@@ -1,0 +1,37 @@
+;;;; -Ob
+
+;
+;  Originally wordfreq.mzscheme by Grzegorz Chrupaa
+;
+
+(declare (fixnum) (disable-interrupts) (uses regex srfi-13))
+
+(define (main . _)
+  (define table (make-hash-table string=?))
+  (let loop ()
+    (let ([ln (read-line)])
+      (unless (eof-object? ln)
+	(parse-line ln table)
+	(loop) ) ) )
+  (hash-table-remove! table "")
+  (for-each (lambda (pair)
+              (let ((word (car pair))
+                    (count (cdr pair)))
+                (print count #\tab word)))
+            (sort (hash-table->list table)
+                  (lambda (pair1 pair2)
+                    (or (> (cdr pair1) (cdr pair2))
+                        (and (= (cdr pair1) (cdr pair2))
+                             (string<? (car pair2) (car pair1))))))))
+
+(define rx (regexp "[^a-zA-Z]+"))
+
+(define (parse-line line table)
+  (string-downcase! line)
+  (for-each
+   (lambda (word)
+     (let ((count (hash-table-ref table word 0)))
+       (hash-table-set! table word (+ count 1))))
+   (string-split-fields rx line #:infix)))
+
+(main)

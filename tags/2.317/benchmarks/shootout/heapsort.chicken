@@ -1,0 +1,62 @@
+;;; heapsort.scm
+
+;; Prints 0.9990640717878372 instead of 0.9990640718 when n=1000.
+;; Updated by Justin Smith
+
+(declare (disable-interrupts) (uses format srfi-4))
+
+(define IM   139968)
+(define IA     3877)
+(define IC    29573)
+
+(define LAST 42)
+(define (gen_random max)
+  (set! LAST (modulo (+ (* LAST IA) IC) IM))
+  (/ (* max LAST) IM))
+
+(define (heapsort n ra)
+  (let ((ir n)
+        (l (+ (quotient n 2) 1))
+        (i 0)
+        (j 0)
+        (rra 0.0))
+    (call/cc 
+     (lambda (return)
+      (do ((bar #t))
+        ((= 1 0))
+        (cond ((> l 1)
+               (set! l (- l 1))
+               (set! rra (f64vector-ref ra l)))
+              (else
+               (set! rra (f64vector-ref ra ir))
+               (f64vector-set! ra ir (f64vector-ref ra 1))
+               (set! ir (- ir 1))
+               (cond ((<= ir 1)
+                      (f64vector-set! ra 1 rra)
+                      (return #t)))))
+        (set! i l)
+        (set! j (* l 2))
+        (do ((foo #t))
+	    ((> j ir))
+          (cond ((and (< j ir) (< (f64vector-ref ra j) (f64vector-ref ra (+ j 1))))
+                 (set! j (+ j 1))))
+          (cond ((< rra (f64vector-ref ra j))
+                 (f64vector-set! ra i (f64vector-ref ra j))
+                 (set! i j)
+                 (set! j (+ j i)))
+                (else
+                 (set! j (+ ir 1)))))
+        (f64vector-set! ra i rra))))))
+
+(define (main args)
+  (let* ((n (or (and (= (length args) 1) (string->number (car args)))
+                1))
+         (last (+ n 1))
+         (ary (make-f64vector last 0)))
+    (do ((i 1 (+ i 1)))
+        ((= i last))
+      (f64vector-set! ary i (gen_random 1.0)))
+    (heapsort n ary)
+    (format #t "~,10F~%" (f64vector-ref ary n) )))
+
+(main (command-line-arguments))

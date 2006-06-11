@@ -1,0 +1,13 @@
+The CHICKEN Task List
+=====================
+
+
+* A multiplatform/multitoolkit GUI library
+* Implementations for all shootout benchmarks
+* A alternative frontend (for example: Lua, Ruby, Prolog, Smalltalk, Dylan, JavaScript, Goo, Logo, SML, ...)
+* hen.el: proper syntax-coloring for `#| ... |#' and curried `define'
+* A texi -> wiki translator
+* A thorough cleaning up of the manual
+* Full documentation for all implemented SRFIs
+* Some sort of Java interface
+* Implement XML-RPC server test-suite
