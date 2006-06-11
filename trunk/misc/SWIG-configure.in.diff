@@ -1,0 +1,63 @@
+Index: configure.in
+===================================================================
+RCS file: /cvsroot/swig/SWIG/configure.in,v
+retrieving revision 1.156
+diff -r1.156 configure.in
+1317d1316
+< CHICKEN_CONFIG=
+1353d1351
+< AC_ARG_WITH(chickencfg,[  --with-chickencfg=path  Set location of chicken-config],[ CHICKEN_CONFIG="$withval"], [CHICKEN_CONFIG=])
+1355,1361c1353
+< if test -z "$CHICKEN_CONFIG"; then
+< AC_CHECK_PROGS(CHICKEN_CONFIG, chicken-config)
+< else
+< CHICKEN_CONFIG="$CHICKEN_CONFIG"
+< fi
+< 
+< if test -n "$CHICKEN_CONFIG" ; then
+---
+> if test -n "$CHICKEN_CSC" ; then
+1375c1367
+<   dirs="$CHICKENHOME `chicken-config -home | sed s/CHICKEN_HOME=//`"
+---
+>   dirs="$CHICKENHOME `csc -home | sed s/CHICKEN_HOME=//`"
+1389c1381
+<         CHICKENSHAREDOPTS="`chicken-config -shared -cflags`"
+---
+>         CHICKENSHAREDOPTS="`csc -s -cflags`"
+1391c1383
+<         CHICKENSHAREDOPTS="`chicken-config -shared -cflags` $CHICKENSHAREDOPTS"
+---
+>         CHICKENSHAREDOPTS="`csc -s -cflags` $CHICKENSHAREDOPTS"
+1401c1393
+<         CHICKENOPTS="`chicken-config -cflags`"
+---
+>         CHICKENOPTS="`csc -cflags`"
+1403c1395
+<         CHICKENOPTS="`chicken-config -cflags` $CHICKENOPTS"
+---
+>         CHICKENOPTS="`csc -cflags` $CHICKENOPTS"
+1412c1404
+<   dirs="$CHICKENSHAREDLIB `chicken-config -shared -libs -extra-libs | sed s/-L//g` /usr/lib"
+---
+>   dirs="$CHICKENSHAREDLIB `csc -s -ldflags -libs | sed s/-L//g` /usr/lib"
+1416,1417c1408
+<   	    CHICKENSHAREDLIB="$CHICKENSHAREDLIB `chicken-config -shared -extra-libs`"
+<   	    CHICKENSHAREDLIB="$CHICKENSHAREDLIB `chicken-config -shared -libs`"
+---
+>   	    CHICKENSHAREDLIB="$CHICKENSHAREDLIB `csc -s -ldflags -libs`"
+1426c1417
+<   dirs="$CHICKENLIB `chicken-config -libs -extra-libs | sed s/-L//g` /usr/lib "
+---
+>   dirs="$CHICKENLIB `csc -ldflags -libs | sed s/-L//g` /usr/lib "
+1430,1431c1421
+<   	    CHICKENLIB="$CHICKENLIB `chicken-config -extra-libs`"
+<   	    CHICKENLIB="$CHICKENLIB `chicken-config -libs`"
+---
+>   	    CHICKENLIB="$CHICKENLIB `csc -ldflags -libs`"
+1439c1429
+< fi # have CHICKEN_CONFIG
+---
+> fi # have CHICKEN_CSC
+1445d1434
+< AC_SUBST(CHICKEN_CONFIG)

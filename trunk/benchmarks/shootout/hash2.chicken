@@ -1,0 +1,28 @@
+;;;; -Ob
+
+(declare (fixnum) (disable-interrupts) (uses srfi-1))
+
+(define (main args)
+  (let* ([n (string->number (car args))]
+	 [hash1 (make-hash-table string=?)]
+	 [hash2 (make-hash-table string=?)]
+	 [seq (iota 10000)]
+	 [nseq (iota n)])
+    (for-each (lambda (item)
+		(hash-table-set! hash1 
+				 (string-append "foo_" (number->string
+							item))
+				 item))
+	      seq)
+    (for-each (lambda (item)
+		(hash-table-for-each 
+		 (lambda (key value)
+		   (hash-table-set! hash2 key (+ (hash-table-ref hash2 key 0) value)))
+		 hash1) )
+	      nseq)
+    (print (hash-table-ref hash1 "foo_1") " "
+	   (hash-table-ref hash1 "foo_9999") " "
+	   (hash-table-ref hash2 "foo_1") " "
+	   (hash-table-ref hash2 "foo_9999"))))
+
+(main (command-line-arguments))

@@ -1,0 +1,16 @@
+;;;; -Ob
+
+(declare (fixnum) (disable-interrupts))
+
+(define (fib n)
+  (cond ((< n 2) 1)
+	(else (+ (fib (- n 2)) (fib (- n 1))))))
+
+(define (main args)
+  (let ((n (if (null? args)
+               1
+               (string->number (car args)))))
+    (display (fib n))
+    (newline)))
+
+(main (command-line-arguments))

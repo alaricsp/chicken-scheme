@@ -1,0 +1,25 @@
+;;;; -Ob
+
+(declare (fixnum) (disable-interrupts))
+
+(define (sequence start stop)
+  (if (> start stop)
+      '()
+      (cons start (sequence (+ start 1) stop))))
+
+(define (main args)
+  (let* ([n (string->number (car args))]
+	 [hash (make-hash-table string=?)]
+	 [accum 0]
+	 [seq (sequence 1 n)]
+	 [revseq (reverse seq)])
+    (for-each (lambda (item)
+		(hash-table-set! hash (number->string item 16) item))
+	      seq)
+    (for-each (lambda (item)
+		(when (hash-table-ref hash (number->string item))
+		  (set! accum (+ accum 1))))
+	      revseq)
+    (print accum)))
+
+(main (command-line-arguments))
