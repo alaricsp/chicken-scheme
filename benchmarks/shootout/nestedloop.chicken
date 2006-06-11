@@ -1,0 +1,22 @@
+(declare (fixnum) (disable-interrupts))
+
+(define (main #!optional (n "1"))
+  (let* ([n (string->number n)]
+	 [x 0] )
+    (do ((a 0 (+ a 1)))
+	((= a n))
+      (do ((b 0 (+ b 1)))
+	  ((= b n))
+	(do ((c 0 (+ c 1)))
+	    ((= c n))
+	  (do ((d 0 (+ d 1)))
+	      ((= d n))
+	    (do ((e 0 (+ e 1)))
+		((= e n))
+	      (do ((f 0 (+ f 1)))
+		  ((= f n))
+		(set! x (+ x 1))))))))
+    (display x)
+    (newline)))
+
+(apply main (command-line-arguments))

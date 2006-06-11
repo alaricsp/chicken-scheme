@@ -1,0 +1,191 @@
+How to build Chicken Scheme using CMake and MinGW
+-------------------------------------------------
+
+by Brandon Van Every
+CMake buildmaster
+last updated March 25, 2006
+
+If in trouble, please contact me through the Chicken mailing list.  You can subscribe to the list from the Chicken homepage, http://call-with-current-continuation.org.
+
+
+
+EXECUTIVE SUMMARY
+-----------------
+
+- Install MinGW
+- Install MSYS
+- Install CMake
+- Install the Microsoft Platform SDK and set environment variables for MSYS
+- Test your installed tools
+- unpack a Chicken release or snapshot tarball
+- run cmakesetup from a MSYS shell, select "Unix Makefiles" and generate them
+- make; make install
+- test your Chicken installation
+
+
+BENEFITS OF CMake
+-----------------
+
+In principle, a CMake build is no more difficult than running a GNU Autoconf .\configure script.  CMake is designed to replace Autoconf.  It provides the same functionality of querying the system and available libraries.  It can generate Makefiles, and unlike Autoconf, it can also generate Visual C++ project files, Windows nmake files, and even Borland makefiles.  Watcom file generation is also in development.  CMake is a true cross-platform build tool, not just a Unix build tool.  It's what us Windows guys *wish* GNU Autoconf was, so now we can stop wishing!  Unixen may find it convenient as well, if they are not too settled in their ways.  Also GCC is supported on the Mac under Darwin, although I'm unsure how robust it is.  For full details on CMake and supported platforms, look at http://cmake.org.
+
+These instructions can, in principle, be used to build Chicken with any compiler on any platform that CMake supports.  In practice, if the combo isn't tested then it won't work.  Currently these instructions only ensure a MinGW build.  I plan to add Visual Studio and Cygwin builds once the MinGW build is perfected.
+
+
+
+INSTALL MinGW
+-------------
+
+The least painful way to install MinGW is to install the Dev-C++ IDE.  It's free, and even if you don't use it, the packaging mechanism is excellent.  You will find the packaging comes in very handy when you need MinGW versions of open source libraries; compiling them yourself on Windows is usually a PITA.  The packaging mechanism can even be used in a standalone fashion if you really really resent the IDE.  Get Dev-C++ from http://www.bloodshed.net/dev/devcpp.html.  Get the version that includes MinGW.
+
+
+
+INSTALL MSYS
+------------
+
+Goto http://mingw.org download section, grab MSYS, and install it.
+
+During the install, a command shell will pop up and perform a "post install" operation to rectify MSYS with your MinGW installation.  This is because the Make utility is different for MinGW and MSYS.  When using MSYS, you want to use MSYS's version of it.  You will be asked some questions; answer them in a straightforward manner, similar to the following:
+
+  "Do you want to continue with the post install?" YES [y]
+  "Do you have MinGW installed?" YES [y]
+  "Where is your MinGW installation?"  C:/Dev-Cpp
+  "Oh joy, you do not have C:/Dev-Cpp/bin/make.exe.  Keep it that way."
+  [alternately it may rename make.exe to mingw32-make.exe]
+  "Press any key to continue . . ."  [DO SO]
+
+The command prompt now goes away, you are returned to the MSYS Setup.exe installer, and you can Click Finish to exit Setup.
+
+
+
+INSTALL CMake
+----------------
+
+Goto http://cmake.org download section, grab CMake, and install it.  CMake 2.3 or later is required.  
+
+INTERIM NOTE: CMake 2.3 is a development version that has to be compiled from source.  Once CMake 2.4 ships, this interim note will go away.  Contact me via the Chicken mailing list to obtain a working binary, if you don't want to download from CVS and compile from source.  Be advised that the Windows version of CMake relies on Microsoft Foundation Classes, and consequently a commercially licensed copy of Visual C++ is needed to build it.  The free VCToolkit, and the free Visual Express development environment, do not include MFC.  The Platform SDK has a version of MFC for AMD64, but it cannot build a "regular" MFC without significant alterations to the source code.  Don't try that; you will suffer needless pain.  
+
+
+
+INSTALL The Microsoft Platform SDK
+----------------------------------
+
+Goto http://msdn.microsoft.com and grab one of the following Platform SDK packages:
+
+  Windows Server 2003 SP1 Platform SDK ISO Install    [for burning a CD image]
+  Windows Server 2003 SP1 Platform SDK Full Download  [a series of 25MB files]
+  Windows Server 2003 SP1 Platform SDK Web Install    [for installing over the web]
+
+Microsoft changes their website a lot, so there's no point in giving you an exact URL.  Who knows, the name of the "Platform SDK" may also change.  As of February 2006, this is what you want if you are going to build stuff on Windows 2000 or XP.
+
+Install the package.  During the install, be sure to REGISTER ENVIRONMENT VARIABLES.  They are not registered by default.  For this you will need to do "Custom Installation.. Configuration Options.. Register Environment Variables.. Will Be Installed On Local Hard Drive."
+
+The PSDK provides a SetEnv.Cmd file to set the environment variables, but it has the annoying habit of searching for VC++.  If found, it adds lotsa VC++ environment variables.  You don't want these for a MinGW build, they could cause problems.  There's no clean way to disentangle this behavior; Microsoft believes you want to use VC++.  ;-)  So, be sure to REGISTER ENVIRONMENT VARIABLES.
+
+Why is the PSDK needed at all?  Well, if you don't have it, then chicken.exe gets built, but fails immediately with a memory write error the first time it is used during the build.  I don't know what the dependency is exactly, although I've deduced that it's an include and library dependency, not a PATH dependency.  Removing the PSDK from your PATH will not affect the build, but INCLUDE, LIB, MSSDK, and MSTOOLS all seem to be needed.
+
+
+
+TEST YOUR PSDK, MinGW, and MSYS INSTALLATIONS
+---------------------------------------------
+
+Open a MSYS shell.  There's probably an icon on your desktop to do this.  Type:
+
+  set
+
+You should see environment variables like:
+
+COMMONPROGRAMFILES='C:\Program Files\Common Files'
+INCLUDE='C:\Program Files\Microsoft Platform SDK\Include\.'
+INETSDK='C:\Program Files\Microsoft Platform SDK\.'
+LIB='C:\Program Files\Microsoft Platform SDK\Lib\.'
+MSSDK='C:\Program Files\Microsoft Platform SDK\.'
+MSTOOLS='C:\Program Files\Microsoft Platform SDK\.'
+PATH='.:/usr/local/bin:/mingw/bin:/bin:/c/WINNT/system32:/c/WINNT:/c/WINNT/System32/Wbem:/e/Program Files/Microsoft Platform SDK/Bin/.:/e/Program Files/Microsoft Platform SDK/Bin/WinNT/.'
+
+Now type:
+
+  gcc --version
+
+You should see something like "gcc.exe (GCC) 3.4.2 (mingw special)".  Now type:
+
+  chicken -version
+
+YOU SHOULD GET A "COMMAND NOT FOUND" ERROR.  You're not supposed to have any Chicken yet!  If you've got an old build lying around that failed for some reason, either get rid of it, or get it out of your PATH.  It could interfere with your new build.
+
+
+
+Build Chicken with CMake
+------------------------
+
+Grab a Chicken release or snapshot tarball from http://www.call-with-current-continuation.org.
+
+You must use a tarball to get the needed *.c files.  The CMake build does not currently support bootstrapping straight from the Darcs source control repository, although I'll add this in the future.
+
+Unpack the tarball wherever you like.  These instructions will assume the source code is in C:\src\chicken.  You'll be doing an "out of directory" build, i.e. nothing in the source directory will ever be changed.  I'll assume you want to build everything in C:\msys-build\chicken.
+
+Open CMakeSetup.exe.  A window pops up.  Fill out the fields as follows:
+
+  "Where is the source code:" C:\src\chicken
+  "Where to build the binaries:" C:\msys-build\chicken
+
+Now hit "Configure".  A dialog box will ask you to Select the Generator.  Choose "MSYS Makefiles" as your generator and hit OK.  You now have the opportunity to change various settings if you wish, such as the CMAKE_INSTALL_PREFIX.  This is the directory that Chicken will eventually be installed in after it is built; the default is something like C:\Program Files\Chicken.  Uncommitted settings appear in red.  Once you've changed what you like, hit "Configure" again.  Now the settings will change to grey and the message "Configuring done" will appear in the status bar.  Hit "OK" to exit cmakesetup.
+
+You should now have a bunch of files, including a Makefile, in your C:\msys-build\chicken directory.  In your MSYS shell, change to this directory.  MSYS uses /c to represent the C: drive, so do "cd /c/msys-build/chicken".  Now type "make".  Everything should build; you may receive warnings, but you should receive no errors.
+
+Now type "make install".  C:\Program Files\Chicken should be populated with the following files:
+
+chicken-ffi-macros.scm
+chicken-match-macros.scm
+chicken-more-macros.scm
+chicken-profile.1
+chicken-profile.exe
+chicken-setup.1
+chicken-setup.exe
+chicken-static.exe
+chicken.1
+chicken.exe
+chicken.h
+chicken.pdf
+csc.1
+csc.exe
+csi-static.exe
+csi.1
+csi.exe
+csibatch.bat
+libchicken-static.a
+libchicken.dll
+libchicken_gui-static.a
+libchicken_gui.dll
+libuchicken-static.a
+libuchicken.dll
+
+Now put Chicken in your PATH.  Right click on "My Computer."  Select "Properties... Advanced... Environment Variables...."  Under "System Variables," select "Path" and click "Edit...."  Add the following to the end of your path:
+
+  ;C:\Program Files\Chicken
+
+Note the ; separator.
+
+
+
+TEST YOUR Chicken INSTALLATION
+------------------------------
+
+Close your MSYS shell.  Open a new shell; it can be a MSYS shell, or a plain old Windows Command Prompt.  Change to any directory other than your C:\dest\chicken directory, to make sure that your PATH is set up correctly.  Type:
+
+  chicken -version
+
+You should see a banner like:
+
+ )   ___                        
+(__/_____) /)   ,    /)         
+  /       (/      _ (/_   _ __  
+ /        / )__(_(__/(___(/_/ (_
+(______)                        
+Version 2, Build 3 - windows-mingw32-x86 - [ dload ptables ]
+(c)2000-2005 Felix L. Winkelmann
+
+Enter "chicken -help" for information on how to use it.
+
+
+
+[TODO: HOW ABOUT SOME MORE STRINGENT TESTS?]

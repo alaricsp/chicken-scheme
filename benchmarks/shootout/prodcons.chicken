@@ -1,0 +1,65 @@
+; prodcons.scm
+; Producer/consumer benchmark for http://www.bagley.org/~doug/shootout/
+; Scheme implementation using SRFI 18, needs only the following subset:
+; make-thread, thread-start!, thread-join!
+; make-mutex, mutex-lock!, mutex-unlock!
+; make-condition-variable, condition-variable-signal!
+
+; (by Sven Hartrumpf)
+
+(declare (fixnum) (uses srfi-18))
+
+(define *num 1)
+(define *mutex (make-mutex))
+(define *nonzero-condition (make-condition-variable))
+(define *zero-condition (make-condition-variable))
+(define *buffer #f)
+(define *count 0)
+(define *produced 0)
+(define *consumed 0)
+
+(define producer
+  (make-thread
+   (lambda ()
+     (do ((i 1))
+	 ((> i *num))
+       (mutex-lock! *mutex)
+       (cond ((= *count 0)
+	      (set! *buffer i)
+	      (set! *count (+ *count 1))
+	      (condition-variable-signal! *nonzero-condition)
+	      (mutex-unlock! *mutex *zero-condition)
+	      (set! i (+ i 1))
+	      (set! *produced (+ *produced 1))
+	      )
+	     (else
+	      (mutex-unlock! *mutex *zero-condition))) )
+     (condition-variable-signal! *nonzero-condition) ) ) ) ; to run consumer once more...
+
+(define consumer (make-thread (lambda ()
+  (do ((i 0))
+    ((>= i *num))
+    (mutex-lock! *mutex)
+    (cond ((> *count 0)
+           (set! i *buffer)
+           (set! *buffer #f)
+           (set! *count (- *count 1))
+           (condition-variable-signal! *zero-condition)
+           (mutex-unlock! *mutex *nonzero-condition)
+           (set! *consumed (+ *consumed 1))
+           )
+          (else
+            (mutex-unlock! *mutex *nonzero-condition)))
+    ))))
+
+(define (main #!optional (n "1"))
+  (set! *num (string->number n))
+  (thread-start! producer)
+  (thread-start! consumer)
+  (thread-join! producer)
+  (thread-join! consumer)
+  (print *produced " " *consumed))
+
+
+(apply main (command-line-arguments))
+

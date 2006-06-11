@@ -1,0 +1,42 @@
+;;;; -Ob
+
+(declare (fixnum) (disable-interrupts))
+
+(define HI 0)
+(define LO 0)
+
+(define lo-exception #f)
+(define hi-exception #f)
+
+(define (some_fun n)
+  (hi_fun n))
+
+(define (hi_fun n)
+  (when (call/cc
+	 (lambda (return)
+	   (set! hi-exception return)
+	   (lo_fun n) 
+	   #f) )
+    (set! HI (add1 HI)) ) )
+
+(define (lo_fun n)
+  (when (call/cc
+	 (lambda (return)
+	   (set! lo-exception return)
+	   (blowup n) 
+	   #f) )
+    (set! LO (add1 LO)) ) )
+
+(define (blowup n)
+  (if (even? n)
+      (hi-exception #t)
+      (lo-exception #t)))
+	
+(define (main #!optional (n "1"))
+  (let ((n (string->number n)))
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (some_fun i)))
+  (print "Exceptions: HI=" HI " / LO=" LO))
+
+(apply main (command-line-arguments))
