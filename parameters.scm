@@ -93,6 +93,7 @@
 
 (define-constant repository-environment-variable "CHICKEN_REPOSITORY")
 (define-constant home-environment-variable "CHICKEN_HOME")
+(define-constant prefix-environment-variable "CHICKEN_PREFIX")
 
 (define-constant default-profile-name "PROFILE")
 

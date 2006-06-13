@@ -2769,6 +2769,8 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_build_platform")))])
     (lambda () sym) ) )
 
+(define flat-directory-install (##core#inline "C_flat_directory_install"))
+
 (define (chicken-version . full)
   (define (get-config)
     (let ([bp (build-platform)]
@@ -2797,16 +2799,6 @@ EOF
 	 (if (eq? 0 (##sys#size spec)) "" (string-append " - [" spec " ]") ) ))
       (string-append (number->string build-version) "." (number->string build-number))))
 
-(define chicken-home
-  (let ([getenv getenv])
-    (lambda ()
-      (or (getenv home-environment-variable)
-	  installation-home) ) ) )
-
-(define c-runtime
-  (let ([sym (string->symbol ((##core#primitive "C_c_runtime")))])
-    (lambda () sym) ) )
-
 (define ##sys#pathname-directory-separator
   (let ([st (software-type)])
     (if (or (eq? 'msdos st)
@@ -2815,6 +2807,22 @@ EOF
 		   (not (or (eq? 'cygwin bp) (eq? 'mingw32 bp))) ) ) )
 	#\\
 	#\/) ) )
+
+(define chicken-home
+  (let ([getenv getenv])
+    (lambda ()
+      (or (getenv home-environment-variable)
+	  (and-let* ((p (getenv prefix-environment-variable)))
+	    (##sys#string-append 
+	     p
+	     (if (char=? (string-ref p (fx- (##sys#size p) 1)) ##sys#pathname-directory-separator)
+		 "share"
+		 "/share") ) )
+	  installation-home) ) ) )
+
+(define c-runtime
+  (let ([sym (string->symbol ((##core#primitive "C_c_runtime")))])
+    (lambda () sym) ) )
 
 
 ;;; Feature identifiers:
@@ -3128,6 +3136,7 @@ EOF
 
 (define ##sys#signal-hook 
   (lambda (mode msg . args)
+    (##core#inline "C_dbg_hook" #f)
     (case mode
       [(#:user-interrupt)
        (##sys#abort

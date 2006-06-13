@@ -261,7 +261,7 @@ EOF
   profile-info-vector-name finish-foreign-result pending-canonicalizations
   foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size default-installation-home valid-c-identifier?
+  target-heap-size target-stack-size valid-c-identifier?
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -371,7 +371,6 @@ EOF
 
 ;;; These are here so that the backend can access them:
 
-(define default-installation-home installation-home)
 (define default-default-target-heap-size default-target-heap-size)
 (define default-default-target-stack-size default-target-stack-size)
 

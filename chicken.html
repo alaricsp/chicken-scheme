@@ -124,6 +124,7 @@ border: 1px solid #bbc;
 <div class="section">
 <h3>Version</h3>
 <ul>
+<li>2.318 Fix in setup script [Thanks to John Cowan]</li>
 <li>2.317 Initial release as egg</li></ul></div>
 <div class="section">
 <h3>Download</h3><a href="chicken.egg">chicken.egg</a></div>
@@ -131,7 +132,8 @@ border: 1px solid #bbc;
 <h3>Documentation</h3>
 <p>This extension packages the newest development snapshot of the CHICKEN base system as an egg.</p>
 <p>When installed via <tt>chicken-setup</tt>, the development snapshot will be configured, built and installed with the same settings as the previously installed (the current) version of CHICKEN. To pass extra options to <tt>configure</tt>, invoke <tt>chicken-setup</tt> with the configuration options following <tt>--</tt>, like this:
-<pre>% chicken-setup chicken -- --without-XYZ ...</pre></p></div>
+<pre>% chicken-setup chicken -- --without-XYZ ...</pre></p>
+<p>You will need <tt>autoconf</tt>, <tt>automake</tt> and <tt>libtool</tt>.</p></div>
 <div class="section">
 <h3>License</h3>
 <pre>Copyright (c) 2000-2006, Felix Winkelmann.  All rights reserved.

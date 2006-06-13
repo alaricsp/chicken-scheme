@@ -266,6 +266,16 @@ SET(CHICKEN_UFLAGS ${CHICKEN_FLAGS} -no-lambda-info -unsafe -feature unsafe)
 # used for .o file dependencies on .c files, not for
 # source-file-to-source-file dependencies.  
 
+MACRO(DEPENDS_CHICKEN_H root)
+  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/${root}.c
+    PROPERTIES OBJECT_DEPENDS ${Chicken_SOURCE_DIR}/chicken.h)
+ENDMACRO(DEPENDS_CHICKEN_H)
+
+MACRO(DEPENDS_CHICKEN_DEFAULTS_H root)
+  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/${root}.c
+    PROPERTIES OBJECT_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h)
+ENDMACRO(DEPENDS_CHICKEN_DEFAULTS_H)
+
 MACRO(SIMPLE_SCM_TO_C root)
   SET(deproots ${ARGN})
   ADD_PREFIX(${Chicken_SOURCE_DIR}/ deproots)
@@ -277,6 +287,7 @@ MACRO(SIMPLE_SCM_TO_C root)
     COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/${root}.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/${root}.c ${CHICKEN_FLAGS}
     COMMENT "Compiling ${Chicken_SOURCE_DIR}/${root}.scm to ${CMAKE_CURRENT_BINARY_DIR}/${root}.c"
   )
+  DEPENDS_CHICKEN_H(${root})
 ENDMACRO(SIMPLE_SCM_TO_C)
 
 # Library units must be compiled with -explicit-use
@@ -292,6 +303,7 @@ MACRO(LIBRARY_SCM_TO_C root)
     COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/${root}.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/${root}.c -explicit-use ${CHICKEN_FLAGS}
     COMMENT "Compiling ${Chicken_SOURCE_DIR}/${root}.scm to ${CMAKE_CURRENT_BINARY_DIR}/${root}.c"
   )
+  DEPENDS_CHICKEN_H(${root})
 ENDMACRO(LIBRARY_SCM_TO_C)
 
 # Some library units have .exports, others don't.
@@ -307,6 +319,7 @@ MACRO(LIBRARY_SCM_TO_C_EXPORTS root)
     COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/${root}.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/${root}.c -explicit-use ${CHICKEN_FLAGS}
     COMMENT "Compiling ${Chicken_SOURCE_DIR}/${root}.scm to ${CMAKE_CURRENT_BINARY_DIR}/${root}.c Exporting ${CMAKE_CURRENT_BINARY_DIR}/${root}.exports"
   )
+  DEPENDS_CHICKEN_H(${root})
 ENDMACRO(LIBRARY_SCM_TO_C_EXPORTS)
 
 # Unsafe library units get a 'u' prefix and must be compiled with -explicit-use
@@ -323,15 +336,49 @@ MACRO(UNSAFE_LIBRARY_SCM_TO_C saferoot)
     COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/${saferoot}.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/u${saferoot}.c -explicit-use ${CHICKEN_UFLAGS}
     COMMENT "Compiling ${Chicken_SOURCE_DIR}/${saferoot}.scm to ${CMAKE_CURRENT_BINARY_DIR}/u${saferoot}.c"
   )
+  DEPENDS_CHICKEN_H(u${saferoot})
 ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 
+# csc.scm.in and chicken-defaults.h.in needs regex replacement.
+# CONFIGURE_FILE doesn't have a
+# regex capability, but we can get around this using a CMake script.
+# CMake 2.4.2 scripting has extremely limited input capabilities.
+# We have to pass the calling context and variables we need in
+# a file, vars.cmake.  Then we INCLUDE it in csc.replace.cmake, 
+# which does the actual regex.
+
+MACRO(GEN_CHICKEN_DEFAULTS_H)
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken-defaults.h.in
+    DEPENDS
+      ${CMAKE_CURRENT_BINARY_DIR}/vars.cmake
+      ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
+    COMMAND ${CMAKE_COMMAND} -P ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
+    COMMENT "Replacing ${Chicken_SOURCE_DIR}/chicken-defaults.h.in to ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h"
+  )
+ENDMACRO(GEN_CHICKEN_DEFAULTS_H)
+
+MACRO(GEN_COMPILER_C)
+  SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)
+  DEPENDS_CHICKEN_DEFAULTS_H(compiler)
+ENDMACRO(GEN_COMPILER_C)
+
+MACRO(GEN_CSC_SCM)
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
+    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csc.scm.in
+    DEPENDS
+      ${CMAKE_CURRENT_BINARY_DIR}/vars.cmake
+      ${Chicken_SOURCE_DIR}/csc.replace.cmake
+    COMMAND ${CMAKE_COMMAND} -P ${Chicken_SOURCE_DIR}/csc.replace.cmake
+    COMMENT "Replacing ${Chicken_SOURCE_DIR}/csc.scm.in to ${CMAKE_CURRENT_BINARY_DIR}/csc.scm"
+  )
+ENDMACRO(GEN_CSC_SCM)
+
 # csc.c needs its own custom rule because csc.scm is generated.
-# Will need to create csc.scm multiple times during bootstrap?
 
 MACRO(GEN_CSC_C)
-  CONFIGURE_FILE(${Chicken_SOURCE_DIR}/csc.scm.in ${CMAKE_CURRENT_BINARY_DIR}/csc.scm)
-  MESSAGE(STATUS "Configuring ${Chicken_SOURCE_DIR}/csc.scm.in to ${CMAKE_CURRENT_BINARY_DIR}/csc.scm"
-  )
   ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.c
     MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
@@ -339,6 +386,7 @@ MACRO(GEN_CSC_C)
     COMMAND ${CURRENT_CHICKEN} ${CMAKE_CURRENT_BINARY_DIR}/csc.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csc.c ${CHICKEN_FLAGS}
     COMMENT "Compiling ${CMAKE_CURRENT_BINARY_DIR}/csc.scm to ${CMAKE_CURRENT_BINARY_DIR}/csc.c"
   )
+  DEPENDS_CHICKEN_H(csc)
 ENDMACRO(GEN_CSC_C)
 
 # csi gets special treatment with a prologue.
@@ -355,6 +403,7 @@ MACRO(GEN_CSI_C)
     COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/csi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csi.c -prologue ${Chicken_SOURCE_DIR}/build.scm ${CHICKEN_FLAGS}
     COMMENT "Compiling ${Chicken_SOURCE_DIR}/csi.scm to ${CMAKE_CURRENT_BINARY_DIR}/csi.c"
   )
+  DEPENDS_CHICKEN_H(csi)
 ENDMACRO(GEN_CSI_C)
 
 # Need to generate easyffi.l.silex first.
@@ -368,6 +417,7 @@ MACRO(GEN_EASYFFI_C)
     COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/easyffi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c ${CHICKEN_FLAGS}
     COMMENT "Compiling ${Chicken_SOURCE_DIR}/easyffi.scm to ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c"
   )
+  DEPENDS_CHICKEN_H(easyffi)
 ENDMACRO(GEN_EASYFFI_C)
 
 MACRO(GEN_EASYFFI_L_SILEX)
@@ -407,6 +457,23 @@ ENDMACRO(LOCAL_COPY)
 #All our various optional libraries go in here.
 SET(EXTRA_LIBS )
 
+# vcbuild.bat installs everything in one flat directory, but that's not
+# how we install our build.  Chicken has the flat directory behavior
+# hardwired for msvc by default.  Use this to work around it.
+
+ADD_DEFINITIONS(-DHIERARCHICAL_INSTALL)
+ADD_DEFINITIONS(-DC_USE_C_DEFAULTS)
+
+SET(INSTALL_HOME ${CMAKE_INSTALL_PREFIX})
+SET(INSTALL_BIN_HOME ${INSTALL_HOME}/bin)
+SET(INSTALL_INCLUDE_HOME ${INSTALL_HOME}/include)
+# What about that /chicken/1 funk?
+SET(INSTALL_LIB_HOME ${INSTALL_HOME}/lib)
+
+ADD_DEFINITIONS(-DC_INSTALL_HOME="${INSTALL_HOME}")
+ADD_DEFINITIONS(-DC_INSTALL_BIN_HOME="${INSTALL_BIN_HOME}")
+ADD_DEFINITIONS(-DC_INSTALL_INCLUDE_HOME="${INSTALL_INCLUDE_HOME}")
+ADD_DEFINITIONS(-DC_INSTALL_LIB_HOME="${INSTALL_LIB_HOME}")
 
 # This flag is definitely needed for MSVC.
 # Does MinGW need it?
@@ -618,6 +685,22 @@ MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
 
 
 ####################################################################
+#  EXCESSIVE_CPPFLAGS                                              #
+####################################################################
+
+# These are flags that CSC wants to hear about when it does its thing.
+# These will be substituted into csc.scm using csc.replace.cmake.
+# The following approach generates excessive numbers of flags, but I'm
+# really tired of dealing with all this crap being spewed around.
+# Good God when will it ever end?
+
+GET_DIRECTORY_PROPERTY(EXCESSIVE_CPPFLAGS
+  DIRECTORY ${Chicken_SOURCE_DIR}
+  DEFINITIONS
+)
+
+
+####################################################################
 #  LISTS OF .C SOURCES                                             #
 ####################################################################
 
@@ -759,10 +842,30 @@ MACRO(GET_CHICKEN_C_SOURCES out)
   GET_CHICKEN_CGEN(cgen)
   SET(${out}
     ${Chicken_SOURCE_DIR}/chicken.h
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
     ${Chicken_SOURCE_DIR}/chicken.rc
     ${cgen}
   )
 ENDMACRO(GET_CHICKEN_C_SOURCES)
+
+
+####################################################################
+#  CONFIGURATION                                                   #
+####################################################################
+
+# Can't actually do nsample at configuration time.  Hrm.
+# This is a placeholder.
+
+SET(DEFAULT_TARGET_STACK_SIZE 131072)
+
+# CMake 2.4.2's facilities at configuration time are limited.  In
+# particular, we can't perform general regex replacement on *.in
+# files.  We write out the variables that we're going to need to
+# vars.cmake, so that "cmake -P" scripts can utilize them later.
+# Configure vars.cmake as late as possible so that we get all the
+# goodies from above.
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/vars.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/vars.cmake)
 
 
 ####################################################################
@@ -792,13 +895,15 @@ SET(CURRENT_CSI ${CSI_BOOT_EXE})
 
 # Do these after we've created a 1st stage compiler via the bootstrap.
 
+GEN_CHICKEN_DEFAULTS_H()
 SIMPLE_SCM_TO_C(batch-driver parameters)
 SIMPLE_SCM_TO_C(c-backend tweaks)
 SIMPLE_SCM_TO_C(c-platform)
 SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
 SIMPLE_SCM_TO_C(chicken-profile)
 SIMPLE_SCM_TO_C(chicken-setup build parameters)
-SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)
+GEN_COMPILER_C()
+GEN_CSC_SCM()
 GEN_CSC_C()
 GEN_CSI_C()
 GEN_EASYFFI_C()
@@ -916,21 +1021,23 @@ ADD_DEPENDENCIES(libuchicken-static boot common_cgen unsafe_cgen)
 
 IF(WIN32 AND NOT CYGWIN)
 
-  ADD_LIBRARY(libchicken_gui SHARED ${CHICKEN_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libchicken_gui PROPERTIES
+  SET(GUI_LIBS kernel32 user32 gdi32)
+
+  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchickengui PROPERTIES
     PREFIX "" IMPORT_PREFIX ""
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
   )
-  TARGET_LINK_LIBRARIES(libchicken_gui kernel32 user32 gdi32 ${EXTRA_LIBS})
-  ADD_DEPENDENCIES(libchicken_gui boot)
+  TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${EXTRA_LIBS})
+  ADD_DEPENDENCIES(libchickengui boot)
 
-  ADD_LIBRARY(libchicken_gui-static STATIC ${CHICKEN_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libchicken_gui-static PROPERTIES
+  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
     PREFIX "" IMPORT_PREFIX ""
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
   )
-  TARGET_LINK_LIBRARIES(libchicken_gui-static ${GUI_LIBS} ${EXTRA_LIBS})
-  ADD_DEPENDENCIES(libchicken_gui-static boot common_cgen safe_cgen)
+  TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${EXTRA_LIBS})
+  ADD_DEPENDENCIES(libchickengui-static boot common_cgen safe_cgen)
 
 ENDIF(WIN32 AND NOT CYGWIN)
 
@@ -1043,9 +1150,6 @@ ADD_CUSTOM_TARGET(html ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.html)
 #  INSTALLATION                                                    #
 ####################################################################
 
-# Haven't really dealt with all the subdirectories!
-# Is this subdirectory structure hardwired for ALL platforms?
-# Or do I have to specify it in chicken-defaults.h or something?
 
 INSTALL(TARGETS
   chicken
@@ -1069,8 +1173,8 @@ IF(WIN32)
   INSTALL(FILES csibatch.bat DESTINATION bin)
   IF(NOT CYGWIN)
     INSTALL(TARGETS
-      libchicken_gui
-      libchicken_gui-static
+      libchickengui
+      libchickengui-static
       RUNTIME DESTINATION bin
       LIBRARY DESTINATION lib
       ARCHIVE DESTINATION lib

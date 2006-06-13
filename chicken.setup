@@ -36,5 +36,5 @@
 	,(if (##sys#fudge 32) "--enable-gc-hooks" "")
 	,(if (##sys#fudge 15) "--enable-symbol-gc" "")
 	,@*configargs*) )
-  (run (make))
+  (run (make ,(conc "BOOTSTRAP_PATH=" (program-path))))
   (when *install* (run (make install))) ) )

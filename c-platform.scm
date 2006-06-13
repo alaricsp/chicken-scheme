@@ -45,7 +45,7 @@
   foreign-type-table-size dump-nodes
   unit-name insert-timer-checks used-units inlining
   foreign-declarations block-compilation analysis-database-size line-number-database-size
-  target-heap-size target-stack-size default-installation-home 
+  target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants

@@ -46,23 +46,32 @@
 (define osx (eq? (software-version) 'macosx))
 (define hpux-hppa (and (eq? (software-version) 'hpux)
                        (eq? (machine-type) 'hppa)))
-(define homedir "%CHICKEN_HOME%")
-
-(define (homize str) (make-pathname home str))
 
 (define (quit msg . args)
   (fprintf (current-error-port) "csc: ~?~%" msg args)
   (exit 64) )
 
+(define (prefix str dir default)
+  (if chicken-prefix
+      (make-pathname (list chicken-prefix dir) str)
+      default) )
+
+(define chicken-prefix (getenv "CHICKEN_PREFIX"))
+
 (define home
   (or (getenv "CHICKEN_HOME") 
-      (if win
+      (if flat-directory-install
 	  (quit "`CHICKEN_HOME' environment variable not set - please set it to the directory where CHICKEN is installed")
-	  homedir) ) )
+	  (prefix "" "share" "%pkgdatadir%") ) ) )
 
-(if win
-    (begin
+(define (homize str) (make-pathname home str))
+
+(begin
+  (if flat-directory-install
       (define translator (homize "chicken"))
+      (define translator (prefix "chicken" "bin" "%bindir%/chicken")) )
+  (if win
+    (begin
       (define compiler "cl")
       (define c++-compiler "cl")
       (define linker "link")
@@ -75,11 +84,10 @@
       (define shared-library-extension "dll")
       (define nonstatic-compilation-options '("/DPIC")) )
     (begin
-      (define translator "%bindir%/chicken")
       (define compiler "%cc%")
       (define c++-compiler "%cxx%")
       (define linker "%cc%")
-      (define c++-linker "%cxxlinker%")
+      (define c++-linker "%cxx%")
       (define object-extension "o")
       (define library-extension "a")
       (define link-output-flag "-o ")
@@ -89,6 +97,7 @@
       (define shared-library-extension (cond ((or cygwin mingw) "dll")
                                              ;(hpux-hppa "sl")
                                              (else "so")))))
+)
 
 (define default-translation-optimization-options '())
 
@@ -163,32 +172,48 @@ EOF
 (define show-cflags #f)
 (define show-ldflags #f)
 (define show-libs #f)
+(define dry-run #f)
 
 (if win
     (begin
       (define extra-libraries "")
       (define extra-shared-libraries "")
-      (define default-library-files
-	(map homize '("libchicken-static.lib")))
-      (define default-shared-library-files
-	(map homize '("libchicken.lib")))
-      (define unsafe-library-files
-	(map homize '("libuchicken-static.lib")))
-      (define unsafe-shared-library-files
-	(map homize '("libuchicken.lib")))
-      (define gui-library-files
-	(map homize '("libchickengui-static.lib")))
-      (define gui-shared-library-files
-	(map homize '("libchickengui.lib") )))
+      (if flat-directory-install
+        (begin
+          (define default-library-files
+	    (map homize '("libchicken-static.lib")))
+          (define default-shared-library-files
+	    (map homize '("libchicken.lib")))
+          (define unsafe-library-files
+	    (map homize '("libuchicken-static.lib")))
+          (define unsafe-shared-library-files
+	    (map homize '("libuchicken.lib")))
+          (define gui-library-files
+	    (map homize '("libchickengui-static.lib")))
+          (define gui-shared-library-files
+	    (map homize '("libchickengui.lib")))
+        )
+        (begin
+          (define default-library-files (list (prefix "libchicken-static.lib" "lib" "%libdir%/libchicken-static.lib")))
+          (define default-shared-library-files (list (prefix "libchicken.lib" "lib" "%libdir%/libchicken.lib")))
+          (define unsafe-library-files (list (prefix "libuchicken-static.lib" "lib" "%libdir%/libuchicken-static.lib")))
+          (define unsafe-shared-library-files (llist (prefix "libuchicken.lib" "lib" "%libdir%/libuchicken.lib")))
+          (define gui-library-files (list (prefix "libchickengui-static.lib" "lib" "%libdir%/libchickengui-static.lib")))
+          (define gui-shared-library-files (list (prefix "libchickengui.lib" "lib" "%libdir%/libchickengui.lib")))
+        )
+      )
+    )   
     (begin
       (define extra-libraries "%morestaticlibs%")
       (define extra-shared-libraries "%morelibs%")
-      (define default-library-files '("%libdir%/libchicken.a"))
+      (define default-library-files (list (prefix "libchicken.a" "lib" "%libdir%/libchicken.a")))
       (define default-shared-library-files '("-lchicken"))
-      (define unsafe-library-files '("%libdir%/libuchicken.a"))
+      (define unsafe-library-files (list (prefix "libuchicken.a" "lib" "%libdir%/libuchicken.a")))
       (define unsafe-shared-library-files '("-luchicken"))
       (define gui-library-files default-library-files)
-      (define gui-shared-library-files default-shared-library-files) ) )
+      (define gui-shared-library-files default-shared-library-files)
+    )
+)
 
 (define library-files default-library-files)
 (define shared-library-files default-shared-library-files)
@@ -196,14 +221,19 @@ EOF
 (define translate-options '("-quiet"))
 
 (define include-dir
-  (let ([id "%includedir%"])
+  (let ([id (prefix "" "include" "%includedir%")])
     (and (not (member id '("/usr/include" "/usr/local/include" "")))
 	 id) ) )
 
 (define compile-options
-  (if win 
+  (if win
+    (if flat-directory-install
       (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
-      (cons* "-DC_NO_PIC_NO_DLL" (if include-dir (list "-I" include-dir) '())) ) )
+      (cons* "/I%includedir%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
+    )
+    (cons* "-DC_NO_PIC_NO_DLL" (if include-dir (list "-I" include-dir) '())) 
+  ) 
+)
 
 (define compile-only-flag
   (if win "/c" "-c") )
@@ -214,8 +244,8 @@ EOF
 
 (define link-options
   (cond [win '()]
-	[(or osx hpux-hppa) '("-L%libdir%")]
-	[else '("-L%libdir% -Wl,-R%libdir%")] ) )
+	[(or osx hpux-hppa) (list (conc "-L" (prefix "" "lib" "%libdir%")))]
+	[else (list (let ((p (prefix "" "lib" "%libdir%"))) (conc "-L" p " -Wl,-R" p)))] ) )
 
 (define target-filename #f)
 (define verbose #f)
@@ -368,6 +398,7 @@ EOF
     -libs                       show required libraries and exit
     -cc-name                    show name of default C compiler used
     -ld-name                    show name of default linker used
+    -dry-run                    just show commands executed, don't run them (implies `-v')
 
   Obscure options:
 
@@ -524,6 +555,9 @@ EOF
 	       [(-d0) (set! rest (cons* "-debug-level" "0" rest))]
 	       [(-d1) (set! rest (cons* "-debug-level" "1" rest))]
 	       [(-d2) (set! rest (cons* "-debug-level" "2" rest))]
+	       [(-dry-run) 
+		(set! verbose #t)
+		(set! dry-run #t)]
 	       [(-ffi -ffi-parse)
 		(t-options (->string s))
 		(set! ffi #t) ]
@@ -812,7 +846,10 @@ EOF
 
 (define (system* str)
   (when verbose (print str))
-  (set! last-exit-code (system str))
+  (set! last-exit-code
+    (if dry-run 
+	0
+	(system str)) )
   (unless (zero? last-exit-code)
     (printf "*** Shell command terminated with exit status ~S: ~A~%" last-exit-code str) )
   last-exit-code)
@@ -822,7 +859,7 @@ EOF
     (if win
 	(print "del " str) 
 	(print "rm " str) ) )
-  (delete-file str) )
+  (unless dry-run (delete-file str) ))
 
 
 ;;; Run it:

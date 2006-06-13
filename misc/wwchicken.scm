@@ -375,14 +375,22 @@ exec csi -s $0 "$@"
 				(tt "chicken-users@nongnu.org"))
 				   "."))
 			   (tr (@ (valign top))
-			       (td (@ (class "item")) "Darcs repository")
+			       (td (@ (class "item")) "Development repository")
 			       (td "The current CHICKEN development version can be accessed via the"
 				   (a (@ (href "http://www.darcs.net")) "darcs") 
 				   "revision control system, like this:"
 				   (br) (br)
 				   (tt (@ (style "font-size: 90%")) "$ darcs get http://galinha.ucpel.tche.br/chicken")
 				   (br) (br)
-				   "See the file " (tt "README.darcs") " for details on how to bootstrap the system."))
+				   "A " (a (@ (href "http://subversion.tigris.org")) "subversion")
+				   " repository is also available at:"
+				   (br) (a (@ (href "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk"))
+					   "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk")
+				   " which can be accessed like this:"
+				   (br) (br)
+				   (tt "$ svn co https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk chicken")
+				   (br) (br) "(username: " (tt "anonymous") ", password: &lt;none&gt;)") (br)
+				   "See the file " (tt "README.darcs") " for details on how to bootstrap the system.")
 			   (tr (@ (valign top))
 			       (td (@ (class "item")) "Other releases")
 			       (td "Thanks to Davide Puricelli, a "

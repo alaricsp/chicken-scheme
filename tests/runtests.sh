@@ -1,24 +1,34 @@
+
 # runtests.sh 
 
 set -e
 export DYLD_LIBRARY_PATH=`pwd`/../.libs
 export LD_LIBRARY_PATH=`pwd`/../.libs
+compile="../csc -compiler ../chicken -o a.out"
 
 echo "======================================== library-tests ..."
-../csi -s library-tests.scm
+../csi -w -s library-tests.scm
 
 echo "======================================== ffi tests ..."
-../csc ffi-test.scm -compiler ../chicken -o a.out && ./a.out
+$compile ffi-test.scm && ./a.out
 
 echo "======================================== r4rstest ..."
 ../csi -i -s r4rstest.scm >/dev/null
 
-echo "======================================== tinyclos-examples ...."
-../csc -compiler ../chicken tinyclos-examples.scm -o a.out && ./a.out
+echo "======================================== tinyclos-examples ..."
+$compile tinyclos-examples.scm && ./a.out
+
+echo "======================================== locative stress test ..."
+$compile locative-stress-test.scm && ./a.out
 
 echo "======================================== benchmarks ..."
-pushd ..
-make bench
+pushd ../benchmarks
+for x in `ls *.scm`; do
+  if test $x != "cscbench.scm"; then
+    echo $x
+    ../csc $x -O2 -d0 -prologue plists && ./`basename $x .scm` >/dev/null
+  fi
+done
 popd
 
 echo "======================================== done."

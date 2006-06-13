@@ -31,6 +31,7 @@ OTHER DEALINGS IN THE SOFTWARE.")
      (author (url ,email "felix"))
 
      (history
+      (version "2.318" "Fix in setup script [Thanks to John Cowan]")
       (version "2.317" "Initial release as egg"))
 
      (download "chicken.egg")
@@ -41,7 +42,8 @@ OTHER DEALINGS IN THE SOFTWARE.")
 	 " installed with the same settings as the previously installed (the current) version of CHICKEN."
 	 " To pass extra options to " (tt "configure") ", invoke " (tt "chicken-setup") " with the configuration"
 	 " options following " (tt "--") ", like this:"
-	 (pre "% chicken-setup chicken -- --without-XYZ ...") ) )
+	 (pre "% chicken-setup chicken -- --without-XYZ ...") )
+      (p "You will need " (tt "autoconf") ", " (tt "automake") " and " (tt "libtool") ".") )
      (section "License" (pre ,license)))))
 
 (eggdoc->html doc)

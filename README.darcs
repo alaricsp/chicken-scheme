@@ -1,8 +1,9 @@
 This file contains instructions for getting a working Chicken system from 
-a darcs checkout.
+a darcs checkout.  These are the canonical instructions.
 
-(Orignally written by Tony Garnock-Jones <tonyg@kcbbs.gen.nz>, 1 August 2002
-for use with CVS)
+An alternate method of building from darcs is given in INSTALL-CMake.txt.  Please see that file for details on that method.  The two methods are completely independent of each other.
+
+(The following instructions were orignally written by Tony Garnock-Jones <tonyg@kcbbs.gen.nz>, 1 August 2002 for use with CVS.)
 
 The project homepage is http://www.call-with-current-continuation.org/,
 and the darcs repository can be accessed at http://galinha.ucpel.tche.br/chicken.

@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 317
+  Version 2, Build 318
 
 
  1. Introduction:
@@ -180,6 +180,10 @@
     win-install.bat             installation script for Windows
 
     CMakeLists.txt              Build-file for CMake (experimental)
+
+    chicken-defaults.replace.cmake  CMake helper scripts
+    csc.replace.cmake
+    vars.cmake.in
 
     benchmarks/                 contains several benchmarks
 

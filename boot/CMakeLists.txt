@@ -9,6 +9,25 @@
 #
 # chicken-boot and csi-boot are then used by the rest of the build.
 
+
+####################################################################
+#  CONFIGURATION                                                   #
+####################################################################
+
+# CMake 2.4.2's facilities at configuration time are limited.  In
+# particular, we can't perform general regex replacement on *.in
+# files.  We write out the variables that we're going to need to
+# vars.cmake, so that "cmake -P" scripts can utilize them later.
+# Configure vars.cmake as late as possible so that we get all the
+# goodies from above.
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/vars.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/vars.cmake)
+
+
+####################################################################
+#  .C GENERATION                                                   #
+####################################################################
+
 # Do not use LIBRARY_SCM_TO_C_EXPORTS to build the bootstrap compiler.
 # We don't need the exports to build the next compiler stage, and
 # Chicken 2.3 doesn't generate them.  We're worried that extra
@@ -21,6 +40,7 @@ SIMPLE_SCM_TO_C(batch-driver parameters)
 SIMPLE_SCM_TO_C(c-backend tweaks)
 SIMPLE_SCM_TO_C(c-platform)
 SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
+GEN_CHICKEN_DEFAULTS_H()
 SIMPLE_SCM_TO_C(chicken-profile)
 SIMPLE_SCM_TO_C(chicken-setup build parameters)
 SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)

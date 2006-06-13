@@ -1,4 +1,4 @@
-2.315
+2.318
 
 - Bugfixes galore
 - compiler: 
@@ -35,6 +35,10 @@
   procedures `breakpoint' and `singlestep'
 - Added `integer64' foreign type specifier
 - Added `tcp-buffer-size'
+- The environment variable "CHICKEN_PREFIX" allows (together with "CHICKEN_REPOSITORY") overriding
+  the installation path prefix in case you want to install and run multiple instances/versions 
+  of CHICKEN or install on a shared network
+- csc: added `-dry-run' option
 
 Many thanks to Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, John Cowan, 
 Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech Goulart, 

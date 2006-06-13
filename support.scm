@@ -45,7 +45,7 @@
   foreign-type-table-size file-io-only banner custom-declare-alist parse-easy-ffi disabled-warnings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
   foreign-declarations block-compilation analysis-database-size line-number-database-size
-  target-heap-size target-stack-size default-installation-home check-global-exports check-global-imports
+  target-heap-size target-stack-size check-global-exports check-global-imports
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants

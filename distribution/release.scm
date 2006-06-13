@@ -35,7 +35,8 @@ exec chicken-setup -script $0 "$@"
 (define otherfiles
   (string-split
    "chicken.rc chicken.ico csibatch.bat easyffi.l easyffi.l.silex makefile.vc
-      chicken.h chicken.spec.in hen.el win-install.bat *.exports CMakeLists.txt") )
+      chicken.h chicken.spec.in hen.el win-install.bat *.exports CMakeLists.txt chicken-defaults.replace.cmake csc.replace.cmake
+     vars.cmake.in") )
 
 (define benchfiles
   (string-split

@@ -87,8 +87,10 @@ EOF
 
 
 (define *install-bin-path* 
-  (or (foreign-value "C_INSTALL_BIN_HOME" c-string)
-      (getenv "CHICKEN_HOME") ) )
+  (or (and-let* ((p (getenv prefix-environment-variable)))
+	(make-pathname p "bin") )
+      (getenv home-environment-variable) 
+      (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
 (define *cc* (foreign-value "C_CC" c-string))
 
@@ -121,7 +123,6 @@ EOF
 (define setup-verbose-flag (make-parameter #f))
 (define setup-install-flag (make-parameter #t))
 
-(define *verbose* #f)
 (define *fetch-only* #f)
 (define *temporary-directory* #f)
 (define *tmpdir-created* #f)
