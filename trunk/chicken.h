@@ -1187,6 +1187,7 @@ C_fctexport void *C_fcall C_retrieve_proc(C_word closure) C_regparm;
 C_fctexport C_word C_fcall C_permanentp(C_word x) C_regparm;
 C_fctexport int C_in_stackp(C_word x) C_regparm;
 C_fctexport int C_fcall C_in_heapp(C_word x) C_regparm;
+C_fctexport int C_fcall C_in_fromspacep(C_word x) C_regparm;
 C_fctexport void C_fcall C_trace(C_char *name) C_regparm;
 C_fctexport C_word C_fcall C_emit_trace_info(C_word x, C_word y, C_word t) C_regparm;
 C_fctexport C_word C_fcall C_hash_string(C_word str) C_regparm;
@@ -1222,6 +1223,7 @@ C_fctexport C_word C_fcall C_lookup_symbol(C_word sym) C_regparm;
 C_fctexport C_word C_enumerate_symbols(C_SYMBOL_TABLE *stable, C_word pos) C_regparm;
 C_fctexport void C_do_register_finalizer(C_word x, C_word proc);
 C_fctexport int C_do_unregister_finalizer(C_word x);
+C_fctexport C_word C_dbg_hook(C_word x);
 
 C_fctimport void C_ccall C_toplevel(C_word c, C_word self, C_word k) C_noret;
 C_fctexport void C_ccall C_stop_timer(C_word c, C_word closure, C_word k) C_noret;
@@ -1277,6 +1279,7 @@ C_fctexport void C_ccall C_software_type(C_word c, C_word closure, C_word k) C_n
 C_fctexport void C_ccall C_machine_type(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_software_version(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_build_platform(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport C_word C_fcall C_flat_directory_install() C_regparm;
 C_fctexport void C_ccall C_c_runtime(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc) C_noret;
 C_fctexport void C_ccall C_set_dlopen_flags(C_word c, C_word closure, C_word k, C_word now, C_word global) C_noret;

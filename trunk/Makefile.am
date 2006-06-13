@@ -126,7 +126,6 @@ chicken-defaults.h: nsample
 	echo "#ifndef C_INSTALL_LIB_HOME" >> chicken-defaults.h; \
 	echo "# define C_INSTALL_LIB_HOME \"${pkglibdir}/${BINARY_VERSION}\"" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
-	echo "#define C_BIN_DIR \"$(DESTDIR)$(bindir)\"" >>chicken-defaults.h; \
 	echo "#ifndef C_DEFAULT_TARGET_STACK_SIZE" >> chicken-defaults.h; \
 	echo "# define C_DEFAULT_TARGET_STACK_SIZE ($${nursery})" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
@@ -183,14 +182,12 @@ csc.scm: csc.scm.in
 	sed -e "s,%bindir%,$(DESTDIR)$(bindir)," \
 	    -e "s,%cc%,$(CC)," \
 	    -e "s,%cxx%,$(CXX)," \
-	    -e "s,%cxxlinker%,$(CXX)," \
 	    -e "s,%cflags%,$$quoted_cflags," \
 	    -e "s,%morelibs%,$(MORE_LIBS)," \
 	    -e "s,%morestaticlibs%,$(MORE_STATIC_LIBS)," \
-	    -e "s,%CHICKEN_HOME%,$(pkgdatadir)," \
+	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
 	    -e "s,%includedir%,$(includedir)," \
 	    -e "s,%libdir%,$(libdir),g" \
-	    -e "s,%optlibs%,#f," \
 	  <$(srcdir)/csc.scm.in >csc.scm
 
 include_HEADERS = chicken.h chicken-config.h chicken-defaults.h
@@ -240,7 +237,7 @@ libchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_ST
 
 libuchicken_la_SOURCES = runtime.c ulibrary.c ueval.c profiler.c scheduler.c $(chickenulibsources) \
   usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c
-libuchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME
+libuchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG
 libuchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_STATIC_LIBS)
 
 

@@ -1,0 +1,10 @@
+(declare (disable-interrupts))
+
+(define (main)
+  (let ((sum 0))
+    (do ((myInt (read-line) (read-line)))
+	((eof-object? myInt) (print sum))
+      (set! sum (+ sum (string->number myInt))))))
+
+(main)
+ 

@@ -48,7 +48,7 @@
   foreign-type-table-size file-io-only namespace-table
   unit-name insert-timer-checks used-units inlining external-variables
   foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
-  target-heap-size target-stack-size default-installation-home target-heap-growth target-heap-shrinkage
+  target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   target-initial-heap-size disable-stack-overflow-checking
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants
@@ -506,8 +506,7 @@
 		 (gen "   used units: ")
 		 (gen-list used-units) ] )
 	  (unless unit-name
-	    (gen #t "   default installation home: " (or default-installation-home "not specified") #t)
-	    (gen "   default heap size: " default-default-target-heap-size #t)
+	    (gen #t "   default heap size: " default-default-target-heap-size #t)
 	    (gen "   default nursery (stack) size: " default-default-target-stack-size) )
 	  (gen #t "*/" #t #t "#include \"" target-include-file "\"")
 	  (when external-protos-first

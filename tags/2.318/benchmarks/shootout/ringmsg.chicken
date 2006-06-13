@@ -1,0 +1,107 @@
+;;;; ring.scm - by number42
+
+
+(declare (fixnum) (uses srfi-18))
+
+(require 'mailbox)
+
+;; process(main) =
+;;   receive
+;;     dest = process2(main,dest);
+;;   end;
+
+(define (process main)
+  (match (mailbox-receive! (thread-specific (current-thread)))
+    (dest (process2 main dest))))
+
+;; OR: (define (process main) (process2 main (?)))
+
+;; process2(main,dest) =
+;;   receive
+;;     'terminate = 'terminate -> dest;
+;;     0          = 'terminate -> dest,
+;; 		 receive
+;; 		   'terminate = 'done -> main;
+;; 		 end;
+;;     x          = (x-1) -> dest,
+;; 		 process2(main,dest);
+;;   end;
+
+(define (process2 main dest)
+  (let ([mb (thread-specific (current-thread))])
+    (match (mailbox-receive! mb)
+      ('terminate (mailbox-send! (thread-specific dest) 'terminate))
+      (0 (begin
+	   (mailbox-send! (thread-specific dest) 'terminate)
+	   (match (mailbox-receive! mb)
+	     ('terminate (mailbox-send! (thread-specific main) 'done)))))
+      (x (begin
+	   (mailbox-send! (thread-specific dest) (- x 1))
+	   (process2 main dest))))) )
+		
+;; create(main,0) = [];
+;; create(main,n) = spawn(process(main)) :: create(main, n-1);
+
+(define (create main n)
+  (match n
+    (0 '())
+    (n (cons (let ([t (make-thread (lambda () (process main)))])
+	       (thread-specific-set! t (make-mailbox))
+	       (thread-start! t)
+	       t)
+	     (create main (- n 1))))))
+
+;; connect(ps) =
+;;   connect2(hd(ps), ps);
+
+(define (connect ps)
+  (connect2 (car ps) ps))
+
+;; connect2(first,[p])        = first -> p;
+;; connect2(first,[p|others]) = hd(others) -> p, connect2(first,others);
+
+(define (connect2 first p-list)
+  (match p-list
+    ((p) (mailbox-send! (thread-specific p) first))
+    ((p . others) (begin
+		    (mailbox-send! (thread-specific p) (car others))
+		    (connect2 first others)))))
+
+;; ring(nbprocs,hops) =
+;;   ps = create(self(),nbprocs),
+;;   connect(ps),
+;;   hops -> hd(ps),
+;;   receive
+;;     'done = 'ok;
+;;   end;
+
+(define (ring nbprocs hops)
+  (let ((ps (create (current-thread) nbprocs)))
+    (connect ps)
+    (mailbox-send! (thread-specific (car ps)) hops)
+    (match (mailbox-receive! (thread-specific (current-thread)))
+      ('done 'ok))))
+
+;; loop(0,r) = r;
+;; loop(n,r) = loop(n-1,ring(10,20));
+
+(define (loop k n r)
+  (if (zero? n)
+      r
+      (loop k
+	    (- n 1) 
+	    (ring k 100))))
+
+;; main(argv) =
+;;   r = loop(100,0),
+;;   print("result = "),
+;;   print(r);
+
+(thread-specific-set! (current-thread) (make-mailbox))
+
+(define (main! #!optional (k "100") (n "512"))
+  (let ((r (loop (string->number k) (string->number n) 'done)))
+    (print r) ) )
+
+(apply main! (command-line-arguments))
+

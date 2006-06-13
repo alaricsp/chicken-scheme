@@ -1,0 +1,36 @@
+;;; -*- mode: scheme -*-
+;;; $Id: plugin.mzscheme 1.1 2004/09/15 13:43:52 bfulgham Exp $
+;;; http://shootout.alioth.debian.org/
+;;; Provided by Bengt Kleberg
+
+(declare (fixnum) (disable-interrupts))
+
+(define make-decoder cons)
+(define decoder-decode car)
+(define decoder-version cdr)
+
+(define (new-decoder decoder)
+  (let* ((new-version (add1 (decoder-version decoder)))
+	 (file   (string-append "plugin_" (number->string new-version) ".scm"))
+	 (inport (open-input-file file))
+	 (new-decode-input (eval (read inport))))
+    (close-input-port inport)
+    (make-decoder new-decode-input new-version)))
+
+(define decode-input string->number)
+
+(define pluginport
+  (lambda (n line)
+    (letrec ((plugin (lambda (i decoder sum)
+		       (if (zero? i)
+			   sum
+			   (let ((number ((decoder-decode decoder) line)))
+			     (if number
+				 (plugin (sub1 i) (make-decoder decode-input 1) (+ sum number))
+				 (plugin i (new-decoder decoder) sum)))))))
+      (plugin n (make-decoder decode-input 1) 0))))
+
+(define (main #!optional (n "1"))
+  (display (pluginport (string->number n) "I 1")) )
+
+(apply main (command-line-arguments))

@@ -1,0 +1,89 @@
+;; strcat.scm
+
+(declare (fixnum) (disable-interrupts))
+
+;;; SPECIFICATION
+
+;For this test, each program should be implemented in the same way, 
+;according to the following specification. 
+;
+;    pseudocode for strcat test
+;
+;   s is initialized to the null string
+;   repeat N times:
+;     append "hello\n" to s
+;   count the number of individual characters in s
+;   print the count
+
+;  There should be N distinct string append statements done in a loop. 
+;  After each append the resultant string should be 6 characters 
+;  longer (the length of "hello\n"). 
+;  s should be a string, string buffer, or character array. 
+;  The program should not construct a list of strings and join it. 
+
+(define hello "hello\n")
+
+;; Simple slow version
+;; This is surprisingly slow
+
+
+;(define (main args)
+;  (let* ((n (or (and (= (length args) 2) (string->number (cadr args))) 1))
+;  (str ""))
+;    (do ((i 0 (+ i 1)))
+; ((= i n))
+;      (set! str (string-append str hello)))
+;    (display (string-length str))
+;    (newline)))
+
+
+;; Quote from Bigloo documentation
+
+;; (blit-string! string1 o1 string2 o2 len)
+;; Fill string s2 starting at position o2 with len characters 
+;; taken out of string s1 from position o1.
+;;
+;; (let ((s (make-string 20 #\-)))
+;;         (blit-string! "toto" 0 s 16 4)
+;;         s)
+;;    => "----------------toto"
+
+ 
+(define (blit-string! s1 o1 s2 o2 len)
+  (do ((o1 o1 (+ o1 1))
+       (o2 o2 (+ o2 1))
+       (len len (- len 1)))
+    
+      ((= len 0))
+    
+    (string-set! s2 o2 (string-ref s1 o1))))
+
+;; Serranos version (works like a charm)
+
+(define (main args)
+  (let* ((n (or (and (pair? args) (string->number (car args))) 
+                1))
+	 (i 0)
+	 (buflen 32)
+	 (strbuf (make-string buflen))
+	 (stufflen (string-length hello))
+	 (stuff hello)
+	 (stuffstart 0))
+
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (if (>= (+ stufflen stuffstart) buflen)
+	  (let* ((nbuflen (* 2 buflen))
+		 (nstrbuf (make-string nbuflen)))
+	    (blit-string! strbuf 0 nstrbuf 0 buflen)
+	    (set! buflen nbuflen)
+	    (set! strbuf nstrbuf)))
+      (blit-string! stuff 0 strbuf stuffstart stufflen)
+      (set! stuffstart (+ stuffstart stufflen)))
+     
+    (set! strbuf (substring strbuf 0 stuffstart))
+     
+    (display (string-length strbuf))
+    (newline)))
+
+(main (command-line-arguments))

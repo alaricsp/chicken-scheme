@@ -48,7 +48,7 @@
   foreign-type-table-size file-io-only nonwinding-call/cc debugging
   unit-name insert-timer-checks used-units zap-strings-flag
   foreign-declarations debugging-executable block-compilation analysis-database-size line-number-database-size
-  target-heap-size target-stack-size default-installation-home 
+  target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants

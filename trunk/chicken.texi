@@ -1,6 +1,6 @@
 \input texinfo @c -*-texinfo-*-
 @setfilename chicken.info
-@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 317
+@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 318
 
 @ifnottex
 @macro pointrightarrow
@@ -56,14 +56,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @dircategory The Algorithmic Language Scheme
 @direntry
-* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 317).
+* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 318).
 @end direntry
 
 @titlepage
 @title CHICKEN
 @subtitle A practical and portable Scheme system
 @subtitle User's Manual
-@subtitle Version 2, Build 317
+@subtitle Version 2, Build 318
 @author Felix L. Winkelmann
 @end titlepage
 
@@ -78,7 +78,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @top CHICKEN
 
 CHICKEN - A practical and portable Scheme system
-User's manual (Version 2, Build 317)
+User's manual (Version 2, Build 318)
 
 (c) 2000-2006, Felix L. Winkelmann
 All rights reserved. Translated to LaTeX by Peter Keller. Translated to texinfo by Linh Dang.
@@ -1669,9 +1669,9 @@ When a procedure is applied to a list of actual arguments, the formal and actual
 @enumerate
 @item Variables in required-formal-arguments are bound to successive actual arguments starting with the first actual argument. It shall be an error if there are fewer actual arguments than required-formal-arguments.
 
-@item Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer, if one w and otherwise to @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
-@item If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keyword-nts, the it shall be an error if there are any remaining actual arguments.
-@item If @code{#!key} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and thhe corresponding value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specificed or @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound. 
+@item Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer, if one wand otherwise to @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
+@item If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keyword-ts, the it shall be an error if there are any remaining actual arguments.
+@item If @code{#!key} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and the corresponding value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specified or @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound. 
 @end enumerate
 
 It shall be an error for an @code{<ident>} to appear more than once in a formal-argument-list.
@@ -3992,7 +3992,9 @@ with the Microsoft C compiler, @code{c-runtime} always returns @code{unknown}.
 (chicken-home)
 @end lisp
 Returns a string given the installation directory (usually @code{/usr/local/share/chicken} on UNIX-like systems).
-If the environment variable @code{CHICKEN_HOME} is set, then its value will be returned.
+If the environment variable @code{CHICKEN_HOME} is set, then its value will be returned. As a last option,
+if the environment variable @code{CHICKEN_PREFIX} is set, then @code{chicken-home} will return
+@code{$CHICKEN_PREFIX/share}.
 @end deffn
 
 @deffn {procedure} system
@@ -11892,6 +11894,12 @@ A ``make'' macro that executes the expressions @code{COMMAND ...}, when any of t
 @code{DEPENDENT ...} have changed, to build @code{TARGET}. This is the same as the @code{make}
 extension, which is available separately. For more information, see
 @uref{http://www.call-with-current-continuation.org/eggs/make.html, make}.
+@end deffn
+
+@deffn {procedure} program-path
+Holds the path where executables are installed and defaults to either @code{$CHICKEN_PREFIX/bin},
+if the environment variable @code{CHICKEN_PREFIX} is set, @code{$CHICKEN_HOME} or the
+path where the CHICKEN binaries (@code{chicken}, @code{csi}, etc.) are installed.
 @end deffn
 
 @deffn {procedure} patch

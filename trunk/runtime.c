@@ -1,3 +1,4 @@
+
 /* runtime.c - Runtime code for compiler generated executables
 ;
 ; Copyright (c) 2000-2006, Felix L. Winkelmann
@@ -1269,6 +1270,8 @@ void panic(C_char *msg)
 {
   C_char *dmp = C_dump_trace(0);
 
+  C_dbg_hook(C_SCHEME_UNDEFINED);
+
 #ifdef C_MICROSOFT_WINDOWS
   C_sprintf(buffer, C_text("%s\n\n%s"), msg, dmp);
 
@@ -1290,6 +1293,8 @@ void panic(C_char *msg)
 
 void horror(C_char *msg)
 {
+  C_dbg_hook(C_SCHEME_UNDEFINED);
+
 #ifdef C_MICROSOFT_WINDOWS
   C_sprintf(buffer, C_text("%s"), msg);
 
@@ -1317,6 +1322,8 @@ void barf(int code, char *loc, ...)
   C_word err = error_hook_symbol;
   int c, i;
   va_list v;
+
+  C_dbg_hook(C_SCHEME_UNDEFINED);
 
   C_temporary_stack = C_temporary_stack_bottom;
   err = C_u_i_car(err);
@@ -1519,6 +1526,14 @@ void barf(int code, char *loc, ...)
     C_do_apply(c + 2, err, C_SCHEME_UNDEFINED); 
   }
   else panic(msg);
+}
+
+
+/* Hook for setting breakpoints */
+
+C_word C_dbg_hook(C_word dummy)
+{
+  return dummy;
 }
 
 
@@ -1971,6 +1986,13 @@ C_regparm int C_fcall C_in_heapp(C_word x)
   C_byte *ptr = (C_byte *)(C_uword)x;
   return (ptr >= fromspace_start && ptr < C_fromspace_limit) ||
          (ptr >= tospace_start && ptr < tospace_limit);
+}
+
+
+C_regparm int C_fcall C_in_fromspacep(C_word x)
+{
+  C_byte *ptr = (C_byte *)(C_uword)x;
+  return (ptr >= fromspace_start && ptr < C_fromspace_limit);
 }
 
 
@@ -2595,7 +2617,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   if(gc_mode == GC_MINOR) {
     count = (C_uword)C_fromspace_top - (C_uword)start;
     ++gc_count_1;
-    update_locative_table(gc_mode);
+    update_locative_table(GC_MINOR);
   }
   else {
     if(!finalizers_checked) {
@@ -2605,7 +2627,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       if(!C_immediatep(last) && (j = C_unfix(C_block_item(last, 0))) != 0) { 
 	/* still finalizers pending: just mark table items... */
 	if(gc_report_flag) 
-	  C_printf(C_text("GC: %d finalized item(s) still pending\n"), j);
+	  C_printf(C_text("[GC] %d finalized item(s) still pending\n"), j);
 
 	j = fcount = 0;
 
@@ -2616,7 +2638,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 	}
 
 	if(gc_report_flag && fcount > 0)
-	  C_printf(C_text("GC: %d finalizer value(s) marked\n"), fcount);
+	  C_printf(C_text("[GC] %d finalizer value(s) marked\n"), fcount);
       }
       else {
 	j = fcount = 0;
@@ -2636,7 +2658,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       finalizers_checked = 1;
 
       if(pending_finalizer_count > 0 && gc_report_flag)
-	C_printf(C_text("GC: finalizers pending for rescan:\t %d (%d live)\n"), 
+	C_printf(C_text("[GC] finalizers pending for rescan:\t %d (%d live)\n"), 
 		 pending_finalizer_count, live_finalizer_count);
 
       goto rescan;
@@ -2645,7 +2667,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       /* Copy finalized items with remembered indices into `##sys#pending-finalizers' 
 	 (and release finalizer node): */
       if(pending_finalizer_count > 0) {
-	if(gc_report_flag) C_printf(C_text("GC: queueing %d finalizers\n"), pending_finalizer_count);
+	if(gc_report_flag) C_printf(C_text("[GC] queueing %d finalizers\n"), pending_finalizer_count);
 
 	last = C_block_item(pending_finalizers_symbol, 0);
 	assert(C_u_i_car(last) == C_fix(0));
@@ -2672,6 +2694,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
     update_locative_table(gc_mode);
     count = (C_uword)tospace_top - (C_uword)tospace_start;
 
+    /* isn't gc_mode always GC_MAJOR here? */
     if(gc_mode == GC_MAJOR && count < percentage(percentage(heap_size, C_heap_shrinkage), DEFAULT_HEAP_SHRINKAGE_USED) &&
        heap_size > MINIMAL_HEAP_SIZE && !C_heap_size_is_fixed)
       C_rereclaim2(percentage(heap_size, C_heap_shrinkage), 0);
@@ -2737,31 +2760,33 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   /* Display GC report: 
      Note: stubbornly writes to stdout - there is no provision for other output-ports */
   if(gc_report_flag == 1 || (gc_report_flag && gc_mode == GC_MAJOR)) {
-    C_printf(C_text("GC: level  %d\tgcs(minor)  %d\tgcs(major)  %d\n"),
-	   gc_mode, gc_count_1, gc_count_2);
+    C_printf(C_text("[GC] level  %d\tgcs(minor)  %d\tgcs(major)  %d\n"),
+	     gc_mode, gc_count_1, gc_count_2);
     i = (C_uword)C_stack_pointer;
 
 #if C_STACK_GROWS_DOWNWARD
-    C_printf(C_text("GC: stack\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING), 
+    C_printf(C_text("[GC] stack\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING), 
 	   (C_uword)C_stack_limit, (C_uword)i, (C_uword)C_stack_limit + stack_size);
 #else
-    C_printf(C_text("GC: stack\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING), 
+    C_printf(C_text("[GC] stack\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING), 
 	   (C_uword)C_stack_limit - stack_size, (C_uword)i, (C_uword)C_stack_limit);
 #endif
 
     if(gc_mode == GC_MINOR) printf(C_text("\t" UWORD_FORMAT_STRING), count);
 
-    C_printf(C_text("\nGC:  from\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING),
+    C_printf(C_text("\n[GC]  from\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING),
 	   (C_uword)fromspace_start, (C_uword)C_fromspace_top, (C_uword)C_fromspace_limit);
 
     if(gc_mode == GC_MAJOR) printf(C_text("\t" UWORD_FORMAT_STRING), count);
 
-    C_printf(C_text("\nGC:    to\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING" \n"), 
+    C_printf(C_text("\n[GC]    to\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING "\t" UWORD_FORMAT_STRING" \n"), 
 	   (C_uword)tospace_start, (C_uword)tospace_top, 
 	   (C_uword)tospace_limit);
 
     if(gc_mode == GC_MAJOR && C_enable_gcweak && weakn)
-      C_printf(C_text("GC: %d recoverable weakly held items found\n"), weakn);
+      C_printf(C_text("[GC] %d recoverable weakly held items found\n"), weakn);
+
+    C_printf(C_text("[GC] %d locatives (from %d)\n"), locative_table_count, locative_table_size);
   }
 
   if(gc_mode == GC_MAJOR) gc_count_1 = 0;
@@ -3069,7 +3094,7 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   C_fromspace_limit = new_tospace_limit;
   
   if(gc_report_flag) {
-    C_printf(C_text("GC: resized heap to %d bytes\n"), heap_size);
+    C_printf(C_text("[GC] resized heap to %d bytes\n"), heap_size);
     C_printf(C_text("(new) fromspace: \tstart=%08lx, \tlimit=%08lx\n"), (long)fromspace_start, (long)C_fromspace_limit);
     C_printf(C_text("(new) tospace:   \tstart=%08lx, \tlimit=%08lx\n"), (long)tospace_start, (long)tospace_limit);
   }
@@ -3184,9 +3209,10 @@ C_regparm void C_fcall remark(C_word *x)
 
 C_regparm void C_fcall update_locative_table(int mode)
 {
-  int i;
+  int i, hi = 0;
   C_header h;
   C_word loc, obj, obj2, offset, loc2, ptr;
+  C_uword ptr2;
 
   /*  C_printf("major: %d, %d locs in %d\n", major, locative_table_count, locative_table_size); */
 
@@ -3199,63 +3225,73 @@ C_regparm void C_fcall update_locative_table(int mode)
 
       switch(mode) {
       case GC_MINOR:
-        if(is_fptr(h))
+        if(is_fptr(h))		/* forwarded? update l-table entry */
           loc = locative_table[ i ] = fptr_to_ptr(h);
-        else if(C_in_stackp(loc)) {
+        else if(C_in_stackp(loc)) { /* otherwise it must have been GC'd (since this is a minor one) */
           locative_table[ i ] = C_SCHEME_UNDEFINED;
+          C_set_block_item(loc, 0, 0);
           break;
         }
 
-        ptr = C_u_i_car(loc);
-        offset = C_unfix(C_u_i_cdr(loc));
+        ptr = C_block_item(loc, 0); /* forwarded. fix up ptr and check pointed-at object for being forwarded... */
+        offset = C_unfix(C_block_item(loc, 1));
         obj = ptr - offset;
         h = C_block_header(obj);
 
-        if(is_fptr(h))
+        if(is_fptr(h)) {	/* pointed-at object forwarded? update */
           C_set_block_item(loc, 0, (C_uword)fptr_to_ptr(h) + offset);
-        else if(C_in_stackp(obj)) {
+	  hi = i + 1;
+	}
+        else if(C_in_stackp(obj)) { /* pointed-at object GC'd, locative is invalid */
           locative_table[ i ] = C_SCHEME_UNDEFINED;
           C_set_block_item(loc, 0, 0);
         }
+	else hi = i + 1;
         
         break;
 
       case GC_MAJOR:
-        if(is_fptr(h))
+        if(is_fptr(h))		/* forwarded? update l-table entry */
           loc = locative_table[ i ] = fptr_to_ptr(h);
-        else {
+        else {			/* otherwise, throw away */
           locative_table[ i ] = C_SCHEME_UNDEFINED;
+          C_set_block_item(loc, 0, 0);
           break;
         }
 
         h = C_block_header(loc);
         
-        if(is_fptr(h))
+        if(is_fptr(h))		/* new instance is forwarded itself? update again */
           loc = locative_table[ i ] = fptr_to_ptr(h);
 
-        ptr = C_u_i_car(loc);
-        offset = C_unfix(C_u_i_cdr(loc));
+        ptr = C_block_item(loc, 0); /* fix up ptr */
+        offset = C_unfix(C_block_item(loc, 1));
         obj = ptr - offset;
         h = C_block_header(obj);
 
-        if(is_fptr(h)) {
-          C_set_block_item(loc, 0, (C_uword)fptr_to_ptr(h) + offset);
+        if(is_fptr(h)) {	/* pointed-at object hass been forwarded? */
+	  ptr2 = (C_uword)fptr_to_ptr(h);
+	  h = C_block_header(ptr2);
 
-	  /*
-          if(C_block_header(is_fptr(fptr_to_ptr(h)))
-            exit(0);
-	  */
+	  if(is_fptr(h)) {	/* secondary forwarding check for pointed-at object */
+	    ptr2 = (C_uword)fptr_to_ptr(h) + offset;
+	    assert(!is_fptr(C_block_header(ptr2)));
+	    C_set_block_item(loc, 0, ptr2);
+	  }
+	  else C_set_block_item(loc, 0, ptr2 + offset); /* everything's fine, fixup pointer */
+
+	  hi = i + 1;
         }
         else {
-          locative_table[ i ] = C_SCHEME_UNDEFINED;
+          locative_table[ i ] = C_SCHEME_UNDEFINED; /* pointed-at object is dead */
           C_set_block_item(loc, 0, 0);
         }
         
         break;
 
       case GC_REALLOC:
-        ptr = C_u_i_car(loc);
-        offset = C_unfix(C_u_i_cdr(loc));
+        ptr = C_block_item(loc, 0); /* just update ptr's pointed-at objects */
+        offset = C_unfix(C_block_item(loc, 1));
         obj = ptr - offset;
         remark(&obj);
         C_set_block_item(loc, 0, obj + offset);        
@@ -3263,6 +3299,8 @@ C_regparm void C_fcall update_locative_table(int mode)
       }
     }
   }
+
+  if(mode != GC_REALLOC) locative_table_count = hi;
 }
 
 
@@ -3977,6 +4015,21 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 
   default: return C_SCHEME_UNDEFINED;
   }
+}
+
+/* By Brandon Van Every: */
+C_regparm C_word C_fcall C_flat_directory_install()
+{
+  /* vcbuild.bat is the only build that installs everything
+  in a flat directory.  It doesn't pass any defines, so
+  msvc is installed flat by default.  CMake passes
+  HIERARCHICAL_INSTALL so that it can bypass the default
+  behavior for msvc. ./configure never builds with msvc. */
+#if defined(_MSC_VER) && !defined(HIERARCHICAL_INSTALL)
+  return C_SCHEME_TRUE;
+#else
+  return C_SCHEME_FALSE;
+#endif
 }
 
 
@@ -8338,6 +8391,10 @@ C_regparm C_word C_fcall C_a_i_make_locative(C_word **a, int c, C_word type, C_w
     }
 
   if(locative_table_count >= locative_table_size) {
+    if(debug_mode == 2)
+      C_printf(C_text("[debug] resizing locative table from %d to %d (count is %d)\n"), 
+		      locative_table_size, locative_table_size * 2, locative_table_count);
+
     locative_table = (C_word *)C_realloc(locative_table, locative_table_size * 2 * sizeof(C_word));
 
     if(locative_table == NULL) 
@@ -8347,6 +8404,7 @@ C_regparm C_word C_fcall C_a_i_make_locative(C_word **a, int c, C_word type, C_w
   }
 
   locative_table[ locative_table_count++ ] = (C_word)loc;
+
   return (C_word)loc;
 }
 
@@ -8360,7 +8418,7 @@ void C_ccall C_locative_ref(C_word c, C_word closure, C_word k, C_word loc)
   if(C_immediatep(loc) || C_block_header(loc) != C_LOCATIVE_TAG)
     barf(C_BAD_ARGUMENT_TYPE_ERROR, "locative-set!", loc);
 
-  ptr = (C_word *)C_u_i_car(loc);
+  ptr = (C_word *)C_block_item(loc, 0);
 
   if(ptr == NULL) barf(C_LOST_LOCATIVE_ERROR, "locative-ref", loc);
 
@@ -8387,7 +8445,7 @@ C_regparm C_word C_fcall C_i_locative_set(C_word loc, C_word x)
   if(C_immediatep(loc) || C_block_header(loc) != C_LOCATIVE_TAG)
     barf(C_BAD_ARGUMENT_TYPE_ERROR, "locative-set!", loc);
 
-  ptr = (C_word *)C_u_i_car(loc);
+  ptr = (C_word *)C_block_item(loc, 0);
 
   if(ptr == NULL)
     barf(C_LOST_LOCATIVE_ERROR, "locative-set!", loc);

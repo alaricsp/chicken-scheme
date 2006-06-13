@@ -1,0 +1,125 @@
+#!/usr/local/bin/chicken-setup -script
+;;;; bench - build and run benchmarks -*- Hen -*-
+
+(define quick? #f)
+(define except? #f)
+(define clean? #f)
+(define make? #f)
+
+(define args
+  (filter 
+   (lambda (arg)
+     (cond [(string=? arg "-quick")
+	    (set! quick? #t)
+	    #f]
+	   [(string=? arg "-make")
+	    (set! make? #t)
+	    #f]
+	   [(string=? arg "-clean")
+	    (set! clean? #t)
+	    #f]
+	   [(string=? arg "-except")
+	    (set! except? #t)
+	    #f]
+	   [else #t] ) ) 
+   (command-line-arguments) ) )
+
+(define flags "-O3 -d0 -unsafe -lambda-lift -unsafe-libraries -bk -C \"-O3 -fomit-frame-pointer -fno-strict-aliasing\"")
+(define mflags "-O3 -d0 -unsafe -lambda-lift -unsafe-libraries -k -C \"-O3 -fomit-frame-pointer -fno-strict-aliasing\"")
+(define oflags "-O3 -d0 -unsafe -lambda-lift -bk -C \"-O3 -fomit-frame-pointer -fno-strict-aliasing\"")
+(define otcflags "-O3 -d0 -unsafe -lambda-lift -k -C \"-O3 -fomit-frame-pointer -fno-strict-aliasing\"")
+
+(define sfiles (map pathname-strip-extension (glob "*.chicken")))
+
+(define files
+  (if (pair? args)
+      (if except?
+	  (lset-difference string=? sfiles args)
+	  args)
+      sfiles) )
+
+(define source-files (map (cut conc <> ".chicken") files))
+
+(when clean? 
+  (run (rm -f ,@files)) )
+
+(define arguments
+  '((ackermann 4 5 6 7 8 10)
+    (ary 1000 3000 5000 7000 9000)
+;    (echo 10000 40000 70000 100000)
+    (except 50000 100000 150000 200000)
+    (fibo 8 24 32)
+;    (hash 20000 40000 60000 80000 100000)
+;    (hash2 10 50 100 150)
+    (heapsort 1000 20000 40000 60000 80000 100000)
+    (hello 1 50 100 150 200)		; repeats
+    (lists 1 4 8 12 16 18)
+    (lists1 100000 1000000)
+    (matrix 1 100 200 300 600)
+    (methcall 100000 400000 700000 1000000)
+    (moments 1 50 100 150 200)
+    (nestedloop 4 8 12 16 18)
+    (objinst 100000 400000 700000 1000000 1500000)
+    (objinst-tinyclos 100000 400000 700000 1000000 1500000)
+    (procinst 128000)
+    (prodcons 10000 30000 70000 100000 150000)
+    (random 1000 300000 600000 900000)
+    (regexmatch 1 3000 6000 9000)
+    (reversefile 5 10 15 20 25)
+    (ringmsg 10000 50000 100000)
+    (sieve 1 300 600 900 1200)
+    (spellcheck 1 4 7 10 15)
+    (strcat 10000 20000 30000 40000)
+    (sumcol 100 400 700 1000 8000)
+    (wc 500 1000 1500 2000 2500)
+    (ringmsg 100 10000)
+    (wordfreq 1 5 10 15 20 25) ) )
+
+(define needs-input
+  '(moments regexmatch reversefile spellcheck sumcol wc wordfreq) )
+
+(define needs-repeat '(hello moments reversefile sumcol wc wordfreq))
+
+(make (("mailbox.so" ("mailbox.scm") (run (csc mailbox.scm -s ,mflags))))
+  "mailbox.so")
+
+(for-each
+ (lambda (sf f)
+   (make/proc
+    (list (list f (list sf)
+		(lambda () 
+		  (run (csc ,sf -o ,f ,(cond [(member f '("objinst" "methcall")) oflags]
+					     [(string=? "objinst-tinyclos" f) otcflags]
+					     [else flags] ) ) ) ) ) )
+    f) )
+  source-files files)
+
+(when make? (exit))
+
+(for-each
+ (lambda (f)
+   (let* ([fs (string->symbol f)]
+	  [ns (alist-ref fs arguments)] 
+	  [i? (memq fs needs-input)]
+	  [r? (memq fs needs-repeat)] )
+     (when ns
+       (print "--- " f " -------------------------------------------")
+       (for-each
+	(lambda (n)
+	  (print "[" n "]")
+	  (when i?
+	    (system* "cp ~A input" (conc f ".input"))
+	    (when r?
+	      (do ([i (sub1 n) (sub1 i)])
+		  ((zero? i))
+		(system* "cat ~A >>input" (conc f ".input")) ) ) )
+	  (cond [(and i? r?)
+		 (run (time ,(conc "./" f) >/dev/null ,(if (memq fs needs-input) "<input" ""))) ]
+		[r?
+		 (do ([i n (sub1 i)])
+		     ((zero? i))
+		   (run (time ,(conc "./" f) >/dev/null ,(if (memq fs needs-input) "<input" ""))) ) ]
+		[else (run (time ,(conc "./" f) ,n >/dev/null ,(if (memq fs needs-input) "<input" "")))] ) )
+	(if quick? (list (car ns)) ns) )
+       (newline) ) ) )
+ (sort files string<?) )

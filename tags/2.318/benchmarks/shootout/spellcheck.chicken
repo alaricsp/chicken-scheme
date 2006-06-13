@@ -1,0 +1,22 @@
+;;; $Id: spellcheck.chicken,v 1.1 2004/09/13 20:39:31 flw Exp $
+;;; http://www.bagley.org/~doug/shootout/
+
+(declare (fixnum) (disable-interrupts))
+
+(define (main _)
+  (let ((dict (make-hash-table string=? 10001)))
+    (with-input-from-file "Usr.Dict.Words"
+      (lambda ()
+	(let loop ((line (read-line)))
+	  (cond ((eof-object? line) #f)
+		(else
+		 (hash-table-set! dict line #t)
+		 (loop (read-line)))))))
+    (let loop ((word (read-line)))
+      (cond ((eof-object? word) #f)
+	    (else
+	     (if (not (hash-table-ref dict word))
+		 (print word))
+	     (loop (read-line)))))))
+          
+(apply main (command-line-arguments))

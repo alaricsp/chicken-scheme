@@ -526,7 +526,7 @@ EOF
                    Include path:    \t~A~%~
                    Symbol-table load:\t~S~%  ~
                      Avg bucket length:\t~S~%  ~
-                     Total symbols:\t~S~%~%~
+                     Total symbols:\t~S~%~
                    Memory:\theap size is ~S bytes~A with ~S bytes currently in use~%~  
                      nursery size is ~S bytes, stack grows ~A~%"
 		    (machine-type)
