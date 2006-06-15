@@ -1,0 +1,19 @@
+/*** Program generated file: any edits may be lost ***/
+#ifndef C_INSTALL_HOME
+# define C_INSTALL_HOME "%INSTALL_HOME%"
+#endif
+#ifndef C_INSTALL_BIN_HOME
+#define C_INSTALL_BIN_HOME "%INSTALL_BIN_HOME%"
+#endif
+#ifndef C_INSTALL_LIB_HOME
+# define C_INSTALL_LIB_HOME "%INSTALL_LIB_HOME%"
+#endif
+#ifndef C_CC
+#define C_CC "%CMAKE_C_COMPILER%"
+#endif
+#ifndef C_STACK_GROWS_DOWNWARD
+# define C_STACK_GROWS_DOWNWARD %STACK_GROWS_DOWNWARD%
+#endif
+#ifndef C_DEFAULT_TARGET_STACK_SIZE
+# define C_DEFAULT_TARGET_STACK_SIZE %DEFAULT_TARGET_STACK_SIZE%
+#endif

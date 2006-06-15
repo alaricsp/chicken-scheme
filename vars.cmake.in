@@ -1,0 +1,18 @@
+# In CMake 2.4.2, "cmake -P" scripts have no argument passing facilities,
+# nor do they pass any variables from the caller.  Consequently, we have
+# to write variables to a file, then INCLUDE it in a script.
+# We will use CONFIGURE_FILE on this to generate the variables we want.
+
+SET(Chicken_SOURCE_DIR "${Chicken_SOURCE_DIR}")
+
+SET(CMAKE_C_COMPILER "${CMAKE_C_COMPILER}")
+SET(CMAKE_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+SET(INSTALL_HOME "${INSTALL_HOME}")
+SET(INSTALL_BIN_HOME "${INSTALL_BIN_HOME}")
+SET(INSTALL_INCLUDE_HOME "${INSTALL_INCLUDE_HOME}")
+SET(INSTALL_LIB_HOME "${INSTALL_LIB_HOME}")
+SET(EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS}")
+SET(MORE_LIBS "${MORE_LIBS}")
+SET(MORE_STATIC_LIBS "${MORE_STATIC_LIBS}")
+SET(STACK_GROWS_DOWNWARD "${STACK_GROWS_DOWNWARD}")
+SET(DEFAULT_TARGET_STACK_SIZE "${DEFAULT_TARGET_STACK_SIZE}")

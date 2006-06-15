@@ -1,0 +1,313 @@
+dnl -*- mode: m4 -*-
+dnl Process this file with autoconf to produce a configure script.
+dnl (originally by Doug Quale)
+
+AC_INIT(chicken,2.319)
+BINARY_VERSION=1
+AC_PREREQ(2.50)
+AC_CONFIG_SRCDIR([runtime.c])
+AM_INIT_AUTOMAKE()
+AM_CONFIG_HEADER(chicken-config.h)
+
+AC_CANONICAL_HOST
+
+dnl Use ICC to build?
+AC_ARG_WITH(icc, [  --with-icc              build with Intel's C compiler],[CC="icc"; CFLAGS="-Os -Zp2"])
+
+dnl Use pregexp regular expression package?
+AC_ARG_WITH(pregexp, [  --with-pregexp          use pregexp instead of libc regex],[PREGEXP=1])
+
+dnl Disable libffi (if found)?
+AC_ARG_WITH(libffi, [  --without-libffi        do not use libffi, even if available],[USE_LIBFFI=$withval], [USE_LIBFFI=yes])
+
+dnl Enable GC hooks?
+AC_ARG_ENABLE(gc-hooks, [  --enable-gc-hooks       enable various garbage-collector hooks],[AC_DEFINE(C_GC_HOOKS, [], [define if GC hooks should be available])])
+
+dnl Enable extra symbol slot?
+AC_ARG_ENABLE(extra-symbol-slot, [  --enable-extra-symbol-slot   enable extra slot in symbols],[AC_DEFINE(C_EXTRA_SYMBOL_SLOT, [], [define if extra slot in symbols is needed]) BINARY_VERSION="${BINARY_VERSION}"x])
+
+dnl Enable apply-hook?
+AC_ARG_ENABLE(apply-hook, [  --disable-apply-hook    disable user-defined apply hook],[AC_DEFINE(C_NO_APPLY_HOOK, [], [define if user-defined apply hook is not required])])
+
+dnl GC unused symbols by default?
+AC_ARG_ENABLE(symbol-gc, [  --enable-symbol-gc      always GC unused symbols],[AC_DEFINE(C_COLLECT_ALL_SYMBOLS, [], [define if symbols should always be GCd])])
+
+dnl Enable generation of procedure tables?
+AC_ARG_ENABLE(procedure-tables, [  --disable-procedure-tables  disable generation of procedure-tables for serialization],[ptables=$enableval], [ptables=yes])
+
+dnl Compile thread-safe runtime system (doesn't work yet)
+dnl AC_ARG_ENABLE(thread-safety, [  --enable-thread-safety  enable thread-safe runtime-system],[AC_DEFINE(C_ENABLE_TLS,1,[Define if runtime-system should be thread-safe.])])
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_LIBTOOL_WIN32_DLL
+AM_PROG_LIBTOOL
+
+dnl Check for GNU make.
+AC_CHECK_PROGS(MAKE, [gmake make])
+if test x"${MAKE}" = x
+then
+    AC_MSG_ERROR([cannot find a make utility])
+else
+    AC_MSG_CHECKING([whether ${MAKE} is GNU Make])
+    if ${MAKE} --version 2>/dev/null | head -n 1 |
+       grep "GNU Make" >/dev/null
+    then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+        AC_MSG_ERROR([GNU Make is required, but ${MAKE} is
+                      different])
+    fi
+fi
+
+dnl Checks for GCC version: if 2.96, then try kgcc, if available, otherwise override CFLAGS.
+AC_MSG_CHECKING(GCC version)
+echo
+WARNFLAGS=""
+case "$CC" in
+  *gcc*)
+    WARNFLAGS="-Wall -Wno-unused -Wno-uninitialized"
+    if test -n "$CFLAGS"; then
+      case "`$CC -v 2>&1`" in
+      *version\ 2.96*)
+	AC_MSG_RESULT([this system has GCC 2.96 (argh)])
+        AC_CHECK_PROG(KGCCAVAILABLE, kgcc, yes, [])
+        if test -z "$KGCCAVAILABLE"; then
+          AC_MSG_RESULT([GCC optimization options are not available])
+          CFLAGS=""
+        else
+          CC=kgcc
+	  AC_MSG_RESULT([remember to compile with "kgcc" instead of "gcc"])
+        fi;;
+      esac
+    fi;;
+esac
+
+dnl Check for MinGW
+AC_MSG_CHECKING([whether we are in a MinGW system])
+echo
+AC_CHECK_DECL([__MINGW32__], [mingw_system=1])
+
+dnl Check for MinGW library path, with the all important drive letter
+if test -n "${mingw_system}"; then
+  mingw_libdir=`mingw32-gcc -print-prog-name=ld | sed 's%/lib/gcc-lib/.*%/lib%'`
+  AC_CHECK_FILE(${mingw_libdir}/libws2_32.a, [mingw_ws2=1])
+fi
+AM_CONDITIONAL(IS_MINGW, [test -n "${mingw_ws2}"])
+if test -n "${mingw_ws2}"; then
+  WINSOCKLIB="-L${mingw_libdir} -lws2_32"
+  AC_SUBST(WINSOCKLIB)
+  AC_MSG_RESULT([importing Winsock2 library with ${WINSOCKLIB}])
+elif test -n "${mingw_system}"; then
+  AC_MSG_RESULT([unknown MinGW configuration])
+fi
+
+dnl Checks for header files.
+AC_SUBST(LINKFLAGS)
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_CHECK_HEADERS(limits.h unistd.h dirent.h netinet/in.h netdb.h errno.h sys/types.h sys/socket.h sys/time.h, [], [AC_MSG_RESULT([missing header files])])
+AC_CHECK_HEADER(pcre.h, [PCREHEADER=1])
+AC_CHECK_HEADER(regex.h, [REGEXHEADER=1])
+AC_CHECK_HEADER(sysexits.h, [AC_DEFINE(HAVE_SYSEXITS_H, 1, [Needs exit codes])])
+AC_CHECK_HEADER(dlfcn.h, [AC_DEFINE(HAVE_DLFCN_H, 1, [Needs this header])])
+AC_CHECK_HEADER(dl.h, [AC_DEFINE(HAVE_DL_H, 1, [Needs another])])
+AC_CHECK_HEADER(alloca.h, [HAVE_ALLOCA_H=1])
+AC_CHECK_HEADER(stdint.h, [HAVE_STDINT_H=1])
+AC_CHECK_HEADER(windows.h, [AC_DEFINE(HAVE_WINDOWS_H,1,[Define if windows.h is useable])])
+AC_CHECK_HEADER(grp.h, [AC_DEFINE(HAVE_GRP_H,1,[Define if grp.h is available])])
+
+if test x"$USE_LIBFFI" = xyes; then
+AC_CHECK_HEADER(ffi.h, [AC_DEFINE(HAVE_FFI_H,1,[Define if ffi.h is available])])
+fi
+
+AC_CHECK_HEADER(crt_externs.h, [AC_DEFINE(HAVE_CRT_EXTERNS_H, 1, [Define if crt_externs.h is available])])
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
+AC_EXEEXT
+AC_OBJEXT
+
+dnl Checks for library functions.
+AC_FUNC_ALLOCA
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS(strtod strtol strtoul)
+dnl Mac OS X should not use gcvt.
+case "$host_os" in
+  *darwin*)
+        ;;
+  *)
+      AC_CHECK_FUNCS(gcvt)
+      ;;
+esac
+
+AC_CHECK_LIB(pcre, pcre_compile, [PCREFUNCS=1],[AC_MSG_RESULT([no PCRE regex package available])])
+AC_CHECK_FUNC(regcomp, [REGEXFUNCS=1],[AC_MSG_RESULT([no POSIX regex package available])])
+AC_CHECK_LIB(regex, regcomp, [REGEXLIB=1],[AC_MSG_RESULT([no separate POSIX regex library available])])
+
+if test -n "${PREGEXP}"; then
+  REGEXHEADER=
+  PCREHEADER=  
+fi
+
+if test -n "${REGEXLIB}"; then
+  REGEXFUNCS=1
+fi
+
+if test -n "${PCREHEADER}" -a -n "${PCREFUNCS}"; then
+  PCREUSABLE=1
+fi
+
+if test -n "${REGEXHEADER}" -a -n "${REGEXFUNCS}"; then
+  REGEXUSABLE=1
+fi
+
+if test -n "${PCREUSABLE}" -o -n "${REGEXUSABLE}"; then
+  ANYREUSABLE=1
+fi
+
+AM_CONDITIONAL(USE_PCRE, [test -n "${PCREUSABLE}" -a -z "${PREGEXP}"])
+AM_CONDITIONAL(USE_PREGEX, [test -n "${PREGEXP}" -o -z "${ANYREUSABLE}"])
+AC_SUBST(SHLIBS)
+AC_CHECK_LIB(dl, dlopen, [LIBS="$LIBS -ldl"; SHLIBS="$SHLIBS -ldl"])
+
+if test -n "${PREGEXP}" -o -z "${ANYREUSABLE}"; then
+  AC_MSG_RESULT([using pregexp])
+elif test -n "${PCREUSABLE}"; then
+  LIBS="$LIBS -lpcre"; SHLIBS="$SHLIBS -lpcre"
+  AC_MSG_RESULT([using PCRE])
+else
+  if test -n "${REGEXLIB}"; then
+    LIBS="$LIBS -lregex"; SHLIBS="$SHLIBS -lregex"
+  fi
+  AC_MSG_RESULT([using regex])
+fi
+
+if test x"$USE_LIBFFI" = xyes; then
+AC_CHECK_LIB(ffi, ffi_prep_cif, [LIBS="$LIBS -lffi"; SHLIBS="$SHLIBS -lffi"])
+fi
+
+dnl Win32 DLL functions.
+AC_CHECK_DECL(LoadLibrary, [AC_DEFINE(HAVE_LOADLIBRARY,1,[Define if windows.h declares LoadLibrary])],,[#include <windows.h>])
+AC_CHECK_DECL(GetProcAddress, [AC_DEFINE(HAVE_GETPROCADDRESS,1,[Define if windows.h declares GetProcAddress])],,[#include <windows.h>])
+
+dnl HPUX-specific shl_load interface. Goes with dl.h.
+AC_CHECK_LIB(dld, shl_load, [SHLIBS="$SHLIBS -ldld"])
+
+dnl We need this for HP-UX, it seems:
+if test -z "${mingw_ws2}"; then
+  AC_CHECK_LIB(m, modf, [LIBS="$LIBS -lm"])
+fi
+
+dnl Socket stuff for Solaris (stolen from thw SWIG configure.in):
+AC_CHECK_LIB(nsl, t_open, [LIBS="-lnsl $LIBS"])
+AC_CHECK_LIB(inet, gethostbyname, [LIBS="-linet $LIBS"], [], -lnsl)
+AC_CHECK_LIB(socket, socket, [LIBS="-lsocket $LIBS"], [], $LIBS)
+
+dnl Nanosleep for Solaris (thanks to Matthias Koeppe)
+AC_SEARCH_LIBS(nanosleep, rt)
+
+dnl Discovering the stack growth direction.
+AC_MSG_CHECKING([stack growth direction])
+AC_TRY_RUN([
+  static int stack_grows_downward(int counter, char *baseptr) {
+    if (counter < 100) {
+      return stack_grows_downward(counter + 1, baseptr);
+    } else {
+      char tester;
+      return ((baseptr - (&tester)) > 0);
+    }
+  }
+  int main(int argc, char *argv[]) {
+    char basechar;
+    return (stack_grows_downward(0, &basechar) ? 0 : 1);
+  }
+],
+AC_MSG_RESULT([Your C stack grows downward.]); STACK_GROWS_DOWNWARD=1,
+AC_MSG_RESULT([Your C stack grows upward.]); STACK_GROWS_DOWNWARD=0,
+AC_MSG_RESULT([You're cross compiling. I can't tell the correct stack growth direction.])
+STACK_GROWS_DOWNWARD=-1)
+AC_SUBST(STACK_GROWS_DOWNWARD)
+if test "x$STACK_GROWS_DOWNWARD" = "x-1"; then
+    AC_MSG_RESULT([WARNING: unknown stack growth direction. Assuming stack grows downward.])
+fi
+
+dnl If we're using gcc, try to find better CFLAGS than the default -g -O2.
+AC_MSG_CHECKING([for better CFLAGS])
+case "$CC" in
+  *gcc*)
+  if test "-g -O2" = "$CFLAGS"; then
+    if test x${mingw_system} = x1; then
+       CFLAGS="-Os -fno-strict-aliasing $WARNFLAGS"
+    else
+       CFLAGS="-Os -fomit-frame-pointer -fno-strict-aliasing $WARNFLAGS"
+    fi
+    if test -n "${HAVE_ALLOCA_H}"; then
+      CFLAGS="$CFLAGS -DHAVE_ALLOCA_H"
+    fi
+  fi;;
+  *)
+    if test -n "${HAVE_ALLOCA_H}"; then
+      CFLAGS="$CFLAGS -DHAVE_ALLOCA_H"
+    fi;;
+esac
+
+if test x"${ptables}" = xyes; then
+  CFLAGS="$CFLAGS -DC_ENABLE_PTABLES"
+fi
+
+AC_MSG_RESULT($CFLAGS)
+
+dnl Checking whether linker supports -export-dynamic.
+AC_MSG_CHECKING([whether the linker supports -export-dynamic])
+OLDLDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -export-dynamic"
+AC_TRY_RUN(main(){exit(0);},ac_export_dynamic=yes,ac_export_dynamic=no,ac_export_dynamic=no)
+test $ac_export_dynamic = yes|| LDFLAGS=$OLDLDFLAGS
+AC_MSG_RESULT($ac_export_dynamic)
+
+dnl Checking for additional C flags for Mac OS X.
+AC_SUBST(EXTRA_LINK_FLAGS)
+EXTRA_LINK_FLAGS="-Wl,-R%libdir%"
+case "$host_os" in
+  *darwin*) 
+    CFLAGS="$CFLAGS -no-cpp-precomp"
+    EXTRA_LINK_FLAGS="";;
+  hpux*)
+    case "$host_cpu" in
+      hppa*)
+        EXTRA_LINK_FLAGS="";;
+    esac
+esac
+
+dnl Setting the nursery size.
+AC_MSG_CHECKING([supplied nursery size])
+AC_SUBST(NURSERY)
+if test -z "${NURSERY}"; then
+    if test x"${build_alias}" != x"${host_alias}"; then
+        AC_MSG_RESULT([it seems we are cross compiling - NURSERY defaults to 64k])
+	NURSERY=64000
+    else
+        AC_MSG_RESULT([default nursery size will be determined by benchmark])
+    fi
+    AC_MSG_RESULT([(use NURSERY=nnnn on the make command line to set the default nursery size by hand)])
+else
+    AC_MSG_RESULT([setting default nursery size to ${NURSERY}])
+fi
+
+dnl Binary compatibility version
+AC_SUBST(BINARY_VERSION)
+
+dnl Checking for generating "...-static" executables.
+AM_CONDITIONAL(NO_STATIC_EXECUTABLES, [test "${enable_shared}" = "no" -o "${enable_static}" = "no"])
+
+AC_CONFIG_FILES([
+chicken.spec
+Makefile
+])
+AC_OUTPUT

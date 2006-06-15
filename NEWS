@@ -1,0 +1,308 @@
+2.318
+
+- Bugfixes galore
+- compiler: 
+  * added support for the generation of "export" files through the "-emit-exports" option
+  * new option `-check-imports' (csc: `-G') checks for unimported symbols and can be quite
+    helpful in finding unbound variable errors (this requires all extensions ("eggs") to be
+    adapted to this new feature, a process which isn't complete yet)
+  * new declaration `emit-exports'
+  * new option `-disable-warning' and declaration `disable-warning'
+  * new option `-release'
+- chicken-setup: 
+  * new `exports' extension property
+  * option `-check' checks for extension upgrades
+  * added `-eval' option
+  * added parameters `setup-install-flag' and `setup-verbose-flag'
+- FFI: 
+  * added the handy `$' macro, which lets you do foreign calls directly
+  * `define-foreign-enum' for treating C enums as symbol-sets
+  * `foreign-safe-wrapper' has been deprecated
+- Slight reorganization of TinyCLOS and match macros and support code
+- `thread-join!' has been generalized to allow a thread to have multiple results
+- Renamed `thread-deliver-signal!' to `thread-signal!' and `invalid-procedure-call-handler'
+  to `set-procedure-call-handler!' 
+- The system can be configured to add an extra slot to symbol objects
+- Another configuration option enables GC of unused symbols by default
+- The extension repository is now versioned to catch binary incompatible
+  installations, this requires to either move all installed extensions to the
+  new location ("$prefix/lib/chicken/1") or reinstall them
+- Now supports SRFI-61 (extended `cond')
+- Added procedures `load-relative', `tcp-buffer-size`, `string-chomp'
+- trivial implementations of `real-part', `imag-part', `angle' and `magnitude' have 
+  been added to the library to allow more portable code
+- Breakpoints and single-stepping of compiled code on the function-level, new
+  procedures `breakpoint' and `singlestep'
+- csi: new toplevel commands `,info', `,step', `,br', `,ubr', `,breakall', `,breakonly',
+  `,exn' and `,c'
+- Added `integer64' foreign type specifier
+- The environment variable "CHICKEN_PREFIX" allows (together with "CHICKEN_REPOSITORY") overriding
+  the installation path prefix in case you want to install and run multiple instances/versions 
+  of CHICKEN or install on a shared network
+- csc: added `-dry-run' option
+
+Many thanks to Nico Amtsberg, Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, 
+John Cowan, Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech 
+Goulart, Sven Hartrumpf, Markus Hülsmann, Goetz Isenmann, Heath Johns, Daishi Kato, Kon Lovett, Dan 
+Muresan, Burton Samograd, Reed Sheridan, Alex Shinn, Sunnan, Zbigniew Szadkowski and Peter Wright 
+for their helpful contributions, suggestions and bug reports!
+
+
+2.3
+
+- Many many bugfixes
+- compiler:
+  * new option `-profile-name FILENAME'
+- the `chicken-config' script has been removed, identical functionality can be provided
+  by `csc'
+- csc: 
+  * new option `-objc' compiles generated C files in Objective-C mode
+  * accepts .m files and handles the case when only object files are given
+  * new options `-framework', `-F<dir>' and `-rpath'
+  * options `-home', `-cflags', `-ldflags', `-libs', `-cc-name' and `-ld-name'
+- chicken-setup:
+  * detects whether eggs are gzipped or not and accepts ungzipped eggs
+  * if no other actions are specified and no eggs are given on the command line, then
+    all .setup scripts in the current directory are executed
+  * added `setup-build-directory' and `setup-root-directory' parameters
+  * helper procedures `copy-file', `move-file', `remove-file' and `create-directory'
+- csi commands `,s', `,l' and `,ln' accept multiple inputs, the `trace'/`untrace'
+  macros have been replaced byy the toplevel commands `,tr' and `,utr'
+- new toplevel commands in csi can be defined with the `toplevel-command' procedure
+- `extension-info' has been renamed to `extension-information'. The old name is
+  still available, but deprecated
+- `print-backtrace' has been renamed to `print-call-chain'. The old name is still
+  available (and deprecated)
+- `transcript-on' and `transcript-off' are no longer supported
+- New macro `define-for-syntax'
+- library:
+  (get-call-chain [DEPTH])
+  (current-read-table)
+  (copy-read-table READ-TABLE)
+  (current-gc-milliseconds)
+  `print-error-message' writes now to the current output-port, not the error port
+  `number-string' does now a slightly better job converting large exact integers
+  with non-decimal base
+- extras:
+  (each PROC ...)
+  `hash-table-ref' throws (exn access) on error
+- posix:
+  (local-time->seconds TIME)
+  (utc-time->seconds TIME)
+  (local-timezone-abbreviation)
+  `directory' takes optional path and dotfiles arguments
+  `[group|system]-information' return lists instead of multiple values
+- tcp:
+  (tcp-port-numbers PORT)
+- `set-dispatch-read-syntax!' has been renamed to `set-sharp-read-syntax!' (the old
+  name is still available but deprecated)
+- evaluated code generates call-trace information (as compiled code does), which
+  results in much better back-traces.
+- new foreign types `[unsigned-]int32' and `[unsigned-]integer32'
+- added SRFI-17 setters for many accessors of the core libraries
+- tinyclos: added a couple of missing classes for core library structures
+- `let[*]-values' is now SRFI-11 compliant
+- the finalizer-table is now resized dynamically, which speeds up code that uses
+  very many finalizers [Thanks to Zbigniew Szadkowski]
+- reloading compiled code dynamically does basically work (but still leaks memory)
+- the manual contains a section on pattern matching
+- libffi is used by default, when available
+- CHICKEN has now experimental support for the "CMake" build system <http://www.cmake.org>
+  Many thanks to Bill Hoffmann from Kitware and Brandon van Every for helping with this
+- added compiler/runtime support for object serialization via the `s11n' extension
+  (see <http://www.call-with-current-continuation.org/eggs/s11n.html>)
+
+Sergey Khorev has offered to help with maintaining the Windows port of CHICKEN. 
+Thanks, Sergey!
+
+Many thanks Jean-Francois Bignolles, Patrick Brannan, Adam Buchbinder, Hans Bulfone, Category 5, 
+John Cowan, datrus, Guillaume Germaine, Mario Domenech Goulart, Daniel B. Faken, Andrey Fomichev, 
+Jarod Eells, Sven Hartrumpf, David Janssens, Daishi Kato, Levi Pearson, Pupeno, Eric Raible, Benedikt 
+Rosenau, Reed Sheridan, Zbigniew Szadkowski and Mark Wutka for their helpful contributions, 
+suggestions and bug reports!
+
+Special thanks to Kon Lovett for fixing countless open issues and many useful sugestions.
+
+
+2.2
+
+- Many bugfixes
+- The read-syntax `#+X Y' is provided as a shorthand for `(cond-expand (X Y) (else))'
+- `foreign-parse' and `foreign-parse/spec' have been removed
+- lolevel: Executable byte-vector stuff has been removed
+- SRFIs 28, 31, 62 and 69 are now officially supported
+- New compiler option `-extension' simplifies static compilation of eggs
+- csc: changed `-E' to `-P', `-E' is now an alias for `-extension'
+- Embedding:
+  * All the `entry-point' related things have been removed, as has been `define-embedded',
+    calling Scheme from C is now exclusively done with callbacks
+  * Integrated boilerplate embedding API into the `eval' unit
+  * Added `CHICKEN_continue' API function
+  * Default "stub" toplevel (`CHICKEN_default_toplevel') allows embedding without a
+    separate Scheme file 
+  * Different stack-levels during invocation of CHICKEN_run or callbacks could result
+    in crashes - this is now detected (or can be checked manually)
+- Added extension-specifier `(version ...)'
+- New FFI macros `foreign-declare', `foreign-parse' and `foreign-parse/declare' replace
+  the declaration-specifiers of the same name
+- Hash-table resizing was ridiculously slow, and should now be much faster
+- `define-foreign-record' handles recursive structures
+- `require-extension' is now available by default, and so can be used with the
+  plain Scheme evaluator
+- Procedures now contain some basic debug information, unless a file was compiled
+  with `-no-lambda-info'
+- compiler: `-debug-level 2' is now the default (enables trace- and lambda-info)
+- chicken-setup: 
+  * handles direct downloads from arbitrary URLs
+  * HTML documentation for eggs can now be included into the egg and will be installed
+    in the repository (using the `documentation' info-property)
+  * `chicken-setup -docindex' shows path of generated documentation index for all 
+    installed eggs
+- extras: 
+  * SRFI-69 is now fully supported, note that THIS WILL BREAK EXISTING CODE, since
+    the API is not compatible to the previous one
+  * `clear-hash-table!', `get' and `put!' are gone
+  * `read-file' accepts optional reader procedure and max count
+  * `read-lines' accepts filename instead of port
+- library:
+  * `signum' is now exactness-preserving
+  * `procedure-information' returns some basic debug info for a given procedure
+  * Added `(warning MESSAGE ARGUMENTS ...)'
+  * `(promise? X)'
+- posix:
+  * `(current-directory DIR)' is equivalent to `(change-directory DIR)'
+- regex:
+  * `pattern->regexp' has been renamed to `glob->regexp'
+- The `format' library unit has been removed from the base system and is noww available
+  separately
+- SRFI-17, on the other hand has been moved into the base system
+- String literals and the print-names of symbol literals are now allocated in static
+  (non-GC'd) memory 
+- If static or shared build is disabled, no `...-static' executables will be generated
+
+
+Many thanks to Ashley Bone, Thomas Chust, John Cowan, Alejandro Forero Cuervo, Daniel Faken, Sven 
+Hartrumpf, Daishi Kato, Sergey Khorev, Kon Lovett, Gene Pavlovsky, Reed Sheridan and Ed Watkeys for 
+their helpful contributions, suggestions and bug reports!
+
+
+2.0
+
+- Many bugfixes 
+- Loads of minor improvements (better error messages, more warnings, more error 
+  checks, etc.)
+- On systems supported by the "libffi" library, the 128-argument limit can
+  be exceeded (currently to an arbitrary maximum of 1000). To take advantage
+  of this, add `--with-libffi' to the configuration options when building
+  chicken
+- The `libsrfi-chicken' and `libstuffed-chicken' libraries have been folded
+  into `libchicken', so only a single library is linked with generated
+  executables, which greatly simplifies and speeds up the build process.
+  It is recommended to remove any traced of `libstuffed-chicken.*' and 
+  `libsrfi-chicken.*' before installing a new release. This requires also
+  to reinstall all eggs (extension libraries).
+- The compiler is able to inline more procedure calls
+- Implicit non-multival continuations (like in `begin' or 'let') accept multiple 
+  values and discard all but the first value
+- finalization should actually work now and is much more efficient (unless
+  used excessively)
+- csi: 
+  `advise' has been removed
+  `-eval' implies `-batch' and `-quiet'
+  added `-require-extension'
+  short option names are now supported and may be collapsed, if unambigous
+- New runtime options:
+  -:b (enter REPL on error)
+  -:B (ring bell on every major GC)
+  -:fNNN (set pending finalizer maximum limit)
+- New compiler options:
+  -accumulate-profile
+  -inline
+  -inline-limit
+  -emit-external-prototypes-first
+- The compiler-option `-require-for-syntax' has been renamed to `-require-extension'
+  and is the same as putting a `(require-extension ...)' form directly into the code
+- Removed compiler- and interpreter option `-no-feature'
+- New declarations:
+  (lambda-lift)
+  ([not] inline)
+  (inline-limit LIMIT)
+  (emit-external-prototypes-first)
+  ([not] check-c-syntax)
+- `foreign-callback-lambda[*]' has been renamed to `foreign-safe-lambda[*]' - the
+  old names are still valid but deprecated
+- New foreign type specifier `scheme-pointer' (the same as `pointer', which is 
+  deprecated now)
+- Easy FFI: 
+  `___scheme_pointer' and `___byte_vector' pseudo types
+  `___pointer' and `___length' markers
+  `default_renaming' and `opaque' pseudo declarations
+  `___inout' and `___out' argument markers work also for C++ reference types
+  Recognizes `C_word' and `size_t'
+- The reader supports selective case sensitive/insensitive reading using the 
+  `#cs...' and `#ci...' syntax (as supported in PLT Scheme)
+- `\uXXXX' and `\UXXXXXXXX' escape-sequences for string literals
+- `#\UXXXXXXXX' character literal syntax
+- `\v', `\a' and `\f' escape sequences and `#\delete', `#\esc', `#\alarm', `#\vtab' 
+  and `#\nul' character literals
+- `chicken-setup' supports proxy connections via the `-proxy' option
+- library:
+  (set-dynamic-load-mode! MODE)
+  `(end-of-file)' has been removed (use `#!eof' instead)
+- The alternative continuation API described in Marc Feeley's paper
+  "A better API for first class continuations" is supported natively:
+  (continuation-capture PROC)
+  (continuation-graft K THUNK)
+  (continuation-return K VALUE ...)
+  (continuation? X)
+- `foreign-primitive' and `define-extension' macros
+- tinyclos:
+  (instance-of? X)
+  `define-method' specializes on all arguments and allows DSSSL keyword argument lists
+- eval:
+  (set-dispatch-read-syntax! CHAR PROC)
+- extras:
+  (hash-table-update! HT KEY PROC INIT)
+  (hash-table-exists? HT KEY) 
+  (hash-table-values HT)
+  (hash-table-keys HT)
+  (alist->hash-table ALIST [TEST SIZE])
+  `hash-table->list' has been renamed to `hash-table->alist
+  `hash-table-for-each' takes the arguments in reversed order (the old order is still
+  valid but deprecated)
+  Hash-tables support now user-defined hash functions
+- posix:
+  (file-link OLD NEW)
+  (symbolic-link? FILENAME)
+  (regular-file? FILENAME)
+  errno/exist
+  `process' and `process-execute' allow passing an environment
+- regex:
+  (regexp-escape STR)
+- tcp:
+  (tcp-listener-fileno LISTENER)
+- utils:
+  (port-for-each FN THUNK)
+  (port-map FN THUNK)
+- On Windows, the batch file `win-install.bat' can be used to install the system
+  into the desired location
+- Building Chicken on Windows with the free development tools from Microsoft (VCToolkit,
+  Platform Core SDK) has been tested and is documented in the file `vctk-install.txt'
+- The `-script-meta' option has been removed
+- The srfi-25 and srfi-37 library units and the test-infrastructure facility have been 
+  removed from the core system and is now separately available as an extensions (eggs)
+- The syntax-case macro and module system has been removed and also available as an
+  extension. This implies that all compiler- and interpreter options related to hygienic
+  macros and syntax-case are gone as well.
+- All strictness compiler- and interpreter options (and the `strict-reader' parameter)
+  have been removed
+- the `examples' directory and its contents have been removed from the distribution
+  
+
+Many thanks to William Annis, Mark Baily, Peter Bex, Dominique Boucher, Patrick Brannan, 
+Thomas Chust, Alejandro Forero Cuervo, Graham Fawcett, Damian Gryski, Sven Hartrumpf, 
+Hans Huebner, Christian Jaeger, Dale Jordan, Daishi Kato, Sergey Khorev, Krysztof Kowalczyk,
+Goran Krampe, John Lenz, Kon Lovett, Scott G. Miller, Julian Morrison, Nicolas Pelletier, 
+Carlos Pita, Benedikt Rosenau, Andreas Rottmann, Reed Sheridan, Alex Shinn, Andrey Sidorenko, 
+Michele Simionato, Volker Stolz, Sunnan, Zbigniew Szadkowski, Andre van Tonder, Henrik 
+Tramberend and Mark Wutka for their helpful contributions, suggestions and bug reports!
