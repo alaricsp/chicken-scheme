@@ -473,10 +473,12 @@ SET(INSTALL_INCLUDE_HOME ${INSTALL_HOME}/include)
 # What about that /chicken/1 funk?
 SET(INSTALL_LIB_HOME ${INSTALL_HOME}/lib)
 
-ADD_DEFINITIONS(-DC_INSTALL_HOME="${INSTALL_HOME}")
-ADD_DEFINITIONS(-DC_INSTALL_BIN_HOME="${INSTALL_BIN_HOME}")
-ADD_DEFINITIONS(-DC_INSTALL_INCLUDE_HOME="${INSTALL_INCLUDE_HOME}")
-ADD_DEFINITIONS(-DC_INSTALL_LIB_HOME="${INSTALL_LIB_HOME}")
+# Note: the exterior quotes are unescaped.  The interior quotes are escaped.
+# Double \\ are necessary to get through CMake's processing.
+ADD_DEFINITIONS(-DC_INSTALL_HOME="\\"${INSTALL_HOME}\\"")
+ADD_DEFINITIONS(-DC_INSTALL_BIN_HOME="\\"${INSTALL_BIN_HOME}\\"")
+ADD_DEFINITIONS(-DC_INSTALL_INCLUDE_HOME="\\"${INSTALL_INCLUDE_HOME}\\"")
+ADD_DEFINITIONS(-DC_INSTALL_LIB_HOME="\\"${INSTALL_LIB_HOME}\\"")
 
 # This flag is definitely needed for MSVC.
 # Does MinGW need it?
@@ -697,12 +699,16 @@ MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
 # really tired of dealing with all this crap being spewed around.
 # Good God when will it ever end?
 
-GET_DIRECTORY_PROPERTY(EXCESSIVE_CPPFLAGS_LIST
+GET_DIRECTORY_PROPERTY(EXCESSIVE_CPPFLAGS
   DIRECTORY ${Chicken_SOURCE_DIR}
   DEFINITIONS
 )
-# To get these passed properly, we need to escape all the double quotes.
-STRING(REPLACE "\"" "\\\"" EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS_LIST}")
+# Just can't seem to handle passing "\"STRING\"" to vars.cmake.
+# Pass something simpler, just %%%.  Reconstruct it as desired
+# on the other side.  Hm, hope % isn't in any filenames!
+
+STRING(REPLACE "\"" "%" EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS}")
+STRING(REPLACE "\\" "%" EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS}")
 
 
 ####################################################################

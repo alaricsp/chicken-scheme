@@ -143,7 +143,6 @@
 "pregexp.scm"
 "profiler.scm"
 "README"
-"README.cmake-and-mingw32"
 "README.darcs"
 "regex-common.scm"
 "regex.scm"

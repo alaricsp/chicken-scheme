@@ -881,9 +881,6 @@
       `(letrec ((,(car head) (lambda ,(cdr head) ,@args))) ,(car head))
       `(letrec ((,head ,@args)) ,head)))
 
-(eval-when (compile load eval)
-  (register-feature! 'srfi-8 'srfi-16 'srfi-26 'srfi-31 'srfi-15 'srfi-11) )
-
 
 ;;; Definitions available at macroexpansion-time:
 
@@ -898,3 +895,8 @@
 	`(define ,name ,body)
 	'(begin) ) ) )
 
+
+;;;; Register features provided by this file
+
+(eval-when (compile load eval)
+  (register-feature! 'srfi-8 'srfi-16 'srfi-26 'srfi-31 'srfi-15 'srfi-11) )

@@ -17,25 +17,22 @@
 	'() ) ) )
 
 (define *prefix*
-  (let ((p (program-path)))
-    (pathname-directory
-     (if (string-suffix? "/" p)
-	 (substring p 0 (sub1 (string-length p)))
-	 p) ) ) )
+  (or (getenv "CHICKEN_PREFIX")
+      (match (string-match "(.*)/bin/?" (program-path))
+	((_ p) p)
+	(_ (error "unable to figure out installation-prefix")) ) ) )
 
-(cond
- ((eq? 'msvc (build-platform))
-  (run (nmake -f makefile.vc)) )
- (else
-  (run (sh autogen.sh)
-       (./configure 
-	,(conc "--prefix=" *prefix*)
-	,(if (test-feature? 'libffi) "" "--without-libffi")
-	,(if (test-feature? 'ptables) "" "--disable-procedure-tables")
-	,(if (test-feature? 'applyhook) "" "--disable-apply-hook")
-	,(if (test-feature? 'extraslot) "--enable-extra-symbol-slot" "")
-	,(if (##sys#fudge 32) "--enable-gc-hooks" "")
-	,(if (##sys#fudge 15) "--enable-symbol-gc" "")
-	,@*configargs*) )
-  (run (make ,(conc "BOOTSTRAP_PATH=" (program-path))))
-  (when *install* (run (make install))) ) )
+(run (sh autogen.sh)
+     (./configure 
+      ,(conc "--prefix=" *prefix*)
+      ,(if (test-feature? 'libffi) "" "--without-libffi")
+      ,(if (test-feature? 'ptables) "" "--disable-procedure-tables")
+      ,(if (test-feature? 'applyhook) "" "--disable-apply-hook")
+      ,(if (test-feature? 'extraslot) "--enable-extra-symbol-slot" "")
+      ,(if (##sys#fudge 32) "--enable-gc-hooks" "")
+      ,(if (##sys#fudge 15) "--enable-symbol-gc" "")
+      ,@*configargs*) )
+
+(run (make ,(conc "BOOTSTRAP_PATH=" (program-path))))
+
+(when *install* (run (make install)))

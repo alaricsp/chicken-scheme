@@ -1,8 +1,8 @@
-;;; llocative-stress-test.scm - by Kon Lovett
+;;; locative-stress-test.scm - by Kon Lovett
 
 (declare (usual-integrations))
 
-;(set-gc-report! #t)
+(set-gc-report! #t)
 
 (require-extension srfi-1)
 #>

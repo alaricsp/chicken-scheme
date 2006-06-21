@@ -1,6 +1,6 @@
 \input texinfo @c -*-texinfo-*-
 @setfilename chicken.info
-@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 319
+@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 321
 
 @ifnottex
 @macro pointrightarrow
@@ -56,14 +56,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @dircategory The Algorithmic Language Scheme
 @direntry
-* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 319).
+* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 321).
 @end direntry
 
 @titlepage
 @title CHICKEN
 @subtitle A practical and portable Scheme system
 @subtitle User's Manual
-@subtitle Version 2, Build 319
+@subtitle Version 2, Build 321
 @author Felix L. Winkelmann
 @end titlepage
 
@@ -78,7 +78,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @top CHICKEN
 
 CHICKEN - A practical and portable Scheme system
-User's manual (Version 2, Build 319)
+User's manual (Version 2, Build 321)
 
 (c) 2000-2006, Felix L. Winkelmann
 All rights reserved. Translated to LaTeX by Peter Keller. Translated to texinfo by Linh Dang.
@@ -1666,13 +1666,13 @@ macros and special forms} for more information.
 
 When a procedure is applied to a list of actual arguments, the formal and actual arguments are processed from left to right as follows:
 
-@enumerate
-@item Variables in required-formal-arguments are bound to successive actual arguments starting with the first actual argument. It shall be an error if there are fewer actual arguments than required-formal-arguments.
+Variables in required-formal-arguments are bound to successive actual arguments starting with the first actual argument. It shall be an error if there are fewer actual arguments than required-formal-arguments.
 
-@item Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer, if one wnd otherwise to @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
-@item If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keyword-s, the it shall be an error if there are any remaining actual arguments.
-@item If @code{#!key} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and th corresponding value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specified or @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound. 
-@end enumerate
+Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer, if one w otherise to @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
+
+If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keyword- the i shall be an error if there are any remaining actual arguments.
+
+If @code{#!key} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and thorrespnding value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specified or @code{#f}. Te initializer is evaluated in an environment in which all previous formal arguments have been bound. 
 
 It shall be an error for an @code{<ident>} to appear more than once in a formal-argument-list.
 
@@ -3073,6 +3073,14 @@ Sets the maximum size of procedures which may potentially be inlined. The defaul
 (interrupts-enabled)
 @end lisp
 Enable timer-interrupts checks in the compiled program (the default).
+@end deffn
+
+@deffn {declaration specifier} keep-shadowed-macros
+@lisp
+(keep-shadowed-macros)
+@end lisp
+Normally, when a toplevel variable is assigned or defined that has the same name as a macro, the macro-definition
+will be removed (in addition to showing a warning). This declaration will disable the removal of the macro.
 @end deffn
 
 @deffn {declaration specifier} lambda-lift
@@ -11819,7 +11827,8 @@ by the @code{require-at-runtime} property.
 
 @code{FILELIST} may be a filename, a list of filenames, or a list of pairs of
 the form @code{(SOURCE DEST)} (if you want to copy into a particular sub-directory - the
-destination directory will be created as needed).
+destination directory will be created as needed). If @code{DEST} is a relative pathname,
+it will be copied into the extension repository.
 
 The optional argument @code{INFOLIST} should be an association list that
 maps symbols to values, this list will be stored as @code{ID.setup} at the same
@@ -11916,12 +11925,6 @@ extension, which is available separately. For more information, see
 @uref{http://www.call-with-current-continuation.org/eggs/make.html, make}.
 @end deffn
 
-@deffn {procedure} program-path
-Holds the path where executables are installed and defaults to either @code{$CHICKEN_PREFIX/bin},
-if the environment variable @code{CHICKEN_PREFIX} is set, @code{$CHICKEN_HOME} or the
-path where the CHICKEN binaries (@code{chicken}, @code{csi}, etc.) are installed.
-@end deffn
-
 @deffn {procedure} patch
 @lisp
 (patch WHICH REGEX SUBST)
@@ -11963,7 +11966,36 @@ Removes the file or directory given in the string @code{PATH}.
 Creates the directory given in the string @code{PATH}, with all parent directories as needed.
 @end deffn
 
+@deffn {procedure} find-library 
+@lisp
+(find-library NAME PROC)
+@end lisp
+Returns @code{#t} if the library named @code{libNAME.[a|so]} (unix) or @code{NAME.lib} (windows)
+could be found by compiling and linking a test program. @code{PROC} should be the name of a
+C function that must be provided by the library. If no such library was found or the function could not
+be resolved, @code{#f} is returned.
+@end deffn
 
+@deffn {procedure} test-compile
+@lisp
+(test-compile CODE #!key cflags ldflags compile-only)
+@end lisp
+Returns @code{#t} if the C code in @code{CODE} compiles and links successfully, or @code{#f} otherwise.
+The keyword parameters @code{cflags} and @code{ldflags} accept additional compilation and
+linking flags. If @code{compile-only} is true, then no linking step takes place.
+@end deffn
+
+@deffn {parameter} installation-prefix
+Holds the prefix under which CHICKEN executables and libraries have been installed (either
+the value of the environment variable @code{CHICKEN_PREFIX} or whatever prefix was
+specified at the time the system was built.
+@end deffn
+
+@deffn {parameter} program-path
+Holds the path where executables are installed and defaults to either @code{$CHICKEN_PREFIX/bin},
+if the environment variable @code{CHICKEN_PREFIX} is set, @code{$CHICKEN_HOME} or the
+path where the CHICKEN binaries (@code{chicken}, @code{csi}, etc.) are installed.
+@end deffn
 
 @deffn {parameter} setup-root-directory
 Contains the path of the directory where @code{chicken-setup} was invoked.

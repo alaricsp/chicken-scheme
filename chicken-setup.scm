@@ -35,9 +35,9 @@
 
 (declare
   (run-time-macros)
-  (uses srfi-1 regex utils posix tcp match)
+  (uses srfi-1 regex utils posix tcp match srfi-18)
   (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
-	  install-sources setup-verbose-flag setup-install-flag
+	  setup-verbose-flag setup-install-flag installation-prefix find-library
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
 	  test-compile copy-file run-verbose) )
 
@@ -99,6 +99,7 @@ EOF
        (build-platform) ) )
 
 (define *windows-shell* (memq *windows* '(msvc mingw32)))
+(define *msvc* (eq? *windows* 'msvc))
 
 (register-feature! 'chicken-setup)
 
@@ -144,50 +145,50 @@ EOF
 
 
 (define (yes-or-no? str . default)
-  (let ([def (:optional default #f)])
+  (let ((def (:optional default #f)))
     (let loop ()
       (printf "~%~A (yes/no/abort) " str)
       (when def (printf "[~A] " def))
       (flush-output)
-      (let ([ln (read-line)])
-	(cond [(eof-object? ln) (set! ln "abort")]
-	      [(and def (string=? "" ln)) (set! ln def)] )
-	(cond [(string-ci=? "yes" ln) #t]
-	      [(string-ci=? "no" ln) #f]
-	      [(string-ci=? "abort" ln) (*abort-yes-or-no* #f)]
-	      [else
+      (let ((ln (read-line)))
+	(cond ((eof-object? ln) (set! ln "abort"))
+	      ((and def (string=? "" ln)) (set! ln def)) )
+	(cond ((string-ci=? "yes" ln) #t)
+	      ((string-ci=? "no" ln) #f)
+	      ((string-ci=? "abort" ln) (*abort-yes-or-no* #f))
+	      (else
 	       (printf "~%Please enter \"yes\", \"no\" or \"abort\".~%")
-	       (loop) ] ) ) ) ) )
+	       (loop) ) ) ) ) ) )
 
 (define (patch which rx subst)
   (when (setup-verbose-flag) (printf "patching ~A ...~%" which))
   (match which
-    [(from to) 
+    ((from to) 
      (with-output-to-file to
        (lambda ()
 	 (with-input-from-file from
 	   (lambda ()
 	     (let loop ()
-	       (let ([ln (read-line)])
+	       (let ((ln (read-line)))
 		 (unless (eof-object? ln)
 		   (write-line (string-substitute rx subst ln #t)) 
-		   (loop) ) ) ) ) ) ) ) ]
-    [both
-     (let ([tmp (create-temporary-file)])
+		   (loop) ) ) ) ) ) ) ) )
+    (both
+     (let ((tmp (create-temporary-file)))
        (patch (list both tmp) rx subst)
-       (system* "~A ~A ~A" *move-command* tmp both) ) ] ) )
+       (system* "~A ~A ~A" *move-command* tmp both) ) ) ) )
 
 (define run-verbose (make-parameter #t))
 
 (define (fixpath prg)
-  (cond [(string=? prg "csc")
+  (cond ((string=? prg "csc")
 	 (string-intersperse 
 	  (cons* (make-pathname *install-bin-path* prg)
 		 "-feature" "compiling-extension"
 		 *csc-options*) 
-	  " ") ]
-	[(member prg installed-executables) (make-pathname *install-bin-path* prg)]
-	[else prg] ) )
+	  " ") )
+	((member prg installed-executables) (make-pathname *install-bin-path* prg))
+	(else prg) ) )
 
 (define (fixmaketarget file)
   (if (and (equal? "so" (pathname-extension file))
@@ -200,7 +201,7 @@ EOF
 
 (define (run:execute explist)
   (define (smooth lst)
-    (let ([slst (map ->string lst)])
+    (let ((slst (map ->string lst)))
       (string-intersperse (cons (fixpath (car slst)) (cdr slst)) " ") ) )
   (for-each
    (lambda (cmd)
@@ -215,17 +216,17 @@ EOF
   `(run (csc ,@explist) ) )
 
 (define (make:find-matching-line str spec)
-  (let ([match? (lambda (s) (string=? s str))])
-    (let loop ([lines spec])
+  (let ((match? (lambda (s) (string=? s str))))
+    (let loop ((lines spec))
       (cond
-       [(null? lines) #f]
-       [else (let* ([line (car lines)]
-		    [names (if (string? (car line))
+       ((null? lines) #f)
+       (else (let* ((line (car lines))
+		    (names (if (string? (car line))
 			       (list (car line))
-			       (car line))])
+			       (car line))))
 	       (if (ormap match? names)
 		   line
-		   (loop (cdr lines))))]))))
+		   (loop (cdr lines)))))))))
 
 (define (make:form-error s p) (error (sprintf "~a: ~s" s p)))
 (define (make:line-error s p n) (error (sprintf "~a: ~s for line: ~a" s p n)))
@@ -241,7 +242,7 @@ EOF
 		       (and (list? (car line))
 			    (andmap string? (car line))))
 		   (make:form-error "line does not start with a string or list of strings" line))
-	       (let ([name (car line)])
+	       (let ((name (car line)))
 		 (or (list? (cadr line))
 		     (make:line-error "second part of line is not a list" (cadr line) name)
 		     (andmap (lambda (dep)
@@ -262,35 +263,35 @@ EOF
 (define (make:make/proc/helper spec argv)
   (make:check-spec spec)
   (make:check-argv argv)
-  (letrec ([made '()]
-	   [exn? (condition-predicate 'exn)]
-	   [exn-message (condition-property-accessor 'exn 'message)]
-	   [make-file
+  (letrec ((made '())
+	   (exn? (condition-predicate 'exn))
+	   (exn-message (condition-property-accessor 'exn 'message))
+	   (make-file
 	    (lambda (s indent)
-	      (let* ([line (make:find-matching-line s spec)]
-		     [s2 (fixmaketarget s)] 
-		     [date (and (file-exists? s2)
-				(file-modification-time s2))])
+	      (let* ((line (make:find-matching-line s spec))
+		     (s2 (fixmaketarget s)) 
+		     (date (and (file-exists? s2)
+				(file-modification-time s2))))
 
 		(when (setup-verbose-flag)
 		  (printf "make: ~achecking ~a~%" indent s2))
 
 		(if line
-		    (let ([deps (cadr line)])
-		      (for-each (let ([new-indent (string-append " " indent)])
+		    (let ((deps (cadr line)))
+		      (for-each (let ((new-indent (string-append " " indent)))
 				  (lambda (d) (make-file d new-indent)))
 				deps)
-		      (let ([reason
+		      (let ((reason
 			     (or (not date)
 				 (ormap (lambda (dep)
-					  (let ([dep2 (fixmaketarget dep)])
+					  (let ((dep2 (fixmaketarget dep)))
 					    (unless (file-exists? dep2)
 					      (error (sprintf "dependancy ~a was not made~%" dep2)))
 					    (and (> (file-modification-time dep2) date)
 						 dep2)) )
-					deps))])
+					deps))))
 			(when reason
-			  (let ([l (cddr line)])
+			  (let ((l (cddr line)))
 			    (unless (null? l)
 			      (set! made (cons s made))
 			      (when (setup-verbose-flag)
@@ -298,13 +299,13 @@ EOF
 					indent
 					s2
 					(cond
-					 [(not date)
-					  (string-append " because " s2 " does not exist")]
-					 [(string? reason)
-					  (string-append " because " reason " changed")]
-					 [else
+					 ((not date)
+					  (string-append " because " s2 " does not exist"))
+					 ((string? reason)
+					  (string-append " because " reason " changed"))
+					 (else
 					  (string-append (sprintf " just because (reason: ~a date: ~a)" 
-								  reason date))]) ) )
+								  reason date)))) ) )
 			      (handle-exceptions exn
 				  (begin
 				    (printf "make: Failed to make ~a: ~a~%"
@@ -315,11 +316,11 @@ EOF
 				    (signal exn) )
 				((car l))))))))
 		    (unless date
-		      (error (sprintf "don't know how to make ~a" s2))))))])
+		      (error (sprintf "don't know how to make ~a" s2))))))))
     (cond
-     [(string? argv) (make-file argv "")]
-     [(equal? argv '#()) (make-file (caar spec) "")]
-     [else (for-each (lambda (f) (make-file f "")) (vector->list argv))])
+     ((string? argv) (make-file argv ""))
+     ((equal? argv '#()) (make-file (caar spec) ""))
+     (else (for-each (lambda (f) (make-file f "")) (vector->list argv))))
     (when (setup-verbose-flag)
       (for-each (lambda (item)
 		  (printf "make: made ~a~%" item))
@@ -327,32 +328,32 @@ EOF
 
 (define make/proc
   (case-lambda
-   [(spec) (make:make/proc/helper spec '#())]
-   [(spec argv) (make:make/proc/helper spec argv)]))
+   ((spec) (make:make/proc/helper spec '#()))
+   ((spec argv) (make:make/proc/helper spec argv))))
 
 (define-macro (make spec . argv)
-  (let ([make (lambda (spec argv)
-		(let ([form-error (lambda (s . p) (apply error s spec p))])
+  (let ((make (lambda (spec argv)
+		(let ((form-error (lambda (s . p) (apply error s spec p))))
 		  (and (or (list? spec) (form-error "illegal specification (not a sequence)"))
 		       (or (pair? spec) (form-error "empty specification"))
 		       (andmap
 			(lambda (line)
 			  (and (or (and (list? line) (>= (length line) 2))
 				   (form-error "clause does not have at least 2 parts" line))
-			       (let ([name (car line)])
+			       (let ((name (car line)))
 				 (or (list? (cadr line))
 				     (make:line-error "second part of clause is not a sequence" (cadr line) name)))))
 			spec))
 		  `(make/proc (list ,@(map (lambda (line)
 					     `(list ,(car line)
 						    (list ,@(cadr line))
-						    ,@(let ([l (cddr line)])
+						    ,@(let ((l (cddr line)))
 							(if (null? l)
 							    '()
 							    `((lambda ()
 								,@l))))))
 					   spec))
-			      ,(if (vector? argv) `',argv (car argv)))))])
+			      ,(if (vector? argv) `',argv (car argv)))))))
     (if (pair? argv)
 	(make spec argv)
 	(make spec '#())) ) )
@@ -390,11 +391,18 @@ EOF
 
 (define program-path (make-parameter *install-bin-path*))
 
+(define installation-prefix
+  (make-parameter
+   (or (getenv prefix-environment-variable) 
+       (match (string-match "(.*)/bin/?" *install-bin-path*)
+	 ((_ p) p)
+	 (_ #f) ) ) ) )
+
 (define (with-ext filename ext)
   (if (and (equal? (pathname-extension filename) ext)
 	   (file-exists? filename) )
       filename
-      (let ([f2 (pathname-replace-extension filename ext)])
+      (let ((f2 (pathname-replace-extension filename ext)))
 	(and (file-exists? f2) f2) ) ) )
 
 (define (run-setup-script filename)
@@ -438,8 +446,8 @@ EOF
 	  (values '() oinfo) ) ) ) )
 
 (define (simple-install filename)
-  (let ([so (pathname-replace-extension filename ##sys#load-dynamic-extension)]
-	[id (pathname-strip-extension filename)] )
+  (let ((so (pathname-replace-extension filename ##sys#load-dynamic-extension))
+	(id (pathname-strip-extension filename)) )
     (run (csc -O2 -no-trace -s ,filename -emit-exports ,(make-pathname #f id "exports")))
     (when (setup-install-flag)
       (unless *windows* (run (,*remove-command* ,(make-pathname (repo-path) ,so))))
@@ -463,7 +471,7 @@ EOF
   (define (testgz fn)
     (with-input-from-file fn
       (lambda () (string=? "\x1f\x8b" (read-string 2))) ) )
-  (let ([tmpdir (compute-tmpdir filename)])
+  (let ((tmpdir (compute-tmpdir filename)))
     (cond ((file-exists? tmpdir) (chdir tmpdir))
 	  (else
 	   (create-directory tmpdir)
@@ -477,14 +485,14 @@ EOF
     (set! *temporary-directory* tmpdir) ) )
 
 (define (copy-file from to)
-  (let ([from (if (pair? from) (car from) from)]
-	[to (if (pair? from) (make-pathname to (cadr from)) to)] )
+  (let ((from (if (pair? from) (car from) from))
+	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
     (ensure-directory to)
     (run (,*copy-command* ,from ,to)) ) )
 
 (define (move-file from to)
-  (let ([from (if (pair? from) (car from) from)]
-	[to (if (pair? from) (make-pathname to (cadr from)) to)] )
+  (let ((from (if (pair? from) (car from) from))
+	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
     (ensure-directory to)
     (run (,*move-command* ,from ,to)) ) )
 
@@ -513,23 +521,25 @@ EOF
 	(pathname-replace-extension f ##sys#load-dynamic-extension)
 	f) )
   (when (setup-install-flag)
-    (let* ([files (check-filelist (if (list? files) files (list files)))]
-	   [rpath (repo-path)] 
-	   [files (if *windows*
+    (let* ((files (check-filelist (if (list? files) files (list files))))
+	   (rpath (repo-path))
+	   (files (if *windows*
 		      (map (lambda (f) 
 			     (if (pair? f)
 				 (list (soify (car f)) (soify (cadr f)))
 				 (soify f)))
 			   files)
-		      files) ] )
-      (for-each
-       (lambda (f)
-	 (when (and (not *windows*) (string=? "so" (pathname-extension f)))
-	   (run (,*remove-command* ,(make-pathname rpath f))) )
-	 (copy-file f rpath) )
-       files)
+		      files) ) 
+	   (dests (map (lambda (f)
+			 (let ((from (if (pair? f) (car f) f))
+			       (to (make-dest-pathname rpath f)) )
+			   (when (and (not *windows*) (string=? "so" (pathname-extension to)))
+			     (run (,*remove-command* ,to)) )
+			   (copy-file from to) 
+			   to) )
+		       files) ) )
       (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
-      (write-info id (map (cut make-dest-pathname rpath <>) files) info) ) ) )
+      (write-info id dests info) ) ) )
 
 (define (install-program id files #!optional (info '()))
   (define (exify f)
@@ -537,38 +547,37 @@ EOF
 	(pathname-replace-extension f "exe")
 	f) )
   (when (setup-install-flag)
-    (let ([files (check-filelist (if (list? files) files (list files)))]
-	  [ppath (program-path)] )
-      (when *windows*
-	(set! files (map (lambda (f)
-			   (if (list? f) 
-			       (list (exify (car f)) (exify (cadr f)))
-			       (exify f) ) )
-			 files) ) )
-      (for-each (cut copy-file <> ppath) files)
-      (write-info id (map (cut make-dest-pathname ppath <>) files) info) ) ) )
+    (let* ((files (check-filelist (if (list? files) files (list files))))
+	   (ppath (program-path)) 
+	   (files (map (lambda (f)
+			 (if (list? f) 
+			     (list (exify (car f)) (exify (cadr f)))
+			     (exify f) ) )
+		       files) ) 
+	   (dests (map (lambda (f)
+			 (let ((from (if (pair? f) (car f) f))
+			       (to (make-dest-pathname ppath f)) )
+			   (copy-file from to) 
+			   to) )
+		       files) ) )
+      (write-info id dests info) ) ) )
 
 (define (install-script id files #!optional (info '()))
   (when (setup-install-flag)
-    (let* ([files (check-filelist (if (list? files) files (list files)))]
-	   [ppath (program-path)] 
-	   [pfiles (map (cut make-dest-pathname ppath <>) files)] )
-      (for-each (cut copy-file <> ppath) files)
+    (let* ((files (check-filelist (if (list? files) files (list files))))
+	   (ppath (program-path)) 
+	   (pfiles (map (lambda (f)
+			  (let ((from (if (pair? f) (car f) f))
+				(to (make-dest-pathname ppath f)) )
+			    (copy-file from to) 
+			    to) ) ) ) )
       (unless *windows-shell*
 	(run (chmod a+x ,(string-intersperse pfiles " "))) )
       (write-info id pfiles info) ) ) )
 
-(define (install-sources id . files)
-  (when (setup-install-flag)
-    (let* ([files (flatten files)]
-	   [rpath (repository-path)]
-	   [spath (make-pathname (append (list rpath) '("source")) (->string id))] )
-      (create-directory spath)
-      (for-each (cut copy-file <> spath) files) ) ) )
-
 (define (uninstall-extension ext)
-  (let* ([info (extension-information ext)]
-	 [files (and info (assq 'files info))] )
+  (let* ((info (extension-information ext))
+	 (files (and info (assq 'files info))) )
     (if files
 	(begin
 	  (printf "deleting ~A ...~%" ext)
@@ -597,22 +606,31 @@ EOF
 	(create-directory dir) ) ) )
 
 (define (test-compile code #!key (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
-  (let* ([fname (create-temporary-file "c")]
-	 [oname (pathname-replace-extension fname "o")]
-	 [r (begin
+  (let* ((fname (create-temporary-file "c"))
+	 (oname (pathname-replace-extension fname "o"))
+	 (r (begin
 	      (with-output-to-file fname (cut display code))
 	      (system 
-	       (let ([cmd (sprintf "~A ~A ~A ~A ~A >/dev/null 2>&1"
+	       (let ((cmd (sprintf "~A ~A ~A ~A ~A ~A ~A"
 				   *cc*
 				   (if compile-only "-c" "")
 				   cflags
 				   fname
-				   (if compile-only "" ldflags) ) ] )
-		 (when verb (print* cmd " ..."))
-		 cmd) ) ) ] )
+				   (if compile-only "" ldflags) 
+				   (if *msvc* "" ">/dev/null")
+				   (if verb "" "2>&1") ) ) )
+		 (when verb (print cmd " ..."))
+		 cmd) ) ) ) )
     (when verb (print (if (zero? r) "succeeded." "failed.")))
     (system (sprintf "~A ~A" *remove-command* fname))
     (zero? r) ) )
+
+(define (find-library name proc)
+  (test-compile 
+   (sprintf "#ifdef __cplusplus~%extern \"C\"~%#endif~%char ~a();~%int main() { ~a(); return 0; }~%" proc proc)
+   ldflags: (if *msvc*
+		(conc name ".lib")
+		(conc "-l" name) ) ) )
 
 (define (http-get-path-request path fname host)
   (sprintf "~A HTTP/1.0\r\nHost: ~A\r\nConnection: close\r\nContent-length: 0\r\n\r\n"
@@ -635,28 +653,28 @@ EOF
 (define (download-repository-tree)
   (unless *repository-tree*
     (print "downloading catalog ...")
-    (let loop ([hosts repository-hosts])
+    (let loop ((hosts repository-hosts))
       (if (null? hosts)
 	  (error "unable to connect")
 	  (match hosts
-	    [((host path port) . more)
+	    (((host path port) . more)
 	     (call/cc
 	      (lambda (return)
 		(or (handle-exceptions ex
 		      (begin (printf "could not connect to ~A.~%" host) #f)
 		      (printf "downloading catalog from ~A ...~%" host)
-		      (let-values ([(i o) (setup-tcp-connect host port)])
+		      (let-values (((i o) (setup-tcp-connect host port)))
 			(set! *last-decent-host* (car hosts))
 			(let ((req (http-get-request path remote-repository-name host)))
 			  (when (setup-verbose-flag) (display req))
 			  (display req o) )
-			(let ([ln (read-line i)])
+			(let ((ln (read-line i)))
 			  (when (setup-verbose-flag) (print ln))
 			  (when (string-match "HTTP.+ 404 .+" ln)
 			    (print "no remote repository available") 
 			    (return #f) ) )
 			(let loop ()
-			  (let ([ln (read-line i)])
+			  (let ((ln (read-line i)))
 			    (when (setup-verbose-flag) (print ln))
 			    (if (string=? "" ln)
 				(begin
@@ -665,14 +683,31 @@ EOF
 				  (close-output-port o)
 				  #t)
 				(loop) ) ) ) ) )
-		    (loop more) ) ) ) ] ) ) ) ) ) 
+		    (loop more) ) ) ) ) ) ) ) ) )
+
+(define *progress-indicator*
+  (thread-start!
+   (rec (loop)
+     (thread-sleep! 1)
+     (print* ".")
+     (loop) ) ) )
+
+(thread-suspend! *progress-indicator*)
+
+(define (with-progress-indicator thunk)
+  (dynamic-wind
+      (cut thread-resume! *progress-indicator*)
+      thunk
+      (lambda ()
+	(newline)
+	(thread-suspend! *progress-indicator*) ) ) )
 
 (define (download-data hostdata item #!optional filename)
   (match hostdata
-    [(host path port)
-     (let ([fname (or filename (third (assq item *repository-tree*)))])
-       (printf "downloading ~A from ~A ...~%" fname hostdata)
-       (let-values ([(i o) (setup-tcp-connect host port)])
+    ((host path port)
+     (let ((fname (or filename (third (assq item *repository-tree*)))))
+       (printf "downloading ~A from ~A ~!" fname hostdata)
+       (let-values (((i o) (setup-tcp-connect host port)))
 	 (let ((req (http-get-request 
 		     (if filename (pathname-directory filename) path)
 		     (if filename (pathname-strip-directory fname) fname)
@@ -680,15 +715,15 @@ EOF
 	   (when (setup-verbose-flag) (display req))
 	   (display req o) )
 	 (let loop ()
-	   (let ([ln (read-line i)])
+	   (let ((ln (read-line i)))
 	     ;; check for 404 here...
 	     (if (string=? "" ln)
-		 (let ([data (read-string #f i)])
+		 (let ((data (with-progress-indicator (cut read-string #f i))))
 		   (close-input-port i)
 		   (close-output-port o)
 		   (with-output-to-file (pathname-strip-directory fname)
 		     (cut display data) binary:) ) 
-		 (loop) ) ) ) ) ) ] ) )
+		 (loop) ) ) ) ) ) ) ) )
 
 (define (fetch-file-from-net ext)
   (define (requirements reqs)
@@ -716,8 +751,8 @@ EOF
 	     (else
 	      (download-repository-tree)
 	      (set! *dont-ask* #t)
-	      (let ([a (and *repository-tree* (assq (string->symbol ext) *repository-tree*))])
-		(cond (a (let ([reqs (remove extension-info (delete-duplicates (requirements (cdddr a)) eq?))])
+	      (let ((a (and *repository-tree* (assq (string->symbol ext) *repository-tree*))))
+		(cond (a (let ((reqs (remove extension-info (delete-duplicates (requirements (cdddr a)) eq?))))
 			   (when (pair? reqs)
 			     (print "downloading required extensions ...")
 			     (for-each (cut download-data *last-decent-host* <>) reqs)
@@ -728,16 +763,16 @@ EOF
 		       (error "Extension does not exist in the repository" ext)) ) ) ) ) ) )
 
 (define (install filename)
-  (let ([df (not *fetch-only*)])
+  (let ((df (not *fetch-only*)))
     (let loop ((filename filename))
-      (cond [(and df (with-ext filename "setup")) => run-setup-script]
-	    [(and df (with-ext filename "scm")) => simple-install]
-	    [(and df (with-ext filename "egg")) => 
+      (cond ((and df (with-ext filename "setup")) => run-setup-script)
+	    ((and df (with-ext filename "scm")) => simple-install)
+	    ((and df (with-ext filename "egg")) => 
 	     (lambda (f)
 	       (unpack f)
-               (loop (pathname-replace-extension f "setup")) ) ]
-	    [(fetch-file-from-net filename) 
-	     (when df (loop (pathname-file filename))) ] ) ) ) )
+               (loop (pathname-replace-extension f "setup")) ) )
+	    ((fetch-file-from-net filename) 
+	     (when df (loop (pathname-file filename))) ) ) ) ) )
 
 (define (doc-index)
   (make-pathname (repo-path) "index.html"))
@@ -758,15 +793,15 @@ EOF
 	(let ((c 0))
 	  (for-each
 	   (lambda (f)
-	     (and-let* ([info (extension-information f)])
+	     (and-let* ((info (extension-information f)))
 	       (printf "<tr style='background-color: #~a'><td>" (if (odd? c) "ffffff" "c6eff7"))
 	       (set! c (add1 c))
-	       (let ([doc (assq 'documentation info)])
+	       (let ((doc (assq 'documentation info)))
 		 (if doc
 		     (printf "<a href=\"~a\">~a</a>" (cadr doc) f) 
 		     (display f) )
 		 (display "</td><td align='right'>")
-		 (and-let* ([v (assq 'version info)])
+		 (and-let* ((v (assq 'version info)))
 		   (printf "Version: ~A" (cadr v)) )
 		 (and-let* ((r (assq 'release info)))
 		   (printf " Release: ~a" (cadr r)))
@@ -786,11 +821,11 @@ EOF
 (define (list-installed)
   (for-each
    (lambda (f)
-     (and-let* ([info (extension-information f)])
+     (and-let* ((info (extension-information f)))
        (print (format-string (->string f) 32)
 	      " "
 	      (format-string 
-	       (or (and-let* ([v (assq 'version info)])
+	       (or (and-let* ((v (assq 'version info)))
 		     (sprintf "Version: ~A" (cadr v)) )
 		   "") 
 	       32 #t)
@@ -820,19 +855,19 @@ EOF
   (define (parse-host host eggdir)
     (set! repository-hosts
       (cons (match (string-match "(.+)\\:([0-9]+)" host)
-	      [(_ host port) (list host (if eggdir "eggs" "") (string->number port))]
-	      [_ (list host (if eggdir "eggs" "") 80)] )
+	      ((_ host port) (list host (if eggdir "eggs" "") (string->number port)))
+	      (_ (list host (if eggdir "eggs" "") 80)) )
 	    repository-hosts) )  )
   (setup-root-directory (current-directory))
   (let ((uinst #f)
 	(anydone #f))
-    (let loop ([args args])
+    (let loop ((args args))
       (match args
-	[((or "-help" "--help") . _) (usage)]
-	[("-uninstall" . more)
+	(((or "-help" "--help") . _) (usage))
+	(("-uninstall" . more)
 	 (set! uinst #t)
-	 (loop more) ]
-	[("-list" more ...)
+	 (loop more) )
+	(("-list" more ...)
 	 (if (pair? more)
 	     (for-each 
 	      (lambda (e)
@@ -844,78 +879,78 @@ EOF
 			(else (print "Warning: No extension named `" e "' installed.\n")) ) ) )
 	      more)
 	     (list-installed) )
-	 (exit) ]
-	[("-run" fname . more)
+	 (exit) )
+	(("-run" fname . more)
 	 (load fname)
-	 (loop more) ]
-	[("-repository")
+	 (loop more) )
+	(("-repository")
 	 (print (repository-path))
-	 (exit) ]
-	[("-repository" dir . more)
+	 (exit) )
+	(("-repository" dir . more)
 	 (repository-path dir)
-	 (loop more) ]
-	[("--" . more)
-	 (exit) ]
-	[("-program-path")
+	 (loop more) )
+	(("--" . more)
+	 (exit) )
+	(("-program-path")
 	 (print (program-path))
-	 (exit) ]
-	[("-program-path" dir . more)
+	 (exit) )
+	(("-program-path" dir . more)
 	 (program-path dir)
-	 (loop more) ]
-	[("-version" . _)
+	 (loop more) )
+	(("-version" . _)
 	 (printf "chicken-setup - Version ~A, Build ~A~%" build-version build-number)
-	 (exit) ]
-	[("-script" filename . args)
+	 (exit) )
+	(("-script" filename . args)
 	 (command-line-arguments args)
 	 (load filename) 
-	 (exit) ]
-	[("-eval" expr . more)
+	 (exit) )
+	(("-eval" expr . more)
 	 (eval `(begin ,@(with-input-from-string expr read-file))) 
 	 (set! anydone #t)
-	 (loop more) ]
-	[("-fetch" . more)
+	 (loop more) )
+	(("-fetch" . more)
 	 (set! *fetch-only* #t)
-	 (loop more) ]
-	[("-host" host . more)
+	 (loop more) )
+	(("-host" host . more)
 	 (match (string-match "http://(.*)" host)
 	   ((_ host)
 	    (parse-host host #t) )
 	   (_ (parse-host host #t)) )
-	 (loop more) ]
-	[("-proxy" proxy . more)
+	 (loop more) )
+	(("-proxy" proxy . more)
 	 (match (string-match "(.+)\\:([0-9]+)" proxy)
-	   [(_ proxy port) (set! *proxy-host* proxy) (set! *proxy-port* (string->number port))]
-	   [_ (set! *proxy-host* proxy) (set! *proxy-port* 80)] )
-	 (loop more) ]
-	[("-keep" . more)
+	   ((_ proxy port) (set! *proxy-host* proxy) (set! *proxy-port* (string->number port)))
+	   (_ (set! *proxy-host* proxy) (set! *proxy-port* 80)) )
+	 (loop more) )
+	(("-keep" . more)
 	 (set! *keep-stuff* #t)
 	 (set! *csc-options* (append *csc-options* (list "-k")))
-	 (loop more) ]
-	[("-verbose" . more)
+	 (loop more) )
+	(("-verbose" . more)
 	 (setup-verbose-flag #t)
 	 (set! *csc-options* (append *csc-options* (list "-v")))
-	 (loop more) ]
-	[("-csc-option" opt . more)
+	 (loop more) )
+	(("-csc-option" opt . more)
 	 (set! *csc-options* (append *csc-options* (list opt)))
-	 (loop more) ]
-	[("-dont-ask" . more)
+	 (loop more) )
+	(("-dont-ask" . more)
 	 (set! *dont-ask* #t)
-	 (loop more) ]
-	[("-no-install" . more)
+	 (loop more) )
+	(("-no-install" . more)
 	 (setup-install-flag #f)
-	 (loop more) ]
-	[("-docindex" . more)
+	 (loop more) )
+	(("-docindex" . more)
 	 (let ((di (doc-index)))
 	   (unless (file-exists? di)
 	     (build-doc-index) )
-	   (print di) ) ]
-	[("-check" . more)
+	   (print di) ) )
+	(("-check" . more)
 	 (set! *check-repository* #t)
 	 (set! anydone #t)
-	 (loop more) ]
-	[((or "-run" "-script" "-proxy" "-host" "-csc-option"))
-	 (error "missing option argument" (car args)) ]
-	[(filename . more)
+	 (loop more) )
+	(((or "-run" "-script" "-proxy" "-host" "-csc-option"))
+	 (error "missing option argument" (car args)) )
+	((filename . more)
 	 (cond ((and (> (string-length filename) 0) (char=? #\- (string-ref filename 0)))
 		(let ((os (string->list (substring filename 1))))
 		  (if (every (cut memq <> short-options) os)
@@ -932,8 +967,8 @@ EOF
 		    (parse-host host #f)
 		    (conc "/" path) )
 		   (_ filename)) )
-		(loop more) ) ) ]
-	[()
+		(loop more) ) ) )
+	(()
 	 (unless anydone
 	   (let ((setups (glob "*.setup")))
 	     (if (null? setups)
@@ -943,7 +978,7 @@ EOF
 	 (when *rebuild-doc-index*
 	   (when (setup-verbose-flag) (printf "Rebuilding documentation index...\n"))
 	   (build-doc-index) )
-	 #f] ) ) ) )
+	 #f) ) ) ) )
 
 (handle-exceptions ex 
     (begin

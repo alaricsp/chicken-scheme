@@ -75,6 +75,7 @@
 ; (data <tag1> <exp1> ...)
 ; (post-process <string> ...)
 ; (emit-exports <string>)
+; (keep-shadowed-macros)
 ;
 ;   <type> = fixnum | generic
 ;
@@ -292,7 +293,7 @@ EOF
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-compression-threshold compressed-literals compressable-literal
-  lookup-exports-file
+  lookup-exports-file undefine-shadowed-macros
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result}
@@ -367,6 +368,7 @@ EOF
 (define export-file-name #f)
 (define import-table #f)
 (define use-import-table #f)
+(define undefine-shadowed-macros #t)
 
 
 ;;; These are here so that the backend can access them:
@@ -668,7 +670,8 @@ EOF
 			       (compiler-warning 
 				'var "assigned global variable `~S' is a macro ~A"
 				var
-				(if ln (sprintf "in line ~S" ln) "") ) ) )
+				(if ln (sprintf "in line ~S" ln) "") )
+			       (when undefine-shadowed-macros (undefine-macro! var) ) ) )
 			   (when (keyword? var)
 			     (compiler-warning 'syntax "assignment to keyword `~S'" var) )
 			   (cond [(assq var foreign-variables)
@@ -1071,6 +1074,7 @@ EOF
        ((block) (set! block-compilation #t))
        ((separate) (set! block-compilation #f))
        ((check-c-syntax) (set! no-c-syntax-checks #f))
+       ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
        ((not)
 	(check-decl spec 1)
 	(case (second spec)

@@ -384,11 +384,11 @@ exec csi -s $0 "$@"
 				   (br) (br)
 				   "A " (a (@ (href "http://subversion.tigris.org")) "subversion")
 				   " repository is also available at:"
-				   (br) (a (@ (href "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk"))
-					   "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk")
+				   (br) (a (@ (href "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken"))
+					   "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken")
 				   " which can be accessed like this:"
 				   (br) (br)
-				   (tt "$ svn co https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk chicken")
+				   (tt "$ svn co https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken")
 				   (br) (br) "(username: " (tt "anonymous") ", password: &lt;none&gt;)") (br)
 				   "See the file " (tt "README.darcs") " for details on how to bootstrap the system.")
 			   (tr (@ (valign top))

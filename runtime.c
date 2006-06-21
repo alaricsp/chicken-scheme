@@ -3269,7 +3269,7 @@ C_regparm void C_fcall update_locative_table(int mode)
         obj = ptr - offset;
         h = C_block_header(obj);
 
-        if(is_fptr(h)) {	/* pointed-at object hass been forwarded? */
+        if(is_fptr(h)) {	/* pointed-at object has been forwarded? */
 	  ptr2 = (C_uword)fptr_to_ptr(h);
 	  h = C_block_header(ptr2);
 
