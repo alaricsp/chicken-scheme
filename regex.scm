@@ -62,6 +62,7 @@ EOF
  [else
   (declare
     (no-bound-checks)
+    (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
      ##sys#check-string ##sys#check-exact ##sys#make-pointer ##sys#cons ##sys#size ##sys#slot
      ##regexp#compile ##regexp#gather-results ##regexp#re-match

@@ -33,6 +33,14 @@
 ; Germany
 
 
+(declare 
+  (bound-to-procedure
+   get-output-string open-output-string ##sys#write-char-0 string-search string->list list->string
+   ##sys#substring string-search-positions reverse ##sys#fragments->string substring make-string
+   string-substitute
+   ##sys#signal-hook string-append ##sys#make-c-string set-finalizer! ##sys#string-append) )
+
+
 ;;; Split string into fields:
 
 (define string-split-fields

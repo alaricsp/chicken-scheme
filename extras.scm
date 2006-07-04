@@ -81,7 +81,14 @@ EOF
      ##sys#check-symbol ##sys#check-vector ##sys#floor ##sys#ceiling ##sys#truncate ##sys#round 
      ##sys#check-number ##sys#cons-flonum
      ##sys#flonum-fraction ##sys#make-port ##sys#fetch-and-check-port-arg ##sys#print ##sys#check-structure 
-     ##sys#make-structure
+     ##sys#make-structure make-parameter hash-table-set! ##sys#hash-new-len hash-table-ref 
+     hash-table-update! floor input-port? make-vector list->vector sort! merge! open-output-string
+     get-output-string current-output-port ##sys#flush-output ##sys#write-char-0 newline
+     ##sys#number->string display write ##sys#fragments->string list->string make-string string
+     pretty-print-width ##sys#symbol->qualified-string ##extras#reverse-string-append ##sys#number?
+     ##sys#procedure->string ##sys#pointer->string port? ##sys#user-print-hook char-name 
+     read open-input-string ##sys#peek-char-0 ##sys#read-char-0 ##sys#write-char call-with-input-file
+     read-line reverse make-string ##sys#string-append random
      ##sys#gcd ##sys#lcm ##sys#fudge ##sys#check-list ##sys#user-read-hook) ) ] )
 
 #{extras

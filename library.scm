@@ -108,8 +108,21 @@ EOF
      ##sys#schedule ##sys#make-thread ##sys#print-to-string
      ##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer ##sys#user-print-hook 
      ##sys#current-exception-handler ##sys#default-exception-handler ##sys#abandon-mutexes ##sys#make-mutex
-     ##sys#port-has-file-pointer? ##sys#infix-list-hook
-     ##sys#intern-symbol ##sys#make-string ##sys#number?
+     ##sys#port-has-file-pointer? ##sys#infix-list-hook char-name ##sys#open-file-port make-parameter
+     ##sys#intern-symbol ##sys#make-string ##sys#number? software-type build-platform
+     open-output-string get-output-string print-call-chain ##sys#symbol-has-toplevel-binding? repl
+     argv condition-property-accessor ##sys#decorate-lambda ##sys#become! ##sys#lambda-decoration
+     getter-with-setter ##sys#lambda-info ##sys#lambda-info->string open-input-string ##sys#gc
+     ##sys#memory-info ##sys#make-c-string ##sys#find-symbol-table array:make-locative display
+     newline string-append ##sys#with-print-length-limit write print vector-fill! ##sys#context-switch
+     ##sys#set-finalizer! open-output-string get-output-string read ##sys#make-pointer
+     ##sys#pointer->address number->string ##sys#flush-output ##sys#break-entry ##sys#step
+     ##sys#apply-values ##sys#signal-hook ##sys#get-call-chain ##sys#really-print-call-chain
+     string->keyword keyword? string->keyword getenv ##sys#number->string ##sys#copy-bytes
+     call-with-current-continuation ##sys#string->number ##sys#inexact->exact ##sys#exact->inexact
+     ##sys#reverse-list->string reverse ##sys#inexact? list? string ##sys#char->utf8-string 
+     ##sys#update-errno ##sys#file-info close-output-port close-input-port ##sys#peek-unsigned-integer
+     continuation-graft char-downcase string-copy remainder floor ##sys#exact? list->string
      ##sys#append ##sys#list ##sys#cons ##sys#list->vector ##sys#list ##sys#apply ##sys#make-vector
      ##sys#write-char ##sys#force-finalizers ##sys#cleanup-before-exit ##sys#write-char-0
      ##sys#default-read-info-hook ##sys#read-error) ) ] )
@@ -978,7 +991,7 @@ EOF
 			       [(##core#inline "C_symbolp" prefix) (##sys#symbol->string prefix)]
 			       [else (err prefix)] ) )
 		    (err prefix) ) ) )
-	  (number->string counter) ) ) ) ) ) )
+	  (##sys#number->string counter) ) ) ) ) ) )
 
 
 ;;; Keywords:
@@ -1535,7 +1548,11 @@ EOF
       (let ((len (##sys#size path)))
 	(if (fx> len 0)
 	    (case (##core#inline "C_subchar" path 0)
-	      ((#\~) (##sys#string-append (or (getenv "HOME") "") (##sys#substring path 1 len)))
+	      ((#\~) 
+	       (let ((rest (##sys#substring path 1 len)))
+		 (if (and (fx> len 1) (char=? #\/ (##core#inline "C_subchar" path 1)))
+		     (##sys#string-append (or (getenv "HOME") "") rest)
+		     (##sys#string-append "/home/" rest) ) ) )
 	      ((#\$) 
 	       (let loop ((i 1))
 		 (if (fx>= i len)
@@ -2418,18 +2435,28 @@ EOF
 	      (if (fx>= i len)
 		  (outchr port #\|)
 		  (let ([c (##core#inline "C_subchar" str i)])
-		    (when (specialchar? c) (outchr port #\\))
+		    (when (eq? c #\|) (outchr port #\\))
 		    (outchr port c)
 		    (loop (fx+ i 1)) ) ) ) ) )
 
 	(define (sym-is-readable? str)
 	  (let ([len (##sys#size str)])
 	    (and (fx> len 0)
-		 (not (##core#inline "C_u_i_string_equal_p" "." str))
-		 (not (##core#inline "C_u_i_string_equal_p" "#" str))
+		 (if (eq? len 1)
+		     (case (##core#inline "C_subchar" str 0)
+		       ((#\. #\#) #f)
+		       (else #t) ) )
 		 (not (##core#inline "C_substring_compare" "#!" str 0 0 2))
-		 (let loop ([i (fx- len 1)])
-		   (or (fx< i 0)
+		 (let loop ((i (fx- len 1)))
+		   (if (eq? i 0)
+		       (let ((c (##core#inline "C_subchar" str 0)))
+			 (cond ((or (char-numeric? c)
+				    (eq? c #\+)
+				    (eq? c #\-)
+				    (eq? c #\.) )
+				(not (##sys#string->number str)) )
+			       ((specialchar? c) #f)
+			       (else #t) ) )
 		       (let ([c (##core#inline "C_subchar" str i)])
 			 (and (or csp (not (char-upper-case? c)))
 			      (not (specialchar? c))
@@ -2450,13 +2477,13 @@ EOF
 				      (outstr port (##sys#slot cn 1)) ) ]
 				[(fx< code 32)
 				 (outchr port #\x)
-				 (outstr port (number->string code 16)) ]
+				 (outstr port (##sys#number->string code 16)) ]
 				[(fx> code 255)
 				 (outchr port (if (fx> code #xffff) #\U #\u))
-				 (outstr port (number->string code 16)) ]
+				 (outstr port (##sys#number->string code 16)) ]
 				[else (outchr port x)] ) ) ] 
 		       [else (outchr port x)] ) )
-		((##core#inline "C_fixnump" x) (outstr port (number->string x)))
+		((##core#inline "C_fixnump" x) (outstr port (##sys#number->string x)))
 		((eq? x (##sys#slot '##sys#arbitrary-unbound-symbol 0))
 		 (outstr port "#<unbound value>") )
 		((not (##core#inline "C_blockp" x)) (outstr port "#<unprintable object>"))
@@ -2769,7 +2796,7 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_build_platform")))])
     (lambda () sym) ) )
 
-(define flat-directory-install (##core#inline "C_flat_directory_install"))
+(define (flat-directory-install) (##sys#fudge 38))
 
 (define (chicken-version . full)
   (define (get-config)
@@ -2797,7 +2824,7 @@ EOF
 	 ", Build " (##sys#number->string build-number) 
 	 " - " (get-config)
 	 (if (eq? 0 (##sys#size spec)) "" (string-append " - [" spec " ]") ) ))
-      (string-append (number->string build-version) "." (number->string build-number))))
+      (string-append (##sys#number->string build-version) "." (##sys#number->string build-number))))
 
 (define ##sys#pathname-directory-separator
   (let ([st (software-type)])
@@ -3288,8 +3315,7 @@ EOF
 ;;; Error hook (called by runtime-system):
 
 (define ##sys#error-hook
-  (let ([string-append string-append]
-	[number->string number->string] )
+  (let ([string-append string-append])
     (lambda (code loc . args)
       (case code
 	((1) (let ([c (car args)]
@@ -3298,8 +3324,8 @@ EOF
 	       (apply
 		##sys#signal-hook 
 		#:arity-error loc
-		(string-append "bad argument count - received " (number->string n) " but expected "
-			       (number->string c) )
+		(string-append "bad argument count - received " (##sys#number->string n) " but expected "
+			       (##sys#number->string c) )
 		(if fn (list fn) '())) ) )
 	((2) (let ([c (car args)]
 		   [n (cadr args)] 
@@ -3307,8 +3333,8 @@ EOF
 	       (apply
 		##sys#signal-hook
 		#:arity-error loc
-		(string-append "too few arguments - received " (number->string n) " but expected "
-			       (number->string c) )
+		(string-append "too few arguments - received " (##sys#number->string n) " but expected "
+			       (##sys#number->string c) )
 		(if fn (list fn) '()))))
 	((3) (apply ##sys#signal-hook #:type-error loc "bad argument type" args))
 	((4) (apply ##sys#error loc "unbound variable" args))
@@ -3546,9 +3572,9 @@ EOF
 (define ##sys#context-switch (##core#primitive "C_context_switch"))
 
 (define (##sys#interrupt-hook reason state)
-  (if (fx> (##sys#slot ##sys#pending-finalizers 0) 0)
-      (##sys#run-pending-finalizers state)
-      (##sys#context-switch state) ) )
+  (cond ((fx> (##sys#slot ##sys#pending-finalizers 0) 0)
+	 (##sys#run-pending-finalizers state) )
+	(else (##sys#context-switch state) ) ) )
 
 
 ;;; Accessing "errno":

@@ -6,16 +6,17 @@
   * new option `-check-imports' (csc: `-G') checks for unimported symbols and can be quite
     helpful in finding unbound variable errors (this requires all extensions ("eggs") to be
     adapted to this new feature, a process which isn't complete yet)
-  * new declaration `emit-exports'
+  * new declarations `emit-exports', `constant' and `import'
   * new option `-disable-warning' and declaration `disable-warning'
-  * new option `-release'
+  * new options `-release' and `-import'
 - chicken-setup: 
   * new `exports' extension property
   * option `-check' checks for extension upgrades
   * added `-eval' option
   * added parameters `setup-install-flag' and `setup-verbose-flag'
 - FFI: 
-  * added the handy `$' macro, which lets you do foreign calls directly
+  * added the handy `$' macro, which lets you do foreign calls directly without declaring
+    a placeholder procedure
   * `define-foreign-enum' for treating C enums as symbol-sets
   * `foreign-safe-wrapper' has been deprecated
 - Slight reorganization of TinyCLOS and match macros and support code
@@ -40,6 +41,8 @@
   the installation path prefix in case you want to install and run multiple instances/versions 
   of CHICKEN or install on a shared network
 - csc: added `-dry-run' option
+- removed `-split...' options (and the ability to generate multiple C files from a single
+  Scheme file)
 
 Many thanks to Nico Amtsberg, Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, 
 John Cowan, Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech 

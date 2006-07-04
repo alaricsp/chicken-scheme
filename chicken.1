@@ -226,6 +226,11 @@ Sets the heap-shrinkage rate for the compiled program at compile time.
 Print a summary of available options and the format of the command-line parameters and exit the compiler.
 
 .TP
+.BI \-import\ pathname
+Read exports from linked or loaded libraries from given file. Implies
+.B \-check\-imports
+
+.TP
 .BI \-include\-path \ pathname
 Specifies an additional search path for files included via the 
 .I include
@@ -378,19 +383,6 @@ Makes low-level macros (defined with
 also available at run-time. By default
 low-level macros are not available at run-time. Note that highlevel-macros ("syntax-case")
  defined in compiled code are never available at run-time.
-
-.TP
-.BI \-split\ number
-Split output into several C files. So for a source file named
-.I name
-the compiler will generate C files named
-.I name0\,
-.I \.\.\.\,
-.I nameN\-1
-
-.TP
-.BI \-split\-level\ number
-Specifies how hard the partitioning algorithm should work (should be 0, 1 or 2).
 
 .TP
 .B \-to\-stdout

@@ -110,7 +110,7 @@
 	    srfi-69 srfi-28) )		; these are actually in extras, but that is used by default
 
 (define-constant builtin-features/compiled
-  '(srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
+  '(easyffi srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
 
 (define-constant installed-executables
   '("chicken" "csc" "csi" "chicken-setup" "chicken-profile") )

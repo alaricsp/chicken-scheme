@@ -60,7 +60,6 @@ EOF
   (declare
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
-    ;(no-procedure-checks)
     ) ] )
 
 (cond-expand

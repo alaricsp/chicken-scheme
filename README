@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 321
+  Version 2, Build 324
 
 
  1. Introduction:
@@ -233,7 +233,7 @@
           libffi is supposed to work on many Linux systems (x86, Alpha, ARM, m68k, PPC) and Solaris.
 	  Currently this feature has only been tested on x86 Linux.
 	  (Note: a more recent development snapshot of libffi is available at 
-	  http://www.call-with-current-continuation.org/libffi-2.tgz).
+	  http://www.call-with-current-continuation.org/libffi-3.tgz).
 	  If you experience any problems with your libfi installation, you can disable support for it
 	  by passing "--without-libffi" to configure.
 

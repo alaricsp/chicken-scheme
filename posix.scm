@@ -344,7 +344,13 @@ EOF
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
      ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port 
-     ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer
+     ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer make-pathname glob directory?
+     pathname-file string-match process-fork file-close duplicate-fileno process-execute getenv
+     make-string make-input-port make-output-port ##sys#thread-block-for-i/o create-pipe
+     process-wait pathname-strip-directory ##sys#expand-home-path glob->regexp directory
+     decompose-pathname ##sys#cons-flonum ##sys#decode-seconds ##sys#null-pointer ##sys#pointer->address
+     ##sys#substring ##sys#context-switch close-input-pipe close-output-pipe change-directory
+     current-directory ##sys#make-pointer port? ##sys#schedule
      ##sys#peek-fixnum ##sys#make-structure ##sys#check-structure ##sys#enable-interrupts) ) ] )
 
 (cond-expand
@@ -507,15 +513,14 @@ EOF
  [ecos]
  [else
   (define file-mkstemp
-    (let ([string-length string-length])
-      (lambda (template)
-	(##sys#check-string template 'file-mkstemp)
-	(let* ([buf (##sys#make-c-string template)]
-	       [fd (##core#inline "C_mkstemp" buf)]
-	       [path-length (string-length buf)])
-	  (when (eq? -1 fd)
-		(posix-error #:file-error 'file-mkstemp "can not create temporary file" template) )
-	  (values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) ) ) ] )
+    (lambda (template)
+      (##sys#check-string template 'file-mkstemp)
+      (let* ([buf (##sys#make-c-string template)]
+	     [fd (##core#inline "C_mkstemp" buf)]
+	     [path-length (##sys#size buf)])
+	(when (eq? -1 fd)
+	  (posix-error #:file-error 'file-mkstemp "can not create temporary file" template) )
+	(values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) ) ] )
 
 
 ;;; I/O multiplexing:
@@ -1550,7 +1555,7 @@ EOF
 	    (let ([path (car paths)])
 	      (let-values ([(dir file ext) (decompose-pathname path)])
 		(let ([rx (glob->regexp (make-pathname #f (or file "*") ext))])
-		  (let loop ([f (directory (or dir "."))])
+		  (let loop ([f (directory (or dir ".") #t)])
 		    (cond [(null? f) (conc (cdr paths))]
 			  [(string-match rx (car f)) 
 			   => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr f)))) ]

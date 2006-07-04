@@ -37,7 +37,7 @@
   (run-time-macros)
   (uses srfi-1 regex utils posix tcp match srfi-18)
   (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
-	  setup-verbose-flag setup-install-flag installation-prefix find-library
+	  setup-verbose-flag setup-install-flag installation-prefix find-library find-header
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
 	  test-compile copy-file run-verbose) )
 
@@ -137,6 +137,8 @@ EOF
 (define *last-decent-host* #f)
 (define *proxy-host* #f)
 (define *proxy-port* #f)
+(define *example-directory* (make-pathname (chicken-home) "examples"))
+
 
 ; Repository-format:
 ;
@@ -450,7 +452,7 @@ EOF
 	(id (pathname-strip-extension filename)) )
     (run (csc -O2 -no-trace -s ,filename -emit-exports ,(make-pathname #f id "exports")))
     (when (setup-install-flag)
-      (unless *windows* (run (,*remove-command* ,(make-pathname (repo-path) ,so))))
+      (unless *windows* (run (,*remove-command* ,(make-pathname (repo-path) so))))
       (run (,*copy-command* ,so ,(repo-path)))
       (write-info id (list (make-pathname (repository-path) so)) '()) )
     (unless *keep-stuff* (run (rm ,so)) ) ) )
@@ -538,7 +540,19 @@ EOF
 			   (copy-file from to) 
 			   to) )
 		       files) ) )
-      (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
+      (and-let* ((docs (assq 'documentation info)))
+	(print "\n* The following documentation files have been installed in " (doc-index) ":")
+	(for-each (cut print "  * " <>) (cdr docs)) 
+	(newline)
+	(set! *rebuild-doc-index* #t))
+      (and-let* ((exs (assq 'examples info)))
+	(print "\n* The following example files have been installed in " *example-directory* ":")
+	(for-each 
+	 (lambda (f)
+	   (copy-file f (make-pathname *example-directory* f))
+	   (print "  * " f) )
+	 (cdr exs))
+	(newline) )
       (write-info id dests info) ) ) )
 
 (define (install-program id files #!optional (info '()))
@@ -631,6 +645,11 @@ EOF
    ldflags: (if *msvc*
 		(conc name ".lib")
 		(conc "-l" name) ) ) )
+
+(define (find-header name)
+  (test-compile
+   (sprintf "#include <~a>\nint main() { return 0; }\n" name)
+   compile-only: #t) )
 
 (define (http-get-path-request path fname host)
   (sprintf "~A HTTP/1.0\r\nHost: ~A\r\nConnection: close\r\nContent-length: 0\r\n\r\n"

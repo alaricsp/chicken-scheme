@@ -246,6 +246,10 @@ static C_TLS int timezone;
                                      else v = C_flonum_magnitude(x);
 #endif
 
+#define C_isnan(f)                   (!((f) == (f)))
+#define C_isinf(f)                   ((f) == (f) + (f) && (f) != 0.0)
+
+
 /* these could be shorter in unsafe mode: */
 #define C_check_int(x, f, n, w)     if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
                                      else if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) \
@@ -958,6 +962,7 @@ void initialize_symbol_table(void)
   last_applied_procedure_symbol = C_intern2(C_heaptop, C_text("\003syslast-applied-procedure"));
 }
 
+
 /* This is called from POSIX signals: */
 
 void global_signal_handler(int signum)
@@ -965,6 +970,7 @@ void global_signal_handler(int signum)
   C_raise_interrupt(signal_mapping_table[ signum ]);
   signal(signum, global_signal_handler);
 }
+
 
 /* Modify heap size at runtime: */
 
@@ -3275,7 +3281,6 @@ C_regparm void C_fcall update_locative_table(int mode)
 
 	  if(is_fptr(h)) {	/* secondary forwarding check for pointed-at object */
 	    ptr2 = (C_uword)fptr_to_ptr(h) + offset;
-	    assert(!is_fptr(C_block_header(ptr2)));
 	    C_set_block_item(loc, 0, ptr2);
 	  }
 	  else C_set_block_item(loc, 0, ptr2 + offset); /* everything's fine, fixup pointer */
@@ -4013,23 +4018,21 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     return C_SCHEME_FALSE;
 #endif
 
+  case C_fix(38):
+    /* By Brandon Van Every: */
+    /* vcbuild.bat is the only build that installs everything
+       in a flat directory.  It doesn't pass any defines, so
+       msvc is installed flat by default.  CMake passes
+       HIERARCHICAL_INSTALL so that it can bypass the default
+       behavior for msvc. ./configure never builds with msvc. */
+#if defined(_MSC_VER) && !defined(HIERARCHICAL_INSTALL)
+    return C_SCHEME_TRUE;
+#else
+    return C_SCHEME_FALSE;
+#endif
+
   default: return C_SCHEME_UNDEFINED;
   }
-}
-
-/* By Brandon Van Every: */
-C_regparm C_word C_fcall C_flat_directory_install()
-{
-  /* vcbuild.bat is the only build that installs everything
-  in a flat directory.  It doesn't pass any defines, so
-  msvc is installed flat by default.  CMake passes
-  HIERARCHICAL_INSTALL so that it can bypass the default
-  behavior for msvc. ./configure never builds with msvc. */
-#if defined(_MSC_VER) && !defined(HIERARCHICAL_INSTALL)
-  return C_SCHEME_TRUE;
-#else
-  return C_SCHEME_FALSE;
-#endif
 }
 
 
@@ -7330,6 +7333,24 @@ C_regparm C_word C_fcall convert_string_to_number(C_char *str, int radix, C_word
   C_word n;
   C_char *eptr, *eptr2;
   double fn;
+#ifdef __CYGWIN__
+  int len = C_strlen(str);
+
+  if(len >= 4) {
+    if(!C_strncmp(str, "+nan.0", len)) {
+      *flo = 0.0/0.0;
+      return 2;
+    }
+    else if(!C_strncmp(str, "+inf.0", len)) {
+      *flo = 1.0/0.0;
+      return 2;
+    }
+    else if(!C_strncmp(str, "-inf.0", len)) {
+      *flo = -1.0/0.0;
+      return 2;
+    }
+  }
+#endif
 
   if(C_strpbrk(str, "xX\0") != NULL) return 0;
 
@@ -7352,7 +7373,7 @@ C_regparm C_word C_fcall convert_string_to_number(C_char *str, int radix, C_word
 
     if(fn == HUGE_VAL && errno == ERANGE) return 0;
     else if(eptr2 == str) return 0;
-    else if(*eptr2 == '\0' || (eptr != eptr2 && !C_strncmp(eptr, ".0", C_strlen(eptr2)))) {
+    else if(*eptr2 == '\0' || (eptr != eptr2 && !C_strncmp(eptr2, ".0", C_strlen(eptr2)))) {
       *flo = fn;
       return 2;
     }
@@ -7445,6 +7466,17 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 	  goto fini;
       }
     } 
+
+#ifdef __CYGWIN__
+    if(C_isnan(f)) {
+      C_strcpy(p = buffer, "+nan.0");
+      goto fini;
+    }
+    else if(C_isinf(f)) {
+      C_sprintf(p = buffer, "%cinf.0", f > 0 ? '+' : '-');
+      goto fini;
+    }
+#endif
 
 #ifdef HAVE_GCVT
     C_gcvt(f, FLONUM_PRINT_PRECISION, buffer);
@@ -7773,7 +7805,7 @@ void C_ccall C_get_memory_info(C_word c, C_word closure, C_word k)
 void C_ccall C_context_switch(C_word c, C_word closure, C_word k, C_word state)
 {
   C_word n = C_header_size(state) - 1,
-         adrs = C_u_i_car(state);
+    adrs = C_block_item(state, 0);
   TRAMPOLINE trampoline;
 
   C_temporary_stack = C_temporary_stack_bottom - n;

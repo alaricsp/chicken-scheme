@@ -41,6 +41,7 @@
   (unit easyffi)
   (disable-warning var)
   (compress-literals)
+  (no-procedure-checks)
   (export parse-easy-ffi register-ffi-macro used-units foreign-declarations number-type
 	  ffi-include-path-list ffi-dont-include
 	  foreign-type-declaration explicit-use-flag debugging-chicken check-c-syntax

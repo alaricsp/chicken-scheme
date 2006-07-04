@@ -76,6 +76,7 @@
 ; (post-process <string> ...)
 ; (emit-exports <string>)
 ; (keep-shadowed-macros)
+; (import <symbol-or-string> ...)
 ;
 ;   <type> = fixnum | generic
 ;
@@ -256,7 +257,7 @@ EOF
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
-  installation-home decompose-lambda-list external-to-pointer defconstant-bindings
+  installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
   foreign-type-table-size copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
   unit-name insert-timer-checks used-units external-variables require-imports-flag custom-declare-alist
   profile-info-vector-name finish-foreign-result pending-canonicalizations
@@ -276,7 +277,7 @@ EOF
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
   expand-foreign-lambda* data-declarations emit-control-file-item expand-foreign-primitive
-  factor partition-fm process-declaration external-protos-first basic-literal? emit-line-info
+  process-declaration external-protos-first basic-literal? emit-line-info
   transform-direct-lambdas! expand-foreign-callback-lambda* debugging emit-unsafe-marker
   debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
@@ -369,6 +370,7 @@ EOF
 (define import-table #f)
 (define use-import-table #f)
 (define undefine-shadowed-macros #t)
+(define constant-declarations '())
 
 
 ;;; These are here so that the backend can access them:
@@ -1151,6 +1153,22 @@ EOF
 		(set! namespace-table 
 		  (alist-update! ns (lset-union eq? oldsyms (cdr syms)) namespace-table eq?) ) )
 	      (quit "invalid arguments to `namespace' declaration: ~S" spec) ) ) )
+       ((constant)
+	(let ((syms (cdr spec)))
+	  (if (every symbol? syms)
+	      (set! constant-declarations (append syms constant-declarations))
+	      (quit "invalid arguments to `constant' declaration: ~S" spec)) ) )
+       ((import)
+	(let-values (((syms strs) 
+		      (partition
+		       (lambda (x)
+			 (cond ((symbol? x) #t)
+			       ((string? x) #f)
+			       (else (quit "argument to `import' declaration is not a string or symbol" x)) ) )
+		       (cdr spec) ) ) )
+	  (set! use-import-table #t)
+	  (for-each (cut ##sys#hash-table-set! import-table <> "<here>") syms)
+	  (for-each lookup-exports-file strs) ) )
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 
@@ -2031,10 +2049,9 @@ EOF
   customizable				; boolean
   rest-argument-mode			; #f | LIST | VECTOR | UNUSED
   body					; expression
-  direct				; boolean
-  partition)                            ; integer
+  direct)				; boolean
   
-(define (prepare-for-code-generation node db partitions)
+(define (prepare-for-code-generation node db)
   (let ([literals '()]
         [lambdas '()]
         [temporaries 0]
@@ -2171,8 +2188,7 @@ EOF
 			   (or direct (get db id 'customizable))
 			   rest-mode
 			   body
-			   direct
-                           0)
+			   direct)
 			  lambdas) )
 		  (set! looping lping)
 		  (set! temporaries temps)
@@ -2277,286 +2293,10 @@ EOF
 		       ((eof-object? x) '(eof))
 		       (else (bomb "bad immediate (prepare)")) )
 		 '() ) )
-
-    (define (partition-phase! partitions)
-      (define (set-inregion! cells partition)
-        (for-each
-          (lambda (c)
-            (graph-cell-info$$-inregion-set!
-              (graph-cell$$-info c)
-              (eq? (graph*partition c) partition)))
-          cells))
-      (let [(callgraph (make-graph$ eq?))]
-        (debugging 'p "partitioning phase...")
-        ;; init call graph
-        (for-each
-          (lambda (l)
-            (graph$-add-cell! callgraph (make-graph-cell$ (lambda-literal-id l))))
-          lambdas)
-        (##sys#hash-table-for-each
-        (lambda (sym plist)
-          (let loop [(es plist)]
-            (if (and (pair? es)
-                     (eq? (caar es) 'contains))
-                (for-each
-                  (lambda (o)
-                    (let [(symcell (graph$-get callgraph sym))]
-                      (and symcell ;; toplevel et al aren't in lambdas
-                           (graph-cell$-add-undirected-edge!
-                             symcell
-                             (graph$-get callgraph o)))))
-                  (cdar es)))
-            (and (pair? es) (loop (cdr es)))))
-        db)
-        ;; partition recursion.  i threw together something with
-        ;; primes to decompose any partition into bi-partitions.  i am
-        ;; sure there is a better way.
-        (randomize 20040619) ;; make partition repeatable
-	(define partition-level 0)
-	(define partition-index 0)
-	(let pway ([factors (sort (factor partitions) <)]
-		   [cells (graph$->list callgraph)])
-	  (cond-expand [testing 
-			(let loop ([n partition-level]) 
-			  (and (> n 0) (display "  ") (loop (sub1 n)))) ]
-		       [else] )
-	  (set! partition-level (add1 partition-level))
-	  (cond
-	   ;; terminate and update
-	   [(null? factors)
-	    (for-each
-	     (lambda (cell)
-	       (let* [(id (graph*id cell))
-		      (ll (member id lambdas
-				  (lambda (x ei)
-				    (eq? x (lambda-literal-id ei)))))]
-		 (and ll
-		      (lambda-literal-partition-set!
-		       (car ll)
-		       partition-index))))
-	     cells)
-	    (set! partition-index (add1 partition-index))]
-	   ;; just continue if 1
-	   [(= (car factors) 1)
-	    (pway (cdr factors) cells)]
-	   ;; bi-partition, balanced 50/50
-	   [(= (car factors) 2)
-	    (partition-fm cells
-			  graph*id graph*color graph*color-set!
-			  graph*partition graph*partition-move!
-			  graph*neighbours
-			  graph*gain
-			  (lambda () (graph*cost callgraph))
-			  (lambda (w n#f n#t) 
-			    (graph*balance cells
-					   (length cells)
-					   w n#f n#t))
-			  ;; 50/50
-			  '(1 . 1)
-			  10)
-
-	    (let ([bpart#f (map (complement graph*partition) cells)]
-		  [bpart#t (map graph*partition cells)])
-	      ;; descend binary tree
-              
-              (set-inregion! cells #f)
-	      (pway (cdr factors) (compress bpart#f cells))
-              
-              (set-inregion! cells #t)
-	      (pway (cdr factors) (compress bpart#t cells)))
-	    ]
-	   ;; bi-partition, but unbalanced
-	   [else
-	    (partition-fm cells
-			  graph*id graph*color graph*color-set!
-			  graph*partition graph*partition-move!
-			  graph*neighbours
-			  graph*gain
-			  (lambda () (graph*cost callgraph))
-			  (lambda (w n#f n#t) 
-			    (graph*balance cells
-					   (length cells)
-					   w n#f n#t))			  
-			  ;; split into 1:(prime-1) ratio
-			  (cons 1 (sub1 (car factors))) 
-			  10)
-	    (let ([bpart#f (map (complement graph*partition) cells)]
-		  [bpart#t (map graph*partition cells)])
-	      ;;; modify binary tree
-              
-              (set-inregion! cells #f)
-	      (pway (cons 1 (cdr factors)) 
-		    (compress bpart#f cells))
-              
-              (set-inregion! cells #t)
-	      (pway (append (factor (sub1 (car factors))) (cdr factors)) 
-		    (compress bpart#t cells)))
-	    ]
-	   )
-	  (set! partition-level (sub1 partition-level))
-	  )
-	(and #f ;; debugging
-	     (for-each
-	      (lambda (l)
-		(display (lambda-literal-id l))
-		(display " in ")
-		(display (lambda-literal-partition l))
-		(newline))
-	      lambdas))
-        (randomize);; reset random
-        ))
     
     (debugging 'p "preparation phase...")
-    (let* ((node2 (walk node '() #f '()))
-	   (t0 (##sys#fudge 6)) )
-      (partition-phase! partitions)
-      (debugging 'b (sprintf "  time needed for partitioning: ~A ms" (- (##sys#fudge 6) t0)))
+    (let ((node2 (walk node '() #f '())))
       (debugging 'o "fast box initializations" fastinits)
       (debugging 'o "fast global references" fastrefs)
       (debugging 'o "fast global assignments" fastsets)
       (values node2 literals lambdas) ) ) )
-
-
-;; factor - Jonah Beckford - slimmed down from SLIB. -*- Hen -*-
-
-;;;; "factor.scm" factorization, prime test and generation
-;;; Copyright (C) 1991, 1992, 1993, 1998 Aubrey Jaffer
-;
-;Permission to copy this software, to modify it, to redistribute it,
-;to distribute modified versions, and to use it for any purpose is
-;granted, subject to the following restrictions and understandings.
-;
-;1.  Any copy made of this software must include this copyright notice
-;in full.
-;
-;2.  I have made no warranty or representation that the operation of
-;this software will be error-free, and I am under no obligation to
-;provide any services, by way of maintenance, update, or otherwise.
-;
-;3.  In conjunction with products arising from the use of this
-;material, there shall be no use of my name in any advertising,
-;promotional, or sales literature without prior written consent in
-;each case.
-
-;;(declare (unit factor)
-;;	 (uses lolevel)
-;;	 (export factor))
-
-;;; prime:products are products of small primes.
-;;; was (comlist:notevery (lambda (prd) (= 1 (gcd n prd))) comps))
-(declare
-  (hide primes-gcd? prime:prime-sqr prime:products prime:sieve prime:f prime:fo prime:fe) )
-
-(define (primes-gcd? n comps)
-  (not (let mapf ((lst comps))
-	 (or (null? lst) (and (= 1 (gcd n (car lst))) (mapf (cdr lst)))))))
-(define prime:prime-sqr 121)
-(define prime:products '(105))
-(define prime:sieve (vector 0 0 1 1 0 1 0 1 0 0 0))
-(letrec ((lp (lambda (comp comps primes nexp)
-	       (cond ((< comp (quotient (##sys#fudge 21) nexp))
-		      (let ((ncomp (* nexp comp)))
-			(lp ncomp comps
-			    (cons nexp primes)
-			    (next-prime nexp (cons ncomp comps)))))
-		     ((< (quotient comp nexp) (* nexp nexp))
-		      (set! prime:prime-sqr (* nexp nexp))
-		      (set! prime:sieve (make-vector nexp 0))
-		      (for-each (lambda (prime)
-				  (vector-set! prime:sieve prime 1))
-				primes)
-		      (set! prime:products (reverse (cons comp comps))))
-		     (else
-		      (lp nexp (cons comp comps)
-			  (cons nexp primes)
-			  (next-prime nexp (cons comp comps)))))))
-	 (next-prime (lambda (nexp comps)
-		       (set! comps (reverse comps))
-		       (do ((nexp (+ 2 nexp) (+ 2 nexp)))
-			   ((not (primes-gcd? nexp comps)) nexp)))))
-  (lp 3 '() '(2 3) 5))
-;;;;Lankinen's recursive factoring algorithm:
-;From: ld231782@longs.LANCE.ColoState.EDU (L. Detweiler)
-
-;                  |  undefined if n<0,
-;                  |  (u,v) if n=0,
-;Let f(u,v,b,n) := | [otherwise]
-;                  |  f(u+b,v,2b,(n-v)/2) or f(u,v+b,2b,(n-u)/2) if n odd
-;                  |  f(u,v,2b,n/2) or f(u+b,v+b,2b,(n-u-v-b)/2) if n even
-
-;Thm: f(1,1,2,(m-1)/2) = (p,q) iff pq=m for odd m.
-
-;It may be illuminating to consider the relation of the Lankinen function in
-;a `computational hierarchy' of other factoring functions.*  Assumptions are
-;made herein on the basis of conventional digital (binary) computers.  Also,
-;complexity orders are given for the worst case scenarios (when the number to
-;be factored is prime).  However, all algorithms would probably perform to
-;the same constant multiple of the given orders for complete composite
-;factorizations.
-
-;Thm: Eratosthenes' Sieve is very roughtly O(ln(n)/n) in time and
-;     O(n*log2(n)) in space.
-;Pf: It works with all prime factors less than n (about ln(n)/n by the prime
-;    number thm), requiring an array of size proportional to n with log2(n)
-;    space for each entry.
-
-;Thm: `Odd factors' is O((sqrt(n)/2)*log2(n)) in time and O(log2(n)) in
-;     space.
-;Pf: It tests all odd factors less than the square root of n (about
-;    sqrt(n)/2), with log2(n) time for each division.  It requires only
-;    log2(n) space for the number and divisors.
-
-;Thm: Lankinen's algorithm is O(sqrt(n)/2) in time and O((sqrt(n)/2)*log2(n))
-;     in space.
-;Pf: The algorithm is easily modified to seach only for factors p<q for all
-;    pq=m.  Then the recursive call tree forms a geometric progression
-;    starting at one, and doubling until reaching sqrt(n)/2, or a length of
-;    log2(sqrt(n)/2).  From the formula for a geometric progression, there is
-;    a total of about 2^log2(sqrt(n)/2) = sqrt(n)/2 calls.  Assuming that
-;    addition, subtraction, comparison, and multiplication/division by two
-;    occur in constant time, this implies O(sqrt(n)/2) time and a
-;    O((sqrt(n)/2)*log2(n)) requirement of stack space.
-
-(define (prime:f u v b n)
-  (if (<= n 0)
-      (cond ((negative? n) #f)
-	    ((= u 1) #f)
-	    ((= v 1) #f)
-	    ; Do both of these factors need to be factored?
-	    (else (append (or (prime:f 1 1 2 (quotient (- u 1) 2))
-			      (list u))
-			  (or (prime:f 1 1 2 (quotient (- v 1) 2))
-			      (list v)))))
-      (if (even? n)
-	  (or (prime:f u v (+ b b) (quotient n 2))
-	      (prime:f (+ u b) (+ v b) (+ b b) (quotient (- n (+ u v b)) 2)))
-	  (or (prime:f (+ u b) v (+ b b) (quotient (- n v) 2))
-	      (prime:f u (+ v b) (+ b b) (quotient (- n u) 2))))))
-
-(define (prime:fo m)
-  (let* ((s (gcd m (car prime:products)))
-	 (r (quotient m s)))
-    (if (= 1 s)
-	(or (prime:f 1 1 2 (quotient (- m 1) 2)) (list m))
-	(append
-	 (if (= 1 r) '()
-	     (or (prime:f 1 1 2 (quotient (- r 1) 2)) (list r)))
-	 (or (prime:f 1 1 2 (quotient (- s 1) 2)) (list s))))))
-
-(define (prime:fe m)
-  (if (even? m)
-      (cons 2 (prime:fe (quotient m 2)))
-      (if (eqv? 1 m)
-	  '()
-	  (prime:fo m))))
-
-;;@body
-;;Returns a list of the prime factors of @1.  The order of the
-;;factors is unspecified.  In order to obtain a sorted list do
-;;@code{(sort! (factor @var{k}) <)}.
-(define (factor k)
-  (case k
-    ((-1 0 1) (list k))
-    (else (if (negative? k)
-	      (cons -1 (prime:fe (- k)))
-	      (prime:fe k)))))

@@ -48,6 +48,9 @@
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+     condition-property-accessor ##sys#tty-port? ##sys#thread-block-for-i/o thread-yield! ##sys#thread-unblock!
+     ##sys#thread-basic-unblock! gensym ##sys#thread-block-for-timeout! ##sys#thread-kill!
+     ##sys#thread-block-for-termination! make-thread ##sys#exact->inexact ##sys#flonum-fraction truncate
      ##sys#add-to-ready-queue
      ##sys#schedule ##sys#make-thread
      ##sys#check-number ##sys#error ##sys#signal-hook ##sys#signal

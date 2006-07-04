@@ -46,7 +46,7 @@
   debug-info-index debug-info-vector-name profile-info-vector-name
   foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size 
+  target-heap-size target-stack-size constant-declarations
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
@@ -304,6 +304,22 @@
 			   (debugging 'o "contracted procedure" var)
 			   (touch)
 			   (walk (inline-lambda-bindings llist args (first (node-subexpressions lval)) #f)) ) ]
+			[(memq var constant-declarations)
+			 (or (and-let* ((k (car args))
+					((eq? '##core#variable (node-class k)))
+					(kvar (first (node-parameters k)))
+					(lval (and (not (test kvar 'unknown)) (test kvar 'value))) 
+					(eq? '##core#lambda (node-class lval))
+					(llist (third (node-parameters lval)))
+					((or (test (car llist) 'unused)
+					     (and (not (test (car llist) 'references))
+						  (not (test (car llist) 'assigned)))))
+					((not (any (cut expression-has-side-effects? <> db) (cdr args) ))))
+			       (debugging 'x "removed call to constant procedure with unused result" var)
+			       (make-node
+				'##core#call '(#t)
+				(list k (make-node '##core#undefined '() '())) ) ) 
+			     (walk-generic n class params subs)) ]
 			[(and lval (eq? '##core#lambda (node-class lval)))
 			 (let* ([lparams (node-parameters lval)]
 				[llist (third lparams)] )

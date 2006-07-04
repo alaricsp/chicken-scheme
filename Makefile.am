@@ -51,11 +51,11 @@ man_MANS = chicken.1 csi.1 csc.1 chicken-profile.1 chicken-setup.1
 info_TEXINFOS = chicken.texi
 
 chicken_SOURCES = 
-chicken_LDADD = chicken.lo support.lo partition.lo easyffi.lo compiler.lo optimizer.lo c-platform.lo c-backend.lo batch-driver.lo libchicken.la $(MORE_LIBS)
+chicken_LDADD = chicken.lo support.lo easyffi.lo compiler.lo optimizer.lo c-platform.lo c-backend.lo batch-driver.lo libchicken.la $(MORE_LIBS)
 chicken_LDFLAGS = $(LINKFLAGS)
 
 chicken_static_SOURCES = 
-chicken_static_LDADD = chicken.o support.o partition.o easyffi.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la $(MORE_STATIC_LIBS)
+chicken_static_LDADD = chicken.o support.o easyffi.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la $(MORE_STATIC_LIBS)
 chicken_static_LDFLAGS = -static $(LINKFLAGS)
 
 BASE_CPPFLAGS=-DC_STACK_GROWS_DOWNWARD=$(STACK_GROWS_DOWNWARD) -DC_INSTALL_LIB_HOME='"$(pkglibdir)/$(BINARY_VERSION)"' \
@@ -79,7 +79,6 @@ compiler.c : parameters.scm tweaks.scm
 optimizer.c : parameters.scm tweaks.scm
 c-backend.c : tweaks.scm
 support.c : parameters.scm tweaks.scm banner.scm
-partition.c : partition.scm
 batch-driver.c : parameters.scm parameters.scm
 c-platform.c : tweaks.scm
 easyffi.c : tweaks.scm easyffi.l.silex
@@ -472,11 +471,15 @@ uninstall:
 	rm -f $(bindir)/chicken-setup
 	rm -f $(bindir)/csc
 	rm -f $(bindir)/csi
+	rm -f $(bindir)/csi-static
+	rm -f $(infodir)/chicken.info
 	rm -f $(mandir)/man1/chicken.1
 	rm -f $(mandir)/man1/chicken-profile.1
 	rm -f $(mandir)/man1/chicken-setup.1
 	rm -f $(mandir)/man1/csc.1
 	rm -f $(mandir)/man1/csi.1
+	rm -f $(libdir)/libchicken.*
+	rm -f $(libdir)/libuchicken.*
 	rm -fr $(pkglibdir)
 	rm -fr $(pkgdatadir)
 	rm -f $(includedir)/chicken.h

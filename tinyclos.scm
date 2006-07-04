@@ -64,7 +64,11 @@
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     every1 every2 getl filter-in ensure-generic add-global-method
+     every1 every2 getl filter-in ensure-generic add-global-method gensym make make-generic
+     make-method compute-apply-methods compute-methods add-method class-of compute-method-morre-specific?
+     call-next-method ##sys#symbol->string compute-cpl compute-slots compute-getter-and-setter
+     fprintf slot-ref subclass? slot-set! allocate-instance compute-apply-generic class-slots
+     class-direct-supers port? input-port? ##sys#bytevector?
      compute-std-cpl top-sort std-tie-breaker build-transitive-closure build-constraints
      %allocate-instance %allocate-entity get-field set-field! lookup-slot-info
      applicable? more-specific? ##sys#error ##sys#signal-hook

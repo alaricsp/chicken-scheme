@@ -43,7 +43,9 @@
 	  tcp-abandon-port tcp-listener-port tcp-listener-fileno tcp-port-numbers tcp-buffer-size)
   (no-procedure-checks-for-usual-bindings)
   (bound-to-procedure
-   ##net#socket ##net#bind ##net#connect ##net#listen ##net#accept 
+   ##net#socket ##net#bind ##net#connect ##net#listen ##net#accept make-parameter ##sys#string-append ##sys#tcp-port->fileno
+   ##sys#check-port ##sys#port-data ##sys#thread-block-for-i/o! make-string make-input-port make-output-port ##sys#substring
+   substring ##sys#make-c-string ##sys#schedule
    ##net#close ##net#recv ##net#send ##net#select ##net#select-write ##net#gethostaddr ##net#io-ports ##sys#update-errno
    ##sys#error ##sys#signal-hook ##net#getservbyname ##net#parse-host ##net#fresh-addr
    ##net#bind-socket ##net#shutdown)

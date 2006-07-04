@@ -818,7 +818,6 @@ SET(CHICKEN_CGEN
   compiler
   easyffi
   optimizer
-  partition
   support
 )
 MACRO(GET_CHICKEN_CGEN out)
@@ -925,7 +924,6 @@ LIBRARY_SCM_TO_C_EXPORTS(lolevel)
 UNSAFE_LIBRARY_SCM_TO_C(lolevel)
 LIBRARY_SCM_TO_C(match)
 SIMPLE_SCM_TO_C(optimizer parameters tweaks)
-SIMPLE_SCM_TO_C(partition)
 LIBRARY_SCM_TO_C_EXPORTS(pcre regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(pcre regex-common)
 LIBRARY_SCM_TO_C_EXPORTS(posix)

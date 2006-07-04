@@ -74,7 +74,7 @@
   default-optimization-iterations chop-separator chop-extension follow-without-loop dump-exported-globals
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  lookup-exports-file
+  lookup-exports-file constant-declarations
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
 
 
@@ -806,7 +806,7 @@
 		     #t #t) )
 	     ((file-exists? xfile)) )
     (when verbose-mode 
-      (printf "loading ~a ...~%" xfile) )
+      (printf "loading exports file ~a ...~%" xfile) )
     (for-each (cut ##sys#hash-table-set! import-table <> id) (read-file xfile)) ) )
 
 
@@ -1218,8 +1218,6 @@ Usage: chicken FILENAME OPTION ...
   File and pathname options:
 
     -output-file FILENAME       specifies output-filename, default is 'out.c'
-    -split NUMBER               split the output into smaller files
-    -split-level NUMBER         how hard the compiler should try partitioning the output
     -include-path PATHNAME      specifies alternative path for included files
     -to-stdout                  write compiled file to stdout instead of file
 
@@ -1256,6 +1254,7 @@ Usage: chicken FILENAME OPTION ...
     -no-lambda-info             omit additional procedure-information
     -emit-exports FILENAME      write exported toplevel variables to FILENAME
     -check-imports              look for undefined toplevel variables
+    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 

@@ -1280,7 +1280,6 @@ C_fctexport void C_ccall C_software_type(C_word c, C_word closure, C_word k) C_n
 C_fctexport void C_ccall C_machine_type(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_software_version(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_build_platform(C_word c, C_word closure, C_word k) C_noret;
-C_fctexport C_word C_fcall C_flat_directory_install() C_regparm;
 C_fctexport void C_ccall C_c_runtime(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc) C_noret;
 C_fctexport void C_ccall C_set_dlopen_flags(C_word c, C_word closure, C_word k, C_word now, C_word global) C_noret;

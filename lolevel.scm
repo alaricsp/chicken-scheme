@@ -67,6 +67,12 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+     ##sys#symbol-hash-toplevel-binding? ##sys#make-locative ##sys#become! make-hash-table 
+     hash-table-ref/default ##sys#make-string make-vector hash-table-set! hash-table-set!
+     make-property-condition make-composite-condition signal ##sys#set-pointer-address! ##sys#make-vector
+     ##sys#make-pointer byte-vector-fill! make-string make-byte-vector ##sys#not-a-proper-list-error ##sys#check-pointer
+     ##sys#locative? ##sys#bytevector?
+     extend-procedure ##sys#lambda-decoration ##sys#decorate-lambda ##sys#make-tagged-pointer ##sys#check-special
      ##sys#vector->closure! ##sys#error ##sys#signal-hook ##sys#address->pointer ##sys#pointer->address) ) ] )
 
 (cond-expand

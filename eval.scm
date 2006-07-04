@@ -70,7 +70,22 @@ EOF
      ##sys#number? ##sys#symbol->qualified-string ##sys#decorate-lambda ##sys#string-append
      ##sys#ensure-heap-reserve ##sys#syntax-error-hook ##sys#read-prompt-hook
      ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator
-     open-output-string get-output-string
+     open-output-string get-output-string make-parameter software-type software-version machine-type
+     build-platform getenv set-extensions-specifier! ##sys#string->symbol list->vector
+     extension-information syntax-error ->string chicken-home ##sys#expand-curried-define
+     ##sys#match-expression vector->list store-string open-input-string eval ##sys#gc
+     with-exception-handler print-error-message read-char read ##sys#read-error
+     ##sys#reset-handler call-with-current-continuation ##sys#peek-char-0 ##sys#read-char-0
+     ##sys#clear-trace-buffer ##sys#write-char-0 print-call-chain ##sys#with-print-length-limit
+     repl-prompt ##sys#flush-output ##sys#extended-lambda-list? keyword? get-line-number
+     symbol->string string-append display ##sys#repository-path ##sys#file-info make-vector
+     ##sys#make-vector string-copy vector->list ##sys#do-the-right-thing ##sys#->feature-id
+     ##sys#extension-information ##sys#symbol->string ##sys#canonicalize-extension-path
+     file-exists? ##sys#load-extension ##sys#find-extension ##sys#substring reverse
+     dynamic-load-libraries ##sys#string->c-identifier load-verbose ##sys#load ##sys#get-keyword
+     port? ##sys#file-info ##sys#signal-hook ##sys#dload open-input-file close-input-port
+     read write newline ##sys#eval-handler ##sys#set-dlopen-flags! cadadr ##sys#lookup-runtime-requirements
+     map string->keyword ##sys#abort
      ##sys#macroexpand-0 ##sys#macroexpand-1-local) ) ] )
 
 (cond-expand
@@ -1438,6 +1453,11 @@ EOF
 (set-extension-specifier!
  'version
  (lambda (spec _)
+   (define (->string x)
+     (cond ((string? x) x)
+	   ((symbol? x) (##sys#slot x 1))
+	   ((number? x) (##sys#number->string x))
+	   (else (error "invalid extension version" x)) ) )
    (match spec
      (('version id v)
       (let* ((info (extension-information id))

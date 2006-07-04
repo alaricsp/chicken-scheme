@@ -2,7 +2,7 @@
 
 (declare (usual-integrations))
 
-(set-gc-report! #t)
+;(set-gc-report! #t)
 
 (require-extension srfi-1)
 #>
@@ -41,8 +41,8 @@ long fill_10(long i, long *o0, long *o1, long *o2, long *o3, long *o4,
   (let loop
       ((i (string->number (:optional (command-line-arguments) "100000"))))
     (unless (eq? i 0)
-      (let-location ((o0 long 0) (o1 long 0) (o2 long 0) (o3 long 0) (o4 long 0)
-		     (o5 long 0) (o6 long 0) (o7 long 0) (o8 long 0) (o9 long 0))
+      (let-location ((o0 long) (o1 long) (o2 long) (o3 long) (o4 long)
+		     (o5 long) (o6 long) (o7 long) (o8 long) (o9 long))
 	(fill-10! el #$o0 #$o1 #$o2 #$o3 #$o4 #$o5 #$o6 #$o7 #$o8 #$o9)
 	(let ((result (list o0 o1 o2 o3 o4 o5 o6 o7 o8 o9)))
 	  (if (not (equal? result expected))

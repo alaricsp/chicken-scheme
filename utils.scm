@@ -47,6 +47,11 @@
  [else
   (declare
     (no-procedure-checks-for-usual-bindings)
+    (bound-to-procedure
+      ##sys#string-append reverse port? read-string with-input-from-file command-line-arguments
+      for-each-line ##sys#check-port read-line getenv make-pathname file-exists? call-with-output-file
+      decompose-pathname string-search absolute-pathname? string-append ##sys#substring string-match
+      delete-file system)
     (no-bound-checks))] )
 
 (cond-expand

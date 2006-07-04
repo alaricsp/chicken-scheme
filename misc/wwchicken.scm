@@ -212,6 +212,7 @@ exec csi -s $0 "$@"
                          (li "SRFI 47 (Arrays) &deg;")
 			 (li "SRFI 55 (" (tt "require-extension") ")")
 			 (li "SRFI 57 (Records) &deg;") 
+			 (li "SRFI 60 (Integers as bits) &deg;")
 			 (li "SRFI 61 (a more general " (tt "cond") " clause)")
 			 (li "SRFI 62 (S-Expression comments)")
 			 (li "SRFI 63 (Homogeneous and Heterogeneous Arrays) &deg;")

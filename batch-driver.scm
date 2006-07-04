@@ -51,7 +51,7 @@
   foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  target-initial-heap-size split-level postponed-initforms
+  target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
   broken-constant-nodes inline-substitutions-enabled enable-sharp-greater-read-syntax
@@ -72,7 +72,7 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes compressed-literals-initializer
-  inline-max-size file-requirements use-import-table
+  inline-max-size file-requirements use-import-table lookup-exports-file
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
@@ -113,16 +113,6 @@
 				   oname) ) ) ]
 		       [(memq 'to-stdout options) #f]
 		       [else (make-pathname #f (if filename (pathname-file filename) "out") "c")] ) ]
-        [partitions (cond [(memq 'split options)
-                           => (lambda (node)
-                                (let ([oname (option-arg node)])
-                                  (cond
-                                    ((symbol? oname)
-                                     (string->number (symbol->string oname)))
-                                    ((string? oname)
-                                     (string->number oname))
-                                    (else oname))))]
-                          [else 1])]
 	[ipath (map chop-separator (string-split (or (getenv "CHICKEN_INCLUDE_PATH") "") ";"))]
 	[opasses default-optimization-passes]
 	[time0 #f]
@@ -143,19 +133,8 @@
 	[dumpnodes #f]
 	[ffi-mode (memq 'ffi options)]
 	[ffi-parse-mode (memq 'ffi-parse options)]
-	[ofilelist #f]
 	[quiet (memq 'quiet options)]
 	[ssize (or (memq 'nursery options) (memq 'stack-size options))] )
-
-    (define (outfile->list outfile num)
-      (cond
-       [(not outfile) #f]
-       [(= num 1) (list outfile)]
-       [else
-	(let ([file (pathname-file outfile)])
-	  (list-tabulate 
-	   num
-	   (lambda (i) (make-pathname #f (sprintf "~A~A.c" file i))) ) ) ] ) )
 
     (define (cputime) (##sys#fudge 6))
 
@@ -229,8 +208,6 @@
 			  (foreign-parse ,s) ) ] ) ) )
 	  (##sys#read in infohook) ) )
 
-    (when (or (< partitions 1) (not outfile))
-        (set! partitions 1))
     (when uunit
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
     (set! debugging-chicken 
@@ -252,6 +229,10 @@
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
     (set! use-import-table (memq 'check-imports options))
+    (let ((imps (collect-options 'import)))
+      (when (pair? imps)
+	(set! use-import-table #t)
+	(for-each lookup-exports-file imps) ) )
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
       (when verbose (printf "Warnings are disabled~%~!"))
@@ -278,12 +259,6 @@
       (when verbose (printf "Identifiers and symbols are case insensitive~%~!"))
       (register-feature! 'case-insensitive)
       (case-sensitive #f) )
-    (and-let* ([slevel (memq 'split-level options)])
-      (set! split-level 
-	(let ([n (string->number (option-arg slevel))])
-	  (if (and n (<= 0 n 2))
-	      n
-	      (quit "invalid argument to `-split-level' option") ) ) ) )
     (when kwstyle
       (let ([val (option-arg kwstyle)])
 	(cond [(string=? "prefix" val) (keyword-style #:prefix)]
@@ -301,8 +276,7 @@
       (append (map chop-separator (collect-options 'include-path))
 	      ##sys#include-pathnames
 	      ipath) )
-    (set! ofilelist (outfile->list outfile partitions))
-    (when (and outfile filename (any (cut string=? <> filename) ofilelist))
+    (when (and outfile filename (string=? outfile filename))
       (quit "source- and output-filename are the same") )
 
     ;; Handle feature options:
@@ -612,28 +586,16 @@
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 
-                              (when (and verbose
-					 outfile
-					 (not (> partitions 1)) )
-                                (printf "files to be generated: ~A~%" (string-intersperse ofilelist ", ")) )
-                              
 			      (begin-time)
-			      (receive (node literals lambdas) (prepare-for-code-generation node3 db partitions)
+			      (receive (node literals lambdas) (prepare-for-code-generation node3 db)
 				(end-time "preparation")
 
                                 (begin-time)
-                                (let loopfile [(lof ofilelist)
-                                               (file-partition 0)]
-                                  (let* ([outfile (and lof (car lof))]
-					 [out (if outfile (open-output-file outfile) (current-output-port))] )
-				    (unless quiet
-				      (printf "generating `~A' ...~%" outfile) )
-                                    (generate-code 
-				     literals lambdas out filename dynamic db
-				     (if (= partitions 1) #f file-partition))
-                                    (when outfile (close-output-port out))
-                                    (when (and lof (pair? (cdr lof)))
-                                      (loopfile (cdr lof) (+ file-partition 1)))))
+				(let ((out (if outfile (open-output-file outfile) (current-output-port))) )
+				  (unless quiet
+				    (printf "generating `~A' ...~%" outfile) )
+				  (generate-code literals lambdas out filename dynamic db)
+				  (when outfile (close-output-port out)))
                                 (end-time "code generation")
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
                                 (compiler-cleanup-hook)

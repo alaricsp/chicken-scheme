@@ -60,14 +60,14 @@
 
 (define home
   (or (getenv "CHICKEN_HOME") 
-      (if flat-directory-install
+      (if (flat-directory-install)
 	  (quit "`CHICKEN_HOME' environment variable not set - please set it to the directory where CHICKEN is installed")
 	  (prefix "" "share" "%pkgdatadir%") ) ) )
 
 (define (homize str) (make-pathname home str))
 
 (begin
-  (if flat-directory-install
+  (if (flat-directory-install)
       (define translator (homize "chicken"))
       (define translator (prefix "chicken" "bin" "%bindir%/chicken")) )
   (if win
@@ -129,7 +129,7 @@ EOF
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -require-extension -split -split-level -inline-limit -profile-name -disable-warning
+    -require-extension -inline-limit -profile-name -disable-warning -import
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
     -compress-literals -ffi-define -ffi-include-path) )
 
@@ -167,7 +167,6 @@ EOF
 (define cpp-mode #f)
 (define objc-mode #f)
 (define embedded #f)
-(define split #f)
 (define inquiry-only #f)
 (define show-cflags #f)
 (define show-ldflags #f)
@@ -178,7 +177,7 @@ EOF
     (begin
       (define extra-libraries "")
       (define extra-shared-libraries "")
-      (if flat-directory-install
+      (if (flat-directory-install)
         (begin
           (define default-library-files
 	    (map homize '("libchicken-static.lib")))
@@ -227,7 +226,7 @@ EOF
 
 (define compile-options
   (if win
-    (if flat-directory-install
+    (if (flat-directory-install)
       (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
       (cons* "/I%includedir%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
     )
@@ -283,8 +282,6 @@ EOF
 
     -o -output-file FILENAME    specifies target executable name
     -I -include-path PATHNAME   specifies alternative path for included files
-    -split NUMBER               split the output into smaller files
-    -split-level NUMBER         how hard the compiler should try partitioning the output
     -to-stdout                  write compiler to stdout (implies -t)
     -s -shared -dynamic         generate dynamically loadable shared object file
 
@@ -327,6 +324,7 @@ EOF
     -emit-debug-info            emit additional debug-information
     -emit-exports FILENAME      write exported toplevel variables to FILENAME
     -G  -check-imports          look for undefined toplevel variables
+    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 
@@ -581,17 +579,6 @@ EOF
 		(check s rest)
 		(set! translator (car rest))
 		(set! rest (cdr rest)) ]
-	       [(-split)
-		(let ([n (car rest)])
-		  (set! split 
-		    (let ([n (or (string->number n)
-				 (quit "bad argument `~A' to -split option" n) ) ] )
-		      (when (< n 2)
-			(print "option `-split " n "' ignored.") 
-			(set! n #f) )
-		      n) )
-		  (set! rest (cdr rest))
-		  (t-options "-split" n) ) ]
 	       [(-cc)
 		(check s rest)
 		(set! compiler (car rest))
@@ -722,14 +709,8 @@ EOF
 			    (map quote-option (append translate-options translation-optimization-options)) ) )
 		    " ") ) )
 	   (exit last-exit-code) )
-	 (let ([fcs (if split
-			(reverse
-			 (map (lambda (i)
-				(pathname-replace-file fc (string-append (pathname-file fc) (->string i))) )
-			      (iota split) ) )
-			(list fc) ) ] )
-	   (set! c-files (append fcs c-files))
-	   (set! generated-c-files (append fcs generated-c-files)) )
+	 (set! c-files (append (list fc) c-files))
+	 (set! generated-c-files (append (list fc) generated-c-files))
 	 (when (file-exists? cscf)
 	   (with-input-from-file cscf
 	     (lambda ()

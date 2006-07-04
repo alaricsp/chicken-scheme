@@ -44,6 +44,8 @@
  [paranoia]
  [else
   (declare
+    (bound-to-procedure
+     write-char write make-vector)
     (no-bound-checks) ) ] )
 
 

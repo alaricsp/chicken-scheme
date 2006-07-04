@@ -1,6 +1,6 @@
 \input texinfo @c -*-texinfo-*-
 @setfilename chicken.info
-@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 321
+@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 324
 
 @ifnottex
 @macro pointrightarrow
@@ -56,14 +56,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @dircategory The Algorithmic Language Scheme
 @direntry
-* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 321).
+* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 324).
 @end direntry
 
 @titlepage
 @title CHICKEN
 @subtitle A practical and portable Scheme system
 @subtitle User's Manual
-@subtitle Version 2, Build 321
+@subtitle Version 2, Build 324
 @author Felix L. Winkelmann
 @end titlepage
 
@@ -78,7 +78,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @top CHICKEN
 
 CHICKEN - A practical and portable Scheme system
-User's manual (Version 2, Build 321)
+User's manual (Version 2, Build 324)
 
 (c) 2000-2006, Felix L. Winkelmann
 All rights reserved. Translated to LaTeX by Peter Keller. Translated to texinfo by Linh Dang.
@@ -517,12 +517,6 @@ show database before lambda-lifting pass
 show expressions after lambda-lifting
 @item F
 show output of ``easy'' FFI parser
-@item P
-show execution of outer partitioning
-@item Q
-show execution of middle partitioning
-@item R
-show execution of inner partitioning
 @item M
 show unit-information and syntax-/runtime-requirements
 @item 1
@@ -698,6 +692,17 @@ Sets the heap-shrinkage rate for the compiled program at compile time
 Print a summary of available options and the format of the command line
 parameters and exit the compiler.
 
+@item -import FILENAME
+
+Read exports from linked or loaded libraries from given file. See also
+@code{-check-imports}. This is equivalent to declaring
+
+@verbatim
+(declare (import FILENAME))
+@end verbatim
+
+Implies @code{-check-imports}.
+
 @item -include-path PATHNAME
 
 Specifies an additional search path for files included via the
@@ -834,20 +839,6 @@ the compiled program.
 Makes macros also available
 at run-time. By default macros are not available at
 run-time.
-
-@item -split NUMBER
-Splits output into multiple C files that can be compiled separately. The generated
-C files will be named @code{filename0}, ..., @code{filename<NUMBER-1>} with as many
-files as given in @code{NUMBER}.
-
-@item -split-level NUMBER
-Specifies how hard the partitioning algorithm should work:
-
-@itemize
-@item 0 Exit after first iteration (quickest)
-@item 1 Exit when cost does not decrease by at least one-half (the default)
-@item 2 Exit when cost does not change 
-@end itemize
 
 @item -to-stdout
 
@@ -1668,11 +1659,11 @@ When a procedure is applied to a list of actual arguments, the formal and actual
 
 Variables in required-formal-arguments are bound to successive actual arguments starting with the first actual argument. It shall be an error if there are fewer actual arguments than required-formal-arguments.
 
-Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer, if one w otherise to @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
+Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer, if one w other to @code{#f}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
 
-If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keyword- the i shall be an error if there are any remaining actual arguments.
+If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keyword- the iall be an error if there are any remaining actual arguments.
 
-If @code{#!key} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and thorrespnding value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specified or @code{#f}. Te initializer is evaluated in an environment in which all previous formal arguments have been bound. 
+If @code{#!key} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and thorrespng value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specified or @code{#f}. Teiiializer is evaluated in an environment in which all previous formal arguments have been bound. 
 
 It shall be an error for an @code{<ident>} to appear more than once in a formal-argument-list.
 
@@ -3007,6 +2998,14 @@ is given, then the literals will not be created at module startup,
 but when the procedure with this name will be called.
 @end deffn
 
+@deffn {declaration specifier} constant
+@lisp
+(constant SYMBOL ...)
+@end lisp
+Declares the procedures with the names @code{SYMMBOL ...} as constant, that is, as not having any
+side effects. This can help the compiler to remove non-side-effecting expressions.
+@end deffn
+
 @deffn {declaration specifier} export
 @lisp
 (export SYMBOL ...)
@@ -3046,6 +3045,15 @@ not be preempted in main- or library-units that contain this declaration.
 @end lisp
 Disable warnings of type @code{CLASS ...} (equivalent to the @code{-disable-warning CLASS}
 compiler option).
+@end deffn
+
+@deffn {declaration specifier} import
+@lisp
+(import SYMBOL-OR-STRING ...)
+@end lisp
+Adds new imports to the list of externally available toplevel variables. Arguments to this declaration
+may be either strings (designating @code{.exports} files, without the file-extension) or symbols
+which directly designate imported variables.
 @end deffn
 
 @deffn {declaration specifier} inline
@@ -11867,6 +11875,15 @@ a link to it will be automatically included in the index page (accessible via
 @code{chicken-setup -docindex}).
 @end deffn
 
+@deffn {property} examples
+@lisp
+(examples FILENAME ...)
+@end lisp
+Copies the given files into the examples directory, which is usually 
+@code{$prefix/share/chicken/examples} (equivalent to @code{$CHICKEN_HOME/examples}
+or @code{(make-pathname (chicken-home) "examples")}).
+@end deffn
+
 @deffn {property} exports
 @lisp
 (exports EXPORT ...)
@@ -11974,6 +11991,13 @@ Returns @code{#t} if the library named @code{libNAME.[a|so]} (unix) or @code{NAM
 could be found by compiling and linking a test program. @code{PROC} should be the name of a
 C function that must be provided by the library. If no such library was found or the function could not
 be resolved, @code{#f} is returned.
+@end deffn
+
+@deffn {procedure} find-header
+@lisp
+(find-header NAME)
+@end lisp
+Returns @code{#t} if a C include-file with the given name is available, or @code{#f} otherwise.
 @end deffn
 
 @deffn {procedure} test-compile

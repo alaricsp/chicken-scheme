@@ -131,9 +131,9 @@
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
-	  inline-limit profile-name disable-warning emit-exports
-    prelude postlude prologue epilogue nursery extend feature compress-literals split-level
-    heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path split) )
+	  inline-limit profile-name disable-warning emit-exports import
+    prelude postlude prologue epilogue nursery extend feature compress-literals
+    heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 
 ;;; Standard and extended bindings:
@@ -185,7 +185,7 @@
     ##sys#check-exact ##sys#check-number ##sys#check-list ##sys#check-pair ##sys#check-string ##sys#check-symbol 
     ##sys#check-char ##sys#check-vector ##sys#check-byte-vector ##sys#list
     ##sys#call-with-values ##sys#fits-in-int? ##sys#fits-in-unsigned-int? ##sys#flonum-in-fixnum-range? 
-    ##sys#fudge ##sys#immediate? ##sys#direct-return
+    ##sys#fudge ##sys#immediate? ##sys#direct-return ##sys#context-switch
     ##sys#make-structure ##sys#apply ##sys#apply-values ##sys#continuation-graft
     ##sys#bytevector? ##sys#make-vector ##sys#setter
     ##sys#foreign-char-argument ##sys#foreign-fixnum-argument ##sys#foreign-flonum-argument

@@ -36,6 +36,12 @@
  [else
   (declare
     (no-procedure-checks-for-usual-bindings)
+    (bound-to-procedure
+     string-concatenate check-substring-spec ##srfi13#string-fill! string-parse-final-start+end
+     ##sys#substring string-index-right string-skip-right substring/shared
+     string-concatenate/shared make-kmp-restart-vector string-ci= string= char-set?
+     char-set-contains? string-fold char-set string-skip string-index string-downcase! char->int
+     string-parse-start+end substring-spec-ok?)
     (no-bound-checks) ) ] )
 
 (cond-expand

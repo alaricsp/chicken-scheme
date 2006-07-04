@@ -39,7 +39,7 @@ clean :
 	  ulibrary.c ueval.c ulolevel.c utinyclos.c usrfi-14.c usrfi-1.c usrfi-13.c usrfi-18.c \
 	  uextras.c \
 	  uutils.c uposixwin.c upregexp.c usrfi-4.c tcp.c utcp.c \
-	  chicken.c compiler.c support.c partition.c easyffi.c c-backend.c c-platform.c optimizer.c \
+	  chicken.c compiler.c support.c easyffi.c c-backend.c c-platform.c optimizer.c \
 	  *.lib *.exe *.exp *.dll
 
 
@@ -270,12 +270,12 @@ chicken-setup.exe: chicken-setup.obj libchicken.lib chicken.res
 
 # The compiler:
 
-chicken.exe : chicken.obj support.obj partition.obj easyffi.obj compiler.obj optimizer.obj batch-driver.obj \
+chicken.exe : chicken.obj support.obj easyffi.obj compiler.obj optimizer.obj batch-driver.obj \
 	  c-platform.obj c-backend.obj chicken.res \
 	  libchicken.lib
 	link $(LFLAGS) $** /out:$@
 
-chicken-static.exe : chicken.obs support.obs partition.obs easyffi.obs compiler.obs optimizer.obs batch-driver.obs \
+chicken-static.exe : chicken.obs support.obs easyffi.obs compiler.obs optimizer.obs batch-driver.obs \
 	  c-platform.obs c-backend.obs chicken.res \
 	  libchicken-static.lib
 	link $(LFLAGS) $** /out:$@
@@ -287,8 +287,6 @@ chicken.obj : chicken.c chicken.h
 chicken.obs : chicken.c chicken.h
 support.obj : support.c chicken.h
 support.obs : support.c chicken.h
-partition.obj : partition.c chicken.h
-partition.obs : partition.c chicken.h
 easyffi.obj : easyffi.c chicken.h
 easyffi.obs : easyffi.c chicken.h
 c-platform.obj : c-platform.c chicken.h
