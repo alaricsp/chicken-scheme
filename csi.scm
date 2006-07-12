@@ -68,7 +68,7 @@ EOF
 
 (declare
   (hide parse-option-string bytevector-data banner member* canonicalize-args do-trace do-untrace
-	traced-procedures
+	traced-procedures describer-table
 	findall trace-indent command-table do-break do-unbreak broken-procedures) )
 
 
@@ -563,6 +563,8 @@ EOF
 
 (define-constant max-describe-lines 40)
 
+(define describer-table (make-hash-table eq?))
+
 (define describe
   (let ([sprintf sprintf]
 	[printf printf] 
@@ -570,6 +572,7 @@ EOF
 	[length length]
 	[list-ref list-ref]
 	[string-ref string-ref]
+	(hash-table-ref/default hash-table-ref/default)
 	[hash-table-walk hash-table-walk] )
     (lambda (x . port)
       (let ([out (:optional port ##sys#standard-output)])
@@ -661,10 +664,6 @@ EOF
 	       (hash-table-walk
 		x
 		(lambda (k v) (fprintf out " ~S\t-> ~S~%" k v)) ) ]
-	      [(##sys#structure? x 'environment)
-	       (if (##sys#slot x 1)
-		   (fprintf out "environment~%") 
-		   (fprintf out "the interaction environment~%") ) ]
 	      [(##sys#structure? x 'array)
 	       (let* ([shp (##sys#slot x 3)]
 		      [vec (##sys#slot x 1)] 
@@ -694,14 +693,20 @@ EOF
 	       (unveil x out) ]
 	      [(##sys#generic-structure? x)
 	       (let ([st (##sys#slot x 0)])
-		 (let ([data (assq st bytevector-data)] )
-		   (if data
-		       (apply descseq (append (map eval (cdr data)) (list 0)))
-		       (begin
-			 (fprintf out "structure of type `~S':~%" (##sys#slot x 0))
-			 (descseq #f ##sys#size ##sys#slot 1) ) ) ) ) ]
+		 (cond ((hash-table-ref/default describer-table st #f) => (cut <> x out))
+		       ((assq st bytevector-data) =>
+			(lambda (data)
+			  (apply descseq (append (map eval (cdr data)) (list 0)))) )
+		       (else
+			(fprintf out "structure of type `~S':~%" (##sys#slot x 0))
+			(descseq #f ##sys#size ##sys#slot 1) ) ) ) ]
 	      [else (fprintf out "unknown object~%")] )
 	(##sys#void) ) ) ) )
+
+(define set-describer!
+  (let ((hash-table-set! hash-table-set!))
+    (lambda (tag proc)
+      (hash-table-set! describer-table tag proc) ) ) )
 
 
 ;;; Display hexdump:

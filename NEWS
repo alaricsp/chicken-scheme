@@ -1,4 +1,4 @@
-2.318
+2.324
 
 - Bugfixes galore
 - compiler: 
@@ -36,6 +36,7 @@
   procedures `breakpoint' and `singlestep'
 - csi: new toplevel commands `,info', `,step', `,br', `,ubr', `,breakall', `,breakonly',
   `,exn' and `,c'
+- csi: `set-describer!' allows definition of custom output for the `,d' command
 - Added `integer64' foreign type specifier
 - The environment variable "CHICKEN_PREFIX" allows (together with "CHICKEN_REPOSITORY") overriding
   the installation path prefix in case you want to install and run multiple instances/versions 
@@ -47,8 +48,8 @@
 Many thanks to Nico Amtsberg, Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, 
 John Cowan, Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech 
 Goulart, Sven Hartrumpf, Markus Hülsmann, Goetz Isenmann, Heath Johns, Daishi Kato, Kon Lovett, Dan 
-Muresan, Burton Samograd, Reed Sheridan, Alex Shinn, Sunnan, Zbigniew Szadkowski and Peter Wright 
-for their helpful contributions, suggestions and bug reports!
+Muresan, Göran Weinholt, Burton Samograd, Reed Sheridan, Alex Shinn, Sunnan, Zbigniew Szadkowski and 
+Peter Wright for their helpful contributions, suggestions and bug reports!
 
 
 2.3

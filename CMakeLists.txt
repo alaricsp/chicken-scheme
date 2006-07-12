@@ -228,8 +228,8 @@ ENDIF(chicken_version LESS MINIMUM_CANONICAL_CHICKEN)
 
 # The generated .c files are valid on all platforms, not just the
 # ones they are built on.  In particular, this means the POSIX
-# units (posix.c posixwin.c) and the REGEX units
-# (pcre.c pregexp.c regex.c) will all be built.  By building all
+# units (posixunix.c posixwin.c) and the REGEX units
+# (pcre.c pregexp.c regexunix.c) will all be built.  By building all
 # .c files, new platforms can be targeted.
 
 # .o files are of
@@ -460,6 +460,9 @@ ENDMACRO(LOCAL_COPY)
 #All our various optional libraries go in here.
 SET(EXTRA_LIBS )
 
+# Distinguish our .h file logic from other build systems.
+ADD_DEFINITIONS(-DCMAKE_BUILD)
+
 # vcbuild.bat installs everything in one flat directory, but that's not
 # how we install our build.  Chicken has the flat directory behavior
 # hardwired for msvc by default.  Use this to work around it.
@@ -542,7 +545,7 @@ ELSE(HAVE_PCRE_H)
   IF(WIN32 AND NOT CYGWIN)
     SET(REGEX_UNIT pregexp)
   ELSE(WIN32 AND NOT CYGWIN)
-    SET(REGEX_UNIT regex)
+    SET(REGEX_UNIT regexunix)
   ENDIF(WIN32 AND NOT CYGWIN)
 ENDIF(HAVE_PCRE_H)
 
@@ -615,7 +618,7 @@ IF(WIN32 AND NOT CYGWIN)
   SET(EXTRA_LIBS ${EXTRA_LIBS} ws2_32)
 ENDIF(WIN32 AND NOT CYGWIN)
 IF(UNIX)
-  SET(POSIX_UNIT posix)
+  SET(POSIX_UNIT posixunix)
 ENDIF(UNIX)
 
 # Shared and static libraries are built with different flags.
@@ -926,15 +929,15 @@ LIBRARY_SCM_TO_C(match)
 SIMPLE_SCM_TO_C(optimizer parameters tweaks)
 LIBRARY_SCM_TO_C_EXPORTS(pcre regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(pcre regex-common)
-LIBRARY_SCM_TO_C_EXPORTS(posix)
-UNSAFE_LIBRARY_SCM_TO_C(posix)
+LIBRARY_SCM_TO_C_EXPORTS(posixunix)
+UNSAFE_LIBRARY_SCM_TO_C(posixunix)
 LIBRARY_SCM_TO_C_EXPORTS(posixwin)
 UNSAFE_LIBRARY_SCM_TO_C(posixwin)
 LIBRARY_SCM_TO_C_EXPORTS(pregexp regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(pregexp regex-common)
 LIBRARY_SCM_TO_C(profiler)
-LIBRARY_SCM_TO_C_EXPORTS(regex regex-common)
-UNSAFE_LIBRARY_SCM_TO_C(regex regex-common)
+LIBRARY_SCM_TO_C_EXPORTS(regexunix regex-common)
+UNSAFE_LIBRARY_SCM_TO_C(regexunix regex-common)
 LIBRARY_SCM_TO_C_EXPORTS(scheduler)
 SIMPLE_SCM_TO_C(silex)
 LIBRARY_SCM_TO_C_EXPORTS(srfi-1)
@@ -1012,7 +1015,7 @@ ADD_DEPENDENCIES(libchicken-static chicken-boot common_cgen safe_cgen)
 
 ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libuchicken PROPERTIES
-  PREFIX "" IMPORT_PRFIX ""
+  PREFIX "" IMPORT_PREFIX ""
   COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
 )
 TARGET_LINK_LIBRARIES(libuchicken ${EXTRA_LIBS})
@@ -1141,21 +1144,27 @@ ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c chicken_cgen)
 
 # build the html documentation if makeinfo is available
 FIND_PROGRAM(MAKEINFO_EXE NAMES makeinfo)
-IF(NOT MAKEINFO_EXE)
-  MESSAGE("makeinfo not found.  If you want chicken.html, either add
-    makeinfo to your PATH, or specify it in CMakeSetup or CCMake.")
-  # Hope that the user does so.  Don't bug 'em about re-running CMakeSetup.
-  SET(MAKEINFO_EXE makeinfo)
-ENDIF(NOT MAKEINFO_EXE)
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken.texi
-  COMMAND ${MAKEINFO_EXE} --no-split --html --output=${CMAKE_CURRENT_BINARY_DIR}/chicken.html ${Chicken_SOURCE_DIR}/chicken.texi
-  COMMENT "Compiling ${Chicken_SOURCE_DIR}/chicken.texi to ${CMAKE_CURRENT_BINARY_DIR}/chicken.html"
-)
-  
-ADD_CUSTOM_TARGET(html ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.html)
+IF(MAKEINFO_EXE)
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
+    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken.texi
+    COMMAND ${MAKEINFO_EXE} --no-split --html --output=${CMAKE_CURRENT_BINARY_DIR}/chicken.html ${Chicken_SOURCE_DIR}/chicken.texi
+    COMMENT "Compiling ${Chicken_SOURCE_DIR}/chicken.texi to ${CMAKE_CURRENT_BINARY_DIR}/chicken.html"
+  )
+  ADD_CUSTOM_TARGET(html ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.html)
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken.info
+    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken.texi
+    COMMAND ${MAKEINFO_EXE} --no-split --output=${CMAKE_CURRENT_BINARY_DIR}/chicken.info ${Chicken_SOURCE_DIR}/chicken.texi
+    COMMENT "Compiling ${Chicken_SOURCE_DIR}/chicken.texi to ${CMAKE_CURRENT_BINARY_DIR}/chicken.info"
+  )
+  ADD_CUSTOM_TARGET(info ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.info)
+ELSE(MAKEINFO_EXE)
+  MESSAGE("Warning (non-fatal): can't find makeinfo.
+    If you want chicken.html and/or chicken.info,
+    add makeinfo to your PATH or specify it in CMakeSetup or CCMake,
+    then ***RE-RUN*** CMakeSetup or CCMake.")
+ENDIF(MAKEINFO_EXE)
 
 
 ####################################################################
@@ -1179,7 +1188,7 @@ INSTALL(TARGETS
 )
 
 GET_LIB_EXPORTS(exports)
-INSTALL(FILES ${exports} DESTINATION lib)
+INSTALL(FILES ${exports} DESTINATION share/chicken)
 
 IF(WIN32)
   INSTALL(FILES csibatch.bat DESTINATION bin)
@@ -1195,9 +1204,15 @@ IF(WIN32)
 ENDIF(WIN32)
 
 INSTALL(FILES chicken-ffi-macros.scm chicken-more-macros.scm
-  DESTINATION share)
+  DESTINATION share/chicken)
 
 INSTALL(FILES chicken.h DESTINATION include)
 INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1 
   DESTINATION man/man1)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.html DESTINATION doc)
+INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION share/chicken/doc)
+FILE(GLOB CHANGELOG_NAME ChangeLog.*)
+INSTALL(FILES ${CHANGELOG_NAME} RENAME ChangeLog DESTINATION share/chicken/doc)
+IF(MAKEINFO_EXE)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.html DESTINATION share/chicken/doc)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.info DESTINATION info)
+ENDIF(MAKEINFO_EXE)

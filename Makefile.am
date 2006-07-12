@@ -206,25 +206,25 @@ chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pregexp.
 chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upregexp.c uposixwin.c stub.c
 else
 regexexports = regexunix.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c regex.c posixwin.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c uregex.c uposixwin.c stub.c
+chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c regexunix.c posixwin.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c uregexunix.c uposixwin.c stub.c
 endif
 endif
 else
 posixexports = posixunix.exports
 if USE_PCRE
 regexexports = pcre.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pcre.c posix.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upcre.c uposix.c stub.c
+chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pcre.c posixunix.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upcre.c uposixunix.c stub.c
 else
 if USE_PREGEX
 regexexports = pregexp.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pregexp.c posix.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upregexp.c uposix.c stub.c
+chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pregexp.c posixunix.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upregexp.c uposixunix.c stub.c
 else
 regexexports = regexunix.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c regex.c posix.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c uregex.c uposix.c stub.c
+chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c regexunix.c posixunix.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c uregexunix.c uposixunix.c stub.c
 endif
 endif
 endif
@@ -394,7 +394,7 @@ chicken.c: chicken.scm tweaks.scm
 
 library.c: build.scm
 library.c eval.c tinyclos.c profiler.c: parameters.scm
-pcre.c pregexp.c regex.c: regex-common.scm
+pcre.c pregexp.c regexunix.c: regex-common.scm
 
 # Specific rules for unsafe library units:
 ueval.c: eval.scm parameters.scm
@@ -413,16 +413,16 @@ usrfi-14.c: srfi-14.scm
 	$(CHICKEN) srfi-14.scm $(CHICKEN_UFLAGS) -output-file usrfi-14.c -explicit-use
 uposixwin.c: posixwin.scm
 	$(CHICKEN) posixwin.scm $(CHICKEN_UFLAGS) -output-file uposixwin.c -explicit-use
-uposix.c: posix.scm
-	$(CHICKEN) posix.scm $(CHICKEN_UFLAGS) -output-file uposix.c -explicit-use
+uposixunix.c: posixunix.scm
+	$(CHICKEN) posixunix.scm $(CHICKEN_UFLAGS) -output-file uposixunix.c -explicit-use
 uutils.c: utils.scm
 	$(CHICKEN) utils.scm $(CHICKEN_UFLAGS) -output-file uutils.c -explicit-use
 utcp.c: tcp.scm
 	$(CHICKEN) tcp.scm $(CHICKEN_UFLAGS) -output-file utcp.c -explicit-use
 ulolevel.c: lolevel.scm
 	$(CHICKEN) lolevel.scm $(CHICKEN_UFLAGS) -output-file ulolevel.c -explicit-use
-uregex.c: regex.scm regex-common.scm
-	$(CHICKEN) regex.scm $(CHICKEN_UFLAGS) -output-file uregex.c -explicit-use
+uregexunix.c: regexunix.scm regex-common.scm
+	$(CHICKEN) regexunix.scm $(CHICKEN_UFLAGS) -output-file uregexunix.c -explicit-use
 upregexp.c: pregexp.scm regex-common.scm
 	$(CHICKEN) pregexp.scm $(CHICKEN_UFLAGS) -output-file upregexp.c -explicit-use
 upcre.c: pcre.scm regex-common.scm

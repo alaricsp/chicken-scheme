@@ -35,4 +35,7 @@
 
 (run (make ,(conc "BOOTSTRAP_PATH=" (program-path))))
 
-(when *install* (run (make install)))
+(when *install*
+  ;; this is to allow replacement of the running chicken-setup executable
+  ;; (which seems to be a problem on at least cygwin)
+  (process-execute "make" '("install")) )

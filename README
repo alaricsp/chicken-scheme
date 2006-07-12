@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 324
+  Version 2, Build 325
 
 
  1. Introduction:
@@ -179,12 +179,6 @@
     makefile.vc                 Makefile for MS nmake
     win-install.bat             installation script for Windows
 
-    CMakeLists.txt              Build-file for CMake (experimental)
-
-    chicken-defaults.replace.cmake  CMake helper scripts
-    csc.replace.cmake
-    vars.cmake.in
-
     benchmarks/                 contains several benchmarks
 
     hen.el                      an emacs mode for editing Scheme programs, by Linh Dang
@@ -301,7 +295,7 @@
 	  according to the UNIX instructions below.
 
 	  (The BOOTSTRAP_PATH make option may be specified in a form like
-	  C:/chicken-1.66 ... spaces in the path to the existing
+	  C:/chicken-2.3 ... spaces in the path to the existing
 	  CHICKEN installation will cause problems)
 
 	  Sergey Khorev reported how to build Chicken under MinGW with support 
@@ -315,7 +309,7 @@
 	  5) patch libtool with
 		sed -e 's/\(deplibs_check_method=\).*/\1"pass_all"/' libtool > libtool.new
 		cp libtool.new libtool
-	  (it seems that libtool tries to be too smart, giving stupid results).
+  	    (it seems that libtool tries to be too smart, giving stupid results).
 	  6) mkdir $MINGWDIR/lib/.libs;
 	     cp $MINGWDIR/lib/libws2_32.a $MINGWDIR/lib/.libs/libws2_32.dll.a
 	     where MINGWDIR is the where MinGW is installed
@@ -345,6 +339,12 @@
 	    3b)
 		CFLAGS=-I$RE_DIR/include CPPFLAGS=-I$RE_DIR/include LDFLAGS=-L$RE_DIR/lib ./configure
 	    Other steps like in normal MinGW build
+
+        There is experimental support for building CHICKEN with the CMake build tool
+	(http://www.cmake.org), courtesy by Brandon van Every. Currently it only builds CHICKEN
+	from the development repository available via darcs or subversion. See INSTALL-CMake.txt
+	for more information. Note that CMake support is still experimental and not completely
+	tested.
 
 
  4. Usage:

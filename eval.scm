@@ -1050,6 +1050,7 @@ EOF
       [write write]
       [display display]
       [newline newline]
+      [eval eval]
       [open-input-file open-input-file]
       [close-input-port close-input-port]
       [string-append string-append] 
@@ -1084,11 +1085,7 @@ EOF
 			    (if (##sys#file-info fname3)
 				fname3
 				(and (not isdir) input) ) ) ) ) ] ) ]
-	    [evproc (or evaluator 
-			(lambda (x . env)
-			  (apply (##sys#eval-handler)
-				 (##sys#interpreter-toplevel-macroexpand-hook x)
-				 env) ) ) ] )
+	    [evproc (or evaluator eval)] )
 	(cond [(and (string? input) (not fname))
 	       (##sys#signal-hook #:file-error 'load "can not open file" input) ]
 	      [(and (load-verbose) fname)

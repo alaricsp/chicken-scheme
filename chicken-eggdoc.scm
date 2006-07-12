@@ -31,6 +31,7 @@ OTHER DEALINGS IN THE SOFTWARE.")
      (author (url ,email "felix"))
 
      (history
+      (version "2.325" "install step is done via process-execute to allow replacement of running chicken-setup instance")
       (version "2.321" "IEEE float constant fix")
       (version "2.320" "Removed MSVC support, better prefix handling")
       (version "2.319" "Some changes and a fix in the setup script again [Thanks to John Cowan again]")

@@ -35,7 +35,7 @@
 
 (declare
   (uses extras srfi-1 match srfi-4 utils support compiler optimizer driver platform backend 
-	easyffi lolevel tinyclos)
+	easyffi tinyclos)
   (run-time-macros) )
 
 
