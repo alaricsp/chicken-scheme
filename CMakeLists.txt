@@ -172,24 +172,6 @@ ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 # CONFIGURE_FILE doesn't have a
 # regex capability, but we can get around this using a CMake script.
 
-MACRO(GEN_CHICKEN_DEFAULTS_H)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
-    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken-defaults.h.in
-    DEPENDS ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
-    COMMAND ${CMAKE_COMMAND}
-      -DChicken_SOURCE_DIR="${Chicken_SOURCE_DIR}"
-      -DINSTALL_HOME="${INSTALL_HOME}"
-      -DINSTALL_BIN_HOME="${INSTALL_BIN_HOME}"
-      -DINSTALL_LIB_HOME="${INSTALL_LIB_HOME}"
-      -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
-      -DSTACK_GROWS_DOWNWARD="${STACK_GROWS_DOWNWARD}"
-      -DDEFAULT_TARGET_STACK_SIZE="${DEFAULT_TARGET_STACK_SIZE}"
-      -P ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
-    COMMENT "Replacing ${Chicken_SOURCE_DIR}/chicken-defaults.h.in to ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h"
-  )
-ENDMACRO(GEN_CHICKEN_DEFAULTS_H)
-
 MACRO(GEN_CSC_SCM)
   ADD_CUSTOM_COMMAND(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
@@ -460,29 +442,34 @@ ENDIF(UNIX)
 
 # These appear as checkbox items in the CMakeSetup and CCMake GUIs.
 
-# give the user an option to enable support for procedure-serialiazation
 OPTION(ENABLE_PROCEDURE_TABLES "enable support for serialization of procedures" TRUE)
 IF(ENABLE_PROCEDURE_TABLES)
   ADD_DEFINITIONS(-DC_ENABLE_PTABLES)
 ENDIF(ENABLE_PROCEDURE_TABLES)
 
-# give the user an option to enable support for symbol-GC
 OPTION(ENABLE_SYMBOL_GC "enable support for GC of unused symbols" FALSE)
 IF(ENABLE_SYMBOL_GC)
   ADD_DEFINITIONS(-DC_COLLECT_ALL_SYMBOLS)
 ENDIF(ENABLE_SYMBOL_GC)
 
-# give the user an option to enable support for an extra slot in symbols
 OPTION(ENABLE_EXTRA_SYMBOL_SLOT "enable extra data slot for symbols" FALSE)
 IF(ENABLE_EXTRA_SYMBOL_SLOT)
   ADD_DEFINITIONS(-DC_EXTRA_SYMBOL_SLOT)
 ENDIF(ENABLE_EXTRA_SYMBOL_SLOT)
 
-# give the user an option to disable support for the apply-hook (single stepping)
 OPTION(DISABLE_APPLY_HOOK "disable apply hook" FALSE)
 IF(DISABLE_APPLY_HOOK)
   ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
 ENDIF(DISABLE_APPLY_HOOK)
+
+# If you want to force a particular stack size, change the value
+# of the stack size here, then turn OFF the DETERMINE_BEST_STACK_SIZE
+# option in CMakeSetup / CCMake.  CMake 2.4.2 doesn't have a way to
+# input a number in CMakeSetup / CCMake.  Options can only be turned
+# ON or OFF.
+
+SET(DEFAULT_TARGET_STACK_SIZE 131072)
+OPTION(DETERMINE_BEST_STACK_SIZE "run nsample to find best stack size" TRUE)
 
 
 ####################################################################
@@ -678,19 +665,6 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 
 
 ####################################################################
-#  STACK SIZE                                                      #
-####################################################################
-
-# This should be determined by the Nursery.
-# A distribution should figure it out and pre-bake it for the boot,
-# then dynamically determine it for the final build.
-# But I haven't implemented that great stuff yet.
-# This is a placeholder.
-
-SET(DEFAULT_TARGET_STACK_SIZE 131072)
-
-
-####################################################################
 #  BOOTSTRAP                                                       #
 ####################################################################
 
@@ -757,7 +731,6 @@ SET(CURRENT_CHICKEN ${CHICKEN_BOOT_EXE})
 
 # Do these after we've created a 1st stage compiler via the bootstrap.
 
-GEN_CHICKEN_DEFAULTS_H()
 SIMPLE_SCM_TO_C(batch-driver parameters)
 SIMPLE_SCM_TO_C(c-backend tweaks)
 SIMPLE_SCM_TO_C(c-platform)
@@ -898,6 +871,49 @@ SET_TARGET_PROPERTIES(nsample PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(nsample libchicken-static)
 ADD_DEPENDENCIES(nsample chicken-boot)
 
+GET_TARGET_PROPERTY(NSAMPLE_EXE nsample LOCATION)
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/StackSize
+  DEPENDS ${Chicken_SOURCE_DIR}/nursery.cmake
+  COMMAND ${CMAKE_COMMAND}
+    -DNSAMPLE_EXE=${NSAMPLE_EXE}
+    -DDEFAULT_TARGET_STACK_SIZE=${DEFAULT_TARGET_STACK_SIZE}
+    -DDETERMINE_BEST_STACK_SIZE=${DETERMINE_BEST_STACK_SIZE}
+    -P ${Chicken_SOURCE_DIR}/nursery.cmake
+  COMMENT "Writing stack size to ${CMAKE_CURRENT_BINARY_DIR}/StackSize"
+)
+ADD_CUSTOM_TARGET(nursery
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/StackSize
+)
+ADD_DEPENDENCIES(nursery nsample)
+
+# There's no way to pass a result from a CMake script back to a build rule.
+# So, we store the desired value of DEFAULT_TARGET_STACK_SIZE in the file
+# ${CMAKE_CURRENT_BINARY_DIR}/StackSize .
+# ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake will read it
+# to get the value; we don't pass a -D flag for it.
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken-defaults.h.in
+  DEPENDS
+    ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/StackSize
+  COMMAND ${CMAKE_COMMAND}
+    -DChicken_SOURCE_DIR="${Chicken_SOURCE_DIR}"
+    -DINSTALL_HOME="${INSTALL_HOME}"
+    -DINSTALL_BIN_HOME="${INSTALL_BIN_HOME}"
+    -DINSTALL_LIB_HOME="${INSTALL_LIB_HOME}"
+    -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
+    -DSTACK_GROWS_DOWNWARD="${STACK_GROWS_DOWNWARD}"
+    -P ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
+  COMMENT "Replacing ${Chicken_SOURCE_DIR}/chicken-defaults.h.in to ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h"
+)
+ADD_CUSTOM_TARGET(chicken-defaults
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+)
+ADD_DEPENDENCIES(chicken-defaults nursery)
+
 
 ####################################################################
 #  CREATE CSC, CSI, CHICKEN-PROFILE, CHICKEN-SETUP                 #
@@ -929,7 +945,7 @@ ADD_DEPENDENCIES(chicken-profile chicken-boot)
 ADD_EXECUTABLE(chicken-setup ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c)
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
-ADD_DEPENDENCIES(chicken-setup chicken-boot)
+ADD_DEPENDENCIES(chicken-setup chicken-boot chicken-defaults)
 
 
 ####################################################################
@@ -968,12 +984,12 @@ GET_CHICKEN_C_SOURCES(CHICKEN_EXE_SOURCES)
 ADD_EXECUTABLE(chicken ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
-ADD_DEPENDENCIES(chicken chicken-boot easyffi-c)
+ADD_DEPENDENCIES(chicken chicken-boot easyffi-c chicken-defaults)
 
 ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c)
+ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c chicken-defaults)
 
 
 ####################################################################

@@ -14,10 +14,10 @@ CFLAGS = $(CFLAGS) /MD
 !endif
 LFLAGS = /nologo /subsystem:console /incremental:no /machine:I386
 CHICKEN = chicken
-SFLAGS = -quiet -explicit-use -debug-level 0 -optimize-level 2
-SXFLAGS = -quiet -no-warnings -debug-level 0 -optimize-level 2
+SFLAGS = -quiet -explicit-use -no-trace -optimize-level 2
+SXFLAGS = -quiet -no-warnings -no-trace -optimize-level 2
 #SFLAGS = -quiet -explicit-use -optimize-level 2
-SUFLAGS = -quiet -explicit-use -debug-level 0 -optimize-level 2 -feature unsafe -unsafe
+SUFLAGS = -quiet -explicit-use -no-trace -no-lambda-info -optimize-level 2 -feature unsafe -unsafe
 WINLIBS = ws2_32.lib
 WINGUILIBS = $(WINLIBS) kernel32.lib user32.lib gdi32.lib
 

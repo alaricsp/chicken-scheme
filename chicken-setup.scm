@@ -80,10 +80,11 @@ EOF
 
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
-    "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval") )
+    "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
+    "-debug") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D) )
 
 
 (define *install-bin-path* 
@@ -100,6 +101,7 @@ EOF
 
 (define *windows-shell* (memq *windows* '(msvc mingw32)))
 (define *msvc* (eq? *windows* 'msvc))
+(define *debug* #f)
 
 (register-feature! 'chicken-setup)
 
@@ -138,6 +140,7 @@ EOF
 (define *proxy-host* #f)
 (define *proxy-port* #f)
 (define *example-directory* (make-pathname (chicken-home) "examples"))
+(define *base-directory* (current-directory))
 
 
 ; Repository-format:
@@ -465,9 +468,12 @@ EOF
   (change-directory dir) )
 
 (define (rmtmpdir)
+  (chdir *base-directory*)
   (when *tmpdir-created*
-    (chdir "..")
-    (unless *keep-stuff* (run (,*remove-command* ,*temporary-directory*)) ) ) )
+    (set! *tmpdir-created* #f)
+    (unless *keep-stuff*
+      (when (setup-verbose-flag) (printf "removing temporary directory `~A'~%" *temporary-directory*))
+      (run (,*remove-command* ,*temporary-directory*))) ))
 
 (define (unpack filename)
   (define (testgz fn)
@@ -563,11 +569,13 @@ EOF
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (ppath (program-path)) 
-	   (files (map (lambda (f)
-			 (if (list? f) 
-			     (list (exify (car f)) (exify (cadr f)))
-			     (exify f) ) )
-		       files) ) 
+	   (files (if *windows*
+                      (map (lambda (f)
+                             (if (list? f) 
+                                 (list (exify (car f)) (exify (cadr f)))
+                                 (exify f) ) )
+                           files)
+                      files) ) 
 	   (dests (map (lambda (f)
 			 (let ((from (if (pair? f) (car f) f))
 			       (to (make-dest-pathname ppath f)) )
@@ -698,6 +706,9 @@ EOF
 			    (if (string=? "" ln)
 				(begin
 				  (set! *repository-tree* (read i))
+				  (when *debug*
+				    (print "catalog:")
+				    (pp *repository-tree*) )
 				  (close-input-port i)
 				  (close-output-port o)
 				  #t)
@@ -749,7 +760,7 @@ EOF
     (fold 
      (lambda (r reqs)
        (let ((node (assq r *repository-tree*)))
-	 (cond (node (append (requirements (cdddr node)) reqs))
+	 (cond (node (append (list (car node)) (requirements (cdddr node)) reqs))
 	       ((memq r core-library-modules) reqs)
 	       (else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
      '() 
@@ -771,6 +782,7 @@ EOF
 	      (download-repository-tree)
 	      (set! *dont-ask* #t)
 	      (let ((a (and *repository-tree* (assq (string->symbol ext) *repository-tree*))))
+		(when *debug* (printf "catalog entry: ~s~%" a))
 		(cond (a (let ((reqs (remove extension-info (delete-duplicates (requirements (cdddr a)) eq?))))
 			   (when (pair? reqs)
 			     (print "downloading required extensions ...")
@@ -789,7 +801,8 @@ EOF
 	    ((and df (with-ext filename "egg")) => 
 	     (lambda (f)
 	       (unpack f)
-               (loop (pathname-replace-extension f "setup")) ) )
+               (loop (pathname-replace-extension f "setup"))
+               (rmtmpdir) ) )
 	    ((fetch-file-from-net filename) 
 	     (when df (loop (pathname-file filename))) ) ) ) ) )
 
@@ -877,7 +890,7 @@ EOF
 	      ((_ host port) (list host (if eggdir "eggs" "") (string->number port)))
 	      (_ (list host (if eggdir "eggs" "") 80)) )
 	    repository-hosts) )  )
-  (setup-root-directory (current-directory))
+  (setup-root-directory *base-directory*)
   (let ((uinst #f)
 	(anydone #f))
     (let loop ((args args))
@@ -964,6 +977,9 @@ EOF
 	   (unless (file-exists? di)
 	     (build-doc-index) )
 	   (print di) ) )
+	(("-debug" . more)
+	 (set! *debug* #t)
+	 (loop more) )
 	(("-check" . more)
 	 (set! *check-repository* #t)
 	 (set! anydone #t)

@@ -6,6 +6,19 @@
 # CMake's CONFIGURE_FILE doesn't have a regex replace capability,
 # but this can be worked around by running a CMake script.
 
+# CMake can't return values from scripts.  When a script determines
+# a value, it has to write it to a file.  Then the consumer can
+# read the file.  nursery.cmake produces the value of
+# DEFAULT_TARGET_STACK_SIZE and writes it to the file StackSize.
+
+IF(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/StackSize)
+  FILE(READ ${CMAKE_CURRENT_BINARY_DIR}/StackSize DEFAULT_TARGET_STACK_SIZE)
+ELSE(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/StackSize)
+  MESSAGE(FATAL_ERROR "${CMAKE_CURRENT_BINARY_DIR}/StackSize should have been created.
+    Aborting ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h substitutions.")
+ENDIF(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/StackSize)
+
+
 FILE(READ ${Chicken_SOURCE_DIR}/chicken-defaults.h.in input)
 STRING(REPLACE "%INSTALL_HOME%" "${INSTALL_HOME}" input "${input}")
 STRING(REPLACE "%INSTALL_BIN_HOME%" "${INSTALL_BIN_HOME}" input "${input}")
