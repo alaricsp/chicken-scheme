@@ -1,4 +1,4 @@
--18.scm - Simple thread unit - felix
+;;; srfi-18.scm - Simple thread unit - felix
 ;
 ; Copyright (c) 2000-2006, Felix L. Winkelmann
 ; All rights reserved.
@@ -404,6 +404,7 @@ EOF
 	     (let* ([wt (##sys#slot waiting 0)]
 		    [wts (##sys#slot wt 3)] )
 	       (##sys#setslot mutex 3 (##sys#slot waiting 1))
+	       (##sys#setislot mutex 5 #t)
 	       (when (or (eq? wts 'blocked) (eq? wts 'sleeping))
 		 (##sys#setslot mutex 2 wt)
 		 (##sys#setslot wt 8 (cons mutex (##sys#slot wt 8)))

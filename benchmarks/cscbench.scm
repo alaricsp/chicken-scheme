@@ -86,7 +86,7 @@
    (lambda (file)
      (let* ([name (pathname-file file)]
 	    [extras (if (member name plist-files)
-			"-prologue plists"
+			"-prologue plists.scm"
 			"") ]
 	    [options (string-intersperse options " ")] )
        (display-l name 16 #\space)
@@ -102,7 +102,7 @@
 	 (compile-and-run file extras "-benchmark-mode" options "" #t) )
        (newline)
        (flush-output) ) )
-   (delete! "cscbench.scm" (sort (glob "*.scm") string<?) string=?) )
+   (lset-difference string=? (sort (glob "*.scm") string<?) '("cscbench.scm" "plists.scm")))
  0)
 
 (main (command-line-arguments))

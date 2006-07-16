@@ -346,7 +346,7 @@
    (##sys#check-syntax 'define-constant form '(symbol _))
    `(##core#define-constant ',(car form) ,(cadr form)) ) )
 
-(##sys#register-macro-2
+(##sys#register-macro-2			; DEPRECATED
  'critical-section
  (lambda (form)
    `(##sys#dynamic-wind

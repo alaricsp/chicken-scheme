@@ -1216,6 +1216,7 @@ EOF
     (lambda (port msg . args)
       (let rec ([msg msg] [args args])
 	(##sys#check-string msg 'fprintf)
+	(##sys#check-port port 'fprintf)
 	(let ((index 0)
 	      (len (##sys#size msg)) )
 

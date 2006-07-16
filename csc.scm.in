@@ -35,7 +35,7 @@
 
 (declare
   (block)
-  (uses extras srfi-1 regex utils))
+  (uses extras srfi-1 srfi-13 regex utils))
 
 
 ;;; Parameters:
@@ -66,10 +66,15 @@
 
 (define (homize str) (make-pathname home str))
 
+(define (quotewrap str)
+  (if (string-any char-whitespace? str)
+      (string-append "\"" str "\"") 
+      str) )
+
 (begin
   (if (flat-directory-install)
-      (define translator (homize "chicken"))
-      (define translator (prefix "chicken" "bin" "%bindir%/chicken")) )
+      (define translator (quotewrap (homize "chicken")))
+      (define translator (quotewrap (prefix "chicken" "bin" "%bindir%/chicken")) ))
   (if win
     (begin
       (define compiler "cl")
@@ -364,7 +369,7 @@ EOF
     -W  -windows                compile as Windows GUI application (MSVC only)
     -R  -require-extension NAME require extension in compiled code
     -E  -extension              compile as extension (dynamic or static)
-    -dll                        compile as a Windows DLL (MSVC only)
+    -dll -library               compile multiple units into a dynamic library
 
   Options to other passes:
 
@@ -429,6 +434,18 @@ EOF
   (define (check o r . n)
     (unless (>= (length r) (:optional n 1))
       (quit "not enough arguments to option `~A'" o) ) )
+
+  (define (shared-build lib)
+    (set! translate-options (cons* "-feature" "chicken-compile-shared" translate-options))
+    (if win
+	(begin
+	  (set! compile-options (cons* "/DPIC" "/DC_SHARED" compile-options)) 
+	  (set! link-options (cons* "/dll" link-options)))
+	(begin
+	  (set! compile-options (cons* "-fPIC" "-DPIC" "-DC_SHARED" compile-options)) 
+	  (set! link-options
+	    (cons* "-fPIC" (if osx (if lib "-dynamiclib" "-bundle") "-shared") link-options))))
+    (set! shared #t) )
 
   (let loop ([args args])
     (cond [(null? args)
@@ -560,21 +577,9 @@ EOF
 		(t-options (->string s))
 		(set! ffi #t) ]
 	       [(-s -shared -dynamic)
-		(set! translate-options (cons* "-feature" "chicken-compile-shared" translate-options))
-		(if win
-		    (begin
-		      (set! compile-options (cons* "/DPIC" "/DC_SHARED" compile-options)) 
-		      (set! link-options (cons* "/dll" link-options)))
-		    (begin
-		      (set! compile-options (cons* "-fPIC" "-DPIC" "-DC_SHARED" compile-options)) 
-		      (set! link-options
-			(cons* "-fPIC" (if osx "-bundle" "-shared") link-options))))
-		(set! shared #t) ]
-	       [(-dll)
-		(set! translate-options (cons* "-feature" "chicken-compile-shared" translate-options))
-		(set! compile-options (cons* "/DPIC" "/DC_SHARED /DC_EMBEDDED" compile-options)) 
-		(set! link-options (cons "/dll" link-options))
-		(set! shared #t) ]
+		(shared-build #f) ]
+	       [(-dll -library)
+		(shared-build #t) ]
 	       [(-compiler)
 		(check s rest)
 		(set! translator (car rest))

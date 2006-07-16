@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 325
+  Version 2, Build 4
 
 
  1. Introduction:
@@ -33,6 +33,7 @@
     LICENSE                     BSD license
     INSTALL                     generic installation instructions for UNIX
     TASKS                       if you want to contribute
+    INSTALL-CMake.txt           instructions for building CHICKEN with CMake
     ChangeLog    		new features and bugfixes
     vctk-install.txt            Instructions for using the free command-line tools from Microsoft
     chicken.html

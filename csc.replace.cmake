@@ -1,16 +1,10 @@
+# Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
+# See LICENSE section at end of file for full license text.
+
+
 # CMake needs this to perform substitutions upon csc.scm.in .
 # CMake's CONFIGURE_FILE doesn't have a regex replace capability,
 # but this can be worked around by running a CMake script.
-
-# Note that in CMake 2.4.2, "cmake -P" is rather dumb.  It won't take any input arguments,
-# and it doesn't receive any variables from the caller.  "cmake -P" does know the directory
-# it was called from; it is set in CMAKE_CURRENT_BINARY_DIR.  So we put a bunch of SET commands 
-# in a file called vars.cmake, make sure it's in the same directory we're calling from, and
-# include it here.  Bleh!
-
-INCLUDE(${CMAKE_CURRENT_BINARY_DIR}/vars.cmake)
-
-# Now we have some of the usual variables we're expecting to have.
 
 FILE(READ ${Chicken_SOURCE_DIR}/csc.scm.in input)
 
@@ -33,3 +27,28 @@ STRING(REPLACE "%morelibs%" "${MORE_LIBS}" input "${input}")
 STRING(REPLACE "%morestaticlibs%" "${MORE_STATIC_LIBS}" input "${input}")
 
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/csc.scm "${input}")
+
+
+####################################################################
+#   LICENSE                                                        #
+####################################################################
+
+# Copyright (c) 2006 by Brandon J. Van Every
+# 
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.

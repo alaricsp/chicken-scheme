@@ -957,6 +957,7 @@ EOF
 	 (loop more) )
 	(("-no-install" . more)
 	 (setup-install-flag #f)
+	 (set! *keep-stuff* #t)
 	 (loop more) )
 	(("-docindex" . more)
 	 (let ((di (doc-index)))

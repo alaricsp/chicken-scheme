@@ -1,7 +1,7 @@
 ### makefile.vc - Makefile for building CHICKEN with VC++ 5/6 - felix -*- Makefile -*-
 
 CC = cl
-CFLAGS = /nologo /O2 /DC_DEFAULT_TARGET_STACK_SIZE=300000 /DC_NO_PIC_NO_DLL /DHAVE_LOADLIBRARY /DHAVE_GETPROCADDRESS /DHAVE_WINDOWS_H /DC_ENABLE_PTABLES /DC_APPLY_HOOK
+CFLAGS = /nologo /O2 /DC_DEFAULT_TARGET_STACK_SIZE=300000 /DC_NO_PIC_NO_DLL /DHAVE_LOADLIBRARY /DHAVE_GETPROCADDRESS /DHAVE_WINDOWS_H /DC_ENABLE_PTABLES
 !if "$(DYNAMIC_C_RUNTIME)" == "yes"
 # use dynamic C runtime
 # without it every .exe and .dll will have its own copy of the runtime library 

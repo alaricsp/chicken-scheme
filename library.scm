@@ -2828,10 +2828,7 @@ EOF
 
 (define ##sys#pathname-directory-separator
   (let ([st (software-type)])
-    (if (or (eq? 'msdos st)
-	    (and (eq? 'windows st) 
-		 (let ([bp (build-platform)])
-		   (not (or (eq? 'cygwin bp) (eq? 'mingw32 bp))) ) ) )
+    (if (and (eq? 'windows st) (not (eq? (build-platform) 'cygwin)))
 	#\\
 	#\/) ) )
 
@@ -2963,7 +2960,7 @@ EOF
 
 ;;; Interrupt handling:
 
-(let ([count 0])
+(let ([count 0])			; DEPRECATED
   (set! ##sys#enable-interrupts
     (lambda val
       (set! count (fx+ count (if (pair? val) (car val) 1)))
@@ -2973,8 +2970,8 @@ EOF
       (when (eq? count 0) (##core#inline "C_disable_interrupts"))
       (set! count (fx- count 1)) ) ) )
 
-(define enable-interrupts ##sys#enable-interrupts)
-(define disable-interrupts ##sys#disable-interrupts)
+(define enable-interrupts ##sys#enable-interrupts) ; DEPRECATED
+(define disable-interrupts ##sys#disable-interrupts) ; DEPRECATED
 
 (define (##sys#user-interrupt-hook)
   (define (break) (##sys#signal-hook #:user-interrupt #f))
@@ -3834,21 +3831,6 @@ EOF
        (##sys#write-char-0 #\newline ##sys#standard-error) )
      args)
     (##sys#signal-hook #:match-error "no matching clause for " val)))
-
-
-;;; `error' expands into this (with extended-bindings):
-
-(define ##sys#error-at
-  (let ([string-append string-append])
-    (lambda (where msg . args)
-      (apply
-       ##sys#signal-hook #:error 
-       (string-append 
-	where " " 
-	(cond [(string? msg) msg]
-	      [(symbol? msg) (##sys#symbol->string msg)]
-	      [else ""] ) )
-       args) ) ) )
 
 
 ;;; Internal string-reader:

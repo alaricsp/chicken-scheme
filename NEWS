@@ -44,12 +44,14 @@
 - csc: added `-dry-run' option
 - removed `-split...' options (and the ability to generate multiple C files from a single
   Scheme file)
+- `crictical-section', `disable-interrupts' and `enable-interrupts' shouldn't be used from
+  now on (deprecated), use SRFI-18 mutexes instead
 
 Many thanks to Nico Amtsberg, Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, 
 John Cowan, Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech 
 Goulart, Sven Hartrumpf, Markus Hülsmann, Goetz Isenmann, Heath Johns, Daishi Kato, Kon Lovett, Dan 
-Muresan, Göran Weinholt, Burton Samograd, Reed Sheridan, Alex Shinn, Sunnan, Zbigniew Szadkowski and 
-Peter Wright for their helpful contributions, suggestions and bug reports!
+Muresan, Ian Oversby, Göran Weinholt, Burton Samograd, Reed Sheridan, Alex Shinn, Sunnan, Zbigniew 
+Szadkowski and Peter Wright for their helpful contributions, suggestions and bug reports!
 
 
 2.3

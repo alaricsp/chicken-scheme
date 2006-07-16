@@ -1959,6 +1959,7 @@ EOF
 	[read read]
 	[call-with-current-continuation call-with-current-continuation]
 	[print-call-chain print-call-chain]
+	[flush-output flush-output]
 	[reset reset] )
     (lambda ()
 
@@ -2003,7 +2004,8 @@ EOF
 		  (begin
 		    (##sys#write-char-0 #\newline ##sys#standard-error)
 		    (write-err args) ) )
-	      (print-call-chain ##sys#standard-error) ) ) )
+	      (print-call-chain ##sys#standard-error)
+	      (flush-output ##sys#standard-error) ) ) )
 	 (lambda ()
 	   (let loop ()
 	     (saveports)
