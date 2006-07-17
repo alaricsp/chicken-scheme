@@ -48,6 +48,10 @@
 #include <errno.h>
 #include <time.h>
 
+#ifdef CMAKE_BUILD
+#include "chicken-paths.h"
+#endif
+
 #ifndef C_INSTALL_HOME
 # define C_INSTALL_HOME NULL
 #endif

@@ -75,10 +75,8 @@
 
 (define-constant maximal-number-of-free-variables-for-liftable 16)
 
-(define-constant unix-default-dynamic-load-libraries '("libchicken"))
-(define-constant cygwin-default-dynamic-load-libraries '("cygchicken"))
-(define-constant mingw-default-dynamic-load-libraries '("libchicken"))
-(define-constant msvc-default-dynamic-load-libraries '("libchicken"))
+(define-constant default-dynamic-load-libraries '("libchicken"))
+(define-constant cygwin-default-dynamic-load-libraries '("cygchicken-0"))
 
 (define-constant macosx-load-library-extension ".dylib")
 (define-constant windows-load-library-extension ".dll")

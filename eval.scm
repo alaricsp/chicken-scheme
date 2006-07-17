@@ -41,6 +41,10 @@
 	##sys#interaction-environment pds pdss pxss)
   (foreign-declare #<<EOF
 
+#ifdef CMAKE_BUILD
+#include "chicken-paths.h"
+#endif
+
 #ifndef C_INSTALL_LIB_HOME
 # define C_INSTALL_LIB_HOME    "."
 #endif
@@ -1158,14 +1162,10 @@ EOF
 	      (eq? (machine-type) 'hppa)) default-load-library-extension]
 	[else ##sys#load-library-extension] ) )
 
-(define ##sys#default-dynamic-load-libraries
-  (case (software-type)
-    [(windows)
-     (case (build-platform)
-       [(msvc) msvc-default-dynamic-load-libraries]
-       [(mingw32) mingw-default-dynamic-load-libraries]
-       [else cygwin-default-dynamic-load-libraries] ) ]
-    [else unix-default-dynamic-load-libraries] ) )
+(define ##sys#default-dynamic-load-libraries 
+  (case (build-platform)
+    ((cygwin) cygwin-default-dynamic-load-libraries)
+    (else default-dynamic-load-libraries) ) )
 
 (define dynamic-load-libraries 
   (make-parameter

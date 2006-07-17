@@ -235,12 +235,18 @@
  (unit compiler)
  (disable-warning var)
  (foreign-declare #<<EOF
-#ifdef C_USE_C_DEFAULTS
+#ifdef CMAKE_BUILD
+# include "chicken-paths.h"
+# include "stack-size.h"
+#elif defined(C_USE_C_DEFAULTS)
 # include "chicken-defaults.h"
 #else
 # define C_INSTALL_HOME NULL
 #endif
 
+#ifdef CMAKE_BUILD
+# include "stack-size.h"
+#endif
 #ifndef C_DEFAULT_TARGET_STACK_SIZE
 # define C_DEFAULT_TARGET_STACK_SIZE 0
 #endif

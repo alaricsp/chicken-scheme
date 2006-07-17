@@ -12,17 +12,12 @@ STRING(REPLACE "%pkgdatadir%" "${INSTALL_HOME}" input "${input}")
 STRING(REPLACE "%bindir%" "${INSTALL_BIN_HOME}" input "${input}")
 STRING(REPLACE "%includedir%" "${INSTALL_INCLUDE_HOME}" input "${input}")
 STRING(REPLACE "%libdir%" "${INSTALL_LIB_HOME}" input "${input}")
-STRING(REPLACE "%cc%" "${CMAKE_C_COMPILER}" input "${input}")
-STRING(REPLACE "%cxx%" "${CMAKE_CXX_COMPILER}" input "${input}")
+STRING(REPLACE "%cc%" "${CC_PATH}" input "${input}")
+STRING(REPLACE "%cxx%" "${CXX_PATH}" input "${input}")
 
-# "\"STRING\"" formats get messed up in transition, so we've passed
-# %%%STRING%%% instead.  Turn it back into what we want.
-STRING(REPLACE "%%%" "\"\\\"" EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS}")
+FILE(READ ${CMAKE_CURRENT_BINARY_DIR}/cscflags CSCFLAGS)
 
-# Hmm, the output is "\\"STRING\\"" .  Is that what we want?
-# Can't seem to fix it.
-
-STRING(REPLACE "%cflags%" "${EXCESSIVE_CPPFLAGS}" input "${input}")
+STRING(REPLACE "%cflags%" "${CSCFLAGS}" input "${input}")
 STRING(REPLACE "%morelibs%" "${MORE_LIBS}" input "${input}")
 STRING(REPLACE "%morestaticlibs%" "${MORE_STATIC_LIBS}" input "${input}")
 

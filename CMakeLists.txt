@@ -10,40 +10,14 @@ INCLUDE_DIRECTORIES(${Chicken_SOURCE_DIR})
 
 
 ####################################################################
-#  PASSING VARIABLES TO SUBDIRECTORIES                             #
-####################################################################
-
-# In CMake, if a variable or macro is defined before a subdirectory
-# is added, then the variable will be trivially communicated to the
-# subdirectory.  This is fine for passing information from the
-# toplevel downwards.
-#
-# To pass up from directories, or across them, the variable needs
-# CACHE INTERNAL "A documentation string" at the end of it.
-# All 3 elements are required, i.e.
-# SET(MY_ANSWER 42 CACHE INTERNAL "Any questions?")
-# Otherwise you'll get a list of gobbledygoo.
-#
-# So, perform ADD_SUBDIRECTORY rather late!
-
-
-####################################################################
 #  TEXT UTILITIES                                                  #
 ####################################################################
-
-# In CMake, variables are semicolon separated lists of elements.
-# Sometimes we need to turn these lists into one big string.
-
-MACRO(LIST2STRING list string)
-  STRING(REPLACE ";" " " ${string} "${${list}}")
-ENDMACRO(LIST2STRING)
 
 # General style is to list the rootnames of modules, and tack on
 # .scm or .c suffixes as appropriate in context.  Similarly, units
 # in unsafe libraries often need 'u' prefixes.  These text
 # utilities are more readable than writing the same clunky string
 # processing code all the time.
-
 
 MACRO(ADD_SUFFIX rootlist suffix)
   SET(outlist )
@@ -61,23 +35,26 @@ MACRO(ADD_PREFIX prefix rootlist)
   SET(${rootlist} ${outlist})
 ENDMACRO(ADD_PREFIX)
 
-# Quite often, we need to specify where a source or
-# generated file exists.  In principle, CMake should
-# automagically find any file in ${Chicken_SOURCE_DIR}
-# that is simply named.  myfile.c should always be
-# equivalent to ${Chicken_SOURCE_DIR}/myfile.c
-# In practice, we are paranoid.
+# In CMake 2.4.2 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
+# generates Unix style pathnames.  Although this may be correct behavior
+# under the MSYS shell itself, Chicken probably won't be used under the
+# MSYS shell.  Generally MSYS is just there for build assistance.
+# So, manually convert to Windows native pathnames.
 
-MACRO(GLOBALIZE sourcelist)
-  ADD_PREFIX(${Chicken_SOURCE_DIR}/ ${sourcelist})
-ENDMACRO(GLOBALIZE)
+# Quoting policy: if Chicken can't handle a native pathname specified in a
+# straightforward manner, then the Chicken sources are considered broken.
+# Should not have to do any double secret quoting escape rituals.
 
-# Generated files typically need to exist in their own local directory.
-# This is important for multi-stage bootstrapping.
-
-MACRO(LOCALIZE sourcelist)
-  ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${sourcelist})
-ENDMACRO(LOCALIZE)
+MACRO(MAKE_WINDOWS_PATH pathname)
+  # An extra \\ escape is necessary to get a \ through CMake's processing.
+  # Remove all escapes from whitespace.
+  STRING(REPLACE "\\ " " " ${pathname} "${${pathname}}")
+  # Use backslashes for directory separation
+  STRING(REPLACE "/" "\\" ${pathname} "${${pathname}}")
+  # Enclose with UNESCAPED quotes.  This means we need to escape our
+  # quotes once here, i.e. with \"
+  SET(${pathname} \"${${pathname}}\")
+ENDMACRO(MAKE_WINDOWS_PATH)
 
 
 ####################################################################
@@ -168,59 +145,6 @@ MACRO(UNSAFE_LIBRARY_SCM_TO_C saferoot)
   )
 ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 
-# csc.scm.in and chicken-defaults.h.in needs regex replacement.
-# CONFIGURE_FILE doesn't have a
-# regex capability, but we can get around this using a CMake script.
-
-MACRO(GEN_CSC_SCM)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
-    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csc.scm.in
-    DEPENDS ${Chicken_SOURCE_DIR}/csc.replace.cmake
-    COMMAND ${CMAKE_COMMAND}
-      -DChicken_SOURCE_DIR="${Chicken_SOURCE_DIR}"
-      -DINSTALL_HOME="${INSTALL_HOME}"
-      -DINSTALL_BIN_HOME="${INSTALL_BIN_HOME}"
-      -DINSTALL_INCLUDE_HOME="${INSTALL_INCLUDE_HOME}"
-      -DINSTALL_LIB_HOME="${INSTALL_LIB_HOME}"
-      -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
-      -DCMAKE_CXX_COMPILER="${CMAKE_CXX_COMPILER}"
-      -DEXCESSIVE_CPPFLAGS="${EXCESSIVE_CPPFLAGS}"
-      -DMORE_LIBS="${MORE_LIBS}"
-      -DMORE_STATIC_LIBS="${MORE_STATIC_LIBS}"
-      -P ${Chicken_SOURCE_DIR}/csc.replace.cmake
-    COMMENT "Replacing ${Chicken_SOURCE_DIR}/csc.scm.in to ${CMAKE_CURRENT_BINARY_DIR}/csc.scm"
-  )
-ENDMACRO(GEN_CSC_SCM)
-
-# csc.c needs its own custom rule because csc.scm is generated.
-
-MACRO(GEN_CSC_C)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.c
-    MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
-    DEPENDS ${Chicken_SOURCE_DIR}/banner.scm
-    COMMAND ${CURRENT_CHICKEN} ${CMAKE_CURRENT_BINARY_DIR}/csc.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csc.c ${CHICKEN_FLAGS}
-    COMMENT "Compiling ${CMAKE_CURRENT_BINARY_DIR}/csc.scm to ${CMAKE_CURRENT_BINARY_DIR}/csc.c"
-  )
-ENDMACRO(GEN_CSC_C)
-
-# csi gets special treatment with a prologue.
-
-MACRO(GEN_CSI_C)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csi.c
-    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csi.scm
-    DEPENDS
-      ${Chicken_SOURCE_DIR}/banner.scm
-      ${Chicken_SOURCE_DIR}/build.scm
-      ${Chicken_SOURCE_DIR}/chicken-more-macros.scm
-      ${Chicken_SOURCE_DIR}/parameters.scm
-    COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/csi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csi.c -prologue ${Chicken_SOURCE_DIR}/build.scm ${CHICKEN_FLAGS}
-    COMMENT "Compiling ${Chicken_SOURCE_DIR}/csi.scm to ${CMAKE_CURRENT_BINARY_DIR}/csi.c"
-  )
-ENDMACRO(GEN_CSI_C)
-
 # Need to generate easyffi.l.silex first.
 # This is a key 1st step in the bootstrap.
 
@@ -265,25 +189,48 @@ ADD_DEFINITIONS(-DCMAKE_BUILD)
 # hardwired for msvc by default.  Use this to work around it.
 
 ADD_DEFINITIONS(-DHIERARCHICAL_INSTALL)
-ADD_DEFINITIONS(-DC_USE_C_DEFAULTS)
 
+# Chicken uses the INSTALL_* paths in various tools to generate shell
+# commands; for instance, under a Windows command prompt.  So they need
+# to be native paths.
+
+# First specify the paths relative to each other in CMake style.
 SET(INSTALL_HOME ${CMAKE_INSTALL_PREFIX})
 SET(INSTALL_BIN_HOME ${INSTALL_HOME}/bin)
 SET(INSTALL_INCLUDE_HOME ${INSTALL_HOME}/include)
-# What about that /chicken/1 funk?
 SET(INSTALL_LIB_HOME ${INSTALL_HOME}/lib)
+SET(CC_PATH ${CMAKE_C_COMPILER})
+SET(CXX_PATH ${CMAKE_CXX_COMPILER})
 
-# Note: the exterior quotes are unescaped.  The interior quotes are escaped.
-# Double \\ are necessary to get through CMake's processing.
-ADD_DEFINITIONS(-DC_INSTALL_HOME="\\"${INSTALL_HOME}\\"")
-ADD_DEFINITIONS(-DC_INSTALL_BIN_HOME="\\"${INSTALL_BIN_HOME}\\"")
-ADD_DEFINITIONS(-DC_INSTALL_INCLUDE_HOME="\\"${INSTALL_INCLUDE_HOME}\\"")
-ADD_DEFINITIONS(-DC_INSTALL_LIB_HOME="\\"${INSTALL_LIB_HOME}\\"")
+# Then make them native after the path logic is done.
+IF(WIN32 AND NOT CYGWIN)
+  MAKE_WINDOWS_PATH(INSTALL_HOME)
+  MAKE_WINDOWS_PATH(INSTALL_BIN_HOME)
+  MAKE_WINDOWS_PATH(INSTALL_INCLUDE_HOME)
+  MAKE_WINDOWS_PATH(INSTALL_LIB_HOME)
+  MAKE_WINDOWS_PATH(CC_PATH)
+  MAKE_WINDOWS_PATH(CXX_PATH)
+ELSE(WIN32 AND NOT CYGWIN)
+  # Assume that TO_NATIVE_PATH does the right thing.
+  # This is a dicey assumption.  Need to test it on other OSes.
+  FILE(TO_NATIVE_PATH "${INSTALL_HOME}" INSTALL_HOME)
+  FILE(TO_NATIVE_PATH "${INSTALL_BIN_HOME}" INSTALL_BIN_HOME)
+  FILE(TO_NATIVE_PATH "${INSTALL_INCLUDE_HOME}" INSTALL_INCLUDE_HOME)
+  FILE(TO_NATIVE_PATH "${INSTALL_LIB_HOME}" INSTALL_LIB_HOME)
+  FILE(TO_NATIVE_PATH "${CC_PATH}" CC_PATH)
+  FILE(TO_NATIVE_PATH "${CXX_PATH}" CXX_PATH)
+ENDIF(WIN32 AND NOT CYGWIN)
 
-# This flag is definitely needed for MSVC.
-# Does MinGW need it?
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-paths.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
+
+# Does MSVC really require special treatment?
+# Do any other compilers?
+# What if the nursery determines a smaller stack size is better?
 IF(MSVC)
-  ADD_DEFINITIONS(-DC_DEFAULT_TARGET_STACK_SIZE=300000)
+  SET(DEFAULT_TARGET_STACK_SIZE 300000)
+ELSE(MSVC)
+  SET(DEFAULT_TARGET_STACK_SIZE 131072)
 ENDIF(MSVC)
 
 CHECK_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
@@ -437,6 +384,28 @@ ENDIF(UNIX)
 
 
 ####################################################################
+#  DEFINE STACK_GROWS_DOWNWARD                                     #
+####################################################################
+
+TRY_RUN(STACK_GROWS_DOWNWARD
+  STACK_TEST_COMPILED
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${Chicken_SOURCE_DIR}/StackGrowsDownward.c
+)
+IF(STACK_TEST_COMPILED)
+  IF(STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
+    MESSAGE(SEND_ERROR "Compiled stack growth test, but unable to run it.  Using default.")
+    SET(STACK_GROWS_DOWNWARD -1)
+  ENDIF(STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
+ELSE(STACK_TEST_COMPILED)
+  MESSAGE(SEND_ERROR "Unable to compile stack growth test.  Using default.")
+  SET(STACK_GROWS_DOWNWARD -1)
+ENDIF(STACK_TEST_COMPILED)
+ADD_DEFINITIONS(-DC_STACK_GROWS_DOWNWARD="${STACK_GROWS_DOWNWARD}")
+MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
+
+
+####################################################################
 #  USER OPTIONS                                                    #
 ####################################################################
 
@@ -462,58 +431,7 @@ IF(DISABLE_APPLY_HOOK)
   ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
 ENDIF(DISABLE_APPLY_HOOK)
 
-# If you want to force a particular stack size, change the value
-# of the stack size here, then turn OFF the DETERMINE_BEST_STACK_SIZE
-# option in CMakeSetup / CCMake.  CMake 2.4.2 doesn't have a way to
-# input a number in CMakeSetup / CCMake.  Options can only be turned
-# ON or OFF.
-
-SET(DEFAULT_TARGET_STACK_SIZE 131072)
 OPTION(DETERMINE_BEST_STACK_SIZE "run nsample to find best stack size" TRUE)
-
-
-####################################################################
-#  DEFINE C_STACK_GROWS_DOWNWARD                                   #
-####################################################################
-
-TRY_RUN(STACK_GROWS_DOWNWARD
-  STACK_TEST_COMPILED
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${Chicken_SOURCE_DIR}/StackGrowsDownward.c
-)
-IF(STACK_TEST_COMPILED)
-  IF(STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
-    MESSAGE(SEND_ERROR "Compiled stack growth test, but unable to run it.  Using default.")
-    SET(STACK_GROWS_DOWNWARD -1)
-  ENDIF(STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
-ELSE(STACK_TEST_COMPILED)
-  MESSAGE(SEND_ERROR "Unable to compile stack growth test.  Using default.")
-  SET(STACK_GROWS_DOWNWARD -1)
-ENDIF(STACK_TEST_COMPILED)
-ADD_DEFINITIONS(-DC_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD})
-MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
-
-
-####################################################################
-#  EXCESSIVE_CPPFLAGS                                              #
-####################################################################
-
-# These are flags that CSC wants to hear about when it does its thing.
-# These will be substituted into csc.scm using csc.replace.cmake.
-# The following approach generates excessive numbers of flags, but I'm
-# really tired of dealing with all this crap being spewed around.
-# Good God when will it ever end?
-
-GET_DIRECTORY_PROPERTY(EXCESSIVE_CPPFLAGS
-  DIRECTORY ${Chicken_SOURCE_DIR}
-  DEFINITIONS
-)
-# Just can't seem to handle passing "\"STRING\""
-# Pass something simpler, just %%%.  Reconstruct it as desired
-# on the other side.  Hm, hope % isn't in any filenames!
-
-STRING(REPLACE "\"" "%" EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS}")
-STRING(REPLACE "\\" "%" EXCESSIVE_CPPFLAGS "${EXCESSIVE_CPPFLAGS}")
 
 
 ####################################################################
@@ -529,7 +447,7 @@ SET(LIB_CSOURCE
 )
 MACRO(GET_LIB_CSOURCE out)
   SET(${out} ${LIB_CSOURCE})
-  GLOBALIZE(${out})
+  ADD_PREFIX(${Chicken_SOURCE_DIR}/ ${out})
 ENDMACRO(GET_LIB_CSOURCE)
 
 # Library files that are always generated the same way and named the
@@ -544,7 +462,7 @@ SET(LIB_COMMON_CGEN
 MACRO(GET_LIB_COMMON_CGEN out)
   SET(${out} ${LIB_COMMON_CGEN})
   ADD_SUFFIX(${out} .c)
-  LOCALIZE(${out})
+  ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_LIB_COMMON_CGEN)
 
 # Library files that are generated and named differently depending on
@@ -570,7 +488,7 @@ SET(LIB_SAFE_CGEN
 MACRO(GET_LIB_SAFE_CGEN out)
   SET(${out} ${LIB_SAFE_CGEN})
   ADD_SUFFIX(${out} .c)
-  LOCALIZE(${out})
+  ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_LIB_SAFE_CGEN)
 
 # The UNSAFE library names have a 'u' prefix.
@@ -583,7 +501,7 @@ ADD_PREFIX(u LIB_UNSAFE_CGEN)
 MACRO(GET_LIB_UNSAFE_CGEN out)
   SET(${out} ${LIB_UNSAFE_CGEN})
   ADD_SUFFIX(${out} .c)
-  LOCALIZE(${out})
+  ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_LIB_UNSAFE_CGEN)
 
 # libchicken files that emit .exports
@@ -610,7 +528,7 @@ SET(LIB_EXPORTS
 MACRO(GET_LIB_EXPORTS out)
   SET(${out} ${LIB_EXPORTS})
   ADD_SUFFIX(${out} .exports)
-  LOCALIZE(${out})
+  ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_LIB_EXPORTS)
 
 # Files generated for Chicken.  No SAFE or UNSAFE distinctions.
@@ -628,7 +546,7 @@ SET(CHICKEN_CGEN
 MACRO(GET_CHICKEN_CGEN out)
   SET(${out} ${CHICKEN_CGEN})
   ADD_SUFFIX(${out} .c)
-  LOCALIZE(${out})
+  ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_CHICKEN_CGEN)
 
 # Localize the .c sources to a particular build subdirectory.
@@ -640,14 +558,16 @@ MACRO(GET_LIBCHICKEN_C_SOURCES out)
   GET_LIB_CSOURCE(csource)
   GET_LIB_COMMON_CGEN(common)
   GET_LIB_SAFE_CGEN(safe)
-  SET(${out} ${csource} ${common} ${safe})
+  SET(${out} ${csource} ${common} ${safe}
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
 ENDMACRO(GET_LIBCHICKEN_C_SOURCES)
 
 MACRO(GET_LIBUCHICKEN_C_SOURCES out)
   GET_LIB_CSOURCE(csource)
   GET_LIB_COMMON_CGEN(common)
   GET_LIB_UNSAFE_CGEN(unsafe)
-  SET(${out} ${csource} ${common} ${unsafe})
+  SET(${out} ${csource} ${common} ${unsafe}
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
 ENDMACRO(GET_LIBUCHICKEN_C_SOURCES)
 
 # libchicken-gui just compiles libchicken with -DC_WINDOWS_GUI.
@@ -657,7 +577,8 @@ MACRO(GET_CHICKEN_C_SOURCES out)
   GET_CHICKEN_CGEN(cgen)
   SET(${out}
     ${Chicken_SOURCE_DIR}/chicken.h
-    ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
+    ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h
     ${Chicken_SOURCE_DIR}/chicken.rc
     ${cgen}
   )
@@ -726,22 +647,9 @@ SET(CURRENT_CHICKEN ${CHICKEN_BOOT_EXE})
 
 
 ####################################################################
-#  .C GENERATION                                                   #
+#  CREATE LIBCHICKEN                                               #
 ####################################################################
 
-# Do these after we've created a 1st stage compiler via the bootstrap.
-
-SIMPLE_SCM_TO_C(batch-driver parameters)
-SIMPLE_SCM_TO_C(c-backend tweaks)
-SIMPLE_SCM_TO_C(c-platform)
-SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
-SIMPLE_SCM_TO_C(chicken-profile)
-SIMPLE_SCM_TO_C(chicken-setup build parameters)
-SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)
-GEN_CSC_SCM()
-GEN_CSC_C()
-GEN_CSI_C()
-# easyffi.c is declared later, after silex and easyffi.l.silex
 LIBRARY_SCM_TO_C_EXPORTS(eval parameters)
 UNSAFE_LIBRARY_SCM_TO_C(eval parameters)
 LIBRARY_SCM_TO_C_EXPORTS(extras)
@@ -784,10 +692,6 @@ UNSAFE_LIBRARY_SCM_TO_C(tinyclos)
 LIBRARY_SCM_TO_C_EXPORTS(utils)
 UNSAFE_LIBRARY_SCM_TO_C(utils)
 
-
-####################################################################
-#  CREATE LIBCHICKEN                                               #
-####################################################################
 
 GET_LIBCHICKEN_C_SOURCES(CHICKEN_LIB_SOURCES)
 GET_LIBUCHICKEN_C_SOURCES(CHICKEN_UNSAFE_LIB_SOURCES)
@@ -856,9 +760,8 @@ ENDIF(WIN32 AND NOT CYGWIN)
 
 
 ####################################################################
-#  NURSERY                                                         #
+#  STACK SIZE                                                      #
 ####################################################################
-
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/nsample.c
@@ -873,53 +776,97 @@ ADD_DEPENDENCIES(nsample chicken-boot)
 
 GET_TARGET_PROPERTY(NSAMPLE_EXE nsample LOCATION)
 ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/StackSize
-  DEPENDS ${Chicken_SOURCE_DIR}/nursery.cmake
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h
+  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/stack-size.h.in
+  DEPENDS ${Chicken_SOURCE_DIR}/stack-size.cmake
   COMMAND ${CMAKE_COMMAND}
+    -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR}
     -DNSAMPLE_EXE=${NSAMPLE_EXE}
     -DDEFAULT_TARGET_STACK_SIZE=${DEFAULT_TARGET_STACK_SIZE}
     -DDETERMINE_BEST_STACK_SIZE=${DETERMINE_BEST_STACK_SIZE}
-    -P ${Chicken_SOURCE_DIR}/nursery.cmake
-  COMMENT "Writing stack size to ${CMAKE_CURRENT_BINARY_DIR}/StackSize"
+    -P ${Chicken_SOURCE_DIR}/stack-size.cmake
+  COMMENT "Configuring ${Chicken_SOURCE_DIR}/stack-size.h.in to ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h"
 )
-ADD_CUSTOM_TARGET(nursery
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/StackSize
-)
-ADD_DEPENDENCIES(nursery nsample)
+ADD_CUSTOM_TARGET(stack-size
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h)
+ADD_DEPENDENCIES(stack-size nsample)
 
-# There's no way to pass a result from a CMake script back to a build rule.
-# So, we store the desired value of DEFAULT_TARGET_STACK_SIZE in the file
-# ${CMAKE_CURRENT_BINARY_DIR}/StackSize .
-# ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake will read it
-# to get the value; we don't pass a -D flag for it.
+
+####################################################################
+#  CREATE CSC                                                      #
+####################################################################
+
+# These are flags that CSC wants to hear about when it does its thing.
+# These will be substituted into csc.scm using csc.replace.cmake.
+
+GET_DIRECTORY_PROPERTY(CSCFLAGS
+  DIRECTORY ${Chicken_SOURCE_DIR}
+  DEFINITIONS
+)
+
+# CPPFLAGS_STRING can contain quoted pathnames with spaces in them.
+# This makes passing it to a CMake script rather tricky.
+# Rather than try to mess with -D arguments and quoting escapes,
+# we write exactly what we want to a file, then read it when
+# performing substitutions on csc.scm.in
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/cscflags.in
+  ${CMAKE_CURRENT_BINARY_DIR}/cscflags)
+
+# csc.scm.in needs regex replacement.  CONFIGURE_FILE doesn't have a
+# regex capability, but we can get around this using a CMake script.
 
 ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken-defaults.h.in
-  DEPENDS
-    ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/StackSize
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
+  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csc.scm.in
+  DEPENDS ${Chicken_SOURCE_DIR}/csc.replace.cmake
   COMMAND ${CMAKE_COMMAND}
-    -DChicken_SOURCE_DIR="${Chicken_SOURCE_DIR}"
-    -DINSTALL_HOME="${INSTALL_HOME}"
-    -DINSTALL_BIN_HOME="${INSTALL_BIN_HOME}"
-    -DINSTALL_LIB_HOME="${INSTALL_LIB_HOME}"
-    -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
-    -DSTACK_GROWS_DOWNWARD="${STACK_GROWS_DOWNWARD}"
-    -P ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
-  COMMENT "Replacing ${Chicken_SOURCE_DIR}/chicken-defaults.h.in to ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h"
+    -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR}
+    -DINSTALL_HOME=${INSTALL_HOME}
+    -DINSTALL_BIN_HOME=${INSTALL_BIN_HOME}
+    -DINSTALL_INCLUDE_HOME=${INSTALL_INCLUDE_HOME}
+    -DINSTALL_LIB_HOME=${INSTALL_LIB_HOME}
+    -DCC_PATH=${CC_PATH}
+    -DCXX_PATH=${CXX_PATH}
+    -DMORE_LIBS="${MORE_LIBS}"
+    -DMORE_STATIC_LIBS="${MORE_STATIC_LIBS}"
+    -P ${Chicken_SOURCE_DIR}/csc.replace.cmake
+  COMMENT "Replacing ${Chicken_SOURCE_DIR}/csc.scm.in to ${CMAKE_CURRENT_BINARY_DIR}/csc.scm"
 )
-ADD_CUSTOM_TARGET(chicken-defaults
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+
+# csc.c needs its own custom rule because csc.scm is generated.
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.c
+  MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
+  DEPENDS ${Chicken_SOURCE_DIR}/banner.scm
+  COMMAND ${CURRENT_CHICKEN} ${CMAKE_CURRENT_BINARY_DIR}/csc.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csc.c ${CHICKEN_FLAGS}
+  COMMENT "Compiling ${CMAKE_CURRENT_BINARY_DIR}/csc.scm to ${CMAKE_CURRENT_BINARY_DIR}/csc.c"
 )
-ADD_DEPENDENCIES(chicken-defaults nursery)
+
+ADD_EXECUTABLE(csc ${CMAKE_CURRENT_BINARY_DIR}/csc.c)
+SET_TARGET_PROPERTIES(csc PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+TARGET_LINK_LIBRARIES(csc libchicken)
+ADD_DEPENDENCIES(csc chicken-boot)
 
 
 ####################################################################
-#  CREATE CSC, CSI, CHICKEN-PROFILE, CHICKEN-SETUP                 #
+#  CREATE CSI                                                      #
 ####################################################################
 
-# These only depend on libchicken so build 'em earlier.
+# csi gets special treatment with a prologue.
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csi.c
+  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csi.scm
+  DEPENDS
+    ${Chicken_SOURCE_DIR}/banner.scm
+    ${Chicken_SOURCE_DIR}/build.scm
+    ${Chicken_SOURCE_DIR}/chicken-more-macros.scm
+    ${Chicken_SOURCE_DIR}/parameters.scm
+  COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/csi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csi.c -prologue ${Chicken_SOURCE_DIR}/build.scm ${CHICKEN_FLAGS}
+  COMMENT "Compiling ${Chicken_SOURCE_DIR}/csi.scm to ${CMAKE_CURRENT_BINARY_DIR}/csi.c"
+)
 
 ADD_EXECUTABLE(csi ${CMAKE_CURRENT_BINARY_DIR}/csi.c)
 SET_TARGET_PROPERTIES(csi PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
@@ -931,21 +878,27 @@ SET_TARGET_PROPERTIES(csi-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(csi-static libchicken-static)
 ADD_DEPENDENCIES(csi-static chicken-boot)
 
-ADD_EXECUTABLE(csc ${CMAKE_CURRENT_BINARY_DIR}/csc.c)
-SET_TARGET_PROPERTIES(csc PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
-TARGET_LINK_LIBRARIES(csc libchicken)
-ADD_DEPENDENCIES(csc chicken-boot)
-# Felix says csc-static isn't necessary.
 
+####################################################################
+#  CREATE CHICKEN-PROFILE                                          #
+####################################################################
+
+SIMPLE_SCM_TO_C(chicken-profile)
 ADD_EXECUTABLE(chicken-profile ${CMAKE_CURRENT_BINARY_DIR}/chicken-profile.c)
 SET_TARGET_PROPERTIES(chicken-profile PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-profile libchicken)
 ADD_DEPENDENCIES(chicken-profile chicken-boot)
 
+
+####################################################################
+#  CREATE CHICKEN-SETUP                                            #
+####################################################################
+
+SIMPLE_SCM_TO_C(chicken-setup build parameters)
 ADD_EXECUTABLE(chicken-setup ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c)
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
-ADD_DEPENDENCIES(chicken-setup chicken-boot chicken-defaults)
+ADD_DEPENDENCIES(chicken-setup chicken-boot stack-size)
 
 
 ####################################################################
@@ -978,18 +931,24 @@ ADD_DEPENDENCIES(easyffi-c easyffi-l-silex)
 #  CREATE CHICKEN.EXE                                              #
 ####################################################################
 
+SIMPLE_SCM_TO_C(batch-driver parameters)
+SIMPLE_SCM_TO_C(c-backend tweaks)
+SIMPLE_SCM_TO_C(c-platform)
+SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
+SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)
+# easyffi.c is declared earlier
 
 GET_CHICKEN_C_SOURCES(CHICKEN_EXE_SOURCES)
 
 ADD_EXECUTABLE(chicken ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
-ADD_DEPENDENCIES(chicken chicken-boot easyffi-c chicken-defaults)
+ADD_DEPENDENCIES(chicken chicken-boot easyffi-c stack-size)
 
 ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c chicken-defaults)
+ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c stack-size)
 
 
 ####################################################################
@@ -1090,6 +1049,8 @@ IF(WIN32)
   ENDIF(NOT CYGWIN)
 ENDIF(WIN32)
 
+# Where to put the eggs directory?
+
 INSTALL(FILES chicken-ffi-macros.scm chicken-more-macros.scm
   DESTINATION share/chicken)
 
@@ -1111,6 +1072,16 @@ IF(HAVE_CHANGELOG)
     DESTINATION share/chicken/doc
   )
 ENDIF(HAVE_CHANGELOG)
+
+
+####################################################################
+#   UNINSTALLATION                                                 #
+####################################################################
+
+# Well, we don't have one yet.  CMake won't do it automagically.
+
+ADD_CUSTOM_TARGET(uninstall
+  COMMAND ${CMAKE_COMMAND} -E echo Don't you wish!)
 
 
 ####################################################################

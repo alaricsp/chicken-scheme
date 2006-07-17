@@ -221,6 +221,8 @@ ENDIF(HAVE_BOOT_CFILES)
 # we'll have stray .exports junk in the directory.  Do we care about
 # cleaning it up?
 
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-paths.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
 
 IF(HAVE_BOOT_CFILES)
   # We will simply copy boot/*.c.in files
@@ -322,41 +324,12 @@ ENDIF(HAVE_BOOT_CFILES)
 
 
 ####################################################################
-#  CREATE chicken-defaults.h                                       #
+#  STACK SIZE                                                      #
 ####################################################################
 
 # We don't do any nursery sampling for the bootstrap compiler.
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/StackSize
-  DEPENDS ${Chicken_SOURCE_DIR}/nursery.cmake
-  COMMAND ${CMAKE_COMMAND}
-    -DNSAMPLE_EXE=-NOTFOUND
-    -DDEFAULT_TARGET_STACK_SIZE=${DEFAULT_TARGET_STACK_SIZE}
-    -DDETERMINE_BEST_STACK_SIZE=FALSE
-    -P ${Chicken_SOURCE_DIR}/nursery.cmake
-  COMMENT "Writing default stack size to ${CMAKE_CURRENT_BINARY_DIR}/StackSize"
-)
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken-defaults.h.in
-  DEPENDS
-    ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/StackSize
-  COMMAND ${CMAKE_COMMAND}
-    -DChicken_SOURCE_DIR="${Chicken_SOURCE_DIR}"
-    -DINSTALL_HOME="${INSTALL_HOME}"
-    -DINSTALL_BIN_HOME="${INSTALL_BIN_HOME}"
-    -DINSTALL_LIB_HOME="${INSTALL_LIB_HOME}"
-    -DCMAKE_C_COMPILER="${CMAKE_C_COMPILER}"
-    -DSTACK_GROWS_DOWNWARD="${STACK_GROWS_DOWNWARD}"
-    -P ${Chicken_SOURCE_DIR}/chicken-defaults.replace.cmake
-  COMMENT "Replacing ${Chicken_SOURCE_DIR}/chicken-defaults.h.in to ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h"
-)
-ADD_CUSTOM_TARGET(chicken-defaults-boot
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
-)
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/stack-size.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h)
 
 
 ####################################################################
@@ -367,7 +340,7 @@ GET_CHICKEN_C_SOURCES(CHICKEN_BOOT_SOURCES)
 ADD_EXECUTABLE(chicken-boot ${CHICKEN_BOOT_SOURCES})
 SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot)
-ADD_DEPENDENCIES(chicken-boot easyffi-c-boot chicken-defaults-boot)
+ADD_DEPENDENCIES(chicken-boot easyffi-c-boot)
 
 
 ####################################################################
