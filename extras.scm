@@ -397,7 +397,7 @@ EOF
 			[(not n)
 			 (loop (fx* len 2) (make-string (fx* len 2))
 			       (##sys#string-append result
-						    (##sys#substring buffer 0 (fx- len 1)))
+						    (##sys#substring buffer 0 len))
 			       #t) ]
 			[f (##sys#setslot p 4 (fx+ (##sys#slot p 4) 1))
 			   (##sys#string-append result (##sys#substring buffer 0 n))]

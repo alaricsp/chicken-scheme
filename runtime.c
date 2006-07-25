@@ -4020,12 +4020,11 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 
   case C_fix(38):
     /* By Brandon Van Every: */
-    /* vcbuild.bat is the only build that installs everything
+    /* makefile.vc is the only build that installs everything
        in a flat directory.  It doesn't pass any defines, so
-       msvc is installed flat by default.  CMake passes
-       HIERARCHICAL_INSTALL so that it can bypass the default
-       behavior for msvc. ./configure never builds with msvc. */
-#if defined(_MSC_VER) && !defined(HIERARCHICAL_INSTALL)
+       msvc is installed flat by default.  CMake builds are
+       hierarchical.  ./configure never builds with msvc. */
+#if defined(_MSC_VER) && !defined(CMAKE_BUILD)
     return C_SCHEME_TRUE;
 #else
     return C_SCHEME_FALSE;
@@ -7593,10 +7592,10 @@ void C_ccall C_make_symbol(C_word c, C_word closure, C_word k, C_word name)
 
   *(a++) = C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1);
   *(a++) = C_SCHEME_UNBOUND;
+  *(a++) = name;
 #ifdef C_EXTRA_SYMBOL_SLOT
-  *(a++) = C_SCHEME_UNDEFINED;
+  *a = C_SCHEME_UNDEFINED;
 #endif
-  *a = name;
   C_kontinue(k, s0);
 }
 

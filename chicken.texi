@@ -1,6 +1,6 @@
 \input texinfo @c -*-texinfo-*-
 @setfilename chicken.info
-@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 41
+@settitle CHICKEN - A practical and portable Scheme system. Version 2, Build 421
 
 @ifnottex
 @macro pointrightarrow
@@ -56,14 +56,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @dircategory The Algorithmic Language Scheme
 @direntry
-* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 41).
+* CHICKEN: (chicken).          A pratical and portable Scheme system (Version 2, Build 421).
 @end direntry
 
 @titlepage
 @title CHICKEN
 @subtitle A practical and portable Scheme system
 @subtitle User's Manual
-@subtitle Version 2, Build 41
+@subtitle Version 2, Build 421
 @author Felix L. Winkelmann
 @end titlepage
 
@@ -78,7 +78,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 @top CHICKEN
 
 CHICKEN - A practical and portable Scheme system
-User's manual (Version 2, Build 41)
+User's manual (Version 2, Build 421)
 
 (c) 2000-2006, Felix L. Winkelmann
 All rights reserved. Translated to LaTeX by Peter Keller. Translated to texinfo by Linh Dang.

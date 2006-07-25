@@ -41,20 +41,68 @@ ENDMACRO(ADD_PREFIX)
 # MSYS shell.  Generally MSYS is just there for build assistance.
 # So, manually convert to Windows native pathnames.
 
-# Quoting policy: if Chicken can't handle a native pathname specified in a
-# straightforward manner, then the Chicken sources are considered broken.
-# Should not have to do any double secret quoting escape rituals.
+# Quoting policy:
+# - no quotes around the path.  .scm, .h, .c files must do it instead.
+# - backslashes in Windows pathnames need to be escaped, i.e. \\
+# - whitespace is not escaped.
+#
+# Be very careful because we're using unprotected whitespace!
 
-MACRO(MAKE_WINDOWS_PATH pathname)
+MACRO(MAKE_RAW_NATIVE_PATH pathname)
   # An extra \\ escape is necessary to get a \ through CMake's processing.
-  # Remove all escapes from whitespace.
-  STRING(REPLACE "\\ " " " ${pathname} "${${pathname}}")
-  # Use backslashes for directory separation
-  STRING(REPLACE "/" "\\" ${pathname} "${${pathname}}")
-  # Enclose with UNESCAPED quotes.  This means we need to escape our
-  # quotes once here, i.e. with \"
-  SET(${pathname} \"${${pathname}}\")
-ENDMACRO(MAKE_WINDOWS_PATH)
+  # Check that pathname has no escapes in it already.
+  STRING(REGEX MATCH "\\\\" ALREADY_ESCAPED ${pathname} "${${pathname}}")
+  IF(ALREADY_ESCAPED)
+    MESSAGE(FATAL_ERROR "Pathname already contains escapes or backslashes.
+      Not allowed, terminating build.")
+  ENDIF(ALREADY_ESCAPED)
+
+  IF(WIN32 AND NOT CYGWIN)
+    # As proven above, we have no escaped whitespace.
+    # Use backslashes for directory separation.
+    STRING(REPLACE "/" "\\\\" ${pathname} "${${pathname}}")
+  ELSE(WIN32 AND NOT CYGWIN)
+    # Assume that TO_NATIVE_PATH does the right thing.
+    # This is a dicey assumption.  Need to test it on other OSes.
+    FILE(TO_NATIVE_PATH "${${pathname}}" ${pathname})
+    # TO_NATIVE_PATH generates escaped whitespace.  Remove the escapes.
+    STRING(REPLACE "\\ " " " ${pathname} "${${pathname}}")
+  ENDIF(WIN32 AND NOT CYGWIN)
+
+ENDMACRO(MAKE_RAW_NATIVE_PATH)
+
+# It is common to look for tools at configuration time, and if they are
+# not found, to provide make targets that give error messages.  We also
+# typically want to know at configuration time that such a target has
+# been created.  This keeps us from having to type the same error
+# strings twice, and from making mistakes about STATUS vs. dialog boxes.
+
+MACRO(ECHO_TARGET target quoted_message)
+  # Sanity checking.  Unfortunately, it doesn't have the desired effect.
+  # It won't catch code that isn't being exercised by the current
+  # build settings.  So, a hapless user will receive any fatal errors,
+  # not the developer, whose system is probably configured with all
+  # needed tools and not calling ECHO_TARGET at all.
+
+  # CMake 2.4.2 can't handle apostrophes in -E echo, even when
+  # surrounded by double quotes.
+  STRING(REGEX MATCH "'" CONTAINS_APOSTROPHE ${quoted_message})
+  IF(CONTAINS_APOSTROPHE)
+    MESSAGE(STATUS "CMake 2.4.2 cannot handle ' apostrophes in -E echo.")
+  ENDIF(CONTAINS_APOSTROPHE)
+
+  # Make sure the message is quoted.
+  # Apostrophe errors also show up as unquoted strings, so do this 2nd.
+  STRING(REGEX MATCH "\"" QUOTED ${quoted_message})
+  IF(NOT QUOTED)
+    MESSAGE(STATUS "Unquoted ECHO_TARGET string.")
+  ENDIF(NOT QUOTED)
+  
+  # The actual functionality
+  MESSAGE(STATUS ${quoted_message})
+  ADD_CUSTOM_TARGET(${target}
+    COMMAND ${CMAKE_COMMAND} -E echo ${quoted_message})
+ENDMACRO(ECHO_TARGET)
 
 
 ####################################################################
@@ -177,6 +225,12 @@ ENDMACRO(GEN_EASYFFI_L_SILEX)
 # is really intended.  GCC has many similarities of operation across
 # Linux, Cygwin, and MinGW, but there are also differences.
 
+# ****** TODO ******
+# What about OS, compiler, and CPU specific optimizations?
+# Make VC++ have Release or MinSizeRel as default build?
+# I want to see benchmarks integrated as a test suite before bothering.
+# Need proof regarding what's worth it, and also proof that the
+# benchmarks measure something useful.
 
 #All our various optional libraries go in here.
 SET(EXTRA_LIBS )
@@ -184,42 +238,27 @@ SET(EXTRA_LIBS )
 # Distinguish our .h file logic from other build systems.
 ADD_DEFINITIONS(-DCMAKE_BUILD)
 
-# vcbuild.bat installs everything in one flat directory, but that's not
-# how we install our build.  Chicken has the flat directory behavior
-# hardwired for msvc by default.  Use this to work around it.
-
-ADD_DEFINITIONS(-DHIERARCHICAL_INSTALL)
-
 # Chicken uses the INSTALL_* paths in various tools to generate shell
 # commands; for instance, under a Windows command prompt.  So they need
 # to be native paths.
 
 # First specify the paths relative to each other in CMake style.
-SET(INSTALL_HOME ${CMAKE_INSTALL_PREFIX})
-SET(INSTALL_BIN_HOME ${INSTALL_HOME}/bin)
-SET(INSTALL_INCLUDE_HOME ${INSTALL_HOME}/include)
-SET(INSTALL_LIB_HOME ${INSTALL_HOME}/lib)
-SET(CC_PATH ${CMAKE_C_COMPILER})
-SET(CXX_PATH ${CMAKE_CXX_COMPILER})
+SET(INSTALL_HOME ${CMAKE_INSTALL_PREFIX}/share/chicken)
+SET(INSTALL_BIN_HOME ${CMAKE_INSTALL_PREFIX}/bin)
+SET(INSTALL_INCLUDE_HOME ${CMAKE_INSTALL_PREFIX}/include)
+SET(INSTALL_LIB_HOME ${CMAKE_INSTALL_PREFIX}/lib)
+# Do we actually want absolute pathnames for the compilers,
+# or just simple definitions like "gcc" or "cl" ?
+SET(INSTALL_CC ${CMAKE_C_COMPILER})
+SET(INSTALL_CXX ${CMAKE_CXX_COMPILER})
 
 # Then make them native after the path logic is done.
-IF(WIN32 AND NOT CYGWIN)
-  MAKE_WINDOWS_PATH(INSTALL_HOME)
-  MAKE_WINDOWS_PATH(INSTALL_BIN_HOME)
-  MAKE_WINDOWS_PATH(INSTALL_INCLUDE_HOME)
-  MAKE_WINDOWS_PATH(INSTALL_LIB_HOME)
-  MAKE_WINDOWS_PATH(CC_PATH)
-  MAKE_WINDOWS_PATH(CXX_PATH)
-ELSE(WIN32 AND NOT CYGWIN)
-  # Assume that TO_NATIVE_PATH does the right thing.
-  # This is a dicey assumption.  Need to test it on other OSes.
-  FILE(TO_NATIVE_PATH "${INSTALL_HOME}" INSTALL_HOME)
-  FILE(TO_NATIVE_PATH "${INSTALL_BIN_HOME}" INSTALL_BIN_HOME)
-  FILE(TO_NATIVE_PATH "${INSTALL_INCLUDE_HOME}" INSTALL_INCLUDE_HOME)
-  FILE(TO_NATIVE_PATH "${INSTALL_LIB_HOME}" INSTALL_LIB_HOME)
-  FILE(TO_NATIVE_PATH "${CC_PATH}" CC_PATH)
-  FILE(TO_NATIVE_PATH "${CXX_PATH}" CXX_PATH)
-ENDIF(WIN32 AND NOT CYGWIN)
+MAKE_RAW_NATIVE_PATH(INSTALL_HOME)
+MAKE_RAW_NATIVE_PATH(INSTALL_BIN_HOME)
+MAKE_RAW_NATIVE_PATH(INSTALL_INCLUDE_HOME)
+MAKE_RAW_NATIVE_PATH(INSTALL_LIB_HOME)
+MAKE_RAW_NATIVE_PATH(INSTALL_CC)
+MAKE_RAW_NATIVE_PATH(INSTALL_CXX)
 
 CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-paths.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
@@ -401,7 +440,7 @@ ELSE(STACK_TEST_COMPILED)
   MESSAGE(SEND_ERROR "Unable to compile stack growth test.  Using default.")
   SET(STACK_GROWS_DOWNWARD -1)
 ENDIF(STACK_TEST_COMPILED)
-ADD_DEFINITIONS(-DC_STACK_GROWS_DOWNWARD="${STACK_GROWS_DOWNWARD}")
+ADD_DEFINITIONS(-DC_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD})
 MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
 
 
@@ -430,8 +469,6 @@ OPTION(DISABLE_APPLY_HOOK "disable apply hook" FALSE)
 IF(DISABLE_APPLY_HOOK)
   ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
 ENDIF(DISABLE_APPLY_HOOK)
-
-OPTION(DETERMINE_BEST_STACK_SIZE "run nsample to find best stack size" TRUE)
 
 
 ####################################################################
@@ -696,43 +733,27 @@ UNSAFE_LIBRARY_SCM_TO_C(utils)
 GET_LIBCHICKEN_C_SOURCES(CHICKEN_LIB_SOURCES)
 GET_LIBUCHICKEN_C_SOURCES(CHICKEN_UNSAFE_LIB_SOURCES)
 
-# We want the library to be named 'libchicken' on all platfomrs.
-# Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
-# prefix onto every library.  For cross-platform stuff,
-# this often results in the 'liblibfoo" problem.  We don't want
-# to write a bunch of special case code.  So, we take
-# explicit control of the library prefix and suppress it.
-# This works on all platforms.
-
 ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libchicken PROPERTIES
-  PREFIX "" IMPORT_PREFIX ""
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
-)
+  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(libchicken ${EXTRA_LIBS})
 ADD_DEPENDENCIES(libchicken chicken-boot)
 
 ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
-  PREFIX "" IMPORT_PREFIX ""
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
-)
+  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(libchicken-static ${EXTRA_LIBS})
 ADD_DEPENDENCIES(libchicken-static chicken-boot)
 
 ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libuchicken PROPERTIES
-  PREFIX "" IMPORT_PREFIX ""
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
-)
+  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(libuchicken ${EXTRA_LIBS})
 ADD_DEPENDENCIES(libuchicken chicken-boot)
 
 ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
-  PREFIX "" IMPORT_PREFIX ""
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
-)
+  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(libuchicken-static ${EXTRA_LIBS})
 ADD_DEPENDENCIES(libuchicken-static chicken-boot)
 
@@ -742,26 +763,76 @@ IF(WIN32 AND NOT CYGWIN)
 
   ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui PROPERTIES
-    PREFIX "" IMPORT_PREFIX ""
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
-  )
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}")
   TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${EXTRA_LIBS})
   ADD_DEPENDENCIES(libchickengui chicken-boot)
 
   ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
-    PREFIX "" IMPORT_PREFIX ""
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
-  )
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}")
   TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${EXTRA_LIBS})
   ADD_DEPENDENCIES(libchickengui-static chicken-boot)
 
 ENDIF(WIN32 AND NOT CYGWIN)
 
+# We want the library to be named 'libchicken' on all platforms.
+# But, Cygwin conspires against us.  Their convention is
+# cygname-0.dll and so forth.  Whether it's a "best practice" is
+# debateable, but in the Cygwin FAQ and Googling about, it's the
+# practice.  
+# Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
+# prefix onto every library.  For cross-platform stuff,
+# this often results in the 'liblibfoo" problem.  We don't want
+# to write a bunch of special case code.  So, we take
+# explicit control of the library prefix and suppress it.
+# This works on all platforms.
+
+# Let CMake do the prefixing magic on Unix, Cygwin, and MinGW.
+
+SET_TARGET_PROPERTIES(libchicken-static PROPERTIES OUTPUT_NAME chicken-static)
+SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES OUTPUT_NAME uchicken-static)
+IF(CYGWIN)
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME chicken-0)
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME uchicken-0)
+ELSE(CYGWIN)
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME chicken)
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME uchicken)
+ENDIF(CYGWIN)
+IF(WIN32 AND NOT CYGWIN)
+  SET_TARGET_PROPERTIES(libchickengui PROPERTIES OUTPUT_NAME chickengui)
+  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES OUTPUT_NAME chickengui-static)
+ENDIF(WIN32 AND NOT CYGWIN)
+
+# Intervene for MSVC and other non-GCC Windows compilers.
+# Unfortunately there's no MINGW variable for CMake 2.4.2,
+# so we test against GCC.
+
+IF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
+  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES PREFIX "lib")
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
+  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES PREFIX "lib")
+  SET_TARGET_PROPERTIES(libchickengui PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
+  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES PREFIX "lib")
+ENDIF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
+
 
 ####################################################################
 #  STACK SIZE                                                      #
 ####################################################################
+
+# If the hapless user initiates a build that calls nsample, and
+# then he does typical multitasking things waiting for the long,
+# boring build to complete, his nsample results are going to suck.
+# For this reason, nsample cannot be part of a standard build.
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/stack-size.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h)
+
+# However, we leave the stack-size target available for experts
+# who know what they're doing, who want to see if stack-size.cmake
+# can generate a better stack size than the default size.  If
+# invoked, it will simply overwrite the configured stack-size.h file.
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/nsample.c
@@ -775,20 +846,13 @@ TARGET_LINK_LIBRARIES(nsample libchicken-static)
 ADD_DEPENDENCIES(nsample chicken-boot)
 
 GET_TARGET_PROPERTY(NSAMPLE_EXE nsample LOCATION)
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/stack-size.h.in
-  DEPENDS ${Chicken_SOURCE_DIR}/stack-size.cmake
+ADD_CUSTOM_TARGET(stack-size
   COMMAND ${CMAKE_COMMAND}
     -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR}
     -DNSAMPLE_EXE=${NSAMPLE_EXE}
     -DDEFAULT_TARGET_STACK_SIZE=${DEFAULT_TARGET_STACK_SIZE}
-    -DDETERMINE_BEST_STACK_SIZE=${DETERMINE_BEST_STACK_SIZE}
     -P ${Chicken_SOURCE_DIR}/stack-size.cmake
-  COMMENT "Configuring ${Chicken_SOURCE_DIR}/stack-size.h.in to ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h"
 )
-ADD_CUSTOM_TARGET(stack-size
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h)
 ADD_DEPENDENCIES(stack-size nsample)
 
 
@@ -796,43 +860,17 @@ ADD_DEPENDENCIES(stack-size nsample)
 #  CREATE CSC                                                      #
 ####################################################################
 
-# These are flags that CSC wants to hear about when it does its thing.
-# These will be substituted into csc.scm using csc.replace.cmake.
-
-GET_DIRECTORY_PROPERTY(CSCFLAGS
+# Most variables that CSC needs have been SET already,
+# but here are a few stragglers.
+GET_DIRECTORY_PROPERTY(INSTALL_CFLAGS
   DIRECTORY ${Chicken_SOURCE_DIR}
   DEFINITIONS
 )
-
-# CPPFLAGS_STRING can contain quoted pathnames with spaces in them.
-# This makes passing it to a CMake script rather tricky.
-# Rather than try to mess with -D arguments and quoting escapes,
-# we write exactly what we want to a file, then read it when
-# performing substitutions on csc.scm.in
-
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/cscflags.in
-  ${CMAKE_CURRENT_BINARY_DIR}/cscflags)
-
-# csc.scm.in needs regex replacement.  CONFIGURE_FILE doesn't have a
-# regex capability, but we can get around this using a CMake script.
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csc.scm.in
-  DEPENDS ${Chicken_SOURCE_DIR}/csc.replace.cmake
-  COMMAND ${CMAKE_COMMAND}
-    -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR}
-    -DINSTALL_HOME=${INSTALL_HOME}
-    -DINSTALL_BIN_HOME=${INSTALL_BIN_HOME}
-    -DINSTALL_INCLUDE_HOME=${INSTALL_INCLUDE_HOME}
-    -DINSTALL_LIB_HOME=${INSTALL_LIB_HOME}
-    -DCC_PATH=${CC_PATH}
-    -DCXX_PATH=${CXX_PATH}
-    -DMORE_LIBS="${MORE_LIBS}"
-    -DMORE_STATIC_LIBS="${MORE_STATIC_LIBS}"
-    -P ${Chicken_SOURCE_DIR}/csc.replace.cmake
-  COMMENT "Replacing ${Chicken_SOURCE_DIR}/csc.scm.in to ${CMAKE_CURRENT_BINARY_DIR}/csc.scm"
-)
+# CMake doesn't have "more" libs.
+SET(INSTALL_MORE_LIBS )
+SET(INSTALL_MORE_STATIC_LIBS )
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/csc.scm.in
+  ${CMAKE_CURRENT_BINARY_DIR}/csc.scm)
 
 # csc.c needs its own custom rule because csc.scm is generated.
 
@@ -898,7 +936,7 @@ SIMPLE_SCM_TO_C(chicken-setup build parameters)
 ADD_EXECUTABLE(chicken-setup ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c)
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
-ADD_DEPENDENCIES(chicken-setup chicken-boot stack-size)
+ADD_DEPENDENCIES(chicken-setup chicken-boot)
 
 
 ####################################################################
@@ -943,12 +981,12 @@ GET_CHICKEN_C_SOURCES(CHICKEN_EXE_SOURCES)
 ADD_EXECUTABLE(chicken ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
-ADD_DEPENDENCIES(chicken chicken-boot easyffi-c stack-size)
+ADD_DEPENDENCIES(chicken chicken-boot easyffi-c)
 
 ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c stack-size)
+ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c)
 
 
 ####################################################################
@@ -956,6 +994,7 @@ ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c stack-size)
 ####################################################################
 
 # build the html documentation if makeinfo is available
+
 FIND_PROGRAM(MAKEINFO_EXE NAMES makeinfo)
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
@@ -970,20 +1009,39 @@ ADD_CUSTOM_COMMAND(
   COMMENT "Compiling ${Chicken_SOURCE_DIR}/chicken.texi to ${CMAKE_CURRENT_BINARY_DIR}/chicken.info"
 )
 
+SET(HAVE_MAKEINFO FALSE)
 IF(MAKEINFO_EXE)
-  ADD_CUSTOM_TARGET(html
-    ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
-  )
-  ADD_CUSTOM_TARGET(info
-    ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.info
-  )
+  # MSYS makeinfo doesn't work under a Windows command prompt.
+  # Corner case: MSYS tools are in the Windows system path,
+  # but user is building under VC++.  VC++ chokes on MSYS makeinfo.
+  MESSAGE(STATUS "Testing whether makeinfo actually works.")
+
+  # PROBLEM: CMake 2.4.2 is bugged.  Under a VS71 generator,
+  # EXECUTE_PROCESS will successfully run a MSYS makeinfo,
+  # even though the VS71 .sln files cannot and will die.
+  # Waiting for CMake guys to suggest a workaround.
+  # The logic here is correct; CMake 2.4.2 is the problem.
+  #
+  # Last resort workaround is to remove MSYS from one's Windows system path.
+
+  EXECUTE_PROCESS(COMMAND ${MAKEINFO_EXE} --no-split --version ${Chicken_SOURCE_DIR}/chicken.texi
+    RESULT_VARIABLE MAKEINFO_FAILED)
+  IF(MAKEINFO_FAILED)
+    ECHO_TARGET(html "makeinfo does not work. Cannot create chicken.html")
+    ECHO_TARGET(info "makeinfo does not work. Cannot create chicken.info")
+  ELSE(MAKEINFO_FAILED)
+    MESSAGE(STATUS "makeinfo works.  Can build chicken.html and chicken.info")
+    SET(HAVE_MAKEINFO TRUE)
+    ADD_CUSTOM_TARGET(html
+      ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
+    )
+    ADD_CUSTOM_TARGET(info
+      ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.info
+    )
+  ENDIF(MAKEINFO_FAILED)
 ELSE(MAKEINFO_EXE)
-  ADD_CUSTOM_TARGET(html
-    COMMAND ${CMAKE_COMMAND} -E echo makeinfo not available, cannot create chicken.html
-  )
-  ADD_CUSTOM_TARGET(info
-    COMMAND ${CMAKE_COMMAND} -E echo makeinfo not available, cannot create chicken.info
-  )
+  ECHO_TARGET(html "makeinfo not available, cannot create chicken.html")
+  ECHO_TARGET(info "makeinfo not available, cannot create chicken.info")
 ENDIF(MAKEINFO_EXE)
 
 FIND_PROGRAM(DARCS_EXE darcs)
@@ -997,19 +1055,26 @@ ADD_CUSTOM_COMMAND(
 SET(HAVE_CHANGELOG FALSE)
 IF(DARCS_EXE)
   IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-    SET(HAVE_CHANGELOG TRUE)
-    ADD_CUSTOM_TARGET(darcs_changelog
-      ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
-    )
+    # Windows native Darcs doesn't handle Cygwin pathnames.
+    # Corner case: Windows native Darcs is in system path,
+    # but user is building under Cygwin.  Darcs chokes on Cygwin path.
+    MESSAGE(STATUS "Testing whether Darcs actually works.")
+    EXECUTE_PROCESS(COMMAND ${DARCS_EXE} changes --last=1 --repodir=${Chicken_SOURCE_DIR}
+      RESULT_VARIABLE DARCS_FAILED)
+    IF(DARCS_FAILED)
+      ECHO_TARGET(darcs_changelog "Darcs does not work.  Cannot create ChangeLog.")
+    ELSE(DARCS_FAILED)
+      MESSAGE(STATUS "Darcs works.  Can create ChangeLog.")
+      SET(HAVE_CHANGELOG TRUE)
+      ADD_CUSTOM_TARGET(darcs_changelog
+        ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
+      )
+    ENDIF(DARCS_FAILED)
   ELSE(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-    ADD_CUSTOM_TARGET(darcs_changelog
-      COMMAND ${CMAKE_COMMAND} -E echo ${Chicken_SOURCE_DIR}/_darcs doesn't exist, cannot create ChangeLog.
-    )
+    ECHO_TARGET(darcs_changelog "${Chicken_SOURCE_DIR}/_darcs does not exist, cannot create ChangeLog.")
   ENDIF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
 ELSE(DARCS_EXE)
-  ADD_CUSTOM_TARGET(darcs_changelog
-    COMMAND ${CMAKE_COMMAND} -E echo Can't find darcs, cannot create ChangeLog.
-  )
+  ECHO_TARGET(darcs_changelog "Cannot find darcs, cannot create ChangeLog.")
 ENDIF(DARCS_EXE)
 
 
@@ -1049,7 +1114,11 @@ IF(WIN32)
   ENDIF(NOT CYGWIN)
 ENDIF(WIN32)
 
-# Where to put the eggs directory?
+# Destination for eggs.  No eggs to install though.
+INSTALL(CODE "
+  MESSAGE(STATUS \"Installing \${CMAKE_INSTALL_PREFIX}/lib/chicken/1\")
+  MAKE_DIRECTORY(\"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/chicken/1\")
+")
 
 INSTALL(FILES chicken-ffi-macros.scm chicken-more-macros.scm
   DESTINATION share/chicken)
@@ -1058,10 +1127,10 @@ INSTALL(FILES chicken.h DESTINATION include)
 INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1 
   DESTINATION man/man1)
 INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION share/chicken/doc)
-IF(MAKEINFO_EXE)
+IF(HAVE_MAKEINFO)
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.html DESTINATION share/chicken/doc)
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.info DESTINATION info)
-ENDIF(MAKEINFO_EXE)
+ENDIF(HAVE_MAKEINFO)
 # It's confusing to install ChangeLog.0-20040412 without installing
 # ChangeLog.  It makes Chicken looks like it hasn't been updated in a long time.
 # So, either install both, or neither.
@@ -1081,7 +1150,7 @@ ENDIF(HAVE_CHANGELOG)
 # Well, we don't have one yet.  CMake won't do it automagically.
 
 ADD_CUSTOM_TARGET(uninstall
-  COMMAND ${CMAKE_COMMAND} -E echo Don't you wish!)
+  COMMAND ${CMAKE_COMMAND} -E echo Yeah you wish!)
 
 
 ####################################################################

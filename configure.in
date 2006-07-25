@@ -2,7 +2,7 @@ dnl -*- mode: m4 -*-
 dnl Process this file with autoconf to produce a configure script.
 dnl (originally by Doug Quale)
 
-AC_INIT(chicken,2.41)
+AC_INIT(chicken,2.421)
 BINARY_VERSION=1
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([runtime.c])

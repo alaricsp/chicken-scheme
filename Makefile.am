@@ -178,15 +178,15 @@ csc.scm: csc.scm.in
 	sed_quote_subst='s/\([\\`\\"$\\\\,]\)/\\\1/g' ; \
 	quoted_cflags=`echo X$(CFLAGS) $(BASE_CPPFLAGS) | sed -e s/^X// -e "$$sed_quote_subst"` ; \
 	quoted_cppflags=`echo X$(CPPFLAGS) $(BASE_CPPFLAGS) | sed -e s/^X// -e "$$sed_quote_subst"` ; \
-	sed -e "s,%bindir%,$(DESTDIR)$(bindir)," \
-	    -e "s,%cc%,$(CC)," \
-	    -e "s,%cxx%,$(CXX)," \
-	    -e "s,%cflags%,$$quoted_cflags," \
-	    -e "s,%morelibs%,$(MORE_LIBS)," \
-	    -e "s,%morestaticlibs%,$(MORE_STATIC_LIBS)," \
-	    -e "s,%pkgdatadir%,$(pkgdatadir)," \
-	    -e "s,%includedir%,$(includedir)," \
-	    -e "s,%libdir%,$(libdir),g" \
+	sed -e "s,\@INSTALL_BIN_HOME\@,$(DESTDIR)$(bindir)," \
+	    -e "s,\@INSTALL_CC\@,$(CC)," \
+	    -e "s,\@INSTALL_CXX\@,$(CXX)," \
+	    -e "s,\@INSTALL_CFLAGS\@,-DHAVE_CHICKEN_CONFIG_H $$quoted_cflags," \
+	    -e "s,\@INSTALL_MORE_LIBS\@,$(MORE_LIBS)," \
+	    -e "s,\@INSTALL_MORE_STATIC_LIBS\@,$(MORE_STATIC_LIBS)," \
+	    -e "s,\@INSTALL_HOME\@,$(pkgdatadir)," \
+	    -e "s,\@INSTALL_INCLUDE_HOME\@,$(includedir)," \
+	    -e "s,\@INSTALL_LIB_HOME\@,$(libdir),g" \
 	  <$(srcdir)/csc.scm.in >csc.scm
 
 include_HEADERS = chicken.h chicken-config.h chicken-defaults.h

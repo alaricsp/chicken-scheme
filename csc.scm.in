@@ -29,7 +29,7 @@
 ;
 ; Felix L. Winkelmann
 ; Unter den Gleichen 1
-; 37130 Gleichen, OT Weissenborn
+; 37130 Gleichen
 ; Germany
 
 
@@ -51,18 +51,18 @@
   (fprintf (current-error-port) "csc: ~?~%" msg args)
   (exit 64) )
 
+(define chicken-prefix (getenv "CHICKEN_PREFIX"))
+
 (define (prefix str dir default)
   (if chicken-prefix
       (make-pathname (list chicken-prefix dir) str)
       default) )
 
-(define chicken-prefix (getenv "CHICKEN_PREFIX"))
-
 (define home
   (or (getenv "CHICKEN_HOME") 
       (if (flat-directory-install)
 	  (quit "`CHICKEN_HOME' environment variable not set - please set it to the directory where CHICKEN is installed")
-	  (prefix "" "share" "%pkgdatadir%") ) ) )
+	  (prefix "" "share" "@INSTALL_HOME@") ) ) )
 
 (define (homize str) (make-pathname home str))
 
@@ -74,7 +74,7 @@
 (begin
   (if (flat-directory-install)
       (define translator (quotewrap (homize "chicken")))
-      (define translator (quotewrap (prefix "chicken" "bin" "%bindir%/chicken")) ))
+      (define translator (quotewrap (prefix "chicken" "bin" (make-pathname "@INSTALL_BIN_HOME@" "chicken")) ) ) )
   (if win
     (begin
       (define compiler "cl")
@@ -89,10 +89,10 @@
       (define shared-library-extension "dll")
       (define nonstatic-compilation-options '("/DPIC")) )
     (begin
-      (define compiler "%cc%")
-      (define c++-compiler "%cxx%")
-      (define linker "%cc%")
-      (define c++-linker "%cxx%")
+      (define compiler "@INSTALL_CC@")
+      (define c++-compiler "@INSTALL_CXX@")
+      (define linker "@INSTALL_CC@")
+      (define c++-linker "@INSTALL_CXX@")
       (define object-extension "o")
       (define library-extension "a")
       (define link-output-flag "-o ")
@@ -116,7 +116,7 @@
     (begin
       (define (cleanup-filename s) s)
       (define default-compilation-optimization-options (string-split #<<EOF
--DHAVE_CHICKEN_CONFIG_H %cflags%
+@INSTALL_CFLAGS@
 EOF
 ) )
       (define best-compilation-optimization-options default-compilation-optimization-options)
@@ -198,21 +198,21 @@ EOF
 	    (map homize '("libchickengui.lib")))
         )
         (begin
-          (define default-library-files (list (prefix "libchicken-static.lib" "lib" "%libdir%/libchicken-static.lib")))
-          (define default-shared-library-files (list (prefix "libchicken.lib" "lib" "%libdir%/libchicken.lib")))
-          (define unsafe-library-files (list (prefix "libuchicken-static.lib" "lib" "%libdir%/libuchicken-static.lib")))
-          (define unsafe-shared-library-files (llist (prefix "libuchicken.lib" "lib" "%libdir%/libuchicken.lib")))
-          (define gui-library-files (list (prefix "libchickengui-static.lib" "lib" "%libdir%/libchickengui-static.lib")))
-          (define gui-shared-library-files (list (prefix "libchickengui.lib" "lib" "%libdir%/libchickengui.lib")))
+          (define default-library-files (list (prefix "libchicken-static.lib" "lib" "@INSTALL_LIB_HOME@\\libchicken-static.lib")))
+          (define default-shared-library-files (list (prefix "libchicken.lib" "lib" "@INSTALL_LIB_HOME@\\libchicken.lib")))
+          (define unsafe-library-files (list (prefix "libuchicken-static.lib" "lib" "@INSTALL_LIB_HOME@\\libuchicken-static.lib")))
+          (define unsafe-shared-library-files (llist (prefix "libuchicken.lib" "lib" "@INSTALL_LIB_HOME@\\libuchicken.lib")))
+          (define gui-library-files (list (prefix "libchickengui-static.lib" "lib" "@INSTALL_LIB_HOME@\\libchickengui-static.lib")))
+          (define gui-shared-library-files (list (prefix "libchickengui.lib" "lib" "@INSTALL_LIB_HOME@\\libchickengui.lib")))
         )
       )
     )   
     (begin
-      (define extra-libraries "%morestaticlibs%")
-      (define extra-shared-libraries "%morelibs%")
-      (define default-library-files (list (prefix "libchicken.a" "lib" "%libdir%/libchicken.a")))
+      (define extra-libraries "@INSTALL_MORE_STATIC_LIBS@")
+      (define extra-shared-libraries "@INSTALL_MORE_LIBS@")
+      (define default-library-files (list (prefix "libchicken.a" "lib" "@INSTALL_LIB_HOME@/libchicken.a")))
       (define default-shared-library-files '("-lchicken"))
-      (define unsafe-library-files (list (prefix "libuchicken.a" "lib" "%libdir%/libuchicken.a")))
+      (define unsafe-library-files (list (prefix "libuchicken.a" "lib" "@INSTALL_LIB_HOME@/libuchicken.a")))
       (define unsafe-shared-library-files '("-luchicken"))
       (define gui-library-files default-library-files)
       (define gui-shared-library-files default-shared-library-files)
@@ -225,7 +225,7 @@ EOF
 (define translate-options '("-quiet"))
 
 (define include-dir
-  (let ([id (prefix "" "include" "%includedir%")])
+  (let ([id (prefix "" "include" "@INSTALL_INCLUDE_HOME@")])
     (and (not (member id '("/usr/include" "/usr/local/include" "")))
 	 id) ) )
 
@@ -233,7 +233,7 @@ EOF
   (if win
     (if (flat-directory-install)
       (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
-      (cons* "/I%includedir%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
+      (cons* "/I@INSTALL_INCLUDE_HOME@" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
     )
     (cons* "-DC_NO_PIC_NO_DLL" (if include-dir (list "-I" include-dir) '())) 
   ) 
@@ -248,8 +248,8 @@ EOF
 
 (define link-options
   (cond [win '()]
-	[(or osx hpux-hppa) (list (conc "-L" (prefix "" "lib" "%libdir%")))]
-	[else (list (let ((p (prefix "" "lib" "%libdir%"))) (conc "-L" p " -Wl,-R" p)))] ) )
+	[(or osx hpux-hppa) (list (conc "-L" (prefix "" "lib" "@INSTALL_LIB_HOME@")))]
+	[else (list (let ((p (prefix "" "lib" "@INSTALL_LIB_HOME@"))) (conc "-L" p " -Wl,-R" p)))] ) )
 
 (define target-filename #f)
 (define verbose #f)
@@ -406,7 +406,7 @@ EOF
   Obscure options:
 
     -debug MODES                display debugging output for the given modes
-    -compiler PATHNAME          use other compiler than `%bindir%/chicken'
+    -compiler PATHNAME          use other compiler than `@INSTALL_BIN_HOME@/chicken'
     -compress-literals NUMBER   compile literals above threshold as strings
     -disable-c-syntax-checks    disable syntax checks of C code fragments
     -raw                        do not generate implicit init- and exit code			       
