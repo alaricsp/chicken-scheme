@@ -40,7 +40,7 @@
   (usual-integrations)
   (hide ##sys#dynamic-unwind ##sys#find-symbol
 	##sys#grow-vector ##sys#default-parameter-vector 
-	##sys#print-length-limit setter-tag
+	##sys#print-length-limit setter-tag read-marks
 	##sys#fetch-and-check-port-arg ##sys#print-exit)
   (foreign-declare #<<EOF
 #include <string.h>
@@ -2226,13 +2226,21 @@ EOF
 			      (let ((tst (readrec)))
 				(list 'cond-expand (list tst (readrec)) '(else)) ) )
 			     ((#\!)
-			      (let ([tok (r-token)])
-				(cond [(string=? "!eof" tok) #!eof]
-				      [(member tok '("!optional" "!rest" "!key"))
-				       (build-symbol (##sys#string-append "#" tok)) ]
-				      [else 
+			      (##sys#read-char-0 port)
+			      (let ((c (##sys#peek-char-0 port)))
+				(cond ((or (char-whitespace? c) (char=? #\/ c))
 				       (skip-to-eol)
-				       (readrec) ] ) ) )
+				       (readrec) )
+				      (else
+				       (let ([tok (r-token)])
+					 (cond [(string=? "eof" tok) #!eof]
+					       [(member tok '("optional" "rest" "key"))
+						(build-symbol (##sys#string-append "#!" tok)) ]
+					       [else 
+						(let ((a (assq (string->symbol tok) read-marks)))
+						  (if a
+						      ((##sys#slot a 1) port)
+						      (##sys#read-error port "invalid `#!' token" tok) ) ) ] ) ) ) ) ) )
 			     (else (##sys#user-read-hook dchar port)) ) ) ) )
 		    ((#\() (r-list #\( #\)))
 		    ((#\[) 
@@ -2310,39 +2318,49 @@ EOF
 ; - should be either #f or a 256-element vector containing procedures
 ; - the procedure is called with two arguments, a char (peeked) and a port and should return an expression
 
+(define read-marks '())
+
+(define (##sys#set-read-mark! sym proc)
+  (let ((a (assq sym read-marks)))
+    (if a
+	(##sys#setslot a 1 proc)
+	(set! read-marks (cons (cons sym proc) read-marks)) ) ) )
+
 (define set-read-syntax!
   (let ((crt current-read-table))
     (lambda (chr proc)
-      (let ((crt (crt)))
-	(unless (##sys#slot crt 1)
-	  (##sys#setslot crt 1 (##sys#make-vector 256 #f)) )
-	(##sys#check-char chr 'set-read-syntax!)
-	(let ([i (char->integer chr)])
-	  (##sys#check-range i 0 256 'set-read-syntax!)
-	  (##sys#setslot 
-	   (##sys#slot crt 1)
-	   i
-	   (lambda (_ port) 
-	     (##sys#read-char-0 port)
-	     (proc port) ) ) ) ) ) ) )
+      (cond ((symbol? chr) (##sys#set-read-mark! chr proc))
+	    (else
+	     (let ((crt (crt)))
+	       (unless (##sys#slot crt 1)
+		 (##sys#setslot crt 1 (##sys#make-vector 256 #f)) )
+	       (##sys#check-char chr 'set-read-syntax!)
+	       (let ([i (char->integer chr)])
+		 (##sys#check-range i 0 256 'set-read-syntax!)
+		 (##sys#setslot 
+		  (##sys#slot crt 1)
+		  i
+		  (lambda (_ port) 
+		    (##sys#read-char-0 port)
+		    (proc port) ) ) ) ) ) ) ) ) )
 
 (define set-sharp-read-syntax!
   (let ((crt current-read-table))
     (lambda (chr proc)
-      (let ((crt (crt)))
-	(unless (##sys#slot crt 2)
-	  (##sys#setslot crt 2 (##sys#make-vector 256 #f)) )
-	(##sys#check-char chr 'set-sharp-read-syntax!)
-	(let ([i (char->integer chr)])
-	  (##sys#check-range i 0 256 'set-sharp-read-syntax!)
-	  (##sys#setslot
-	   (##sys#slot crt 2)
-	   i
-	   (lambda (_ port) 
-	     (##sys#read-char-0 port)
-	     (proc port) ) ) ) ) ) ) )
-
-(define set-dispatch-read-syntax! set-sharp-read-syntax!) ; DEPRECATED
+      (cond ((symbol? chr) (##sys#set-read-mark! chr proc))
+	    (else
+	     (let ((crt (crt)))
+	       (unless (##sys#slot crt 2)
+		 (##sys#setslot crt 2 (##sys#make-vector 256 #f)) )
+	       (##sys#check-char chr 'set-sharp-read-syntax!)
+	       (let ([i (char->integer chr)])
+		 (##sys#check-range i 0 256 'set-sharp-read-syntax!)
+		 (##sys#setslot
+		  (##sys#slot crt 2)
+		  i
+		  (lambda (_ port) 
+		    (##sys#read-char-0 port)
+		    (proc port) ) ) ) ) ) ) ) ) )
 
 
 ;;; Read-table operations:
