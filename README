@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 421
+  Version 2, Build 424
 
 
  1. Introduction:
@@ -51,9 +51,6 @@
     chicken.scm		        
     support.scm
     graph.scm
-    easyffi.scm
-    easyffi.l.silex
-    easyffi.l
     compiler.scm
     optimizer.scm
     batch-driver.scm
@@ -78,12 +75,9 @@
     utils.scm
     stub.scm
     profiler.scm
-    tinyclos.scm
     tcp.scm
     posix.scm
     posixwin.scm		libraries
-
-    silex.scm                   Danny Dube's lexer generator
 
     runtime.c			the basic runtime system (garbage collector, memory manager, etc.)
 
@@ -104,7 +98,6 @@
     lolevel.c
     utils.c
     profiler.c
-    tinyclos.c
     stub.c
     posixwin.c
     tcp.c            		compiled libraries
@@ -138,7 +131,6 @@
     chicken.c
     support.c
     graph.c
-    easyffi.c
     compiler.c
     optimizer.c
     batch-driver.c

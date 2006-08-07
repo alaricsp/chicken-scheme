@@ -275,7 +275,7 @@ EOF
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
   broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
-  profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda no-c-syntax-checks
+  profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names namespace-table disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
   compiler-warning import-table use-import-table
@@ -293,10 +293,10 @@ EOF
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database export-list csc-control-file
-  estimate-foreign-result-location-size compressed-literals-initializer parse-easy-ffi
+  estimate-foreign-result-location-size compressed-literals-initializer
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
   units-used-by-default words-per-flonum disable-stack-overflow-checking
-  parameter-limit eq-inline-operator optimizable-rest-argument-operators check-c-syntax postponed-initforms
+  parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-compression-threshold compressed-literals compressable-literal
@@ -365,7 +365,6 @@ EOF
 (define disable-stack-overflow-checking #f)
 (define namespace-table '())
 (define require-imports-flag #f)
-(define no-c-syntax-checks #f)
 (define emit-unsafe-marker #f)
 (define external-protos-first #f)
 (define do-lambda-lifting #f)
@@ -760,7 +759,6 @@ EOF
 				[name (if (pair? (cdddr x))
 					  (cadr (fourth x))
 					  (symbol->string var) ) ] )
-			   (check-c-syntax name 'define-foreign-variable)
 			   (set! foreign-variables
 			     (cons (list var type (if (string? name) name (symbol->string name)))
 				   foreign-variables))
@@ -1058,14 +1056,6 @@ EOF
 	(let ([fds (cdr spec)])
 	  (if (every string? fds)
 	      (set! foreign-declarations (append foreign-declarations fds))
-	      (quit "syntax error in declaration: `~S'" spec) )
-	  (check-c-syntax (apply string-append fds) 'foreign-declare) ) )
-       ((foreign-parse)
-	(let ([fds (cdr spec)])
-	  (if (every string? fds)
-	      (return 
-	       (##sys#compiler-toplevel-macroexpand-hook 
-		`(begin ,@(parse-easy-ffi (string-intersperse fds ""))) ) )
 	      (quit "syntax error in declaration: `~S'" spec) ) ) )
        ((custom-declare)
 	(if (or (not (list? spec)) (not (list? (cadr spec))) (< (length (cadr spec)) 3))
@@ -1081,7 +1071,6 @@ EOF
 	   `(post-process ,@(map (cut string-substitute "\\$@" file <>) (cdr spec))) ) ) )
        ((block) (set! block-compilation #t))
        ((separate) (set! block-compilation #f))
-       ((check-c-syntax) (set! no-c-syntax-checks #f))
        ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
        ((not)
 	(check-decl spec 1)
@@ -1110,7 +1099,6 @@ EOF
 	   (check-decl spec 1 1)
 	   (case (cadr spec)
 	     [(interrupts-enabled) (set! insert-timer-checks #f)]
-	     [(check-c-syntax) (set! no-c-syntax-checks #t)]
 	     [(safe) 
 	      (set! unsafe #t)
 	      (##match#set-error-control #:unspecified) ]
@@ -1241,7 +1229,6 @@ EOF
 	 [body (apply string-append (map cadr (cdddr exp)))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
-    (check-c-syntax body 'foreign-lambda*)
     (create-foreign-stub rtype #f argtypes argnames body #f #f) ) )
 
 (define (expand-foreign-callback-lambda* exp)
@@ -1250,7 +1237,6 @@ EOF
 	 [body (apply string-append (map cadr (cdddr exp)))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
-    (check-c-syntax body 'foreign-callback-lambda*)
     (create-foreign-stub rtype #f argtypes argnames body #t #t) ) )
 
 (define (expand-foreign-primitive exp)
@@ -1260,7 +1246,6 @@ EOF
 	 [body (apply string-append (map cadr (if hasrtype (cdddr exp) (cddr exp))))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
-    (check-c-syntax body 'foreign-primitive)
     (create-foreign-stub rtype #f argtypes argnames body #f #t) ) )
 
 

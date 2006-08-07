@@ -10,8 +10,6 @@
 # libraries and executables, no need to fool with anything more complicated.
 # We build:
 #  libchicken-boot
-#  silex-boot
-#  easyffi.l.silex
 #  chicken-boot
 #
 # chicken-boot is then used by the rest of the build.
@@ -242,8 +240,7 @@ ELSE(HAVE_BOOT_CFILES)
   SIMPLE_SCM_TO_C(c-backend tweaks)
   SIMPLE_SCM_TO_C(c-platform)
   SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
-  SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)
-  # easyffi.c is declared later, after silex and easyffi.l.silex
+  SIMPLE_SCM_TO_C(compiler parameters tweaks)
   LIBRARY_SCM_TO_C(eval parameters)
   LIBRARY_SCM_TO_C(extras)
   LIBRARY_SCM_TO_C(library build parameters)
@@ -257,7 +254,6 @@ ELSE(HAVE_BOOT_CFILES)
   LIBRARY_SCM_TO_C(profiler)
   LIBRARY_SCM_TO_C(regexunix regex-common)
   LIBRARY_SCM_TO_C(scheduler)
-  SIMPLE_SCM_TO_C(silex)
   LIBRARY_SCM_TO_C(srfi-1)
   LIBRARY_SCM_TO_C(srfi-4)
   LIBRARY_SCM_TO_C(srfi-13)
@@ -266,7 +262,6 @@ ELSE(HAVE_BOOT_CFILES)
   LIBRARY_SCM_TO_C(stub)
   SIMPLE_SCM_TO_C(support banner parameters tweaks)
   LIBRARY_SCM_TO_C(tcp)
-  LIBRARY_SCM_TO_C(tinyclos)
   LIBRARY_SCM_TO_C(utils)
 
 ENDIF(HAVE_BOOT_CFILES)
@@ -290,43 +285,6 @@ TARGET_LINK_LIBRARIES(libchicken-boot ${EXTRA_LIBS})
 
 
 ####################################################################
-#  CREATE silex-boot, easyffi.l.silex, easyffi.c                   #
-####################################################################
-
-# The goal is to generate easyffi.c.  If we already have it, then
-# we don't need the other steps.
-
-IF(HAVE_BOOT_CFILES)
-  ADD_CUSTOM_TARGET(easyffi-c-boot
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c
-  )
-ELSE(HAVE_BOOT_CFILES)
-
-  ADD_EXECUTABLE(silex-boot
-    ${Chicken_SOURCE_DIR}/chicken.h
-    ${CMAKE_CURRENT_BINARY_DIR}/silex.c
-  )
-  SET_TARGET_PROPERTIES(silex-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-  TARGET_LINK_LIBRARIES(silex-boot libchicken-boot)
-  GET_TARGET_PROPERTY(SILEX_BOOT_EXE silex-boot LOCATION)
-  SET(CURRENT_SILEX ${SILEX_BOOT_EXE})
-
-  GEN_EASYFFI_L_SILEX()
-  ADD_CUSTOM_TARGET(easyffi-l-silex-boot
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/easyffi.l.silex
-  )
-  ADD_DEPENDENCIES(easyffi-l-silex-boot silex-boot)
-
-  GEN_EASYFFI_C()
-  ADD_CUSTOM_TARGET(easyffi-c-boot
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c
-  )
-  ADD_DEPENDENCIES(easyffi-c-boot easyffi-l-silex-boot)
-
-ENDIF(HAVE_BOOT_CFILES)
-
-
-####################################################################
 #  STACK SIZE                                                      #
 ####################################################################
 
@@ -343,7 +301,6 @@ GET_CHICKEN_C_SOURCES(CHICKEN_BOOT_SOURCES)
 ADD_EXECUTABLE(chicken-boot ${CHICKEN_BOOT_SOURCES})
 SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot)
-ADD_DEPENDENCIES(chicken-boot easyffi-c-boot)
 
 
 ####################################################################

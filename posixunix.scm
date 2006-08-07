@@ -296,23 +296,35 @@ static C_TLS sigset_t C_sigset;
 
 #define C_ctime(n)          (C_secs = (n), ctime(&C_secs))
 
-#if defined(__CYGWIN__)
-/* timegm code from Linux manpages */
-time_t timegm (struct tm *tm)
-{
-   time_t ret;
-   char *tz;
+#if defined(__CYGWIN__) || defined(__SVR4)
+/* Seen here: http://lists.samba.org/archive/samba-technical/2002-November/025571.html */
 
-   tz = getenv("TZ");
-   setenv("TZ", "", 1);
-   tzset();
-   ret = mktime(tm);
-   if (tz)
-      setenv("TZ", tz, 1);
-   else
-      unsetenv("TZ");
-   tzset();
-   return ret;
+time_t timegm(struct tm *t)
+{
+  time_t tl, tb;
+  struct tm *tg;
+
+  tl = mktime (t);
+  if (tl == -1)
+    {
+      t->tm_hour--;
+      tl = mktime (t);
+      if (tl == -1)
+        return -1; /* can't deal with output from strptime */
+      tl += 3600;
+    }
+  tg = gmtime (&tl);
+  tg->tm_isdst = 0;
+  tb = mktime (tg);
+  if (tb == -1)
+    {
+      tg->tm_hour--;
+      tb = mktime (tg);
+      if (tb == -1)
+        return -1; /* can't deal with output from gmtime */
+      tb += 3600;
+    }
+  return (tl - (tb - tl));
 }
 #endif
 
@@ -1471,7 +1483,7 @@ EOF
 
 (define local-timezone-abbreviation
   (foreign-lambda* c-string ()
-   "\n#ifndef __CYGWIN__\n"
+   "\n#if !defined(__CYGWIN__) && !defined(__SVR4)\n"
    "time_t clock = (time_t)0;"
    "struct tm *ltm = C_localtime(&clock);"
    "char *z = ltm ? (char *)ltm->tm_zone : 0;"

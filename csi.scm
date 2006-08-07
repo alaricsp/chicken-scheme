@@ -620,7 +620,7 @@ EOF
 	       (let ([len (##sys#size x)])
 		 (if (and (> len 3)
 			  (memq #:tinyclos ##sys#features)
-			  (eq? ##tinyclos#entity-tag (##sys#slot x (fx- len 1))) )
+			  (eq? ##tinyclos#entity-tag (##sys#slot x (fx- len 1))) ) ;XXX handle this in tinyclos egg...
 		     (describe-object x out)
 		     (descseq 
 		      (sprintf "procedure with code pointer ~X" (##sys#peek-unsigned-integer x 0))

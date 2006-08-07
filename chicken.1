@@ -170,30 +170,6 @@ to be a valid feature identifier for
 .B cond\-expand
 
 .TP
-.B \-ffi
-Parse C/C++ code and generate Scheme bindings.
-
-.TP
-.BI \-ffi\-define\ symbol
-Defines a macro that will be accessible in 
-.B foreign\-parse
-declarations.
-
-.TP
-.BI \-ffi\-include\-path\ path
-Set include path for "easy" FFI parser.
-
-.TP
-.B \-ffi\-parse
-Parse C/C++ code and embed as if wrapped inside a 
-.B (declare\ (foreign\-parse\ ...))
-form.
-
-.TP
-.B \-ffi\-no\-include
-Don't parse include files when encountered by the FFI parser.
-
-.TP
 .B \-fixnum\-arithmetic
 Equivalent to
 .B \-prelude\ "(declare\ (fixnum))"

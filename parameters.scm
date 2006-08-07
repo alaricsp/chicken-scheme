@@ -43,14 +43,6 @@
 
 (define-constant output-string-initial-size 256)
 
-(declare
-  (foreign-declare "#define C_METHOD_CACHE_SIZE 8") )
-
-(eval-when (load)
-  (define-foreign-variable method-cache-size int "C_METHOD_CACHE_SIZE") )
-
-(define-constant basic-class-instance-size 11)
-
 (define-constant default-parameter-vector-size 16)
 
 (define-constant debug-output-print-limit 80)
@@ -98,7 +90,7 @@
 (define-constant remote-repository-name "repository")
 
 (define-constant core-library-modules
-  '(extras lolevel tinyclos utils tcp regex posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
+  '(extras lolevel utils tcp regex posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
 
 (define-constant special-syntax-files
   '(chicken-ffi-macros chicken-more-macros) )
@@ -108,7 +100,7 @@
 	    srfi-69 srfi-28) )		; these are actually in extras, but that is used by default
 
 (define-constant builtin-features/compiled
-  '(easyffi srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
+  '(srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
 
 (define-constant installed-executables
   '("chicken" "csc" "csi" "chicken-setup" "chicken-profile") )

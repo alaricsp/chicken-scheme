@@ -44,17 +44,16 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   compiler-cleanup-hook check-global-exports disabled-warnings check-global-imports
-  foreign-type-table-size file-io-only parse-easy-ffi
+  foreign-type-table-size file-io-only
   unit-name insert-timer-checks used-units inline-max-size
-  debugging perform-lambda-lifting! disable-stack-overflow-checking no-c-syntax-checks
-  register-ffi-macro ffi-include-path-list ffi-dont-include
+  debugging perform-lambda-lifting! disable-stack-overflow-checking
   foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  broken-constant-nodes inline-substitutions-enabled enable-sharp-greater-read-syntax
+  broken-constant-nodes inline-substitutions-enabled
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
   direct-call-ids foreign-type-table first-analysis emit-closure-info emit-line-info
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
@@ -131,8 +130,6 @@
 	[a-only (memq 'analyze-only options)]
 	[dynamic (memq 'dynamic options)]
 	[dumpnodes #f]
-	[ffi-mode (memq 'ffi options)]
-	[ffi-parse-mode (memq 'ffi-parse options)]
 	[quiet (memq 'quiet options)]
 	[ssize (or (memq 'nursery options) (memq 'stack-size options))] )
 
@@ -195,18 +192,7 @@
 	(printf "milliseconds needed for ~a: \t~s~%" pass (- (cputime) time0)) ) )
 
     (define (read-form in)
-      (if (or ffi-mode ffi-parse-mode)
-	  (let ([s (read-string #f in)])
-	    (if (string=? s "")
-		#!eof
-		(cond [ffi-mode
-		       `(declare 
-			  (foreign-declare ,s)
-			  (foreign-parse ,s) ) ]
-		      [else
-		       `(declare
-			  (foreign-parse ,s) ) ] ) ) )
-	  (##sys#read in infohook) ) )
+      (##sys#read in infohook) )
 
     (when uunit
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
@@ -246,7 +232,6 @@
     (when (memq 'disable-interrupts options) (set! insert-timer-checks #f))
     (when (memq 'fixnum-arithmetic options) (set! number-type 'fixnum))
     (when (memq 'block options) (set! block-compilation #t))
-    (when (memq 'disable-c-syntax-checks options) (set! no-c-syntax-checks #t))
     (when (memq 'emit-external-prototypes-first options) (set! external-protos-first #t))
     (when (memq 'inline options) (set! inline-max-size default-inline-max-size))
     (when (memq 'track-scheme options) (set! emit-line-info #t))
@@ -282,11 +267,6 @@
     ;; Handle feature options:
     (for-each register-feature! (collect-options 'feature))
 
-    ;; Handle FFI defines and include-paths:
-    (for-each register-ffi-macro (collect-options 'ffi-define))
-    (when (memq 'ffi-no-include options) (set! ffi-dont-include #t))
-    (set! ffi-include-path-list (append (collect-options 'ffi-include-path) ffi-include-path-list))
-
     ;; Load extensions:
     (set! ##sys#features (cons #:compiler-extension ##sys#features))
     (let ([extends (collect-options 'extend)])
@@ -321,7 +301,6 @@
 
     (when (memq 'run-time-macros options)
       (set! ##sys#enable-runtime-macros #t) )
-    (enable-sharp-greater-read-syntax)
     (set! target-heap-size
       (if hsize
 	  (arg-val (option-arg hsize))

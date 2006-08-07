@@ -127,7 +127,7 @@
     lambda-lift run-time-macros tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first track-scheme release
-    analyze-only dynamic ffi ffi-custom ffi-parse ffi-no-include extension) )
+    analyze-only dynamic extension) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
@@ -496,21 +496,23 @@
 	       (and-let* ((sym (car (node-parameters arg2)))
 			  (val (get db sym 'value)) )
 		 (and (eq? '##core#lambda (node-class val))
-		      (= 2 (length (third (node-parameters val))))
-		      (let ((tmp (gensym))
-			    (tmpk (gensym 'r)) )
-			(debugging 'x "removing single-valued `call-with-values'" (node-parameters val))
-			(make-node
-			 'let (list tmp)
-			 (list (make-node
-				'##core#lambda
-				(list (gensym 'f_) #f (list tmpk) 0)
-				(list (make-node
-				       '##core#call '(#t)
-				       (list arg2 cont (varnode tmpk)) ) ) ) 
+		      (let ((llist (third (node-parameters val))))
+			(and (proper-list? llist)
+			     (= 2 (length (third (node-parameters val))))
+			     (let ((tmp (gensym))
+				   (tmpk (gensym 'r)) )
+			       (debugging 'o "removing single-valued `call-with-values'" (node-parameters val))
 			       (make-node
-				'##core#call '(#t)
-				(list arg1 (varnode tmp)) ) ) ) ) ) ) ) ) ) )
+				'let (list tmp)
+				(list (make-node
+				       '##core#lambda
+				       (list (gensym 'f_) #f (list tmpk) 0)
+				       (list (make-node
+					      '##core#call '(#t)
+					      (list arg2 cont (varnode tmpk)) ) ) ) 
+				      (make-node
+				       '##core#call '(#t)
+				       (list arg1 (varnode tmp)) ) ) ) ) ) ) ) ) ) ) ) )
   (rewrite 'call-with-values 8 rewrite-c-w-v)
   (rewrite '##sys#call-with-values 8 rewrite-c-w-v) )
 

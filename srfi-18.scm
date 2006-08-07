@@ -241,7 +241,7 @@ EOF
 	    ct 1
 	    (lambda ()
 	      (case (##sys#slot thread 3)
-		[(dead) (##sys#apply-values (##sys#slot thread 2))]
+		[(dead) (apply return (##sys#slot thread 2))]
 		[(terminated)
 		 (return 
 		  (##sys#signal

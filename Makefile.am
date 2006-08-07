@@ -18,14 +18,12 @@ NO_STATIC_EXECUTABLES=@NO_STATIC_EXECUTABLES@
 LINKFLAGS=@LINKFLAGS@
 EXTRA_LINK_FLAGS=@EXTRA_LINK_FLAGS@
 BINARY_VERSION=@BINARY_VERSION@
-foolibs=@LIBS@ @SHLIBS@
-bazlibs=@LIBS@
 if IS_MINGW
-MORE_LIBS = $(foolibs) @WINSOCKLIB@
-MORE_STATIC_LIBS = $(bazlibs) @WINSOCKLIB@
+MORE_LIBS = @LIBS@ @SHLIBS@ @WINSOCKLIB@
+MORE_STATIC_LIBS = @LIBS@ @WINSOCKLIB@
 else
-MORE_LIBS = $(foolibs)
-MORE_STATIC_LIBS = $(bazlibs)
+MORE_LIBS = @LIBS@ @SHLIBS@ 
+MORE_STATIC_LIBS = @LIBS@ 
 endif
 
 BOOTSTRAP_PATH = .
@@ -51,11 +49,11 @@ man_MANS = chicken.1 csi.1 csc.1 chicken-profile.1 chicken-setup.1
 info_TEXINFOS = chicken.texi
 
 chicken_SOURCES = 
-chicken_LDADD = chicken.lo support.lo easyffi.lo compiler.lo optimizer.lo c-platform.lo c-backend.lo batch-driver.lo libchicken.la $(MORE_LIBS)
+chicken_LDADD = chicken.lo support.lo compiler.lo optimizer.lo c-platform.lo c-backend.lo batch-driver.lo libchicken.la $(MORE_LIBS)
 chicken_LDFLAGS = $(LINKFLAGS)
 
 chicken_static_SOURCES = 
-chicken_static_LDADD = chicken.o support.o easyffi.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la $(MORE_STATIC_LIBS)
+chicken_static_LDADD = chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la $(MORE_STATIC_LIBS)
 chicken_static_LDFLAGS = -static $(LINKFLAGS)
 
 BASE_CPPFLAGS=-DC_STACK_GROWS_DOWNWARD=$(STACK_GROWS_DOWNWARD) -DC_INSTALL_LIB_HOME='"$(pkglibdir)/$(BINARY_VERSION)"' \
@@ -81,11 +79,7 @@ c-backend.c : tweaks.scm
 support.c : parameters.scm tweaks.scm banner.scm
 batch-driver.c : parameters.scm parameters.scm
 c-platform.c : tweaks.scm
-easyffi.c : tweaks.scm easyffi.l.silex
 chicken-setup.c: parameters.scm
-
-easyffi.l.silex : easyffi.l
-	$(CSI) -script silex.scm easyffi.l easyffi.l.silex counters none
 
 chicken-defaults.h: nsample
 	@if [ -n "${NURSERY}" ]; then \
@@ -197,34 +191,34 @@ if IS_MINGW
 posixexports = posixwin.exports
 if USE_PCRE
 regexexports = pcre.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pcre.c posixwin.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upcre.c uposixwin.c stub.c
+chickenlibsources = extras.c match.c lolevel.c utils.c tcp.c pcre.c posixwin.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c uutils.c utcp.c upcre.c uposixwin.c stub.c
 else
 if USE_PREGEX
 regexexports = pregexp.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pregexp.c posixwin.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upregexp.c uposixwin.c stub.c
+chickenlibsources = extras.c match.c lolevel.c utils.c tcp.c pregexp.c posixwin.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c uutils.c utcp.c upregexp.c uposixwin.c stub.c
 else
 regexexports = regexunix.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c regexunix.c posixwin.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c uregexunix.c uposixwin.c stub.c
+chickenlibsources = extras.c match.c lolevel.c utils.c tcp.c regexunix.c posixwin.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c uutils.c utcp.c uregexunix.c uposixwin.c stub.c
 endif
 endif
 else
 posixexports = posixunix.exports
 if USE_PCRE
 regexexports = pcre.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pcre.c posixunix.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upcre.c uposixunix.c stub.c
+chickenlibsources = extras.c match.c lolevel.c utils.c tcp.c pcre.c posixunix.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c uutils.c utcp.c upcre.c uposixunix.c stub.c
 else
 if USE_PREGEX
 regexexports = pregexp.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c pregexp.c posixunix.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c upregexp.c uposixunix.c stub.c
+chickenlibsources = extras.c match.c lolevel.c utils.c tcp.c pregexp.c posixunix.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c uutils.c utcp.c upregexp.c uposixunix.c stub.c
 else
 regexexports = regexunix.exports
-chickenlibsources = extras.c match.c lolevel.c tinyclos.c utils.c tcp.c regexunix.c posixunix.c stub.c
-chickenulibsources = uextras.c match.c ulolevel.c utinyclos.c uutils.c utcp.c uregexunix.c uposixunix.c stub.c
+chickenlibsources = extras.c match.c lolevel.c utils.c tcp.c regexunix.c posixunix.c stub.c
+chickenulibsources = uextras.c match.c ulolevel.c uutils.c utcp.c uregexunix.c uposixunix.c stub.c
 endif
 endif
 endif
@@ -243,7 +237,7 @@ libuchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_S
 # Scheme library files to install.
 pkgdata_DATA = chicken-more-macros.scm \
   banner.scm chicken-ffi-macros.scm library.exports eval.exports srfi-1.exports srfi-4.exports \
-  srfi-13.exports srfi-14.exports srfi-18.exports tinyclos.exports utils.exports extras.exports \
+  srfi-13.exports srfi-14.exports srfi-18.exports utils.exports extras.exports \
   eval.exports tcp.exports regex.exports posix.exports lolevel.exports scheduler.exports
 
 posix.exports: $(posixexports)
@@ -393,7 +387,7 @@ chicken.c: chicken.scm tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@ -explicit-use
 
 library.c: build.scm
-library.c eval.c tinyclos.c profiler.c: parameters.scm
+library.c eval.c profiler.c: parameters.scm
 pcre.c pregexp.c regexunix.c: regex-common.scm
 
 # Specific rules for unsafe library units:
@@ -427,8 +421,6 @@ upregexp.c: pregexp.scm regex-common.scm
 	$(CHICKEN) pregexp.scm $(CHICKEN_UFLAGS) -output-file upregexp.c -explicit-use
 upcre.c: pcre.scm regex-common.scm
 	$(CHICKEN) pcre.scm $(CHICKEN_UFLAGS) -output-file upcre.c -explicit-use
-utinyclos.c: tinyclos.scm parameters.scm
-	$(CHICKEN) tinyclos.scm $(CHICKEN_UFLAGS) -output-file utinyclos.c -explicit-use
 usrfi-18.c: srfi-18.scm
 	$(CHICKEN) srfi-18.scm $(CHICKEN_UFLAGS) -output-file usrfi-18.c -explicit-use
 

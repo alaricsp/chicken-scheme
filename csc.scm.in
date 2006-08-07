@@ -62,7 +62,10 @@
   (or (getenv "CHICKEN_HOME") 
       (if (flat-directory-install)
 	  (quit "`CHICKEN_HOME' environment variable not set - please set it to the directory where CHICKEN is installed")
-	  (prefix "" "share" "@INSTALL_HOME@") ) ) )
+	  (quotewrap (prefix "" "share" "@INSTALL_HOME@"))
+      )
+  )
+)
 
 (define (homize str) (make-pathname home str))
 
@@ -73,8 +76,13 @@
 
 (begin
   (if (flat-directory-install)
-      (define translator (quotewrap (homize "chicken")))
-      (define translator (quotewrap (prefix "chicken" "bin" (make-pathname "@INSTALL_BIN_HOME@" "chicken")) ) ) )
+      (define translator
+        (quotewrap (homize "chicken"))
+      )
+      (define translator
+        (quotewrap (prefix "chicken" "bin" (make-pathname "@INSTALL_BIN_HOME@" "chicken")))
+      )
+  )
   (if win
     (begin
       (define compiler "cl")
@@ -89,10 +97,18 @@
       (define shared-library-extension "dll")
       (define nonstatic-compilation-options '("/DPIC")) )
     (begin
-      (define compiler "@INSTALL_CC@")
-      (define c++-compiler "@INSTALL_CXX@")
-      (define linker "@INSTALL_CC@")
-      (define c++-linker "@INSTALL_CXX@")
+      (define compiler
+        (quotewrap "@INSTALL_CC@")
+      )
+      (define c++-compiler
+        (quotewrap "@INSTALL_CXX@")
+      )
+      (define linker
+        (quotewrap "@INSTALL_CC@")
+      )
+      (define c++-linker
+        (quotewrap "@INSTALL_CXX@")
+      )
       (define object-extension "o")
       (define library-extension "a")
       (define link-output-flag "-o ")
@@ -128,15 +144,15 @@ EOF
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -run-time-macros -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info -check-imports
-    -emit-external-prototypes-first -inline -ffi-no-include -extension -release
-    -analyze-only -ffi -disable-c-syntax-checks -ffi-parse) )
+    -emit-external-prototypes-first -inline -extension -release
+    -analyze-only) )
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
     -require-extension -inline-limit -profile-name -disable-warning -import
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
-    -compress-literals -ffi-define -ffi-include-path) )
+    -compress-literals) )
 
 (define-constant shortcuts
   '((-h "-help")
@@ -198,21 +214,38 @@ EOF
 	    (map homize '("libchickengui.lib")))
         )
         (begin
-          (define default-library-files (list (prefix "libchicken-static.lib" "lib" "@INSTALL_LIB_HOME@\\libchicken-static.lib")))
-          (define default-shared-library-files (list (prefix "libchicken.lib" "lib" "@INSTALL_LIB_HOME@\\libchicken.lib")))
-          (define unsafe-library-files (list (prefix "libuchicken-static.lib" "lib" "@INSTALL_LIB_HOME@\\libuchicken-static.lib")))
-          (define unsafe-shared-library-files (llist (prefix "libuchicken.lib" "lib" "@INSTALL_LIB_HOME@\\libuchicken.lib")))
-          (define gui-library-files (list (prefix "libchickengui-static.lib" "lib" "@INSTALL_LIB_HOME@\\libchickengui-static.lib")))
-          (define gui-shared-library-files (list (prefix "libchickengui.lib" "lib" "@INSTALL_LIB_HOME@\\libchickengui.lib")))
+          (define default-library-files (list
+            (quotewrap (prefix "libchicken-static.lib" "lib" "@INSTALL_LIB_HOME@\\libchicken-static.lib"))
+          ))
+          (define default-shared-library-files (list
+            (quotewrap (prefix "libchicken.lib" "lib" "@INSTALL_LIB_HOME@\\libchicken.lib"))
+          ))
+          (define unsafe-library-files (list
+            (quotewrap (prefix "libuchicken-static.lib" "lib" "@INSTALL_LIB_HOME@\\libuchicken-static.lib"))
+          ))
+          (define unsafe-shared-library-files (list
+            (quotewrap (prefix "libuchicken.lib" "lib" "@INSTALL_LIB_HOME@\\libuchicken.lib"))
+          ))
+          (define gui-library-files (list
+            (quotewrap (prefix "libchickengui-static.lib" "lib" "@INSTALL_LIB_HOME@\\libchickengui-static.lib"))
+          ))
+          (define gui-shared-library-files (list
+            (quotewrap (prefix "libchickengui.lib" "lib" "@INSTALL_LIB_HOME@\\libchickengui.lib"))
+          ))
         )
       )
-    )   
+    )
     (begin
+      ; will more libs ever need quotewrapping?
       (define extra-libraries "@INSTALL_MORE_STATIC_LIBS@")
       (define extra-shared-libraries "@INSTALL_MORE_LIBS@")
-      (define default-library-files (list (prefix "libchicken.a" "lib" "@INSTALL_LIB_HOME@/libchicken.a")))
+      (define default-library-files (list
+        (quotewrap (prefix "libchicken.a" "lib" "@INSTALL_LIB_HOME@/libchicken.a"))
+      ))
       (define default-shared-library-files '("-lchicken"))
-      (define unsafe-library-files (list (prefix "libuchicken.a" "lib" "@INSTALL_LIB_HOME@/libuchicken.a")))
+      (define unsafe-library-files (list
+        (quotewrap (prefix "libuchicken.a" "lib" "@INSTALL_LIB_HOME@/libuchicken.a"))
+      ))
       (define unsafe-shared-library-files '("-luchicken"))
       (define gui-library-files default-library-files)
       (define gui-shared-library-files default-shared-library-files)
@@ -224,8 +257,13 @@ EOF
 
 (define translate-options '("-quiet"))
 
+; include seems to need different string handling.  Don't kill the comments just yet.
+
 (define include-dir
-  (let ([id (prefix "" "include" "@INSTALL_INCLUDE_HOME@")])
+  (let ([id
+    (prefix "" "include" "@INSTALL_INCLUDE_HOME@")
+;    (quotewrap (prefix "" "include" "@INSTALL_INCLUDE_HOME@"))
+    ])
     (and (not (member id '("/usr/include" "/usr/local/include" "")))
 	 id) ) )
 
@@ -233,7 +271,9 @@ EOF
   (if win
     (if (flat-directory-install)
       (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
-      (cons* "/I@INSTALL_INCLUDE_HOME@" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
+      (cons* "/I@INSTALL_INCLUDE_HOME@"
+;        (string-append "/I" (quotewrap "@INSTALL_INCLUDE_HOME@"))
+        "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
     )
     (cons* "-DC_NO_PIC_NO_DLL" (if include-dir (list "-I" include-dir) '())) 
   ) 
@@ -248,8 +288,12 @@ EOF
 
 (define link-options
   (cond [win '()]
-	[(or osx hpux-hppa) (list (conc "-L" (prefix "" "lib" "@INSTALL_LIB_HOME@")))]
-	[else (list (let ((p (prefix "" "lib" "@INSTALL_LIB_HOME@"))) (conc "-L" p " -Wl,-R" p)))] ) )
+	[(or osx hpux-hppa) (list (conc "-L" 
+          (quotewrap (prefix "" "lib" "@INSTALL_LIB_HOME@"))
+        ))]
+	[else (list (let ((p 
+          (quotewrap (prefix "" "lib" "@INSTALL_LIB_HOME@"))
+        )) (conc "-L" p " -Wl,-R" p)))] ) )
 
 (define target-filename #f)
 (define verbose #f)
@@ -261,7 +305,6 @@ EOF
 (define static #f)
 (define static-libs #f)
 (define gui #f)
-(define ffi #f)
 
 
 ;;; Display usage information:
@@ -294,15 +337,8 @@ EOF
 
     -D  -DSYMBOL  -feature SYMBOL 
                                 register feature identifier
-    -ffi-define SYMBOL          define preprocessor macro for ``easy'' FFI parser
-    -ffi-include-path PATH      set include path for ``easy'' FFI parser
-    -ffi-no-include             don't parse include files when encountered by the FFI parser
     -c++                        Compile via a C++ source file (.cpp) 
-                                (implies `-ffi-define __cplusplus')
     -objc                       Compile via Objective-C source file (.m)
-                                (implies `-ffi-define __OBJC__')
-    -ffi                        parse and compile C/C++ code and generate Scheme bindings
-    -ffi-parse                  parse C/C++ code without including it
 
   Syntax related options:
 
@@ -455,7 +491,7 @@ EOF
 	     (when show-libs (print* (linker-libraries) #\space))
 	     (newline)
 	     (exit) )
-	   (when (and (null? scheme-files) ffi)
+	   (when (null? scheme-files)
 	     (set! scheme-files c-files)
 	     (set! c-files '()) )
 	   (cond [(null? scheme-files)
@@ -500,11 +536,9 @@ EOF
 		(system (sprintf translator " -version"))
 		(exit) ]
 	       [(-c++) 
-		(t-options "-ffi-define" "__cplusplus")
 		(set! cpp-mode #t)
 		(when osx (set! compile-options (cons "-no-cpp-precomp" compile-options))) ]
 	       [(-objc) 
-		(t-options "-ffi-define" "__OBJC__")
 		(set! objc-mode #t) ]
 	       [(-static) 
 		(set! translate-options (cons* "-feature" "chicken-compile-static" translate-options))
@@ -573,9 +607,6 @@ EOF
 	       [(-dry-run) 
 		(set! verbose #t)
 		(set! dry-run #t)]
-	       [(-ffi -ffi-parse)
-		(t-options (->string s))
-		(set! ffi #t) ]
 	       [(-s -shared -dynamic)
 		(shared-build #f) ]
 	       [(-dll -library)

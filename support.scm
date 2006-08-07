@@ -42,20 +42,20 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
-  foreign-type-table-size file-io-only banner custom-declare-alist parse-easy-ffi disabled-warnings
+  foreign-type-table-size file-io-only banner custom-declare-alist disabled-warnings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
   foreign-declarations block-compilation analysis-database-size line-number-database-size
   target-heap-size target-stack-size check-global-exports check-global-imports
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  dependency-list broken-constant-nodes inline-substitutions-enabled no-c-syntax-checks
+  dependency-list broken-constant-nodes inline-substitutions-enabled
   always-bound-to-procedure block-variable-literal copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
-  direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string enable-sharp-greater-read-syntax
+  direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string
   expand-profile-lambda profile-lambda-list profile-lambda-index profile-info-vector-name
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call check-c-syntax
+  reorganize-recursive-bindings substitution-table simplify-named-call
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! finish-foreign-result compressable-literal csc-control-file
   debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
@@ -1071,7 +1071,7 @@
     [else
      (match type
        [((or 'instance 'instance-ref) cname sname)
-	`(##tinyclos#make-instance-from-pointer ,body ,sname) ]
+	`(##tinyclos#make-instance-from-pointer ,body ,sname) ] ;XXX eggified, needs better treatment...
        [('nonnull-instance cname sname)
 	`(make ,sname 'this ,body) ]
        [_ body] ) ] ) )
@@ -1224,11 +1224,6 @@ Usage: chicken FILENAME OPTION ...
   Language options:
 
     -feature SYMBOL             register feature identifier
-    -ffi-define SYMBOL          define preprocessor macro for ``easy'' FFI parser
-    -ffi-include-path PATH      set include path for ``easy'' FFI parser
-    -ffi-no-include             don't parse include files when encountered by the FFI parser
-    -ffi                        parse and compile C/C++ code and generate Scheme bindings
-    -ffi-parse                  parse C/C++ code without including it
 
   Syntax related options:
 
@@ -1294,7 +1289,6 @@ Usage: chicken FILENAME OPTION ...
 
     -debug MODES                display debugging output for the given modes
     -compress-literals NUMBER   compile literals above threshold as strings
-    -disable-c-syntax-checks    disable syntax check of C code fragments
     -unsafe-libraries           marks the generated file as being linked
                                 with the unsafe runtime system
     -raw                        do not generate implicit init- and exit code			       
@@ -1400,55 +1394,14 @@ EOF
 
 ;;; "#> ... <#" syntax:
 
-(define (enable-sharp-greater-read-syntax)
-  (set! ##sys#user-read-hook
-    (let ([old-hook ##sys#user-read-hook])
-      (lambda (char port)
-	(if (char=? #\> char)	       
-	    (let ([_ (read-char port)]		; swallow #\>
-		  [decl #f]
-		  [parse #f]
-		  [exec #f] )
-	      (case (peek-char port)
-		[(#\!)
-		 (read-char port)
-		 (set! parse #t)
-		 (set! decl #t) ]
-		[(#\?)
-		 (read-char port)
-		 (set! parse #t) ]
-		[(#\:)
-		 (read-char port)
-		 (set! exec #t) ]
-		[(#\()
-		 (let ([head (read port)])
-		   (match head
-		     [_ (for-each
-			 (lambda (t)
-			   (case t
-			     [(declare) (set! decl #t)]
-			     [(parse) (set! parse #t)]
-			     [(execute) (set! exec #t)]
-			     [else (quit "invalid tag in `#>(...) ...<#' form" t)] ) )
-			 head) ] ) ) ]
-		[else (set! decl #t)] )
-	      (let ([text (scan-sharp-greater-string port)])
-		(check-c-syntax text)
-		`(begin
-		   ,@(if decl
-			 `((declare (foreign-declare ,text)))
-			 '() )
-		   ,@(if parse
-			 `((declare (foreign-parse ,text)))
-			 '() )
-		   ,@(if exec
-			 (let ([tmp (gensym 'code_)])
-			   `((declare 
-			       (foreign-declare
-				,(sprintf "static C_word ~A() { ~A; return C_SCHEME_UNDEFINED; }\n" tmp text) ) )
-			     (##core#inline ,(symbol->string tmp)) ) )
-			 '() ) ) ) )
-	    (old-hook char port) ) ) ) ) )
+(set! ##sys#user-read-hook
+  (let ([old-hook ##sys#user-read-hook])
+    (lambda (char port)
+      (if (char=? #\> char)	       
+	  (let* ((_ (read-char port))		; swallow #\>
+		 (text (scan-sharp-greater-string port)))
+	    `(declare (foreign-declare ,text)) )
+	  (old-hook char port) ) ) ) )
 
 (define (scan-sharp-greater-string port)
   (let ([out (open-output-string)])
@@ -1469,8 +1422,6 @@ EOF
 	      [else
 	       (write-char c out)
 	       (loop) ] ) ) ) ) )
-
-(enable-sharp-greater-read-syntax)
 
 
 ;;; Custom declarations:

@@ -34,12 +34,12 @@ all : libchicken.lib libchicken.dll libchicken-static.lib \
 	copy pregexp.exports regex.exports
 
 clean :
-	del *.obj *.obs library.c eval.c lolevel.c tinyclos.c srfi-14.c srfi-1.c srfi-13.c scheduler.c srfi-18.c extras.c \
+	del *.obj *.obs library.c eval.c lolevel.c srfi-14.c srfi-1.c srfi-13.c scheduler.c srfi-18.c extras.c \
 	  utils.c posixwin.c profiler.c match.c pregexp.c srfi-4.c stub.c \
-	  ulibrary.c ueval.c ulolevel.c utinyclos.c usrfi-14.c usrfi-1.c usrfi-13.c usrfi-18.c \
+	  ulibrary.c ueval.c ulolevel.c usrfi-14.c usrfi-1.c usrfi-13.c usrfi-18.c \
 	  uextras.c \
 	  uutils.c uposixwin.c upregexp.c usrfi-4.c tcp.c utcp.c \
-	  chicken.c compiler.c support.c easyffi.c c-backend.c c-platform.c optimizer.c \
+	  chicken.c compiler.c support.c c-backend.c c-platform.c optimizer.c \
 	  *.lib *.exe *.exp *.dll
 
 
@@ -56,8 +56,6 @@ upregexp.c : pregexp.scm
 	$(CHICKEN) pregexp.scm -output-file $@ $(SUFLAGS)
 ulolevel.c : lolevel.scm
 	$(CHICKEN) lolevel.scm -output-file $@ $(SUFLAGS)
-utinyclos.c : tinyclos.scm
-	$(CHICKEN) tinyclos.scm -output-file $@ $(SUFLAGS)
 usrfi-1.c : srfi-1.scm
 	$(CHICKEN) srfi-1.scm -output-file $@ $(SUFLAGS)
 usrfi-4.c : srfi-4.scm
@@ -81,32 +79,32 @@ uposixwin.c : posixwin.scm
 # The runtime library:
 
 libchicken.lib libchicken.dll: runtime.obj library.obj eval.obj profiler.obj scheduler.obj \
-	extras.obj match.obj lolevel.obj tinyclos.obj pregexp.obj utils.obj \
+	extras.obj match.obj lolevel.obj pregexp.obj utils.obj \
 	tcp.obj posixwin.obj srfi-1.obj srfi-4.obj srfi-13.obj srfi-14.obj srfi-18.obj stub.obj
 	link /nologo /out:libchicken.dll /implib:libchicken.lib /dll $(WINLIBS) $**
 
 libchicken-static.lib : runtime.obs library.obs eval.obs profiler.obs scheduler.obs \
-	extras.obs match.obs lolevel.obs tinyclos.obs pregexp.obs utils.obs \
+	extras.obs match.obs lolevel.obs pregexp.obs utils.obs \
 	tcp.obs posixwin.obs srfi-1.obs srfi-4.obs srfi-13.obs srfi-14.obs srfi-18.obs stub.obs
 	lib /nologo /out:$@ $(WINLIBS) $**
 
 libuchicken.lib libuchicken.dll: uruntime.obj ulibrary.obj ueval.obj profiler.obj scheduler.obj \
-	uextras.obj match.obj ulolevel.obj utinyclos.obj upregexp.obj uutils.obj \
+	uextras.obj match.obj ulolevel.obj upregexp.obj uutils.obj \
 	utcp.obj uposixwin.obj usrfi-1.obj usrfi-4.obj usrfi-13.obj usrfi-14.obj usrfi-18.obj stub.obj
 	link /nologo /out:libuchicken.dll /implib:libuchicken.lib /dll $(WINLIBS) $**
 
 libuchicken-static.lib : uruntime.obs ulibrary.obs ueval.obs profiler.obs scheduler.obs \
-	uextras.obs match.obs ulolevel.obs utinyclos.obs upregexp.obs uutils.obs \
+	uextras.obs match.obs ulolevel.obs upregexp.obs uutils.obs \
 	utcp.obs uposixwin.obs usrfi-1.obs usrfi-4.obs usrfi-13.obs usrfi-14.obs usrfi-18.obs stub.obs
 	lib /nologo /out:$@ $(WINLIBS) $**
 
 libchickengui.lib libchickengui.dll: gui-runtime.obj gui-library.obj eval.obj profiler.obj scheduler.obj \
-	extras.obj match.obj lolevel.obj tinyclos.obj pregexp.obj utils.obj \
+	extras.obj match.obj lolevel.obj pregexp.obj utils.obj \
 	tcp.obj posixwin.obj srfi-1.obj srfi-4.obj srfi-13.obj srfi-14.obj srfi-18.obj stub.obj
 	link /nologo /out:libchickengui.dll /implib:libchickengui.lib /dll $(WINGUILIBS) $**
 
 libchickengui-static.lib : gui-runtime.obs gui-library.obs eval.obs profiler.obs scheduler.obs \
-	extras.obs match.obs lolevel.obs tinyclos.obs pregexp.obs utils.obs \
+	extras.obs match.obs lolevel.obs pregexp.obs utils.obs \
 	tcp.obs posixwin.obs srfi-1.obs srfi-4.obs srfi-13.obs srfi-14.obs srfi-18.obs stub.obs
 	lib /nologo /out:$@ $(WINGUILIBS) $**
 
@@ -159,8 +157,6 @@ srfi-4.obj : srfi-4.c chicken.h
 srfi-4.obs : srfi-4.c chicken.h
 match.obj : match.c chicken.h
 match.obs : match.c chicken.h
-tinyclos.obj : tinyclos.c chicken.h
-tinyclos.obs : tinyclos.c chicken.h
 srfi-13.obj : srfi-13.c chicken.h
 srfi-13.obs : srfi-13.c chicken.h
 srfi-14.obj : srfi-14.c chicken.h
@@ -194,8 +190,6 @@ usrfi-1.obj : usrfi-1.c chicken.h
 usrfi-1.obs : usrfi-1.c chicken.h
 usrfi-4.obj : usrfi-4.c chicken.h
 usrfi-4.obs : usrfi-4.c chicken.h
-utinyclos.obj : utinyclos.c chicken.h
-utinyclos.obs : utinyclos.c chicken.h
 usrfi-13.obj : usrfi-13.c chicken.h
 usrfi-13.obs : usrfi-13.c chicken.h
 usrfi-14.obj : usrfi-14.c chicken.h
@@ -270,12 +264,12 @@ chicken-setup.exe: chicken-setup.obj libchicken.lib chicken.res
 
 # The compiler:
 
-chicken.exe : chicken.obj support.obj easyffi.obj compiler.obj optimizer.obj batch-driver.obj \
+chicken.exe : chicken.obj support.obj compiler.obj optimizer.obj batch-driver.obj \
 	  c-platform.obj c-backend.obj chicken.res \
 	  libchicken.lib
 	link $(LFLAGS) $** /out:$@
 
-chicken-static.exe : chicken.obs support.obs easyffi.obs compiler.obs optimizer.obs batch-driver.obs \
+chicken-static.exe : chicken.obs support.obs compiler.obs optimizer.obs batch-driver.obs \
 	  c-platform.obs c-backend.obs chicken.res \
 	  libchicken-static.lib
 	link $(LFLAGS) $** /out:$@
@@ -287,8 +281,6 @@ chicken.obj : chicken.c chicken.h
 chicken.obs : chicken.c chicken.h
 support.obj : support.c chicken.h
 support.obs : support.c chicken.h
-easyffi.obj : easyffi.c chicken.h
-easyffi.obs : easyffi.c chicken.h
 c-platform.obj : c-platform.c chicken.h
 c-platform.obs : c-platform.c chicken.h
 c-backend.obj : c-backend.c chicken.h
@@ -299,8 +291,3 @@ compiler.obj : compiler.c chicken.h
 compiler.obs : compiler.c chicken.h
 optimizer.obj : optimizer.c chicken.h
 optimizer.obs : optimizer.c chicken.h
-
-easyffi.c: easyffi.l.silex
-
-easyffi.l.silex : easyffi.l
-	csi -script silex.scm easyffi.l easyffi.l.silex counters none

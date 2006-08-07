@@ -35,7 +35,7 @@
 
 (declare
   (run-time-macros)
-  (uses srfi-1 regex utils posix tcp match srfi-18)
+  (uses srfi-1 regex utils posix tcp match srfi-18 srfi-13)
   (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
 	  setup-verbose-flag setup-install-flag installation-prefix find-library find-header
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
@@ -122,7 +122,12 @@ EOF
 	  ((foreign-lambda void "create_directory" c-string) dir) ) 
 	(lambda (dir)
 	  (verb dir)
-	  (system* "mkdir -p ~a" dir) ) ) ) )
+	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
+
+(define (quotewrap str)
+  (if (string-any char-whitespace? str)
+      (string-append "\"" str "\"") 
+      str) )
 
 (define setup-root-directory (make-parameter #f))
 (define setup-build-directory (make-parameter #f))
@@ -184,14 +189,14 @@ EOF
     (both
      (let ((tmp (create-temporary-file)))
        (patch (list both tmp) rx subst)
-       (system* "~A ~A ~A" *move-command* tmp both) ) ) ) )
+       (system* "~A ~A ~A" *move-command* (quotewrap tmp) (quotewrap both) ) ) ) ) )
 
 (define run-verbose (make-parameter #t))
 
 (define (fixpath prg)
   (cond ((string=? prg "csc")
 	 (string-intersperse 
-	  (cons* (make-pathname *install-bin-path* prg)
+	  (cons* (quotewrap (make-pathname *install-bin-path* prg))
 		 "-feature" "compiling-extension"
 		 *csc-options*) 
 	  " ") )
@@ -476,7 +481,7 @@ EOF
     (set! *tmpdir-created* #f)
     (unless *keep-stuff*
       (when (setup-verbose-flag) (printf "removing temporary directory `~A'~%" *temporary-directory*))
-      (run (,*remove-command* ,*temporary-directory*))) ))
+      (run (,*remove-command* ,(quotewrap *temporary-directory*))) )) )
 
 (define (unpack filename)
   (define (testgz fn)
@@ -499,16 +504,16 @@ EOF
   (let ((from (if (pair? from) (car from) from))
 	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
     (ensure-directory to)
-    (run (,*copy-command* ,from ,to)) ) )
+    (run (,*copy-command* ,(quotewrap from) ,(quotewrap to)) ) ) )
 
 (define (move-file from to)
   (let ((from (if (pair? from) (car from) from))
 	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
     (ensure-directory to)
-    (run (,*move-command* ,from ,to)) ) )
+    (run (,*move-command* ,(quotewrap from) ,(quotewrap to)) ) ) )
 
 (define (remove-file* dir)
-  (run (,*remove-command* ,dir)) )
+  (run (,*remove-command* ,(quotewrap dir)) ) )
 
 (define (make-dest-pathname path file)
   (match file
@@ -610,7 +615,7 @@ EOF
 	   (lambda (f)
 	     (let ((f (if (pair? f) (cadr f) f)))
 	       (when (setup-verbose-flag) (printf "  deleting ~A~%" f))
-	       (run (,*remove-command* ,f)) ) )
+	       (run (,*remove-command* ,(quotewrap f)) ) ) )
 	   (cdr files) ) )
 	(print "no files to uninstall") )
     (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
@@ -647,7 +652,7 @@ EOF
 		 (when verb (print cmd " ..."))
 		 cmd) ) ) ) )
     (when verb (print (if (zero? r) "succeeded." "failed.")))
-    (system (sprintf "~A ~A" *remove-command* fname))
+    (system (sprintf "~A ~A" *remove-command* (quotewrap fname)))
     (zero? r) ) )
 
 (define (find-library name proc)

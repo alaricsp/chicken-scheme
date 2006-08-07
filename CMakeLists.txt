@@ -1,8 +1,9 @@
 # Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
 # See LICENSE section at end of file for full license text.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3)
 INCLUDE(CheckIncludeFile)
+INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckSymbolExists)
 
 PROJECT(Chicken)
@@ -193,29 +194,6 @@ MACRO(UNSAFE_LIBRARY_SCM_TO_C saferoot)
   )
 ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 
-# Need to generate easyffi.l.silex first.
-# This is a key 1st step in the bootstrap.
-
-MACRO(GEN_EASYFFI_C)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c
-    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/easyffi.scm
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/easyffi.l.silex
-    COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/easyffi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c ${CHICKEN_FLAGS}
-    COMMENT "Compiling ${Chicken_SOURCE_DIR}/easyffi.scm to ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c"
-  )
-ENDMACRO(GEN_EASYFFI_C)
-
-MACRO(GEN_EASYFFI_L_SILEX)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/easyffi.l.silex
-    MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/easyffi.l
-    COMMAND ${CURRENT_SILEX} ${Chicken_SOURCE_DIR}/easyffi.l ${CMAKE_CURRENT_BINARY_DIR}/easyffi.l.silex counters none
-    COMMENT "Lexing ${Chicken_SOURCE_DIR}/easyffi.l to ${CMAKE_CURRENT_BINARY_DIR}/easyffi.l.silex"
-  )
-ENDMACRO(GEN_EASYFFI_L_SILEX)
-
-
 ####################################################################
 #  DEDUCE OS SPECIFIC BUILD OPTIONS                                #
 ####################################################################
@@ -376,11 +354,19 @@ IF(HAVE_WINDOWS_H)
   CHECK_INCLUDE_FILE(winsock2.h HAVE_WINSOCK2_H)
   IF(HAVE_WINSOCK2_H)
     ADD_DEFINITIONS(-DHAVE_WINSOCK2_H)
+  ELSE(HAVE_WINSOCK2_H)
+    MESSAGE("You are missing winsock2.h.
+      Correct this if you want full network functionality.")
   ENDIF(HAVE_WINSOCK2_H)
 
-  CHECK_INCLUDE_FILE(ws2tcpip.h HAVE_WS2TCPIP_H)
+  # ws2tcpip.h needs winsock2.h for various definitions
+  SET(WS2FILES winsock2.h ws2tcpip.h)
+  CHECK_INCLUDE_FILES("${WS2FILES}" HAVE_WS2TCPIP_H)
   IF(HAVE_WS2TCPIP_H)
     ADD_DEFINITIONS(-DHAVE_WS2TCPIP_H)
+  ELSE(HAVE_WS2TCPIP_H)
+    MESSAGE("You are missing ws2tcpip.h.
+      Correct this if you want full network functionality.")
   ENDIF(HAVE_WS2TCPIP_H)
 
 ENDIF(HAVE_WINDOWS_H)
@@ -420,6 +406,11 @@ SET(STATIC_FLAGS -DC_NO_PIC_NO_DLL)
 IF(UNIX)
   SET(EXTRA_LIBS ${EXTRA_LIBS} m)
 ENDIF(UNIX)
+
+# Solaris doesn't have socket calls in its libc
+IF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  SET(EXTRA_LIBS ${EXTRA_LIBS} socket rt)
+ENDIF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
 
 
 ####################################################################
@@ -519,7 +510,6 @@ SET(LIB_SAFE_CGEN
   srfi-14
   srfi-18
   tcp
-  tinyclos
   utils
 )
 MACRO(GET_LIB_SAFE_CGEN out)
@@ -559,7 +549,6 @@ SET(LIB_EXPORTS
   srfi-14
   srfi-18
   tcp
-  tinyclos
   utils
 )
 MACRO(GET_LIB_EXPORTS out)
@@ -641,7 +630,6 @@ SET(BOOT_CFILES
   c-platform.c
   chicken.c
   compiler.c
-  easyffi.c
   eval.c
   extras.c
   library.c
@@ -655,7 +643,6 @@ SET(BOOT_CFILES
   profiler.c
   regexunix.c
   scheduler.c
-  silex.c
   srfi-1.c
   srfi-4.c
   srfi-13.c
@@ -664,7 +651,6 @@ SET(BOOT_CFILES
   stub.c
   support.c
   tcp.c
-  tinyclos.c
   utils.c
 )
 
@@ -709,7 +695,6 @@ LIBRARY_SCM_TO_C(profiler)
 LIBRARY_SCM_TO_C_EXPORTS(regexunix regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(regexunix regex-common)
 LIBRARY_SCM_TO_C_EXPORTS(scheduler)
-SIMPLE_SCM_TO_C(silex)
 LIBRARY_SCM_TO_C_EXPORTS(srfi-1)
 UNSAFE_LIBRARY_SCM_TO_C(srfi-1)
 LIBRARY_SCM_TO_C_EXPORTS(srfi-4)
@@ -724,8 +709,6 @@ LIBRARY_SCM_TO_C(stub)
 SIMPLE_SCM_TO_C(support banner parameters tweaks)
 LIBRARY_SCM_TO_C_EXPORTS(tcp)
 UNSAFE_LIBRARY_SCM_TO_C(tcp)
-LIBRARY_SCM_TO_C_EXPORTS(tinyclos)
-UNSAFE_LIBRARY_SCM_TO_C(tinyclos)
 LIBRARY_SCM_TO_C_EXPORTS(utils)
 UNSAFE_LIBRARY_SCM_TO_C(utils)
 
@@ -782,15 +765,10 @@ ENDIF(WIN32 AND NOT CYGWIN)
 # practice.  
 # Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
 # prefix onto every library.  For cross-platform stuff,
-# this often results in the 'liblibfoo" problem.  We don't want
-# to write a bunch of special case code.  So, we take
-# explicit control of the library prefix and suppress it.
-# This works on all platforms.
+# this often results in the 'liblibfoo" problem.
 
 # Let CMake do the prefixing magic on Unix, Cygwin, and MinGW.
 
-SET_TARGET_PROPERTIES(libchicken-static PROPERTIES OUTPUT_NAME chicken-static)
-SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES OUTPUT_NAME uchicken-static)
 IF(CYGWIN)
   SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME chicken-0)
   SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME uchicken-0)
@@ -798,23 +776,49 @@ ELSE(CYGWIN)
   SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME chicken)
   SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME uchicken)
 ENDIF(CYGWIN)
-IF(WIN32 AND NOT CYGWIN)
+IF(MSVC OR MINGW)
   SET_TARGET_PROPERTIES(libchickengui PROPERTIES OUTPUT_NAME chickengui)
-  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES OUTPUT_NAME chickengui-static)
-ENDIF(WIN32 AND NOT CYGWIN)
+ENDIF(MSVC OR MINGW)
 
-# Intervene for MSVC and other non-GCC Windows compilers.
-# Unfortunately there's no MINGW variable for CMake 2.4.2,
-# so we test against GCC.
+# CMake 2.4.3 has a bug where libchicken.a and libchicken.dll.a
+# clobber each other during the build.  This will be fixed in
+# CMake 2.4.4 and then we can have both at the same time.
+# Meanwhile as a workaround we need to distinguish the library names
+# and do a symlink at install time.
 
-IF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
-  SET_TARGET_PROPERTIES(libchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
-  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES PREFIX "lib")
-  SET_TARGET_PROPERTIES(libuchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
-  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES PREFIX "lib")
-  SET_TARGET_PROPERTIES(libchickengui PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib")
-  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES PREFIX "lib")
-ENDIF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
+IF(MINGW)
+  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES OUTPUT_NAME chicken-s)
+  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES OUTPUT_NAME uchicken-s)
+  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES OUTPUT_NAME chickengui-s)
+ELSE(MINGW)
+  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES OUTPUT_NAME chicken)
+  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES OUTPUT_NAME uchicken)
+  IF(MSVC)
+    SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES OUTPUT_NAME chickengui)
+  ENDIF(MSVC)
+ENDIF(MINGW)
+
+# Unix-y compilers tack "lib" onto the front of library names.  MSVC doesn't.
+# Also, MSVC uses the indistinguishable suffix .lib for both dlls and static
+# libraries.  So we need postfixes to distinguish our library names.
+# Can't find any canonical postfixing conventions, so these will do for now.
+# Don't wish to use "-m" for MINSIZEREL_POSTFIX because "mt" typically means
+# "multithreaded, static linkage" for Windows native libraries.
+
+IF(MSVC)
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib"
+    RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib"
+    RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
+  SET_TARGET_PROPERTIES(libchickengui PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib"
+    RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
+  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES PREFIX "lib"
+    RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
+  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES PREFIX "lib"
+    RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
+  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES PREFIX "lib"
+    RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
+ENDIF(MSVC)
 
 
 ####################################################################
@@ -940,32 +944,6 @@ ADD_DEPENDENCIES(chicken-setup chicken-boot)
 
 
 ####################################################################
-#  CREATE silex, easyffi.l.silex, and easyffi.c                    #
-####################################################################
-
-ADD_EXECUTABLE(silex
-  ${Chicken_SOURCE_DIR}/chicken.h
-  ${CMAKE_CURRENT_BINARY_DIR}/silex.c
-)
-SET_TARGET_PROPERTIES(silex PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(silex libchicken-static)
-ADD_DEPENDENCIES(silex chicken-boot)
-GET_TARGET_PROPERTY(SILEX_EXE silex LOCATION)
-SET(CURRENT_SILEX ${SILEX_EXE})
-
-GEN_EASYFFI_L_SILEX()
-ADD_CUSTOM_TARGET(easyffi-l-silex
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/easyffi.l.silex)
-ADD_DEPENDENCIES(easyffi-l-silex silex)
-
-GEN_EASYFFI_C()
-ADD_CUSTOM_TARGET(easyffi-c
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/easyffi.c
-)
-ADD_DEPENDENCIES(easyffi-c easyffi-l-silex)
-
-
-####################################################################
 #  CREATE CHICKEN.EXE                                              #
 ####################################################################
 
@@ -973,20 +951,19 @@ SIMPLE_SCM_TO_C(batch-driver parameters)
 SIMPLE_SCM_TO_C(c-backend tweaks)
 SIMPLE_SCM_TO_C(c-platform)
 SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
-SIMPLE_SCM_TO_C(compiler easyffi parameters tweaks)
-# easyffi.c is declared earlier
+SIMPLE_SCM_TO_C(compiler parameters tweaks)
 
 GET_CHICKEN_C_SOURCES(CHICKEN_EXE_SOURCES)
 
 ADD_EXECUTABLE(chicken ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
-ADD_DEPENDENCIES(chicken chicken-boot easyffi-c)
+ADD_DEPENDENCIES(chicken chicken-boot)
 
 ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-ADD_DEPENDENCIES(chicken-static chicken-boot easyffi-c)
+ADD_DEPENDENCIES(chicken-static chicken-boot)
 
 
 ####################################################################
@@ -1085,10 +1062,12 @@ ENDIF(DARCS_EXE)
 
 INSTALL(TARGETS
   chicken
+  chicken-profile
   chicken-setup
   chicken-static
   csc
   csi
+  csi-static
   libchicken
   libchicken-static
   libuchicken
@@ -1103,7 +1082,7 @@ INSTALL(FILES ${exports} DESTINATION share/chicken)
 
 IF(WIN32)
   INSTALL(FILES csibatch.bat DESTINATION bin)
-  IF(NOT CYGWIN)
+  IF(MSVC OR MINGW)
     INSTALL(TARGETS
       libchickengui
       libchickengui-static
@@ -1111,8 +1090,63 @@ IF(WIN32)
       LIBRARY DESTINATION lib
       ARCHIVE DESTINATION lib
     )
-  ENDIF(NOT CYGWIN)
+  ENDIF(MSVC OR MINGW)
 ENDIF(WIN32)
+
+# CMake 2.4.3 will collide libchicken.dll.a and libchicken.a.
+# We symlink around the problem until CMake 2.4.4 ships.
+
+# CMake 2.4.3 can't produce both cygchicken-0.dll and libchicken.dll.a
+# Currently Autoconf must produce the cygchicken-0.dll nomenclature,
+# and that name is needed internally by the libraries for things to
+# work correctly, so we can't ditch it in the source pool.  So we
+# symlink it here.  This workaround courtesy of John Cowan.
+
+# Cygwin CMake 2.4.3 has "cmake -E create_symlink"
+# MinGW CMake 2.4.3 does not, as it is Windows native.
+# MSYS has "ln -s" but it only does a copy, not an actual
+# symlink.  Also MinGW isn't necessarily using MSYS.  All
+# said and done, MinGW gets a straight copy and we hope it works.
+
+IF(MINGW)
+  INSTALL(CODE "
+    MESSAGE(STATUS \"Copying libchicken-s.a to libchicken.a\")
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.a)
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken-s.a
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.a)
+    MESSAGE(STATUS \"Copying libuchicken-s.a to libuchicken.a\")
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.a)
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken-s.a
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.a)
+    MESSAGE(STATUS \"Copying libchickengui-s.a to libchickengui.a\")
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchickengui.a)
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchickengui-s.a
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchickengui.a)
+  ")
+ENDIF(MINGW)
+
+IF(CYGWIN)
+  INSTALL(CODE "
+    MESSAGE(STATUS \"Symlinking libchicken-0.dll.a to libchicken.dll.a\")
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.dll.a)
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E create_symlink
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken-0.dll.a
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.dll.a)
+    MESSAGE(STATUS \"Symlinking libuchicken-0.dll.a to libuchicken.dll.a\")
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.dll.a)
+    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E create_symlink
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken-0.dll.a
+      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.dll.a)
+  ")
+ENDIF(CYGWIN)
 
 # Destination for eggs.  No eggs to install though.
 INSTALL(CODE "
@@ -1147,10 +1181,70 @@ ENDIF(HAVE_CHANGELOG)
 #   UNINSTALLATION                                                 #
 ####################################################################
 
-# Well, we don't have one yet.  CMake won't do it automagically.
+# Policy is to wipe out any versions of binaries and libraries that
+# Chicken has been building, not just the ones we installed.  This
+# allows, say, MSVC and MinGW to be uninstalled and reinstalled in
+# the same directory.
+#
+# We leave installed eggs alone.  Good idea or not?
+#
+# Do we need $ENV(DESTDIR} here?
+
+SET(INSTALLED_BINARIES
+  chicken
+  chicken.exe
+  chicken-profile
+  chicken-profile.exe
+  chicken-setup
+  chicken-setup.exe
+  chicken-static
+  chicken-static.exe
+  csc
+  csc.exe
+  csi
+  csi.exe
+  csibatch.bat
+  csi-static
+  csi-static.exe
+)
+ADD_PREFIX(${CMAKE_INSTALL_PREFIX}/bin/ INSTALLED_BINARIES)
+
+SET(INSTALLED_MANPAGES
+  chicken.1
+  chicken-profile.1
+  chicken-setup.1
+  csc.1
+  csi.1
+)
+ADD_PREFIX(${CMAKE_INSTALL_PREFIX}/man/man1/ INSTALLED_MANPAGES)
+
+SET(INSTALLED_DOCS
+  ChangeLog
+  ChangeLog.0-20040412
+  chicken.html
+  INSTALL-CMake.txt
+  LICENSE
+  README
+)
+ADD_PREFIX(${CMAKE_INSTALL_PREFIX}/share/chicken/doc/ INSTALLED_DOCS)
 
 ADD_CUSTOM_TARGET(uninstall
-  COMMAND ${CMAKE_COMMAND} -E echo Yeah you wish!)
+  COMMAND ${CMAKE_COMMAND} -E echo Completely removing all traces of Chicken installation from ${CMAKE_INSTALL_PREFIX}
+  COMMAND ${CMAKE_COMMAND} -E echo Eggs in ${CMAKE_INSTALL_PREFIX}/share/chicken/1 will be left alone.
+  COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_BINARIES}
+  COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_MANPAGES}
+  COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_DOCS}
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/include/chicken.h
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/info/chicken.info
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/libchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/libuchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/cygchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/cyguchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/lib/libchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/lib/libuchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/share/chicken/*.exports
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/share/chicken/*.scm
+)
 
 
 ####################################################################
@@ -1160,7 +1254,7 @@ ADD_CUSTOM_TARGET(uninstall
 SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
 ADD_CUSTOM_TARGET(boot_cfiles DEPENDS ${BOOT_CFILES_DEPS})
-ADD_DEPENDENCIES(boot_cfiles easyffi-c)
+ADD_DEPENDENCIES(boot_cfiles)
 
 # tarball.cmake contains the list of all files that should be present
 # in the distribution.  It also contains a script for creating a
@@ -1168,7 +1262,12 @@ ADD_DEPENDENCIES(boot_cfiles easyffi-c)
 
 FILE(READ ${Chicken_SOURCE_DIR}/buildversion BUILDVERSION)
 FILE(READ ${Chicken_SOURCE_DIR}/buildnumber BUILDNUMBER)
-SET(DIST_DIR chicken-${BUILDVERSION}.${BUILDNUMBER})
+
+# Distinguish CMake tarballs from "standard" ./configure tarballs
+# using a -c- for CMake.  Don't put it as part of the buildversion
+# and buildnumber because automated packaging systems would interpret
+# it as superseding the "standard" builds.
+SET(DIST_DIR chicken-c-${BUILDVERSION}.${BUILDNUMBER})
 
 ADD_CUSTOM_TARGET(dist
   COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake

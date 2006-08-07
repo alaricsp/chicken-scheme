@@ -151,7 +151,6 @@
 
 (define-macro (foreign-code str)
   (let ([tmp (gensym 'code_)])
-    (##compiler#check-c-syntax str 'foreign-code)
     `(begin
        (declare 
 	 (foreign-declare
@@ -160,7 +159,6 @@
 
 (define-macro (foreign-value str type)
   (let ([tmp (gensym 'code_)])
-    (##compiler#check-c-syntax str 'foreign-value)
     `(begin
        (define-foreign-variable ,tmp ,type ,str)
        ,tmp) ) )
@@ -288,12 +286,6 @@
 
 (define-macro (foreign-declare . strs)
   `(##core#declare '(foreign-declare ,@strs)))
-
-(define-macro (foreign-parse . strs)
-  `(##core#declare '(foreign-parse ,@strs)))
-
-(define-macro (foreign-parse/declare . strs)
-  `(##core#declare '(foreign-declare ,@strs) '(foreign-parse ,@strs)) )
 
 
 ;;; Foreign enumerations (or enum-like constants)
