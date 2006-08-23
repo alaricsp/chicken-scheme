@@ -241,7 +241,7 @@
 #elif defined(C_USE_C_DEFAULTS)
 # include "chicken-defaults.h"
 #else
-# define C_INSTALL_HOME NULL
+# define C_INSTALL_SHARE_HOME NULL
 #endif
 
 #ifdef CMAKE_BUILD
@@ -264,10 +264,10 @@ EOF
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
-  foreign-type-table-size copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
+  copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
   unit-name insert-timer-checks used-units external-variables require-imports-flag custom-declare-alist
   profile-info-vector-name finish-foreign-result pending-canonicalizations
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
   target-heap-size target-stack-size valid-c-identifier?
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
@@ -308,8 +308,9 @@ EOF
 (eval-when (compile eval)
   (match-error-control #:fail) )
 
+
 (include "tweaks")
-(include "parameters")
+
 
 (define-inline (gensym-f-id) (gensym 'f_))
 
@@ -319,7 +320,7 @@ EOF
   (define default-target-stack-size #f) )
 
 (eval-when (load)
-  (define-foreign-variable installation-home c-string "C_INSTALL_HOME")
+  (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
   (define-foreign-variable default-target-heap-size int "C_DEFAULT_TARGET_HEAP_SIZE")
   (define-foreign-variable default-target-stack-size int "C_DEFAULT_TARGET_STACK_SIZE") )
 
@@ -329,6 +330,16 @@ EOF
 (define user-pass (make-parameter #f))
 (define user-pass-2 (make-parameter #f))
 (define user-post-analysis-pass (make-parameter #f))
+
+(define-constant foreign-type-table-size 301)
+(define-constant analysis-database-size 3001)
+(define-constant default-line-number-database-size 997)
+(define-constant inline-table-size 301)
+(define-constant constant-table-size 301)
+(define-constant real-name-table-size 997)
+(define-constant import-table-size 997)
+(define-constant default-literal-compression-threshold 50)
+(define-constant default-inline-max-size 10)
 
 
 ;;; Global variables containing compilation parameters:

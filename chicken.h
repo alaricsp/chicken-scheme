@@ -39,7 +39,7 @@
 #ifndef ___CHICKEN
 #define ___CHICKEN
 
-#if !defined(CMAKE_BUILD) && ((defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)) && !defined(_MSC_VER))
+#if !defined(CMAKE_BUILD) && (defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)) && !defined(_MSC_VER)
 # include <chicken-config.h>
 #endif
 

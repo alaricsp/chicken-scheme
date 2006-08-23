@@ -45,9 +45,9 @@
   foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations debugging cleanup
-  foreign-type-table-size file-io-only namespace-table
+  file-io-only namespace-table
   unit-name insert-timer-checks used-units inlining external-variables
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   target-initial-heap-size disable-stack-overflow-checking

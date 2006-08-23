@@ -5,16 +5,9 @@ See LICENSE section at end of file for full license text.
 How to build Chicken Scheme using CMake
 ---------------------------------------
 
-last updated July 13, 2006
+last updated August 10, 2006
 
 If in trouble, please contact me through the Chicken mailing list.  You can subscribe to the list from the Chicken homepage, http://call-with-current-continuation.org.
-
-
-
-WHICH BUILD METHOD SHOULD I USE?
---------------------------------
-
-These are alternate instructions for getting a working Chicken system from a Darcs checkout.  These are NOT the canonical build instructions; those are available in README.darcs.  The two build methods are completely independent and have nothing to do with each other.  When following my instructions, don't go by anything stated in README.darcs.  Nothing there is relevant: the required build numbers aren't relevant, the needed tools aren't relevant, the environment variables aren't relevant, etc.  In my opinion, this CMake build method is easier, but the results are not well tested yet.
 
 
 
@@ -22,7 +15,6 @@ GENERAL INSTRUCTIONS SUMMARY
 ---------------------------- 
 
 - install a C compiler
-- install platform-specific SDKs
 - install Chicken 2.3 or better
 - install Darcs
 - install CMake
@@ -32,7 +24,7 @@ GENERAL INSTRUCTIONS SUMMARY
 - test your new Chicken installation
 - Enjoy!
 
-If you already know how to use Chicken, Darcs, and CMake, then you don't really need these instructions.  They are aimed at first-time users.  For the experienced: you'll need a working Chicken 2.3 compiler or better.  The Darcs repository is at http://galinha.ucpel.tche.br/chicken .  If you're building on Windows you may or may not need the Platform SDK, I'm unsure.  Other than that, do the usual.
+If you already know how to use Chicken, Darcs, and CMake, then you don't really need these instructions.  They are aimed at first-time users.  For the experienced: you'll need a working Chicken 2.3 compiler or better.  The Darcs repository is at http://galinha.ucpel.tche.br/chicken .
 
 
 
@@ -43,24 +35,12 @@ A CMake build is no more difficult than running a GNU Autoconf ./configure scrip
 
 These instructions can, in principle, be used to build Chicken with any compiler on any platform that CMake supports.  In practice, the build is known to work on: MinGW using MSYS generation, Visual Studio .NET 2003, Cygwin, Linux, and Mac OS X.  The build is aggressive about testing for system-specific .h files and libraries, so untried platforms may build just fine.  If they don't, the changes are likely to be trivial.  Please report any problems to the Chicken mailing list, so they can be fixed and incorporated.
 
-At this time the build results are not well tested.  Everything builds and installs, but I cannot yet guarantee that everything works.  Part of the problem is Chicken lacks a comprehensive test suite.
-
 
 
 INSTALL a C compiler
 --------------------
 
 Any reasonable, recent C compiler should work.  GCC, VC++, MinGW, and Cygwin get regular testing and are all known to work.
-
-
-
-INSTALL platform-specific SDKs
-------------------------------
-
-On Windows, you may need the Platform SDK.  Once upon a time it was required to prevent certain errors.  It may still be; I don't know.  I don't feel like tearing apart my stable build system to find out.
-
-On Unix, you probably don't need to do anything.  CMake checks for what .h files and libraries you have.  If you're missing something important, the build will complain.  
-
 
 
 INSTALL Chicken 2.3 or better
@@ -106,7 +86,7 @@ This will populate your directory with a full working repository.
 INSTALL CMake
 -------------
 
-CMake 2.4 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.  If there's no CMake 2.4 package, bug the CMake guys about providing one.  :-)
+CMake 2.4 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.
 
 
 
@@ -185,13 +165,12 @@ Open a new shell or command prompt.  Change to any directory other than where yo
 
 You should see a banner like:
 
-  @@@@@@@ @@@  @@@ @@@  @@@@@@@ @@@  @@@ @@@@@@@@ @@@  @@@
- !@@      @@!  @@@ @@! !@@      @@!  !@@ @@!      @@!@!@@@
- !@!      @!@!@!@! !!@ !@!      @!@@!@!  @!!!:!   @!@@!!@!
- :!!      !!:  !!! !!: :!!      !!: :!!  !!:      !!:  !!!
-  :: :: :  :   : : :    :: :: :  :   ::: : :: ::: ::    : 
+  ___| |    _)      |
+ |     __ \  |  __| |  /  _ \ __ \
+ |     | | | | (      <   __/ |   |
+\____|_| |_|_|\___|_|\_\\___|_|  _|
 
-Version 2, Build 316 - windows-mingw32-x86 - [ dload ptables applyhook ]
+Version 2, Build 424 - windows-mingw32-x86 - [ dload ptables applyhook ]
 (c)2000-2006 Felix L. Winkelmann
 
 

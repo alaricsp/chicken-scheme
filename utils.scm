@@ -111,18 +111,19 @@
       (##sys#check-string pn 'absolute-pathname?)
       (pair? (string-match rx pn)) ) ) )
 
-(define (chop-pds str)
+(define (chop-pds str pds)
   (and str
-       (let ([len (##sys#size str)])
-	 (if (and (fx> len 0) 
-		  (eq? ##sys#pathname-directory-separator (##core#inline "C_subchar" str (fx- len 1))) )
-	     (##sys#substring str 0 (fx- len 1))
+       (let ((len (##sys#size str))
+	     (pdslen (##sys#size pds)) )
+	 (if (and (fx>= len pdslen) 
+		  (##core#inline "C_substring_compare" str pds (fx- len pdslen) 0 pdslen) )
+	     (##sys#substring str 0 (fx- len pdslen))
 	     str) ) ) )
 
 (let ([string-append string-append]
       [absolute-pathname? absolute-pathname?]
-      [pds (string ##sys#pathname-directory-separator)] )
-  (define (conc-dirs dirs)
+      [pds0 (string ##sys#pathname-directory-separator)] )
+  (define (conc-dirs dirs pds)
     (##sys#check-list dirs 'make-pathname)
     (let loop ([strs dirs])
       (if (null? strs) 
@@ -130,44 +131,48 @@
 	  (let ((s1 (car strs)))
 	    (if (zero? (string-length s1))
 		(loop (cdr strs))
-		(string-append (chop-pds (car strs)) pds (loop (cdr strs))) ) ) ) ) )
-  (define (canonicalize dir)
+		(string-append (chop-pds (car strs) pds) pds (loop (cdr strs))) ) ) ) ) )
+  (define (canonicalize dir pds)
     (cond [(or (not dir) (null? dir)) ""]
-	  [(string? dir) (conc-dirs (list dir))]
-	  [else (conc-dirs dir)] ) )
-  (define (_make-pathname dir file . ext)
-    (let ([dirs (canonicalize dir)]
-	  [file (or file "")]
-	  [ext (if (pair? ext) (or (car ext) "") "")] )
-      (##sys#check-string file 'make-pathname)
-      (##sys#check-string ext 'make-pathname)
+	  [(string? dir) (conc-dirs (list dir) pds)]
+	  [else (conc-dirs dir pds)] ) )
+  (define (_make-pathname loc dir file ext pds)
+    (let ([dirs (canonicalize dir pds)]
+	  (pdslen (##sys#size pds))
+	  (ext (or ext ""))
+	  [file (or file "")] )
+      (##sys#check-string file loc)
+      (##sys#check-string ext loc)
+      (##sys#check-string pds loc)
       (string-append
        dirs
        (if (and dir
-		(fx> (##sys#size file) 0) 
-		(eq? ##sys#pathname-directory-separator (##core#inline "C_subchar" file 0)) )
-	   (##sys#substring file 1 (##sys#size file))
+		(and (fx>= (##sys#size file) pdslen)
+		     (##core#inline "C_substring_compare" pds file 0 0 pdslen) ) )
+	   (##sys#substring file pdslen (##sys#size file))
 	   file)
        (if (and (fx> (##sys#size ext) 0)
 		(not (char=? (##core#inline "C_subchar" ext 0) #\.)) )
 	   "."
 	   "")
        ext) ) )
-  (set! make-pathname _make-pathname)
+  (set! make-pathname 
+    (lambda (dir file #!optional ext (pds pds0))
+      (_make-pathname 'make-pathname dir file ext pds)))
   (set! make-absolute-pathname
-    (lambda (dir file . ext)
-      (apply
-       _make-pathname
-       (let* ([dirs (canonicalize dir)]
+    (lambda (dir file #!optional ext (pds pds0))
+      (_make-pathname
+       'make-absolute-pathname
+       (let* ([dirs (canonicalize dir pds)]
 	      [dlen (##sys#size dirs)] )
 	 (if (not (absolute-pathname? dirs))
 	     (##sys#string-append pds dirs)
 	     dirs) )
-       file
-       ext) ) ) )
+       file ext pds) ) ) )
 
 (define decompose-pathname
-  (let* ([set (##sys#string-append "\\/\\" (string ##sys#pathname-directory-separator))]
+  (let* ((pds (string ##sys#pathname-directory-separator))
+	 [set (##sys#string-append "\\/\\" pds)]
 	 [rx1 (string-append "^(.*[" set "])?([^" set "]+)(\\.([^" set ".]+))$")]
 	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")] 
 	 [string-match string-match] )
@@ -177,10 +182,10 @@
 	  (values #f #f #f) 
 	  (let ([m (string-search rx1 pn)])
 	    (if m
-		(values (chop-pds (cadr m)) (caddr m) (car (cddddr m)))
+		(values (chop-pds (cadr m) pds) (caddr m) (car (cddddr m)))
 		(let ([m (string-search rx2 pn)])
 		  (if m
-		      (values (chop-pds (cadr m)) (caddr m) #f)
+		      (values (chop-pds (cadr m) pds) (caddr m) #f)
 		      (values pn #f #f) ) ) ) ) ) ) ) )
 
 (let ([decompose-pathname decompose-pathname])

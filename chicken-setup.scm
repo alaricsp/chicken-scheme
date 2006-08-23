@@ -51,12 +51,12 @@
 #else
 # define C_INSTALL_BIN_HOME   NULL
 # ifdef _MSC_VER
-#  define C_CC                "cl"
+#  define C_INSTALL_CC                "cl"
 # else
 #  ifdef __GNUC__
-#   define C_CC                "gcc"
+#   define C_INSTALL_CC                "gcc"
 #  else
-#   define C_CC                "cc"
+#   define C_INSTALL_CC                "cc"
 #  endif
 # endif
 #endif
@@ -76,7 +76,11 @@ EOF
 )
 
 
-(include "parameters.scm")
+(define-constant setup-file-extension "setup-info")
+(define-constant remote-repository-name "repository")
+(define-constant installed-executables '("chicken" "csc" "csi" "chicken-setup" "chicken-profile"))
+
+
 (include "build.scm")
 (include "chicken-more-macros.scm")
 
@@ -84,19 +88,19 @@ EOF
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug") )
+    "-debug" "-ls") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f) )
 
 
 (define *install-bin-path* 
-  (or (and-let* ((p (getenv prefix-environment-variable)))
+  (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	(make-pathname p "bin") )
-      (getenv home-environment-variable) 
+      (getenv "CHICKEN_HOME")
       (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
-(define *cc* (foreign-value "C_CC" c-string))
+(define *cc* (foreign-value "C_INSTALL_CC" c-string))
 
 (define *windows*
   (and (eq? (software-type) 'windows) 
@@ -394,6 +398,7 @@ usage: chicken-setup [OPTION ...] FILENAME
   -i  -docindex                  display path for documentation index
   -C  -check                     check for available upgrades
   -e  -eval EXPRESSION           evaluate expression
+      -ls EXTENSION              list installed files for extension
   --                             ignore all following arguments
 
   Builds and installs extension libraries.
@@ -406,7 +411,7 @@ EOF
 
 (define installation-prefix
   (make-parameter
-   (or (getenv prefix-environment-variable) 
+   (or (getenv "CHICKEN_PREFIX")
        (match (string-match "(.*)/bin/?" *install-bin-path*)
 	 ((_ p) p)
 	 (_ #f) ) ) ) )
@@ -600,7 +605,8 @@ EOF
 			  (let ((from (if (pair? f) (car f) f))
 				(to (make-dest-pathname ppath f)) )
 			    (copy-file from to) 
-			    to) ) ) ) )
+			    to) )
+			files) ) )
       (unless *windows-shell*
 	(run (chmod a+x ,(string-intersperse pfiles " "))) )
       (write-info id pfiles info) ) ) )
@@ -620,8 +626,7 @@ EOF
 	(print "no files to uninstall") )
     (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
     (let ((sfile (make-pathname (repository-path) (->string ext) setup-file-extension)))
-      (delete-file* sfile)
-      (delete-file* (pathname-replace-extension sfile alternative-setup-file-extension)) ) ) )
+      (delete-file* sfile) ) ) )
 
 (define (repo-path)
   (let ((p (repository-path)))
@@ -669,7 +674,7 @@ EOF
 
 (define (http-get-path-request path fname host)
   (sprintf "~A HTTP/1.0\r\nHost: ~A\r\nConnection: close\r\nContent-length: 0\r\n\r\n"
-	   (let ((p (make-pathname path fname)))
+	   (let ((p (make-pathname path fname "" "/")))
 	     (if (absolute-pathname? p)
 		 p
 		 (conc "/" p) ) )
@@ -769,7 +774,7 @@ EOF
      (lambda (r reqs)
        (let ((node (assq r *repository-tree*)))
 	 (cond (node (append (list (car node)) (requirements (cdddr node)) reqs))
-	       ((memq r core-library-modules) reqs)
+	       ((memq r ##sys#core-library-modules) reqs)
 	       (else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
      '() 
      reqs) )
@@ -973,6 +978,11 @@ EOF
 	(("-csc-option" opt . more)
 	 (set! *csc-options* (append *csc-options* (list opt)))
 	 (loop more) )
+	(("-ls" ext . more)
+	 (and-let* ((info (extension-information ext))
+		    (files (assq 'files info)) )
+	   (for-each print (cdr files) ) )
+	 (exit) )
 	(("-dont-ask" . more)
 	 (set! *dont-ask* #t)
 	 (loop more) )

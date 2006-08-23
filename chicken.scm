@@ -44,9 +44,9 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations process-command-line
-  foreign-type-table-size file-io-only nonwinding-call/cc debugging
+  file-io-only nonwinding-call/cc debugging
   unit-name insert-timer-checks used-units zap-strings-flag
-  foreign-declarations debugging-executable block-compilation analysis-database-size line-number-database-size
+  foreign-declarations debugging-executable block-compilation line-number-database-size
   target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables

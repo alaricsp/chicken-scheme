@@ -154,7 +154,7 @@
     `(begin
        (declare 
 	 (foreign-declare
-	  ,(sprintf "static C_word ~A() { ~A; return C_SCHEME_UNDEFINED; }\n" tmp str) ) )
+	  ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" tmp str) ) )
        (##core#inline ,tmp) ) ) )
 
 (define-macro (foreign-value str type)
@@ -320,61 +320,6 @@
 	    ,@(map (lambda (a s) `((= val ,a) ',s)) aliases symbols)
 	    (else '()) ) )
 	 (define-foreign-type ,name ,type ,s->e ,e->s) ) ) ) )
-
-
-;;; The dollar macro
-
-(define-macro ($ func . args)
-  (define (conv arg err)
-    (cond ((fixnum? arg) `(int ,arg))
-	  ((number? arg) `(double ,arg))
-	  ((string? arg) `(nonnull-c-string ,arg))
-	  ((char? arg) `(char ,arg))
-	  ((boolean? arg) `(bool ,arg))
-	  (else (syntax-error '$ "argument has unknown type" arg)) ) )
-  (let* ((rtype (cond ((and (pair? args) (symbol? (car args)))
-		       (let ((rtype func))
-			 (set! func (car args))
-			 (set! args (cdr args))
-			 rtype) ) 
-		      (else 'void)))
-	 (args (map (lambda (arg)
-		      (cond ((atom? arg) (conv arg #t))
-			    ((list? arg)
-			     (case (car arg)
-			       ((quote)
-				(if (pair? (cdr arg))
-				    (let ((val (cadr arg)))
-				      (cond ((symbol? val) `(symbol ',val))
-					    ((u8vector? val) `(nonnull-u8vector ',val))
-					    ((s8vector? val) `(nonnull-s8vector ',val))
-					    ((u16vector? val) `(nonnull-u16vector ',val))
-					    ((s16vector? val) `(nonnull-s16vector ',val))
-					    ((u32vector? val) `(nonnull-u32vector ',val))
-					    ((s32vector? val) `(nonnull-s32vector ',val))
-					    ((f32vector? val) `(nonnull-f32vector ',val))
-					    ((f64vector? val) `(nonnull-f64vector ',val))
-					    ((or (pair? val) (vector? val)) `(scheme-object ',val))
-					    (else (conv val #f)) ) )
-				    arg) )
-			       ((location) `(nonnull-c-pointer ,arg))
-			       (else arg) ) )
-			    (else (syntax-error '$ "argument has unknown type" arg)) ) )
-		    args) )
-	 (syms (map (lambda (_) (gensym)) args)))
-    (if (null? args)
-	(if (eq? 'void rtype)
-	    `(foreign-code ,(conc func "();"))
-	    `(foreign-value ,(conc func "()") ,rtype) )
-	`((foreign-lambda* ,rtype 
-	      ,(map (lambda (arg sym)
-		      (list (car arg) sym)) 
-		    args syms)
-	    ,(let ((body (conc func "(" (string-intersperse (map ->string syms) ",") ")")))
-	       (if (eq? rtype 'void) 
-		   (string-append body ";")
-		   (string-append "return(" body ");") ) ) )
-	  ,@(map cadr args) ) ) ) )
 
 
 ;;; Deprecated FFI macros

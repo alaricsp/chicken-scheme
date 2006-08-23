@@ -41,10 +41,10 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home decompose-lambda-list external-to-pointer
-  foreign-type-table-size copy-node! export-list inline-list not-inline-list
+  copy-node! export-list inline-list not-inline-list
   unit-name insert-timer-checks used-units external-variables
   debug-info-index debug-info-vector-name profile-info-vector-name
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
   target-heap-size target-stack-size constant-declarations
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
@@ -79,7 +79,8 @@
   (match-error-control #:fail) )
 
 (include "tweaks")
-(include "parameters")
+
+(define-constant maximal-number-of-free-variables-for-liftable 16)
 
 
 ;;; Scan toplevel expressions for assignments:

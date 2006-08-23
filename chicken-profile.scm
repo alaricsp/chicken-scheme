@@ -38,6 +38,8 @@
   (uses srfi-1))
 
 
+(include "build.scm")
+
 (define sort-by #f)
 (define file #f)
 (define no-unused #f)
@@ -46,12 +48,13 @@
   (display #<<EOF
 Usage: chicken-profile [FILENAME | OPTION] ...
 
- -sort-by-calls            Sort output by call frequency
- -sort-by-time             Sort output by procedure execution time
- -sort-by-avg              Sort output by average procedure execution time
- -sort-by-name             Sort output alphabetically by procedure name
- -no-unused                Remove procedures that are never called
+ -sort-by-calls            sort output by call frequency
+ -sort-by-time             sort output by procedure execution time
+ -sort-by-avg              sort output by average procedure execution time
+ -sort-by-name             sort output alphabetically by procedure name
+ -no-unused                remove procedures that are never called
  -help                     Show this text
+ -version                  show version
 
  FILENAME defaults to "PROFILE"
 
@@ -69,6 +72,9 @@ EOF
 	      [rest (cdr args)] )
 	  (match arg
 	    [(or "-h" "-help" "--help") (print-usage)]
+	    [(or "-v" "-version") 
+	     (print "chicken-profile - Version " build-version ", Build " build-number)
+	     (exit) ]
 	    ["-no-unused" (set! no-unused #t)]
 	    ["-sort-by-calls" (set! sort-by sort-by-calls)]
 	    ["-sort-by-time" (set! sort-by sort-by-time)]

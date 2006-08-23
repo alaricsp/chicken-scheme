@@ -44,7 +44,7 @@
 static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
   int n = C_unfix(size);
   int i;
-  char c;
+  int c;
   char *buf = C_c_string(str);
   C_FILEPTR fp = C_port_file(port);
 
@@ -1219,47 +1219,46 @@ EOF
 	(##sys#check-port port 'fprintf)
 	(let ((index 0)
 	      (len (##sys#size msg)) )
-
 	  (define (fetch)
 	    (let ((c (##core#inline "C_subchar" msg index)))
-	      (set! index (##core#inline "C_fixnum_plus" index 1))
+	      (set! index (fx+ index 1))
 	      c) )
-
 	  (define (next)
 	    (if (cond-expand [unsafe #f] [else (##core#inline "C_eqp" args '())])
 		(##sys#error 'fprintf "too few arguments to formatted output procedure")
 		(let ((x (##sys#slot args 0)))
 		  (set! args (##sys#slot args 1)) 
 		  x) ) )
-
-	  (do ([c (fetch) (fetch)])
-	      ((fx> index len))
-	    (if (eq? c #\~)
-		(let ((dchar (fetch)))
-		  (case (char-upcase dchar)
-		    ((#\S) (write (next) port))
-		    ((#\A) (display (next) port))
-		    ((#\C) (##sys#write-char-0 (next) port))
-		    ((#\B) (display (##sys#number->string (next) 2) port))
-		    ((#\O) (display (##sys#number->string (next) 8) port))
-		    ((#\X) (display (##sys#number->string (next) 16) port))
-		    ((#\!) (##sys#flush-output port))
-		    ((#\?)
-		     (let* ([fstr (next)]
-			    [lst (next)] )
-		       (##sys#check-list lst 'fprintf)
-		       (rec fstr lst) ) )
-		    ((#\~) (##sys#write-char-0 #\~ port))
-		    ((#\%) (newline port))
-		    ((#\% #\N) (newline port))
-		    (else
-		     (if (char-whitespace? dchar)
-			 (let skip ((c (fetch)))
-			   (if (char-whitespace? c)
-			       (skip (fetch))
-			       (set! index (##core#inline "C_fixnum_difference" index 1)) ) )
-			 (##sys#error 'fprintf "illegal format-string character" dchar) ) ) ) )
-		(##sys#write-char-0 c port) ) ) ) ) ) ) )
+	  (let loop ()
+	    (unless (fx>= index len)
+	      (let ((c (fetch)))
+		(if (and (eq? c #\~) (fx< index len))
+		    (let ((dchar (fetch)))
+		      (case (char-upcase dchar)
+			((#\S) (write (next) port))
+			((#\A) (display (next) port))
+			((#\C) (##sys#write-char-0 (next) port))
+			((#\B) (display (##sys#number->string (next) 2) port))
+			((#\O) (display (##sys#number->string (next) 8) port))
+			((#\X) (display (##sys#number->string (next) 16) port))
+			((#\!) (##sys#flush-output port))
+			((#\?)
+			 (let* ([fstr (next)]
+				[lst (next)] )
+			   (##sys#check-list lst 'fprintf)
+			   (rec fstr lst) ) )
+			((#\~) (##sys#write-char-0 #\~ port))
+			((#\%) (newline port))
+			((#\% #\N) (newline port))
+			(else
+			 (if (char-whitespace? dchar)
+			     (let skip ((c (fetch)))
+			       (if (char-whitespace? c)
+				   (skip (fetch))
+				   (set! index (fx- index 1)) ) )
+			     (##sys#error 'fprintf "illegal format-string character" dchar) ) ) ) )
+		    (##sys#write-char-0 c port) )
+		(loop) ) ) ) ) ) ) ) )
 
 
 (define printf

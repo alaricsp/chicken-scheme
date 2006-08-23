@@ -52,10 +52,6 @@
 #include "chicken-paths.h"
 #endif
 
-#ifndef C_INSTALL_HOME
-# define C_INSTALL_HOME NULL
-#endif
-
 #ifdef HAVE_SYSEXITS_H
 # include <sysexits.h>
 #endif
@@ -133,7 +129,15 @@ EOF
 
 
 (include "build")
-(include "parameters")
+
+
+(define-constant namespace-size 997)
+(define-constant namespace-max-id-len 31)
+(define-constant char-name-table-size 37)
+(define-constant output-string-initial-size 256)
+(define-constant default-parameter-vector-size 16)
+(define-constant maximal-string-length #x00ffffff)
+
 
 
 ;;; System routines:
@@ -160,7 +164,6 @@ EOF
 
 (define-foreign-variable main_argc int "C_main_argc")
 (define-foreign-variable main_argv c-pointer "C_main_argv")
-(define-foreign-variable installation-home c-string "C_INSTALL_HOME")
 (define-foreign-variable strerror c-string "strerror(errno)")
 
 (define (set-gc-report! flag) (##core#inline "C_set_gc_report" flag))
@@ -2818,8 +2821,6 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_build_platform")))])
     (lambda () sym) ) )
 
-(define (flat-directory-install) (##sys#fudge 38))
-
 (define (chicken-version . full)
   (define (get-config)
     (let ([bp (build-platform)]
@@ -2853,18 +2854,6 @@ EOF
     (if (and (eq? 'windows st) (not (eq? (build-platform) 'cygwin)))
 	#\\
 	#\/) ) )
-
-(define chicken-home
-  (let ([getenv getenv])
-    (lambda ()
-      (or (getenv home-environment-variable)
-	  (and-let* ((p (getenv prefix-environment-variable)))
-	    (##sys#string-append 
-	     p
-	     (if (char=? (string-ref p (fx- (##sys#size p) 1)) ##sys#pathname-directory-separator)
-		 "share"
-		 "/share") ) )
-	  installation-home) ) ) )
 
 (define c-runtime
   (let ([sym (string->symbol ((##core#primitive "C_c_runtime")))])

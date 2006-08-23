@@ -13,7 +13,7 @@ TODO list for Chicken								-*- Outline -*-
 * remove deprecated features
 
 * inline-defs for generated accessors in define-record and define-record-type [Benedikt]
-  (or option `-inline-record-accessors' ?)
+  (or option/declaration `-inline-record-accessors' ?)
 
 * foreign-types
 ** `string-list': NULL-terminated array of C-strings
@@ -48,9 +48,11 @@ TODO list for Chicken								-*- Outline -*-
 ** better overflow-detection for fixnum plus/minus (see "Hacker's Delight")
 ** possible bug: free() of malloc'd blocks that have been aligned (like `tospace_start')
 ** random scatter hash-func (cii book) ?
+** printf-style function for building (permanent) data structures
 
 * regexes
 ** [PCRE] should `regexp' use `pcre_study()'? (benchmark)
+** bundle PCRE
 
 * Compiler
 ** speed up closure conversion

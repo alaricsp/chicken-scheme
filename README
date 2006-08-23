@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 424
+  Version 2, Build 426
 
 
  1. Introduction:
@@ -35,7 +35,6 @@
     TASKS                       if you want to contribute
     INSTALL-CMake.txt           instructions for building CHICKEN with CMake
     ChangeLog    		new features and bugfixes
-    vctk-install.txt            Instructions for using the free command-line tools from Microsoft
     chicken.html
     chicken.pdf
     chicken.texi   		user's manual in several format
@@ -138,16 +137,20 @@
     c-backend.c                 the compiler (in compiled form)
 
     csi.scm                     source-file for the Scheme interpreter/REPL
+    csi.c                       precompiled interpreter
+
+    csc.scm                     source-file for compiler driver
+    csc.c			compiler driver in compiled form
 
     chicken-setup.scm
-    chicken-profile.scm         tool sources
+    chicken-setup.c
+    chicken-profile.scm         
+    chicken-profile.c		tool sources and compiled versions
 
     chicken-more-macros.scm     some useful macros (SRFI-16, etc.)
 
     chicken.ico                 icon for Windows executables
     chicken.rc                  resource-script for Windows executables
-
-    csc.scm.in                  templates for Shell/Scheme scripts
 
     chicken.spec.in		RPM spec-file template
 
@@ -173,6 +176,8 @@
     win-install.bat             installation script for Windows
 
     benchmarks/                 contains several benchmarks
+    distribution/		various distribution scripts
+    misc/                       miscellaneous stuff
 
     hen.el                      an emacs mode for editing Scheme programs, by Linh Dang
 

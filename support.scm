@@ -42,9 +42,9 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
-  foreign-type-table-size file-io-only banner custom-declare-alist disabled-warnings
+  file-io-only banner custom-declare-alist disabled-warnings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
-  foreign-declarations block-compilation analysis-database-size line-number-database-size
+  foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size check-global-exports check-global-imports
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -78,7 +78,6 @@
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
 
 
-(include "parameters")
 (include "tweaks")
 (include "banner")
 

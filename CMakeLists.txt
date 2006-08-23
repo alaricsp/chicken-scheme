@@ -49,10 +49,11 @@ ENDMACRO(ADD_PREFIX)
 #
 # Be very careful because we're using unprotected whitespace!
 
-MACRO(MAKE_RAW_NATIVE_PATH pathname)
+MACRO(MAKE_RAW_NATIVE_PATH cmake_path_in native_path_out)
+  SET(${native_path_out} ${${cmake_path_in}})
   # An extra \\ escape is necessary to get a \ through CMake's processing.
   # Check that pathname has no escapes in it already.
-  STRING(REGEX MATCH "\\\\" ALREADY_ESCAPED ${pathname} "${${pathname}}")
+  STRING(REGEX MATCH "\\\\" ALREADY_ESCAPED ${native_path_out} "${${native_path_out}}")
   IF(ALREADY_ESCAPED)
     MESSAGE(FATAL_ERROR "Pathname already contains escapes or backslashes.
       Not allowed, terminating build.")
@@ -61,13 +62,13 @@ MACRO(MAKE_RAW_NATIVE_PATH pathname)
   IF(WIN32 AND NOT CYGWIN)
     # As proven above, we have no escaped whitespace.
     # Use backslashes for directory separation.
-    STRING(REPLACE "/" "\\\\" ${pathname} "${${pathname}}")
+    STRING(REPLACE "/" "\\\\" ${native_path_out} "${${native_path_out}}")
   ELSE(WIN32 AND NOT CYGWIN)
     # Assume that TO_NATIVE_PATH does the right thing.
     # This is a dicey assumption.  Need to test it on other OSes.
-    FILE(TO_NATIVE_PATH "${${pathname}}" ${pathname})
+    FILE(TO_NATIVE_PATH "${${native_path_out}}" ${native_path_out})
     # TO_NATIVE_PATH generates escaped whitespace.  Remove the escapes.
-    STRING(REPLACE "\\ " " " ${pathname} "${${pathname}}")
+    STRING(REPLACE "\\ " " " ${native_path_out} "${${native_path_out}}")
   ENDIF(WIN32 AND NOT CYGWIN)
 
 ENDMACRO(MAKE_RAW_NATIVE_PATH)
@@ -221,22 +222,26 @@ ADD_DEFINITIONS(-DCMAKE_BUILD)
 # to be native paths.
 
 # First specify the paths relative to each other in CMake style.
-SET(INSTALL_HOME ${CMAKE_INSTALL_PREFIX}/share/chicken)
-SET(INSTALL_BIN_HOME ${CMAKE_INSTALL_PREFIX}/bin)
-SET(INSTALL_INCLUDE_HOME ${CMAKE_INSTALL_PREFIX}/include)
-SET(INSTALL_LIB_HOME ${CMAKE_INSTALL_PREFIX}/lib)
-# Do we actually want absolute pathnames for the compilers,
-# or just simple definitions like "gcc" or "cl" ?
-SET(INSTALL_CC ${CMAKE_C_COMPILER})
-SET(INSTALL_CXX ${CMAKE_CXX_COMPILER})
+SET(SHARE_HOME   ${CMAKE_INSTALL_PREFIX}/share/chicken)
+SET(BIN_HOME     ${CMAKE_INSTALL_PREFIX}/bin)
+SET(INCLUDE_HOME ${CMAKE_INSTALL_PREFIX}/include)
+SET(LIB_HOME     ${CMAKE_INSTALL_PREFIX}/lib)
+SET(INFO_HOME    ${CMAKE_INSTALL_PREFIX}/info)
+SET(MAN_HOME     ${CMAKE_INSTALL_PREFIX}/man/man1)
+SET(EGG_HOME     ${LIB_HOME}/chicken/1)
+SET(DOC_HOME     ${SHARE_HOME}/doc)
 
 # Then make them native after the path logic is done.
-MAKE_RAW_NATIVE_PATH(INSTALL_HOME)
-MAKE_RAW_NATIVE_PATH(INSTALL_BIN_HOME)
-MAKE_RAW_NATIVE_PATH(INSTALL_INCLUDE_HOME)
-MAKE_RAW_NATIVE_PATH(INSTALL_LIB_HOME)
-MAKE_RAW_NATIVE_PATH(INSTALL_CC)
-MAKE_RAW_NATIVE_PATH(INSTALL_CXX)
+MAKE_RAW_NATIVE_PATH(SHARE_HOME   INSTALL_SHARE_HOME)
+MAKE_RAW_NATIVE_PATH(BIN_HOME     INSTALL_BIN_HOME)
+MAKE_RAW_NATIVE_PATH(INCLUDE_HOME INSTALL_INCLUDE_HOME)
+MAKE_RAW_NATIVE_PATH(LIB_HOME     INSTALL_LIB_HOME)
+MAKE_RAW_NATIVE_PATH(EGG_HOME     INSTALL_EGG_HOME)
+
+# Do we actually want absolute pathnames for the compilers,
+# or just simple definitions like "gcc" or "cl" ?
+MAKE_RAW_NATIVE_PATH(CMAKE_C_COMPILER   INSTALL_CC)
+MAKE_RAW_NATIVE_PATH(CMAKE_CXX_COMPILER INSTALL_CXX)
 
 CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-paths.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
@@ -565,7 +570,6 @@ SET(CHICKEN_CGEN
   c-platform
   chicken
   compiler
-  easyffi
   optimizer
   support
 )
@@ -673,16 +677,16 @@ SET(CURRENT_CHICKEN ${CHICKEN_BOOT_EXE})
 #  CREATE LIBCHICKEN                                               #
 ####################################################################
 
-LIBRARY_SCM_TO_C_EXPORTS(eval parameters)
-UNSAFE_LIBRARY_SCM_TO_C(eval parameters)
+LIBRARY_SCM_TO_C_EXPORTS(eval)
+UNSAFE_LIBRARY_SCM_TO_C(eval)
 LIBRARY_SCM_TO_C_EXPORTS(extras)
 UNSAFE_LIBRARY_SCM_TO_C(extras)
-LIBRARY_SCM_TO_C_EXPORTS(library build parameters)
-UNSAFE_LIBRARY_SCM_TO_C(library build parameters)
+LIBRARY_SCM_TO_C_EXPORTS(library build)
+UNSAFE_LIBRARY_SCM_TO_C(library build)
 LIBRARY_SCM_TO_C_EXPORTS(lolevel)
 UNSAFE_LIBRARY_SCM_TO_C(lolevel)
 LIBRARY_SCM_TO_C(match)
-SIMPLE_SCM_TO_C(optimizer parameters tweaks)
+SIMPLE_SCM_TO_C(optimizer tweaks)
 LIBRARY_SCM_TO_C_EXPORTS(pcre regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(pcre regex-common)
 LIBRARY_SCM_TO_C_EXPORTS(posixunix)
@@ -706,7 +710,7 @@ UNSAFE_LIBRARY_SCM_TO_C(srfi-14)
 LIBRARY_SCM_TO_C_EXPORTS(srfi-18)
 UNSAFE_LIBRARY_SCM_TO_C(srfi-18)
 LIBRARY_SCM_TO_C(stub)
-SIMPLE_SCM_TO_C(support banner parameters tweaks)
+SIMPLE_SCM_TO_C(support banner tweaks)
 LIBRARY_SCM_TO_C_EXPORTS(tcp)
 UNSAFE_LIBRARY_SCM_TO_C(tcp)
 LIBRARY_SCM_TO_C_EXPORTS(utils)
@@ -905,7 +909,6 @@ ADD_CUSTOM_COMMAND(
     ${Chicken_SOURCE_DIR}/banner.scm
     ${Chicken_SOURCE_DIR}/build.scm
     ${Chicken_SOURCE_DIR}/chicken-more-macros.scm
-    ${Chicken_SOURCE_DIR}/parameters.scm
   COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/csi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csi.c -prologue ${Chicken_SOURCE_DIR}/build.scm ${CHICKEN_FLAGS}
   COMMENT "Compiling ${Chicken_SOURCE_DIR}/csi.scm to ${CMAKE_CURRENT_BINARY_DIR}/csi.c"
 )
@@ -936,7 +939,7 @@ ADD_DEPENDENCIES(chicken-profile chicken-boot)
 #  CREATE CHICKEN-SETUP                                            #
 ####################################################################
 
-SIMPLE_SCM_TO_C(chicken-setup build parameters)
+SIMPLE_SCM_TO_C(chicken-setup build)
 ADD_EXECUTABLE(chicken-setup ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c)
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
@@ -947,11 +950,11 @@ ADD_DEPENDENCIES(chicken-setup chicken-boot)
 #  CREATE CHICKEN.EXE                                              #
 ####################################################################
 
-SIMPLE_SCM_TO_C(batch-driver parameters)
+SIMPLE_SCM_TO_C(batch-driver)
 SIMPLE_SCM_TO_C(c-backend tweaks)
 SIMPLE_SCM_TO_C(c-platform)
 SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
-SIMPLE_SCM_TO_C(compiler parameters tweaks)
+SIMPLE_SCM_TO_C(compiler tweaks)
 
 GET_CHICKEN_C_SOURCES(CHICKEN_EXE_SOURCES)
 
@@ -969,57 +972,6 @@ ADD_DEPENDENCIES(chicken-static chicken-boot)
 ####################################################################
 #  DOCUMENTATION                                                   #
 ####################################################################
-
-# build the html documentation if makeinfo is available
-
-FIND_PROGRAM(MAKEINFO_EXE NAMES makeinfo)
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken.texi
-  COMMAND ${MAKEINFO_EXE} --no-split --html --output=${CMAKE_CURRENT_BINARY_DIR}/chicken.html ${Chicken_SOURCE_DIR}/chicken.texi
-  COMMENT "Compiling ${Chicken_SOURCE_DIR}/chicken.texi to ${CMAKE_CURRENT_BINARY_DIR}/chicken.html"
-)
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/chicken.info
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/chicken.texi
-  COMMAND ${MAKEINFO_EXE} --no-split --output=${CMAKE_CURRENT_BINARY_DIR}/chicken.info ${Chicken_SOURCE_DIR}/chicken.texi
-  COMMENT "Compiling ${Chicken_SOURCE_DIR}/chicken.texi to ${CMAKE_CURRENT_BINARY_DIR}/chicken.info"
-)
-
-SET(HAVE_MAKEINFO FALSE)
-IF(MAKEINFO_EXE)
-  # MSYS makeinfo doesn't work under a Windows command prompt.
-  # Corner case: MSYS tools are in the Windows system path,
-  # but user is building under VC++.  VC++ chokes on MSYS makeinfo.
-  MESSAGE(STATUS "Testing whether makeinfo actually works.")
-
-  # PROBLEM: CMake 2.4.2 is bugged.  Under a VS71 generator,
-  # EXECUTE_PROCESS will successfully run a MSYS makeinfo,
-  # even though the VS71 .sln files cannot and will die.
-  # Waiting for CMake guys to suggest a workaround.
-  # The logic here is correct; CMake 2.4.2 is the problem.
-  #
-  # Last resort workaround is to remove MSYS from one's Windows system path.
-
-  EXECUTE_PROCESS(COMMAND ${MAKEINFO_EXE} --no-split --version ${Chicken_SOURCE_DIR}/chicken.texi
-    RESULT_VARIABLE MAKEINFO_FAILED)
-  IF(MAKEINFO_FAILED)
-    ECHO_TARGET(html "makeinfo does not work. Cannot create chicken.html")
-    ECHO_TARGET(info "makeinfo does not work. Cannot create chicken.info")
-  ELSE(MAKEINFO_FAILED)
-    MESSAGE(STATUS "makeinfo works.  Can build chicken.html and chicken.info")
-    SET(HAVE_MAKEINFO TRUE)
-    ADD_CUSTOM_TARGET(html
-      ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.html
-    )
-    ADD_CUSTOM_TARGET(info
-      ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken.info
-    )
-  ENDIF(MAKEINFO_FAILED)
-ELSE(MAKEINFO_EXE)
-  ECHO_TARGET(html "makeinfo not available, cannot create chicken.html")
-  ECHO_TARGET(info "makeinfo not available, cannot create chicken.info")
-ENDIF(MAKEINFO_EXE)
 
 FIND_PROGRAM(DARCS_EXE darcs)
 ADD_CUSTOM_COMMAND(
@@ -1072,23 +1024,23 @@ INSTALL(TARGETS
   libchicken-static
   libuchicken
   libuchicken-static
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION ${BIN_HOME}
+  LIBRARY DESTINATION ${LIB_HOME}
+  ARCHIVE DESTINATION ${LIB_HOME}
 )
 
 GET_LIB_EXPORTS(exports)
-INSTALL(FILES ${exports} DESTINATION share/chicken)
+INSTALL(FILES ${exports} DESTINATION ${SHARE_HOME})
 
 IF(WIN32)
-  INSTALL(FILES csibatch.bat DESTINATION bin)
+  INSTALL(FILES csibatch.bat DESTINATION ${BIN_HOME})
   IF(MSVC OR MINGW)
     INSTALL(TARGETS
       libchickengui
       libchickengui-static
-      RUNTIME DESTINATION bin
-      LIBRARY DESTINATION lib
-      ARCHIVE DESTINATION lib
+      RUNTIME DESTINATION ${BIN_HOME}
+      LIBRARY DESTINATION ${LIB_HOME}
+      ARCHIVE DESTINATION ${LIB_HOME}
     )
   ENDIF(MSVC OR MINGW)
 ENDIF(WIN32)
@@ -1108,26 +1060,31 @@ ENDIF(WIN32)
 # symlink.  Also MinGW isn't necessarily using MSYS.  All
 # said and done, MinGW gets a straight copy and we hope it works.
 
+# Brad King demonstrated \$ENV{DESTDIR} as the preferred method
+# of handling ${CMAKE_INSTALL_PREFIX} when doing INSTALL(CODE ...)
+# But I don't think this can be supported, as the paths must be
+# hardwired into Chicken itself.
+
 IF(MINGW)
   INSTALL(CODE "
     MESSAGE(STATUS \"Copying libchicken-s.a to libchicken.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.a)
+      \"${LIB_HOME}/libchicken.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken-s.a
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.a)
+      \"${LIB_HOME}/libchicken-s.a\"
+      \"${LIB_HOME}/libchicken.a\")
     MESSAGE(STATUS \"Copying libuchicken-s.a to libuchicken.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.a)
+      \"${LIB_HOME}/libuchicken.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken-s.a
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.a)
+      \"${LIB_HOME}/libuchicken-s.a\"
+      \"${LIB_HOME}/libuchicken.a\")
     MESSAGE(STATUS \"Copying libchickengui-s.a to libchickengui.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchickengui.a)
+      \"${LIB_HOME}/libchickengui.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchickengui-s.a
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchickengui.a)
+      \"${LIB_HOME}/libchickengui-s.a\"
+      \"${LIB_HOME}/libchickengui.a\")
   ")
 ENDIF(MINGW)
 
@@ -1135,35 +1092,35 @@ IF(CYGWIN)
   INSTALL(CODE "
     MESSAGE(STATUS \"Symlinking libchicken-0.dll.a to libchicken.dll.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.dll.a)
+      \"${LIB_HOME}/libchicken.dll.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E create_symlink
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken-0.dll.a
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libchicken.dll.a)
+      \"${LIB_HOME}/libchicken-0.dll.a\"
+      \"${LIB_HOME}/libchicken.dll.a\")
     MESSAGE(STATUS \"Symlinking libuchicken-0.dll.a to libuchicken.dll.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.dll.a)
+      \"${LIB_HOME}/libuchicken.dll.a\")
     EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E create_symlink
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken-0.dll.a
-      \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/libuchicken.dll.a)
+      \"${LIB_HOME}/libuchicken-0.dll.a\"
+      \"${LIB_HOME}/libuchicken.dll.a\")
   ")
 ENDIF(CYGWIN)
 
 # Destination for eggs.  No eggs to install though.
 INSTALL(CODE "
-  MESSAGE(STATUS \"Installing \${CMAKE_INSTALL_PREFIX}/lib/chicken/1\")
-  MAKE_DIRECTORY(\"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib/chicken/1\")
+  MESSAGE(STATUS \"Installing ${EGG_HOME}\")
+  MAKE_DIRECTORY(\"${EGG_HOME}\")
 ")
 
 INSTALL(FILES chicken-ffi-macros.scm chicken-more-macros.scm
-  DESTINATION share/chicken)
+  DESTINATION ${SHARE_HOME})
 
-INSTALL(FILES chicken.h DESTINATION include)
+INSTALL(FILES chicken.h DESTINATION ${INCLUDE_HOME})
 INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1 
-  DESTINATION man/man1)
-INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION share/chicken/doc)
+  DESTINATION ${MAN_HOME})
+INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION ${DOC_HOME})
 IF(HAVE_MAKEINFO)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.html DESTINATION share/chicken/doc)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.info DESTINATION info)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.html DESTINATION ${DOC_HOME})
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.info DESTINATION ${INFO_HOME})
 ENDIF(HAVE_MAKEINFO)
 # It's confusing to install ChangeLog.0-20040412 without installing
 # ChangeLog.  It makes Chicken looks like it hasn't been updated in a long time.
@@ -1172,7 +1129,7 @@ IF(HAVE_CHANGELOG)
   INSTALL(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
     ${Chicken_SOURCE_DIR}/ChangeLog.0-20040412
-    DESTINATION share/chicken/doc
+    DESTINATION ${DOC_HOME}
   )
 ENDIF(HAVE_CHANGELOG)
 
@@ -1187,8 +1144,6 @@ ENDIF(HAVE_CHANGELOG)
 # the same directory.
 #
 # We leave installed eggs alone.  Good idea or not?
-#
-# Do we need $ENV(DESTDIR} here?
 
 SET(INSTALLED_BINARIES
   chicken
@@ -1207,7 +1162,7 @@ SET(INSTALLED_BINARIES
   csi-static
   csi-static.exe
 )
-ADD_PREFIX(${CMAKE_INSTALL_PREFIX}/bin/ INSTALLED_BINARIES)
+ADD_PREFIX(${BIN_HOME}/ INSTALLED_BINARIES)
 
 SET(INSTALLED_MANPAGES
   chicken.1
@@ -1216,7 +1171,7 @@ SET(INSTALLED_MANPAGES
   csc.1
   csi.1
 )
-ADD_PREFIX(${CMAKE_INSTALL_PREFIX}/man/man1/ INSTALLED_MANPAGES)
+ADD_PREFIX(${MAN_HOME}/ INSTALLED_MANPAGES)
 
 SET(INSTALLED_DOCS
   ChangeLog
@@ -1226,24 +1181,24 @@ SET(INSTALLED_DOCS
   LICENSE
   README
 )
-ADD_PREFIX(${CMAKE_INSTALL_PREFIX}/share/chicken/doc/ INSTALLED_DOCS)
+ADD_PREFIX(${DOC_HOME}/ INSTALLED_DOCS)
 
 ADD_CUSTOM_TARGET(uninstall
   COMMAND ${CMAKE_COMMAND} -E echo Completely removing all traces of Chicken installation from ${CMAKE_INSTALL_PREFIX}
-  COMMAND ${CMAKE_COMMAND} -E echo Eggs in ${CMAKE_INSTALL_PREFIX}/share/chicken/1 will be left alone.
+  COMMAND ${CMAKE_COMMAND} -E echo Eggs in ${EGG_HOME} will be left alone.
   COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_BINARIES}
   COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_MANPAGES}
   COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_DOCS}
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/include/chicken.h
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/info/chicken.info
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/libchicken*
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/libuchicken*
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/cygchicken*
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/bin/cyguchicken*
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/lib/libchicken*
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/lib/libuchicken*
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/share/chicken/*.exports
-  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_INSTALL_PREFIX}/share/chicken/*.scm
+  COMMAND ${CMAKE_COMMAND} -E remove ${INCLUDE_HOME}/chicken.h
+  COMMAND ${CMAKE_COMMAND} -E remove ${INFO_HOME}/chicken.info
+  COMMAND ${CMAKE_COMMAND} -E remove ${BIN_HOME}/libchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${BIN_HOME}/libuchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${BIN_HOME}/cygchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${BIN_HOME}/cyguchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${LIB_HOME}/libchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${LIB_HOME}/libuchicken*
+  COMMAND ${CMAKE_COMMAND} -E remove ${SHARE_HOME}/*.exports
+  COMMAND ${CMAKE_COMMAND} -E remove ${SHARE_HOME}/*.scm
 )
 
 
@@ -1254,7 +1209,6 @@ ADD_CUSTOM_TARGET(uninstall
 SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
 ADD_CUSTOM_TARGET(boot_cfiles DEPENDS ${BOOT_CFILES_DEPS})
-ADD_DEPENDENCIES(boot_cfiles)
 
 # tarball.cmake contains the list of all files that should be present
 # in the distribution.  It also contains a script for creating a

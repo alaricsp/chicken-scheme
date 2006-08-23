@@ -1,4 +1,4 @@
-(define banner #<<EOF
+(define-constant banner #<<EOF
 
   ___| |    _)      |               
  |     __ \  |  __| |  /  _ \ __ \  
@@ -8,3 +8,5 @@
 
 EOF
 )
+
+(define-constant copyright "(c)2000-2006 Felix L. Winkelmann")

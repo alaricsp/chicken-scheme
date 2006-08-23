@@ -49,7 +49,7 @@
     (no-bound-checks) ) ] )
 
 
-(include "parameters.scm")
+(define-constant profile-info-entry-size 5)
 
 
 ;;; Globals:
@@ -80,6 +80,9 @@
       (let ([vec (make-vector (* size profile-info-entry-size) 0)])
 	(set! ##sys#profile-vector-list (cons vec ##sys#profile-vector-list))
 	vec) ) ) )
+
+(define (##sys#set-profile-info-vector! vec i x)
+  (##sys#setslot vec (* i profile-info-entry-size) x) )
 
 
 ;;; Entry and exit into/out of profiled lambda:

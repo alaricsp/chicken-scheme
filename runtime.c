@@ -271,6 +271,12 @@ static C_TLS int timezone;
                                        else n = (C_uword)f; \
                                      }
 
+#ifdef C_SIXTY_FOUR
+#define C_limit_fixnum(n)            ((n) & C_MOST_POSITIVE_FIXNUM)
+#else
+#define C_limit_fixnum(n)            (n)
+#endif
+
 #define C_pte(name)                  pt[ i ].id = #name; pt[ i++ ].ptr = name;
 
 
@@ -4019,12 +4025,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 #endif
 
   case C_fix(38):
-    /* By Brandon Van Every: */
-    /* makefile.vc is the only build that installs everything
-       in a flat directory.  It doesn't pass any defines, so
-       msvc is installed flat by default.  CMake builds are
-       hierarchical.  ./configure never builds with msvc. */
-#if defined(_MSC_VER) && !defined(CMAKE_BUILD)
+#ifdef CMAKE_BUILD
     return C_SCHEME_TRUE;
 #else
     return C_SCHEME_FALSE;
@@ -5123,7 +5124,7 @@ C_regparm C_word C_fcall C_a_i_bitwise_and(C_word **a, int c, C_word n1, C_word 
 
   C_check_uint(n1, f1, nn1, "bitwise-and");
   C_check_uint(n2, f2, nn2, "bitwise-and");
-  nn1 &= nn2;
+  nn1 = C_limit_fixnum(nn1 & nn2);
 
   if(C_ufitsinfixnump(nn1)) return C_fix(nn1);
   else return C_flonum(a, nn1);
@@ -5137,7 +5138,7 @@ C_regparm C_word C_fcall C_a_i_bitwise_ior(C_word **a, int c, C_word n1, C_word 
 
   C_check_uint(n1, f1, nn1, "bitwise-ior");
   C_check_uint(n2, f2, nn2, "bitwise-ior");
-  nn1 |= nn2;
+  nn1 = C_limit_fixnum(nn1 | nn2);
 
   if(C_ufitsinfixnump(nn1)) return C_fix(nn1);
   else return C_flonum(a, nn1);
@@ -5151,7 +5152,7 @@ C_regparm C_word C_fcall C_a_i_bitwise_xor(C_word **a, int c, C_word n1, C_word 
 
   C_check_uint(n1, f1, nn1, "bitwise-xor");
   C_check_uint(n2, f2, nn2, "bitwise-xor");
-  nn1 ^= nn2;
+  nn1 = C_limit_fixnum(nn1 ^ nn2);
 
   if(C_ufitsinfixnump(nn1)) return C_fix(nn1);
   else return C_flonum(a, nn1);
@@ -5164,7 +5165,7 @@ C_regparm C_word C_fcall C_a_i_bitwise_not(C_word **a, int c, C_word n)
   C_uword nn;
 
   C_check_uint(n, f, nn, "bitwise-not");
-  nn = ~nn;
+  nn = C_limit_fixnum(~nn);
 
   if(C_ufitsinfixnump(nn)) return C_fix(nn);
   else return C_flonum(a, nn);

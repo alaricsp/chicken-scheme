@@ -11,7 +11,6 @@ lt_version_info = 0:0:0
 
 # Set the default nursery size (stack size, or 0 generation):
 NURSERY=@NURSERY@
-NSAMPLE=./nsample
 HAVE_ALLOCA_H=@HAVE_ALLOCA_H@
 STACK_GROWS_DOWNWARD=@STACK_GROWS_DOWNWARD@
 NO_STATIC_EXECUTABLES=@NO_STATIC_EXECUTABLES@
@@ -39,14 +38,12 @@ AM_MAKEINFOFLAGS=--no-split
 INSTALL_SCRIPT = @INSTALL@
 
 if NO_STATIC_EXECUTABLES
-bin_PROGRAMS = chicken chicken csi csi csc chicken-profile chicken-setup
+bin_PROGRAMS = chicken csi csc chicken-profile chicken-setup
 else
 bin_PROGRAMS = chicken chicken-static csi csi-static csc chicken-profile chicken-setup
 endif
 
 man_MANS = chicken.1 csi.1 csc.1 chicken-profile.1 chicken-setup.1
-
-info_TEXINFOS = chicken.texi
 
 chicken_SOURCES = 
 chicken_LDADD = chicken.lo support.lo compiler.lo optimizer.lo c-platform.lo c-backend.lo batch-driver.lo libchicken.la $(MORE_LIBS)
@@ -56,14 +53,12 @@ chicken_static_SOURCES =
 chicken_static_LDADD = chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la $(MORE_STATIC_LIBS)
 chicken_static_LDFLAGS = -static $(LINKFLAGS)
 
-BASE_CPPFLAGS=-DC_STACK_GROWS_DOWNWARD=$(STACK_GROWS_DOWNWARD) -DC_INSTALL_LIB_HOME='"$(pkglibdir)/$(BINARY_VERSION)"' \
-  -DC_INSTALL_HOME='"$(pkgdatadir)"' -DC_USE_C_DEFAULTS
-INCLUDES=$(BASE_CPPFLAGS) -DC_NO_PIC_NO_DLL
+INCLUDES=-DC_NO_PIC_NO_DLL -DC_USE_C_DEFAULTS
 
 library.lo: library.c chicken.h
 compiler.lo: chicken-defaults.h compiler.c chicken.h
 csi.lo: csi.c chicken.h
-csc.lo: csc.c chicken.h
+csc.lo: csc.c chicken.h chicken-defaults.h
 chicken-profile.lo: chicken-profile.c chicken.h
 chicken-setup.lo: chicken-defaults.h chicken-setup.c chicken.h
 eval.lo: eval.c chicken.h
@@ -73,67 +68,62 @@ compiler.o: chicken-defaults.h compiler.c chicken.h
 csi.o: csi.c chicken.h
 eval.o: eval.c chicken.h
 
-compiler.c : parameters.scm tweaks.scm
-optimizer.c : parameters.scm tweaks.scm
+compiler.c : tweaks.scm
+optimizer.c : tweaks.scm
 c-backend.c : tweaks.scm
-support.c : parameters.scm tweaks.scm banner.scm
-batch-driver.c : parameters.scm parameters.scm
+support.c : tweaks.scm banner.scm
 c-platform.c : tweaks.scm
-chicken-setup.c: parameters.scm
 
-chicken-defaults.h: nsample
+chicken-defaults.h:
 	@if [ -n "${NURSERY}" ]; then \
 	  nursery=${NURSERY}; \
 	  echo "setting nursery size to $${nursery}"; \
 	else \
-	  echo "checking for best nursery size ..."; \
-	  bestn=0; \
-	  for n in 16 24 32 48 64 128 256 512 1024; do \
-	    tm1=`$(NSAMPLE) -:s$${n}k`; \
-	    tm2=`$(NSAMPLE) -:s$${n}k`; \
-	    tm3=`$(NSAMPLE) -:s$${n}k`; \
-	    tm=`expr \( $$tm1 + $$tm2 + $$tm3 \) / 3`; \
-	    echo " $${n}K -> $${tm} ms"; \
-	    if [ $$bestn -eq 0 ]; then \
-              best=$$tm; \
-	      bestn=$$n; \
-            elif [ $$tm -le $$best ]; then \
-	      best=$$tm; \
-	      bestn=$$n; \
-	    fi; \
-	  done; \
-	  if [ $$bestn -eq 0 ]; then \
-            nursery="256*1024"; \
-            echo "hm, no decent nursery value here ... using 256K"; \
-	  else \
-	    echo the optimal size of the nursery seems to be $${bestn}K; \
-	    nursery="$${bestn}*1024"; \
-          fi; \
+	  nursery="128*1024"; \
+	  echo "using default nursery size of 128k"; \
 	fi; \
-	echo the CHICKEN_HOME install directory is ${pkgdatadir}; \
+	echo the CHICKEN_HOME install directory is $(pkgdatadir); \
 	echo creating $@; \
 	echo "/*** Program generated file: any edits may be lost ***/" >chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_HOME \"${pkgdatadir}\"" >>chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_CC" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_CC \"$(CC)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_CXX" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_CXX \"$(CXX)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_CFLAGS" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_CFLAGS \"-DHAVE_CHICKEN_CONFIG_H $(CFLAGS)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_SHARE_HOME" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_SHARE_HOME \"$(pkgdatadir)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_BIN_HOME" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_BIN_HOME \"$(DESTDIR)$(bindir)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_EGG_HOME" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_EGG_HOME \"$(pkglibdir)/$(BINARY_VERSION)\"" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
 	echo "#ifndef C_INSTALL_LIB_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_LIB_HOME \"${pkglibdir}/${BINARY_VERSION}\"" >>chicken-defaults.h; \
+	echo "# define C_INSTALL_LIB_HOME \"$(libdir)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_STATIC_LIB_HOME" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(libdir)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_INCLUDE_HOME" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_INCLUDE_HOME \"$(includedir)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_MORE_LIBS" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_MORE_LIBS \"$(MORE_LIBS)\"" >>chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h; \
+	echo "#ifndef C_INSTALL_MORE_STATIC_LIBS" >> chicken-defaults.h; \
+	echo "# define C_INSTALL_MORE_STATIC_LIBS \"$(MORE_STATIC_LIBS)\"" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
 	echo "#ifndef C_DEFAULT_TARGET_STACK_SIZE" >> chicken-defaults.h; \
 	echo "# define C_DEFAULT_TARGET_STACK_SIZE ($${nursery})" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
-	echo "#define C_CC \"$(CC)\"" >> chicken-defaults.h; \
 	echo "#ifndef C_STACK_GROWS_DOWNWARD" >> chicken-defaults.h; \
-	echo "# define C_STACK_GROWS_DOWNWARD (${STACK_GROWS_DOWNWARD})" >> chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#define C_INSTALL_BIN_HOME \"$(DESTDIR)${bindir}\"" >>chicken-defaults.h
-
-nsample.c: nsample.scm
-	$(CHICKEN) nsample.scm $(CHICKEN_FLAGS) -output-file $@ -explicit-use -uses library -uses eval
-
-nsample: nsample.o libchicken.la
-	$(LINK) -static nsample.o libchicken.la $(LINKFLAGS) $(MORE_STATIC_LIBS)
-
+	echo "# define C_STACK_GROWS_DOWNWARD ($(STACK_GROWS_DOWNWARD))" >> chicken-defaults.h; \
+	echo "#endif" >> chicken-defaults.h
 
 # csi.c is a built source compiled by chicken from csi.scm
 csi_SOURCES =
@@ -144,44 +134,29 @@ csi_static_SOURCES =
 csi_static_LDADD = csi.o libchicken.la $(MORE_STATIC_LIBS)
 csi_static_LDFLAGS = -static $(LINKFLAGS)
 
-csi.c: csi.scm banner.scm parameters.scm $(CHICKEN)
-	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@ -prologue $(srcdir)/build.scm
+csi.c: csi.scm banner.scm $(CHICKEN)
+	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 csc_SOURCES =
 csc_LDADD = csc.lo libchicken.la $(MORE_LIBS)
 csc_LDFLAGS = $(LINKFLAGS)
 
-csc.c: csc.scm banner.scm $(CHICKEN)
+csc.c: csc.scm $(CHICKEN)
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 chicken_profile_SOURCES =
 chicken_profile_LDADD = chicken-profile.lo libchicken.la $(MORE_LIBS)
 chicken_profile_LDFLAGS = $(LINKFLAGS)
 
-chicken-profile.c: chicken-profile.scm  $(CHICKEN)
+chicken-profile.c: chicken-profile.scm $(srcdir)/build.scm $(CHICKEN)
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 chicken_setup_SOURCES =
 chicken_setup_LDADD = chicken-setup.lo libchicken.la $(MORE_LIBS)
 chicken_setup_LDFLAGS = $(LINKFLAGS)
 
-chicken-setup.c: chicken-setup.scm build.scm $(CHICKEN)
+chicken-setup.c: chicken-setup.scm $(srcdir)/build.scm $(CHICKEN)
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
-
-csc.scm: csc.scm.in
-	sed_quote_subst='s/\([\\`\\"$\\\\,]\)/\\\1/g' ; \
-	quoted_cflags=`echo X$(CFLAGS) $(BASE_CPPFLAGS) | sed -e s/^X// -e "$$sed_quote_subst"` ; \
-	quoted_cppflags=`echo X$(CPPFLAGS) $(BASE_CPPFLAGS) | sed -e s/^X// -e "$$sed_quote_subst"` ; \
-	sed -e "s,\@INSTALL_BIN_HOME\@,$(DESTDIR)$(bindir)," \
-	    -e "s,\@INSTALL_CC\@,$(CC)," \
-	    -e "s,\@INSTALL_CXX\@,$(CXX)," \
-	    -e "s,\@INSTALL_CFLAGS\@,-DHAVE_CHICKEN_CONFIG_H $$quoted_cflags," \
-	    -e "s,\@INSTALL_MORE_LIBS\@,$(MORE_LIBS)," \
-	    -e "s,\@INSTALL_MORE_STATIC_LIBS\@,$(MORE_STATIC_LIBS)," \
-	    -e "s,\@INSTALL_HOME\@,$(pkgdatadir)," \
-	    -e "s,\@INSTALL_INCLUDE_HOME\@,$(includedir)," \
-	    -e "s,\@INSTALL_LIB_HOME\@,$(libdir),g" \
-	  <$(srcdir)/csc.scm.in >csc.scm
 
 include_HEADERS = chicken.h chicken-config.h chicken-defaults.h
 
@@ -252,11 +227,8 @@ install-data-local : chicken.html
 	-for file in $(DOCFILES); do cp $(srcdir)/$$file $(DESTDIR)$(pkgdatadir)/doc; done
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)/$(BINARY_VERSION)
 
-chicken.html: chicken.texi
-	$(MAKEINFO) --no-split --html chicken.texi
-
 # Some generated files we need to clean up.
-CLEANFILES = csi.c nsample csc csc.scm
+CLEANFILES = csi.c csc csc.scm
 DISTCLEANFILES = $(PACKAGE)-$(VERSION).*
 clean-local:
 	-rm -rf stage2 stage3 stage2-stamp stage3-stamp
@@ -265,9 +237,7 @@ clean-local:
 # installed by a binary distribution.  Unfortunately there is no
 # standard place to install these sorts of files so we must leave that
 # to the package builder.
-EXTRA_DIST = makefile.vc \
-  INSTALL nsample.c csc.scm.in \
-  chicken.spec.in *.1
+EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt chicken.spec.in *.1
 
 
 ## Rules for the chicken maintainer.
@@ -386,14 +356,13 @@ chicken.c: chicken.scm tweaks.scm
 %.c: %.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@ -explicit-use
 
-library.c: build.scm
-library.c eval.c profiler.c: parameters.scm
+library.c: $(srcdir)/build.scm
 pcre.c pregexp.c regexunix.c: regex-common.scm
 
 # Specific rules for unsafe library units:
-ueval.c: eval.scm parameters.scm
+ueval.c: eval.scm
 	$(CHICKEN) eval.scm $(CHICKEN_UFLAGS) -output-file ueval.c -explicit-use
-ulibrary.c: library.scm parameters.scm build.scm
+ulibrary.c: library.scm $(srcdir)/build.scm
 	$(CHICKEN) library.scm $(CHICKEN_UFLAGS) -output-file ulibrary.c -explicit-use
 uextras.c: extras.scm
 	$(CHICKEN) extras.scm $(CHICKEN_UFLAGS) -output-file uextras.c -explicit-use
@@ -428,8 +397,8 @@ usrfi-18.c: srfi-18.scm
 $(OBJECTS): chicken.h
 
 # Extra dependencies in the Scheme source from Scheme includes.
-chicken.c: chicken.scm chicken-more-macros.scm build.scm chicken-ffi-macros.scm
-csi.c: csi.scm chicken-more-macros.scm build.scm
+chicken.c: chicken.scm chicken-more-macros.scm $(srcdir)/build.scm chicken-ffi-macros.scm
+csi.c: csi.scm chicken-more-macros.scm $(srcdir)/build.scm
 
 
 # Rebuild with all checks enabled:
@@ -449,7 +418,7 @@ bench : benchmarks/cscbench
 	cd benchmarks; ./cscbench
 
 benchmarks/cscbench: benchmarks/cscbench.scm
-	./csc $< -o $@ -compiler $(CHICKEN)
+	./csc benchmarks/cscbench.scm -o benchmarks/cscbench -compiler $(CHICKEN)
 
 
 # If nothing helps...

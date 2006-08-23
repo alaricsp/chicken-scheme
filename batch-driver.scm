@@ -44,10 +44,10 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   compiler-cleanup-hook check-global-exports disabled-warnings check-global-imports
-  foreign-type-table-size file-io-only
+  file-io-only
   unit-name insert-timer-checks used-units inline-max-size
   debugging perform-lambda-lifting! disable-stack-overflow-checking
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   target-initial-heap-size postponed-initforms
@@ -81,7 +81,9 @@
 
 
 (include "tweaks")
-(include "parameters")
+
+(define-constant default-profile-name "PROFILE")
+(define-constant default-inline-max-size 10)
 
 
 ;;; Compile a complete source file:
@@ -383,9 +385,10 @@
 			     (append (map string->expr prelude)
 				     (reverse forms)
 				     (map string->expr postlude) ) ) )
-			(let* ([f (car files)]
-			       [in (check-and-open-input-file f)] )
-			  (do ([x (read-form in) (read-form in)])
+			(let* ((f (car files))
+			       (in (check-and-open-input-file f)) 
+			       (x1 (read-form in)) )
+			  (do ((x x1 (read-form in)))
 			      ((eof-object? x) 
 			       (close-checked-input-file in f) )
 			    (set! forms (cons x forms)) ) ) ) ] ) ) )
@@ -414,10 +417,9 @@
 				  ',(if unit-name #f profile-name))))
 			     '() )
 			 (map (lambda (pl)
-				`(##core#inline 
-				  "C_i_setslot"
+				`(##sys#set-profile-info-vector!
 				  ,profile-info-vector-name
-				  ',(* profile-info-entry-size (car pl)) 
+				  ',(car pl)
 				  ',(cdr pl) ) )
 			      profile-lambda-list)
 			 (let ([is (fold (lambda (clf r)

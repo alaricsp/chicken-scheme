@@ -121,7 +121,17 @@ static C_TLS struct flock C_flock;
 static C_TLS DIR *temphandle;
 #ifndef ECOS
 static C_TLS struct passwd *C_user;
+#ifdef HAVE_GRP_H
 static C_TLS struct group *C_group;
+#else
+struct C_fake_group {
+  int gr_gid;
+  int gr_mem[ 1 ];
+  char *gr_name;
+  char *gr_passwd;
+};
+static C_TLS struct C_fake_group *C_group;
+#endif
 static C_TLS int C_pipefds[ 2 ];
 #endif
 static C_TLS time_t C_secs;
@@ -171,8 +181,13 @@ static C_TLS struct stat C_statbuf;
 #define C_readlink(f, b)    C_fix(readlink(C_data_pointer(f), C_data_pointer(b), FILENAME_MAX))
 #define C_getpwnam(n)       C_mk_bool((C_user = getpwnam((char *)C_data_pointer(n))) != NULL)
 #define C_getpwuid(u)       C_mk_bool((C_user = getpwuid(C_unfix(u))) != NULL)
+#ifdef HAVE_GRP_H
 #define C_getgrnam(n)       C_mk_bool((C_group = getgrnam((char *)C_data_pointer(n))) != NULL)
 #define C_getgrgid(u)       C_mk_bool((C_group = getgrgid(C_unfix(u))) != NULL)
+#else
+#define C_getgrnam(n)       C_SCHEME_FALSE
+#define C_getgrgid(n)       C_SCHEME_FALSE
+#endif
 #define C_pipe(d)           C_fix(pipe(C_pipefds))
 #define C_truncate(f, n)    C_fix(truncate((char *)C_data_pointer(f), C_num_to_int(n)))
 #define C_ftruncate(f, n)   C_fix(ftruncate(C_unfix(f), C_num_to_int(n)))

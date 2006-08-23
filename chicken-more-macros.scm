@@ -896,19 +896,6 @@
 	'(begin) ) ) )
 
 
-;;; Modify locations, T-like:
-
-(define-macro (modify-location loc proc)
-  (let ((x (gensym)))
-    (if (atom? loc)
-	`(,proc (lambda () ,loc)
-		(lambda (,x) (set! ,loc ,x)) ) 
-	(let ((tmps (map (lambda _ (gensym)) loc)))
-	  `(let ,(map list tmps loc)
-	     (,proc (lambda () ,tmps)
-		    (lambda (,x) (set! ,tmps ,x))))) ) ) )
-
-
 ;;;; Register features provided by this file
 
 (eval-when (compile load eval)

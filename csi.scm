@@ -55,7 +55,7 @@ EOF
 
 (include "chicken-more-macros")
 (include "banner")
-(include "parameters")
+
 
 #{csi 
   print-usage print-banner

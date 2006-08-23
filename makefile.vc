@@ -254,7 +254,7 @@ chicken-profile.exe: chicken-profile.obj libchicken.lib chicken.res
 
 # chicken-setup:
 
-chicken-setup.c: chicken-setup.scm parameters.scm
+chicken-setup.c: chicken-setup.scm 
 	.\chicken-static.exe chicken-setup.scm -optimize-level 2 -debug-level 0 -quiet -output-file chicken-setup.c
 chicken-setup.obj: chicken-setup.c chicken.h
 

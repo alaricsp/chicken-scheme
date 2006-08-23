@@ -45,8 +45,12 @@
 #include "chicken-paths.h"
 #endif
 
-#ifndef C_INSTALL_LIB_HOME
-# define C_INSTALL_LIB_HOME    "."
+#ifndef C_INSTALL_EGG_HOME
+# define C_INSTALL_EGG_HOME    "."
+#endif
+
+#ifndef C_INSTALL_SHARE_HOME
+# define C_INSTALL_SHARE_HOME NULL
 #endif
 
 EOF
@@ -110,12 +114,49 @@ EOF
   (declare (emit-exports "eval.exports"))])
 
 
-(include "parameters")
-
-(define-foreign-variable install-lib-home c-string "C_INSTALL_LIB_HOME")
+(define-foreign-variable install-egg-home c-string "C_INSTALL_EGG_HOME")
+(define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
 (define pds ##sys#pathname-directory-separator)
 (define pdss (string ##sys#pathname-directory-separator))
+
+(define ##sys#core-library-modules
+  '(extras lolevel utils tcp regex posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
+
+(define-constant macro-table-size 301)
+(define-constant default-dynamic-load-libraries '("libchicken"))
+(define-constant cygwin-default-dynamic-load-libraries '("cygchicken-0"))
+(define-constant macosx-load-library-extension ".dylib")
+(define-constant windows-load-library-extension ".dll")
+(define-constant hppa-load-library-extension ".sl")
+(define-constant default-load-library-extension ".so")
+(define-constant environment-table-size 301)
+(define-constant source-file-extension ".scm")
+(define-constant setup-file-extension "setup-info")
+(define-constant repository-environment-variable "CHICKEN_REPOSITORY")
+(define-constant special-syntax-files '(chicken-ffi-macros chicken-more-macros))
+
+(define-constant builtin-features
+  '(chicken srfi-23 srfi-30 srfi-39 srfi-6 srfi-10 srfi-2 srfi-31
+	    srfi-69 srfi-28) )		; these are actually in extras, but that is used by default
+
+(define-constant builtin-features/compiled
+  '(srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
+
+
+;;; System settings
+
+(define chicken-home
+  (let ([getenv getenv])
+    (lambda ()
+      (or (getenv "CHICKEN_HOME")
+	  (and-let* ((p (getenv "CHICKEN_PREFIX")))
+	    (##sys#string-append 
+	     p
+	     (if (char=? (string-ref p (fx- (##sys#size p) 1)) ##sys#pathname-directory-separator)
+		 "share"
+		 "/share") ) )
+	  installation-home) ) ) )
 
 
 ;;; Macro handling:
@@ -1115,21 +1156,22 @@ EOF
 		      (let ([c1 (peek-char in)])
 			(when (char=? c1 (integer->char 127))
 			  (##sys#error 'load "unable to load compiled module" fname _dlerror) ) )
-		      (do ((x (read in) (read in)))
-			  ((eof-object? x))
-			(when printer (printer x))
-			(##sys#call-with-values
-			 (lambda () 
-			   (if timer
-			       (time (evproc x)) 
-			       (evproc x) ) )
-			 (lambda results
-			   (when pf
-			     (for-each
-			      (lambda (r) 
-				(write r)
-				(newline) )
-			      results) ) ) ) ) )
+		      (let ((x1 (read in)))
+			(do ((x x1 (read in)))
+			    ((eof-object? x))
+			  (when printer (printer x))
+			  (##sys#call-with-values
+			   (lambda () 
+			     (if timer
+				 (time (evproc x)) 
+				 (evproc x) ) )
+			   (lambda results
+			     (when pf
+			       (for-each
+				(lambda (r) 
+				  (write r)
+				  (newline) )
+				results) ) ) ) ) ) )
 		    (lambda () (close-input-port in)) ) ) ) ) ) )
 	(##core#undefined) ) ) )
   (set! load
@@ -1256,8 +1298,8 @@ EOF
 (define ##sys#repository-path
   (make-parameter 
    (or (getenv repository-environment-variable)
-       (getenv home-environment-variable)
-       install-lib-home) ) )
+       (getenv "CHICKEN_HOME")
+       install-egg-home) ) )
 
 (define repository-path ##sys#repository-path)
 
@@ -1286,7 +1328,7 @@ EOF
 	    (else (##sys#check-symbol id loc)) )
       (let ([p (##sys#canonicalize-extension-path id loc)])
 	(cond ((member p ##sys#loaded-extensions))
-	      ((memq id core-library-modules)
+	      ((memq id ##sys#core-library-modules)
 	       (##sys#load-library id #f) )
 	      (else
 	       (let ([id2 (##sys#find-extension p #t)])
@@ -1331,8 +1373,6 @@ EOF
 	     (rpath (string-append (##sys#repository-path) pdss p ".")) )
 	(cond ((file-exists? (string-append rpath setup-file-extension))
 	       => (cut with-input-from-file <> read) )
-	      ((file-exists? (string-append rpath alternative-setup-file-extension))
-	       => (cut with-input-from-file <> read) )
 	      (else #f) ) ) ) ) )
 
 (define (extension-information ext)
@@ -1376,7 +1416,7 @@ EOF
 		   (##sys#load (##sys#resolve-include-filename (##sys#symbol->string id) #t) #f #f) 
 		   (set! ##sys#features (cons fid ##sys#features)) )
 		 (values '(##sys#void) #t) ) ]
-	      [(memq id core-library-modules)
+	      [(memq id ##sys#core-library-modules)
 	       (values
 		(if comp?
 		    `(##core#declare '(uses ,id))

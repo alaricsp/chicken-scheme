@@ -42,9 +42,9 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home debugging
-  foreign-type-table-size dump-nodes
+  dump-nodes
   unit-name insert-timer-checks used-units inlining
-  foreign-declarations block-compilation analysis-database-size line-number-database-size
+  foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
