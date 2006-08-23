@@ -11,6 +11,20 @@ INCLUDE_DIRECTORIES(${Chicken_SOURCE_DIR})
 
 
 ####################################################################
+#  VERSION                                                         #
+####################################################################
+
+# A basic handy thing to know
+
+FILE(READ ${Chicken_SOURCE_DIR}/buildversion BUILDVERSION)
+FILE(READ ${Chicken_SOURCE_DIR}/buildnumber BUILDNUMBER)
+SET(VERSION ${BUILDVERSION}.${BUILDNUMBER})
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken.spec.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken.spec)
+
+
+####################################################################
 #  TEXT UTILITIES                                                  #
 ####################################################################
 
@@ -214,8 +228,8 @@ ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 #All our various optional libraries go in here.
 SET(EXTRA_LIBS )
 
-# Distinguish our .h file logic from other build systems.
-ADD_DEFINITIONS(-DCMAKE_BUILD)
+# Any CMake-specific defines are in chicken-config.h
+ADD_DEFINITIONS(-DHAVE_CHICKEN_CONFIG_H)
 
 # Chicken uses the INSTALL_* paths in various tools to generate shell
 # commands; for instance, under a Windows command prompt.  So they need
@@ -256,40 +270,12 @@ ELSE(MSVC)
 ENDIF(MSVC)
 
 CHECK_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
-IF(HAVE_ALLOCA_H)
-  ADD_DEFINITIONS(-DHAVE_ALLOCA_H)
-ENDIF(HAVE_ALLOCA_H)
-
 CHECK_INCLUDE_FILE(crt_externs.h HAVE_CRT_EXTERNS_H)
-IF(HAVE_CRT_EXTERNS_H)
-  ADD_DEFINITIONS(-DHAVE_CRT_EXTERNS_H)
-ENDIF(HAVE_CRT_EXTERNS_H)
-
 CHECK_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
-IF(HAVE_DIRECT_H)
-  ADD_DEFINITIONS(-DHAVE_DIRECT_H)
-ENDIF(HAVE_DIRECT_H)
-
 CHECK_SYMBOL_EXISTS(gcvt stdlib.h HAVE_GCVT)
-IF(HAVE_GCVT)
-  ADD_DEFINITIONS(-DHAVE_GCVT)
-ENDIF(HAVE_GCVT)
-
 CHECK_INCLUDE_FILE(grp.h HAVE_GRP_H)
-IF(HAVE_GRP_H)
-  ADD_DEFINITIONS(-DHAVE_GRP_H)
-ENDIF(HAVE_GRP_H)
-
 CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
-IF(HAVE_STDINT_H)
-  ADD_DEFINITIONS(-DHAVE_STDINT_H)
-ENDIF(HAVE_STDINT_H)
-
 CHECK_INCLUDE_FILE(sysexits.h HAVE_SYSEXITS_H)
-IF(HAVE_SYSEXITS_H)
-  ADD_DEFINITIONS(-DHAVE_SYSEXITS_H)
-ENDIF(HAVE_SYSEXITS_H)
-
 
 # We can create REGEX .c files for all platforms when
 # generating .scm --> c. code.  However, we can only
@@ -304,7 +290,6 @@ ENDIF(HAVE_SYSEXITS_H)
 SET(REGEX_UNIT )
 CHECK_INCLUDE_FILE(pcre.h HAVE_PCRE_H)
 IF(HAVE_PCRE_H)
-  ADD_DEFINITIONS(-DHAVE_PCRE_H)
   SET(REGEX_UNIT pcre)
   SET(EXTRA_LIBS ${EXTRA_LIBS} pcre)
 ELSE(HAVE_PCRE_H)
@@ -315,10 +300,8 @@ ELSE(HAVE_PCRE_H)
   ENDIF(WIN32 AND NOT CYGWIN)
 ENDIF(HAVE_PCRE_H)
 
-# check for dlfcn.h or dl.h
 CHECK_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 IF(HAVE_DLFCN_H)
-  ADD_DEFINITIONS(-DHAVE_DLFCN_H)
   # The presence of dlfcn.h does NOT mean that -ldl is used.
   # For instance, Cygwin has dlfcn.h and does not use -ldl.
   FIND_LIBRARY(DL_LIBRARY dl)
@@ -326,53 +309,37 @@ IF(HAVE_DLFCN_H)
     SET(EXTRA_LIBS ${EXTRA_LIBS} dl)
   ENDIF(DL_LIBRARY)
 ENDIF(HAVE_DLFCN_H)
+
 CHECK_INCLUDE_FILE(dl.h HAVE_DL_H)
 IF(HAVE_DL_H)
-  ADD_DEFINITIONS(-DHAVE_DL_H)
   SET(EXTRA_LIBS ${EXTRA_LIBS} ldl)
 ENDIF(HAVE_DL_H)
 
-# check for ffi.h
 CHECK_INCLUDE_FILE(ffi.h HAVE_FFI_H)
 IF(HAVE_FFI_H)
-  ADD_DEFINITIONS(-DHAVE_FFI_H)
   SET(EXTRA_LIBS ${EXTRA_LIBS} ffi)
 ENDIF(HAVE_FFI_H)
 
 # check for windows.h
 CHECK_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
 IF(HAVE_WINDOWS_H)
-  ADD_DEFINITIONS(-DHAVE_WINDOWS_H)
 
   # NOTE: Don't assume we're on Windows.  We could be cross-compiling.
-
   CHECK_SYMBOL_EXISTS(LoadLibrary windows.h HAVE_LOADLIBRARY)
-  IF(HAVE_LOADLIBRARY)
-    ADD_DEFINITIONS(-DHAVE_LOADLIBRARY)
-  ENDIF(HAVE_LOADLIBRARY)
-
   CHECK_SYMBOL_EXISTS(GetProcAddress windows.h HAVE_GETPROCADDRESS)
-  IF(HAVE_GETPROCADDRESS)
-    ADD_DEFINITIONS(-DHAVE_GETPROCADDRESS)
-  ENDIF(HAVE_GETPROCADDRESS)
 
   CHECK_INCLUDE_FILE(winsock2.h HAVE_WINSOCK2_H)
-  IF(HAVE_WINSOCK2_H)
-    ADD_DEFINITIONS(-DHAVE_WINSOCK2_H)
-  ELSE(HAVE_WINSOCK2_H)
+  IF (NOT HAVE_WINSOCK2_H)
     MESSAGE("You are missing winsock2.h.
       Correct this if you want full network functionality.")
-  ENDIF(HAVE_WINSOCK2_H)
-
+  ENDIF(NOT HAVE_WINSOCK2_H)
   # ws2tcpip.h needs winsock2.h for various definitions
   SET(WS2FILES winsock2.h ws2tcpip.h)
   CHECK_INCLUDE_FILES("${WS2FILES}" HAVE_WS2TCPIP_H)
-  IF(HAVE_WS2TCPIP_H)
-    ADD_DEFINITIONS(-DHAVE_WS2TCPIP_H)
-  ELSE(HAVE_WS2TCPIP_H)
+  IF (NOT HAVE_WS2TCPIP_H)
     MESSAGE("You are missing ws2tcpip.h.
       Correct this if you want full network functionality.")
-  ENDIF(HAVE_WS2TCPIP_H)
+  ENDIF(NOT HAVE_WS2TCPIP_H)
 
 ENDIF(HAVE_WINDOWS_H)
 
@@ -436,8 +403,19 @@ ELSE(STACK_TEST_COMPILED)
   MESSAGE(SEND_ERROR "Unable to compile stack growth test.  Using default.")
   SET(STACK_GROWS_DOWNWARD -1)
 ENDIF(STACK_TEST_COMPILED)
-ADD_DEFINITIONS(-DC_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD})
 MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
+
+
+####################################################################
+#  CHICKEN_CONFIG_H                                                #
+####################################################################
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
+# ./configure just plops chicken-config.h in the source tree.
+# Try to avoid collisions with it by searching 
+# ${CMAKE_CURRENT_BINARY_DIR} first.
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 
 ####################################################################
@@ -472,15 +450,17 @@ ENDIF(DISABLE_APPLY_HOOK)
 ####################################################################
 
 
-# Library files that are not generated.
+# Library files that are not generated at build time.
+# Either they are read-only sources,
+# or they are hardwired at configuration time.
 
-SET(LIB_CSOURCE
-  chicken.h
-  runtime.c
-)
 MACRO(GET_LIB_CSOURCE out)
-  SET(${out} ${LIB_CSOURCE})
-  ADD_PREFIX(${Chicken_SOURCE_DIR}/ ${out})
+  SET(${out}
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+    ${Chicken_SOURCE_DIR}/chicken.h
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
+    ${Chicken_SOURCE_DIR}/runtime.c
+  )
 ENDMACRO(GET_LIB_CSOURCE)
 
 # Library files that are always generated the same way and named the
@@ -562,6 +542,29 @@ MACRO(GET_LIB_EXPORTS out)
   ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_LIB_EXPORTS)
 
+# Localize the .c sources to a particular build subdirectory.
+# This is needed because we're doing a multiple stage bootstrap.
+# The 1st crop of generated .c files is not going to be the
+# same as the 2nd crop.
+
+MACRO(GET_LIBCHICKEN_C_SOURCES out)
+  GET_LIB_CSOURCE(csource)
+  GET_LIB_COMMON_CGEN(common)
+  GET_LIB_SAFE_CGEN(safe)
+  SET(${out} ${csource} ${common} ${safe})
+ENDMACRO(GET_LIBCHICKEN_C_SOURCES)
+
+MACRO(GET_LIBUCHICKEN_C_SOURCES out)
+  GET_LIB_CSOURCE(csource)
+  GET_LIB_COMMON_CGEN(common)
+  GET_LIB_UNSAFE_CGEN(unsafe)
+  SET(${out} ${csource} ${common} ${unsafe})
+ENDMACRO(GET_LIBUCHICKEN_C_SOURCES)
+
+# libchicken-gui just compiles libchicken with -DC_WINDOWS_GUI.
+# There are no .c files specific to it.
+
+
 # Files generated for Chicken.  No SAFE or UNSAFE distinctions.
 
 SET(CHICKEN_CGEN
@@ -579,33 +582,10 @@ MACRO(GET_CHICKEN_CGEN out)
   ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ ${out})
 ENDMACRO(GET_CHICKEN_CGEN)
 
-# Localize the .c sources to a particular build subdirectory.
-# This is needed because we're doing a multiple stage bootstrap.
-# The 1st crop of generated .c files is not going to be the
-# same as the 2nd crop.
-
-MACRO(GET_LIBCHICKEN_C_SOURCES out)
-  GET_LIB_CSOURCE(csource)
-  GET_LIB_COMMON_CGEN(common)
-  GET_LIB_SAFE_CGEN(safe)
-  SET(${out} ${csource} ${common} ${safe}
-    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
-ENDMACRO(GET_LIBCHICKEN_C_SOURCES)
-
-MACRO(GET_LIBUCHICKEN_C_SOURCES out)
-  GET_LIB_CSOURCE(csource)
-  GET_LIB_COMMON_CGEN(common)
-  GET_LIB_UNSAFE_CGEN(unsafe)
-  SET(${out} ${csource} ${common} ${unsafe}
-    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
-ENDMACRO(GET_LIBUCHICKEN_C_SOURCES)
-
-# libchicken-gui just compiles libchicken with -DC_WINDOWS_GUI.
-# There are no .c files specific to it.
-
 MACRO(GET_CHICKEN_C_SOURCES out)
   GET_CHICKEN_CGEN(cgen)
   SET(${out}
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
     ${Chicken_SOURCE_DIR}/chicken.h
     ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
     ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h
@@ -1114,14 +1094,17 @@ INSTALL(CODE "
 INSTALL(FILES chicken-ffi-macros.scm chicken-more-macros.scm
   DESTINATION ${SHARE_HOME})
 
-INSTALL(FILES chicken.h DESTINATION ${INCLUDE_HOME})
+INSTALL(FILES
+  chicken.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
+  ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h  
+  DESTINATION ${INCLUDE_HOME}
+)
 INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1 
   DESTINATION ${MAN_HOME})
 INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION ${DOC_HOME})
-IF(HAVE_MAKEINFO)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.html DESTINATION ${DOC_HOME})
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/chicken.info DESTINATION ${INFO_HOME})
-ENDIF(HAVE_MAKEINFO)
+
 # It's confusing to install ChangeLog.0-20040412 without installing
 # ChangeLog.  It makes Chicken looks like it hasn't been updated in a long time.
 # So, either install both, or neither.
@@ -1164,6 +1147,14 @@ SET(INSTALLED_BINARIES
 )
 ADD_PREFIX(${BIN_HOME}/ INSTALLED_BINARIES)
 
+SET(INSTALLED_INCLUDES
+  chicken.h
+  chicken-config.h
+  chicken-paths.h  
+  stack-size.h
+)
+ADD_PREFIX(${INCLUDE_HOME}/ INSTALLED_INCLUDES)
+
 SET(INSTALLED_MANPAGES
   chicken.1
   chicken-profile.1
@@ -1176,7 +1167,6 @@ ADD_PREFIX(${MAN_HOME}/ INSTALLED_MANPAGES)
 SET(INSTALLED_DOCS
   ChangeLog
   ChangeLog.0-20040412
-  chicken.html
   INSTALL-CMake.txt
   LICENSE
   README
@@ -1187,9 +1177,9 @@ ADD_CUSTOM_TARGET(uninstall
   COMMAND ${CMAKE_COMMAND} -E echo Completely removing all traces of Chicken installation from ${CMAKE_INSTALL_PREFIX}
   COMMAND ${CMAKE_COMMAND} -E echo Eggs in ${EGG_HOME} will be left alone.
   COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_BINARIES}
+  COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_INCLUDES}
   COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_MANPAGES}
   COMMAND ${CMAKE_COMMAND} -E remove ${INSTALLED_DOCS}
-  COMMAND ${CMAKE_COMMAND} -E remove ${INCLUDE_HOME}/chicken.h
   COMMAND ${CMAKE_COMMAND} -E remove ${INFO_HOME}/chicken.info
   COMMAND ${CMAKE_COMMAND} -E remove ${BIN_HOME}/libchicken*
   COMMAND ${CMAKE_COMMAND} -E remove ${BIN_HOME}/libuchicken*
@@ -1210,18 +1200,15 @@ SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
 ADD_CUSTOM_TARGET(boot_cfiles DEPENDS ${BOOT_CFILES_DEPS})
 
-# tarball.cmake contains the list of all files that should be present
+# dist.cmake contains the list of all files that should be present
 # in the distribution.  It also contains a script for creating a
 # distribution tree and verifying its contents.
-
-FILE(READ ${Chicken_SOURCE_DIR}/buildversion BUILDVERSION)
-FILE(READ ${Chicken_SOURCE_DIR}/buildnumber BUILDNUMBER)
 
 # Distinguish CMake tarballs from "standard" ./configure tarballs
 # using a -c- for CMake.  Don't put it as part of the buildversion
 # and buildnumber because automated packaging systems would interpret
 # it as superseding the "standard" builds.
-SET(DIST_DIR chicken-c-${BUILDVERSION}.${BUILDNUMBER})
+SET(DIST_DIR chicken-c-${VERSION})
 
 ADD_CUSTOM_TARGET(dist
   COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake

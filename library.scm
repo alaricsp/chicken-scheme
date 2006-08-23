@@ -48,10 +48,6 @@
 #include <errno.h>
 #include <time.h>
 
-#ifdef CMAKE_BUILD
-#include "chicken-paths.h"
-#endif
-
 #ifdef HAVE_SYSEXITS_H
 # include <sysexits.h>
 #endif

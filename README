@@ -35,9 +35,6 @@
     TASKS                       if you want to contribute
     INSTALL-CMake.txt           instructions for building CHICKEN with CMake
     ChangeLog    		new features and bugfixes
-    chicken.html
-    chicken.pdf
-    chicken.texi   		user's manual in several format
 
     chicken.1
     chicken-setup.1
@@ -121,9 +118,6 @@
     parameters.scm		constant definitions for the library files and the compiler
 
     banner.scm                  silly banner
-
-    nsample.scm                 nursery benchmarking
-    nsample.c                   compiled form of a simple benchmark to measure nursery sizes
 
     chicken.h      		headerfile included by all modules compiled with CHICKEN
 
@@ -414,10 +408,8 @@
 
  6. What's next?
 
-	More information on the use and implementation of CHICKEN can be found in the manual
- 	(%{prefix}/share/chicken/doc/chicken.html, or type "info chicken"). If you have any more
-        questions or problems (even the slightest problems, or the most stupid questions), then please 
-  	contact me at:
+	If you have any more questions or problems (even the slightest problems, or the most
+        stupid questions), then please contact me at:
 
 	<felix@call-with-current-continuation.org>.
 

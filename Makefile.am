@@ -1,4 +1,4 @@
-### Makefile.am - by Doug Quale, modified by felix and improved by Tony Garnock-Jones and Panagiotis Vossos
+### Makefile.am - by Doug Quale, modified by felix and improved by Tony Garnock-Jones, Panagiotis Vossos, and Brandon Van Every
 
 AUTOMAKE_OPTIONS = foreign no-dependencies dist-zip
 
@@ -9,8 +9,6 @@ libtool: $(LIBTOOL_DEPS)
 # -version-info for libtool to use in setting the SONAME of the shared libs.
 lt_version_info = 0:0:0
 
-# Set the default nursery size (stack size, or 0 generation):
-NURSERY=@NURSERY@
 HAVE_ALLOCA_H=@HAVE_ALLOCA_H@
 STACK_GROWS_DOWNWARD=@STACK_GROWS_DOWNWARD@
 NO_STATIC_EXECUTABLES=@NO_STATIC_EXECUTABLES@
@@ -30,7 +28,7 @@ CHICKEN = $(BOOTSTRAP_PATH)/chicken
 CSI = $(BOOTSTRAP_PATH)/csi
 CHICKEN_FLAGS = -quiet -no-trace -optimize-level 2 -include-path $(srcdir) $(CHICKEN_EXTRA_FLAGS)
 CHICKEN_UFLAGS = -quiet -no-trace -no-lambda-info -optimize-level 2 -unsafe -feature unsafe -include-path $(srcdir)
-DOCFILES = ChangeLog README LICENSE chicken.html
+DOCFILES = ChangeLog README LICENSE
 AM_MAKEINFOFLAGS=--no-split
 
 # The following seems to be needed to make the `install-strip' target work with scripts, on some UNIXen
@@ -53,20 +51,23 @@ chicken_static_SOURCES =
 chicken_static_LDADD = chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la $(MORE_STATIC_LIBS)
 chicken_static_LDFLAGS = -static $(LINKFLAGS)
 
-INCLUDES=-DC_NO_PIC_NO_DLL -DC_USE_C_DEFAULTS
+INCLUDES= -DC_NO_PIC_NO_DLL
 
-library.lo: library.c chicken.h
-compiler.lo: chicken-defaults.h compiler.c chicken.h
-csi.lo: csi.c chicken.h
-csc.lo: csc.c chicken.h chicken-defaults.h
-chicken-profile.lo: chicken-profile.c chicken.h
-chicken-setup.lo: chicken-defaults.h chicken-setup.c chicken.h
-eval.lo: eval.c chicken.h
+# Everything relies on chicken.h, and it includes chicken-defaults.h.
+# chicken-defaults.h does not exist at configuration time because
+# Autoconf enforces the GNU Coding Standards.  Installation pathnames
+# cannot be expanded in configure.in, they must be expanded in Makefile.am.
+# So...
+#
+# chicken-defaults.h can be built with "make all" or "make chicken-defaults.h".
+# Unfortunately, it cannot be built by a "make foo" that needs it, as
+# there is no dependency information.  This is a limitation of the
+# Autotools dependency generation.  See the "Built Sources" section of
+# its documentation for examples of this general problem.  Explicit
+# build rules are possible, but they interfere with automatically
+# generated build rules, and thus are a bad idea.
 
-library.o: library.c chicken.h
-compiler.o: chicken-defaults.h compiler.c chicken.h
-csi.o: csi.c chicken.h
-eval.o: eval.c chicken.h
+BUILT_SOURCES = chicken-defaults.h
 
 compiler.c : tweaks.scm
 optimizer.c : tweaks.scm
@@ -75,15 +76,8 @@ support.c : tweaks.scm banner.scm
 c-platform.c : tweaks.scm
 
 chicken-defaults.h:
-	@if [ -n "${NURSERY}" ]; then \
-	  nursery=${NURSERY}; \
-	  echo "setting nursery size to $${nursery}"; \
-	else \
-	  nursery="128*1024"; \
-	  echo "using default nursery size of 128k"; \
-	fi; \
+	@echo creating $@; \
 	echo the CHICKEN_HOME install directory is $(pkgdatadir); \
-	echo creating $@; \
 	echo "/*** Program generated file: any edits may be lost ***/" >chicken-defaults.h; \
 	echo "#ifndef C_INSTALL_CC" >> chicken-defaults.h; \
 	echo "# define C_INSTALL_CC \"$(CC)\"" >>chicken-defaults.h; \
@@ -98,7 +92,7 @@ chicken-defaults.h:
 	echo "# define C_INSTALL_SHARE_HOME \"$(pkgdatadir)\"" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
 	echo "#ifndef C_INSTALL_BIN_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_BIN_HOME \"$(DESTDIR)$(bindir)\"" >>chicken-defaults.h; \
+	echo "# define C_INSTALL_BIN_HOME \"$(bindir)\"" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
 	echo "#ifndef C_INSTALL_EGG_HOME" >> chicken-defaults.h; \
 	echo "# define C_INSTALL_EGG_HOME \"$(pkglibdir)/$(BINARY_VERSION)\"" >>chicken-defaults.h; \
@@ -119,7 +113,7 @@ chicken-defaults.h:
 	echo "# define C_INSTALL_MORE_STATIC_LIBS \"$(MORE_STATIC_LIBS)\"" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
 	echo "#ifndef C_DEFAULT_TARGET_STACK_SIZE" >> chicken-defaults.h; \
-	echo "# define C_DEFAULT_TARGET_STACK_SIZE ($${nursery})" >>chicken-defaults.h; \
+	echo "# define C_DEFAULT_TARGET_STACK_SIZE (128*1024)" >>chicken-defaults.h; \
 	echo "#endif" >> chicken-defaults.h; \
 	echo "#ifndef C_STACK_GROWS_DOWNWARD" >> chicken-defaults.h; \
 	echo "# define C_STACK_GROWS_DOWNWARD ($(STACK_GROWS_DOWNWARD))" >> chicken-defaults.h; \
@@ -159,7 +153,6 @@ chicken-setup.c: chicken-setup.scm $(srcdir)/build.scm $(CHICKEN)
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 include_HEADERS = chicken.h chicken-config.h chicken-defaults.h
-
 lib_LTLIBRARIES = libchicken.la libuchicken.la
 
 if IS_MINGW
@@ -222,13 +215,16 @@ regex.exports: $(regexexports)
 	cp $(regexexports) regex.exports
 
 # Install docs and sources.
-install-data-local : chicken.html
+install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/doc
 	-for file in $(DOCFILES); do cp $(srcdir)/$$file $(DESTDIR)$(pkgdatadir)/doc; done
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)/$(BINARY_VERSION)
 
 # Some generated files we need to clean up.
-CLEANFILES = csi.c csc csc.scm
+# Note that a tarball distribution can clobber its *.c boot files
+# and have no way of getting them back from the Makefile, but the
+# user can always just unpack the tarball again.
+CLEANFILES = c-backend.c c-platform.c chicken-defaults.h chicken-profile.c chicken-setup.c chicken.c compiler.c csc.c csc csi.c eval.c extras.c library.c lolevel.c match.c optimizer.c posixunix.c profiler.c regexunix.c scheduler.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c stub.c support.c tcp.c ueval.c uextras.c ulibrary.c ulolevel.c uposixunix.c uregexunix.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c utcp.c utils.c uutils.c
 DISTCLEANFILES = $(PACKAGE)-$(VERSION).*
 clean-local:
 	-rm -rf stage2 stage3 stage2-stamp stage3-stamp
@@ -393,9 +389,6 @@ upcre.c: pcre.scm regex-common.scm
 usrfi-18.c: srfi-18.scm
 	$(CHICKEN) srfi-18.scm $(CHICKEN_UFLAGS) -output-file usrfi-18.c -explicit-use
 
-# Every object depends on chicken.h.
-$(OBJECTS): chicken.h
-
 # Extra dependencies in the Scheme source from Scheme includes.
 chicken.c: chicken.scm chicken-more-macros.scm $(srcdir)/build.scm chicken-ffi-macros.scm
 csi.c: csi.scm chicken-more-macros.scm $(srcdir)/build.scm
@@ -427,13 +420,22 @@ benchmarks/cscbench: benchmarks/cscbench.scm
 
 uninstall:
 	rm -f $(bindir)/chicken
+	rm -f $(bindir)/chicken.exe
 	rm -f $(bindir)/chicken-static
+	rm -f $(bindir)/chicken-static.exe
 	rm -f $(bindir)/chicken-profile
+	rm -f $(bindir)/chicken-profile.exe
 	rm -f $(bindir)/chicken-setup
+	rm -f $(bindir)/chicken-setup.exe
 	rm -f $(bindir)/csc
+	rm -f $(bindir)/csc.exe
 	rm -f $(bindir)/csi
+	rm -f $(bindir)/csi.exe
 	rm -f $(bindir)/csi-static
-	rm -f $(infodir)/chicken.info
+	rm -f $(bindir)/csi-static.exe
+	rm -f $(bindir)/csibatch.bat
+	rm -f $(bindir)/cygchicken-0.dll
+	rm -f $(bindir)/cyguchicken-0.dll
 	rm -f $(mandir)/man1/chicken.1
 	rm -f $(mandir)/man1/chicken-profile.1
 	rm -f $(mandir)/man1/chicken-setup.1

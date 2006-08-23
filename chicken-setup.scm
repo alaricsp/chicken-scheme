@@ -41,14 +41,8 @@
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
 	  test-compile copy-file run-verbose) )
 
-
-(foreign-declare #<<EOF
-#ifdef CMAKE_BUILD
-# include "chicken-paths.h"
-# include "stack-size.h"
-#elif defined(C_USE_C_DEFAULTS)
-# include "chicken-defaults.h"
-#else
+#>
+#ifndef C_USE_C_DEFAULTS
 # define C_INSTALL_BIN_HOME   NULL
 # ifdef _MSC_VER
 #  define C_INSTALL_CC                "cl"
@@ -72,8 +66,7 @@ static void create_directory(char *pathname)
 #else
 static void create_directory(char *pathname) {}
 #endif
-EOF
-)
+<#
 
 
 (define-constant setup-file-extension "setup-info")

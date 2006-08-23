@@ -233,20 +233,13 @@
 
 (declare
  (unit compiler)
- (disable-warning var)
- (foreign-declare #<<EOF
-#ifdef CMAKE_BUILD
-# include "chicken-paths.h"
-# include "stack-size.h"
-#elif defined(C_USE_C_DEFAULTS)
-# include "chicken-defaults.h"
-#else
+ (disable-warning var) )
+
+#>
+#ifndef C_USE_C_DEFAULTS
 # define C_INSTALL_SHARE_HOME NULL
 #endif
 
-#ifdef CMAKE_BUILD
-# include "stack-size.h"
-#endif
 #ifndef C_DEFAULT_TARGET_STACK_SIZE
 # define C_DEFAULT_TARGET_STACK_SIZE 0
 #endif
@@ -254,8 +247,7 @@
 #ifndef C_DEFAULT_TARGET_HEAP_SIZE
 # define C_DEFAULT_TARGET_HEAP_SIZE 0
 #endif
-EOF
-) )
+<#
 
 
 #{compiler

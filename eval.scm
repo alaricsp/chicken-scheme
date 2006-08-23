@@ -38,13 +38,9 @@
   (disable-warning var)
   (hide ##sys#unregister-macro ##sys#macroexpand-0 ##sys#split-at-separator
 	##sys#r4rs-environment ##sys#r5rs-environment 
-	##sys#interaction-environment pds pdss pxss)
-  (foreign-declare #<<EOF
+	##sys#interaction-environment pds pdss pxss) )
 
-#ifdef CMAKE_BUILD
-#include "chicken-paths.h"
-#endif
-
+#>
 #ifndef C_INSTALL_EGG_HOME
 # define C_INSTALL_EGG_HOME    "."
 #endif
@@ -52,9 +48,7 @@
 #ifndef C_INSTALL_SHARE_HOME
 # define C_INSTALL_SHARE_HOME NULL
 #endif
-
-EOF
-) )
+<#
 
 (cond-expand
  [paranoia]

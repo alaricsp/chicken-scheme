@@ -8,6 +8,7 @@ AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([runtime.c])
 AM_INIT_AUTOMAKE()
 AM_CONFIG_HEADER(chicken-config.h)
+AC_DEFINE(C_USE_C_DEFAULTS,1,[Use hardwired installation pathnames])
 
 AC_CANONICAL_HOST
 
@@ -232,6 +233,7 @@ AC_MSG_RESULT([Your C stack grows downward.]); STACK_GROWS_DOWNWARD=1,
 AC_MSG_RESULT([Your C stack grows upward.]); STACK_GROWS_DOWNWARD=0,
 AC_MSG_RESULT([You're cross compiling. I can't tell the correct stack growth direction.])
 STACK_GROWS_DOWNWARD=-1)
+AC_DEFINE_UNQUOTED(C_STACK_GROWS_DOWNWARD,$STACK_GROWS_DOWNWARD,[stack growth direction])
 AC_SUBST(STACK_GROWS_DOWNWARD)
 if test "x$STACK_GROWS_DOWNWARD" = "x-1"; then
     AC_MSG_RESULT([WARNING: unknown stack growth direction. Assuming stack grows downward.])
@@ -247,14 +249,8 @@ case "$CC" in
     else
        CFLAGS="-Os -fomit-frame-pointer -fno-strict-aliasing $WARNFLAGS"
     fi
-    if test -n "${HAVE_ALLOCA_H}"; then
-      CFLAGS="$CFLAGS -DHAVE_ALLOCA_H"
-    fi
   fi;;
   *)
-    if test -n "${HAVE_ALLOCA_H}"; then
-      CFLAGS="$CFLAGS -DHAVE_ALLOCA_H"
-    fi;;
 esac
 
 if test x"${ptables}" = xyes; then
@@ -287,18 +283,6 @@ esac
 
 dnl Setting the nursery size.
 AC_MSG_CHECKING([supplied nursery size])
-AC_SUBST(NURSERY)
-if test -z "${NURSERY}"; then
-    if test x"${build_alias}" != x"${host_alias}"; then
-        AC_MSG_RESULT([it seems we are cross compiling - NURSERY defaults to 64k])
-	NURSERY=64000
-    else
-        AC_MSG_RESULT([default nursery size will be determined by benchmark])
-    fi
-    AC_MSG_RESULT([(use NURSERY=nnnn on the make command line to set the default nursery size by hand)])
-else
-    AC_MSG_RESULT([setting default nursery size to ${NURSERY}])
-fi
 
 dnl Binary compatibility version
 AC_SUBST(BINARY_VERSION)

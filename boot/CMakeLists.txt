@@ -208,6 +208,18 @@ ENDIF(HAVE_BOOT_CFILES)
 
 
 ####################################################################
+#  CHICKEN_CONFIG_H                                                #
+####################################################################
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
+# ./configure just plops chicken-config.h in the source tree.
+# Try to avoid collisions with it by searching 
+# ${CMAKE_CURRENT_BINARY_DIR} first.
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
+
+
+####################################################################
 #  .C GENERATION                                                   #
 ####################################################################
 
