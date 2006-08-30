@@ -66,6 +66,14 @@ static void create_directory(char *pathname)
 #else
 static void create_directory(char *pathname) {}
 #endif
+
+#ifndef C_TARGET_CC
+# define C_TARGET_CC  C_INSTALL_CC
+#endif
+
+#ifndef C_TARGET_CXX
+# define C_TARGET_CXX  C_INSTALL_CXX
+#endif
 <#
 
 
@@ -93,7 +101,8 @@ static void create_directory(char *pathname) {}
       (getenv "CHICKEN_HOME")
       (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
-(define *cc* (foreign-value "C_INSTALL_CC" c-string))
+(define *cc* (foreign-value "C_TARGET_CC" c-string))
+(define *cxx* (foreign-value "C_TARGET_CXX" c-string))
 
 (define *windows*
   (and (eq? (software-type) 'windows) 
@@ -467,7 +476,9 @@ EOF
     (unless *keep-stuff* (run (rm ,so)) ) ) )
 
 (define (compute-tmpdir fname)
-  (string-append fname ".dir") )
+  (if (string=? "egg-dir" (pathname-extension fname))
+      fname
+      (string-append fname "-dir") ) )
 
 (define (chdir dir)
   (when (setup-verbose-flag) (printf "changing working directory to `~A'~%" dir))
@@ -481,7 +492,7 @@ EOF
       (when (setup-verbose-flag) (printf "removing temporary directory `~A'~%" *temporary-directory*))
       (run (,*remove-command* ,(quotewrap *temporary-directory*))) )) )
 
-(define (unpack filename)
+(define (unpack/enter filename)
   (define (testgz fn)
     (with-input-from-file fn
       (lambda () (string=? "\x1f\x8b" (read-string 2))) ) )
@@ -633,14 +644,14 @@ EOF
 	  (error "can not create directory: a file with the same name already exists") )
 	(create-directory dir) ) ) )
 
-(define (test-compile code #!key (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
+(define (test-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
   (let* ((fname (create-temporary-file "c"))
 	 (oname (pathname-replace-extension fname "o"))
 	 (r (begin
 	      (with-output-to-file fname (cut display code))
 	      (system 
 	       (let ((cmd (sprintf "~A ~A ~A ~A ~A ~A ~A"
-				   *cc*
+				   cc
 				   (if compile-only "-c" "")
 				   cflags
 				   fname
@@ -804,9 +815,9 @@ EOF
     (let loop ((filename filename))
       (cond ((and df (with-ext filename "setup")) => run-setup-script)
 	    ((and df (with-ext filename "scm")) => simple-install)
-	    ((and df (with-ext filename "egg")) => 
+	    ((and df (or (with-ext filename "egg") (with-ext filename "egg-dir"))) =>
 	     (lambda (f)
-	       (unpack f)
+	       (unpack/enter f)
                (loop (pathname-replace-extension f "setup"))
                (rmtmpdir) ) )
 	    ((fetch-file-from-net filename) 

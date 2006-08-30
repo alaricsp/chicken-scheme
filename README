@@ -170,8 +170,6 @@
     win-install.bat             installation script for Windows
 
     benchmarks/                 contains several benchmarks
-    distribution/		various distribution scripts
-    misc/                       miscellaneous stuff
 
     hen.el                      an emacs mode for editing Scheme programs, by Linh Dang
 

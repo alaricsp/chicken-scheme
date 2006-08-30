@@ -3613,11 +3613,11 @@ EOF
 	      (let loop ()
 		;; Skips all characters until #\}
 		(let ([c (##sys#read-char-0 port)])
-		  (cond [(eof-object? c) (err)]
+		  (cond [(eof-object? c)
+			 (##sys#read-error port "unexpected end of file - unterminated `#{...}' item in `here' string literal") ]
 			[(not (char=? #\} c)) (loop)] ) ) ) )
 	form))
     (lambda (char port)
-      (define (err) (##sys#read-error port "unexpected end of file - unterminated string literal"))
       (cond [(not (char=? #\< char)) (old char port)]
 	    [else
 	     (read-char port)
@@ -3628,7 +3628,10 @@ EOF
 		      [end (readln port)] 
 		      [f #f] )
 		  (do ([ln (readln port) (readln port)])
-		      ((or (eof-object? ln) (string=? end ln)) (get-output-string str))
+		      ((or (eof-object? ln) (string=? end ln)) 
+		       (when (eof-object? ln)
+			 (##sys#read-warning port "unterminated `here' string literal") )
+		       (get-output-string str) )
 		    (if f 
 			(##sys#write-char-0 #\newline str)
 			(set! f #t) )
@@ -3643,11 +3646,12 @@ EOF
 		      s))
 		  (let loop [(lst '())]
 		    (let ([c (##sys#read-char-0 port)])
-		      (when (eof-object? c) (err))
 		      (case c
-			[(#\newline)
+			[(#\newline #!eof)
 			 (let ([s (get/clear-str)])
-			   (cond [(string=? end s)
+			   (cond [(or (eof-object? c) (string=? end s))
+				  (when (eof-object? c)
+				    (##sys#read-warning port "unterminated `here' string literal") )
 				  `(##sys#print-to-string
 				    ;;Can't just use `(list ,@lst) because of 126 argument apply limit
 				    ,(let loop2 ((lst (cdr lst)) (next-string '()) (acc ''())) ; drop last newline
