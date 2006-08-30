@@ -220,6 +220,17 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 
 ####################################################################
+#  CHICKEN_DEFAULTS_H                                              #
+####################################################################
+
+# ./configure does the substitutions at make time, not
+# configuration time.  Will this cause problems if
+# people are using both builds?
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-defaults.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h)
+
+
+####################################################################
 #  .C GENERATION                                                   #
 ####################################################################
 
@@ -230,9 +241,6 @@ INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 # If EXTANT_CHICKEN is a high enough version number to generate .exports,
 # we'll have stray .exports junk in the directory.  Do we care about
 # cleaning it up?
-
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-paths.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
 
 IF(HAVE_BOOT_CFILES)
   # We will simply copy boot/*.c.in files
@@ -248,11 +256,6 @@ IF(HAVE_BOOT_CFILES)
 ELSE(HAVE_BOOT_CFILES)
   # We will generate the .c files using the available Chicken compiler.
 
-  SIMPLE_SCM_TO_C(batch-driver)
-  SIMPLE_SCM_TO_C(c-backend tweaks)
-  SIMPLE_SCM_TO_C(c-platform)
-  SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
-  SIMPLE_SCM_TO_C(compiler tweaks)
   LIBRARY_SCM_TO_C(eval)
   LIBRARY_SCM_TO_C(extras)
   LIBRARY_SCM_TO_C(library build)
@@ -293,23 +296,21 @@ IF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
   SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES PREFIX "lib")
 ENDIF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
 
-TARGET_LINK_LIBRARIES(libchicken-boot ${EXTRA_LIBS})
-
-
-####################################################################
-#  STACK SIZE                                                      #
-####################################################################
-
-# We don't do any nursery sampling for the bootstrap compiler.
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/stack-size.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h)
+TARGET_LINK_LIBRARIES(libchicken-boot ${MORE_STATIC_LIBS})
 
 
 ####################################################################
 #  CREATE CHICKEN-BOOT                                             #
 ####################################################################
 
+SIMPLE_SCM_TO_C(batch-driver tweaks)
+SIMPLE_SCM_TO_C(c-backend tweaks)
+SIMPLE_SCM_TO_C(c-platform tweaks)
+SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
+SIMPLE_SCM_TO_C(compiler tweaks)
+
 GET_CHICKEN_C_SOURCES(CHICKEN_BOOT_SOURCES)
+
 ADD_EXECUTABLE(chicken-boot ${CHICKEN_BOOT_SOURCES})
 SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot)

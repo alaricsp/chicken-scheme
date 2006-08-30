@@ -50,6 +50,15 @@ MACRO(ADD_PREFIX prefix rootlist)
   SET(${rootlist} ${outlist})
 ENDMACRO(ADD_PREFIX)
 
+# Returns an unquoted string.  Note that CMake will readily
+# turn such strings back into lists, so be careful how you use it.
+MACRO(LIST2STRING alist astring)
+  FOREACH(elem ${${alist}})
+   SET(${astring} "${${astring}} ${elem}")
+  ENDFOREACH(elem)
+ENDMACRO(LIST2STRING)
+
+
 # In CMake 2.4.2 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
 # generates Unix style pathnames.  Although this may be correct behavior
 # under the MSYS shell itself, Chicken probably won't be used under the
@@ -57,13 +66,13 @@ ENDMACRO(ADD_PREFIX)
 # So, manually convert to Windows native pathnames.
 
 # Quoting policy:
-# - no quotes around the path.  .scm, .h, .c files must do it instead.
+# - quote the path.  Output is expected to be a C string.
 # - backslashes in Windows pathnames need to be escaped, i.e. \\
 # - whitespace is not escaped.
 #
 # Be very careful because we're using unprotected whitespace!
 
-MACRO(MAKE_RAW_NATIVE_PATH cmake_path_in native_path_out)
+MACRO(NATIVE_C_PATH cmake_path_in native_path_out)
   SET(${native_path_out} ${${cmake_path_in}})
   # An extra \\ escape is necessary to get a \ through CMake's processing.
   # Check that pathname has no escapes in it already.
@@ -85,7 +94,10 @@ MACRO(MAKE_RAW_NATIVE_PATH cmake_path_in native_path_out)
     STRING(REPLACE "\\ " " " ${native_path_out} "${${native_path_out}}")
   ENDIF(WIN32 AND NOT CYGWIN)
 
-ENDMACRO(MAKE_RAW_NATIVE_PATH)
+  # Quote the results
+  SET(${native_path_out} \"${${native_path_out}}\")
+
+ENDMACRO(NATIVE_C_PATH)
 
 # It is common to look for tools at configuration time, and if they are
 # not found, to provide make targets that give error messages.  We also
@@ -226,7 +238,8 @@ ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 # benchmarks measure something useful.
 
 #All our various optional libraries go in here.
-SET(EXTRA_LIBS )
+SET(MORE_LIBS )
+SET(MORE_STATIC_LIBS )
 
 # Any CMake-specific defines are in chicken-config.h
 ADD_DEFINITIONS(-DHAVE_CHICKEN_CONFIG_H)
@@ -240,34 +253,30 @@ SET(SHARE_HOME   ${CMAKE_INSTALL_PREFIX}/share/chicken)
 SET(BIN_HOME     ${CMAKE_INSTALL_PREFIX}/bin)
 SET(INCLUDE_HOME ${CMAKE_INSTALL_PREFIX}/include)
 SET(LIB_HOME     ${CMAKE_INSTALL_PREFIX}/lib)
+SET(STATIC_LIB_HOME     ${CMAKE_INSTALL_PREFIX}/lib)
 SET(INFO_HOME    ${CMAKE_INSTALL_PREFIX}/info)
 SET(MAN_HOME     ${CMAKE_INSTALL_PREFIX}/man/man1)
 SET(EGG_HOME     ${LIB_HOME}/chicken/1)
 SET(DOC_HOME     ${SHARE_HOME}/doc)
 
 # Then make them native after the path logic is done.
-MAKE_RAW_NATIVE_PATH(SHARE_HOME   INSTALL_SHARE_HOME)
-MAKE_RAW_NATIVE_PATH(BIN_HOME     INSTALL_BIN_HOME)
-MAKE_RAW_NATIVE_PATH(INCLUDE_HOME INSTALL_INCLUDE_HOME)
-MAKE_RAW_NATIVE_PATH(LIB_HOME     INSTALL_LIB_HOME)
-MAKE_RAW_NATIVE_PATH(EGG_HOME     INSTALL_EGG_HOME)
+NATIVE_C_PATH(SHARE_HOME         C_INSTALL_SHARE_HOME)
+NATIVE_C_PATH(BIN_HOME           C_INSTALL_BIN_HOME)
+NATIVE_C_PATH(INCLUDE_HOME       C_INSTALL_INCLUDE_HOME)
+NATIVE_C_PATH(LIB_HOME           C_INSTALL_LIB_HOME)
+NATIVE_C_PATH(STATIC_LIB_HOME    C_INSTALL_STATIC_LIB_HOME)
+NATIVE_C_PATH(EGG_HOME           C_INSTALL_EGG_HOME)
 
 # Do we actually want absolute pathnames for the compilers,
 # or just simple definitions like "gcc" or "cl" ?
-MAKE_RAW_NATIVE_PATH(CMAKE_C_COMPILER   INSTALL_CC)
-MAKE_RAW_NATIVE_PATH(CMAKE_CXX_COMPILER INSTALL_CXX)
+GET_FILENAME_COMPONENT(THE_CC ${CMAKE_C_COMPILER} NAME_WE)
+GET_FILENAME_COMPONENT(THE_CXX ${CMAKE_CXX_COMPILER} NAME_WE)
+SET(C_INSTALL_CC \"${THE_CC}\")
+SET(C_INSTALL_CXX \"${THE_CXX}\")
 
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-paths.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h)
-
-# Does MSVC really require special treatment?
-# Do any other compilers?
-# What if the nursery determines a smaller stack size is better?
-IF(MSVC)
-  SET(DEFAULT_TARGET_STACK_SIZE 300000)
-ELSE(MSVC)
-  SET(DEFAULT_TARGET_STACK_SIZE 131072)
-ENDIF(MSVC)
+# Historically, MSVC was given a stack size of 300000.
+# Not convinced this is necessary, but noted in case of problems.
+SET(C_DEFAULT_TARGET_STACK_SIZE \(128*1024\))
 
 CHECK_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 CHECK_INCLUDE_FILE(crt_externs.h HAVE_CRT_EXTERNS_H)
@@ -291,7 +300,8 @@ SET(REGEX_UNIT )
 CHECK_INCLUDE_FILE(pcre.h HAVE_PCRE_H)
 IF(HAVE_PCRE_H)
   SET(REGEX_UNIT pcre)
-  SET(EXTRA_LIBS ${EXTRA_LIBS} pcre)
+  SET(MORE_LIBS ${MORE_LIBS} pcre)
+  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} pcre)
 ELSE(HAVE_PCRE_H)
   IF(WIN32 AND NOT CYGWIN)
     SET(REGEX_UNIT pregexp)
@@ -306,18 +316,21 @@ IF(HAVE_DLFCN_H)
   # For instance, Cygwin has dlfcn.h and does not use -ldl.
   FIND_LIBRARY(DL_LIBRARY dl)
   IF(DL_LIBRARY)
-    SET(EXTRA_LIBS ${EXTRA_LIBS} dl)
+    SET(MORE_LIBS ${MORE_LIBS} dl)
+    SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} dl)
   ENDIF(DL_LIBRARY)
 ENDIF(HAVE_DLFCN_H)
 
 CHECK_INCLUDE_FILE(dl.h HAVE_DL_H)
 IF(HAVE_DL_H)
-  SET(EXTRA_LIBS ${EXTRA_LIBS} ldl)
+  SET(MORE_LIBS ${MORE_LIBS} ldl)
+  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ldl)
 ENDIF(HAVE_DL_H)
 
 CHECK_INCLUDE_FILE(ffi.h HAVE_FFI_H)
 IF(HAVE_FFI_H)
-  SET(EXTRA_LIBS ${EXTRA_LIBS} ffi)
+  SET(MORE_LIBS ${MORE_LIBS} ffi)
+  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ffi)
 ENDIF(HAVE_FFI_H)
 
 # check for windows.h
@@ -333,13 +346,17 @@ IF(HAVE_WINDOWS_H)
     MESSAGE("You are missing winsock2.h.
       Correct this if you want full network functionality.")
   ENDIF(NOT HAVE_WINSOCK2_H)
-  # ws2tcpip.h needs winsock2.h for various definitions
+  # ws2tcpip.h needs winsock2.h for various definitions.
+  # Found it really difficult to pass the list of files as a
+  # 1st argument.  This is what worked.
   SET(WS2FILES winsock2.h ws2tcpip.h)
   CHECK_INCLUDE_FILES("${WS2FILES}" HAVE_WS2TCPIP_H)
   IF (NOT HAVE_WS2TCPIP_H)
     MESSAGE("You are missing ws2tcpip.h.
       Correct this if you want full network functionality.")
   ENDIF(NOT HAVE_WS2TCPIP_H)
+
+  # Seems like the ws2_32 stuff should be up here, not down below.
 
 ENDIF(HAVE_WINDOWS_H)
 
@@ -356,7 +373,8 @@ ENDIF(HAVE_WINDOWS_H)
 SET(POSIX_UNIT )
 IF(WIN32 AND NOT CYGWIN)
   SET(POSIX_UNIT posixwin)
-  SET(EXTRA_LIBS ${EXTRA_LIBS} ws2_32)
+  SET(MORE_LIBS ${MORE_LIBS} ws2_32)
+  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ws2_32)
 ENDIF(WIN32 AND NOT CYGWIN)
 IF(UNIX)
   SET(POSIX_UNIT posixunix)
@@ -376,46 +394,46 @@ SET(STATIC_FLAGS -DC_NO_PIC_NO_DLL)
 # Windows platforms generally don't need it.
 # Uncertain if this is strictly necessary, but we're paranoid.
 IF(UNIX)
-  SET(EXTRA_LIBS ${EXTRA_LIBS} m)
+  SET(MORE_LIBS ${MORE_LIBS} m)
+  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} m)
 ENDIF(UNIX)
 
 # Solaris doesn't have socket calls in its libc
 IF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
-  SET(EXTRA_LIBS ${EXTRA_LIBS} socket rt)
+  SET(MORE_LIBS ${MORE_LIBS} socket rt)
+  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} socket rt)
 ENDIF(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
 
+# Tack on -l for chicken-defaults.h
+SET(L_MORE_LIBS ${MORE_LIBS})
+SET(L_MORE_STATIC_LIBS ${MORE_STATIC_LIBS})
+ADD_PREFIX(-l L_MORE_LIBS)
+ADD_PREFIX(-l L_MORE_STATIC_LIBS)
+LIST2STRING(L_MORE_LIBS L_MORE_LIBS_STRING)
+LIST2STRING(L_MORE_STATIC_LIBS L_MORE_STATIC_LIBS_STRING)
+SET(C_INSTALL_MORE_LIBS \"${L_MORE_LIBS_STRING}\")
+SET(C_INSTALL_MORE_STATIC_LIBS \"${L_MORE_STATIC_LIBS_STRING}\")
+
 
 ####################################################################
-#  DEFINE STACK_GROWS_DOWNWARD                                     #
+#  DEFINE C_STACK_GROWS_DOWNWARD                                   #
 ####################################################################
 
-TRY_RUN(STACK_GROWS_DOWNWARD
+TRY_RUN(C_STACK_GROWS_DOWNWARD
   STACK_TEST_COMPILED
   ${CMAKE_CURRENT_BINARY_DIR}
   ${Chicken_SOURCE_DIR}/StackGrowsDownward.c
 )
 IF(STACK_TEST_COMPILED)
-  IF(STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
+  IF(C_STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
     MESSAGE(SEND_ERROR "Compiled stack growth test, but unable to run it.  Using default.")
-    SET(STACK_GROWS_DOWNWARD -1)
-  ENDIF(STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
+    SET(C_STACK_GROWS_DOWNWARD -1)
+  ENDIF(C_STACK_GROWS_DOWNWARD STREQUAL "FAILED_TO_RUN")
 ELSE(STACK_TEST_COMPILED)
   MESSAGE(SEND_ERROR "Unable to compile stack growth test.  Using default.")
-  SET(STACK_GROWS_DOWNWARD -1)
+  SET(C_STACK_GROWS_DOWNWARD -1)
 ENDIF(STACK_TEST_COMPILED)
-MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${STACK_GROWS_DOWNWARD}")
-
-
-####################################################################
-#  CHICKEN_CONFIG_H                                                #
-####################################################################
-
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
-# ./configure just plops chicken-config.h in the source tree.
-# Try to avoid collisions with it by searching 
-# ${CMAKE_CURRENT_BINARY_DIR} first.
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
+MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${C_STACK_GROWS_DOWNWARD}")
 
 
 ####################################################################
@@ -446,6 +464,36 @@ ENDIF(DISABLE_APPLY_HOOK)
 
 
 ####################################################################
+#  CHICKEN_CONFIG_H                                                #
+####################################################################
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
+# ./configure just plops chicken-config.h in the source tree.
+# Try to avoid collisions with it by searching 
+# ${CMAKE_CURRENT_BINARY_DIR} first.
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
+
+
+####################################################################
+#  CHICKEN_DEFAULTS_H                                              #
+####################################################################
+
+# get C flags as late as possible so they're all available
+GET_DIRECTORY_PROPERTY(RAW_CFLAGS
+  DIRECTORY ${Chicken_SOURCE_DIR}
+  DEFINITIONS
+)
+SET(C_INSTALL_CFLAGS \"${RAW_CFLAGS}\")
+
+# ./configure does the substitutions at make time, not
+# configuration time.  Will this cause problems if
+# people are using both builds?
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-defaults.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h)
+
+
+####################################################################
 #  LISTS OF .C SOURCES                                             #
 ####################################################################
 
@@ -458,7 +506,7 @@ MACRO(GET_LIB_CSOURCE out)
   SET(${out}
     ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
     ${Chicken_SOURCE_DIR}/chicken.h
-    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
     ${Chicken_SOURCE_DIR}/runtime.c
   )
 ENDMACRO(GET_LIB_CSOURCE)
@@ -587,8 +635,7 @@ MACRO(GET_CHICKEN_C_SOURCES out)
   SET(${out}
     ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
     ${Chicken_SOURCE_DIR}/chicken.h
-    ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
-    ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h
+    ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
     ${Chicken_SOURCE_DIR}/chicken.rc
     ${cgen}
   )
@@ -703,41 +750,42 @@ GET_LIBUCHICKEN_C_SOURCES(CHICKEN_UNSAFE_LIB_SOURCES)
 ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libchicken PROPERTIES
   COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}")
-TARGET_LINK_LIBRARIES(libchicken ${EXTRA_LIBS})
+TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
 ADD_DEPENDENCIES(libchicken chicken-boot)
 
 ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
   COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(libchicken-static ${EXTRA_LIBS})
+TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
 ADD_DEPENDENCIES(libchicken-static chicken-boot)
 
 ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libuchicken PROPERTIES
   COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}")
-TARGET_LINK_LIBRARIES(libuchicken ${EXTRA_LIBS})
+TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
 ADD_DEPENDENCIES(libuchicken chicken-boot)
 
 ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
 SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
   COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(libuchicken-static ${EXTRA_LIBS})
+TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
 ADD_DEPENDENCIES(libuchicken-static chicken-boot)
 
 IF(WIN32 AND NOT CYGWIN)
 
+  # Should these be in MORE_LIBS way up above?
   SET(GUI_LIBS kernel32 user32 gdi32)
 
   ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}")
-  TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${EXTRA_LIBS})
+  TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
   ADD_DEPENDENCIES(libchickengui chicken-boot)
 
   ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}")
-  TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${EXTRA_LIBS})
+  TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
   ADD_DEPENDENCIES(libchickengui-static chicken-boot)
 
 ENDIF(WIN32 AND NOT CYGWIN)
@@ -806,71 +854,17 @@ ENDIF(MSVC)
 
 
 ####################################################################
-#  STACK SIZE                                                      #
-####################################################################
-
-# If the hapless user initiates a build that calls nsample, and
-# then he does typical multitasking things waiting for the long,
-# boring build to complete, his nsample results are going to suck.
-# For this reason, nsample cannot be part of a standard build.
-
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/stack-size.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h)
-
-# However, we leave the stack-size target available for experts
-# who know what they're doing, who want to see if stack-size.cmake
-# can generate a better stack size than the default size.  If
-# invoked, it will simply overwrite the configured stack-size.h file.
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/nsample.c
-  MAIN_DEPENDENCY nsample.scm
-  COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/nsample.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/nsample.c -explicit-use -uses library -uses eval ${CHICKEN_FLAGS}
-  COMMENT "Compiling ${Chicken_SOURCE_DIR}/nsample.scm to ${CMAKE_CURRENT_BINARY_DIR}/nsample.c"
-)
-ADD_EXECUTABLE(nsample ${CMAKE_CURRENT_BINARY_DIR}/nsample.c)
-SET_TARGET_PROPERTIES(nsample PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(nsample libchicken-static)
-ADD_DEPENDENCIES(nsample chicken-boot)
-
-GET_TARGET_PROPERTY(NSAMPLE_EXE nsample LOCATION)
-ADD_CUSTOM_TARGET(stack-size
-  COMMAND ${CMAKE_COMMAND}
-    -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR}
-    -DNSAMPLE_EXE=${NSAMPLE_EXE}
-    -DDEFAULT_TARGET_STACK_SIZE=${DEFAULT_TARGET_STACK_SIZE}
-    -P ${Chicken_SOURCE_DIR}/stack-size.cmake
-)
-ADD_DEPENDENCIES(stack-size nsample)
-
-
-####################################################################
 #  CREATE CSC                                                      #
 ####################################################################
 
-# Most variables that CSC needs have been SET already,
-# but here are a few stragglers.
-GET_DIRECTORY_PROPERTY(INSTALL_CFLAGS
-  DIRECTORY ${Chicken_SOURCE_DIR}
-  DEFINITIONS
+SIMPLE_SCM_TO_C(csc)
+
+ADD_EXECUTABLE(csc
+  ${Chicken_SOURCE_DIR}/chicken.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+  ${CMAKE_CURRENT_BINARY_DIR}/csc.c
 )
-# CMake doesn't have "more" libs.
-SET(INSTALL_MORE_LIBS )
-SET(INSTALL_MORE_STATIC_LIBS )
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/csc.scm.in
-  ${CMAKE_CURRENT_BINARY_DIR}/csc.scm)
-
-# csc.c needs its own custom rule because csc.scm is generated.
-
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csc.c
-  MAIN_DEPENDENCY ${CMAKE_CURRENT_BINARY_DIR}/csc.scm
-  DEPENDS ${Chicken_SOURCE_DIR}/banner.scm
-  COMMAND ${CURRENT_CHICKEN} ${CMAKE_CURRENT_BINARY_DIR}/csc.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csc.c ${CHICKEN_FLAGS}
-  COMMENT "Compiling ${CMAKE_CURRENT_BINARY_DIR}/csc.scm to ${CMAKE_CURRENT_BINARY_DIR}/csc.c"
-)
-
-ADD_EXECUTABLE(csc ${CMAKE_CURRENT_BINARY_DIR}/csc.c)
 SET_TARGET_PROPERTIES(csc PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(csc libchicken)
 ADD_DEPENDENCIES(csc chicken-boot)
@@ -880,25 +874,24 @@ ADD_DEPENDENCIES(csc chicken-boot)
 #  CREATE CSI                                                      #
 ####################################################################
 
-# csi gets special treatment with a prologue.
+SIMPLE_SCM_TO_C(csi banner chicken-more-macros)
 
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/csi.c
-  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/csi.scm
-  DEPENDS
-    ${Chicken_SOURCE_DIR}/banner.scm
-    ${Chicken_SOURCE_DIR}/build.scm
-    ${Chicken_SOURCE_DIR}/chicken-more-macros.scm
-  COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/csi.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/csi.c -prologue ${Chicken_SOURCE_DIR}/build.scm ${CHICKEN_FLAGS}
-  COMMENT "Compiling ${Chicken_SOURCE_DIR}/csi.scm to ${CMAKE_CURRENT_BINARY_DIR}/csi.c"
+ADD_EXECUTABLE(csi
+  ${Chicken_SOURCE_DIR}/chicken.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+  ${CMAKE_CURRENT_BINARY_DIR}/csi.c
 )
-
-ADD_EXECUTABLE(csi ${CMAKE_CURRENT_BINARY_DIR}/csi.c)
 SET_TARGET_PROPERTIES(csi PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(csi libchicken)
 ADD_DEPENDENCIES(csi chicken-boot)
 
-ADD_EXECUTABLE(csi-static ${CMAKE_CURRENT_BINARY_DIR}/csi.c)
+ADD_EXECUTABLE(csi-static
+  ${Chicken_SOURCE_DIR}/chicken.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+  ${CMAKE_CURRENT_BINARY_DIR}/csi.c
+)
 SET_TARGET_PROPERTIES(csi-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(csi-static libchicken-static)
 ADD_DEPENDENCIES(csi-static chicken-boot)
@@ -908,8 +901,14 @@ ADD_DEPENDENCIES(csi-static chicken-boot)
 #  CREATE CHICKEN-PROFILE                                          #
 ####################################################################
 
-SIMPLE_SCM_TO_C(chicken-profile)
-ADD_EXECUTABLE(chicken-profile ${CMAKE_CURRENT_BINARY_DIR}/chicken-profile.c)
+SIMPLE_SCM_TO_C(chicken-profile build)
+
+ADD_EXECUTABLE(chicken-profile
+  ${Chicken_SOURCE_DIR}/chicken.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-profile.c
+)
 SET_TARGET_PROPERTIES(chicken-profile PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-profile libchicken)
 ADD_DEPENDENCIES(chicken-profile chicken-boot)
@@ -920,7 +919,13 @@ ADD_DEPENDENCIES(chicken-profile chicken-boot)
 ####################################################################
 
 SIMPLE_SCM_TO_C(chicken-setup build)
-ADD_EXECUTABLE(chicken-setup ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c)
+
+ADD_EXECUTABLE(chicken-setup
+  ${Chicken_SOURCE_DIR}/chicken.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c
+)
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
 ADD_DEPENDENCIES(chicken-setup chicken-boot)
@@ -930,9 +935,9 @@ ADD_DEPENDENCIES(chicken-setup chicken-boot)
 #  CREATE CHICKEN.EXE                                              #
 ####################################################################
 
-SIMPLE_SCM_TO_C(batch-driver)
+SIMPLE_SCM_TO_C(batch-driver tweaks)
 SIMPLE_SCM_TO_C(c-backend tweaks)
-SIMPLE_SCM_TO_C(c-platform)
+SIMPLE_SCM_TO_C(c-platform tweaks)
 SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
 SIMPLE_SCM_TO_C(compiler tweaks)
 
@@ -1097,8 +1102,7 @@ INSTALL(FILES chicken-ffi-macros.scm chicken-more-macros.scm
 INSTALL(FILES
   chicken.h
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-paths.h
-  ${CMAKE_CURRENT_BINARY_DIR}/stack-size.h  
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
   DESTINATION ${INCLUDE_HOME}
 )
 INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1 
@@ -1150,8 +1154,7 @@ ADD_PREFIX(${BIN_HOME}/ INSTALLED_BINARIES)
 SET(INSTALLED_INCLUDES
   chicken.h
   chicken-config.h
-  chicken-paths.h  
-  stack-size.h
+  chicken-defaults.h  
 )
 ADD_PREFIX(${INCLUDE_HOME}/ INSTALLED_INCLUDES)
 

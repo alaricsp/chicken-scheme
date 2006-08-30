@@ -46,10 +46,6 @@
 #else
 # define _getcwd(buf, len)       NULL
 #endif
-
-#ifdef __DJGPP__
-# include <unistd.h>
-#endif
 EOF
 ) )
 

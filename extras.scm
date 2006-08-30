@@ -1556,7 +1556,7 @@ EOF
 			   (fx+ i 1)
 			   (fx- len 1) ) ) ) ) ) ) )
     (##sys#check-exact limit 'hash)
-    (##core#inline "C_fixnum_modulo" (fxand #x00ffffff (rechash x 0)) limit) ) )
+    (##core#inline "C_fixnum_modulo" (fxand (foreign-value "C_MOST_POSITIVE_FIXNUM" int) (rechash x 0)) limit) ) )
 
 (define (hash x #!optional (bound default-hash-bound))
   (##sys#check-exact bound 'hash)
@@ -1567,14 +1567,14 @@ EOF
 (define (string-hash s #!optional (bound default-hash-bound))
   (##core#inline 
    "C_fixnum_modulo"
-   (fxand #x00ffffff (##core#inline "C_hash_string" s))
-   limit) )
+   (##core#inline "C_hash_string" s)
+   bound) )
 
 (define (string-ci-hash s #!optional (bound default-hash-bound))
   (##core#inline 
    "C_fixnum_modulo"
-   (fxand #x00ffffff (##core#inline "C_hash_string_ci" s))
-   limit) )
+   (##core#inline "C_hash_string_ci" s)
+   bound) )
 
 
 ;;; Access:

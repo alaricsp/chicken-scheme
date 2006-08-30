@@ -1,4 +1,3 @@
-
 /* runtime.c - Runtime code for compiler generated executables
 ;
 ; Copyright (c) 2000-2006, Felix L. Winkelmann
@@ -3593,11 +3592,9 @@ C_regparm C_word C_fcall C_hash_string(C_word str)
   int len = C_header_size(str);
   C_byte *ptr = C_data_pointer(str);
 
-  if(len > MAX_HASH_PREFIX) len = MAX_HASH_PREFIX;
-
   while(len--) key = (key << 4) + *(ptr++);
 
-  return C_fix(key & 0x0fffffff);
+  return C_fix(key & C_MOST_POSITIVE_FIXNUM);
 }
 
 
@@ -3607,11 +3604,9 @@ C_regparm C_word C_fcall C_hash_string_ci(C_word str)
   int len = C_header_size(str);
   C_byte *ptr = C_data_pointer(str);
 
-  if(len > MAX_HASH_PREFIX) len = MAX_HASH_PREFIX;
-
   while(len--) key = (key << 4) + C_tolower(*(ptr++));
 
-  return C_fix(key & 0x0fffffff);
+  return C_fix(key & C_MOST_POSITIVE_FIXNUM);
 }
 
 

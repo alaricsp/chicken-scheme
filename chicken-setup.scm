@@ -206,7 +206,7 @@ static void create_directory(char *pathname) {}
 		 "-feature" "compiling-extension"
 		 *csc-options*) 
 	  " ") )
-	((member prg installed-executables) (make-pathname *install-bin-path* prg))
+	((member prg installed-executables) (quotewrap (make-pathname *install-bin-path* prg)))
 	(else prg) ) )
 
 (define (fixmaketarget file)
@@ -774,14 +774,15 @@ EOF
 
 (define (fetch-file-from-net ext)
   (define (requirements reqs)
-    (fold 
-     (lambda (r reqs)
-       (let ((node (assq r *repository-tree*)))
-	 (cond (node (append (list (car node)) (requirements (cdddr node)) reqs))
-	       ((memq r ##sys#core-library-modules) reqs)
-	       (else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
-     '() 
-     reqs) )
+    (reverse 
+     (fold 
+      (lambda (r reqs)
+	(let ((node (assq r *repository-tree*)))
+	  (cond (node (append (list (car node)) (requirements (cdddr node)) reqs))
+		((memq r ##sys#core-library-modules) reqs)
+		(else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
+      '() 
+      reqs) ) )
   (and (or *dont-ask*
 	   (yes-or-no?
 	    (sprintf "The extension ~A does not exist.~%Do you want to download it ?" ext)

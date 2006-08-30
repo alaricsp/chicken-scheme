@@ -5,7 +5,7 @@ See LICENSE section at end of file for full license text.
 How to build Chicken Scheme using CMake
 ---------------------------------------
 
-last updated August 10, 2006
+last updated August 25, 2006
 
 If in trouble, please contact me through the Chicken mailing list.  You can subscribe to the list from the Chicken homepage, http://call-with-current-continuation.org.
 
@@ -50,7 +50,14 @@ You need an extant Chicken to build from Darcs.  Chicken 2.3 or later is require
 
 The build is two-stage, so a sub-optimal Chicken is fine.  First the old Chicken is used to build a static boot compiler, called chicken-boot.  Then chicken-boot is used to build the final compiler.  That way, the final compiler uses the most current code.
 
-The Chicken compiler doesn't need to have been built with any particular C runtime.  As long as it actually works on your platform, you're fine.  The C code that Chicken outputs will compile on any platform, not just the one you built it on.  You can, for instance, use a Chicken built with VC++ to bootstrap a Chicken MinGW build, or a Cygwin build, or vice versa.
+The Chicken compiler you use for bootstrapping does not need to use the same C compiler or runtime as the final Chicken compiler you're building.  For instance, I canonically use the MSVC Chicken 2.3 binary to build all my MinGW Chicken compilers.
+
+However, the Chicken bootstrap compiler must understand the pathnames of your build environment.  In particular, legacy MSVC Chicken compiler binaries do not understand Cygwin's Unix-style pathnames, and consequently can't be used to build Cygwin Chicken compilers.  MinGW and Cygwin compilers both understand Unix pathnames, and in principle could be used to build each other.  In practice, the MSYS shell and the Cygwin shell have different conventions for Windows drive letters, and totally different installations to simulate the /usr directory, so it's not gonna work.  The bottom line is, you'll need a Cygwin Chicken compiler to build a Cygwin Chicken compiler.
+
+MinGW and MSVC Chicken compilers can build each other because they both understand native Windows paths.  YMMV for other OS and compiler permutations.  Remember in general:
+
+  - the C compilers need not be the same
+  - the path conventions must be the same
 
 If your OS has Chicken 2.3 available as a package in a distribution, use that.  That saves you the bother of compiling anything.  As of this writing, Debian is known to have Chicken 2.3 in the "testing" distribution, but not the "stable" distribution.  YMMV with other distributions and OSes.
 

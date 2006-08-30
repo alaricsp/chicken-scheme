@@ -23,6 +23,24 @@ MORE_LIBS = @LIBS@ @SHLIBS@
 MORE_STATIC_LIBS = @LIBS@ 
 endif
 
+# These C_INSTALL_* variables are necessary so that
+# both ./configure and CMake do the same variable substitutions.
+
+C_INSTALL_CC=\"$(CC)\"
+C_INSTALL_CXX=\"$(CXX)\"
+C_INSTALL_CFLAGS=\"-DHAVE_CHICKEN_CONFIG_H $(CFLAGS)\"
+C_INSTALL_SHARE_HOME=\"$(pkgdatadir)\"
+C_INSTALL_BIN_HOME=\"$(bindir)\"
+C_INSTALL_EGG_HOME=\"$(pkglibdir)/$(BINARY_VERSION)\"
+C_INSTALL_LIB_HOME=\"$(libdir)\"
+C_INSTALL_STATIC_LIB_HOME=\"$(libdir)\"
+C_INSTALL_INCLUDE_HOME=\"$(includedir)\"
+C_INSTALL_MORE_LIBS=\"$(MORE_LIBS)\"
+C_INSTALL_MORE_STATIC_LIBS=\"$(MORE_STATIC_LIBS)\"
+C_DEFAULT_TARGET_STACK_SIZE=(128*1024)
+C_STACK_GROWS_DOWNWARD=($(STACK_GROWS_DOWNWARD))
+
+
 BOOTSTRAP_PATH = .
 CHICKEN = $(BOOTSTRAP_PATH)/chicken
 CSI = $(BOOTSTRAP_PATH)/csi
@@ -75,49 +93,28 @@ c-backend.c : tweaks.scm
 support.c : tweaks.scm banner.scm
 c-platform.c : tweaks.scm
 
-chicken-defaults.h:
-	@echo creating $@; \
-	echo the CHICKEN_HOME install directory is $(pkgdatadir); \
-	echo "/*** Program generated file: any edits may be lost ***/" >chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_CC" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_CC \"$(CC)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_CXX" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_CXX \"$(CXX)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_CFLAGS" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_CFLAGS \"-DHAVE_CHICKEN_CONFIG_H $(CFLAGS)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_SHARE_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_SHARE_HOME \"$(pkgdatadir)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_BIN_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_BIN_HOME \"$(bindir)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_EGG_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_EGG_HOME \"$(pkglibdir)/$(BINARY_VERSION)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_LIB_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_LIB_HOME \"$(libdir)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_STATIC_LIB_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(libdir)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_INCLUDE_HOME" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_INCLUDE_HOME \"$(includedir)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_MORE_LIBS" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_MORE_LIBS \"$(MORE_LIBS)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_INSTALL_MORE_STATIC_LIBS" >> chicken-defaults.h; \
-	echo "# define C_INSTALL_MORE_STATIC_LIBS \"$(MORE_STATIC_LIBS)\"" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_DEFAULT_TARGET_STACK_SIZE" >> chicken-defaults.h; \
-	echo "# define C_DEFAULT_TARGET_STACK_SIZE (128*1024)" >>chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h; \
-	echo "#ifndef C_STACK_GROWS_DOWNWARD" >> chicken-defaults.h; \
-	echo "# define C_STACK_GROWS_DOWNWARD ($(STACK_GROWS_DOWNWARD))" >> chicken-defaults.h; \
-	echo "#endif" >> chicken-defaults.h
+# We make chicken-defaults.h depend on the Makefile in case anyone
+# changes these installation variables manually.  Unfortunately,
+# people could make Makefile changes that have nothing to do with
+# these variables, but nevertheless trigger lotsa rebuilding.
+# Remains to be seen whether it's a problem in practice.
+
+chicken-defaults.h: chicken-defaults.h.in Makefile
+	echo creating $@; \
+	sed -e "s,@C_INSTALL_CC[@],$(C_INSTALL_CC)," \
+	    -e "s,@C_INSTALL_CXX[@],$(C_INSTALL_CXX)," \
+	    -e "s,@C_INSTALL_CFLAGS[@],$(C_INSTALL_CFLAGS)," \
+	    -e "s,@C_INSTALL_SHARE_HOME[@],$(C_INSTALL_SHARE_HOME)," \
+	    -e "s,@C_INSTALL_BIN_HOME[@],$(C_INSTALL_BIN_HOME)," \
+	    -e "s,@C_INSTALL_EGG_HOME[@],$(C_INSTALL_EGG_HOME)," \
+	    -e "s,@C_INSTALL_LIB_HOME[@],$(C_INSTALL_LIB_HOME)," \
+	    -e "s,@C_INSTALL_STATIC_LIB_HOME[@],$(C_INSTALL_STATIC_LIB_HOME)," \
+	    -e "s,@C_INSTALL_INCLUDE_HOME[@],$(C_INSTALL_INCLUDE_HOME)," \
+	    -e "s,@C_INSTALL_MORE_LIBS[@],$(C_INSTALL_MORE_LIBS)," \
+	    -e "s,@C_INSTALL_MORE_STATIC_LIBS[@],$(C_INSTALL_MORE_STATIC_LIBS)," \
+	    -e "s,@C_DEFAULT_TARGET_STACK_SIZE[@],$(C_DEFAULT_TARGET_STACK_SIZE)," \
+	    -e "s,@C_STACK_GROWS_DOWNWARD[@],$(C_STACK_GROWS_DOWNWARD),g" \
+	  <$(srcdir)/chicken-defaults.h.in >chicken-defaults.h;
 
 # csi.c is a built source compiled by chicken from csi.scm
 csi_SOURCES =
