@@ -124,7 +124,7 @@ EOF
      ##sys#default-read-info-hook ##sys#read-error) ) ] )
 
 
-(include "build")
+(include "build.scm")
 
 
 (define-constant namespace-size 997)
@@ -695,26 +695,109 @@ EOF
 	  (##sys#signal-hook #:arithmetic-error 'fxmod "division by zero" x y)
 	  (##core#inline "C_fixnum_modulo" x y) ) ] ) ) )
 
-(define (fp+ x y) (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y))
-(define (fp- x y) (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y))
-(define (fp* x y) (##core#inline_allocate ("C_a_i_flonum_times" 4) x y))
-(define (fp= x y) (##core#inline "C_flonum_equalp" x y))
-(define (fp> x y) (##core#inline "C_flonum_greaterp" x y))
-(define (fp< x y) (##core#inline "C_flonum_lessp" x y))
-(define (fp>= x y) (##core#inline "C_flonum_greater_or_equal_p" x y))
-(define (fp<= x y) (##core#inline "C_flonum_less_or_equal_p" x y))
-(define (fpneg x) (##core#inline_allocate ("C_a_i_flonum_negate" 4) x))
-(define (fpmax x y) (##core#inline "C_i_flonum_max" x y))
-(define (fpmin x y) (##core#inline "C_i_flonum_min" x y))
+(define (flonum? x) (##core#inline "C_i_flonump" x))
 
-(define fp/
-  (lambda (x y)
-    (cond-expand
-     [unsafe (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y)]
-     [else
-      (if (fp= y 0.0)
-	  (##sys#signal-hook #:arithmetic-error 'fp/ "division by zero" x y)
-	  (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y) ) ] ) ) )
+(define (finite? x) 
+  (##sys#check-number x 'finite?)
+  (##core#inline "C_i_finitep" x) )
+
+(define (fp+ x y) 
+  (cond-expand
+   (unsafe (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y))
+   (else 
+    (if (and (flonum? x)
+             (flonum? y))
+        (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y)
+        (##sys#signal-hook #:type-error 'fp+ "not flonums" x y)))))
+
+(define (fp- x y) 
+  (cond-expand
+   (unsafe (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y))
+   (else 
+    (if (and (flonum? x)
+             (flonum? y))
+        (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y)
+        (##sys#signal-hook #:type-error 'fp- "not flonums" x y)))))
+
+(define (fp* x y) 
+  (cond-expand
+   (unsafe (##core#inline_allocate ("C_a_i_flonum_times" 4) x y))
+   (else 
+    (if (and (flonum? x)
+             (flonum? y))
+        (##core#inline_allocate ("C_a_i_flonum_times" 4) x y)
+        (##sys#signal-hook #:type-error 'fp* "not flonums" x y)))))
+
+(define (fp= x y) 
+  (cond-expand
+   (unsafe (##core#inline "C_flonum_equalp" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_flonum_equalp" x y)
+             (##sys#signal-hook #:type-error 'fp= "not flonums" x y)))))
+
+(define (fp> x y) 
+  (cond-expand
+   (unsafe (##core#inline "C_flonum_greaterp" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_flonum_greaterp" x y)
+             (##sys#signal-hook #:type-error 'fp> "not flonums" x y)))))
+
+(define (fp< x y) 
+  (cond-expand 
+   (unsafe (##core#inline "C_flonum_lessp" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_flonum_lessp" x y)
+             (##sys#signal-hook #:type-error 'fp< "not flonums" x y)))))
+
+(define (fp>= x y) 
+  (cond-expand
+   (unsafe (##core#inline "C_flonum_greater_or_equal_p" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_flonum_greater_or_equal_p" x y)
+             (##sys#signal-hook #:type-error 'fp>= "not flonums" x y)))))
+
+(define (fp<= x y) 
+  (cond-expand
+   (unsafe (##core#inline "C_flonum_less_or_equal_p" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_flonum_less_or_equal_p" x y)
+             (##sys#signal-hook #:type-error 'fp<= "not flonums" x y)))))
+
+(define (fpneg x) 
+  (cond-expand
+   (unsafe (##core#inline_allocate ("C_a_i_flonum_negate" 4) x))
+   (else (if (flonum? x)
+             (##core#inline_allocate ("C_a_i_flonum_negate" 4) x)
+             (##sys#signal-hook #:type-error 'fpneg "not flonums" x)))))
+
+(define (fpmax x y) 
+  (cond-expand
+   (unsafe (##core#inline "C_i_flonum_max" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_i_flonum_max" x y)
+             (##sys#signal-hook #:type-error 'fpmax "not flonums" x y)))))
+
+(define (fpmin x y) 
+  (cond-expand
+   (unsafe (##core#inline "C_i_flonum_min" x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline "C_i_flonum_min" x y)
+             (##sys#signal-hook #:type-error 'fpmin "not flonums" x y)))))
+
+(define (fp/ x y)
+  (cond-expand
+   (unsafe (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y))
+   (else (if (and (flonum? x)
+                  (flonum? y))
+             (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y)
+             (##sys#signal-hook #:type-error 'fp/ "not flonums" x y)))))
 
 (define * (##core#primitive "C_times"))
 (define - (##core#primitive "C_minus"))
@@ -2837,13 +2920,13 @@ EOF
 		   (if (##sys#fudge 28) " ptables" "")
 		   (if (##sys#fudge 32) " gchooks" "") 
 		   (if (##sys#fudge 33) " extraslot" "")
-		   (if (##sys#fudge 35) " applyhook" "") ) ) ) 
+		   (if (##sys#fudge 35) " applyhook" "") 
+		   (if (##sys#fudge 38) " cmake" "") ) ) )
 	(string-append 
-	 "Version " (##sys#number->string build-version)
-	 ", Build " (##sys#number->string build-number) 
+	 "Version " +build-version+
 	 " - " (get-config)
 	 (if (eq? 0 (##sys#size spec)) "" (string-append " - [" spec " ]") ) ))
-      (string-append (##sys#number->string build-version) "." (##sys#number->string build-number))))
+      +build-version+) )
 
 (define ##sys#pathname-directory-separator
   (let ([st (software-type)])

@@ -1305,13 +1305,14 @@ C_fctexport C_word C_fcall C_a_i_bytevector(C_word **a, int c, C_word x) C_regpa
 C_fctexport C_word C_fcall C_i_eqvp(C_word x, C_word y) C_regparm;
 C_fctexport C_word C_fcall C_i_symbolp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_pairp(C_word x) C_regparm;
-C_fctexport C_word C_fcall C_i_atomp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_vectorp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_closurep(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_portp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_stringp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_numberp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_integerp(C_word x) C_regparm;
+C_fctexport C_word C_fcall C_i_flonump(C_word x) C_regparm;
+C_fctexport C_word C_fcall C_i_finitep(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_locativep(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_fixnum_min(C_word x, C_word y) C_regparm;
 C_fctexport C_word C_fcall C_i_fixnum_max(C_word x, C_word y) C_regparm;

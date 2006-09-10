@@ -205,7 +205,7 @@ EOF
 
 ;;; List operators:
 
-(define (atom? x) (##core#inline "C_i_atomp" x))
+(define (atom? x) (##core#inline "C_i_not_pair_p" x))
 
 (define (tail? x y)
   (##sys#check-list y 'tail?)

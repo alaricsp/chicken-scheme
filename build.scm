@@ -1,2 +1,1 @@
-(define build-version 2)
-(define build-number 427)
+(define-constant +build-version+ "2.430")

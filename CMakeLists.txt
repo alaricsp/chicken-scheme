@@ -11,20 +11,6 @@ INCLUDE_DIRECTORIES(${Chicken_SOURCE_DIR})
 
 
 ####################################################################
-#  VERSION                                                         #
-####################################################################
-
-# A basic handy thing to know
-
-FILE(READ ${Chicken_SOURCE_DIR}/buildversion BUILDVERSION)
-FILE(READ ${Chicken_SOURCE_DIR}/buildnumber BUILDNUMBER)
-SET(VERSION ${BUILDVERSION}.${BUILDNUMBER})
-
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken.spec.in
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken.spec)
-
-
-####################################################################
 #  TEXT UTILITIES                                                  #
 ####################################################################
 
@@ -131,6 +117,265 @@ MACRO(ECHO_TARGET target quoted_message)
   ADD_CUSTOM_TARGET(${target}
     COMMAND ${CMAKE_COMMAND} -E echo ${quoted_message})
 ENDMACRO(ECHO_TARGET)
+
+
+####################################################################
+#  CHICKEN VERSION MACROS                                          #
+####################################################################
+
+FILE(READ ${Chicken_SOURCE_DIR}/buildversion VERSION)
+
+# Canonize the version and build into 1 number that can be
+# easily compared.  We assume the build number has no more
+# than 6 digits of precision.  If Chicken ever exceeds that,
+# watch out!
+
+# Chicken has been using single digits for major stable build
+# releases.  However, interim releases in Darcs have triple
+# digits for the build.  This means that Chicken 2.216 would
+# canonize as greater than 2.3, unless we promote 2.3 to 2.300.
+
+MACRO(CANONIZE_VERSION version build canonized)
+  IF(build LESS 100)
+    MATH(EXPR ${canonized} "${version} * 1000000 + ${build} * 100")
+  ELSE(build LESS 100)
+    MATH(EXPR ${canonized} "${version} * 1000000 + ${build}")
+  ENDIF(build LESS 100)
+ENDMACRO(CANONIZE_VERSION)
+
+# Pretty much all the various Chicken tools accept a -version
+# argument and display some variation of "Version X.Y"
+# as the result.  
+
+MACRO(GET_TOOL_VERSION absolute_exe_name canonized)
+  EXEC_PROGRAM(${absolute_exe_name}
+    ARGS -version
+    OUTPUT_VARIABLE exe_output
+    RETURN_VALUE exe_return
+  )
+  IF(exe_return EQUAL 0)
+    # Parse the output to extract the version and build numbers.
+    # If the output format changes significantly, problems will ensue.
+    SET(VERSION_BUILD_REGEX ".*Version ([0-9]+)+\\.([0-9]+).*")
+    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
+      version ${exe_output})
+    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
+      build ${exe_output})
+    CANONIZE_VERSION(${version} ${build} ${canonized})
+
+  ELSE(exe_return EQUAL 0)
+    MESSAGE(FATAL_ERROR "Bogus result when invoking ${absolute_exe_name} -version
+      Dump of output:
+      ${exe_output}"
+    )
+  ENDIF(exe_return EQUAL 0)
+ENDMACRO(GET_TOOL_VERSION)
+
+
+####################################################################
+#  CHICKEN VERSION REQUIREMENTS                                    #
+####################################################################
+
+# A previously installed Chicken can be used to build a new Chicken.
+# The previously installed Chicken must have minimum Version and Build numbers.
+
+SET(MINIMUM_CHICKEN_VERSION 2)
+SET(MINIMUM_CHICKEN_BUILD 3)
+
+CANONIZE_VERSION(${MINIMUM_CHICKEN_VERSION} ${MINIMUM_CHICKEN_BUILD}
+  MINIMUM_CANONICAL_CHICKEN
+)
+
+# This is the minimum build necessary to generate .exports.
+# The bootstrap compiler doesn't need to generate .exports.
+# Our final compiler will ultimately generate .exports.
+
+SET(EXPORTS_CHICKEN_VERSION 2)
+SET(EXPORTS_CHICKEN_BUILD 310)
+
+CANONIZE_VERSION(${EXPORTS_CHICKEN_VERSION} ${EXPORTS_CHICKEN_BUILD}
+  MINIMUM_CANONICAL_EXPORTS
+)
+
+##############################################################
+#                                                            #
+#  FIND CHICKEN                                              #
+#                                                            #
+#  Output:  EXTANT_CHICKEN                                   #
+#                                                            #
+#  Absolute paths of chicken executable and interpreter.     #
+#  If none exists, evaluates to -NOTFOUND, which is          #
+#  equivalent to FALSE in conditional tests.  Thus they are  #
+#  both the path and the boolean about whether the path is   #
+#  usable.  Isn't CMake clever?                              #
+#                                                            #
+##############################################################
+
+
+# Is CHICKEN_HOME set in the environment?
+# CHICKEN_HOME need not be set, but it could be a configuration error.
+# Warn the user if it isn't set, and state the exact error.
+
+STRING(COMPARE NOTEQUAL "$ENV{CHICKEN_HOME}" "" HAVE_CHICKEN_HOME)
+IF(HAVE_CHICKEN_HOME)
+  MESSAGE("Found CHICKEN_HOME=$ENV{CHICKEN_HOME} .
+    This is only used by legacy MSVC compilers.")
+  # Too lazy to test if it's a legacy MSVC Chicken
+ENDIF(HAVE_CHICKEN_HOME)
+
+# Do we have a Chicken installed already that we can use for the build?
+# Did the user specify where to find Chicken via CMakeSetup or CCMake?
+
+IF(NOT EXTANT_CHICKEN)
+  FIND_PROGRAM(EXTANT_CHICKEN
+    NAMES chicken-static chicken
+    PATHS $ENV{CHICKEN_HOME} $ENV{CHICKEN_HOME}/bin
+  )
+  IF(EXTANT_CHICKEN)
+    MESSAGE(STATUS "Found ${EXTANT_CHICKEN}")
+  ELSE(EXTANT_CHICKEN)
+    MESSAGE("Can't find Chicken, which is required to generate bootstrap .c files.")
+  ENDIF(EXTANT_CHICKEN)
+ENDIF(NOT EXTANT_CHICKEN)
+
+
+##############################################################
+#                                                            #
+#  VALIDATE VERSION REQIREMENTS                              #
+#                                                            #
+#  Output:  VALID_CHICKEN                                    #
+#                                                            #
+##############################################################
+
+SET(VALID_CHICKEN "-NOTFOUND")
+IF(EXTANT_CHICKEN)
+  GET_TOOL_VERSION(${EXTANT_CHICKEN} chicken_version)
+  IF(chicken_version LESS MINIMUM_CANONICAL_CHICKEN)
+    MESSAGE("Chicken ${MINIMUM_CANONICAL_CHICKEN} required to generate bootstrap .c files.
+      Available Chicken is only ${chicken_version}."
+    )
+  ELSE(chicken_version LESS MINIMUM_CANONICAL_CHICKEN)
+    MESSAGE(STATUS "Chicken ${MINIMUM_CANONICAL_CHICKEN} required; using ${chicken_version}.")
+    SET(VALID_CHICKEN ${EXTANT_CHICKEN})
+  ENDIF(chicken_version LESS MINIMUM_CANONICAL_CHICKEN)
+ENDIF(EXTANT_CHICKEN)
+
+# it may or may not be valid, but this is what we have to work with.
+SET(CURRENT_CHICKEN ${VALID_CHICKEN})
+
+
+####################################################################
+#  BOOT_CFILES                                                     #
+####################################################################
+
+# BOOT_CFILES is a list of all .c files necessary to build a bootstrap
+# Chicken compiler, without a valid Chicken compiler being available.
+# A Chicken build tree can come either with or without these files.
+# Typically, when downloaded as a tarball distribution, these files
+# will be present.  But when pulled straight from Darcs, these files
+# will be absent.  If they are present, then we don't use a Chicken
+# compiler to do the build, we just compile the .c sources.
+#
+# It would be desireable to implement a uniform MANIFEST.txt file so
+# that we don't have to edit these both here and in configure.in .
+
+SET(BOOT_CFILES
+  batch-driver.c
+  c-backend.c
+  c-platform.c
+  chicken.c
+  chicken-profile.c
+  chicken-setup.c
+  compiler.c
+  csc.c
+  csi.c
+  eval.c
+  eval.exports
+  extras.c
+  extras.exports
+  library.c
+  library.exports
+  lolevel.c
+  lolevel.exports
+  match.c
+  optimizer.c
+  pcre.c
+  pcre.exports
+  posixunix.c
+  posixunix.exports
+  posixwin.c
+  posixwin.exports
+  pregexp.c
+  pregexp.exports
+  profiler.c
+  regexunix.c
+  regexunix.exports
+  scheduler.c
+  scheduler.exports
+  srfi-1.c
+  srfi-1.exports
+  srfi-4.c
+  srfi-4.exports
+  srfi-13.c
+  srfi-13.exports
+  srfi-14.c
+  srfi-14.exports
+  srfi-18.c
+  srfi-18.exports
+  stub.c
+  support.c
+  tcp.c
+  tcp.exports
+  ueval.c
+  uextras.c
+  ulibrary.c
+  ulolevel.c
+  upcre.c
+  uposixunix.c
+  uposixwin.c
+  upregexp.c
+  uregexunix.c
+  usrfi-1.c
+  usrfi-4.c
+  usrfi-13.c
+  usrfi-14.c
+  usrfi-18.c
+  utcp.c
+  utils.c
+  utils.exports
+  uutils.c
+)
+
+# Check if all BOOT_CFILES are present in the build tree.
+SET(HAVE_BOOT_CFILES TRUE)
+IF(NOT VALID_CHICKEN)
+  MESSAGE("You have no valid Chicken available.
+    If you have all the boot/cfiles/*.c files that a bootstrap needs,
+    then I can still build Chicken for you."
+  )
+ENDIF(NOT VALID_CHICKEN)
+FOREACH(f ${BOOT_CFILES})
+  IF(NOT EXISTS ${Chicken_SOURCE_DIR}/boot/cfiles/${f})
+    SET(HAVE_BOOT_CFILES FALSE)
+    IF(VALID_CHICKEN)
+      MESSAGE(STATUS "Missing ${Chicken_SOURCE_DIR}/boot/cfiles/${f}
+        Not an error, can generate if needed.")
+    ELSE(VALID_CHICKEN)
+      MESSAGE(FATAL_ERROR "${Chicken_SOURCE_DIR}/boot/cfiles/${f} is missing.
+        Giving up, terminating build."
+      )
+    ENDIF(VALID_CHICKEN)
+  ENDIF(NOT EXISTS ${Chicken_SOURCE_DIR}/boot/cfiles/${f})
+ENDFOREACH(f)
+IF(HAVE_BOOT_CFILES)
+  IF(VALID_CHICKEN)
+    # Just give status
+    MESSAGE(STATUS "All boot/cfiles/*.c files are present.")
+  ELSE(VALID_CHICKEN)
+    # Pester the user with a dialog box that everything will be ok.
+    MESSAGE("All boot/cfiles/*.c files are present.")
+  ENDIF(VALID_CHICKEN)
+ENDIF(HAVE_BOOT_CFILES)
 
 
 ####################################################################
@@ -243,6 +488,22 @@ SET(MORE_STATIC_LIBS )
 
 # Any CMake-specific defines are in chicken-config.h
 ADD_DEFINITIONS(-DHAVE_CHICKEN_CONFIG_H)
+
+# Compiler optimizations.  Beware that these must be
+# passed to C_INSTALL_CFLAGS somehow.
+
+IF(CMAKE_COMPILER_IS_GNUCC)
+  # Why is -Os believed to produce better code?  Why not -O2?
+  # Really should implement some benchmarking instead of just guessing.
+  ADD_DEFINITIONS(-Os -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized)
+  # -fomit-frame-pointer causes chicken-boot to crash on MinGW 3.4.5
+  # Unknown whether it affects other MinGW versions.
+  # This points out that testing builds with different optimization flags
+  # could get complicated.
+  IF(NOT MINGW)
+    ADD_DEFINITIONS(-fomit-frame-pointer)
+  ENDIF(NOT MINGW)
+ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 # Chicken uses the INSTALL_* paths in various tools to generate shell
 # commands; for instance, under a Windows command prompt.  So they need
@@ -462,6 +723,14 @@ IF(DISABLE_APPLY_HOOK)
   ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
 ENDIF(DISABLE_APPLY_HOOK)
 
+####################################################################
+#  CHICKEN_SPEC                                                    #
+####################################################################
+
+# I don't really know what chicken.spec is for.
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken.spec.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken.spec)
+
 
 ####################################################################
 #  CHICKEN_CONFIG_H                                                #
@@ -646,45 +915,6 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 #  BOOTSTRAP                                                       #
 ####################################################################
 
-# BOOT_CFILES is a list of all .c files necessary to build a bootstrap
-# Chicken compiler, without a valid Chicken compiler being available.
-# A Chicken build tree can come either with or without these files.
-# Typically, when downloaded as a tarball distribution, these files
-# will be present.  But when pulled straight from Darcs, these files
-# will be absent.  If they are present, then we don't really need a
-# Chicken compiler to do the build, although we may choose to use one
-# anyways.
-
-SET(BOOT_CFILES
-  batch-driver.c
-  c-backend.c
-  c-platform.c
-  chicken.c
-  compiler.c
-  eval.c
-  extras.c
-  library.c
-  lolevel.c
-  match.c
-  optimizer.c
-  pcre.c
-  posixunix.c
-  posixwin.c
-  pregexp.c
-  profiler.c
-  regexunix.c
-  scheduler.c
-  srfi-1.c
-  srfi-4.c
-  srfi-13.c
-  srfi-14.c
-  srfi-18.c
-  stub.c
-  support.c
-  tcp.c
-  utils.c
-)
-
 # Now that we've determined everything we need to know to build,
 # we can transfer control to a subdirectory and create a 1st
 # stage boot compiler.  /boot worries about whether any previous
@@ -747,88 +977,9 @@ UNSAFE_LIBRARY_SCM_TO_C(utils)
 GET_LIBCHICKEN_C_SOURCES(CHICKEN_LIB_SOURCES)
 GET_LIBUCHICKEN_C_SOURCES(CHICKEN_UNSAFE_LIB_SOURCES)
 
-ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
-SET_TARGET_PROPERTIES(libchicken PROPERTIES
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}")
-TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
-ADD_DEPENDENCIES(libchicken chicken-boot)
-
-ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
-SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-ADD_DEPENDENCIES(libchicken-static chicken-boot)
-
-ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
-SET_TARGET_PROPERTIES(libuchicken PROPERTIES
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}")
-TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
-ADD_DEPENDENCIES(libuchicken chicken-boot)
-
-ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
-SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-ADD_DEPENDENCIES(libuchicken-static chicken-boot)
-
 IF(WIN32 AND NOT CYGWIN)
-
-  # Should these be in MORE_LIBS way up above?
   SET(GUI_LIBS kernel32 user32 gdi32)
-
-  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libchickengui PROPERTIES
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}")
-  TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
-  ADD_DEPENDENCIES(libchickengui chicken-boot)
-
-  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}")
-  TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchickengui-static chicken-boot)
-
 ENDIF(WIN32 AND NOT CYGWIN)
-
-# We want the library to be named 'libchicken' on all platforms.
-# But, Cygwin conspires against us.  Their convention is
-# cygname-0.dll and so forth.  Whether it's a "best practice" is
-# debateable, but in the Cygwin FAQ and Googling about, it's the
-# practice.  
-# Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
-# prefix onto every library.  For cross-platform stuff,
-# this often results in the 'liblibfoo" problem.
-
-# Let CMake do the prefixing magic on Unix, Cygwin, and MinGW.
-
-IF(CYGWIN)
-  SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME chicken-0)
-  SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME uchicken-0)
-ELSE(CYGWIN)
-  SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME chicken)
-  SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME uchicken)
-ENDIF(CYGWIN)
-IF(MSVC OR MINGW)
-  SET_TARGET_PROPERTIES(libchickengui PROPERTIES OUTPUT_NAME chickengui)
-ENDIF(MSVC OR MINGW)
-
-# CMake 2.4.3 has a bug where libchicken.a and libchicken.dll.a
-# clobber each other during the build.  This will be fixed in
-# CMake 2.4.4 and then we can have both at the same time.
-# Meanwhile as a workaround we need to distinguish the library names
-# and do a symlink at install time.
-
-IF(MINGW)
-  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES OUTPUT_NAME chicken-s)
-  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES OUTPUT_NAME uchicken-s)
-  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES OUTPUT_NAME chickengui-s)
-ELSE(MINGW)
-  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES OUTPUT_NAME chicken)
-  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES OUTPUT_NAME uchicken)
-  IF(MSVC)
-    SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES OUTPUT_NAME chickengui)
-  ENDIF(MSVC)
-ENDIF(MINGW)
 
 # Unix-y compilers tack "lib" onto the front of library names.  MSVC doesn't.
 # Also, MSVC uses the indistinguishable suffix .lib for both dlls and static
@@ -838,18 +989,132 @@ ENDIF(MINGW)
 # "multithreaded, static linkage" for Windows native libraries.
 
 IF(MSVC)
-  SET_TARGET_PROPERTIES(libchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib"
+  # static and dynamic libraries are built here
+
+  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
+    OUTPUT_NAME "chicken" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
-  SET_TARGET_PROPERTIES(libuchicken PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib"
+  TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
+  ADD_DEPENDENCIES(libchicken chicken-boot)
+
+  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
+    OUTPUT_NAME "uchicken" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
-  SET_TARGET_PROPERTIES(libchickengui PROPERTIES PREFIX "lib" IMPORT_PREFIX "lib"
+  TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
+  ADD_DEPENDENCIES(libuchicken chicken-boot)
+
+  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchickengui PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
+    OUTPUT_NAME "chickengui" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
-  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES PREFIX "lib"
+  TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
+  ADD_DEPENDENCIES(libchickengui chicken-boot)
+
+  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
+    OUTPUT_NAME "chicken" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
-  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES PREFIX "lib"
+  TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
+  ADD_DEPENDENCIES(libchicken-static chicken-boot)
+
+  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
+    OUTPUT_NAME "uchicken" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
-  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES PREFIX "lib"
+  TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
+  ADD_DEPENDENCIES(libuchicken-static chicken-boot)
+
+  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
+    OUTPUT_NAME "chickengui" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
+  TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
+  ADD_DEPENDENCIES(libchickengui-static chicken-boot)
+
+ELSE(MSVC)
+
+  # We want the library to be named 'libchicken' on all platforms.
+  # But, Cygwin conspires against us.  Their convention is
+  # cygname-0.dll and so forth.  Whether it's a "best practice" is
+  # debateable, but in the Cygwin FAQ and Googling about, it's the
+  # practice.  
+  # Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
+  # prefix onto every library.  For cross-platform stuff,
+  # this often results in the 'liblibfoo" problem.
+
+  IF(CYGWIN)
+    # static and dynamic libraries are built here
+    
+    ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libchicken PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
+      OUTPUT_NAME "chicken-0")
+    TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
+    ADD_DEPENDENCIES(libchicken chicken-boot)
+
+    ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libuchicken PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
+      OUTPUT_NAME "uchicken-0")
+    TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
+    ADD_DEPENDENCIES(libuchicken chicken-boot)
+
+    ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
+      OUTPUT_NAME "chicken")
+    TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
+    ADD_DEPENDENCIES(libchicken-static chicken-boot)
+
+    ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
+      OUTPUT_NAME "uchicken")
+    TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
+    ADD_DEPENDENCIES(libuchicken-static chicken-boot)
+
+  ELSE(CYGWIN)
+
+    ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libchicken PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
+      OUTPUT_NAME "chicken")
+    TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
+    ADD_DEPENDENCIES(libchicken chicken-boot)
+
+    ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libuchicken PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
+      OUTPUT_NAME "uchicken")
+    TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
+    ADD_DEPENDENCIES(libuchicken chicken-boot)
+
+    IF(WIN32)
+      ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
+      SET_TARGET_PROPERTIES(libchickengui PROPERTIES
+        COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
+        OUTPUT_NAME "chickengui")
+      TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
+      ADD_DEPENDENCIES(libchickengui chicken-boot)
+    ENDIF(WIN32)
+
+    # CMake 2.4.3 has a bug where shared and static libraries clobber each
+    # other if they have the same rootname.  For platforms that have the
+    # same rootname, we build static libraries in a subdirectory as a
+    # workaround.  See full comments there.  Some platforms do not have a
+    # rootname collision, so we can avoid using a subdirectory in those cases.
+
+    ADD_SUBDIRECTORY(static)
+
+  ENDIF(CYGWIN)  
 ENDIF(MSVC)
 
 
@@ -958,6 +1223,12 @@ ADD_DEPENDENCIES(chicken-static chicken-boot)
 #  DOCUMENTATION                                                   #
 ####################################################################
 
+# Note that as of Sept. 2nd, 2006, a Darcs package that understands
+# Cygwin paths is not readily available.  It is possible to compile
+# Darcs from Haskell sources, but that requires GHC, which can be
+# difficult to get working.  The upshot is it's a PITA to access
+# Darcs from Cygwin and hence to create a ChangeLog.
+
 FIND_PROGRAM(DARCS_EXE darcs)
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
@@ -973,7 +1244,10 @@ IF(DARCS_EXE)
     # Corner case: Windows native Darcs is in system path,
     # but user is building under Cygwin.  Darcs chokes on Cygwin path.
     MESSAGE(STATUS "Testing whether Darcs actually works.")
-    EXECUTE_PROCESS(COMMAND ${DARCS_EXE} changes --last=1 --repodir=${Chicken_SOURCE_DIR}
+    # It's actually wrong to use EXECUTE_PROCESS.
+    # It doesn't execute in the build environment.
+    # The fix is laborious; later.
+    EXECUTE_PROCESS(COMMAND ${DARCS_EXE} changes --last=0 --repodir=${Chicken_SOURCE_DIR}
       RESULT_VARIABLE DARCS_FAILED)
     IF(DARCS_FAILED)
       ECHO_TARGET(darcs_changelog "Darcs does not work.  Cannot create ChangeLog.")
@@ -1006,32 +1280,49 @@ INSTALL(TARGETS
   csi
   csi-static
   libchicken
-  libchicken-static
   libuchicken
-  libuchicken-static
   RUNTIME DESTINATION ${BIN_HOME}
   LIBRARY DESTINATION ${LIB_HOME}
   ARCHIVE DESTINATION ${LIB_HOME}
 )
+IF(WIN32 AND NOT CYGWIN)
+  INSTALL(TARGETS
+    libchickengui
+    RUNTIME DESTINATION ${BIN_HOME}
+    LIBRARY DESTINATION ${LIB_HOME}
+    ARCHIVE DESTINATION ${LIB_HOME}
+  )
+ENDIF(WIN32 AND NOT CYGWIN)
+
+# installation of static libraries for CYGWIN and MSVC
+# are handled in this directory.  All others are handled
+# in the /static subdirectory.  
+IF(CYGWIN)
+  INSTALL(TARGETS
+    libchicken-static
+    libuchicken-static
+    RUNTIME DESTINATION ${BIN_HOME}
+    LIBRARY DESTINATION ${LIB_HOME}
+    ARCHIVE DESTINATION ${LIB_HOME}
+  )
+ENDIF(CYGWIN)
+IF(MSVC)
+  INSTALL(TARGETS
+    libchicken-static
+    libuchicken-static
+    libchickengui-static
+    RUNTIME DESTINATION ${BIN_HOME}
+    LIBRARY DESTINATION ${LIB_HOME}
+    ARCHIVE DESTINATION ${LIB_HOME}
+  )
+ENDIF(MSVC)
 
 GET_LIB_EXPORTS(exports)
 INSTALL(FILES ${exports} DESTINATION ${SHARE_HOME})
 
 IF(WIN32)
   INSTALL(FILES csibatch.bat DESTINATION ${BIN_HOME})
-  IF(MSVC OR MINGW)
-    INSTALL(TARGETS
-      libchickengui
-      libchickengui-static
-      RUNTIME DESTINATION ${BIN_HOME}
-      LIBRARY DESTINATION ${LIB_HOME}
-      ARCHIVE DESTINATION ${LIB_HOME}
-    )
-  ENDIF(MSVC OR MINGW)
 ENDIF(WIN32)
-
-# CMake 2.4.3 will collide libchicken.dll.a and libchicken.a.
-# We symlink around the problem until CMake 2.4.4 ships.
 
 # CMake 2.4.3 can't produce both cygchicken-0.dll and libchicken.dll.a
 # Currently Autoconf must produce the cygchicken-0.dll nomenclature,
@@ -1040,38 +1331,14 @@ ENDIF(WIN32)
 # symlink it here.  This workaround courtesy of John Cowan.
 
 # Cygwin CMake 2.4.3 has "cmake -E create_symlink"
-# MinGW CMake 2.4.3 does not, as it is Windows native.
-# MSYS has "ln -s" but it only does a copy, not an actual
-# symlink.  Also MinGW isn't necessarily using MSYS.  All
-# said and done, MinGW gets a straight copy and we hope it works.
+# Note that if this kind of workaround is ever needed on other
+# platforms, some do not have symlinks.  For instance, MinGW / MSYS
+# does not.  In that case a straight copy would be needed.
 
 # Brad King demonstrated \$ENV{DESTDIR} as the preferred method
 # of handling ${CMAKE_INSTALL_PREFIX} when doing INSTALL(CODE ...)
 # But I don't think this can be supported, as the paths must be
 # hardwired into Chicken itself.
-
-IF(MINGW)
-  INSTALL(CODE "
-    MESSAGE(STATUS \"Copying libchicken-s.a to libchicken.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \"${LIB_HOME}/libchicken.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
-      \"${LIB_HOME}/libchicken-s.a\"
-      \"${LIB_HOME}/libchicken.a\")
-    MESSAGE(STATUS \"Copying libuchicken-s.a to libuchicken.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \"${LIB_HOME}/libuchicken.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
-      \"${LIB_HOME}/libuchicken-s.a\"
-      \"${LIB_HOME}/libuchicken.a\")
-    MESSAGE(STATUS \"Copying libchickengui-s.a to libchickengui.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \"${LIB_HOME}/libchickengui.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E copy
-      \"${LIB_HOME}/libchickengui-s.a\"
-      \"${LIB_HOME}/libchickengui.a\")
-  ")
-ENDIF(MINGW)
 
 IF(CYGWIN)
   INSTALL(CODE "
@@ -1194,29 +1461,83 @@ ADD_CUSTOM_TARGET(uninstall
   COMMAND ${CMAKE_COMMAND} -E remove ${SHARE_HOME}/*.scm
 )
 
+####################################################################
+#   GNU AUTOMAKE                                                   #
+####################################################################
+
+# Since CMake is used to generate the canonical Chicken distribution,
+# it must invoke Automake so that ./configure et al are current.
+# We run Automake in the source directory because we don't want to
+# mess with how to do it out-of-directory.
+#
+# Note that this has to be run from a Bourne shell.  No error
+# checking on that, as most people don't need to create Chicken
+# distributions.
+
+SET(AUTOMAKE_FILES aclocal.m4 compile config.guess config.sub configure install-sh Makefile.in missing ltmain.sh)
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${AUTOMAKE_FILES}
+  MAIN_DEPENDENCY autogen.sh
+  DEPENDS configure.in Makefile.am
+  WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
+  COMMAND sh autogen.sh
+)
+
 
 ####################################################################
 #   DISTRIBUTION                                                   #
 ####################################################################
 
+# Unix platforms can build a distro pretty easily, as all needed
+# ingredients are simultaneously available.  Pitfalls await on
+# Windoze, however.  (Don't you just love trying to do open source
+# on Windoze?  If we didn't have CMake....)
+#
+# MSVC .sln files run within Visual Studio, not a Bourne shell, so
+# the .sln generators probably can't make a distro.  That said,
+# weird permutations of running MSVC from a Makefile are possible,
+# and noted by Kitware as a "good trick" for parallel compilation
+# and so forth.  Haven't explored this option though.
+#
+# As of Sept. 2nd, 2006, a Darcs that understands Cygwin paths is
+# difficult to obtain.  Hence ChangeLog is difficult to generate.
+# TODO: allow ChangeLog to be supplied manually from outside the build.
+# Cygwin doesn't have any problem with the rest; it's actually the
+# best Windows platform for the Automake flagellation.
+#
+# As of Sept. 3rd, 2006, the various Autoconfs + Automakes
+# distributed with MSYS are complete garbage.  Don't waste your
+# time; I wasted an entire day before giving up.  The GNU Win32
+# distros din't help either.  A project called mingw-install
+# finally did the trick.  http://sourceforge.net/projects/mingw-install
+# Haibin Zhang has solved quite a number of irritating integration
+# issues.  Although, caveat emptor, it'll nuke your entire MinGW
+# installation including GCC, without warning you!  Proper steps:
+#
+# - install MinGW-5.0.3.exe
+# - install mingw-install-20060210/setup/MSYS-1.0.11-2004.04.30-1.exe
+# - install mingw-install-20060210/msys/install.sh
+# - comment out the nasty "rm -rf" statements in
+#   mingw-install-20060210/mingw/install.sh
+# - install mingw-install-20060210/mingw/install.sh
+
+
 SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
-ADD_CUSTOM_TARGET(boot_cfiles DEPENDS ${BOOT_CFILES_DEPS})
 
 # dist.cmake contains the list of all files that should be present
 # in the distribution.  It also contains a script for creating a
-# distribution tree and verifying its contents.
+# distribution tree and verifying its contents.  dist.cmake
+# produces a distribution that works for both CMake and ./configure,
+# and is now the canonical method for creating a distribution.
 
-# Distinguish CMake tarballs from "standard" ./configure tarballs
-# using a -c- for CMake.  Don't put it as part of the buildversion
-# and buildnumber because automated packaging systems would interpret
-# it as superseding the "standard" builds.
-SET(DIST_DIR chicken-c-${VERSION})
+SET(DIST_DIR chicken-${VERSION})
 
 ADD_CUSTOM_TARGET(dist
+  DEPENDS ${BOOT_CFILES_DEPS} ${AUTOMAKE_FILES} 
   COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake
 )
-ADD_DEPENDENCIES(dist boot_cfiles darcs_changelog html info)
+ADD_DEPENDENCIES(dist darcs_changelog)
 
 
 ####################################################################

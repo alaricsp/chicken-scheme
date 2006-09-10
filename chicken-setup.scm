@@ -74,6 +74,14 @@ static void create_directory(char *pathname) {}
 #ifndef C_TARGET_CXX
 # define C_TARGET_CXX  C_INSTALL_CXX
 #endif
+
+#ifndef C_TARGET_CFLAGS
+# define C_TARGET_CFLAGS  ""
+#endif
+
+#ifndef C_TARGET_LFLAGS
+# define C_TARGET_LFLAGS  ""
+#endif
 <#
 
 
@@ -103,6 +111,8 @@ static void create_directory(char *pathname) {}
 
 (define *cc* (foreign-value "C_TARGET_CC" c-string))
 (define *cxx* (foreign-value "C_TARGET_CXX" c-string))
+(define *target-cflags* (foreign-value "C_TARGET_CFLAGS" c-string))
+(define *target-lflags* (foreign-value "C_TARGET_LFLAGS" c-string))
 
 (define *windows*
   (and (eq? (software-type) 'windows) 
@@ -650,14 +660,17 @@ EOF
 	 (r (begin
 	      (with-output-to-file fname (cut display code))
 	      (system 
-	       (let ((cmd (sprintf "~A ~A ~A ~A ~A ~A ~A"
-				   cc
-				   (if compile-only "-c" "")
-				   cflags
-				   fname
-				   (if compile-only "" ldflags) 
-				   (if *msvc* "" ">/dev/null")
-				   (if verb "" "2>&1") ) ) )
+	       (let ((cmd (conc
+			   cc " "
+			   (if compile-only "-c" "") " "
+			   cflags " " *target-cflags* " "
+			   fname " "
+			   (if compile-only
+			       "" 
+			       (conc ldflags " " *target-lflags*) )
+			   " "
+			   (if *msvc* "" ">/dev/null") " "
+			   (if verb "" "2>&1") ) ) )
 		 (when verb (print cmd " ..."))
 		 cmd) ) ) ) )
     (when verb (print (if (zero? r) "succeeded." "failed.")))
@@ -948,7 +961,7 @@ EOF
 	 (program-path dir)
 	 (loop more) )
 	(("-version" . _)
-	 (printf "chicken-setup - Version ~A, Build ~A~%" build-version build-number)
+	 (printf "chicken-setup - Version ~A~%" +build-version+)
 	 (exit) )
 	(("-script" filename . args)
 	 (command-line-arguments args)

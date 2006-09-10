@@ -277,7 +277,7 @@
   expand-foreign-lambda* data-declarations emit-control-file-item expand-foreign-primitive
   process-declaration external-protos-first basic-literal? emit-line-info
   transform-direct-lambdas! expand-foreign-callback-lambda* debugging emit-unsafe-marker
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 

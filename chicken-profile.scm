@@ -73,7 +73,7 @@ EOF
 	  (match arg
 	    [(or "-h" "-help" "--help") (print-usage)]
 	    [(or "-v" "-version") 
-	     (print "chicken-profile - Version " build-version ", Build " build-number)
+	     (print "chicken-profile - Version " +build-version+)
 	     (exit) ]
 	    ["-no-unused" (set! no-unused #t)]
 	    ["-sort-by-calls" (set! sort-by sort-by-calls)]

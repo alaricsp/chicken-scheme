@@ -56,7 +56,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call find-inlining-candidates perform-inlining!
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! decompose-lambda-list rewrite
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -161,9 +161,9 @@
 (define default-extended-bindings
   '(bitwise-and bitwise-ior bitwise-xor bitwise-not add1 sub1 fx+ fx- fx* fx/ fxmod
     fx= fx> fx< fx>= fx<= fixnum? fxneg fxmax fxmin identity fp+ fp- fp* fp/ fpmin fpmax fpneg
-    fp> fp< fp= fp>= fp<= atom? fxand fxnot fxior fxxor fxshr fxshl
+    fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl
     arithmetic-shift void flush-output thread-specific thread-specific-set!
-    not-pair? null-list? print print* error cpu-time proper-list? call/cc
+    not-pair? atom? null-list? print print* error cpu-time proper-list? call/cc
     u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector 
     u32vector->byte-vector 
     s32vector->byte-vector byte-vector-length block-ref block-set! number-of-slots
@@ -176,7 +176,7 @@
     f32vector-ref f64vector-ref
     u8vector-set! s8vector-set! u16vector-set! s16vector-set! u32vector-set! s32vector-set!
     locative-ref locative-set! locative->object locative? global-ref
-    null-pointer? pointer->object) )
+    null-pointer? pointer->object flonum? finite?) )
 
 (define internal-bindings
   '(##sys#slot ##sys#setslot ##sys#block-ref ##sys#block-set!
@@ -573,7 +573,6 @@
 (rewrite 'symbol? 2 1 "C_i_symbolp" #t #f)
 (rewrite 'vector? 2 1 "C_i_vectorp" #t #f)
 (rewrite 'pair? 2 1 "C_i_pairp" #t "C_notvemptyp")
-(rewrite 'atom? 2 1 "C_i_atomp" #t #f)
 (rewrite 'procedure? 2 1 "C_i_closurep" #t #f)
 (rewrite 'port? 2 1 "C_i_portp" #t #f)
 (rewrite 'boolean? 2 1 "C_booleanp" #t #f)
@@ -582,7 +581,9 @@
 (rewrite 'rational? 2 1 "C_i_numberp" #t #f)
 (rewrite 'real? 2 1 "C_i_numberp" #t #f)
 (rewrite 'integer? 2 1 "C_i_integerp" #t #f)
+(rewrite 'flonum? 2 1 "C_i_flonump" #t #f)
 (rewrite 'fixnum? 2 1 "C_fixnump" #t #f)
+(rewrite 'finite? 2 1 "C_i_finitep" #f #f)
 (rewrite '##sys#pointer? 2 1 "C_pointerp" #t #f)
 (rewrite '##sys#generic-structure? 2 1 "C_structurep" #t #f)
 (rewrite 'exact? 2 1 "C_fixnump" #f #f)
@@ -922,6 +923,7 @@
 (rewrite 'f64vector-length 2 1 "C_u_i_64vector_length" #f #f)
 
 (rewrite 'not-pair? 17 1 "C_i_not_pair_p")
+(rewrite 'atom? 17 1 "C_i_not_pair_p")
 (rewrite 'null-list? 17 1 "C_i_null_list_p" "C_i_nullp")
 
 (rewrite 'u8vector->byte-vector 7 1 "C_slot" 1 #f)

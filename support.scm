@@ -58,7 +58,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! finish-foreign-result compressable-literal csc-control-file
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
   constant? basic-literal? source-info->string import-table
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
@@ -160,9 +160,6 @@
   (cond ((symbol? x) x)
 	((string? x) (string->symbol x))
 	(else (string->symbol (sprintf "~a" x))) ) )
-
-(define (flonum? x)
-  (and (number? x) (not (exact? x))) )
 
 (define (build-lambda-list vars argc rest)
   (let loop ((vars vars) (n argc))

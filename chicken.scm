@@ -58,7 +58,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas!
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 

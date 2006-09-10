@@ -2,12 +2,12 @@ dnl -*- mode: m4 -*-
 dnl Process this file with autoconf to produce a configure script.
 dnl (originally by Doug Quale)
 
-AC_INIT(chicken,2.424)
+AC_INIT(chicken,2.430)
 BINARY_VERSION=1
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([runtime.c])
-AM_INIT_AUTOMAKE()
-AM_CONFIG_HEADER(chicken-config.h)
+AM_INIT_AUTOMAKE(1.8.3)
+AC_CONFIG_HEADERS(chicken-config.h)
 AC_DEFINE(C_USE_C_DEFAULTS,1,[Use hardwired installation pathnames])
 
 AC_CANONICAL_HOST
@@ -20,6 +20,9 @@ AC_ARG_WITH(pregexp, [  --with-pregexp          use pregexp instead of libc rege
 
 dnl Disable libffi (if found)?
 AC_ARG_WITH(libffi, [  --without-libffi        do not use libffi, even if available],[USE_LIBFFI=$withval], [USE_LIBFFI=yes])
+
+dnl Disable libpcre (if found)?
+AC_ARG_WITH(pcre, [  --without-pcre        do not use libpcre, even if available],[USE_PCRE=$withval], [])
 
 dnl Enable GC hooks?
 AC_ARG_ENABLE(gc-hooks, [  --enable-gc-hooks       enable various garbage-collector hooks],[AC_DEFINE(C_GC_HOOKS, [], [define if GC hooks should be available])])
@@ -107,7 +110,6 @@ elif test -n "${mingw_system}"; then
 fi
 
 dnl Checks for header files.
-AC_SUBST(LINKFLAGS)
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(limits.h unistd.h dirent.h netinet/in.h netdb.h errno.h sys/types.h sys/socket.h sys/time.h, [], [AC_MSG_RESULT([missing header files])])
@@ -160,8 +162,12 @@ if test -n "${REGEXLIB}"; then
   REGEXFUNCS=1
 fi
 
-if test -n "${PCREHEADER}" -a -n "${PCREFUNCS}"; then
-  PCREUSABLE=1
+if test "${USE_PCRE}" = "no"; then
+  PCREUSABLE=""
+else
+  if test -n "${PCREHEADER}" -a -n "${PCREFUNCS}"; then
+    PCREUSABLE=1
+  fi
 fi
 
 if test -n "${REGEXHEADER}" -a -n "${REGEXFUNCS}"; then
@@ -268,28 +274,76 @@ test $ac_export_dynamic = yes|| LDFLAGS=$OLDLDFLAGS
 AC_MSG_RESULT($ac_export_dynamic)
 
 dnl Checking for additional C flags for Mac OS X.
-AC_SUBST(EXTRA_LINK_FLAGS)
-EXTRA_LINK_FLAGS="-Wl,-R%libdir%"
 case "$host_os" in
   *darwin*) 
-    CFLAGS="$CFLAGS -no-cpp-precomp"
-    EXTRA_LINK_FLAGS="";;
-  hpux*)
-    case "$host_cpu" in
-      hppa*)
-        EXTRA_LINK_FLAGS="";;
-    esac
+    CFLAGS="$CFLAGS -no-cpp-precomp";;
 esac
 
 dnl Setting the nursery size.
 AC_MSG_CHECKING([supplied nursery size])
 
-dnl Binary compatibility version
+dnl Binary compatibility version.
 AC_SUBST(BINARY_VERSION)
+
+dnl Passing target compilers to chicken-setup/csc.
+if test "$TARGET_CC" = ""; then
+  TARGET_CC=$CC
+fi
+
+AC_SUBST(TARGET_CC)
+
+if test "$TARGET_CC" = ""; then
+  TARGET_CC=$CC
+fi
+
+AC_SUBST(TARGET_CXX)
+
+if test "$TARGET_CXX" = ""; then
+  TARGET_CXX=$CXX
+fi
+
+AC_SUBST(TARGET_CFLAGS)
+AC_SUBST(TARGET_LFLAGS)
 
 dnl Checking for generating "...-static" executables.
 AM_CONDITIONAL(NO_STATIC_EXECUTABLES, [test "${enable_shared}" = "no" -o "${enable_static}" = "no"])
+echo
 
+dnl Checking whether this is a tarball distribution that should be booted without Chicken.
+dnl
+dnl It would be desireable to implement a uniform MANIFEST.txt file so that we don't
+dnl have to edit these both here and in CMakeLists.txt .
+
+boot_c="batch-driver.c c-backend.c c-platform.c chicken.c chicken-profile.c \
+  chicken-setup.c compiler.c csc.c csi.c \
+  eval.c extras.c library.c lolevel.c match.c optimizer.c pcre.c \
+  posixunix.c posixwin.c pregexp.c profiler.c regexunix.c scheduler.c \
+  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-14.exports srfi-18.c stub.c \
+  support.c tcp.c ueval.c uextras.c ulibrary.c ulolevel.c upcre.c \
+  uposixunix.c uposixwin.c upregexp.c uregexunix.c usrfi-1.c usrfi-4.c \
+  usrfi-13.c usrfi-14.c usrfi-18.c utcp.c utils.c uutils.c"
+
+boot_exports="eval.exports extras.exports library.exports lolevel.exports \
+  pcre.exports posixunix.exports posixwin.exports pregexp.exports \
+  regexunix.exports scheduler.exports srfi-1.exports srfi-4.exports \
+  srfi-13.exports srfi-18.exports tcp.exports utils.exports"
+
+if test "$cross_compiling" = "yes"; then
+  HAVE_ALL_BOOT_CFILES=true
+  BOOT_CFILES="$boot_c $boot_exports"
+else
+  BOOT_CFILES=
+  HAVE_ALL_BOOT_CFILES=true
+  for fname in $boot_c $boot_exports; do
+    AC_CHECK_FILE([boot/cfiles/$fname],[BOOT_CFILES="$BOOT_CFILES $fname"],[HAVE_ALL_BOOT_CFILES=false])
+  done
+fi
+
+AC_SUBST(HAVE_ALL_BOOT_CFILES)
+AC_SUBST(BOOT_CFILES)
+AM_CONDITIONAL(USE_BOOT_CFILES,[$HAVE_ALL_BOOT_CFILES])
+
+dnl output all configured files
 AC_CONFIG_FILES([
 chicken.spec
 Makefile

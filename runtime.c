@@ -4376,12 +4376,6 @@ C_regparm C_word C_fcall C_i_pairp(C_word x)
 }
 
 
-C_regparm C_word C_fcall C_i_atomp(C_word x)
-{
-  return C_mk_bool(x != C_SCHEME_END_OF_LIST && (C_immediatep(x) || C_header_bits(x) != C_PAIR_TYPE));
-}
-
-
 C_regparm C_word C_fcall C_i_stringp(C_word x)
 {
   return C_mk_bool(!C_immediatep(x) && C_header_bits(x) == C_STRING_TYPE);
@@ -4425,6 +4419,19 @@ C_regparm C_word C_fcall C_i_integerp(C_word x)
   return C_mk_bool((x & C_FIXNUM_BIT) || 
 		   ((!C_immediatep(x) && C_block_header(x) == C_FLONUM_TAG) &&
 		    modf(C_flonum_magnitude(x), &dummy) == 0.0 ) );
+}
+
+
+C_regparm C_word C_fcall C_i_flonump(C_word x)
+{
+  return C_mk_bool(!C_immediatep(x) && C_block_header(x) == C_FLONUM_TAG);
+}
+
+
+C_regparm C_word C_fcall C_i_finitep(C_word x)
+{
+  if((x & C_FIXNUM_BIT) != 0) return C_SCHEME_TRUE;
+  else return C_mk_bool(!C_isinf(C_flonum_magnitude(x)));
 }
 
 
@@ -5075,39 +5082,30 @@ C_regparm C_word C_fcall C_a_i_abs(C_word **a, int c, C_word x)
 
 C_regparm C_word C_fcall C_a_i_flonum_plus(C_word **a, int c, C_word n1, C_word n2)
 {
-  C_check_flonum(n1, "fp+");
-  C_check_flonum(n2, "fp+");
   return C_flonum(a, C_flonum_magnitude(n1) + C_flonum_magnitude(n2));
 }
 
 
 C_regparm C_word C_fcall C_a_i_flonum_difference(C_word **a, int c, C_word n1, C_word n2)
 {
-  C_check_flonum(n1, "fp-");
-  C_check_flonum(n2, "fp-");
   return C_flonum(a, C_flonum_magnitude(n1) - C_flonum_magnitude(n2));
 }
 
 
 C_regparm C_word C_fcall C_a_i_flonum_times(C_word **a, int c, C_word n1, C_word n2)
 {
-  C_check_flonum(n1, "fp*");
-  C_check_flonum(n2, "fp*");
   return C_flonum(a, C_flonum_magnitude(n1) * C_flonum_magnitude(n2));
 }
 
 
 C_regparm C_word C_fcall C_a_i_flonum_quotient(C_word **a, int c, C_word n1, C_word n2)
 {
-  C_check_flonum(n1, "fp/");
-  C_check_flonum(n2, "fp/");
   return C_flonum(a, C_flonum_magnitude(n1) / C_flonum_magnitude(n2));
 }
 
 
 C_regparm C_word C_fcall C_a_i_flonum_negate(C_word **a, int c, C_word n)
 {
-  C_check_flonum(n, "fpneg");
   return C_flonum(a, -C_flonum_magnitude(n));
 }
 

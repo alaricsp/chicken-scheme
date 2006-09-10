@@ -5,7 +5,7 @@ See LICENSE section at end of file for full license text.
 How to build Chicken Scheme using CMake
 ---------------------------------------
 
-last updated August 25, 2006
+last updated September 7, 2006
 
 If in trouble, please contact me through the Chicken mailing list.  You can subscribe to the list from the Chicken homepage, http://call-with-current-continuation.org.
 
@@ -14,17 +14,29 @@ If in trouble, please contact me through the Chicken mailing list.  You can subs
 GENERAL INSTRUCTIONS SUMMARY
 ---------------------------- 
 
+If you are building from a distribution archive, i.e. you downloaded chicken-X.YY.tar.gz or chicken-X.YY.zip, then you need to:
+
+- install a C compiler
+- install CMake
+- run CMakeSetup on Windows, or run CCMake on Unix, Cygwin, and MacOS
+- build Chicken using the native build system that CMake generated
+  for your platform, i.e. a Makefile or .sln file or whatever.
+- test your new Chicken installation
+- Enjoy!
+
+That's it.  No Chicken required to make a Chicken!  For an experienced CMake user, installing Chicken from a distribution archive is trivial.  If it's anything less than trivial, please report bugs on the Chicken mailing list.  It's supposed to be the most pain free build you can imagine.
+
+If you want to build straight from the Darcs repository at at http://galinha.ucpel.tche.br/chicken , you need a few more steps:
+
 - install a C compiler
 - install Chicken 2.3 or better
 - install Darcs
 - install CMake
-- building with CMakeSetup on Windows
-- building with CCMake on Unix, Cygwin, and MacOS
-- building with wxWidgets version of CMakeSetup
+- run CMakeSetup on Windows, or run CCMake on Unix, Cygwin, and MacOS
+- build Chicken using the native build system that CMake generated
+  for your platform, i.e. a Makefile or .sln file or whatever.
 - test your new Chicken installation
 - Enjoy!
-
-If you already know how to use Chicken, Darcs, and CMake, then you don't really need these instructions.  They are aimed at first-time users.  For the experienced: you'll need a working Chicken 2.3 compiler or better.  The Darcs repository is at http://galinha.ucpel.tche.br/chicken .
 
 
 
@@ -43,10 +55,13 @@ INSTALL a C compiler
 Any reasonable, recent C compiler should work.  GCC, VC++, MinGW, and Cygwin get regular testing and are all known to work.
 
 
+
 INSTALL Chicken 2.3 or better
 -----------------------------
 
-You need an extant Chicken to build from Darcs.  Chicken 2.3 or later is required.  If you try to use an earlier Chicken, CMake will complain and the build will not proceed.
+You do not need to install a Chicken to build from a distribution archive, i.e. a Chicken-X.YY.tar.gz or Chicken-X.YY.zip file.  The distribution archives already contain .c files necessary to boot Chicken on any C compiler or operating system.  
+
+If you want to build from the Darcs repository, you need to install a Chicken first.  You can use an older Chicken archive distribution or binary for this purpose.  Chicken 2.3 or later is required.  If you try to use an earlier Chicken, CMake will complain and the build will not proceed.
 
 The build is two-stage, so a sub-optimal Chicken is fine.  First the old Chicken is used to build a static boot compiler, called chicken-boot.  Then chicken-boot is used to build the final compiler.  That way, the final compiler uses the most current code.
 
@@ -80,6 +95,8 @@ Version 2, Build 3 - windows-msvc-x86 - [ dload ptables ]
 INSTALL Darcs
 -------------
 
+You do not need Darcs to build from a distribution archive, i.e. a Chicken-X.YY.tar.gz or Chicken-X.YY.zip file.  The distribution archives already contains all the Scheme and .c source files you need to build Chicken on any C compiler or operating system.  Darcs is for people who want the absolute bleeding edge of Chicken development, or who are actively developing Chicken themselves.
+
 Goto http://www.darcs.net/ and grab a precompiled binary for your platform.  Again, if you've got packages and distribution, use 'em.  Darcs has its own learning curve, but obtaining a Chicken repository is easy.  Goto your favorite command line and type:
 
   mkdir chicken
@@ -93,7 +110,7 @@ This will populate your directory with a full working repository.
 INSTALL CMake
 -------------
 
-CMake 2.4 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.
+CMake 2.4.3 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.
 
 
 

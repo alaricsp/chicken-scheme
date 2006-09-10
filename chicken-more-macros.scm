@@ -64,17 +64,17 @@
 		     `(begin
 			(define ,setr
 			  (lambda (x val)
-			    (##sys#check-structure x ',name)
+			    (##core#check (##sys#check-structure x ',name))
 			    (##sys#block-set! x ,i val) ) )
 			(define ,getr
 			  ,(if setters
 			       `(getter-with-setter
 				 (lambda (x) 
-				   (##sys#check-structure x ',name)
+				   (##core#check (##sys#check-structure x ',name))
 				   (##sys#block-ref x ,i) )
 				 ,setr)
 			       `(lambda (x)
-				  (##sys#check-structure x ',name)
+				  (##core#check (##sys#check-structure x ',name))
 				  (##sys#block-ref x ,i) ) ) ) )
 		     (mapslots (##sys#slot slots 1) (fx+ i 1)) ) ) ) ) ) ) ) ) )
 
@@ -768,11 +768,11 @@
 		      (setters (memq #:record-setters ##sys#features))
 		      (setr? (pair? (cddr slot))) 
 		      (getr `(lambda (x)
-			       (##sys#check-structure x ',t)
+			       (##core#check (##sys#check-structure x ',t))
 			       (##sys#block-ref x ,i) ) ) )
 		 `(,@(if setr?
 			 `((define (,(caddr slot) x y)
-			     (##sys#check-structure x ',t)
+			     (##core#check (##sys#check-structure x ',t))
 			     (##sys#block-set! x ,i y)) )
 			 '() )
 		   (define ,(cadr slot) 

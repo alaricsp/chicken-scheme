@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2, Build 427
+  Version 2.430
 
 
  1. Introduction:
@@ -25,156 +25,7 @@
 
     4. Loads of extra libraries.
 
-
- 2. Files distributed with CHICKEN:
-
-    README 			the file your are currently reading
-    NEWS 			what has changed since the previous release
-    LICENSE                     BSD license
-    INSTALL                     generic installation instructions for UNIX
-    TASKS                       if you want to contribute
-    INSTALL-CMake.txt           instructions for building CHICKEN with CMake
-    ChangeLog    		new features and bugfixes
-
-    chicken.1
-    chicken-setup.1
-    chicken-profile.1
-    csi.1                       manual pages
-
-    build.scm			contains current build- and version number
-
-    tweaks.scm
-    chicken.scm		        
-    support.scm
-    graph.scm
-    compiler.scm
-    optimizer.scm
-    batch-driver.scm
-    c-platform.scm
-    c-backend.scm       	the compiler in source form
-
-    library.scm
-    extras.scm 
-    eval.scm
-    srfi-1.scm
-    srfi-4.scm
-    srfi-13.scm
-    srfi-14.scm
-    match.scm
-    regex.scm
-    pregexp.scm
-    pcre.scm
-    regex-common.scm
-    srfi-18.scm
-    scheduler.scm
-    lolevel.scm
-    utils.scm
-    stub.scm
-    profiler.scm
-    tcp.scm
-    posix.scm
-    posixwin.scm		libraries
-
-    runtime.c			the basic runtime system (garbage collector, memory manager, etc.)
-
-    library.c
-    extras.c
-    eval.c
-    srfi-1.c
-    srfi-4.c
-    srfi-13.c
-    srfi-14.c
-    match.c
-    regex.c
-    pregexp.c
-    pcre.c
-    srfi-18.c
-    scheduler.c
-    posix.c
-    lolevel.c
-    utils.c
-    profiler.c
-    stub.c
-    posixwin.c
-    tcp.c            		compiled libraries
-
-    ulibrary.c
-    uextras.c
-    ueval.c
-    usrfi-1.c
-    usrfi-4.c
-    usrfi-13.c
-    usrfi-14.c
-    uregex.c
-    upregexp.c
-    upcre.c
-    usrfi-18.c
-    uposix.c
-    ulolevel.c
-    utcp.c
-    uposixwin.c
-    uutils.c			compiled libraries (unsafe version)
-
-    parameters.scm		constant definitions for the library files and the compiler
-
-    banner.scm                  silly banner
-
-    chicken.h      		headerfile included by all modules compiled with CHICKEN
-
-    chicken.c
-    support.c
-    graph.c
-    compiler.c
-    optimizer.c
-    batch-driver.c
-    c-platform.c
-    c-backend.c                 the compiler (in compiled form)
-
-    csi.scm                     source-file for the Scheme interpreter/REPL
-    csi.c                       precompiled interpreter
-
-    csc.scm                     source-file for compiler driver
-    csc.c			compiler driver in compiled form
-
-    chicken-setup.scm
-    chicken-setup.c
-    chicken-profile.scm         
-    chicken-profile.c		tool sources and compiled versions
-
-    chicken-more-macros.scm     some useful macros (SRFI-16, etc.)
-
-    chicken.ico                 icon for Windows executables
-    chicken.rc                  resource-script for Windows executables
-
-    chicken.spec.in		RPM spec-file template
-
-    csibatch.bat		trampoline for Windows/DOS shell scripts
-
-    *.exports                   export information files for core libraries
-
-    aclocal.m4
-    acconfig.h
-    config.guess
-    config.h.in
-    config.sub
-    configure
-    configure.in
-    install-sh
-    ltmain.sh
-    Makefile.am
-    Makefile.in
-    missing
-    mkinstalldirs		the usual configuration stuff for UNIX and Linux systems    
-
-    makefile.vc                 Makefile for MS nmake
-    win-install.bat             installation script for Windows
-
-    benchmarks/                 contains several benchmarks
-
-    hen.el                      an emacs mode for editing Scheme programs, by Linh Dang
-
-
- 3. Installation:
+ 2. Installation:
 
 	If you already have CHICKEN installed, then it is recommended that you delete it first.
 	Sometimes files are renamed, and this ensures that no unused junk remains.
@@ -337,7 +188,7 @@
 	tested.
 
 
- 4. Usage:
+ 3. Usage:
 
 	Documentation can be found in the directory <prefix>/share/chicken/doc, where <prefix>
 	is the prefix specified in the `--prefix' option to `configure', which defaults to
@@ -361,7 +212,7 @@
 	To make "hen-mode" available, and enter it by issuing the command M-x hen-mode.
 
 	
- 5. Platform issues:
+ 4. Platform issues:
 
 	- Some Linux distributions ship with a buggy version of the GNU C compiler (2.96). If the
 	  system is configured for kernel recompilation, then an alternative GCC version is available under
@@ -404,7 +255,7 @@
 	  ignored.
 
 
- 6. What's next?
+ 5. What's next?
 
 	If you have any more questions or problems (even the slightest problems, or the most
         stupid questions), then please contact me at:
