@@ -86,6 +86,7 @@ EOF
 
     -h  -help  --help           display this text and exit
     -v  -version                display version and exit
+        -release                print release number and exit
     -i  -case-insensitive       enable case-insensitive reading
     -e  -eval EXPRESSION        evaluate given expression
     -D  -feature SYMBOL         register feature identifier
@@ -830,11 +831,11 @@ EOF
 		 (else (find (cdr ks))) ) ) ) ) )
 
 (define-constant short-options 
-  '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I) )
+  '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #f) )
 
 (define-constant long-options
   '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" "-eval" "-case-insensitive"
-    "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" "-include-path") )
+    "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" "-include-path" "-release") )
 
 (define (canonicalize-args args)
   (let loop ((args args))
@@ -906,6 +907,9 @@ EOF
 	(exit 0) )
       (when (member* '("-v" "-version") args)
 	(print-banner)
+	(exit 0) )
+      (when (member "-release" args)
+	(print (chicken-version))
 	(exit 0) )
       (when (member* '("-w" "-no-warnings") args)
 	(unless quiet (display "Warnings are disabled\n"))

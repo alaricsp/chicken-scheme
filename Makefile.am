@@ -149,16 +149,16 @@ pcre.c pregexp.c regexunix.c: regex-common.scm
 chicken.c: chicken.scm chicken-more-macros.scm build.scm chicken-ffi-macros.scm tweaks.scm
 	$(CHICKEN) chicken.scm $(CHICKEN_FLAGS) -output-file chicken.c
 
-csi.c: csi.scm banner.scm chicken-more-macros.scm build.scm
+csi.c: csi.scm banner.scm chicken-more-macros.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 csc.c: csc.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
-chicken-profile.c: chicken-profile.scm $(srcdir)/build.scm
+chicken-profile.c: chicken-profile.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
-chicken-setup.c: chicken-setup.scm $(srcdir)/build.scm
+chicken-setup.c: chicken-setup.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 # Building C files from Scheme sources.
@@ -292,7 +292,9 @@ regex.exports: $(regexexports)
 # Install docs and sources.
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/doc
+	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/doc/html
 	-for file in $(DOCFILES); do cp $(srcdir)/$$file $(DESTDIR)$(pkgdatadir)/doc; done
+	-cp $(srcdir)/html/* $(DESTDIR)$(pkgdatadir)/doc/html
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)/$(BINARY_VERSION)
 
 # Some generated files we need to clean up.

@@ -85,6 +85,7 @@
   (exit 64) )
 
 (define chicken-prefix (getenv "CHICKEN_PREFIX"))
+(define cmake-build (##sys#fudge 38))
 
 (define (prefix str dir default)
   (if chicken-prefix
@@ -93,7 +94,7 @@
 
 (define home
   (or (getenv "CHICKEN_HOME") 
-      (if (and win (not (cmake-build)))
+      (if (and win (not cmake-build))
 	  (quit "`CHICKEN_HOME' environment variable not set - please set it to the directory where CHICKEN is installed")
 	  (quotewrap (prefix "" "share" INSTALL_SHARE_HOME))
       )
@@ -108,7 +109,7 @@
       str) )
 
 (begin
-  (if (and win (not (cmake-build)))
+  (if (and win (not cmake-build))
       (define translator
         (quotewrap (homize "chicken"))
       )
@@ -220,7 +221,7 @@
     (begin
       (define extra-libraries "")
       (define extra-shared-libraries "")
-      (if (not (cmake-build))
+      (if (not cmake-build)
         (begin				; flat destination directory
           (define default-library-files
 	    (map homize '("libchicken-static.lib")))
@@ -247,7 +248,7 @@
             (quotewrap (prefix "libuchicken-s.lib" "lib" (string-append INSTALL_LIB_HOME "\\libuchicken-s.lib")))
           ))
           (define unsafe-shared-library-files (list
-            (quotewrap (prefix "libuchicken.lib" "lib" (stirng-append INSTALL_LIB_HOME "\\libuchicken.lib")))
+            (quotewrap (prefix "libuchicken.lib" "lib" (string-append INSTALL_LIB_HOME "\\libuchicken.lib")))
           ))
           (define gui-library-files (list
             (quotewrap (prefix "libchickengui-s.lib" "lib" (string-append INSTALL_LIB_HOME "\\libchickengui-s.lib")))
@@ -289,7 +290,7 @@
 
 (define compile-options
   (if win
-    (if (not (cmake-build))
+    (if (not cmake-build)
       (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
       (cons* (string-append "/I" INSTALL_INCLUDE_HOME)
 	     "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))

@@ -160,7 +160,7 @@ The value returned is the value of the last form in BODY."
               "else"
               "foreign-lambda*" "foreign-safe-lambda*" "foreign-primitive"
               "foreign-lambda" "foreign-safe-lambda" "foreign-code" "foreign-safe-wrapper"
-              "match" "match-lambda" "match-define" "match-let" "match-let*"
+              "match" "match-lambda" "match-lambda*" "match-define" "match-let" "match-let*"
 
               "case" "case-lambda" "cond" "cond-expand" "condition-case" "switch"
 	      "handle-exceptions"

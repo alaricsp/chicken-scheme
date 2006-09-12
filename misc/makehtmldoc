@@ -55,16 +55,18 @@ EOF
 (define-values (*wikipath* *outpath* *only*) 
   (match (command-line-arguments)
     ((w o) (values w o #f))
-    ((w o p) (values w o p)) ) )
+    ((w o p) (values w o p))
+    (_ (print "usage: makehtmldoc WIKIPATH OUTPUTPATH [PAGE]")
+       (exit 1) ) ) )
 
 (define-constant +index-page+ "The User's Manual")
 
 (define (clean-link lnk)
   (cond ((or (string-prefix? "toc:" lnk) (string-prefix? "tags:" lnk))
 	 lnk)
-	((string=? lnk +index-page+) "index.html")
-	((member lnk +pages+)
-	 (string-append (url-encode lnk) ".html|" lnk) )
+	((string-ci=? lnk +index-page+) "index.html")
+	((any (lambda (f) (string-ci=? f lnk)) +pages+)
+	 (string-downcase (string-append (url-encode lnk) ".html|" lnk) ) )
 	((string-prefix? "http:" lnk) lnk)
 	(else (string-append "http://galinha.ucpel.tche.br/" lnk) ) ) )
 
@@ -87,7 +89,7 @@ EOF
 
 (for-each
  (lambda (p)
-   (let ((po (make-pathname *outpath* (if (string=? p +index-page+) "index" p) "html")))
+   (let ((po (string-downcase (make-pathname *outpath* (if (string=? p +index-page+) "index" p) "html"))))
      (print p " -> " po " ...")
      (with-output-to-file po
        (lambda ()

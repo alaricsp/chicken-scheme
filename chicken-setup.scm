@@ -90,17 +90,16 @@ static void create_directory(char *pathname) {}
 (define-constant installed-executables '("chicken" "csc" "csi" "chicken-setup" "chicken-profile"))
 
 
-(include "build.scm")
 (include "chicken-more-macros.scm")
 
 
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug" "-ls") )
+    "-debug" "-ls" "-release") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f) )
 
 
 (define *install-bin-path* 
@@ -165,6 +164,7 @@ static void create_directory(char *pathname) {}
 (define *proxy-port* #f)
 (define *example-directory* (make-pathname (chicken-home) "examples"))
 (define *base-directory* (current-directory))
+(define *fetch-tree-only* #f)
 
 
 ; Repository-format:
@@ -391,8 +391,9 @@ static void create_directory(char *pathname) {}
   (display #<<EOF
 usage: chicken-setup [OPTION ...] FILENAME
 
-  -h  -help                      show this text
-  -V  -version                   show version of this program
+  -h  -help                      show this text and exit
+  -V  -version                   show version of this program and exit
+      -release                   show release number and exit
   -R  -repository                prints the location of the extension repository
   -u  -uninstall                 remove the following extension from repository
   -H  -host HOSTNAME[:PORT]      specify alternative host for downloading
@@ -411,6 +412,7 @@ usage: chicken-setup [OPTION ...] FILENAME
   -C  -check                     check for available upgrades
   -e  -eval EXPRESSION           evaluate expression
       -ls EXTENSION              list installed files for extension
+      -fetch-tree                download and show repository catalog
   --                             ignore all following arguments
 
   Builds and installs extension libraries.
@@ -787,15 +789,14 @@ EOF
 
 (define (fetch-file-from-net ext)
   (define (requirements reqs)
-    (reverse 
-     (fold 
-      (lambda (r reqs)
-	(let ((node (assq r *repository-tree*)))
-	  (cond (node (append (list (car node)) (requirements (cdddr node)) reqs))
-		((memq r ##sys#core-library-modules) reqs)
-		(else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
-      '() 
-      reqs) ) )
+    (fold 
+     (lambda (r reqs)
+       (let ((node (assq r *repository-tree*)))
+	 (cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
+	       ((memq r ##sys#core-library-modules) reqs)
+	       (else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
+     '() 
+     reqs) )
   (and (or *dont-ask*
 	   (yes-or-no?
 	    (sprintf "The extension ~A does not exist.~%Do you want to download it ?" ext)
@@ -816,7 +817,7 @@ EOF
 		(when *debug* (printf "catalog entry: ~s~%" a))
 		(cond (a (let ((reqs (remove extension-info (delete-duplicates (requirements (cdddr a)) eq?))))
 			   (when (pair? reqs)
-			     (print "downloading required extensions ...")
+			     (print "downloading required extensions " reqs " ...")
 			     (for-each (cut download-data *last-decent-host* <>) reqs)
 			     (print "installing required extensions ...")
 			     (for-each (cut install <>) (map ->string reqs)) )
@@ -961,7 +962,10 @@ EOF
 	 (program-path dir)
 	 (loop more) )
 	(("-version" . _)
-	 (printf "chicken-setup - Version ~A~%" +build-version+)
+	 (printf "chicken-setup - Version ~A~%" (chicken-version))
+	 (exit) )
+	(("-release" . _)
+	 (print (chicken-version))
 	 (exit) )
 	(("-script" filename . args)
 	 (command-line-arguments args)
@@ -1020,6 +1024,10 @@ EOF
 	 (set! *check-repository* #t)
 	 (set! anydone #t)
 	 (loop more) )
+	(("-fetch-tree" . more)
+	 (set! *fetch-tree-only* #t)
+	 (set! anydone #t)
+	 (loop more) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
@@ -1047,6 +1055,9 @@ EOF
 		 (printf "No setup scripts to process~%")
 		 (for-each (if uinst uninstall-extension install) setups) ) ) )
 	 (when *check-repository* (check-for-upgrades))
+	 (when *fetch-tree-only*
+	   (download-repository-tree)
+	   (pp *repository-tree*) )
 	 (when *rebuild-doc-index*
 	   (when (setup-verbose-flag) (printf "Rebuilding documentation index...\n"))
 	   (build-doc-index) )

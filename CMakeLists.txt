@@ -2,12 +2,13 @@
 # See LICENSE section at end of file for full license text.
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3)
+PROJECT(Chicken)
+INCLUDE_DIRECTORIES(BEFORE ${Chicken_SOURCE_DIR})
+
 INCLUDE(CheckIncludeFile)
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckSymbolExists)
-
-PROJECT(Chicken)
-INCLUDE_DIRECTORIES(${Chicken_SOURCE_DIR})
+INCLUDE(Dart)
 
 
 ####################################################################
@@ -123,7 +124,7 @@ ENDMACRO(ECHO_TARGET)
 #  CHICKEN VERSION MACROS                                          #
 ####################################################################
 
-FILE(READ ${Chicken_SOURCE_DIR}/buildversion VERSION)
+FILE(READ ${Chicken_SOURCE_DIR}/buildversion BUILDVERSION)
 
 # Canonize the version and build into 1 number that can be
 # easily compared.  We assume the build number has no more
@@ -137,39 +138,67 @@ FILE(READ ${Chicken_SOURCE_DIR}/buildversion VERSION)
 
 MACRO(CANONIZE_VERSION version build canonized)
   IF(build LESS 100)
-    MATH(EXPR ${canonized} "${version} * 1000000 + ${build} * 100")
+    IF(build LESS 10)
+      # Chicken 2.4 should canonize as 2.400
+      MATH(EXPR ${canonized} "${version} * 1000000 + ${build} * 100")
+    ELSE(build LESS 10)
+      # Chicken 2.41 should canonize as 2.410
+      MATH(EXPR ${canonized} "${version} * 1000000 + ${build} * 10")
+    ENDIF(build LESS 10)
   ELSE(build LESS 100)
+    # Chicken 2.430 should canonize as 2.430
     MATH(EXPR ${canonized} "${version} * 1000000 + ${build}")
   ENDIF(build LESS 100)
 ENDMACRO(CANONIZE_VERSION)
 
-# Pretty much all the various Chicken tools accept a -version
-# argument and display some variation of "Version X.Y"
-# as the result.  
+# "chicken -release" works on Chicken 2.3, but it is not
+# documented by "chicken -help" .  It produces the
+# Chicken banner, i.e. it's just like "chicken -version" .
+# With Chicken 2.41 and onwards, "chicken -release" produces
+# a simple BUILDVERSION.  So the problem is, if we allow
+# older compilers, we don't know if we're going to get a
+# banner or a BUILDVERSION.
+#
+# The other tools (csc, csi, etc.) have a " -release" option
+# as of Chicken 2.430.  Earlier versions do not have it
+# however, so if you use GET_CHICKEN_VERSION on a tool
+# other than chicken.exe, be careful.
 
-MACRO(GET_TOOL_VERSION absolute_exe_name canonized)
+MACRO(GET_CHICKEN_VERSION absolute_exe_name canonized)
   EXEC_PROGRAM(${absolute_exe_name}
-    ARGS -version
+    ARGS -release
     OUTPUT_VARIABLE exe_output
     RETURN_VALUE exe_return
   )
   IF(exe_return EQUAL 0)
-    # Parse the output to extract the version and build numbers.
-    # If the output format changes significantly, problems will ensue.
-    SET(VERSION_BUILD_REGEX ".*Version ([0-9]+)+\\.([0-9]+).*")
-    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
-      version ${exe_output})
-    STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
-      build ${exe_output})
+    # If the output has Felix L. Winkelmann's name in it,
+    # then it must be a banner.
+    IF("${exe_output}" MATCHES ".*(Felix L[.] Winkelmann).*")    
+      # Parse the output to extract legacy version and build numbers.
+      # If the output format changes significantly, problems will ensue.
+      SET(LEGACY_BANNER_REGEX ".*Version ([0-9]+).*Build ([0-9]+).*")
+      STRING(REGEX REPLACE ${LEGACY_BANNER_REGEX} "\\1"
+        version ${exe_output})
+      STRING(REGEX REPLACE ${LEGACY_BANNER_REGEX} "\\2"
+        build ${exe_output})
+    ELSE("${exe_output}" MATCHES ".*(Felix L[.] Winkelmann).*")
+      # This is not a banner, but a plain BUILDNUMBER.
+      # Parse the BUILDNUMBER into version and build.
+      SET(VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9a-zA-Z]+)$")
+      STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
+        version ${exe_output})
+      STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
+        build ${exe_output})
+    ENDIF("${exe_output}" MATCHES ".*(Felix L[.] Winkelmann).*")
     CANONIZE_VERSION(${version} ${build} ${canonized})
 
   ELSE(exe_return EQUAL 0)
-    MESSAGE(FATAL_ERROR "Bogus result when invoking ${absolute_exe_name} -version
+    MESSAGE(FATAL_ERROR "Bogus result when invoking ${absolute_exe_name} -release
       Dump of output:
       ${exe_output}"
     )
   ENDIF(exe_return EQUAL 0)
-ENDMACRO(GET_TOOL_VERSION)
+ENDMACRO(GET_CHICKEN_VERSION)
 
 
 ####################################################################
@@ -249,7 +278,7 @@ ENDIF(NOT EXTANT_CHICKEN)
 
 SET(VALID_CHICKEN "-NOTFOUND")
 IF(EXTANT_CHICKEN)
-  GET_TOOL_VERSION(${EXTANT_CHICKEN} chicken_version)
+  GET_CHICKEN_VERSION(${EXTANT_CHICKEN} chicken_version)
   IF(chicken_version LESS MINIMUM_CANONICAL_CHICKEN)
     MESSAGE("Chicken ${MINIMUM_CANONICAL_CHICKEN} required to generate bootstrap .c files.
       Available Chicken is only ${chicken_version}."
@@ -495,14 +524,18 @@ ADD_DEFINITIONS(-DHAVE_CHICKEN_CONFIG_H)
 IF(CMAKE_COMPILER_IS_GNUCC)
   # Why is -Os believed to produce better code?  Why not -O2?
   # Really should implement some benchmarking instead of just guessing.
-  ADD_DEFINITIONS(-Os -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized)
+  IF(ENABLE_DEBUG_BUILD)
+    ADD_DEFINITIONS(-g -Wall -Wno-unused -Wno-uninitialized)
+  ELSE(ENABLE_DEBUG_BUILD)
+    ADD_DEFINITIONS(-Os -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized)
+  ENDIF(ENABLE_DEBUG_BUILD)
   # -fomit-frame-pointer causes chicken-boot to crash on MinGW 3.4.5
   # Unknown whether it affects other MinGW versions.
   # This points out that testing builds with different optimization flags
   # could get complicated.
-  IF(NOT MINGW)
+  IF(NOT MINGW AND NOT ENABLE_DEBUG_BUILD)
     ADD_DEFINITIONS(-fomit-frame-pointer)
-  ENDIF(NOT MINGW)
+  ENDIF(NOT MINGW AND NOT ENABLE_DEBUG_BUILD)
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 # Chicken uses the INSTALL_* paths in various tools to generate shell
@@ -534,6 +567,10 @@ GET_FILENAME_COMPONENT(THE_CC ${CMAKE_C_COMPILER} NAME_WE)
 GET_FILENAME_COMPONENT(THE_CXX ${CMAKE_CXX_COMPILER} NAME_WE)
 SET(C_INSTALL_CC \"${THE_CC}\")
 SET(C_INSTALL_CXX \"${THE_CXX}\")
+SET(C_TARGET_CC ${C_INSTALL_CC})
+SET(C_TARGET_CXX ${C_INSTALL_CXX})
+SET(C_TARGET_CFLAGS \"\")
+SET(C_TARGET_LFLAGS \"\")
 
 # Historically, MSVC was given a stack size of 300000.
 # Not convinced this is necessary, but noted in case of problems.
@@ -723,6 +760,9 @@ IF(DISABLE_APPLY_HOOK)
   ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
 ENDIF(DISABLE_APPLY_HOOK)
 
+OPTION(ENABLE_DEBUG_BUILD "select debugging options for C compiler" FALSE)
+
+
 ####################################################################
 #  CHICKEN_SPEC                                                    #
 ####################################################################
@@ -738,10 +778,6 @@ CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken.spec.in
 
 CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
-# ./configure just plops chicken-config.h in the source tree.
-# Try to avoid collisions with it by searching 
-# ${CMAKE_CURRENT_BINARY_DIR} first.
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 
 ####################################################################
@@ -917,17 +953,19 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 
 # Now that we've determined everything we need to know to build,
 # we can transfer control to a subdirectory and create a 1st
-# stage boot compiler.  /boot worries about whether any previous
-# Chicken is installed, and whether a previous Chicken is even
-# needed.  Let /boot handle any fatal errors.
+# stage boot compiler.  
 
 ADD_SUBDIRECTORY(boot)
 
-# If we come back, then we know we can build chicken-boot.
 GET_TARGET_PROPERTY(CHICKEN_BOOT_EXE chicken-boot LOCATION)
 SET(CURRENT_CHICKEN ${CHICKEN_BOOT_EXE})
 
 # Now we're compiling with the up-to-date version of Chicken. Yippie!
+
+# ./configure just plops chicken-config.h in the source tree.
+# Try to avoid collisions with it by searching 
+# ${CMAKE_CURRENT_BINARY_DIR} first.
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 
 ####################################################################
@@ -973,6 +1011,46 @@ UNSAFE_LIBRARY_SCM_TO_C(tcp)
 LIBRARY_SCM_TO_C_EXPORTS(utils)
 UNSAFE_LIBRARY_SCM_TO_C(utils)
 
+# exports should be part of the target dependencies, somehow.
+# Need to rework this stuff; it's the most confusing part of
+# the build.  Blowing it off for now.
+
+ADD_CUSTOM_TARGET(all-posix-c DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/posixunix.c
+  ${CMAKE_CURRENT_BINARY_DIR}/uposixunix.c
+  ${CMAKE_CURRENT_BINARY_DIR}/posixwin.c
+  ${CMAKE_CURRENT_BINARY_DIR}/uposixwin.c
+)
+ADD_DEPENDENCIES(all-posix-c chicken-boot)
+
+ADD_CUSTOM_TARGET(all-regex-c DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/pcre.c
+  ${CMAKE_CURRENT_BINARY_DIR}/upcre.c
+  ${CMAKE_CURRENT_BINARY_DIR}/pregexp.c
+  ${CMAKE_CURRENT_BINARY_DIR}/upregexp.c
+  ${CMAKE_CURRENT_BINARY_DIR}/regexunix.c
+  ${CMAKE_CURRENT_BINARY_DIR}/uregexunix.c
+)
+ADD_DEPENDENCIES(all-regex-c chicken-boot)
+
+GET_LIB_COMMON_CGEN(COMMON_C)
+ADD_CUSTOM_TARGET(lib-common-c DEPENDS ${COMMON_C})
+ADD_DEPENDENCIES(lib-common-c chicken-boot)
+
+GET_LIB_SAFE_CGEN(SAFE_C)
+ADD_CUSTOM_TARGET(lib-safe-c DEPENDS ${SAFE_C})
+ADD_DEPENDENCIES(lib-safe-c chicken-boot)
+
+GET_LIB_UNSAFE_CGEN(UNSAFE_C)
+ADD_CUSTOM_TARGET(lib-unsafe-c DEPENDS ${UNSAFE_C})
+ADD_DEPENDENCIES(lib-unsafe-c chicken-boot)
+
+GET_LIB_CSOURCE(SOURCE_C)
+ADD_CUSTOM_TARGET(libchicken-c DEPENDS ${SOURCE_C})
+ADD_DEPENDENCIES(libchicken-c lib-common-c lib-safe-c)
+ADD_CUSTOM_TARGET(libuchicken-c DEPENDS ${SOURCE_C})
+ADD_DEPENDENCIES(libuchicken-c lib-common-c lib-unsafe-c)
+
 
 GET_LIBCHICKEN_C_SOURCES(CHICKEN_LIB_SOURCES)
 GET_LIBUCHICKEN_C_SOURCES(CHICKEN_UNSAFE_LIB_SOURCES)
@@ -997,7 +1075,7 @@ IF(MSVC)
     OUTPUT_NAME "chicken" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
   TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
-  ADD_DEPENDENCIES(libchicken chicken-boot)
+  ADD_DEPENDENCIES(libchicken libchicken-c)
 
   ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libuchicken PROPERTIES
@@ -1005,7 +1083,7 @@ IF(MSVC)
     OUTPUT_NAME "uchicken" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
   TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
-  ADD_DEPENDENCIES(libuchicken chicken-boot)
+  ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
   ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui PROPERTIES
@@ -1013,7 +1091,7 @@ IF(MSVC)
     OUTPUT_NAME "chickengui" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "-z" DEBUG_POSTFIX "-d" RELWITHDEBINFO_POSTFIX "-g")
   TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
-  ADD_DEPENDENCIES(libchickengui chicken-boot)
+  ADD_DEPENDENCIES(libchickengui libchicken-c)
 
   ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
@@ -1021,7 +1099,7 @@ IF(MSVC)
     OUTPUT_NAME "chicken" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
   TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchicken-static chicken-boot)
+  ADD_DEPENDENCIES(libchicken-static libchicken-c)
 
   ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
@@ -1029,7 +1107,7 @@ IF(MSVC)
     OUTPUT_NAME "uchicken" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
   TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libuchicken-static chicken-boot)
+  ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
 
   ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
@@ -1037,7 +1115,7 @@ IF(MSVC)
     OUTPUT_NAME "chickengui" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-sz" DEBUG_POSTFIX "-sd" RELWITHDEBINFO_POSTFIX "-sg")
   TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchickengui-static chicken-boot)
+  ADD_DEPENDENCIES(libchickengui-static libchicken-c)
 
 ELSE(MSVC)
 
@@ -1058,28 +1136,28 @@ ELSE(MSVC)
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
       OUTPUT_NAME "chicken-0")
     TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libchicken chicken-boot)
+    ADD_DEPENDENCIES(libchicken libchicken-c)
 
     ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
     SET_TARGET_PROPERTIES(libuchicken PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
       OUTPUT_NAME "uchicken-0")
     TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libuchicken chicken-boot)
+    ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
     ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
     SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
       OUTPUT_NAME "chicken")
     TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-    ADD_DEPENDENCIES(libchicken-static chicken-boot)
+    ADD_DEPENDENCIES(libchicken-static libchicken-c)
 
     ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
     SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
       OUTPUT_NAME "uchicken")
     TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-    ADD_DEPENDENCIES(libuchicken-static chicken-boot)
+    ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
 
   ELSE(CYGWIN)
 
@@ -1088,14 +1166,14 @@ ELSE(MSVC)
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
       OUTPUT_NAME "chicken")
     TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libchicken chicken-boot)
+    ADD_DEPENDENCIES(libchicken libchicken-c)
 
     ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
     SET_TARGET_PROPERTIES(libuchicken PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
       OUTPUT_NAME "uchicken")
     TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libuchicken chicken-boot)
+    ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
     IF(WIN32)
       ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
@@ -1103,7 +1181,7 @@ ELSE(MSVC)
         COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
         OUTPUT_NAME "chickengui")
       TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
-      ADD_DEPENDENCIES(libchickengui chicken-boot)
+      ADD_DEPENDENCIES(libchickengui libchicken-c)
     ENDIF(WIN32)
 
     # CMake 2.4.3 has a bug where shared and static libraries clobber each
@@ -1123,6 +1201,8 @@ ENDIF(MSVC)
 ####################################################################
 
 SIMPLE_SCM_TO_C(csc)
+ADD_CUSTOM_TARGET(csc-c DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/csc.c)
+ADD_DEPENDENCIES(csc-c chicken-boot)
 
 ADD_EXECUTABLE(csc
   ${Chicken_SOURCE_DIR}/chicken.h
@@ -1132,7 +1212,7 @@ ADD_EXECUTABLE(csc
 )
 SET_TARGET_PROPERTIES(csc PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(csc libchicken)
-ADD_DEPENDENCIES(csc chicken-boot)
+ADD_DEPENDENCIES(csc csc-c)
 
 
 ####################################################################
@@ -1140,6 +1220,8 @@ ADD_DEPENDENCIES(csc chicken-boot)
 ####################################################################
 
 SIMPLE_SCM_TO_C(csi banner chicken-more-macros)
+ADD_CUSTOM_TARGET(csi-c DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/csi.c)
+ADD_DEPENDENCIES(csi-c chicken-boot)
 
 ADD_EXECUTABLE(csi
   ${Chicken_SOURCE_DIR}/chicken.h
@@ -1149,7 +1231,7 @@ ADD_EXECUTABLE(csi
 )
 SET_TARGET_PROPERTIES(csi PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(csi libchicken)
-ADD_DEPENDENCIES(csi chicken-boot)
+ADD_DEPENDENCIES(csi csi-c)
 
 ADD_EXECUTABLE(csi-static
   ${Chicken_SOURCE_DIR}/chicken.h
@@ -1159,7 +1241,7 @@ ADD_EXECUTABLE(csi-static
 )
 SET_TARGET_PROPERTIES(csi-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(csi-static libchicken-static)
-ADD_DEPENDENCIES(csi-static chicken-boot)
+ADD_DEPENDENCIES(csi-static csi-c)
 
 
 ####################################################################
@@ -1167,6 +1249,8 @@ ADD_DEPENDENCIES(csi-static chicken-boot)
 ####################################################################
 
 SIMPLE_SCM_TO_C(chicken-profile build)
+ADD_CUSTOM_TARGET(chicken-profile-c DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken-profile.c)
+ADD_DEPENDENCIES(chicken-profile-c chicken-boot)
 
 ADD_EXECUTABLE(chicken-profile
   ${Chicken_SOURCE_DIR}/chicken.h
@@ -1176,7 +1260,7 @@ ADD_EXECUTABLE(chicken-profile
 )
 SET_TARGET_PROPERTIES(chicken-profile PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-profile libchicken)
-ADD_DEPENDENCIES(chicken-profile chicken-boot)
+ADD_DEPENDENCIES(chicken-profile chicken-profile-c)
 
 
 ####################################################################
@@ -1184,6 +1268,8 @@ ADD_DEPENDENCIES(chicken-profile chicken-boot)
 ####################################################################
 
 SIMPLE_SCM_TO_C(chicken-setup build)
+ADD_CUSTOM_TARGET(chicken-setup-c DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c)
+ADD_DEPENDENCIES(chicken-setup-c chicken-boot)
 
 ADD_EXECUTABLE(chicken-setup
   ${Chicken_SOURCE_DIR}/chicken.h
@@ -1193,7 +1279,7 @@ ADD_EXECUTABLE(chicken-setup
 )
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
-ADD_DEPENDENCIES(chicken-setup chicken-boot)
+ADD_DEPENDENCIES(chicken-setup chicken-boot chicken-setup-c)
 
 
 ####################################################################
@@ -1207,20 +1293,22 @@ SIMPLE_SCM_TO_C(chicken build chicken-ffi-macros chicken-more-macros tweaks)
 SIMPLE_SCM_TO_C(compiler tweaks)
 
 GET_CHICKEN_C_SOURCES(CHICKEN_EXE_SOURCES)
+ADD_CUSTOM_TARGET(chicken-c DEPENDS ${CHICKEN_EXE_SOURCES})
+ADD_DEPENDENCIES(chicken-c chicken-boot)
 
 ADD_EXECUTABLE(chicken ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
-ADD_DEPENDENCIES(chicken chicken-boot)
+ADD_DEPENDENCIES(chicken chicken-c)
 
 ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-ADD_DEPENDENCIES(chicken-static chicken-boot)
+ADD_DEPENDENCIES(chicken-static chicken-c)
 
 
 ####################################################################
-#  DOCUMENTATION                                                   #
+#  CHANGELOG                                                       #
 ####################################################################
 
 # Note that as of Sept. 2nd, 2006, a Darcs package that understands
@@ -1228,42 +1316,90 @@ ADD_DEPENDENCIES(chicken-static chicken-boot)
 # Darcs from Haskell sources, but that requires GHC, which can be
 # difficult to get working.  The upshot is it's a PITA to access
 # Darcs from Cygwin and hence to create a ChangeLog.
+#
+# A distribution archive (aka a tarball) will have ChangeLog already.
+# A Darcs repository tree will not, however.  We have to generate it.
+#
+# In principle, if we need to use a Darcs command, we should test
+# whether Darcs is available and actually works.  Different shells
+# can cause Darcs to fail.  For instance, running a Windows native
+# Darcs under a Cygwin shell fails, because the Windows native Darcs
+# doesn't understand Cygwin paths.
+#
+# In practice, it is very tedious to write a tool test in CMake 2.4.3.
+# EXECUTE_PROCESS is not correct, as it executes in CMake's environment,
+# not the actual build environment.  For instance, let's say Darcs is
+# available at the Windows command prompt.  EXECUTE_PROCESS will say it
+# works.  However, it won't actually work under Visual Studio, because
+# VS doesn't typically receive all the paths that the command prompt does.
+#
+# The correct way to write a tool test is to emit a trivial CMakeLists.txt
+# to a temporary subdirectory and run it in the build environment.  This
+# is a PITA.  So for now, we're not bothering.  If the user is building
+# straight from Darcs, and her Darcs doesn't work, her build is allowed to
+# blow up with a nasty error message.  Tarball users won't be affected as
+# they already have the ChangeLog, and most people build Chicken from a
+# tarball.
 
-FIND_PROGRAM(DARCS_EXE darcs)
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${DARCS_EXE} changes --repodir=${Chicken_SOURCE_DIR} > ChangeLog
-  COMMENT Generating ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog from Darcs repository.
-)
+IF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+  SET(CHANGELOG_FILE ${Chicken_SOURCE_DIR}/ChangeLog)
+ELSE(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+  SET(CHANGELOG_FILE ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog)
+  ADD_CUSTOM_COMMAND(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND darcs changes --repodir=${Chicken_SOURCE_DIR} > ChangeLog
+    COMMENT Generating ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog from Darcs repository.
+  )
+ENDIF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+ADD_CUSTOM_TARGET(darcs-changelog ALL DEPENDS ${CHANGELOG_FILE})
 
-SET(HAVE_CHANGELOG FALSE)
-IF(DARCS_EXE)
-  IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-    # Windows native Darcs doesn't handle Cygwin pathnames.
-    # Corner case: Windows native Darcs is in system path,
-    # but user is building under Cygwin.  Darcs chokes on Cygwin path.
-    MESSAGE(STATUS "Testing whether Darcs actually works.")
-    # It's actually wrong to use EXECUTE_PROCESS.
-    # It doesn't execute in the build environment.
-    # The fix is laborious; later.
-    EXECUTE_PROCESS(COMMAND ${DARCS_EXE} changes --last=0 --repodir=${Chicken_SOURCE_DIR}
-      RESULT_VARIABLE DARCS_FAILED)
-    IF(DARCS_FAILED)
-      ECHO_TARGET(darcs_changelog "Darcs does not work.  Cannot create ChangeLog.")
-    ELSE(DARCS_FAILED)
-      MESSAGE(STATUS "Darcs works.  Can create ChangeLog.")
-      SET(HAVE_CHANGELOG TRUE)
-      ADD_CUSTOM_TARGET(darcs_changelog
-        ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
-      )
-    ENDIF(DARCS_FAILED)
-  ELSE(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-    ECHO_TARGET(darcs_changelog "${Chicken_SOURCE_DIR}/_darcs does not exist, cannot create ChangeLog.")
-  ENDIF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-ELSE(DARCS_EXE)
-  ECHO_TARGET(darcs_changelog "Cannot find darcs, cannot create ChangeLog.")
-ENDIF(DARCS_EXE)
+
+#### HTML documentation
+IF(EXISTS html/index.html)
+  SET(HTMLDOC_FILES 
+    "html/accessing external objects.html"
+    html/acknowledgements.html
+    "html/additional files.html"
+    "html/basic mode of operation.html"
+    html/bibliography.html
+    "html/bugs and limitations.html"
+    "html/c interface.html"
+    html/callbacks.html
+    "html/data representation.html"
+    html/declarations.html
+    "html/deviations from the standard.html"
+    html/embedding.html
+    "html/extensions to the standard.html"
+    "html/foreign type specifiers.html"
+    "html/interface to external functions and variables.html"
+    html/locations.html
+    "html/non standard macros and special forms.html"
+    "html/non standard read syntax.html"
+    "html/other support procedures.html"
+    html/parameters.html
+    "html/pattern matching.html"
+    "html/supported language.html"
+    html/index.html
+    "html/unit eval.html"
+    "html/unit extras.html"
+    "html/unit library.html"
+    "html/unit lolevel.html"
+    "html/unit match.html"
+    "html/unit posix.html"
+    "html/unit regex.html"
+    "html/unit srfi-1.html"
+    "html/unit srfi-13.html"
+    "html/unit srfi-14.html"
+    "html/unit srfi-18.html"
+    "html/unit srfi-4.html"
+    "html/unit tcp.html"
+    "html/unit utils.html"
+    "html/using the compiler.html"
+    "html/using the interpreter.html"
+    html/chicken-setup.html
+    html/faq.html)
+ENDIF(EXISTS html/index.html)
 
 
 ####################################################################
@@ -1376,16 +1512,13 @@ INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1
   DESTINATION ${MAN_HOME})
 INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION ${DOC_HOME})
 
-# It's confusing to install ChangeLog.0-20040412 without installing
-# ChangeLog.  It makes Chicken looks like it hasn't been updated in a long time.
-# So, either install both, or neither.
-IF(HAVE_CHANGELOG)
-  INSTALL(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
-    ${Chicken_SOURCE_DIR}/ChangeLog.0-20040412
-    DESTINATION ${DOC_HOME}
-  )
-ENDIF(HAVE_CHANGELOG)
+INSTALL(FILES
+  ${CHANGELOG_FILE}
+  ${Chicken_SOURCE_DIR}/ChangeLog.0-20040412
+  DESTINATION ${DOC_HOME}
+)
+
+INSTALL(FILES ${HTMLDOC_FILES} DESTINATION ${DOC_HOME}/html)
 
 
 ####################################################################
@@ -1521,9 +1654,13 @@ ADD_CUSTOM_COMMAND(
 #   mingw-install-20060210/mingw/install.sh
 # - install mingw-install-20060210/mingw/install.sh
 
-
 SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
+ADD_CUSTOM_TARGET(boot-c DEPENDS ${BOOT_CFILES_DEPS})
+ADD_DEPENDENCIES(boot-c
+  all-posix-c all-regex-c lib-common-c lib-safe-c lib-unsafe-c
+  chicken-c csc-c csi-c chicken-profile-c chicken-setup-c
+)
 
 # dist.cmake contains the list of all files that should be present
 # in the distribution.  It also contains a script for creating a
@@ -1531,13 +1668,15 @@ ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
 # produces a distribution that works for both CMake and ./configure,
 # and is now the canonical method for creating a distribution.
 
-SET(DIST_DIR chicken-${VERSION})
+SET(DIST_DIR chicken-${BUILDVERSION})
 
-ADD_CUSTOM_TARGET(dist
-  DEPENDS ${BOOT_CFILES_DEPS} ${AUTOMAKE_FILES} 
-  COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.zip
+  DEPENDS ${AUTOMAKE_FILES} ${CHANGELOG_FILE}
+  COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DCHANGELOG_FILE="${CHANGELOG_FILE}" -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake
 )
-ADD_DEPENDENCIES(dist darcs_changelog)
+ADD_CUSTOM_TARGET(dist DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.zip)
+ADD_DEPENDENCIES(dist boot-c)
 
 
 ####################################################################

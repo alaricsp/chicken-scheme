@@ -21,10 +21,6 @@
 
 CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
-# ./configure just plops chicken-config.h in the source tree.
-# Try to avoid collisions with it by searching 
-# ${CMAKE_CURRENT_BINARY_DIR} first.
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 
 ####################################################################
@@ -41,6 +37,12 @@ CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-defaults.h.in
 ####################################################################
 #  .C GENERATION                                                   #
 ####################################################################
+
+# ./configure just plops chicken-config.h in the source tree.
+# Try to avoid collisions with it by searching 
+# ${CMAKE_CURRENT_BINARY_DIR} first.
+
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Do not use LIBRARY_SCM_TO_C_EXPORTS to build the bootstrap compiler.
 # We don't need the exports to build the next compiler stage, and
@@ -102,6 +104,7 @@ ENDIF(HAVE_BOOT_CFILES)
 ####################################################################
 
 GET_LIBCHICKEN_C_SOURCES(LIBCHICKEN_BOOT_SOURCES)
+ADD_CUSTOM_TARGET(libchicken-boot-c DEPENDS ${LIBCHICKEN_BOOT_SOURCES})
 
 ADD_LIBRARY(libchicken-boot STATIC ${LIBCHICKEN_BOOT_SOURCES})
 SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES
@@ -110,8 +113,8 @@ SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES
 IF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
   SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES PREFIX "lib")
 ENDIF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
-
 TARGET_LINK_LIBRARIES(libchicken-boot ${MORE_STATIC_LIBS})
+ADD_DEPENDENCIES(libchicken-boot libchicken-boot-c)
 
 
 ####################################################################
@@ -119,10 +122,12 @@ TARGET_LINK_LIBRARIES(libchicken-boot ${MORE_STATIC_LIBS})
 ####################################################################
 
 GET_CHICKEN_C_SOURCES(CHICKEN_BOOT_SOURCES)
+ADD_CUSTOM_TARGET(chicken-boot-c DEPENDS ${CHICKEN_BOOT_SOURCES})
 
 ADD_EXECUTABLE(chicken-boot ${CHICKEN_BOOT_SOURCES})
 SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot)
+ADD_DEPENDENCIES(chicken-boot chicken-boot-c)
 
 
 ####################################################################
