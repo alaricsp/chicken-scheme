@@ -422,11 +422,11 @@ paranoid :
 
 .PHONY : bench
 
-bench : benchmarks/cscbench
-	cd benchmarks; ./cscbench
+bench : cscbench
+	cd benchmarks; ../cscbench
 
-benchmarks/cscbench: benchmarks/cscbench.scm
-	./csc benchmarks/cscbench.scm -o benchmarks/cscbench -compiler $(CHICKEN)
+cscbench: cscbench.scm
+	./csc cscbench.scm -o cscbench -compiler $(CHICKEN)
 
 
 # If nothing helps...

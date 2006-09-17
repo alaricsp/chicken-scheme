@@ -394,7 +394,7 @@ usage: chicken-setup [OPTION ...] FILENAME
   -h  -help                      show this text and exit
   -V  -version                   show version of this program and exit
       -release                   show release number and exit
-  -R  -repository                prints the location of the extension repository
+  -R  -repository [PATH]         prints the location of the extension repository
   -u  -uninstall                 remove the following extension from repository
   -H  -host HOSTNAME[:PORT]      specify alternative host for downloading
   -p  -proxy HOSTNAME[:PORT]     connect via proxy
@@ -502,7 +502,9 @@ EOF
     (set! *tmpdir-created* #f)
     (unless *keep-stuff*
       (when (setup-verbose-flag) (printf "removing temporary directory `~A'~%" *temporary-directory*))
-      (run (,*remove-command* ,(quotewrap *temporary-directory*))) )) )
+      (handle-exceptions ex
+	  (warning "removal of temporary directory failed" *temporary-directory*)
+	(run (,*remove-command* ,(quotewrap *temporary-directory*))) )) ) )
 
 (define (unpack/enter filename)
   (define (testgz fn)

@@ -166,13 +166,15 @@
 		,@(map (lambda (ot id) `(##core#set! ,ot ,id))
 		       old-tmps ids)
 		,@(map (lambda (id nt) `(##core#set! ,id ,nt))
-		       ids new-tmps))
+		       ids new-tmps)
+		(##sys#void) )
 	      (lambda () ,@body)
 	      (lambda ()
 		,@(map (lambda (nt id) `(##core#set! ,nt ,id))
 		       new-tmps ids)
 		,@(map (lambda (id ot) `(##core#set! ,id ,ot))
-		       ids old-tmps) ) ) ) ) ) ) )
+		       ids old-tmps)
+		(##sys#void) ) ) ) ) ) ) )
 
 (##sys#register-macro
  'eval-when
