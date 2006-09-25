@@ -1,25 +1,299 @@
 # Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
 # See LICENSE section at end of file for full license text.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3)
+####################################################################
+#  TUTORIAL                                                        #
+####################################################################
+
+# This is working code for building the Chicken Scheme-to-C compiler.
+# It is also a tutorial for building non-trivial CMake projects.
+# Please realize that the 1st mission of this code is always to
+# build Chicken properly.  If a section is under-commented or under-
+# explained, that's because nobody has had time to explain it.  It
+# may also be deemed an unstable part of the build design, and
+# thus not worthy of being documented, as it will likely change.
+#
+# Chicken developers: do not remove tutorial comments from the code.
+# Brevity is not the goal here.  Aside from making both Chicken and
+# CMake more accessible to newbies, it is important to have good
+# documentation in case Brandon J. Van Every is hit by a truck.
+#
+# If you notice inaccuracies, inconsistencies, or ways that the 
+# explanations can be improved, please report them on the
+# Chicken mailing list.  You can always access the mailing list from
+# the Chicken homepage:
+#
+#   http://www.call-with-current-continuation.org
+
+
+####################################################################
+#  CMAKE SPECIFIC ISSUES                                           #
+####################################################################
+
+# As this is also a tutorial for building non-trivial CMake projects,
+# some words on how to utilize the CMake community.  Here are the
+# basic resources:
+#
+#   read the docs that ship with CMake
+#
+#   CMake FAQ
+#   http://www.cmake.org/Wiki/CMake_FAQ
+#
+#   CMake Useful Variables
+#   http://www.cmake.org/Wiki/CMake_Useful_Variables
+#   This is really important because the CMake 2.4.3 documentation
+#   does not document the variables that CMake uses, and there are
+#   quite a few of them.
+#
+#   CMake mailing list
+#   http://www.cmake.org/mailman/listinfo/cmake
+#   Once you've made a reasonable effort to read the docs, the FAQ,
+#   and the Useful Variables, go straight to the mailing list and
+#   ask questions.  The docs are terse and omit some important
+#   things, like the CMake variables.  People on the mailing list
+#   are very helpful and responsive.  This is the main way that
+#   you'll get the best quality of support from the CMake community.
+#
+#   CMake mailing list archive
+#   http://public.kitware.com/pipermail/cmake/
+#   If you're a newbie, there's a good chance your questions have
+#   been asked already.  Although people don't mind newbie questions,
+#   you can often get your answers faster if you just look them up in
+#   the archive.  There's no search facility on this page, so using
+#   Google Advanced Search is a good idea.  Goto
+#   http://www.google.com/advanced_search and for the Domain, enter
+#   the URL of the mailing list archive.
+#
+#   CMake wiki
+#   http://www.cmake.org/Wiki/CMake
+#   This has tutorials and lots more info that you may find useful.
+#
+#   CMake Bug Tracker
+#   http://www.cmake.org/Bug/
+#   Use the bug tracker both to report bugs in CMake, and to make
+#   Feature Requests.  You may want to discuss the bug or feature
+#   request on the mailing list before making an official entry.
+#   For instance, whether something is a bug or a feature request
+#   may be in the realm of debate.  :-)  When filing bugs, it is
+#   best to provide a trivial CMakeLists.txt that reproduces the
+#   problem.  You can get help on more complicated pieces of code,
+#   but if you've already isolated the problem, quick action is
+#   more likely.
+
+
+####################################################################
+#  CMAKE VERSION                                                   #
+####################################################################
+
+# CMake undergoes rapid development.  Open source projects such as
+# Chicken tend to stress CMake's capabilities, and bugs in CMake are
+# frequently found.  Kitware is very good at reacting quickly to
+# bugs and adding new features.  So good, that even minor releases
+# can have significant differences in features available.  Do not
+# expect old CMake binaries to simply work!  If your project is
+# non-trivial, you are probably exploring non-trivial CMake
+# capabilities somewhere, and backwards compatibility is not assured.
+
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3 FATAL_ERROR)
+
+# Bugs typically show up in the current version of CMake you're using.
+# Then you make a bug report to http://www.kitware.com/Bug , and
+# often the bug gets fixed in the CVS repository.  Then you want to
+# verify that the bug was actually fixed.  But, you want to keep
+# running your old code, because the next version of CMake hasn't
+# shipped and you don't expect people to be compiling CMake from CVS.
+#
+# To handle this, we need to know what version of CMake we're using.
+# We already issue a fatal error for any CMake less than 2.4.3.
+# So this is sufficient for distinguishing whether we've got
+# CMake 2.4.3, or something greater.  We would ideally like to
+# make lexical comparisons on CMake version numbers, and be able
+# to say things like "if it's greater than version 2.x.y, do this."
+# But that's work to implement, and this is easy and sufficient for now.
+
+SET(IS_CMAKE_243 false)
+IF(CMAKE_MAJOR_VERSION EQUAL 2)
+  IF(CMAKE_MINOR_VERSION EQUAL 4)
+    IF(CMAKE_PATCH_VERSION EQUAL 3)
+      SET(IS_CMAKE_243 true)
+    ENDIF(CMAKE_PATCH_VERSION EQUAL 3)
+  ENDIF(CMAKE_MINOR_VERSION EQUAL 4)
+ENDIF(CMAKE_MAJOR_VERSION EQUAL 2) 
+
+
+####################################################################
+#  CHICKEN PROJECT                                                 #
+####################################################################
+
+# All CMake projects need a name.  The name is global to all
+# CMakeLists.txt in subdirectories.  Once you define a project
+# named "myproject", the variable "myproject_SOURCE_DIR" exists.
+# This is the toplevel source directory of your project, i.e.
+# wherever your topmost CMakeLists.txt resides.
+#
+# You can also specify support for languages other than C, using
+# additional arguments.  Chicken only needs C, so we don't bother.
+
 PROJECT(Chicken)
+
+# You can specify the order in which directories are searched for
+# header files.  Chicken is a multi-directory project, so we do
+# need to tell subdirectories where to find our toplevel *.h files.
+# Also, the user may already have Chicken installed on their system.
+# To avoid any possibility of picking up wrong header files from
+# the system, we search our own directories BEFORE searching
+# system directories.
+
 INCLUDE_DIRECTORIES(BEFORE ${Chicken_SOURCE_DIR})
+
+
+####################################################################
+#  CHECKING HEADER FILES                                           #
+####################################################################
+
+# Typically we do not know if a header file, library, function, or
+# other symbol is available on the system.  CMake has standard
+# "modules" for checking their availability.  CMake "modules" are
+# not available by default; if we want them, we have to explicitly
+# INCLUDE them.
+#
+# CheckIncludeFile and CheckIncludeFiles do not do quite the same thing.
+# CheckIncludeFile is the simpler case, when you only need 1 *.h file
+# and it can be compiled in a straightforward manner into a trivial
+# C test program.  Sometimes, however, multiple *.h files must be
+# included together, in a specific sequence, and cannot be tested in
+# isolation from one another.  Such is the case for WINSOCK *.h files,
+# for instance.
+#
+# The interface for CheckIncludeFiles is more awkward.  Don't use it
+# unless you really need it.  In particular, you will likely scratch
+# your head about how exactly to specify a list of *.h files, so that
+# CheckIncludeFiles actually takes it.
 
 INCLUDE(CheckIncludeFile)
 INCLUDE(CheckIncludeFiles)
+
+# When you want to know if a specific function is available on your
+# system, CheckFunctionExists is the module that people are likely to
+# think of.  However, some "functions" are implemented as macros!
+# CheckFunctionExists won't handle that.  CheckSymbolExists will.
+
 INCLUDE(CheckSymbolExists)
+
+
+####################################################################
+#  DART DASHBOARD                                                  #
+####################################################################
+
+# CMake is integrated with a testing program called CTest.  It can
+# create so-called "Dart Dashboards" on external websites.  These
+# list the number of warnings and errors in a build.  If you write
+# unit tests, the dashboard will list whether those tests pass or
+# fail.  Information about your build can be dumped nightly, 
+# continuously, or "experimentally" i.e. at any time you feel like.
+#
+# Chicken does not yet take full advantage of Dart Dashboard
+# capabilities.  It is here as proof-of-concept.  This 1 line of
+# code was sufficient to allow build results to be posted on the
+# default Kitware public dashboard.  Over time, unit tests will be
+# implemented and a canonical Dashboard of Chicken's status will
+# be specified.
+
 INCLUDE(Dart)
+
+
+####################################################################
+#  MACROS                                                          #
+####################################################################
+
+# CMake macros save work.  They are best employed:
+#
+# - to wrap up tasks that occur over and over again, i.e. as a
+#   kind of function or subroutine.
+#
+# - to localize build rules in subdirectories, i.e. so you don't
+#   have to type ${CMAKE_CURRENT_BINARY_DIR} all the time.
+#
+# CMake macros are also a way to obfuscate your code, make it
+# unmaintainable, and render it illegible to others.  Don't get
+# macro happy!  Programmers often think that abstraction and
+# gratuitous refactoring is their job.  But, it's not the job of
+# a Build Engineer.  Above all else, a Build Engineer needs to 
+# Keep It Simple Stupid so that other people can understand,
+# maintain, and spot problems with the build.
+#
+# This is why dumb lists of needed *.c files are often preferred to
+# fancy build rules and macro wrap-ups.  It's easy for a programmer
+# who doesn't know CMake to look through a simple list and spot files
+# that need to be added, changed, or deleted.  They can use text
+# editor search tools on such lists; they can't find weird production
+# rules that do magical things to input strings.
+#
+# Prefer the straightforward CMake way to specify things, even if it
+# is longer.   Some day, you're going to be asking someone on the CMake
+# mailing list, "What's wrong with my code?"  If it's straightforward
+# CMake code, you'll get snappy answers.  If you've wrapped it in 3
+# bazillion layers of macros, nobody's going to be able to help you.  If
+# you want someone to join your open source project as a build engineer,
+# and they have to spend forever just figuring out how you
+# macrotized everything, they're not going to bother.
 
 
 ####################################################################
 #  TEXT UTILITIES                                                  #
 ####################################################################
 
-# General style is to list the rootnames of modules, and tack on
-# .scm or .c suffixes as appropriate in context.  Similarly, units
-# in unsafe libraries often need 'u' prefixes.  These text
-# utilities are more readable than writing the same clunky string
-# processing code all the time.
+# The text utilities evolved because handling lists properly in
+# CMake can get confusing.  A list in CMake is a string of elements
+# separated by semicolons.  So when is it a string, and when is it
+# a list?  ${mylist} and "${mylist}" will give you completely different
+# results; the quotes work as a sort of evaluator.
+#
+# Currently I am too lazy to explain all the nuances.
+#
+# Once you've figured out how to process your lists and strings properly,
+# it is best to wrap up what you did and use it forever.  Otherwise you
+# will make lotsa trivial mistakes over and over again.  I use FOREACH to
+# iterate through lists because it's a conservative, safe way to do it.
+# Generally when I've tried to operate directly on semicolons, I've
+# gotten into trouble.
+#
+# Note the double evaluators such as ${${rootlist}}.  This is typical
+# of macros:
+#
+# - rootlist is a formal name, a placeholder in the macro definition.
+#
+# - ${rootlist} is the name of the actual variable when the macro is
+#   invoked.  i.e. If I call ADD_SUFFIX(mylistofroots .c), then
+#   ${rootlist} == mylistofroots
+#
+# - ${${rootlist}} is the VALUE of the actual variable when the macro
+#   is invoked.  This is often what you're actually interested in.
+#   So if you did:
+#
+#     SET(mymonstermoves crush crumble chomp)
+#     ADD_SUFFIX(mymonstermoves .c)
+#
+#   then within ADD_SUFFIX,
+#   ${${rootlist}} == a list containing the elements
+#
+#     crush crumble chomp
+#
+# Note that within ADD_SUFFIX, you have single evaluations such as
+# SET(${rootlist} ${outlist}).  This is because when doing a SET,
+# the 1st argument is the NAME of variable you're setting, not its VALUE.
+#
+# Also notice that
+#
+#  outlist
+#
+# is a variable INSIDE the macro.  It has local scope; it is not a formal
+# parameter.  You use it just like an ordinary variable within the macro;
+# you do not ever double-evaluate it.  In our example above, at the end of
+# ADD_SUFFIX, ${outlist} evaluates to
+#
+#  crush.c crumble.c chomp.c
+
 
 MACRO(ADD_SUFFIX rootlist suffix)
   SET(outlist )
@@ -37,14 +311,15 @@ MACRO(ADD_PREFIX prefix rootlist)
   SET(${rootlist} ${outlist})
 ENDMACRO(ADD_PREFIX)
 
-# Returns an unquoted string.  Note that CMake will readily
-# turn such strings back into lists, so be careful how you use it.
+# Returns an unquoted string.  Note that CMake will readily turn such
+# strings back into lists, due to the duality of lists and
+# semicolon-separated strings.  So be careful how you use it.
+
 MACRO(LIST2STRING alist astring)
   FOREACH(elem ${${alist}})
    SET(${astring} "${${astring}} ${elem}")
   ENDFOREACH(elem)
 ENDMACRO(LIST2STRING)
-
 
 # In CMake 2.4.2 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
 # generates Unix style pathnames.  Although this may be correct behavior
@@ -52,39 +327,60 @@ ENDMACRO(LIST2STRING)
 # MSYS shell.  Generally MSYS is just there for build assistance.
 # So, manually convert to Windows native pathnames.
 
-# Quoting policy:
-# - quote the path.  Output is expected to be a C string.
-# - backslashes in Windows pathnames need to be escaped, i.e. \\
-# - whitespace is not escaped.
-#
-# Be very careful because we're using unprotected whitespace!
-
-MACRO(NATIVE_C_PATH cmake_path_in native_path_out)
-  SET(${native_path_out} ${${cmake_path_in}})
-  # An extra \\ escape is necessary to get a \ through CMake's processing.
-  # Check that pathname has no escapes in it already.
-  STRING(REGEX MATCH "\\\\" ALREADY_ESCAPED ${native_path_out} "${${native_path_out}}")
-  IF(ALREADY_ESCAPED)
-    MESSAGE(FATAL_ERROR "Pathname already contains escapes or backslashes.
-      Not allowed, terminating build.")
-  ENDIF(ALREADY_ESCAPED)
-
+MACRO(UNQUOTED_NATIVE_PATH cmake_path_in native_path_out)
+  # Remove escaped whitespace.  It causes shells to choke.
+  STRING(REPLACE "\\ " " " ${native_path_out} "${${cmake_path_in}}")
   IF(WIN32 AND NOT CYGWIN)
-    # As proven above, we have no escaped whitespace.
     # Use backslashes for directory separation.
-    STRING(REPLACE "/" "\\\\" ${native_path_out} "${${native_path_out}}")
-  ELSE(WIN32 AND NOT CYGWIN)
-    # Assume that TO_NATIVE_PATH does the right thing.
-    # This is a dicey assumption.  Need to test it on other OSes.
-    FILE(TO_NATIVE_PATH "${${native_path_out}}" ${native_path_out})
-    # TO_NATIVE_PATH generates escaped whitespace.  Remove the escapes.
-    STRING(REPLACE "\\ " " " ${native_path_out} "${${native_path_out}}")
+    STRING(REPLACE "/" "\\" ${native_path_out} "${${native_path_out}}")
   ENDIF(WIN32 AND NOT CYGWIN)
+ENDMACRO(UNQUOTED_NATIVE_PATH)
 
+MACRO(NATIVE_PATH cmake_path_in native_path_out)
+  UNQUOTED_NATIVE_PATH(${cmake_path_in} ${native_path_out})
   # Quote the results
   SET(${native_path_out} \"${${native_path_out}}\")
+ENDMACRO(NATIVE_PATH)
 
+# This is what you need for paths put into C *.h files.
+# If you don't escape your backslashes, your C compiler will complain.
+
+MACRO(NATIVE_C_PATH cmake_path_in native_path_out)
+  NATIVE_PATH(${cmake_path_in} ${native_path_out})
+  # Need to escape backslashes
+  STRING(REPLACE "\\" "\\\\" ${native_path_out} "${${native_path_out}}")
 ENDMACRO(NATIVE_C_PATH)
+
+# CMake 2.4.3 has a bug where a COMMAND consumes twice the number of
+# escapes as an IF(...) statement!  This makes it impossible to
+# pass Windows native paths to a COMMAND.  Instead we must add
+# more escapes especially-and-only for the COMMAND.  This is filed
+# in the CMake bug tracker http:\\www.cmake.org\Bug as bug #3786.
+
+MACRO(NATIVE_COMMAND_EXE_PATH cmake_path_in native_path_out)
+  NATIVE_PATH(${cmake_path_in} ${native_path_out})
+  # Escape requirements seem to be specific to various generators.
+  # MSVC generators seem to reduce all escapes down to a single backslash.
+  # So, generating MSVC paths is easy.
+  #
+  # Not so for MSYS.  The actual executable in a COMMAND seems to need
+  # excessive numbers of quotes.  And this differs again from what is
+  # needed for command arguments and pipe redirections to files.  This
+  # here just deals with the executable.
+  IF(MINGW)
+    # Really we mean MSYS, but there is no MSYS defined in CMake 2.4.3.
+    # 
+    # Need to escape twice as many backslashes!
+    STRING(REPLACE "\\" "\\\\\\\\" ${native_path_out} "${${native_path_out}}")
+    # Quotes need to be escaped
+    STRING(REPLACE "\"" "\\\"" ${native_path_out} "${${native_path_out}}")
+  ENDIF(MINGW)
+ENDMACRO(NATIVE_COMMAND_EXE_PATH)
+
+
+####################################################################
+#  STUB TARGETS FOR MISSING TOOLS                                  #
+####################################################################
 
 # It is common to look for tools at configuration time, and if they are
 # not found, to provide make targets that give error messages.  We also
@@ -99,19 +395,12 @@ MACRO(ECHO_TARGET target quoted_message)
   # not the developer, whose system is probably configured with all
   # needed tools and not calling ECHO_TARGET at all.
 
-  # CMake 2.4.2 can't handle apostrophes in -E echo, even when
+  # CMake 2.4.3 can't handle apostrophes in -E echo, even when
   # surrounded by double quotes.
   STRING(REGEX MATCH "'" CONTAINS_APOSTROPHE ${quoted_message})
   IF(CONTAINS_APOSTROPHE)
-    MESSAGE(STATUS "CMake 2.4.2 cannot handle ' apostrophes in -E echo.")
+    MESSAGE(STATUS "CMake 2.4.3 cannot handle ' apostrophes in -E echo.")
   ENDIF(CONTAINS_APOSTROPHE)
-
-  # Make sure the message is quoted.
-  # Apostrophe errors also show up as unquoted strings, so do this 2nd.
-  STRING(REGEX MATCH "\"" QUOTED ${quoted_message})
-  IF(NOT QUOTED)
-    MESSAGE(STATUS "Unquoted ECHO_TARGET string.")
-  ENDIF(NOT QUOTED)
   
   # The actual functionality
   MESSAGE(STATUS ${quoted_message})
@@ -577,6 +866,8 @@ SET(C_TARGET_LFLAGS \"\")
 SET(C_DEFAULT_TARGET_STACK_SIZE \(128*1024\))
 
 CHECK_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
+# Is passing multiple .h files going to be troublesome like for WS2TCPIP below?
+CHECK_SYMBOL_EXISTS(alloca "alloca.h malloc.h" HAVE_ALLOCA)
 CHECK_INCLUDE_FILE(crt_externs.h HAVE_CRT_EXTERNS_H)
 CHECK_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
 CHECK_SYMBOL_EXISTS(gcvt stdlib.h HAVE_GCVT)
@@ -1067,7 +1358,9 @@ ENDIF(WIN32 AND NOT CYGWIN)
 # "multithreaded, static linkage" for Windows native libraries.
 
 IF(MSVC)
-  # static and dynamic libraries are built here
+
+  # Eventually, we wish to support different postfixes for debug, release builds etc.
+  # For now, the user has to install the 1 configuration she actually wants.
 
   ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
   SET_TARGET_PROPERTIES(libchicken PROPERTIES
@@ -1093,30 +1386,6 @@ IF(MSVC)
   TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
   ADD_DEPENDENCIES(libchickengui libchicken-c)
 
-  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
-    OUTPUT_NAME "chicken" PREFIX "lib"
-    RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-s" DEBUG_POSTFIX "-s" RELWITHDEBINFO_POSTFIX "-s")
-  TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchicken-static libchicken-c)
-
-  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
-    OUTPUT_NAME "uchicken" PREFIX "lib"
-    RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-s" DEBUG_POSTFIX "-s" RELWITHDEBINFO_POSTFIX "-s")
-  TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
-
-  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
-  SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
-    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
-    OUTPUT_NAME "chickengui" PREFIX "lib"
-    RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-s" DEBUG_POSTFIX "-s" RELWITHDEBINFO_POSTFIX "-s")
-  TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchickengui-static libchicken-c)
-
 ELSE(MSVC)
 
   # We want the library to be named 'libchicken' on all platforms.
@@ -1127,72 +1396,36 @@ ELSE(MSVC)
   # Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
   # prefix onto every library.  For cross-platform stuff,
   # this often results in the 'liblibfoo" problem.
+    
+  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}")
+  TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
+  ADD_DEPENDENCIES(libchicken libchicken-c)
+
+  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES
+    COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}")
+  TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
+  ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
   IF(CYGWIN)
-    # static and dynamic libraries are built here
-    
-    ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
-    SET_TARGET_PROPERTIES(libchicken PROPERTIES
-      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
-      OUTPUT_NAME "chicken-0")
-    TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libchicken libchicken-c)
-
-    ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
-    SET_TARGET_PROPERTIES(libuchicken PROPERTIES
-      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
-      OUTPUT_NAME "uchicken-0")
-    TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libuchicken libuchicken-c)
-
-    ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
-    SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
-      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
-      OUTPUT_NAME "chicken")
-    TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-    ADD_DEPENDENCIES(libchicken-static libchicken-c)
-
-    ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
-    SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
-      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
-      OUTPUT_NAME "uchicken")
-    TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-    ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
-
+    SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME "chicken-0")
+    SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME "uchicken-0")
   ELSE(CYGWIN)
+    SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME "chicken")
+    SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME "uchicken")
+  ENDIF(CYGWIN)
 
-    ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
-    SET_TARGET_PROPERTIES(libchicken PROPERTIES
-      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
-      OUTPUT_NAME "chicken")
-    TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libchicken libchicken-c)
+  IF(WIN32 AND NOT CYGWIN)
+    ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
+    SET_TARGET_PROPERTIES(libchickengui PROPERTIES
+      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
+      OUTPUT_NAME "chickengui")
+    TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
+    ADD_DEPENDENCIES(libchickengui libchicken-c)
+  ENDIF(WIN32 AND NOT CYGWIN)
 
-    ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
-    SET_TARGET_PROPERTIES(libuchicken PROPERTIES
-      COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
-      OUTPUT_NAME "uchicken")
-    TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
-    ADD_DEPENDENCIES(libuchicken libuchicken-c)
-
-    IF(WIN32)
-      ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
-      SET_TARGET_PROPERTIES(libchickengui PROPERTIES
-        COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
-        OUTPUT_NAME "chickengui")
-      TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
-      ADD_DEPENDENCIES(libchickengui libchicken-c)
-    ENDIF(WIN32)
-
-    # CMake 2.4.3 has a bug where shared and static libraries clobber each
-    # other if they have the same rootname.  For platforms that have the
-    # same rootname, we build static libraries in a subdirectory as a
-    # workaround.  See full comments there.  Some platforms do not have a
-    # rootname collision, so we can avoid using a subdirectory in those cases.
-
-    ADD_SUBDIRECTORY(static)
-
-  ENDIF(CYGWIN)  
 ENDIF(MSVC)
 
 
@@ -1223,25 +1456,16 @@ SIMPLE_SCM_TO_C(csi banner chicken-more-macros)
 ADD_CUSTOM_TARGET(csi-c DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/csi.c)
 ADD_DEPENDENCIES(csi-c chicken-boot)
 
-ADD_EXECUTABLE(csi
+SET(CSI_EXE_SOURCES
   ${Chicken_SOURCE_DIR}/chicken.h
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
   ${CMAKE_CURRENT_BINARY_DIR}/csi.c
 )
+ADD_EXECUTABLE(csi ${CSI_EXE_SOURCES})
 SET_TARGET_PROPERTIES(csi PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(csi libchicken)
 ADD_DEPENDENCIES(csi csi-c)
-
-ADD_EXECUTABLE(csi-static
-  ${Chicken_SOURCE_DIR}/chicken.h
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
-  ${CMAKE_CURRENT_BINARY_DIR}/csi.c
-)
-SET_TARGET_PROPERTIES(csi-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(csi-static libchicken-static)
-ADD_DEPENDENCIES(csi-static csi-c)
 
 
 ####################################################################
@@ -1301,10 +1525,18 @@ SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
 ADD_DEPENDENCIES(chicken chicken-c)
 
-ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
-SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-ADD_DEPENDENCIES(chicken-static chicken-c)
+
+####################################################################
+#  CREATE STATIC LIBS AND EXES                                     #
+####################################################################
+
+# CMake 2.4.3 has a bug where shared and static libraries in the same
+# directory clobber each other if they have the same rootname.  Also,
+# if static and shared libraries are in the same directory, static
+# exes will prefer to link with the shared libraries.  To work around
+# these problems, we build all static libs and exes in a subdirectory.
+
+ADD_SUBDIRECTORY(static)
 
 
 ####################################################################
@@ -1333,29 +1565,83 @@ ADD_DEPENDENCIES(chicken-static chicken-c)
 # works.  However, it won't actually work under Visual Studio, because
 # VS doesn't typically receive all the paths that the command prompt does.
 #
-# The correct way to write a tool test is to emit a trivial CMakeLists.txt
-# to a temporary subdirectory and run it in the build environment.  This
-# is a PITA.  So for now, we're not bothering.  If the user is building
-# straight from Darcs, and her Darcs doesn't work, her build is allowed to
-# blow up with a nasty error message.  Tarball users won't be affected as
-# they already have the ChangeLog, and most people build Chicken from a
-# tarball.
+# To write a tool test, Kitware expects one to emit a trivial CMakeLists.txt
+# to a temporary subdirectory, and then TRY_COMPILE it.  This turns out to
+# be impossible to do in the general case, because in CMake 2.4.3 a
+# COMMAND consumes twice as many escapes as it should.  The following is the
+# the result of 3 days worth of workarounds.
 
-IF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
-  SET(CHANGELOG_FILE ${Chicken_SOURCE_DIR}/ChangeLog)
-ELSE(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
-  SET(CHANGELOG_FILE ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND darcs changes --repodir=${Chicken_SOURCE_DIR} > ChangeLog
-    COMMENT Generating ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog from Darcs repository.
-  )
-ENDIF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
-ADD_CUSTOM_TARGET(darcs-changelog ALL DEPENDS ${CHANGELOG_FILE})
+SET(CHANGELOG_FILE -NOTFOUND)
+IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
+  FIND_PROGRAM(DARCS_EXE darcs)
+  IF(DARCS_EXE)
+    FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/try-darcs)
+    # Note the need to escape any quotes that are part of the file output.
+    FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/try-darcs/CMakeLists.txt "
+      PROJECT(try-darcs)
+      ADD_CUSTOM_TARGET(try
+        WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
+        COMMAND \"${DARCS_EXE}\" changes --last=0
+      )
+    ")
+    TRY_COMPILE(DARCS_WORKS
+       ${CMAKE_CURRENT_BINARY_DIR}/try-darcs
+       ${CMAKE_CURRENT_BINARY_DIR}/try-darcs
+       try-darcs try
+    )
+    IF(DARCS_WORKS)
+      SET(CHANGELOG_FILE ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog)
+
+      # Custom commands have the format:
+      #
+      #   COMMAND command1 [args...]
+      #
+      # command1 has to be a CMake path.  This is not documented in CMake 2.4.3.
+      # Think of command1 as receiving "special interpretation" and not really
+      # being a "custom" command, i.e. you're not free to do what you like.
+      #
+      # Also, command1 must be quoted as it may contain whitespace.  This is not
+      # a bug, but a common pitfall.  ADD_CUSTOM_COMMAND and ADD_CUSTOM_TARGET
+      # do not document this in CMake 2.4.3.  Hopefully later versions will.
+      #
+      # Other path statements in [args...] need to be paths that your
+      # tool understands.  This means you'll need native paths, unless your
+      # tool happens to like CMake paths.  In CMake 2.4.3, native paths are
+      # problematic as different generators do inconsistent things to quotes
+      # and escapes in the [args...].
+      #
+      # We use a WORKING_DIRECTORY of ${Chicken_SOURCE_DIR} to avoid having to
+      # use --repodir=${Chicken_SOURCE_DIR}, as it comes out badly.
+      # ${NATIVE_CHANGELOG_FILE} is working on MSYS and MSVC, so we use it.
+
+      NATIVE_PATH(CHANGELOG_FILE NATIVE_CHANGELOG_FILE)
+      ADD_CUSTOM_COMMAND(
+        OUTPUT ${CHANGELOG_FILE}
+        WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
+        COMMAND "${DARCS_EXE}" changes > ${NATIVE_CHANGELOG_FILE}
+        COMMENT "Generating ${CHANGELOG_FILE} from Darcs repository."
+      )
+      ADD_CUSTOM_TARGET(darcs-changelog ALL DEPENDS ${CHANGELOG_FILE})
+    ELSE(DARCS_WORKS)
+      ECHO_TARGET(darcs-changelog "Darcs does not work.  Cannot create ChangeLog.")
+    ENDIF(DARCS_WORKS)
+  ELSE(DARCS_EXE)
+    ECHO_TARGET(darcs-changelog "Cannot find Darcs.  Cannot create ChangeLog.")    
+  ENDIF(DARCS_EXE)
+ELSE(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
+  IF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+    SET(CHANGELOG_FILE ${Chicken_SOURCE_DIR}/ChangeLog)
+    ECHO_TARGET(darcs-changelog "No Darcs repository.  ChangeLog already exists as part of archive distribution.")
+  ELSE(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+    ECHO_TARGET(darcs-changelog "No Darcs repository.  ChangeLog is missing from archive distribution.")
+  ENDIF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+ENDIF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
 
 
-#### HTML documentation
+####################################################################
+#    HTML documentation                                            #
+####################################################################
+
 IF(EXISTS html/index.html)
   SET(HTMLDOC_FILES 
     "html/accessing external objects.html"
@@ -1411,10 +1697,8 @@ INSTALL(TARGETS
   chicken
   chicken-profile
   chicken-setup
-  chicken-static
   csc
   csi
-  csi-static
   libchicken
   libuchicken
   RUNTIME DESTINATION ${BIN_HOME}
@@ -1429,29 +1713,6 @@ IF(WIN32 AND NOT CYGWIN)
     ARCHIVE DESTINATION ${LIB_HOME}
   )
 ENDIF(WIN32 AND NOT CYGWIN)
-
-# installation of static libraries for CYGWIN and MSVC
-# are handled in this directory.  All others are handled
-# in the /static subdirectory.  
-IF(CYGWIN)
-  INSTALL(TARGETS
-    libchicken-static
-    libuchicken-static
-    RUNTIME DESTINATION ${BIN_HOME}
-    LIBRARY DESTINATION ${LIB_HOME}
-    ARCHIVE DESTINATION ${LIB_HOME}
-  )
-ENDIF(CYGWIN)
-IF(MSVC)
-  INSTALL(TARGETS
-    libchicken-static
-    libuchicken-static
-    libchickengui-static
-    RUNTIME DESTINATION ${BIN_HOME}
-    LIBRARY DESTINATION ${LIB_HOME}
-    ARCHIVE DESTINATION ${LIB_HOME}
-  )
-ENDIF(MSVC)
 
 GET_LIB_EXPORTS(exports)
 INSTALL(FILES ${exports} DESTINATION ${SHARE_HOME})
@@ -1512,11 +1773,16 @@ INSTALL(FILES chicken.1 csi.1 csc.1 chicken-setup.1 chicken-profile.1
   DESTINATION ${MAN_HOME})
 INSTALL(FILES README LICENSE INSTALL-CMake.txt DESTINATION ${DOC_HOME})
 
-INSTALL(FILES
-  ${CHANGELOG_FILE}
-  ${Chicken_SOURCE_DIR}/ChangeLog.0-20040412
-  DESTINATION ${DOC_HOME}
-)
+# It is confusing to install ChangeLog.0-20040412 without ChangeLog.
+# It makes Chicken look like it hasn't been updated in a long time.
+# Either install both, or none at all.
+IF(CHANGELOG_FILE)
+  INSTALL(FILES
+    ${CHANGELOG_FILE}
+    ${Chicken_SOURCE_DIR}/ChangeLog.0-20040412
+    DESTINATION ${DOC_HOME}
+  )
+ENDIF(CHANGELOG_FILE)
 
 INSTALL(FILES ${HTMLDOC_FILES} DESTINATION ${DOC_HOME}/html)
 
@@ -1670,6 +1936,13 @@ ADD_DEPENDENCIES(boot-c
 
 SET(DIST_DIR chicken-${BUILDVERSION})
 
+# We wrap ADD_CUSTOM_COMMAND with ADD_CUSTOM_TARGET so that if a
+# build step fails, CMake cannot falsely report a success.  We
+# need OUTPUT files from an ADD_CUSTOM_COMMAND to correctly track our
+# progress.  If an OUTPUT file doesn't get built, then we have failed.
+# If we just use a chain of ADD_CUSTOM_TARGET commands, they will always
+# execute unconditionally and will always report success.
+
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.zip
   DEPENDS ${AUTOMAKE_FILES} ${CHANGELOG_FILE}
@@ -1679,7 +1952,60 @@ ADD_CUSTOM_TARGET(dist DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.tar.gz ${
 ADD_DEPENDENCIES(dist boot-c)
 
 
-# Benchmarking
+####################################################################
+#    OPENGL INSTALLATION AND TESTING                               #
+####################################################################
+
+# As a byproduct of OpenGL testing, the OpenGL egg and all its
+# dependencies are installed on the user's system.  It would be
+# nice to test without installing, but this is not possible so long
+# as Chicken's installation paths are hardwired into chicken-defaults.h
+#
+# We need to invoke chicken-setup from a temp directory that doesn't contain
+# the chicken-setup we just built.  The installed chicken-setup is supposed
+# to know how to find all the other needed tools in the Chicken installation.
+# Thus if this works, it is testing a whole lot of the Chicken installation.
+#
+# We wrap ADD_CUSTOM_COMMAND with ADD_CUSTOM_TARGET so that if a
+# build step fails, CMake cannot falsely report a success.  We
+# need OUTPUT files from an ADD_CUSTOM_COMMAND to correctly track our
+# progress.  If an OUTPUT file doesn't get built, then we have failed.
+# If we just use a chain of ADD_CUSTOM_TARGET commands, they will always
+# execute unconditionally and will always report success.
+#
+# The ADD_CUSTOM_TARGET bulletproofing is supposed to work, but doesn't!
+# Found another bug in CMake 2.4.3; reported to Kitware.  When file
+# dependencies of ADD_CUSTOM_TARGET are not built, the target nevertheless
+# reports success.  So you can use these targets, but don't trust 'em when
+# they tell you they've succeeded.
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/opengl-temp
+  COMMAND ${CMAKE_COMMAND}
+    -D DIR=${CMAKE_CURRENT_BINARY_DIR}/opengl-temp
+    -P ${Chicken_SOURCE_DIR}/mkdir.cmake
+)
+ADD_CUSTOM_TARGET(opengl-temp-dir DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/opengl-temp)
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${EGG_HOME}/opengl.dll ${EGG_HOME}/opengl.setup-info
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/opengl-temp
+  COMMAND ${BIN_HOME}/chicken-setup -dont-ask opengl
+)
+ADD_CUSTOM_TARGET(install-opengl-egg
+  DEPENDS ${EGG_HOME}/opengl.dll ${EGG_HOME}/opengl.setup-info)
+ADD_DEPENDENCIES(install-opengl-egg opengl-temp-dir chicken-setup)
+
+# In CMake 2.4.3 the following line crashes CMakeSetup!
+# A bug report has been sent to Kitware.  Need to find out how to
+# implement post-installation tests.
+#
+# ADD_DEPENDENCIES(install-opengl-egg install)
+
+
+####################################################################
+#    BENCHMARKING                                                  #
+####################################################################
 
 # SIMPLE_SCM_TO_C(cscbench)
 # ADD_CUSTOM_TARGET(cscbench-c DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/cscbench.c)

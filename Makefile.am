@@ -89,16 +89,16 @@ chicken-defaults.h: chicken-defaults.h.in Makefile
 	echo creating $@; \
 	sed -e "s,@C_INSTALL_CC[@],$(C_INSTALL_CC)," \
 	    -e "s,@C_INSTALL_CXX[@],$(C_INSTALL_CXX)," \
-	    -e "s,@C_INSTALL_CFLAGS[@],$(C_INSTALL_CFLAGS)," \
+	    -e "s%@C_INSTALL_CFLAGS[@]%$(C_INSTALL_CFLAGS)%" \
 	    -e "s,@C_INSTALL_SHARE_HOME[@],$(C_INSTALL_SHARE_HOME)," \
 	    -e "s,@C_INSTALL_BIN_HOME[@],$(C_INSTALL_BIN_HOME)," \
 	    -e "s,@C_INSTALL_EGG_HOME[@],$(C_INSTALL_EGG_HOME)," \
 	    -e "s,@C_INSTALL_LIB_HOME[@],$(C_INSTALL_LIB_HOME)," \
 	    -e "s,@C_INSTALL_STATIC_LIB_HOME[@],$(C_INSTALL_STATIC_LIB_HOME)," \
 	    -e "s,@C_INSTALL_INCLUDE_HOME[@],$(C_INSTALL_INCLUDE_HOME)," \
-	    -e "s,@C_INSTALL_MORE_LIBS[@],$(C_INSTALL_MORE_LIBS)," \
-	    -e "s,@C_INSTALL_MORE_STATIC_LIBS[@],$(C_INSTALL_MORE_STATIC_LIBS)," \
-	    -e "s,@C_DEFAULT_TARGET_STACK_SIZE[@],$(C_DEFAULT_TARGET_STACK_SIZE)," \
+	    -e "s%@C_INSTALL_MORE_LIBS[@]%$(C_INSTALL_MORE_LIBS)%" \
+	    -e "s%@C_INSTALL_MORE_STATIC_LIBS[@]%$(C_INSTALL_MORE_STATIC_LIBS)%" \
+	    -e "s%@C_DEFAULT_TARGET_STACK_SIZE[@]%$(C_DEFAULT_TARGET_STACK_SIZE)%" \
 	    -e "s,@C_TARGET_CC[@],$(TARGET_CC)," \
 	    -e "s,@C_TARGET_CXX[@],$(TARGET_CXX)," \
 	    -e "s,@C_TARGET_CFLAGS[@],$(TARGET_CFLAGS)," \

@@ -512,8 +512,8 @@ EOF
 	    (printf "Features:")
 	    (for-each
 	     (lambda (lst) 
-	       (display "\n\t")
-	       (for-each (cut print* #\space <>) lst) )
+	       (newline)
+	       (for-each (cut print* #\tab <>) lst) )
 	     (chop (map keyword->string ##sys#features) 10) )
 	    (printf "~%~
                    Machine type:    \t~A ~A~%~

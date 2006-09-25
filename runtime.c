@@ -850,6 +850,12 @@ int CHICKEN_is_running()
 }
 
 
+void CHICKEN_interrupt()
+{
+  C_timer_interrupt_counter = 0;
+}
+
+
 C_regparm C_SYMBOL_TABLE *C_new_symbol_table(char *name, unsigned int size)
 {
   C_SYMBOL_TABLE *stp;
@@ -4065,7 +4071,7 @@ C_regparm C_word C_fcall C_set_initial_timer_interrupt_period(C_word n)
 C_regparm C_word C_fcall C_enable_interrupts(void)
 {
   C_timer_interrupt_counter = C_initial_timer_interrupt_period;
-  assert(C_timer_interrupt_counter > 0);
+  /* assert(C_timer_interrupt_counter > 0); */
   C_interrupts_enabled = 1;
   return C_SCHEME_UNDEFINED;
 }

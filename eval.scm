@@ -36,7 +36,7 @@
 (declare
   (unit eval)
   (disable-warning var)
-  (hide ##sys#unregister-macro ##sys#macroexpand-0 ##sys#split-at-separator
+  (hide ##sys#unregister-macro ##sys#split-at-separator
 	##sys#r4rs-environment ##sys#r5rs-environment 
 	##sys#interaction-environment pds pdss pxss) )
 

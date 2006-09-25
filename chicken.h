@@ -40,8 +40,8 @@
 #define ___CHICKEN
 
 #if defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)
-# include <chicken-config.h>
-# include <chicken-defaults.h>
+# include "chicken-config.h"
+# include "chicken-defaults.h"
 #endif
 
 #if !defined(__GNUC__) && !defined(__WATCOMC__)
@@ -49,7 +49,7 @@
 #  include <alloca.h>
 # else
 #  ifdef _AIX
-# pragma alloca
+#   pragma alloca
 #  else
 #   ifndef alloca /* predefined by HP cc +Olibcalls */
 char *alloca ();
@@ -220,6 +220,10 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # define strncasecmp       strnicmp
 # define isatty            _isatty
 # pragma warning(disable: 4101)
+#endif
+
+#ifdef __MINGW32__
+# include <malloc.h>
 #endif
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
@@ -1095,6 +1099,7 @@ C_fctexport void *CHICKEN_new_gc_root();
 C_fctexport void CHICKEN_delete_gc_root(void *root);
 C_fctexport void *CHICKEN_global_lookup(char *name);
 C_fctexport int CHICKEN_is_running();
+C_fctexport void CHICKEN_interrupt();
 
 C_fctexport void C_check_nursery_minimum(C_word size);
 C_fctexport int C_fcall C_save_callback_continuation(C_word **ptr, C_word k);

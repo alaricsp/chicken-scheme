@@ -96,10 +96,10 @@ static void create_directory(char *pathname) {}
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug" "-ls" "-release") )
+    "-debug" "-ls" "-release" "-test") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t) )
 
 
 (define *install-bin-path* 
@@ -411,6 +411,7 @@ usage: chicken-setup [OPTION ...] FILENAME
   -i  -docindex                  display path for documentation index
   -C  -check                     check for available upgrades
   -e  -eval EXPRESSION           evaluate expression
+  -t  -test EXTENSION ...        return success if all given extensions are installed
       -ls EXTENSION              list installed files for extension
       -fetch-tree                download and show repository catalog
   --                             ignore all following arguments
@@ -517,10 +518,11 @@ EOF
 	   (set! *tmpdir-created* #t)
 	   (chdir tmpdir)
 	   (setup-build-directory (current-directory))
-	   (let ((fn2 (string-append "../" filename)))
+	   (let ((fn2 (string-append "../" filename))
+		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
-		 (run (gunzip -c ,fn2 |\|| tar xvf -))
-		 (run (tar xvf ,fn2)) ) ) ) )
+		 (run (gunzip -c ,fn2 |\|| tar ,(if v 'xvf 'xf) -))
+		 (run (tar ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
     (set! *temporary-directory* tmpdir) ) )
 
 (define (copy-file from to)
@@ -1030,6 +1032,8 @@ EOF
 	 (set! *fetch-tree-only* #t)
 	 (set! anydone #t)
 	 (loop more) )
+	(("-test" . exts)
+	 (exit (if (every extension-info exts) 0 1)) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)

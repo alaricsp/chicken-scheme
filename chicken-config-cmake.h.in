@@ -13,6 +13,10 @@ or "#if 10", which looks funny, but it works. */
 #define HAVE_ALLOCA_H @HAVE_ALLOCA_H@
 #endif
 
+#if @HAVE_ALLOCA@0
+#define HAVE_ALLOCA @HAVE_ALLOCA@
+#endif
+
 #if @HAVE_CRT_EXTERNS_H@0
 #define HAVE_CRT_EXTERNS_H @HAVE_CRT_EXTERNS_H@
 #endif

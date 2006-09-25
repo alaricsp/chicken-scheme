@@ -149,12 +149,12 @@
 
 ;;; Embedding code directly:
 
-(define-macro (foreign-code str)
+(define-macro (foreign-code . strs)
   (let ([tmp (gensym 'code_)])
     `(begin
        (declare 
 	 (foreign-declare
-	  ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" tmp str) ) )
+	  ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" tmp (string-intersperse strs "\n")) ) )
        (##core#inline ,tmp) ) ) )
 
 (define-macro (foreign-value str type)

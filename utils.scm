@@ -7,11 +7,11 @@
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -23,7 +23,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-; Send bugs, suggestions and ideas to: 
+; Send bugs, suggestions and ideas to:
 ;
 ; felix@call-with-current-continuation.org
 ;
@@ -126,7 +126,7 @@
   (define (conc-dirs dirs pds)
     (##sys#check-list dirs 'make-pathname)
     (let loop ([strs dirs])
-      (if (null? strs) 
+      (if (null? strs)
 	  ""
 	  (let ((s1 (car strs)))
 	    (if (zero? (string-length s1))
@@ -156,7 +156,7 @@
 	   "."
 	   "")
        ext) ) )
-  (set! make-pathname 
+  (set! make-pathname
     (lambda (dir file #!optional ext (pds pds0))
       (_make-pathname 'make-pathname dir file ext pds)))
   (set! make-absolute-pathname
@@ -174,22 +174,28 @@
   (let* ((pds (string ##sys#pathname-directory-separator))
 	 [set (##sys#string-append "\\/\\" pds)]
 	 [rx1 (string-append "^(.*[" set "])?([^" set "]+)(\\.([^" set ".]+))$")]
-	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")] 
-	 [string-match string-match] )
+	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")]
+	 [string-match string-match]
+	 [strip-pds
+	   (lambda (dir)
+	      (and dir
+		(if (string=? dir pds)
+		    dir
+		    (chop-pds dir pds) ) ) )] )
     (lambda (pn)
       (##sys#check-string pn 'decompose-pathname)
       (if (eq? (##sys#size pn) 0)
-	  (values #f #f #f) 
+	  (values #f #f #f)
 	  (let ([m (string-search rx1 pn)])
 	    (if m
-		(values (chop-pds (cadr m) pds) (caddr m) (car (cddddr m)))
+		(values (strip-pds (cadr m)) (caddr m) (car (cddddr m)))
 		(let ([m (string-search rx2 pn)])
 		  (if m
-		      (values (chop-pds (cadr m) pds) (caddr m) #f)
+		      (values (strip-pds (cadr m)) (caddr m) #f)
 		      (values pn #f #f) ) ) ) ) ) ) ) )
 
 (let ([decompose-pathname decompose-pathname])
-  (set! pathname-directory 
+  (set! pathname-directory
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	dir) ) )
@@ -197,15 +203,15 @@
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	file) ) )
-  (set! pathname-extension 
+  (set! pathname-extension
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	ext) ) )
-  (set! pathname-strip-directory 
+  (set! pathname-strip-directory
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	(make-pathname #f file ext) ) ) )
-  (set! pathname-strip-extension 
+  (set! pathname-strip-extension
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	(make-pathname dir file) ) ) )
@@ -224,8 +230,8 @@
 
 (define create-temporary-file
   (let ([getenv getenv]
-	[make-pathname make-pathname] 
-	[file-exists? file-exists?] 
+	[make-pathname make-pathname]
+	[file-exists? file-exists?]
 	[call-with-output-file call-with-output-file] )
     (lambda ext
       (let ([dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP"))]
@@ -234,7 +240,7 @@
 	(let loop ()
 	  (let* ([n (##sys#fudge 16)]
 		 [pn (make-pathname dir (##sys#string-append "t" (number->string n 16)) ext)] )
-	    (if (file-exists? pn) 
+	    (if (file-exists? pn)
 		(loop)
 		(call-with-output-file pn (lambda (p) pn)) ) ) ) ) ) ) )
 
@@ -248,7 +254,7 @@
 	(##sys#check-port port 'for-each-line)
 	(let loop ()
 	  (let ([ln (read-line port)])
-	    (unless (eof-object? ln) 
+	    (unless (eof-object? ln)
 	      (proc ln)
 	      (loop) ) ) ) ) ) ) )
 
@@ -262,7 +268,7 @@
         (with-input-from-file file (cut for-each-line thunk) ) ) )
   (let ((args (command-line-arguments)))
     (if (null? args)
-        ;; If no arguments, take from stdin, 
+        ;; If no arguments, take from stdin,
         (for-each-line thunk)
         ;; otherwise, hit each file named in argv.
         (for-each (lambda (arg) (file-iterator arg thunk)) args))))
