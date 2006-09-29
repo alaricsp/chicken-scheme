@@ -1615,13 +1615,17 @@ IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
       # ${NATIVE_CHANGELOG_FILE} is working on MSYS and MSVC, so we use it.
 
       NATIVE_PATH(CHANGELOG_FILE NATIVE_CHANGELOG_FILE)
-      ADD_CUSTOM_COMMAND(
-        OUTPUT ${CHANGELOG_FILE}
+
+      # Always build the ChangeLog unconditionally.  It doesn't take long,
+      # and we need to make sure it stays up to date.  There is no easy
+      # way to determine if the Darcs repository has changed since we last
+      # looked at it, so brute force is the workaround.
+
+      ADD_CUSTOM_TARGET(darcs-changelog ALL
         WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} -E echo "Generating ${CHANGELOG_FILE} from Darcs repository."
         COMMAND "${DARCS_EXE}" changes > ${NATIVE_CHANGELOG_FILE}
-        COMMENT "Generating ${CHANGELOG_FILE} from Darcs repository."
       )
-      ADD_CUSTOM_TARGET(darcs-changelog ALL DEPENDS ${CHANGELOG_FILE})
     ELSE(DARCS_WORKS)
       ECHO_TARGET(darcs-changelog "Darcs does not work.  Cannot create ChangeLog.")
     ENDIF(DARCS_WORKS)
@@ -1949,7 +1953,7 @@ ADD_CUSTOM_COMMAND(
   COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DCHANGELOG_FILE="${CHANGELOG_FILE}" -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake
 )
 ADD_CUSTOM_TARGET(dist DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.zip)
-ADD_DEPENDENCIES(dist boot-c)
+ADD_DEPENDENCIES(dist boot-c darcs-changelog)
 
 
 ####################################################################

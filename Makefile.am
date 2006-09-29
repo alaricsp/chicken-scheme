@@ -28,7 +28,7 @@ endif
 
 C_INSTALL_CC=\"$(CC)\"
 C_INSTALL_CXX=\"$(CXX)\"
-C_INSTALL_CFLAGS=\"-DHAVE_CHICKEN_CONFIG_H $(CFLAGS)\"
+C_INSTALL_CFLAGS=\"-DHAVE_CHICKEN_CONFIG_H -DC_NO_PIC_NO_DLL $(CFLAGS)\"
 C_INSTALL_SHARE_HOME=\"$(pkgdatadir)\"
 C_INSTALL_BIN_HOME=\"$(bindir)\"
 C_INSTALL_EGG_HOME=\"$(pkglibdir)/$(BINARY_VERSION)\"
@@ -49,7 +49,6 @@ CHICKEN = $(BOOTSTRAP_PATH)/chicken
 CSI = $(BOOTSTRAP_PATH)/csi
 CHICKEN_FLAGS = -quiet -no-trace -optimize-level 2 -include-path $(srcdir) $(CHICKEN_EXTRA_FLAGS)
 CHICKEN_UFLAGS = -quiet -no-trace -no-lambda-info -optimize-level 2 -unsafe -feature unsafe -include-path $(srcdir)
-AM_CPPFLAGS = -DC_NO_PIC_NO_DLL
 DOCFILES = ChangeLog README LICENSE
 
 # The following seems to be needed to make the `install-strip' target work with scripts, on some UNIXen

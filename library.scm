@@ -2958,6 +2958,14 @@ EOF
 
 (define ##sys#features '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
 
+(let ((check (lambda (f)
+	       (unless (eq? 'unknown f)
+		 (set! ##sys#features (cons (##sys#->feature-id f) ##sys#features))))))
+  (check (software-type))
+  (check (software-version))
+  (check (machine-type))
+  (check (machine-byte-order)) )
+
 (when (##sys#fudge 22) (set! ##sys#features (cons #:libffi ##sys#features)))
 (when (##sys#fudge 24) (set! ##sys#features (cons #:dload ##sys#features)))
 (when (##sys#fudge 28) (set! ##sys#features (cons #:ptables ##sys#features)))
@@ -3330,7 +3338,7 @@ EOF
 		    (if msga
 			(let ([msg (cadr msga)]
 			      [loc (and loca (cadr loca))] )
-			  (if loc
+			  (if (and loc (symbol? loc))
 			      (string-append "(" (##sys#symbol->qualified-string loc) ") " msg)
 			      msg) )
 			"<exn: has no `message' property>")
@@ -3963,7 +3971,7 @@ EOF
 	       (cond ((errmsg ex) =>
 		      (lambda (msg)
 			(let ([loc (errloc ex)])
-			  (when loc
+			  (when (and loc (symbol? loc))
 			    (display (string-append "(" (##sys#symbol->qualified-string loc) ") ") port) ) )
 			(display msg port) ) )
 		     (else 

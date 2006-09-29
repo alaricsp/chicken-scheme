@@ -3,7 +3,7 @@
 exec csi -s $0 "$@"
 |#
 
-;;; usage: makehtmldoc WIKIPATH OUTPATH [PAGE]
+;;; usage: makehtmldoc WIKIPATH WIKIEXTPATH OUTPATH [PAGE]
 
 (use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url)
 
@@ -52,13 +52,10 @@ faq
 EOF
 	"\n") )
 
-(define-values (*wikipath* *outpath* *only*) 
-  (match (command-line-arguments)
-    ((w o) (values w o #f))
-    ((w o p) (values w o p))
-    (_ (print "usage: makehtmldoc WIKIPATH OUTPUTPATH [PAGE]")
-       (exit 1) ) ) )
-
+(define-values (*wikipath* *wikiextpath* *outpath* *only*) 
+  (apply (lambda (w x #!optional (o ".") p) (values w x o p))
+	 (command-line-arguments)))
+	   
 (define-constant +index-page+ "The User's Manual")
 
 (define (clean-link lnk)
@@ -87,6 +84,13 @@ EOF
 	      all) ) ) )
 	 (_ (reverse (cons (substring data i) all))) ) ) ) ) )
 
+(define *extensions* (make-hash-table))
+
+;; Load all the extensions into "ext":
+(for-each
+ (lambda (f) (load-extensions-from-file *extensions* (make-pathname *wikiextpath* f)))
+ (directory *wikiextpath*))
+
 (for-each
  (lambda (p)
    (let ((po (string-downcase (make-pathname *outpath* (if (string=? p +index-page+) "index" p) "html"))))
@@ -94,8 +98,15 @@ EOF
      (with-output-to-file po
        (lambda ()
 	 (write-stream
-	  (wiki->html 
-	   (string->stream (convert-page p)) ) ) ) ) ) )
+	  (wiki->html
+	   (string->stream (convert-page p))
+	   stream-null
+	   ""
+	   (constantly stream-null)
+	   (constantly stream-null)
+	   (make-hash-table)
+	   (make-html-header 1)
+	   (constantly stream-null)
+	   (constantly #t)
+	   ext))) ) ) )
  (if *only* (list *only*) +pages+) )
-
-

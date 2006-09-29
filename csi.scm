@@ -514,7 +514,7 @@ EOF
 	     (lambda (lst) 
 	       (newline)
 	       (for-each (cut print* #\tab <>) lst) )
-	     (chop (map keyword->string ##sys#features) 10) )
+	     (chop (map keyword->string ##sys#features) 8) )
 	    (printf "~%~
                    Machine type:    \t~A ~A~%~
                    Software type:   \t~A~%~
