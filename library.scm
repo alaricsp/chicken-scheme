@@ -62,13 +62,14 @@
 
 #define C_close_file(p)       (C_fclose((C_FILEPTR)(C_port_file(p))), C_SCHEME_UNDEFINED)
 #define C_f64peek(b, i)       (C_temporary_flonum = ((double *)C_data_pointer(b))[ C_unfix(i) ], C_SCHEME_UNDEFINED)
-#define C_fetch_c_strlen(b, i) C_fix(strlen((char *)C_block_item(b, C_unfix(i))))
-#define C_peek_c_string(b, i, to, len) (C_memcpy(C_data_pointer(to), (char *)C_block_item(b, C_unfix(i)), C_unfix(len)), C_SCHEME_UNDEFINED)
+#define C_fetch_c_strlen(b, i) C_fix(strlen((C_char *)C_block_item(b, C_unfix(i))))
+#define C_peek_c_string(b, i, to, len) (C_memcpy(C_data_pointer(to), (C_char *)C_block_item(b, C_unfix(i)), C_unfix(len)), C_SCHEME_UNDEFINED)
 #define C_free_mptr(p, i)     (C_free((void *)C_block_item(p, C_unfix(i))), C_SCHEME_UNDEFINED)
 
 #define C_direct_continuation(dummy)  t1
 
 #define C_get_current_seconds(dummy)  (C_temporary_flonum = time(NULL), C_SCHEME_UNDEFINED)
+#define C_peek_c_string_at(ptr, i)    ((C_char *)(((C_char **)ptr)[ i ]))
 
 static C_word one_two_three = 123;
 EOF
@@ -2889,7 +2890,7 @@ EOF
     (lambda () sym) ) )
 
 (define (machine-byte-order)
-  (if (foreign-value "*((char *)&one_two_three) != 123" bool)
+  (if (foreign-value "*((C_char *)&one_two_three) != 123" bool)
       'big-endian 'little-endian) )
 
 (define software-version
@@ -3555,6 +3556,17 @@ EOF
 
 (define (##sys#poke-integer b i n) (##core#inline "C_poke_integer" b i n))
 (define (##sys#poke-double b i n) (##core#inline "C_poke_double" b i n))
+
+(define ##sys#peek-c-string-list 
+  (let ((fetch (foreign-lambda c-string "C_peek_c_string_at" c-pointer int)))
+    (lambda (ptr n)
+      (let loop ((i 0))
+	(if (and n (fx>= i n))
+	    '()
+	    (let ((s (fetch ptr i)))
+	      (if s
+		  (cons s (loop (fx+ i 1)))
+		  '() ) ) ) ) ) ) )
 
 (define (##sys#vector->closure! vec addr)
   (##core#inline "C_vector_to_closure" vec)

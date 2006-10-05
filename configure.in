@@ -2,7 +2,7 @@ dnl -*- mode: m4 -*-
 dnl Process this file with autoconf to produce a configure script.
 dnl (originally by Doug Quale)
 
-AC_INIT(chicken,2.433)
+AC_INIT(chicken,2.434)
 BINARY_VERSION=1
 AC_PREREQ(2.50)
 AC_CONFIG_SRCDIR([runtime.c])
@@ -263,6 +263,7 @@ if test x"${ptables}" = xyes; then
   CFLAGS="$CFLAGS -DC_ENABLE_PTABLES"
 fi
 
+CFLAGS="$CFLAGS -DC_NO_PIC_NO_DLL"
 AC_MSG_RESULT($CFLAGS)
 
 dnl Checking whether linker supports -export-dynamic.

@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2.433
+  Version 2.434
 
 
  1. Introduction:
@@ -27,13 +27,13 @@
 
  2. Installation:
 
-	First unzip the package ("unzip chicken.zip", "tar xvzf chicken.tar.gz" on UNIX or use
-	your favorite extraction program on Windows), then configure the system and generate
-	the binaries by invoking the "make" program.
+	First unzip the package ("unzip chicken-<version>.zip", "tar xvzf chicken-<version>.tar.gz" 
+        on UNIX or useyour favorite extraction program on Windows), then configure the system and 
+        generate the binaries by invoking the "make" program.
 
 	CHICKEN can be built either using the "CMake" <http://www.cmake.org> build system or
 	via the traditional UNIX "configure/make/make install". On Windows it is generally 
-	recommended touse CMake. CMake offers more features than the autoconf build and is
+	recommended to use CMake. CMake offers more features than the autoconf build and is
 	easier to maintain. See "INSTALL-CMake.txt" for detailed explanations about configuring,
 	building and installing CHICKEN.
 
@@ -101,6 +101,11 @@
 	  might be important for long running server applications). If you don't specify this option
 	  you can still enable symbol GC on a per-program basis by passing the `-:w' runtime option
 	  when running the program.
+
+	  If you want maximum performance, consider passing "--disable-apply-hook" to "configure",
+	  which will disable support for breakpoints, but speed up procedure invocation in safe
+	  code. Smaller binaries can be obtained by also giving "--disable-procedure-tables", but
+	  that means serialization (available separately) of procedures will not be available.
 
 	  A note for Mac OS X users: if you install the chicken runtime libraries (libchicken.*) 
           into a non-standard directory, the dynamic linker might not be able to find them when

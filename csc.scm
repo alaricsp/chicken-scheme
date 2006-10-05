@@ -295,7 +295,7 @@
       (cons* (string-append "/I" INSTALL_INCLUDE_HOME)
 	     "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
     )
-    (cons* "-DC_NO_PIC_NO_DLL" TARGET_CFLAGS (if include-dir (list "-I" include-dir) '())) 
+    (cons* TARGET_CFLAGS (if include-dir (list "-I" include-dir) '())) 
   ) 
 )
 

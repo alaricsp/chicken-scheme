@@ -1,3 +1,34 @@
+2.5rc1
+
+- Bugfixes
+- CHICKEN can now be built using CMake <http://www.cmake.org>, in fact CMake
+  is required to built CHICKEN from sources on Windows with the Microsoft 
+  tools
+- the whole build process has been cleaned up and simplified
+- the "easyffi" and "tinyclos" library units have been removed from the base
+  system and are now available as separate extensions
+- the deprecated "set-dispatch-read-syntax!" has been removed
+- Will Farr cleaned up the behaviour of number-type specific numeric operations
+  ("fx..."/"fp...") with respect to safe/unsafe mode
+- added "(finite? NUMBER)"
+- the "$" macro moved into its own separate extension
+- the values of "software-type", "software-version", "machine-type" and "machine-byte-order"
+  are now registered as features and can be tested using "cond-expand" or "#+"
+- all tools now support the "-release" option
+- chicken-setup: added "-test" option
+
+Special thanks to Brandon van Every, who put considerable effort into the
+CHICKEN build system and who ported it to CMake completely from scratch.
+The installation instructions and build file are extensively documented and may
+server as a tutorial for creating non-trivial software projects with CMake.
+Thanks, Branndon! Also thanks to Bill Hoffmann and Brad King from Kitware
+for their support.
+
+Many thanks to Peter Bex, Toby Butzon, Thomans Chust, John Cowan, Alejandro Forero Cuervo, 
+dgym, Alex Drummond, Mario Domenech Goulart, Kon Lovett, Benedikt Rosenau and Zbigniew 
+Szadkowski for reporting bugs, suggesting improvements and contributing fixes.
+
+
 2.41
 
 - Bugfixes galore

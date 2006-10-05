@@ -3,72 +3,31 @@
 exec csi -s $0 "$@"
 |#
 
-;;; usage: makehtmldoc WIKIPATH WIKIEXTPATH OUTPATH [PAGE]
+;;; usage: misc/makehtmldoc [PAGE]
 
 (use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url)
 
-(define +pages+ (string-split #<<EOF
-Accessing external objects
-Acknowledgements
-Additional files
-Basic mode of operation
-Bibliography
-Bugs and limitations
-C interface
-Callbacks
-Data representation
-Declarations
-Deviations from the standard
-Embedding
-Extensions to the standard
-Foreign type specifiers
-Interface to external functions and variables
-Locations
-Non standard macros and special forms
-Non standard read syntax
-Other support procedures
-Parameters
-Pattern matching
-Supported language
-The User's Manual
-Unit eval
-Unit extras
-Unit library
-Unit lolevel
-Unit match
-Unit posix
-Unit regex
-Unit srfi-1
-Unit srfi-13
-Unit srfi-14
-Unit srfi-18
-Unit srfi-4
-Unit tcp
-Unit utils
-Using the compiler
-Using the interpreter
-chicken-setup
-faq
-EOF
-	"\n") )
-
-(define-values (*wikipath* *wikiextpath* *outpath* *only*) 
-  (apply (lambda (w x #!optional (o ".") p) (values w x o p))
-	 (command-line-arguments)))
-	   
+(define-constant +outpath+ "html")
+(define-constant +extension-path+ "wiki-extensions")
 (define-constant +index-page+ "The User's Manual")
+
+(define *pages* (directory "wiki"))
+(define *only* (:optional (command-line-arguments) #f))
+	   
+(define (hyphen s)
+  (string-substitute " " "-" s #t) )
 
 (define (clean-link lnk)
   (cond ((or (string-prefix? "toc:" lnk) (string-prefix? "tags:" lnk))
 	 lnk)
 	((string-ci=? lnk +index-page+) "index.html")
-	((any (lambda (f) (string-ci=? f lnk)) +pages+)
-	 (string-downcase (string-append (url-encode lnk) ".html|" lnk) ) )
+	((any (lambda (f) (string-ci=? f lnk)) *pages*)
+	 (string-append (hyphen (string-downcase lnk)) ".html|" lnk) )
 	((string-prefix? "http:" lnk) lnk)
 	(else (string-append "http://galinha.ucpel.tche.br/" lnk) ) ) )
 
 (define (convert-page page)
-  (let ((data (read-all (make-pathname *wikipath* page))))
+  (let ((data (read-all (make-pathname "wiki" page))))
     (string-concatenate
      (let loop ((i 0) (all '()))
        (match (string-search-positions "\\[\\[([^]]+)\\]\\]" data i)
@@ -84,19 +43,23 @@ EOF
 	      all) ) ) )
 	 (_ (reverse (cons (substring data i) all))) ) ) ) ) )
 
-(define *extensions* (make-hash-table))
+(define *loaded-extensions* (make-hash-table))
 
-;; Load all the extensions into "ext":
 (for-each
- (lambda (f) (load-extensions-from-file *extensions* (make-pathname *wikiextpath* f)))
- (directory *wikiextpath*))
+ (cut load-extensions-from-file *loaded-extensions* <>)
+ (glob (conc +extension-path+ "/*")) )
 
 (for-each
  (lambda (p)
-   (let ((po (string-downcase (make-pathname *outpath* (if (string=? p +index-page+) "index" p) "html"))))
+   (let* ((pagename p)
+	  (po (hyphen (string-downcase 
+		       (make-pathname
+			+outpath+
+			(if (string=? pagename +index-page+) "index" pagename) "html")))))
      (print p " -> " po " ...")
      (with-output-to-file po
        (lambda ()
+	 (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename)
 	 (write-stream
 	  (wiki->html
 	   (string->stream (convert-page p))
@@ -108,5 +71,6 @@ EOF
 	   (make-html-header 1)
 	   (constantly stream-null)
 	   (constantly #t)
-	   ext))) ) ) )
- (if *only* (list *only*) +pages+) )
+	   *loaded-extensions*) )
+	 (printf "~%</body></html>") ) ) ) )
+ (if *only* (list *only*) *pages*) )

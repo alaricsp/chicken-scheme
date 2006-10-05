@@ -1648,45 +1648,44 @@ ENDIF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
 
 IF(EXISTS html/index.html)
   SET(HTMLDOC_FILES 
-    "html/accessing external objects.html"
+    html/accessing-external-objects.html
     html/acknowledgements.html
-    "html/additional files.html"
-    "html/basic mode of operation.html"
+    html/basic-mode-of-operation.html
     html/bibliography.html
-    "html/bugs and limitations.html"
-    "html/c interface.html"
+    html/bugs-and-limitations.html
+    html/c-interface.html
     html/callbacks.html
-    "html/data representation.html"
+    html/data-representation.html
     html/declarations.html
-    "html/deviations from the standard.html"
+    html/deviations-from-the-standard.html
     html/embedding.html
-    "html/extensions to the standard.html"
-    "html/foreign type specifiers.html"
-    "html/interface to external functions and variables.html"
+    html/extensions-to-the-standard.html
+    html/foreign-type-specifiers.html
+    html/interface-to-external-functions-and-variables.html
     html/locations.html
-    "html/non standard macros and special forms.html"
-    "html/non standard read syntax.html"
-    "html/other support procedures.html"
+    html/non-standard-macros-and-special-forms.html
+    html/non-standard-read-syntax.html
+    html/other-support-procedures.html
     html/parameters.html
-    "html/pattern matching.html"
-    "html/supported language.html"
+    html/pattern-matching.html
+    html/supported-language.html
     html/index.html
-    "html/unit eval.html"
-    "html/unit extras.html"
-    "html/unit library.html"
-    "html/unit lolevel.html"
-    "html/unit match.html"
-    "html/unit posix.html"
-    "html/unit regex.html"
-    "html/unit srfi-1.html"
-    "html/unit srfi-13.html"
-    "html/unit srfi-14.html"
-    "html/unit srfi-18.html"
-    "html/unit srfi-4.html"
-    "html/unit tcp.html"
-    "html/unit utils.html"
-    "html/using the compiler.html"
-    "html/using the interpreter.html"
+    html/unit-eval.html
+    html/unit-extras.html
+    html/unit-library.html
+    html/unit-lolevel.html
+    html/unit-match.html
+    html/unit-posix.html
+    html/unit-regex.html
+    html/unit-srfi-1.html
+    html/unit-srfi-13.html
+    html/unit-srfi-14.html
+    html/unit-srfi-18.html
+    html/unit-srfi-4.html
+    html/unit-tcp.html
+    html/unit-utils.html
+    html/using-the-compiler.html
+    html/using-the-interpreter.html
     html/chicken-setup.html
     html/faq.html)
 ENDIF(EXISTS html/index.html)
