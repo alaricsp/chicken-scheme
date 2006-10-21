@@ -3,5 +3,5 @@ set -x
 libtoolize --force --copy --automake
 aclocal
 autoheader
-automake --foreign -a -f --copy
+automake --foreign -a --copy
 autoconf

@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2.434
+  Version 2.5
 
 
  1. Introduction:
@@ -115,6 +115,16 @@
 	  To remove CHICKEN from your file-system, enter (probably as root):
 
 	    make uninstall
+
+	Windows binary distribution:
+
+	  Unpack chicken-<version>-msvc.zip into "C:\Program Files\" and add "C:\Program Files\bin"
+	  into your %PATH%.
+
+ 	Mac OS X binary distribution:
+
+	  Unpack chicken-<version>-osx-ppc.dmg and install the contained ".pkg" file. It will place
+	  binaries, libraries and support-files under "/usr".
 
 
  3. Usage:

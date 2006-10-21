@@ -1,4 +1,4 @@
-2.5rc1
+2.5
 
 - Bugfixes
 - CHICKEN can now be built using CMake <http://www.cmake.org>, in fact CMake
@@ -17,11 +17,11 @@
 - all tools now support the "-release" option
 - chicken-setup: added "-test" option
 
-Special thanks to Brandon van Every, who put considerable effort into the
+Special thanks to Brandon Van Every, who put considerable effort into the
 CHICKEN build system and who ported it to CMake completely from scratch.
 The installation instructions and build file are extensively documented and may
-server as a tutorial for creating non-trivial software projects with CMake.
-Thanks, Branndon! Also thanks to Bill Hoffmann and Brad King from Kitware
+serve as a tutorial for creating non-trivial software projects with CMake.
+Thanks, Brandon! Also thanks to Bill Hoffmann and Brad King from Kitware
 for their support.
 
 Many thanks to Peter Bex, Toby Butzon, Thomans Chust, John Cowan, Alejandro Forero Cuervo, 

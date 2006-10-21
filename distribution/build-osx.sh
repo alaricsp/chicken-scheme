@@ -36,7 +36,6 @@ cp /tmp/chicken/*.exports files/usr/share/chicken
 cp /tmp/chicken/chicken.h /tmp/chicken/chicken-config.h /tmp/chicken/chicken-defaults.h files/usr/include
 cp /tmp/chicken/chicken-ffi-macros.scm /tmp/chicken/chicken-more-macros.scm files/usr/share/chicken
 cp /tmp/chicken/*.1 files/usr/man/man1
-# cp ???/chicken.html files/usr/share/chicken/doc
 cp -r /tmp/chicken/html /tmp/chicken/README ../ChangeLog /tmp/chicken/NEWS files/usr/share/chicken/doc
 #rm -fr /tmp/chicken
 

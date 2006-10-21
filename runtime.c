@@ -276,7 +276,7 @@ static C_TLS int timezone;
 #define C_limit_fixnum(n)            (n)
 #endif
 
-#define C_pte(name)                  pt[ i ].id = #name; pt[ i++ ].ptr = name;
+#define C_pte(name)                  pt[ i ].id = #name; pt[ i++ ].ptr = (void *)name;
 
 
 /* Type definitions: */
@@ -725,7 +725,7 @@ static C_PTABLE_ENTRY *create_initial_ptable()
   int i = 0;
 
   if(pt == NULL)
-    panic(C_text("out of memory - can not create initiaal ptable"));
+    panic(C_text("out of memory - can not create initial ptable"));
 
   C_pte(termination_continuation);
   C_pte(callback_return_continuation);
@@ -7957,7 +7957,7 @@ void C_ccall C_build_platform(C_word c, C_word closure, C_word k)
   s = C_string2(&a, "msvc");
 #elif defined(__SUNPRO_C)
   a = C_alloc(2 + C_bytestowords(3));
-  s = C_string(&a, "sun");
+  s = C_string2(&a, "sun");
 #elif defined(__MINGW32__)
   a = C_alloc(2 + C_bytestowords(7));
   s = C_string2(&a, "mingw32");

@@ -1055,6 +1055,7 @@ EOF
 		 (match (string-match "http://([^/]+)/(.+)" filename)
 		   ((_ host path)
 		    (parse-host host #f)
+		    (set! *dont-ask* #t)
 		    (conc "/" path) )
 		   (_ filename)) )
 		(loop more) ) ) )

@@ -473,7 +473,7 @@ MACRO(GET_CHICKEN_VERSION absolute_exe_name canonized)
     ELSE("${exe_output}" MATCHES ".*(Felix L[.] Winkelmann).*")
       # This is not a banner, but a plain BUILDNUMBER.
       # Parse the BUILDNUMBER into version and build.
-      SET(VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9a-zA-Z]+)$")
+      SET(VERSION_BUILD_REGEX "^([0-9]+)[.]([0-9]+).*$")
       STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\1"
         version ${exe_output})
       STRING(REGEX REPLACE ${VERSION_BUILD_REGEX} "\\2"
