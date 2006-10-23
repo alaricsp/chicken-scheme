@@ -181,13 +181,14 @@ static C_TLS int timezone;
 #define MUTATION_STACK_GROWTH          1024
 
 #define FILE_INFO_SIZE                 7
-#define FLONUM_PRINT_PRECISION         15
 
-#ifdef C_SIXTY_FOUR
-# define WORDS_PER_FLONUM              2
+#ifdef C_DOUBLE_IS_32_BITS
+# define FLONUM_PRINT_PRECISION         7
 #else
-# define WORDS_PER_FLONUM              4
+# define FLONUM_PRINT_PRECISION         15
 #endif
+
+#define WORDS_PER_FLONUM              C_SIZEOF_FLONUM
 
 #define MAXIMAL_NUMBER_OF_COMMAND_LINE_ARGUMENTS 32
 
@@ -2279,14 +2280,16 @@ C_regparm C_word C_fcall C_flonum(C_word **ptr, double n)
     *p0;
 
 #ifndef C_SIXTY_FOUR
+#ifndef C_DOUBLE_IS_32_BITS
   /* Align double on 8-byte boundary: */
   if(aligned8(p)) ++p;
 #endif
+#endif
 
   p0 = p;
-  *(p++) = C_FLONUM_TYPE | sizeof(double);
+  *(p++) = C_FLONUM_TAG;
   *((double *)p) = n;
-  *ptr = p + sizeof(double) / sizeof(C_word);
+  *ptr = p + C_SIZEOF_FLONUM;
   return (C_word)p0;
 }
 
@@ -2302,14 +2305,16 @@ C_regparm C_word C_fcall C_number(C_word **ptr, double n)
     return C_fix(n);
 
 #ifndef C_SIXTY_FOUR
+#ifndef C_DOUBLE_IS_32_BITS
   /* Align double on 8-byte boundary: */
   if(aligned8(p)) ++p;
 #endif
+#endif
 
   p0 = p;
-  *(p++) = C_FLONUM_TYPE | sizeof(double);
+  *(p++) = C_FLONUM_TAG;
   *((double *)p) = n;
-  *ptr = p + sizeof(double) / sizeof(C_word);
+  *ptr = p + C_SIZEOF_FLONUM;
   return (C_word)p0;
 }
 

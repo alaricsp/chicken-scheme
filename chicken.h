@@ -331,7 +331,11 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # define C_STRING_TYPE            (0x02000000 | C_BYTEBLOCK_BIT)
 # define C_PAIR_TYPE              (0x03000000)
 # define C_CLOSURE_TYPE           (0x04000000 | C_SPECIALBLOCK_BIT)
-# define C_FLONUM_TYPE            (0x05000000 | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
+# ifdef C_DOUBLE_IS_32_BITS
+#  define C_FLONUM_TYPE            (0x05000000 | C_BYTEBLOCK_BIT)
+# else
+#  define C_FLONUM_TYPE            (0x05000000 | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
+# endif
 # define C_UNUSED_TYPE            (0x06000000)
 # define C_PORT_TYPE              (0x07000000 | C_SPECIALBLOCK_BIT)
 # define C_STRUCTURE_TYPE         (0x08000000)
@@ -366,7 +370,11 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # define C_SIZEOF_SYMBOL          3
 #endif
 #define C_SIZEOF_INTERNED_SYMBOL(n) (C_SIZEOF_SYMBOL + C_SIZEOF_BUCKET + C_SIZEOF_STRING(n))
-#define C_SIZEOF_FLONUM           4
+#ifdef C_DOUBLE_IS_32_BITS
+# define C_SIZEOF_FLONUM           2
+#else
+# define C_SIZEOF_FLONUM           4
+#endif
 #define C_SIZEOF_POINTER          2
 #define C_SIZEOF_TAGGED_POINTER   3
 #define C_SIZEOF_SWIG_POINTER     3
@@ -381,12 +389,7 @@ int strncasecmp(const char *one, const char *two, size_t n);
 #define C_TAGGED_POINTER_TAG      (C_TAGGED_POINTER_TYPE | (C_SIZEOF_TAGGED_POINTER - 1))
 #define C_SWIG_POINTER_TAG        (C_SWIG_POINTER_TYPE | (C_wordstobytes(C_SIZEOF_SWIG_POINTER - 1)))
 #define C_SYMBOL_TAG              (C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1))
-
-#ifdef C_SIXTY_FOUR
-# define C_FLONUM_TAG             (C_FLONUM_TYPE | C_wordstobytes(1))
-#else
-# define C_FLONUM_TAG             (C_FLONUM_TYPE | C_wordstobytes(2))
-#endif
+#define C_FLONUM_TAG             (C_FLONUM_TYPE | sizeof(double))
 
 #ifdef C_SIXTY_FOUR
 # define C_word                   long

@@ -1081,5 +1081,6 @@ EOF
   (call/cc
    (lambda (return)
      (set! *abort-yes-or-no* return)
-     (main (command-line-arguments)) ) )
+     (main (append (string-split (or (getenv "CHICKEN_SETUP_OPTIONS") ""))
+		   (command-line-arguments) ) ) ) )
   (rmtmpdir) )
