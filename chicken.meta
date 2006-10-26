@@ -88,7 +88,6 @@
 "LICENSE"
 "lolevel.scm"
 "Makefile.am"
-"makefile.vc"
 "match.scm"
 "misc/dbgconfigure"
 "misc/mini-runtime/lib.scm"
