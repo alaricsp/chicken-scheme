@@ -247,7 +247,9 @@ fi
 
 dnl Check sizeof(double)
 AC_MSG_CHECKING([sizeof(double)])
-AC_TRY_RUN([int main() { return sizeof(double) == 2; }], AC_DEFINE(C_DOUBLE_IS_32_BITS, 1, [define if sizeof(double) == 2]))
+AC_TRY_RUN([int main() { return sizeof(double) == 2; }], 
+AC_MSG_RESULT([sizeof(double) is not 2])
+AC_MSG_RESULT([sizeof(double) is 2], AC_DEFINE(C_DOUBLE_IS_32_BITS,$SMALLDOUBLES,[define if sizeof(double) == 2])))
 
 dnl If we're using gcc, try to find better CFLAGS than the default -g -O2.
 AC_MSG_CHECKING([for better CFLAGS])

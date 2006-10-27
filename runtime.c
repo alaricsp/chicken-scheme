@@ -2289,7 +2289,7 @@ C_regparm C_word C_fcall C_flonum(C_word **ptr, double n)
   p0 = p;
   *(p++) = C_FLONUM_TAG;
   *((double *)p) = n;
-  *ptr = p + C_SIZEOF_FLONUM;
+  *ptr = p + sizeof(double) / sizeof(C_word);
   return (C_word)p0;
 }
 
@@ -2314,7 +2314,7 @@ C_regparm C_word C_fcall C_number(C_word **ptr, double n)
   p0 = p;
   *(p++) = C_FLONUM_TAG;
   *((double *)p) = n;
-  *ptr = p + C_SIZEOF_FLONUM;
+  *ptr = p + sizeof(double) / sizeof(C_word);
   return (C_word)p0;
 }
 

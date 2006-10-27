@@ -422,6 +422,9 @@ EOF
   )
   (exit) )
 
+(define (make-setup-info-pathname fn #!optional (rpath (repository-path)))
+  (make-pathname rpath fn setup-file-extension) )
+
 (define program-path (make-parameter *install-bin-path*))
 
 (define installation-prefix
@@ -454,7 +457,7 @@ EOF
 		,@info)) )
       (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
       (let ((sid (->string id)))
-	(with-output-to-file (make-pathname (repo-path) sid setup-file-extension)
+	(with-output-to-file (make-setup-info-pathname sid (repo-path))
 	  (cut pp info) ) ) ) ) )
 
 (define (fix-exports id info)
@@ -580,12 +583,12 @@ EOF
 			   to) )
 		       files) ) )
       (and-let* ((docs (assq 'documentation info)))
-	(print "\n* The following documentation files have been installed in " (doc-index) ":")
+	(print "\n* Installing documentation files in " (pathname-directory (doc-index) )":")
 	(for-each (cut print "  * " <>) (cdr docs)) 
 	(newline)
 	(set! *rebuild-doc-index* #t))
       (and-let* ((exs (assq 'examples info)))
-	(print "\n* The following example files have been installed in " *example-directory* ":")
+	(print "\n* Installing example files in " *example-directory* ":")
 	(for-each 
 	 (lambda (f)
 	   (copy-file f (make-pathname *example-directory* f))
@@ -645,8 +648,7 @@ EOF
 	   (cdr files) ) )
 	(print "no files to uninstall") )
     (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
-    (let ((sfile (make-pathname (repository-path) (->string ext) setup-file-extension)))
-      (delete-file* sfile) ) ) )
+    (delete-file* (make-setup-info-pathname (->string ext)))))
 
 (define (repo-path)
   (let ((p (repository-path)))
@@ -845,6 +847,16 @@ EOF
 (define (doc-index)
   (make-pathname (repo-path) "index.html"))
 
+(define (extension-documented? rpath fn)
+  (let ([pn (make-setup-info-pathname fn rpath)])
+    (and (file-exists? pn)
+	 (with-input-from-file pn
+	   (lambda ()
+	     (not (not (alist-ref 'documentation (read) eq?))) ) ) ) ) )
+
+(define (delete-undocumented-extensions rpath lst)
+  (filter (cut extension-documented? rpath <>) lst) )
+
 (define (build-doc-index)
   (let ((rpath (repository-path))
 	(hn (get-host-name)))
@@ -874,9 +886,11 @@ EOF
 		 (and-let* ((r (assq 'release info)))
 		   (printf " Release: ~a" (cadr r)))
 		 (display "</td></tr>\n") ) ) )
-	   (sort (delete-duplicates
-		  (grep "^[^.].*\\.*$" (map pathname-file (directory rpath))) string=?)
-		 string<?) )
+	   (delete-undocumented-extensions 
+	    rpath
+	    (sort (delete-duplicates
+		   (grep "^[^.].*\\.*$" (map pathname-file (directory rpath))) string=?)
+		  string<?) ) )
 	  (display "</table></center></body></font></html>\n") ) ) ) ) )
 
 (define (format-string str cols #!optional right (padc #\space))
