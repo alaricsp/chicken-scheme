@@ -666,18 +666,6 @@ EOF
   (##sys#stat fname #t 'symbolic-link?)
   (foreign-value "C_islink" bool) )
 
-(define file-position
-  (lambda (port)
-    (let ([pos (cond [(port? port) 
-		      (if (eq? (##sys#slot port 7) 'stream)
-			  (##core#inline "C_ftell" port)
-			  -1) ]
-		     [(fixnum? port) (##core#inline "C_lseek" port 0 _seek_cur)]
-		     [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
-      (when (fx< pos 0)
-	(posix-error #:file-error 'file-position "can not retrieve file position of port" port) )
-      pos) ) )
-
 (define set-file-position!
   (lambda (port pos . whence)
     (let ([whence (if (pair? whence) (car whence) _seek_set)])
@@ -690,6 +678,20 @@ EOF
 		    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
 		    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
 	(posix-error #:file-error 'set-file-position! "can not set file position" port pos) ) ) ) )
+
+(define file-position
+  (getter-with-setter
+   (lambda (port)
+    (let ([pos (cond [(port? port) 
+		      (if (eq? (##sys#slot port 7) 'stream)
+			  (##core#inline "C_ftell" port)
+			  -1) ]
+		     [(fixnum? port) (##core#inline "C_lseek" port 0 _seek_cur)]
+		     [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
+      (when (fx< pos 0)
+	(posix-error #:file-error 'file-position "can not retrieve file position of port" port) )
+      pos) )
+   set-file-position!) )
 
 
 ;;; Directory stuff:
@@ -1145,8 +1147,6 @@ EOF
       (when (fx< (##core#inline "C_chown" (##sys#make-c-string (##sys#expand-home-path fn)) uid gid) 0)
         (posix-error #:file-error 'change-file-owner "can not change file owner" fn uid gid) ) ) )
   
-  (define current-user-id (foreign-lambda int "C_getuid"))
-  (define current-group-id (foreign-lambda int "C_getgid"))
   (define current-effective-user-id (foreign-lambda int "C_geteuid"))
   (define current-effective-group-id (foreign-lambda int "C_getegid"))
   
@@ -1156,12 +1156,22 @@ EOF
         (##sys#update-errno)
         (##sys#error 'set-user-id! "can not set user ID" id) ) ) )
   
+  (define current-user-id
+    (getter-with-setter
+     (foreign-lambda int "C_getuid")
+     set-user-id!) )
+
   (define set-group-id!
     (lambda (id)
       (when (fx< (##core#inline "C_setgid" id) 0)
         (##sys#update-errno)
         (##sys#error 'set-user-id! "can not set group ID" id) ) ) )
   
+  (define current-group-id
+    (getter-with-setter
+     (foreign-lambda int "C_getgid")
+     set-group-id!) )
+
   (define-foreign-variable _r_ok int "R_OK")
   (define-foreign-variable _w_ok int "W_OK")
   (define-foreign-variable _x_ok int "X_OK")
@@ -1183,21 +1193,23 @@ EOF
         (##sys#error 'create-session "can not create session") )
       a) )
   
-  (define (process-group-id pid)
-    (##sys#check-exact pid 'process-group-id)
-    (let ([a (##core#inline "C_getpgid" pid)])
-      (when (fx< a 0)
-        (##sys#update-errno)
-        (##sys#error 'process-group-id "can not retrieve process group ID" pid) )
-      a) )
-  
   (define (set-process-group-id! pid pgid)
     (##sys#check-exact pid 'set-process-group-id!)
     (##sys#check-exact pgid 'set-process-group-id!)
     (when (fx< (##core#inline "C_setpgid" pid pgid) 0)
       (##sys#update-errno)
       (##sys#error 'set-process-group-id! "can not set process group ID" pid pgid) ) )
-  
+
+  (define process-group-id
+    (getter-with-setter
+     (lambda (pid)
+       (##sys#check-exact pid 'process-group-id)
+       (let ([a (##core#inline "C_getpgid" pid)])
+	 (when (fx< a 0)
+	   (##sys#update-errno)
+	   (##sys#error 'process-group-id "can not retrieve process group ID" pid) )
+      a) )
+     set-process-group-id!) )
   
   ;;; Hard and symbolic links:
   

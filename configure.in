@@ -15,6 +15,9 @@ AC_CANONICAL_HOST
 dnl Use ICC to build?
 AC_ARG_WITH(icc, [  --with-icc              build with Intel's C compiler],[CC="icc"; CFLAGS="-Os -Zp2"])
 
+dnl Use SunPro CC to build?
+AC_ARG_WITH(suncc, [  --with-suncc            build with Sun's C compiler],[CC="suncc"; SUNCC=1])
+
 dnl Use pregexp regular expression package?
 AC_ARG_WITH(pregexp, [  --with-pregexp          use pregexp instead of libc regex],[PREGEXP=1])
 
@@ -273,12 +276,14 @@ CFLAGS="$CFLAGS -DC_NO_PIC_NO_DLL"
 AC_MSG_RESULT($CFLAGS)
 
 dnl Checking whether linker supports -export-dynamic.
-AC_MSG_CHECKING([whether the linker supports -export-dynamic])
-OLDLDFLAGS=$LDFLAGS
-LDFLAGS="$LDFLAGS -export-dynamic"
-AC_TRY_RUN(main(){exit(0);},ac_export_dynamic=yes,ac_export_dynamic=no,ac_export_dynamic=no)
-test $ac_export_dynamic = yes|| LDFLAGS=$OLDLDFLAGS
-AC_MSG_RESULT($ac_export_dynamic)
+if test -z "$SUNCC"; then
+  AC_MSG_CHECKING([whether the linker supports -export-dynamic])
+  OLDLDFLAGS=$LDFLAGS
+  LDFLAGS="$LDFLAGS -export-dynamic"
+  AC_TRY_RUN(main(){exit(0);},ac_export_dynamic=yes,ac_export_dynamic=no,ac_export_dynamic=no)
+  test $ac_export_dynamic = yes|| LDFLAGS=$OLDLDFLAGS
+  AC_MSG_RESULT($ac_export_dynamic)
+fi
 
 dnl Checking for additional C flags for Mac OS X.
 case "$host_os" in

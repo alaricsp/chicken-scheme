@@ -206,7 +206,7 @@
 ;   foldable -> <boolean>                    If true: variable names foldable standard-binding
 ;   boxed -> <boolean>                       If true: variable has to be boxed after closure-conversion
 ;   contractable -> <boolean>                If true: variable names contractable procedure
-;   inlineable -> <boolean>                  If true: variable names potentially inlinable procedure
+;   inlinable -> <boolean>                  If true: variable names potentially inlinable procedure
 ;   collapsable -> <boolean>                 If true: variable refers to collapsable constant
 ;   removable -> <boolean>                   If true: variable is not used
 ;   replacable -> <variable>                 Variable can be replaced by another variable
@@ -1645,7 +1645,7 @@
 
 	 ;; Make 'contractable, if it has a procedure as known value, has only one use and one call-site and
 	 ;;  if the lambda has no free non-global variables or is an internal lambda. Make 'inlinable if
-	 ;;  use/call count is 1:
+	 ;;  use/call count is not 1:
 	 (when value
 	   (let ((valparams (node-parameters value)))
 	     (when (and (eq? '##core#lambda (node-class value))

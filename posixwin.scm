@@ -473,6 +473,7 @@ static int pipe_write(int hpipe, void* buf, int count)
 static int pipe_read(int hpipe)
 {
     DWORD done = 0;
+    DWORD err;
     /* TODO:
     if (!pipe_ready(hpipe))
 	go_to_sleep;
@@ -484,7 +485,11 @@ static int pipe_read(int hpipe)
 	else
 	    return -1;
     }
-    set_errno(GetLastError());
+    err = GetLastError();
+
+    if(err == ERROR_BROKEN_PIPE) return -2;
+    else set_errno(err);
+
     return 0;
 }
 static int pipe_ready(int hpipe)
@@ -1377,14 +1382,21 @@ EOF
 	    (values
 	      (make-input-port
 		(lambda () ; read
-		  (case (##core#inline "C_pipe_read" h1)
-		    [(-1) #!eof]
-		    [(0) (##sys#error 'process "could not read from pipe")]
-		    [(1) _rdbuf]) )
+		  (if h1
+		      (case (##core#inline "C_pipe_read" h1)
+			[(-2) 
+			 ;; hack to avoid exception on EPIPE'd process
+			 (set! h1 #f)
+			 (set! h0 #f)
+			 #!eof]
+			[(-1) #!eof]
+			[(0) (##sys#error 'process "could not read from pipe")]
+			[(1) _rdbuf])
+		      #!eof) )
 		(lambda () ; ready?
-		  (##core#inline "C_pipe_ready" h1) )
+		  (and h1 (##core#inline "C_pipe_ready" h1) ) )
 		(lambda () ; close
-		  (close-handle h1) )
+		  (when h1 (close-handle h1) ) )
 		;(lambda () ; peek
 		;)
 		)
@@ -1393,13 +1405,13 @@ EOF
 		  (unless (##core#inline "C_pipe_write" h0 s (string-length s))
 		    (##sys#error 'process "could not write to pipe") ) )
 		(lambda () ; close
-		  (close-handle h0) )
+		  (when h0 (close-handle h0) ) )
 		)
 	      proc)
 	    (begin
 	      (##sys#update-errno)
-	      (C_close_handle h0)
-	      (C_close_handle h1)
+	      (close-handle h0)
+	      (close-handle h1)
 	      (##sys#error 'process "could not create process")))
 	  )
 	(##sys#error 'process "could not redirect I/O") ) ) ) )

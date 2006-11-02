@@ -39,7 +39,7 @@
   (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
 	  setup-verbose-flag setup-install-flag installation-prefix find-library find-header
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
-	  test-compile copy-file run-verbose) )
+	  test-compile try-compile copy-file run-verbose) )
 
 #>
 #ifndef C_USE_C_DEFAULTS
@@ -662,7 +662,7 @@ EOF
 	  (error "can not create directory: a file with the same name already exists") )
 	(create-directory dir) ) ) )
 
-(define (test-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
+(define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
   (let* ((fname (create-temporary-file "c"))
 	 (oname (pathname-replace-extension fname "o"))
 	 (r (begin
@@ -684,6 +684,8 @@ EOF
     (when verb (print (if (zero? r) "succeeded." "failed.")))
     (system (sprintf "~A ~A" *remove-command* (quotewrap fname)))
     (zero? r) ) )
+
+(define test-compile try-compile)
 
 (define (find-library name proc)
   (test-compile 

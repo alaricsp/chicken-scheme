@@ -132,7 +132,8 @@ EOF
 		     [else (xerr to)] ) ]
 	      [(or (##sys#bytevector? from) (string? from))
 	       (let ([nfrom (##sys#size from)])
-		 (cond [(##sys#pointer? to) (memmove2 to from (checkn (:optional n nfrom) nfrom))]
+		 (cond [(or (##sys#pointer? to) (##sys#locative? to))
+			(memmove2 to from (checkn (:optional n nfrom) nfrom))]
 		       [(or (##sys#bytevector? to) (string? to))
 			(memmove4 to from (checkn2 (:optional n nfrom) nfrom (##sys#size to))) ]
 		       [else (xerr to)] ) ) ]

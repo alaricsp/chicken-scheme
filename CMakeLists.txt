@@ -1053,6 +1053,13 @@ ENDIF(DISABLE_APPLY_HOOK)
 
 OPTION(ENABLE_DEBUG_BUILD "select debugging options for C compiler" FALSE)
 
+IF(MSVC)
+  OPTION(USE_DYNAMIC_C_RUNTIME "use dynamically linked multithreaded C runtime" FALSE)
+  IF(USE_DYNAMIC_C_RUNTIME)
+    ADD_DEFINITIONS(/MD)
+  ENDIF(USE_DYNAMIC_C_RUNTIME)
+ENDIF(MSVC)
+
 
 ####################################################################
 #  CHICKEN_SPEC                                                    #

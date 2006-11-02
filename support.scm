@@ -440,7 +440,7 @@
   (let ((names '((captured . cpt) (assigned . set) (boxed . box) (global . glo) (assigned-locally . stl)
 		 (contractable . con) (standard-binding . stb) (foldable . fld) (simple . sim) (inlinable . inl)
 		 (side-effecting . sef) (collapsable . col) (removable . rem) (constant . con)
-		 (undefined . und) (replacing . rpg) (unused . uud) (extended-binding . xtb)
+		 (undefined . und) (replacing . rpg) (unused . uud) (extended-binding . xtb) (inline-export . ilx)
 		 (customizable . cst) (has-unused-parameters . hup) (boxed-rest . bxr) ) ) )
     (lambda (db)
       (##sys#hash-table-for-each
@@ -455,7 +455,7 @@
 		 (begin
 		   (case (caar es)
 		     ((captured assigned boxed global contractable standard-binding foldable assigned-locally
-		       side-effecting collapsable removable undefined replacing unused simple inlinable
+		       side-effecting collapsable removable undefined replacing unused simple inlinable inline-export
 		       has-unused-parameters extended-binding customizable constant boxed-rest)
 		      (printf "\t~a" (cdr (assq (caar es) names))) )
 		     ((unknown)
