@@ -1053,6 +1053,8 @@ ENDIF(DISABLE_APPLY_HOOK)
 
 OPTION(ENABLE_DEBUG_BUILD "select debugging options for C compiler" FALSE)
 
+# Should this be on by default?
+
 IF(MSVC)
   OPTION(USE_DYNAMIC_C_RUNTIME "use dynamically linked multithreaded C runtime" FALSE)
   IF(USE_DYNAMIC_C_RUNTIME)

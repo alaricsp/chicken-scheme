@@ -1,5 +1,5 @@
 #!/bin/sh
-#| -*- Scheme -*-
+#| -*- Hen -*-
 exec chicken-setup -s $0 "$@"
 |#
 ;;;; nextbuild.setup - Bump version-number

@@ -492,7 +492,7 @@ EOF
     (unless *keep-stuff* (run (rm ,so)) ) ) )
 
 (define (compute-tmpdir fname)
-  (if (string=? "egg-dir" (pathname-extension fname))
+  (if (equal? "egg-dir" (pathname-extension fname))
       fname
       (string-append fname "-dir") ) )
 
@@ -561,7 +561,7 @@ EOF
 
 (define (install-extension id files #!optional (info '()))
   (define (soify f)
-    (if (string=? (pathname-extension f) "so")
+    (if (equal? (pathname-extension f) "so")
 	(pathname-replace-extension f ##sys#load-dynamic-extension)
 	f) )
   (when (setup-install-flag)
@@ -577,7 +577,7 @@ EOF
 	   (dests (map (lambda (f)
 			 (let ((from (if (pair? f) (car f) f))
 			       (to (make-dest-pathname rpath f)) )
-			   (when (and (not *windows*) (string=? "so" (pathname-extension to)))
+			   (when (and (not *windows*) (equal? "so" (pathname-extension to)))
 			     (run (,*remove-command* ,to)) )
 			   (copy-file from to) 
 			   to) )

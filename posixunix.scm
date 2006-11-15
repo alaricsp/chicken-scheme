@@ -666,7 +666,7 @@ EOF
   (##sys#stat fname #t 'symbolic-link?)
   (foreign-value "C_islink" bool) )
 
-(define set-file-position!
+(define set-file-position!		; DEPRECATED
   (lambda (port pos . whence)
     (let ([whence (if (pair? whence) (car whence) _seek_set)])
       (##sys#check-exact pos 'set-file-position!)
@@ -1150,7 +1150,7 @@ EOF
   (define current-effective-user-id (foreign-lambda int "C_geteuid"))
   (define current-effective-group-id (foreign-lambda int "C_getegid"))
   
-  (define set-user-id!
+  (define set-user-id!			; DEPRECATED
     (lambda (id)
       (when (fx< (##core#inline "C_setuid" id) 0)
         (##sys#update-errno)
@@ -1161,7 +1161,7 @@ EOF
      (foreign-lambda int "C_getuid")
      set-user-id!) )
 
-  (define set-group-id!
+  (define set-group-id!			; DEPRECATED
     (lambda (id)
       (when (fx< (##core#inline "C_setgid" id) 0)
         (##sys#update-errno)
@@ -1193,7 +1193,7 @@ EOF
         (##sys#error 'create-session "can not create session") )
       a) )
   
-  (define (set-process-group-id! pid pgid)
+  (define (set-process-group-id! pid pgid) ; DEPRECATED
     (##sys#check-exact pid 'set-process-group-id!)
     (##sys#check-exact pgid 'set-process-group-id!)
     (when (fx< (##core#inline "C_setpgid" pid pgid) 0)

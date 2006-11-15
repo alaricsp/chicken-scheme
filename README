@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2.503
+  Version 2.504
 
 
  1. Introduction:
@@ -132,7 +132,7 @@
 	Documentation can be found in the directory <prefix>/share/chicken/doc, where <prefix>
 	is the prefix specified in the `--prefix' option to `configure', which defaults to
 	`/usr/local'. The HTML documentation (in "<prefix>/share/chicken/doc/html") is automatically
-	generated from the Wiki pages at <http://galinha.ucpel.tche.br/>. Go there to read the
+	generated from the Wiki pages at <http://chicken.wiki.br/>. Go there to read the
 	most up to date documentation.
 
 	An emacs mode is provided in the file `hen.el'. To use it, copy it somewhere into a location

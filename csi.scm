@@ -291,7 +291,7 @@ EOF
 			((br) (do-break (map string->symbol (string-split (read-line)))))
 			((ubr) (do-unbreak (map string->symbol (string-split (read-line)))))
 			((breakall) 
-			 (set! ##sys#break-in-thread #t) ) 
+			 (set! ##sys#break-in-thread #f) ) 
 			((breakonly)
 			 (set! ##sys#break-in-thread (eval (read))) )
 			((info)
@@ -328,15 +328,15 @@ EOF
  ,du EXP           Dump data of expression EXP
  ,dur EXP N        Dump range
  ,q                Quit interpreter
- ,l FILENAME ...   Load file with given filename
- ,ln FILENAME ...  Load file and print result of each top-level expression
+ ,l FILENAME ...   Load one or more files
+ ,ln FILENAME ...  Load one or more files and print result of each top-level expression
  ,r                Show system information
  ,s TEXT ...       Execute shell-command
  ,tr NAME ...      Trace procedures
  ,utr NAME ...     Untrace procedures
  ,br NAME ...      Set breakpoints
  ,ubr NAME ...     Remove breakpoints
- ,breakall         Break in all threads
+ ,breakall         Break in all threads (default)
  ,breakonly THREAD Break only in specified thread
  ,c                Continue from breakpoint
  ,info             List traced procedures and breakpoints
@@ -617,7 +617,7 @@ EOF
 	       (let ([len (##sys#size x)])
 		 (if (and (> len 3)
 			  (memq #:tinyclos ##sys#features)
-			  (eq? ##tinyclos#entity-tag (##sys#slot x (fx- len 1))) ) ;XXX handle this in tinyclos egg...
+			  (eq? ##tinyclos#entity-tag (##sys#slot x (fx- len 1))) ) ;XXX handle this in tinyclos egg (difficult)
 		     (describe-object x out)
 		     (descseq 
 		      (sprintf "procedure with code pointer ~X" (##sys#peek-unsigned-integer x 0))
@@ -629,7 +629,7 @@ EOF
 			(##sys#slot x 7)
 			(##sys#slot x 3)
 			(##sys#peek-unsigned-integer x 0) ) ]
-	      [(and (memq #:tinyclos ##sys#features) (instance? x))
+	      [(and (memq #:tinyclos ##sys#features) (instance? x)) ; XXX put into tinyclos egg
 	       (describe-object x out) ]
 	      [(##sys#locative? x)
 	       (fprintf out "locative~%  pointer ~X~%  index ~A~%  type ~A~%"
@@ -686,7 +686,7 @@ EOF
 			(fprintf out "\t~s: ~s~%" (cdar props) (cadr props)) )
 		      (loop (cddr props)) ) ) )
 		(##sys#slot x 1) ) ]
-	      [(and (##sys#structure? x 'meroon-instance) (provided? 'meroon))
+	      [(and (##sys#structure? x 'meroon-instance) (provided? 'meroon)) ; XXX put this into meroon egg (really!)
 	       (unveil x out) ]
 	      [(##sys#generic-structure? x)
 	       (let ([st (##sys#slot x 0)])

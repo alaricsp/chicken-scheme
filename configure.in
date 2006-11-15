@@ -16,7 +16,7 @@ dnl Use ICC to build?
 AC_ARG_WITH(icc, [  --with-icc              build with Intel's C compiler],[CC="icc"; CFLAGS="-Os -Zp2"])
 
 dnl Use SunPro CC to build?
-AC_ARG_WITH(suncc, [  --with-suncc            build with Sun's C compiler],[CC="suncc"; SUNCC=1])
+AC_ARG_WITH(suncc, [  --with-suncc            build with Sun's C compiler],[CC="suncc"; CFLAGS="-fast -xalias_level=strong -xrestrict -xregs=frameptr"; SUNCC=1])
 
 dnl Use pregexp regular expression package?
 AC_ARG_WITH(pregexp, [  --with-pregexp          use pregexp instead of libc regex],[PREGEXP=1])

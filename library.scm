@@ -191,6 +191,7 @@ EOF
 (define (##sys#setbyte x i n) (##core#inline "C_setbyte" x i n))
 (define (##sys#void) (##core#undefined))
 (define void ##sys#void)
+(define ##sys#undefined-value (##core#undefined))
 (define (##sys#halt) (##core#inline "C_halt" #f))
 (define ##sys#dload (##core#primitive "C_dload"))
 (define ##sys#set-dlopen-flags! (##core#primitive "C_set_dlopen_flags"))

@@ -894,7 +894,7 @@
     ((3) ; classargs = (<var>)
      (and inline-substitutions-enabled
 	  (null? callargs)
-	  (test name 'standard-binding)
+	  (or (test name 'standard-binding) (test name 'extended-binding))
 	  (make-node '##core#call '(#t) (list cont (varnode (first classargs)))) ) )
 
     ;; (<op> a b) -> (<primitiveop> a (quote <i>) b)

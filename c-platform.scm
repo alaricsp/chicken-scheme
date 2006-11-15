@@ -190,7 +190,7 @@
     ##sys#bytevector? ##sys#make-vector ##sys#setter
     ##sys#foreign-char-argument ##sys#foreign-fixnum-argument ##sys#foreign-flonum-argument
     ##sys#foreign-block-argument ##sys#foreign-number-vector-argument
-    ##sys#foreign-string-argument ##sys#foreign-pointer-argument
+    ##sys#foreign-string-argument ##sys#foreign-pointer-argument ##sys#void
     ##sys#foreign-integer-argument ##sys#foreign-unsigned-integer-argument ##sys#double->number
     ##sys#peek-fixnum ##sys#setislot ##sys#poke-integer ##sys#permanent? ##sys#values ##sys#poke-double
     ##sys#intern-symbol ##sys#make-symbol ##sys#null-pointer? ##sys#peek-byte) )
@@ -217,7 +217,7 @@
     f32vector->byte-vector f64vector->byte-vector ##sys#byte ##sys#setbyte byte-vector-ref byte-vector-set!
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length ##sys#apply-values ##sys#setter setter
-    u8vector-ref s8vector-ref u16vector-ref s16vector-ref
+    u8vector-ref s8vector-ref u16vector-ref s16vector-ref u32vector-ref s32vector-ref
     u8vector-set! s8vector-set! u16vector-set! s16vector-set! u32vector-set! s32vector-set!
     ##sys#intern-symbol ##sys#make-symbol make-record-instance error cpu-time ##sys#block-set!) )
 
@@ -906,6 +906,9 @@
 (rewrite 'u16vector-ref 2 2 "C_u_i_u16vector_ref" #f #f)
 (rewrite 's16vector-ref 2 2 "C_u_i_s16vector_ref" #f #f)
 
+(rewrite 'u32vector-ref 22 2 "C_a_i_u32vector_ref" #f words-per-flonum "C_u_i_u32vector_ref")
+(rewrite 's32vector-ref 22 2 "C_a_i_s32vector_ref" #f words-per-flonum "C_u_i_s32vector_ref")
+
 (rewrite 'u8vector-set! 2 3 "C_u_i_u8vector_set" #f #f)
 (rewrite 's8vector-set! 2 3 "C_u_i_s8vector_set" #f #f)
 (rewrite 'u16vector-set! 2 3 "C_u_i_u16vector_set" #f #f)
@@ -1033,3 +1036,5 @@
 			 '##core#call '(#t)
 			 (list cont (varnode (cdr a))) ) ) ) ) ) ) ) ) )
 			       
+(rewrite 'void 3 '##sys#undefined-value)
+(rewrite '##sys#void 3 '##sys#undefined-value)

@@ -326,7 +326,7 @@
 
 (define-macro (define-deprecated-macro old new)
   `(define-macro (,old . args)
-     (warning "`~s' is deprecated, use `~s' instead" ',old ',new)
+     (warning (sprintf "`~s' is deprecated, use `~s' instead" ',old ',new))
      (cons ',new args) ) )
 
 (define-deprecated-macro foreign-callback-lambda foreign-safe-lambda)
