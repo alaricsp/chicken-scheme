@@ -1,0 +1,15 @@
+[[tags: manual]]
+
+== Interface to external functions and variables
+
+* [[Accessing external objects]]
+* [[Foreign type specifiers]]  
+* [[Embedding]]                
+* [[Callbacks]]                   
+* [[Locations]]                   
+* [[Other support procedures]]    
+* [[C interface]]                 
+
+Previous: [[Supported language]]
+
+Next: [[chicken-setup]]

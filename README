@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2.504
+  Version 2.505
 
 
  1. Introduction:
@@ -24,6 +24,10 @@
 	   can easily be embedded into existing C code.
 
 	4. Loads of extra libraries.
+
+        Note: Should you have any trouble in setting up and using CHICKEN, please ask questions on 
+        the Chicken mailing list. You can subscribe to the list from the Chicken homepage, 
+        http://www.call-with-current-continuation.org)
 
  2. Installation:
 

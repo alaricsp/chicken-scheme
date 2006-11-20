@@ -1,0 +1,155 @@
+[[tags: manual]]
+
+== Extensions to the standard
+
+[2.1] Identifiers may contain special characters if delimited with
+{{| ... |}}.
+
+[2.3] The brackets {{[ ... ]}} are provided as an alternative syntax
+for {{( ... )}}.  A number of reader extensions is provided. See
+[[Non standard read syntax]].
+
+[4] Numerous non-standard macros are provided. See 
+[[Non standard macros and special forms]] for more information.
+
+[4.1.4] Extended DSSSL style lambda lists are supported. DSSSL formal argument lists are defined by the following grammar:
+
+ <formal-argument-list> ==> <required-formal-argument>*
+                            [(#!optional <optional-formal-argument>*)]
+                            [(#!rest <rest-formal-argument>)]
+                            [(#!key <key-formal-argument>*)]
+ <required-formal-argument> ==> <ident>
+ <optional-formal-argument> ==> <ident>
+                              | (<ident> <initializer>)
+ <rest-formal-argument> ==> <ident>
+ <key-formal-argument> ==> <ident>
+                           | (<ident> <initializer>)
+ <initializer> ==> <expr>
+
+When a procedure is applied to a list of actual arguments, the formal and actual arguments are processed from left to right as follows:
+
+* Variables in required-formal-arguments are bound to successive actual arguments starting with the first actual argument. It shall be an error if there are fewer actual arguments than required-formal-arguments.
+* Next, variables in optional-formal-arguments are bound to any remaining actual arguments. If there are fewer remaining actual arguments than optional-formal-arguments, then variables are bound to the result of the evaluation of initializer if one was specified or otherwise to {{#f}}. The initializer is evaluated in an environment in which all previous formal arguments have been bound.
+* If there is a rest-formal-argument, then it is bound to a list of all remaining actual arguments. The remaining actual arguments are also eligible to be bound to keyword-formal-arguments. If there is no rest-formal-argument and there are no keywords, the it shall be an error if there are any remaining actual arguments.
+* If {{#!key}} was specified in the formal-argument-list, there shall be an even number of remaining actual arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the argument name, and th corresponding value. It shall be an error if the first member of a pair is not a keyword. It shall be an error if the argument name is not the same as a variable in a keyword-formal-argument, unless there is a rest-formal-argument. If the same argument name occurs more than once in the list of actual arguments, then the first value is used. If there is no actual argument for a particular keyword-formal-argument, then the variable is bound to the result of evaluating initializer if one was specified or {{#f}}. The initializer is evaluated in an environment in which all previous formal arguments have been bound. 
+
+It shall be an error for an {{<ident>}} to appear more than once in a formal-argument-list.
+
+Example:
+
+ ((lambda x x) 3 4 5 6)       => (3 4 5 6)
+ ((lambda (x y #!rest z) z)
+  3 4 5 6)                    => (5 6)
+ ((lambda (x y #!optional z #!rest r #!key i (j 1)) 
+     (list x y z i: i j: j))
+  3 4 5 i: 6 i: 7)            => (3 4 5 i: 6 j: 1)
+
+[4.1.6] {{set!}} for unbound toplevel variables is allowed. {{set! (PROCEDURE ...) ...)}}
+is supported, as CHICKEN implements [[http://srfi.schemers.org/srfi-17/srfi-17.html|SRFI-17]].
+[4.2.1] The {{cond}} form supports [[http://srfi.schemers.org/srfi-61|SRFI-61]].
+
+[4.2.2] It is allowed for initialization values of bindings in a {{letrec}}
+construct to refer to previous variables in the same set of bindings, so
+
+ (letrec ((foo 123)
+          (bar foo) )
+   bar)
+
+is allowed and returns {{123}}.
+
+[4.2.3] {{(begin)}} is allowed in non-toplevel contexts and evaluates
+to an unspecified value.
+
+[4.2.5] Delayed expressions may return multiple values.
+
+[5.2.2] CHICKEN extends standard semantics by allowing internal definitions
+everywhere, and not only at the beginning of a body. A set of internal definitions
+is equivalent to a {{letrec}} form enclosing all following expressions
+in the body:
+
+ (let ((foo 123))
+   (bar)
+   (define foo 456)
+   (baz foo) )
+
+expands into
+
+ (let ((foo 123))
+   (bar)
+   (letrec ((foo 456))
+     (baz foo) ) )
+
+[5.2] {{define}} with a single argument is allowed and initializes the toplevel or local binding
+to an unspecified value. CHICKEN supports ''curried'' definitions, where the the variable name
+may also be a list specifying a name and a nested lambda list. So
+
+ (define ((make-adder x) y) (+ x y))
+
+is equivalent to
+
+ (define (make-adder x) (lambda (y) (+ x y)))
+
+[6] CHICKEN provides numerous non-standard procedures. See the manual
+sections on library units for more information.
+
+[6.2.4] The special IEEE floating-point numbers ''+nan'', ''+inf'' and ''-inf''
+are supported, as is negative zero.
+
+[6.3.4] User defined character names are supported. See
+{{char-name}}. Characters can be given
+in hexadecimal notation using the ''#\xXX'' syntax where ''XX'' specifies the 
+character code. Character codes above 255 are supported and can be read (and are
+written) using the ''#\uXXXX'' and ''#\UXXXXXXXX'' notations.
+
+Non-standard characters names supported are {{#\tab}}, {{#\linefeed}}, {{#\return}}, {{#\alarm}},
+{{#\vtab}}, {{#\nul}}, {{#\page}}, {{#\esc}}, {{#\delete}} and {{#\backspace}}.
+
+[6.3.5]  CHICKEN supports special characters preceded with
+a backslash ''\'' in quoted string
+constants. ''\n'' denotes the newline-character,
+''\r'' carriage return, ''\b''
+backspace, ''\t'' TAB, ''\v'' vertical TAB, ''\a'' alarm, ''\f'' formfeed,
+''\xXX'' a character with the code {{XX}} in hex and 
+''\uXXXX'' (and ''\UXXXXXXXX'') a unicode character with the code {{XXXX}}.
+The latter is encoded in UTF-8 format.
+
+The third argument to {{substring}} is optional and defaults to the length
+of the string.
+
+[6.4] {{force}} called with an argument that is not a promise returns
+that object unchanged.  Captured continuations can be safely invoked
+inside before- and after-thunks of a {{dynamic-wind}} form and
+execute in the outer dynamic context of the {{dynamic-wind}} form.
+
+'''Implicit''' non-multival continuations accept multiple values by discarding all
+but the first result. Zero values result in the continuation receiving an
+unspecified value. Note that this slight relaxation of the behaviour of
+returning mulitple values to non-multival continuations does not apply to
+explicit continuations (created with {{call-with-current-continuation}}).
+
+[6.5] The second argument to {{eval}} is optional and
+defaults to the value of {{(interaction-environment)}}.
+{{scheme-report-environment}} and {{null-environment}} accept
+an optional 2nd parameter: if not {{#f}} (which is the default),
+toplevel bindings to standard procedures are mutable and new toplevel
+bindings may be introduced.
+
+[6.6] The ''tilde'' character ({{~}}) is automatically expanded in pathnames.
+Additionally, if a pathname starts with {{$VARIABLE...}}, then the prefix is replaced
+by the value of the given environment variable.
+
+[6.6.1] if the procedures {{current-input-port}} and
+{{current-output-port}} are called with an argument (which should
+be a port), then that argument is selected as the new current input- and
+output-port, respectively.  The procedures {{open-input-file}},
+{{open-output-file}}, {{with-input-from-file}},
+{{with-output-to-file}}, {{call-with-input-file}} and
+{{call-with-output-file}} accept an optional second (or third)
+argument which should be one or more keywords, if supplied. These
+arguments specify the mode in which the file is opened. Possible
+values are the keywords {{#:text}}, {{#:binary}} or
+{{#:append}}.
+
+Previous: [[Deviations from the standard]]
+
+Next: [[Non standard read syntax]]

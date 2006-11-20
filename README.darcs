@@ -1,9 +1,13 @@
+
 This file contains instructions for getting a working Chicken system from 
 a darcs checkout.  These are the canonical instructions.
 
 An alternate method of building from darcs is given in INSTALL-CMake.txt.  
 Please see that file for details on that method.  The two methods are completely 
 independent of each other.
+
+If in trouble, please ask questions on the Chicken mailing list. You can 
+subscribe to the list from the Chicken homepage, http://www.call-with-current-continuation.org.
 
 (The following instructions were orignally written by Tony Garnock-Jones <tonyg@kcbbs.gen.nz>, 
 1 August 2002 for use with CVS.)

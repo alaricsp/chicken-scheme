@@ -1,0 +1,101 @@
+[[tags: manual]]
+[[toc:]]
+
+== Unit srfi-4
+
+Homogeneous numeric vectors, see the documentation for [[http://srfi.schemers.org/srfi-4/srfi-4.html|SRFI-4]]
+64-bit integer vectors ({{u64vector}} and {{s64vector}} are not supported.
+
+The basic constructor procedures for number vectors are extended to allow allocating the storage in non garbage
+collected memory:
+
+=== make-XXXvector
+
+ [procedure] (make-XXXvector SIZE [INIT NONGC FINALIZE])
+
+Creates a SRFI-4 homogenous number vector of length {{SIZE}}. If {{INIT}} is given, it specifies the initial
+value for each slot in the vector. The optional arguments {{NONGC}} and {{FINALIZE}} define whether the
+vector should be allocated in a memory area not subject to garbage collection and whether the associated storage
+should be automatically freed (using finalization) when there are no references from Scheme variables and data.
+{{NONGC}} defaults to {{#f}} (the vector will be located in normal garbage collected memory) and
+{{FINALIZE}} defaults to  {{#t}}. Note that the {{FINALIZE}} argument is only used when {{NONGC}}
+is true.
+
+
+Additionally, the following procedures are provided:
+
+=== u8vector->byte-vector
+=== s8vector->byte-vector
+=== u16vector->byte-vector
+=== s16vector->byte-vector
+=== u32vector->byte-vector
+=== s32vector->byte-vector
+=== f32vector->byte-vector
+=== f64vector->byte-vector
+
+ [procedure] (u8vector->byte-vector U8VECTOR)
+ [procedure] (s8vector->byte-vector S8VECTOR)
+ [procedure] (u16vector->byte-vector U16VECTOR)
+ [procedure] (s16vector->byte-vector S16VECTOR)
+ [procedure] (u32vector->byte-vector U32VECTOR)
+ [procedure] (s32vector->byte-vector S32VECTOR)
+ [procedure] (f32vector->byte-vector F32VECTOR)
+ [procedure] (f64vector->byte-vector F64VECTOR)
+
+Each of these procedures return the contents of the given vector as a
+'packed' byte-vector. The byte order in that vector is platform-dependent
+(for example little-endian on an '''Intel''' processor). The returned
+byte-vector shares memory with the contents of the vector.
+
+
+=== byte-vector->u8vector
+=== byte-vector->s8vector
+=== byte-vector->u16vector
+=== byte-vector->s16vector
+=== byte-vector->u32vector
+=== byte-vector->s32vector
+=== byte-vector->f32vector
+=== byte-vector->f64vector
+
+ [procedure] (byte-vector->u8vector BYTE-VECTOR)
+ [procedure] (byte-vector->s8vector BYTE-VECTOR)
+ [procedure] (byte-vector->u16vector BYTE-VECTOR)
+ [procedure] (byte-vector->s16vector BYTE-VECTOR)
+ [procedure] (byte-vector->u32vector BYTE-VECTOR)
+ [procedure] (byte-vector->s32vector BYTE-VECTOR)
+ [procedure] (byte-vector->f32vector BYTE-VECTOR)
+ [procedure] (byte-vector->f64vector BYTE-VECTOR)
+
+Each of these procedures return a vector where the argument
+{{BYTE-VECTOR}} is taken as a 'packed' representation of the contents
+of the vector. The argument-byte-vector shares memory with the contents
+of the vector.
+
+
+=== subu8vector
+=== subu16vector
+=== subu32vector
+=== subs8vector
+=== subs16vector
+=== subs32vector
+=== subf32vector
+=== subf64vector
+
+ [procedure] (subu8vector U8VECTOR FROM TO)
+ [procedure] (subu16vector U16VECTOR FROM TO)
+ [procedure] (subu32vector U32VECTOR FROM TO)
+ [procedure] (subs8vector S8VECTOR FROM TO)
+ [procedure] (subs16vector S16VECTOR FROM TO)
+ [procedure] (subs32vector S32VECTOR FROM TO)
+ [procedure] (subf32vector F32VECTOR FROM TO)
+ [procedure] (subf64vector F64VECTOR FROM TO)
+
+Creates a number vector of the same type as the argument vector with the elements at the positions {{FROM}} up to but
+not including {{TO}}.
+
+SRFI-17 Setters for {{XXXvector-ref}} are defined.
+
+
+Previous: [[Unit srfi-1]]
+
+Next: [[Unit srfi-13]]

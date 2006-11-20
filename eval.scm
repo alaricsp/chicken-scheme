@@ -575,6 +575,8 @@
 	 (get-output-string o))))
      p) ) )
 
+(define ##sys#unbound-in-eval #f)
+
 (define ##sys#compile-to-closure
   (let ([macro? macro?]
 	[write write]
@@ -650,7 +652,10 @@
 					val) ) ) ] ) )
 			    (cond-expand
 			     [unsafe (lambda v (##core#inline "C_slot" x 0))]
-			     [else (lambda v (##core#inline "C_retrieve" x))] ) ) ]
+			     [else
+			      (when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
+				(set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
+			      (lambda v (##core#inline "C_retrieve" x))] ) ) ]
 		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
 		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
 	      [(##sys#number? x)
@@ -1107,8 +1112,8 @@
     (lambda (input evaluator pf #!optional timer printer)
       (when (string? input) 
 	(set! input (##sys#expand-home-path input)) )
-      (let ([isdir #f]
-	    [fname 
+      (let* ([isdir #f]
+	     [fname 
 	     (cond [(port? input) #f]
 		   [(not (string? input)) (badfile input)]
 		   [(and-let* ([info (##sys#file-info input)]
@@ -2008,11 +2013,12 @@
 	(unless (or (null? xs) (eq? (##core#undefined) (car xs)))
 	  (for-each (cut write-one <> ##sys#standard-output) xs) ) )
 
-      (let ([stdin ##sys#standard-input]
-	    [stdout ##sys#standard-output]
-	    [stderr ##sys#standard-error] 
-	    [ehandler (##sys#error-handler)] 
-	    [rhandler (##sys#reset-handler)] )
+      (let ((stdin ##sys#standard-input)
+	    (stdout ##sys#standard-output)
+	    (stderr ##sys#standard-error)
+	    (ehandler (##sys#error-handler))
+	    (rhandler (##sys#reset-handler)) 
+	    (uie ##sys#unbound-in-eval) )
 
 	(define (saveports)
 	  (set! stdin ##sys#standard-input)
@@ -2059,10 +2065,33 @@
 		 (when (char=? #\newline (##sys#peek-char-0 ##sys#standard-input))
 		   (##sys#read-char-0 ##sys#standard-input) )
 		 (##sys#clear-trace-buffer)
+		 (set! ##sys#unbound-in-eval '())
 		 (receive result ((or ##sys#repl-eval-hook eval) exp)
+		   (when (and ##sys#warnings-enabled (pair? ##sys#unbound-in-eval))
+		     (let loop ((vars ##sys#unbound-in-eval) (u '()))
+		       (cond ((null? vars)
+			      (when (pair? u)
+				(##sys#print 
+				 "Warning: the following toplevel variables are referenced but unbound:\n" 
+				 #f ##sys#standard-error)
+				(for-each 
+				 (lambda (v)
+				   (##sys#print "  " #f ##sys#standard-error)
+				   (##sys#print (car v) #t ##sys#standard-error)
+				   (when (cdr v)
+				     (##sys#print " (in " #f ##sys#standard-error)
+				     (##sys#print (cdr v) #t ##sys#standard-error) 
+				     (##sys#write-char-0 #\) ##sys#standard-error) )
+				   (##sys#write-char-0 #\newline ##sys#standard-error) )
+				 u) ) )
+			     ((or (memq (caar vars) u) 
+				  (##sys#symbol-has-toplevel-binding? (caar vars)) )
+			      (loop (cdr vars) u) )
+			     (else (loop (cdr vars) (cons (car vars) u))) ) 9 ) )
 		   (write-results result) 
 		   (loop) ) ) ) ) )
 	 (lambda ()
+	   (set! ##sys#unbound-in-eval uie)
 	   (##sys#error-handler ehandler)
 	   (##sys#reset-handler rhandler) ) ) ) ) ) )
 

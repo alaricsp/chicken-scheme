@@ -606,9 +606,11 @@
 (define-macro (:optional rest default-exp)
   (let ([var (gensym)])
     `(let ((,var ,rest))
-       (cond ((null? ,var) ,default-exp)
-	     ((null? (cdr ,var)) (car ,var))
-	     (else (##core#check (##sys#error (##core#immutable '"too many optional arguments") ,var)))))))
+       (if (null? ,var) 
+	   ,default-exp
+	   (if (##core#check (null? (cdr ,var)))
+	       (car ,var)
+	       (##sys#error (##core#immutable '"too many optional arguments") ,var))))))
 
 
 ;;; (LET-OPTIONALS* args ((var1 default1) ... [rest]) body1 ...)

@@ -1,0 +1,260 @@
+[[tags: manual]]
+
+== Foreign type specifiers
+
+Here is a list of valid foreign type specifiers:
+
+=== scheme-object
+
+An arbitrary Scheme data object (immediate or non-immediate). 
+
+=== bool
+
+As argument: any value ({{#f}} is false, anything else is true).
+As result: anything different from 0 and the {{NULL}}-pointer
+is {{#t}}.
+
+=== byte unsigned-byte
+
+A byte.
+
+=== char unsigned-char
+
+A character.
+
+=== short unsigned-short
+
+A short integer number.
+
+=== int unsigned-int int32 unsigned-int32
+
+An small integer number in fixnum range (at least 30 bit).
+
+=== integer unsigned-integer integer32 unsigned-integer32 integer64
+
+Either a fixnum or a flonum in the range of a (unsigned) machine ''int''
+or with 32/64 bit width.
+
+=== long unsigned-long
+
+Either a fixnum or a flonum in the range of a (unsigned) machine ''long''
+or with 32 bit width.
+
+=== float double
+
+A floating-point number. If an exact integer is passed as an argument,
+then it is automatically converted to a float.
+
+=== number
+
+A floating-point number. Similar to {{double}}, but when used as a result
+type, then either an exact integer or a floating-point number is returned, depending
+on whether the result fits into an exact integer or not.
+
+=== symbol
+
+A symbol, which will be passed to foreign code as a zero-terminated string.
+When declared as the result of foreign code, the result should be a string and
+a symbol with the same name will be interned in the symbol table (and returned
+to the caller).
+
+=== scheme-pointer
+
+An untyped pointer to the contents of a non-immediate Scheme object
+(not allowed as return type).  The value {{#f}} is also allowed
+and is passed as a {{NULL}} pointer. 
+Don't confuse this type with {{(pointer ...)}} which means something
+different (a machine-pointer object).
+
+=== nonnull-scheme-pointer
+
+As {{pointer}}, but guaranteed not to be {{#f}}.
+Don't confuse this type with {{(nonnull-pointer ...)}} which means something
+different (a machine-pointer object).
+
+=== c-pointer
+
+An untyped operating-system pointer or a locative.  The value {{#f}} is also
+allowed and is passed as a {{NULL}} pointer.  If uses as the type of
+a return value, a {{NULL}} pointer will be returned as {{#f}}.
+
+=== nonnull-c-pointer
+
+As {{c-pointer}}, but guaranteed not to be {{#f/NULL}}.
+
+=== scheme-or-c-pointer
+
+An untyped pointer. If the argument is a machine-pointer object, the wrapped C pointer
+will be passed. If it is any other object, then this type is treated as {{scheme-pointer}}.
+
+Not allowed as a result type.
+
+=== [nonnull-] byte-vector
+
+A byte-vector object, passed as a pointer to its contents. Arguments
+of type {{byte-vector}} may optionally be {{#f}}, which is
+passed as a NULL pointer.  This is not allowed as a return type.
+
+=== [nonnull-] u8vector [nonnull-] u16vector [nonnull-] u32vector [nonnull-] s8vector [nonnull-] s16vector [nonnull-] s32vector [nonnull-] f32vector [nonnull-] f64vector
+
+A SRFI-4 number-vector object, passed as a pointer to its
+contents. Arguments of type {{byte-vector}} may optionally be
+{{#f}}, which is passed as a NULL pointer.  These are not allowed
+as return types.
+
+=== c-string
+
+A C string (zero-terminated). The value {{#f}}
+is also allowed and is passed as a {{NULL}} pointer. If uses as
+the type of a return value, a {{NULL}} pointer will be returned as
+{{#f}}. Note that the string is copied (with a zero-byte appended)
+when passed as an argument to a foreign function. Also a return value
+of this type is copied into garbage collected memory.
+
+=== nonnull-c-string
+
+As {{c-string}}, but guaranteed not to be {{#f/NULL}}.
+
+=== [nonnull-] c-string*
+
+Similar to {{[nonnull-]c-string}}, but if used as a result-type,
+the pointer returned by the foreign code will be freed (using the
+C-libraries {{free()}})
+after copying. This type specifier is not valid as a result type
+for callbacks defined with {{define-external}}.
+
+=== void
+
+Specifies an undefined return value. Not allowed as argument type.
+
+=== (const TYPE)
+
+The foreign type {{TYPE}} with an additional {{const}} specifier.
+
+=== (enum NAME)
+
+An enumeration type. Handled internally as an {{integer}}.
+
+=== (pointer TYPE) (c-pointer TYPE)
+
+An operating-system pointer or a locative to an object of {{TYPE}}.
+
+=== (nonnull-pointer TYPE) (nonnull-c-pointer TYPE)
+
+As {{(pointer TYPE)}}, but guaranteed not to be {{#f/NULL}}.
+
+=== (ref TYPE)
+
+A C++ reference type. Reference types are handled the same way as pointers
+inside Scheme code.
+
+=== (struct NAME)
+
+A struct of the name {{NAME}}, which should be a string. Structs
+can not be directly passed as arguments to foreign function, neither
+can they be result values. Pointers to structs are allowed, though.
+
+=== (template TYPE ARGTYPE ...)
+
+A C++ template type. For example {{vector<int>}} would be specified
+as {{(template "vector" int)}}. Template types can not be directly passed
+as arguments or returned as results.
+
+=== (union NAME)
+
+A union of the name {{NAME}}, which should be a string. Unions can
+not be directly passed as arguments to foreign function, neither can
+they be result values. Pointers to unions are allowed, though.
+
+=== (instance CNAME SCHEMECLASS)
+
+A pointer to a C++ class instance. {{CNAME}} should designate
+the name of the C++ class, and {{SCHEMECLASS}} should be the class
+that wraps the instance pointer. Normally {{SCHEMECLASS}}
+should be a subclass of {{<c++-object>}}.
+
+=== (instance-ref CNAME SCHEMECLASS)
+
+A reference to a C++ class instance. 
+
+=== (function RESULTTYPE (ARGUMENTTYPE1 ... [...]) [CALLCONV])
+
+A function pointer. {{CALLCONV}} specifies an optional calling
+convention and should be a string. The meaning of this string is entirely
+platform dependent.  The value {{#f}} is also allowed and is passed
+as a {{NULL}} pointer.
+
+== Mappings
+
+Foreign types are mapped to C types in the following manner:
+
+<table>
+<tr><td>bool</td><td>
+int
+</td></tr><tr><td>[unsigned-]char</td><td>
+[unsigned] char
+</td></tr><tr><td>[unsigned-]short</td><td>
+[unsigned] short
+</td></tr><tr><td>[unsigned-]int</td><td>
+[unsigned] int
+</td></tr><tr><td>[unsigned-]integer</td><td>
+[unsigned] int
+</td></tr><tr><td>[unsigned-]long</td><td>
+[unsigned] long
+</td></tr><tr><td>float</td><td>
+float
+</td></tr><tr><td>double</td><td>
+double
+</td></tr><tr><td>number</td><td>
+double
+</td></tr><tr><td>[nonnull-]pointer</td><td>
+void *
+</td></tr><tr><td>[nonnull-]c-pointer</td><td>
+void *
+</td></tr><tr><td>[nonnull-]byte-vector</td><td>
+unsigned char *
+</td></tr><tr><td>[nonnull-]u8vector</td><td>
+unsigned char *
+</td></tr><tr><td>[nonnull-]s8vector</td><td>
+char *
+</td></tr><tr><td>[nonnull-]u16vector</td><td>
+unsigned short *
+</td></tr><tr><td>[nonnull-]s16vector</td><td>
+short *
+</td></tr><tr><td>[nonnull-]u32vector</td><td>
+uint32_t *
+</td></tr><tr><td>[nonnull-]s32vector</td><td>
+int32_t *
+</td></tr><tr><td>[nonnull-]f32vector</td><td>
+float *
+</td></tr><tr><td>[nonnull-]f64vector</td><td>
+double *
+</td></tr><tr><td>[nonnull-]c-string</td><td>
+char *
+</td></tr><tr><td>symbol</td><td>
+char *
+</td></tr><tr><td>void</td><td>
+void
+</td></tr><tr><td>([nonnull-]pointer TYPE)</td><td>
+TYPE *
+</td></tr><tr><td>(enum NAME)</td><td>
+enum NAME
+</td></tr><tr><td>(struct NAME)</td><td>
+struct NAME
+</td></tr><tr><td>(ref TYPE)</td><td>
+TYPE &
+</td></tr><tr><td>(template T1 T2 ...)</td><td>
+T1<T2, ...>
+</td></tr><tr><td>(union NAME)</td><td>
+union NAME
+</td></tr><tr><td>(function RTYPE (ATYPE ...) [CALLCONV])</td><td>
+[CALLCONV] RTYPE (*)(ATYPE, ...)
+</td></tr><tr><td>(instance CNAME SNAME)</td><td>
+CNAME *
+</td></tr><tr><td>(instance-ref CNAME SNAME)</td><td>
+CNAME &
+</td></tr></table>
+
+Previous: [[Accessing external objects]]
+
+Next: [[Embedding]]

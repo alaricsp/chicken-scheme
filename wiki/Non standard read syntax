@@ -1,0 +1,96 @@
+[[tags: manual]]
+
+== Non standard read syntax
+
+ #| ... |# 
+
+A multiline ''block'' comment. May be nested. Implements [[http://srfi.schemers.org/srfi-30/srfi-30.html|SRFI-30]]
+
+ #;EXPRESSION
+
+Treats {{EXPRESSION}} as a comment.
+
+ #,(CONSTRUCTORNAME DATUM ...)
+
+Allows user-defined extension of external representations. (For more information see the documentation for
+[[http://srfi.schemers.org/srfi-10/srfi-10.html|SRFI-10]])
+
+ #'EXPRESSION
+
+An abbreviation for {{(syntax EXPRESSION)}}.
+
+ #$EXPRESSION
+
+An abbreviation for {{(location EXPRESSION)}}.
+
+ #:SYMBOL
+
+Syntax for keywords. Keywords are symbols that evaluate to themselves, and as such don't have to be quoted.
+
+ #<<TAG
+
+Specifies a multiline string constant. Anything up to a line equal to {{TAG}} (or end of file) will be returned as a single string:
+
+ (define msg #<<END
+  "Hello, world!", she said.
+ END
+ )
+
+is equivalent to
+
+ (define msg "\"Hello, world!\", she said.")
+
+ #<#TAG
+
+Similar to {{#<<}}, but allows substitution of embedded Scheme expressions prefixed with {{#}} and optionally enclosed in curly brackets. Two consecutive {{#}}s are translated to a single {{#}}:
+
+ (define three 3)
+ (display #<#EOF
+ This is a simple string with an embedded `##' character
+ and substituted expressions: (+ three 99) ==> #(+ three 99)
+ (three is "#{three}")
+ EOF
+ )
+
+prints
+
+ This is a simple string with an embedded `#' character
+ and substituted expressions: (+ three 99) ==> 102
+ (three is "3")
+
+ #> ... <#
+
+Abbreviation for {{foreign-declare " ... ")}}.
+
+ #%... 
+
+Reads like a normal symbol.
+
+ #!... 
+
+Depending on the directly following characters this is read as follows
+
+* If followed by whitespace or a slash, then everything up the end of the current line is ignored
+* If followed by the character sequence {{eof}}, then the (self-evaluating) end-of-file object is returned
+* If followed by any of the character sequences {{optional}}, {{rest}} or {{key}}, then a symbol with the same name (and prefixed with {{#!}}) is returned
+* If a ''read mark'' with the same name as the token is registered, then its procedure is called and the result of the read-mark procedure will be returned
+
+Any other case results in a read error.
+
+ #cs...
+
+Read the next expression in case-sensitive mode (regardless of the current global setting).
+
+ #ci...
+
+Read the next expression in case-insensitive mode (regardless of the current global setting).
+
+ #+FEATURE EXPR
+
+Equivalent to 
+
+ (cond-expand (FEATURE EXPR) (else))
+
+Previous: [[Extensions to the standard]]
+
+Next: [[Non standard macros and special forms]]

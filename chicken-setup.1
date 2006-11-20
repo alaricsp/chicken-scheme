@@ -50,12 +50,96 @@ manual for more information.
 .SH OPTIONS
 
 .TP
+.B \-check
+Downloads the repository-index and lists locally installed extensions for which a newer
+release is available for download.
+
+.TP 
+.BI \-csc\-option option
+Passes 
+.B option
+as an extra argument to invocations of the compiler-driver (
+.I csc
+). This works only if 
+.I csc
+is invoked as 
+.I (run\ (csc\ ...))
+
+.TP
+.BI \-destdir\ pathname
+Specifies alternative installation prefix by setting the
+.B installation-prefix
+parameter.
+
+.TP
+.B \-docindex
+Displays the path to the index-page of any installed extension-documentation. If the index page
+does not exist, it is created.
+
+.TP
+.B \-dont\-ask
+Do not ask the user before trying to download required extensions.
+
+.TP
+.BI \-eval\ expression
+Evaluates the given expression(s).
+
+.TP
+.B \-fetch
+Only download, don't extract, build or install.
+
+.TP
+.B \-fetch\-tree
+Downloads and prints the repository catalog to stdout.
+
+.TP
 .B \-help
 Show usage information and exit.
 
 .TP
-.B \-version
-Display version and exit.
+.BI \-host\ hostname:port
+Specifies alternative host for downloading extensions. 
+.B port
+may be omitted and defaults to 80.
+
+.TP
+.B \-keep
+Keep temporary files and directories.
+
+.TP
+.B \-list
+List all installed extensions and exit, or show extension-information of extensions given on the
+command-line (following this option).
+
+.TP
+.BI \-local\ path
+Fetch extension sources from local filesystem at
+.B path
+instead of downloading egg from egg server.
+
+.TP
+.B \-no\-install
+Do not install generated binaries and/or support files. Any invocations of
+.I install\-program
+,
+.I install\-extension
+or
+.I install\-script
+will be be no-ops.
+
+.TP
+.B \-program\-path
+Display the path where executables are installed.
+
+.TP
+.BI \-program\-path\ directory
+Sets the location where executables are installed.
+
+.TP
+.BI \-proxy\ hostname:port
+Connect to server via proxy.
+.B port
+may be omitted and defaults to 80.
 
 .TP
 .B \-repository
@@ -70,35 +154,6 @@ The default repository path is the installation library directory (usually
 .I CHICKEN\_REPOSITORY
 
 .TP
-.B \-program\-path
-Display the path where executables are installed.
-
-.TP
-.BI \-program\-path\ directory
-Sets the location where executables are installed.
-
-.TP
-.BI \-host\ hostname:port
-Specifies alternative host for downloading extensions. 
-.B port
-may be omitted and defaults to 80.
-
-.TP
-.BI \-proxy\ hostname:port
-Connect to server via proxy.
-.B port
-may be omitted and defaults to 80.
-
-.TP
-.B \-uninstall
-Removes all following extensions from repository.
-
-.TP
-.B \-list
-List all installed extensions and exit, or show extension-information of extensions given on the
-command-line (following this option).
-
-.TP
 .BI \-run\ filename
 Load and execute given file.
 
@@ -107,59 +162,27 @@ Load and execute given file.
 Executes the given Scheme source file with all remaining arguments and exit.
 
 .TP
-.BI \-eval\ expression
-Evaluates the given expression(s).
+.BI \-svn\ url
+Fetch extension sources from Subversion (http://subversion.tigris.org) repository,
+instead of downloading egg from egg server.
 
 .TP
-.B \-fetch
-Only download, don't extract, build or install.
+.BI \-tree\ filename
+Uses the repository catalog stored in
+.B filename
+instead of downloading it.
+
+.TP
+.B \-uninstall
+Removes all following extensions from repository.
 
 .TP
 .B \-verbose
 Display additional information (mainly for debugging).
 
 .TP
-.B \-keep
-Keep temporary files and directories.
-
-.TP
-.B \-dont\-ask
-Do not ask the user before trying to download required extensions.
-
-.TP
-.B \-no\-install
-Do not install generated binaries and/or support files. Any invocations of
-.I install\-program
-,
-.I install\-extension
-or
-.I install\-script
-will be be no-ops.
-
-.TP 
-.BI \-csc\-option option
-Passes 
-.B option
-as an extra argument to invocations of the compiler-driver (
-.I csc
-). This works only if 
-.I csc
-is invoked as 
-.I (run\ (csc\ ...))
-
-.TP
-.B \-dont\-ask
-Do not ask the user before trying to download required extensions.
-
-.TP
-.B \-docindex
-Displays the path to the index-page of any installed extension-documentation. If the index page
-does not exist, it is created.
-
-.TP
-.B \-check
-Downloads the repository-index and lists locally installed extensions for which a newer
-release is available for download.
+.B \-version
+Display version and exit.
 
 .TP
 .B \-\-

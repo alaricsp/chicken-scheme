@@ -1,4 +1,4 @@
-;;;; csi.scm - Simple interpreter stub for CHICKEN
+;;;; csi.scm - Interpreter stub for CHICKEN
 ;
 ; Copyright (c) 2000-2006, Felix L. Winkelmann
 ; All rights reserved.
@@ -99,6 +99,7 @@ EOF
     -w  -no-warnings            disable all warnings
     -k  -keyword-style STYLE    enable alternative keyword-syntax (none, prefix or suffix)
     -s  -script PATHNAME        use interpreter for shell scripts
+        -ss PATHNAME            shell script with `main' procedure
     -R  -require-extension NAME require extension before executing code
     -I  -include-path PATHNAME  add PATHNAME to include path
     --                          ignore all following options
@@ -831,18 +832,18 @@ EOF
 		 (else (find (cdr ks))) ) ) ) ) )
 
 (define-constant short-options 
-  '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #f) )
+  '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #f #f) )
 
 (define-constant long-options
   '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" "-eval" "-case-insensitive"
-    "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" "-include-path" "-release") )
+    "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" "-include-path" "-release" "-ss") )
 
 (define (canonicalize-args args)
   (let loop ((args args))
     (if (null? args)
 	'()
 	(let ((x (car args)))
-	  (cond ((or (string=? "-s" x) (string=? "-script" x)) args)
+	  (cond ((or (string=? "-s" x) (string=? "-ss" x) (string=? "-script" x)) args)
 		((and (fx> (##sys#size x) 2)
 		      (char=? #\- (##core#inline "C_subchar" x 0))
 		      (not (member x long-options)) )
@@ -863,17 +864,15 @@ EOF
 (define (run)
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (cdr (argv)))]
-	 [loadlater #f]
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
-	 [script (member* '("-s" "-script") args)])
+	 [script (member* '("-s" "-ss" "-script") args)])
     (cond [script
-	   (unless (pair? (cdr script)) (##sys#error "missing argument to `-script' option"))
+	   (unless (pair? (cdr script)) (##sys#error "missing script argument"))
 	   (command-line-arguments (cddr script))
 	   (register-feature! 'script)
 	   (set-cdr! (cdr script) '()) 
-	   (when (and (memq (software-type) '(windows msdos))
-		      (not (eq? (build-platform) 'cygwin)) )
-	     (and-let* ([sname (lookup-script-file (cadr script))])
+	   (when (and (eq? (software-type) 'windows) (not (eq? (build-platform) 'cygwin)) )
+	     (and-let* ((sname (lookup-script-file (cadr script))))
 	       (set-car! (cdr script) sname) ) ) ]
 	  [else
 	   (set! args (append (canonicalize-args extraopts) args))
@@ -882,8 +881,7 @@ EOF
     (let* ([eval? (member* '("-e" "-eval") args)]
 	   [batch (or script (member* '("-b" "-batch") args) eval?)]
 	   [quiet (or script (member* '("-q" "-quiet") args) eval?)]
-	   [ipath (map chop-separator (string-split (or (getenv "CHICKEN_INCLUDE_PATH") "") ";"))] )
-      
+	   [ipath (map chop-separator (string-split (or (getenv "CHICKEN_INCLUDE_PATH") "") ";"))] )      
       (define (collect-options opt)
 	(let loop ([opts args])
 	  (cond [(member opt opts) 
@@ -892,7 +890,6 @@ EOF
 			  (##sys#error "missing argument to command-line option" opt)
 			  (cons (cadr p) (loop (cddr p)))) ) ]
 		[else '()] ) ) )
-
       (define (loadinit)
 	(let ([fn (##sys#string-append "./" init-file)])
 	  (if (file-exists? fn)
@@ -901,7 +898,6 @@ EOF
 		     [fn (string-append prefix (string ##sys#pathname-directory-separator) init-file)] )
 		(when (file-exists? fn) 
 		  (load fn) ) ) ) ) )
-
       (when (member* '("-h" "-help" "--help") args)
 	(print-usage)
 	(exit 0) )
@@ -944,7 +940,6 @@ EOF
       (unless (or (member* '("-n" "-no-init") args) script) (loadinit))
       (do ([args args (cdr args)])
 	  ((null? args)
-	   (when loadlater (load loadlater))
 	   (unless batch 
 	     (repl)
 	     (##sys#write-char-0 #\newline ##sys#standard-output) ) )
@@ -953,7 +948,7 @@ EOF
 	  (cond ((member 
 		  arg 
 		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script" "-b" "-q" "-n" "-w" "-s" "-i"
-		    "-case-insensitive") ) )
+		    "-case-insensitive" "-ss") ) )
 		((member arg '("-feature" "-include-path" "-keyword-style" "-D" "-I" "-k"))
 		 (set! args (cdr args)) )
 		((or (string=? "-R" arg) (string=? "-require-extension" arg))
@@ -965,6 +960,14 @@ EOF
 		       ((eof-object? x))
 		     (eval x) )
 		   (set! args (cdr args)) ) )
-		(else (load arg) ) ) ) ) ) ) )
+		(else
+		 (load arg) 
+		 (when (and script (string=? "-ss" (car script)))
+		   (call-with-values (cut main (command-line-arguments))
+		     (lambda results
+		       (exit
+			(if (and (pair? results) (fixnum? (car results)))
+			    (car results)
+			    0) ) ) ) ) ) ) ) ) ) ) )
 
 (run)

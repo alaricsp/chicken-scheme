@@ -1,0 +1,179 @@
+[[tags: manual]]
+[[toc:]]
+
+== Unit regex
+
+This library unit provides support for regular expressions. The flavor depends on
+the particular installation platform:
+
+* On UNIX systems that have PCRE (the Perl Compatible Regular Expression package) installed, PCRE is used.
+* If PCRE is not available, and the C library provides regular expressions, these are used instead.
+* on Windows (or of PCRE and libc regexes are not available), Dorai Sitaram's portable {{pregexp}} library is used.
+
+
+=== grep
+
+ [procedure] (grep REGEX LIST)
+
+Returns all items of {{LIST}} that match the regular expression
+{{REGEX}}.  This procedure could be defined as follows:
+
+<enscript highlight=scheme>
+(define (grep regex lst)
+  (filter (lambda (x) (string-search regex x)) lst) )
+</enscript>
+
+
+=== glob->regexp
+
+ [procedure] (glob->regexp PATTERN)
+
+Converts the file-pattern {{PATTERN}} into a regular expression.
+
+<enscript highlight=scheme>
+(glob->regexp "foo.*")
+=> "foo\..*"
+</enscript>
+
+
+=== regexp
+
+ [procedure] (regexp STRING [IGNORECASE [IGNORESPACE [UTF8]]])
+
+Returns a precompiled regular expression object for {{string}}.
+The optional arguments {{IGNORECASE}}, {{IGNORESPACE}} and {{UTF8}}
+specify whether the regular expression should be matched with case- or whitespace-differences
+ignored, or whether the string should be treated as containing UTF-8 encoded
+characters, respectively.
+
+Notes:
+
+* regex doesn't allow (?: ) cloisters (non-capturing groups). Currently this means if you use utf8 matching, individual "." matching will return extra submatches.
+* pregexp doesn't allow a # comment w/o a trailing newline.
+
+
+=== regexp?
+
+ [procedure] (regexp? X)
+
+Returns {{#t}} if {{X}} is a precompiled regular expression,
+or {{#f}} otherwise.
+
+
+=== string-match
+=== string-match-positions
+
+ [procedure] (string-match REGEXP STRING [START])
+ [procedure] (string-match-positions REGEXP STRING [START])
+
+Matches the regular expression in {{REGEXP}} (a string or a precompiled
+regular expression) with
+{{STRING}} and returns either {{#f}} if the match failed,
+or a list of matching groups, where the first element is the complete
+match. If the optional argument {{START}} is supplied, it specifies
+the starting position in {{STRING}}.  For each matching group the
+result-list contains either: {{#f}} for a non-matching but optional
+group; a list of start- and end-position of the match in {{STRING}}
+(in the case of {{string-match-positions}}); or the matching
+substring (in the case of {{string-match}}). Note that the exact string
+is matched. For searching a pattern inside a string, see below.
+Note also that {{string-match}} is implemented by calling
+{{string-search}} with the regular expression wrapped in {{^ ... $}}.
+
+
+=== string-search
+=== string-search-positions
+
+ [procedure] (string-search REGEXP STRING [START [RANGE]])
+ [procedure] (string-search-positions REGEXP STRING [START [RANGE]])
+
+Searches for the first match of the regular expression in
+{{REGEXP}} with {{STRING}}. The search can be limited to
+{{RANGE}} characters.
+
+
+=== string-split-fields
+
+ [procedure] (string-split-fields REGEXP STRING [MODE [START]])
+
+Splits {{STRING}} into a list of fields according to {{MODE}},
+where {{MODE}} can be the keyword {{#:infix}} ({{REGEXP}}
+matches field separator), the keyword {{#:suffix}} ({{REGEXP}}
+matches field terminator) or {{#t}} ({{REGEXP}} matches field),
+which is the default.
+
+<enscript highlight=scheme>
+(define s "this is a string 1, 2, 3,")
+
+(string-split-fields "[^ ]+" s)
+
+  => ("this" "is" "a" "string" "1," "2," "3,")
+
+(string-split-fields " " s #:infix)
+
+  => ("this" "is" "a" "string" "1," "2," "3,")
+
+(string-split-fields "," s #:suffix))
+ 
+  => ("this is a string 1" " 2" " 3")
+</enscript>
+
+
+=== string-substitute
+
+ [procedure] (string-substitute REGEXP SUBST STRING [MODE])
+
+Searches substrings in {{STRING}} that match {{REGEXP}}
+and substitutes them with the string {{SUBST}}. The substitution
+can contain references to subexpressions in 
+{{REGEXP}} with the {{\NUM}} notation, where {{NUM}}
+refers to the NUMth parenthesized expression. The optional argument
+{{MODE}} defaults to 1 and specifies the number of the match to
+be substituted. Any non-numeric index specifies that all matches are to
+be substituted.
+
+<enscript highlight=scheme>
+(string-substitute "([0-9]+) (eggs|chicks)"
+                   "\\2 (\\1)" "99 eggs or 99 chicks" 2)
+=> "99 eggs or chicks (99)"
+</enscript>
+
+
+=== string-substitute*
+
+ [procedure] (string-substitute* STRING SMAP [MODE])
+
+Substitutes elements of {{STRING}} with {{string-substitute}} according to {{SMAP}}.
+{{SMAP}} should be an association-list where each element of the list
+is a pair of the form {{(MATCH . REPLACEMENT)}}. Every occurrence of
+the regular expression {{MATCH}} in {{STRING}} will be replaced by the string
+{{REPLACEMENT}}
+
+<enscript highlight=scheme>
+(string-substitute* "<h1>Hello, world!</h1>"
+                    '(("<[/A-Za-z0-9]+>" . ""))))
+
+=>  "Hello, world!"
+</enscript>
+
+
+=== regexp-escape
+
+ [procedure] (regexp-escape STRING)
+
+Escapes all special characters in {{STRING}} with {{\}}, so that the string can be embedded
+into a regular expression.
+
+<enscript highlight=scheme>
+(regexp-escape "^[0-9]+:.*$")
+=>  "\\^\\[0-9\\]\\+:.\n.\\*\\$"
+</enscript>
+
+
+Platform-specific notes:
+
+* due to a bug in the {{pregexp}} library, character classes enclosed in {{[ ... ]}} may not begin with a hyphen ({{-}}). A workaround is either to precede the hyphen with a backslash or use the range {{---}}.
+
+Previous: [[Unit match]]
+
+Next: [[Unit srfi-18]]

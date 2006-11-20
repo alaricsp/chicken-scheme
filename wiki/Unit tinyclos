@@ -1,0 +1,13 @@
+[[tags: manual]]
+[[toc:]]
+
+
+== Unit tinyclos
+
+From CHICKEN version 2.424 on, the functionality of this library has been
+moved into a separate extension, [[tinyclos]].
+
+
+Previous: [[Unit lolevel]]
+
+Next: [[Interface to external functions and variables]]

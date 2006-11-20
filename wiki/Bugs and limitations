@@ -1,0 +1,15 @@
+[[tags: manual]]
+
+== Bugs and limitations
+
+* Compiling large files takes too much time.
+
+* If a known procedure has unused arguments, but is always called without those parameters, then the optimizer ''repairs'' the procedure in certain situations and removes the parameter from the lambda-list.
+
+* {{port-position}} currently works only for input ports.
+
+* Leaf routine optimization can theoretically result in code that thrashes, if tight loops perform excessively many mutations.
+
+Previous: [[Data representation]]
+
+Next: [[FAQ]]

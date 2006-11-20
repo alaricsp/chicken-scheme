@@ -1,0 +1,19 @@
+[[tags: manual]]
+== Unit srfi-13
+
+
+String library, see the documentation for
+[[http://srfi.schemers.org/srfi-13/srfi-13.html|SRFI-13]]
+
+
+On systems that support dynamic loading, the {{srfi-13}} unit can
+be made available in the interpreter ({{csi}}) by entering
+
+<enscript highlight=scheme>
+(require-extension srfi-13)
+</enscript>
+
+
+Previous: [[Unit srfi-4]]
+
+Next: [[Unit srfi-14]]

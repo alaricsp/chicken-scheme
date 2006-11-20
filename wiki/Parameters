@@ -1,0 +1,114 @@
+[[tags: manual]]
+[[toc:]]
+
+== Parameters
+
+Certain behavior of the interpreter and compiled programs can be
+customized via 'parameters', where a parameter is a procedure of
+zero or one arguments. To retrieve the value of a parameter call the
+parameter-procedure with zero arguments. To change the setting of the
+parameter, call the parameter-procedure with the new value as argument:
+
+<enscript highlight=scheme>
+(define foo (make-parameter 123))
+(foo)                             ==> 123
+(foo 99)
+(foo)                             ==> 99
+</enscript>
+
+Parameters are fully thread-local, each thread of execution
+owns a local copy of a parameters' value.
+
+CHICKEN implements [[http://srfi.schemers.org/srfi-39/srfi-39.html|SRFI-39]].
+
+
+
+=== make-parameter
+
+ [procedure] (make-parameter VALUE [GUARD])
+
+Returns a procedure that accepts zero or one argument. Invoking the
+procedure with zero arguments returns {{VALUE}}. Invoking the
+procedure with one argument changes its value to the value of that
+argument (subsequent invocations with zero parameters return the new
+value). {{GUARD}} should be a procedure of a single argument. Any
+new values of the parameter (even the initial value) are passed to this
+procedure. The guard procedure should check the value and/or convert it
+to an appropriate form.
+
+=== case-sensitive
+If true, then {{read}} reads symbols and identifiers in
+case-sensitive mode and uppercase characters in symbols are printed
+escaped. Defaults to {{#t}}.
+
+
+=== dynamic-load-libraries
+A list of strings containing shared libraries that should be checked
+for explicitly loaded library units (this facility is not available on
+all platforms). See {{load-library}}.
+
+
+=== command-line-arguments
+Contains the list of arguments passed to this program, with the name of
+the program and any runtime options (all options starting with {{-:}})
+removed.
+
+
+
+=== current-read-table
+A read-table object that holds read-procedures for special non-standard
+read-syntax (see {{set-read-syntax!}} for more information).
+
+
+=== exit-handler
+A procedure of a single optional argument. When {{exit}} is called,
+then this procedure will be invoked with the exit-code as argument. The
+default behavior is to terminate the program.
+
+
+=== eval-handler
+A procedure of one or two arguments. When {{eval}} is invoked, it
+calls the value of this parameter with the same arguments. The default
+behavior is to evaluate the argument expression and to ignore the
+second parameter.
+
+
+=== force-finalizers
+If true, force and execute all pending finalizers before exiting the
+program (either explicitly by {{exit}} or implicitly when the last
+toplevel expression has been executed). Default is {{#t}}.
+
+
+=== implicit-exit-handler
+A procedure of no arguments. When the last toplevel expression of the
+program has executed, then the value of this parameter is called. The
+default behaviour is to invoke all pending finalizers.
+
+
+=== keyword-style
+Enables alternative keyword syntax, where {{STYLE}} may be either
+{{#:prefix}} (as in Common Lisp) or {{#:suffix}} (as in DSSSL).
+Any other value disables the alternative syntaxes.
+
+
+=== load-verbose
+A boolean indicating whether loading of source files, compiled code
+(if available) and compiled libraries should display a message.
+
+
+=== repl-prompt
+A procedure that should evaluate to a string that will be printed before reading 
+interactive input from the user in a read-eval-print loop. Defaults to 
+{{(lambda () "#;N> ")}}.
+
+
+=== reset-handler
+A procedure of zero arguments that is called via {{reset}}. The
+default behavior in compiled code is to invoke the value of
+{{(exit-handler)}}. The default behavior in the interpreter is to
+abort the current computation and to restart the read-eval-print loop.
+
+
+Previous: [[Declarations]]
+
+Next: [[Unit library]]

@@ -1,0 +1,12 @@
+[[tags: manual]]
+
+== Unit match
+
+The runtime-support code for the Pattern Matching extensions. Note that to use the macros in
+normal compiled code it is not required to declare this unit as used. Only
+if forms containing these macros are to be expanded at runtime, this
+is needed. 
+
+Previous: [[Unit srfi-14]]
+
+Next: [[Unit regex]]

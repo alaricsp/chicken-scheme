@@ -96,10 +96,10 @@ static void create_directory(char *pathname) {}
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug" "-ls" "-release" "-test") )
+    "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f) )
 
 
 (define *install-bin-path* 
@@ -145,7 +145,7 @@ static void create_directory(char *pathname) {}
       str) )
 
 (define setup-root-directory (make-parameter #f))
-(define setup-build-directory (make-parameter #f))
+(define setup-build-directory (make-parameter (current-directory)))
 (define setup-verbose-flag (make-parameter #f))
 (define setup-install-flag (make-parameter #t))
 
@@ -165,12 +165,10 @@ static void create_directory(char *pathname) {}
 (define *example-directory* (make-pathname (chicken-home) "examples"))
 (define *base-directory* (current-directory))
 (define *fetch-tree-only* #f)
-
-
-; Repository-format:
-;
-; ((NAME FILENAME REQUIRED-NAME ...) ...)
-(define repository-hosts '(("www.call-with-current-continuation.org" "eggs" 80)))
+(define *svn-repository* #f)
+(define *local-repository* #f)
+(define *destdir* #f)
+(define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
 
 
 (define (yes-or-no? str . default)
@@ -414,6 +412,10 @@ usage: chicken-setup [OPTION ...] FILENAME
   -t  -test EXTENSION ...        return success if all given extensions are installed
       -ls EXTENSION              list installed files for extension
       -fetch-tree                download and show repository catalog
+      -tree FILENAME             use repository catalog from given file
+      -svn URL                   fetch extension from subversion repository
+      -local PATH                fetch extension from local filesystem
+      -destdir PATH              specify alternative installation prefix
   --                             ignore all following arguments
 
   Builds and installs extension libraries.
@@ -457,7 +459,7 @@ EOF
 		,@info)) )
       (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
       (let ((sid (->string id)))
-	(with-output-to-file (make-setup-info-pathname sid (repo-path))
+	(with-output-to-file (make-setup-info-pathname sid (repo-path #t))
 	  (cut pp info) ) ) ) ) )
 
 (define (fix-exports id info)
@@ -481,16 +483,6 @@ EOF
 	  (values `((exports ,@exports)) oinfo)
 	  (values '() oinfo) ) ) ) )
 
-(define (simple-install filename)
-  (let ((so (pathname-replace-extension filename ##sys#load-dynamic-extension))
-	(id (pathname-strip-extension filename)) )
-    (run (csc -O2 -no-trace -s ,filename -emit-exports ,(make-pathname #f id "exports")))
-    (when (setup-install-flag)
-      (unless *windows* (run (,*remove-command* ,(make-pathname (repo-path) so))))
-      (run (,*copy-command* ,so ,(repo-path)))
-      (write-info id (list (make-pathname (repository-path) so)) '()) )
-    (unless *keep-stuff* (run (rm ,so)) ) ) )
-
 (define (compute-tmpdir fname)
   (if (equal? "egg-dir" (pathname-extension fname))
       fname
@@ -501,7 +493,8 @@ EOF
   (change-directory dir) )
 
 (define (rmtmpdir)
-  (chdir *base-directory*)
+  (unless (string=? (current-directory) *base-directory*)
+    (chdir *base-directory*) )
   (when *tmpdir-created*
     (set! *tmpdir-created* #f)
     (unless *keep-stuff*
@@ -515,7 +508,9 @@ EOF
     (with-input-from-file fn
       (lambda () (string=? "\x1f\x8b" (read-string 2))) ) )
   (let ((tmpdir (compute-tmpdir filename)))
-    (cond ((file-exists? tmpdir) (chdir tmpdir))
+    (cond ((file-exists? tmpdir) 
+	   (chdir tmpdir)
+	   (setup-build-directory (current-directory)) )
 	  (else
 	   (create-directory tmpdir)
 	   (set! *tmpdir-created* #t)
@@ -567,6 +562,7 @@ EOF
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (rpath (repo-path))
+	   (rpathd (repo-path #t))
 	   (files (if *windows*
 		      (map (lambda (f) 
 			     (if (pair? f)
@@ -576,17 +572,23 @@ EOF
 		      files) ) 
 	   (dests (map (lambda (f)
 			 (let ((from (if (pair? f) (car f) f))
-			       (to (make-dest-pathname rpath f)) )
+			       (to (make-dest-pathname rpathd f)) )
 			   (when (and (not *windows*) (equal? "so" (pathname-extension to)))
 			     (run (,*remove-command* ,to)) )
 			   (copy-file from to) 
-			   to) )
+			   (make-dest-pathname rpath f)))
 		       files) ) )
       (and-let* ((docs (assq 'documentation info)))
-	(print "\n* Installing documentation files in " (pathname-directory (doc-index) )":")
-	(for-each (cut print "  * " <>) (cdr docs)) 
-	(newline)
-	(set! *rebuild-doc-index* #t))
+	(let ((docpath (pathname-directory (doc-index #t))))
+	  (print "\n* Installing documentation files in " docpath ":")
+	  (for-each
+	   (lambda (f)
+	     (if (file-exists? f)
+		 (copy-file f (make-pathname docpath f))
+		 (print "Warning: file " f " doesn't seem to exist") )
+	     (print "  * " <>) (cdr docs)) 
+	   (newline)
+	   (set! *rebuild-doc-index* #t)) ) )
       (and-let* ((exs (assq 'examples info)))
 	(print "\n* Installing example files in " *example-directory* ":")
 	(for-each 
@@ -604,7 +606,7 @@ EOF
 	f) )
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
-	   (ppath (program-path)) 
+	   (ppath (if *destdir* (make-pathname *destdir* "bin") (program-path)))
 	   (files (if *windows*
                       (map (lambda (f)
                              (if (list? f) 
@@ -650,8 +652,12 @@ EOF
     (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
     (delete-file* (make-setup-info-pathname (->string ext)))))
 
-(define (repo-path)
-  (let ((p (repository-path)))
+(define (repo-path #!optional ddir?)
+  (let ((p (if (and ddir? *destdir*)
+	       (make-pathname 
+		(list *destdir* "lib/chicken") 
+		(pathname-file (repository-path))) ; we need the binary-compat. version
+	       (repository-path))) )
     (ensure-directory p)
     p) )
 
@@ -719,8 +725,8 @@ EOF
 
 (define (download-repository-tree)
   (unless *repository-tree*
-    (print "downloading catalog ...")
-    (let loop ((hosts repository-hosts))
+    (when (setup-verbose-flag) (print "downloading catalog ..."))
+    (let loop ((hosts *repository-hosts*))
       (if (null? hosts)
 	  (error "unable to connect")
 	  (match hosts
@@ -729,7 +735,8 @@ EOF
 	      (lambda (return)
 		(or (handle-exceptions ex
 		      (begin (printf "could not connect to ~A.~%" host) #f)
-		      (printf "downloading catalog from ~A ...~%" host)
+		      (when (setup-verbose-flag)
+			(printf "downloading catalog from ~A ...~%" host) )
 		      (let-values (((i o) (setup-tcp-connect host port)))
 			(set! *last-decent-host* (car hosts))
 			(let ((req (http-get-request path remote-repository-name host)))
@@ -753,7 +760,8 @@ EOF
 				  (close-output-port o)
 				  #t)
 				(loop) ) ) ) ) )
-		    (loop more) ) ) ) ) ) ) ) ) )
+		    (loop more) ) ) ) )
+	    ((x . _) (error "(internal) invalid host" x)) ) ) ) ) )
 
 (define *progress-indicator*
   (thread-start!
@@ -773,29 +781,41 @@ EOF
 	(thread-suspend! *progress-indicator*) ) ) )
 
 (define (download-data hostdata item #!optional filename)
-  (match hostdata
-    ((host path port)
-     (let ((fname (or filename (third (assq item *repository-tree*)))))
-       (printf "downloading ~A from ~A ~!" fname hostdata)
-       (let-values (((i o) (setup-tcp-connect host port)))
-	 (let ((req (http-get-request 
-		     (if filename (pathname-directory filename) path)
-		     (if filename (pathname-strip-directory fname) fname)
-		     host) ) )
-	   (when (setup-verbose-flag) (display req))
-	   (display req o) )
-	 (let loop ()
-	   (let ((ln (read-line i)))
-	     ;; check for 404 here...
-	     (if (string=? "" ln)
-		 (let ((data (with-progress-indicator (cut read-string #f i))))
-		   (close-input-port i)
-		   (close-output-port o)
-		   (with-output-to-file (pathname-strip-directory fname)
-		     (cut display data) binary:) ) 
-		 (loop) ) ) ) ) ) ) ) )
+  (unless hostdata (set! hostdata (car *repository-hosts*)))
+  (cond (*local-repository*
+	 (when (setup-verbose-flag) (printf "fetching from local directory ~a ...~%" *local-repository*))
+	 (let ((p (->string item)))
+	   (copy-file (make-pathname *local-repository* p) (make-pathname #f p "egg-dir")) ) )
+	(*svn-repository*
+	 (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" *svn-repository*))
+	 (let ((p (->string item)))
+	   (run (svn co ,(make-pathname *svn-repository* p) ,(make-pathname #f p "egg-dir"))) ) )
+	(else
+	 (match hostdata
+	   ((host path port)
+	    (let ((fname (or filename (third (assq item *repository-tree*)))))
+	      (printf "downloading ~A from ~A ~!" fname hostdata)
+	      (let-values (((i o) (setup-tcp-connect host port)))
+		(let ((req (http-get-request 
+			    (if filename (pathname-directory filename) path)
+			    (if filename (pathname-strip-directory fname) fname)
+			    host) ) )
+		  (when *debug* (display req))
+		  (display req o) )
+		(let loop ()
+		  (let ((ln (read-line i)))
+		    ;; check for 404 here...
+		    (if (string=? "" ln)
+			(let ((data (with-progress-indicator (cut read-string #f i))))
+			  (close-input-port i)
+			  (close-output-port o)
+			  (with-output-to-file (pathname-strip-directory fname)
+			    (cut display data) 
+			    binary:) ) 
+			(loop) ) ) ) ) ) )
+	   (x (error "(internal) invalid host" x)) ) ) ) )
 
-(define (fetch-file-from-net ext)
+(define (fetch-file ext)
   (define (requirements reqs)
     (fold 
      (lambda (r reqs)
@@ -811,7 +831,7 @@ EOF
 	    "yes") )
        (cond ((pathname-directory ext)
 	      (printf "Warning: no repository index available, trying direct download...~%" ext)
-	      (set! *last-decent-host* (car repository-hosts))
+	      (set! *last-decent-host* (car *repository-hosts*))
 	      (set! *dont-ask* #t)
 	      (download-data
 	       *last-decent-host*
@@ -837,17 +857,24 @@ EOF
   (let ((df (not *fetch-only*)))
     (let loop ((filename filename))
       (cond ((and df (with-ext filename "setup")) => run-setup-script)
-	    ((and df (with-ext filename "scm")) => simple-install)
-	    ((and df (or (with-ext filename "egg") (with-ext filename "egg-dir"))) =>
+	    ((or (with-ext filename "egg") (with-ext filename "egg-dir")) =>
 	     (lambda (f)
-	       (unpack/enter f)
-               (loop (pathname-replace-extension f "setup"))
-               (rmtmpdir) ) )
-	    ((fetch-file-from-net filename) 
+	       (when df
+		 (unpack/enter f)
+		 (let ((sfile (pathname-replace-extension f "setup")))
+		   (when (and (not (file-exists? sfile)) (file-exists? "tags") )
+		     (let ((ds (sort (directory "tags") string>=?)))
+		       (when (pair? ds) 
+			 (let ((d (make-pathname "tags" (car ds))))
+			   (chdir d)
+			   (setup-build-directory d) ) ) ) )
+		   (loop sfile)
+		   (rmtmpdir) ) ) ) )
+	    ((fetch-file filename) 
 	     (when df (loop (pathname-file filename))) ) ) ) ) )
 
-(define (doc-index)
-  (make-pathname (repo-path) "index.html"))
+(define (doc-index #!optional ddir?)
+  (make-pathname (repo-path ddir?) "index.html"))
 
 (define (extension-documented? rpath fn)
   (let ([pn (make-setup-info-pathname fn rpath)])
@@ -937,11 +964,11 @@ EOF
 
 (define (main args)
   (define (parse-host host eggdir)
-    (set! repository-hosts
+    (set! *repository-hosts*
       (cons (match (string-match "(.+)\\:([0-9]+)" host)
 	      ((_ host port) (list host (if eggdir "eggs" "") (string->number port)))
 	      (_ (list host (if eggdir "eggs" "") 80)) )
-	    repository-hosts) )  )
+	    *repository-hosts*) )  )
   (setup-root-directory *base-directory*)
   (let ((uinst #f)
 	(anydone #f))
@@ -973,11 +1000,19 @@ EOF
 	(("-repository" dir . more)
 	 (repository-path dir)
 	 (loop more) )
+	(("-tree" file . more)
+	 (set! *repository-tree* (with-input-from-file file read))
+	 (loop more) )
 	(("--" . more)
 	 (exit) )
 	(("-program-path")
 	 (print (program-path))
 	 (exit) )
+	(("-destdir" path . more)
+	 (set! *example-directory* (make-pathname path "examples"))
+	 (set! *destdir* path) 
+	 (installation-prefix path)
+	 (loop more) )
 	(("-program-path" dir . more)
 	 (program-path dir)
 	 (loop more) )
@@ -1000,8 +1035,7 @@ EOF
 	 (loop more) )
 	(("-host" host . more)
 	 (match (string-match "http://(.*)" host)
-	   ((_ host)
-	    (parse-host host #t) )
+	   ((_ host) (parse-host host #t) )
 	   (_ (parse-host host #t)) )
 	 (loop more) )
 	(("-proxy" proxy . more)
@@ -1044,6 +1078,14 @@ EOF
 	 (set! *check-repository* #t)
 	 (set! anydone #t)
 	 (loop more) )
+	(("-svn" url . more)
+	 (set! *svn-repository* url)
+	 (set! *dont-ask* #t)
+	 (loop more) )
+	(("-local" path . more)
+	 (set! *local-repository* path)
+	 (set! *dont-ask* #t)
+	 (loop more) )
 	(("-fetch-tree" . more)
 	 (set! *fetch-tree-only* #t)
 	 (set! anydone #t)
@@ -1054,7 +1096,7 @@ EOF
 		  (print "the following extensions are currently not installed: " missing)
 		  1)
 		 (else (exit 0)) ) ) )
-	(((or "-run" "-script" "-proxy" "-host" "-csc-option"))
+	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" "-tree" "-local" "-svn" "-eval"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
 	 (cond ((and (> (string-length filename) 0) (char=? #\- (string-ref filename 0)))
