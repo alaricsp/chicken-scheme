@@ -1796,6 +1796,7 @@ void C_unregister_lf(void *handle)
 
   if (lf_list == node) lf_list = node->next;
 
+  C_free(node->module_name);
   C_free(node);
 }
 
@@ -8139,6 +8140,7 @@ void C_ccall C_dload(C_word c, C_word closure, C_word k, C_word name, C_word ent
   C_kontinue(k, C_SCHEME_FALSE);
 }
 
+
 #ifdef DLOAD_2_DEFINED
 # undef DLOAD_2_DEFINED
 #endif
@@ -8350,6 +8352,31 @@ void dload_2(void *dummy)
   C_kontinue(k, C_SCHEME_FALSE);
 }
 #endif
+
+
+C_word C_ccall C_dunload(C_word name)
+{
+  LF_LIST *m = find_module_handle(C_c_string(name));
+
+  if(m == NULL) return C_SCHEME_FALSE;
+
+#ifndef NO_DLOAD2
+# if defined(__hpux__) && defined(HAVE_DL_H)
+  shl_unload((shl_t)m->module_handle);
+# elif defined(HAVE_DLFCN_H)
+  if(dlclose(m->module_handle) != 0) return C_SCHEME_FALSE;
+# elif defined(HAVE_LOADLIBRARY)
+  FreeLibrary(m->module_handle);
+# else
+  return C_SCHEME_FALSE;
+# endif
+# else
+  return C_SCHEME_FALSE;
+#endif
+
+  C_unregister_lf(m);
+  return C_SCHEME_TRUE;
+}
 
 
 void C_ccall C_become(C_word c, C_word closure, C_word k, C_word table)

@@ -193,7 +193,7 @@ EOF
 (install-lib (dest LIBDIR) "libchicken.a" "libuchicken.a")
 (install-man (dest MANDIR) "chicken.1" "csi.1" "csc.1" "chicken-profile.1" "chicken-setup.1")
 (install-file (dest INCDIR) "chicken.h" "chicken-defaults.h" "chicken-config.h")
-(install-file (dest DOCDIR) "ChangeLog" "README" "LICENSE")
+(install-file (dest DOCDIR) #;"ChangeLog" "README" "LICENSE")
 (install-file (path (dest DOCDIR) "html") (glob "html/*") )
 
 (notfile "spotless")
@@ -232,3 +232,6 @@ EOF
 (depends "pregexp.c" "regex-common.scm")
 (depends "pcre.c" "regex-common.scm")
 (depends "regexunix.c" "regex-common.scm")
+
+(notfile "tags")
+(actions "tags" ^{etags *.scm runtime.c chicken.h})

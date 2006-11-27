@@ -1441,6 +1441,7 @@ C_fctexport C_word C_fcall C_i_foreign_unsigned_integer_argumentp(C_word x) C_re
 
 C_fctexport C_char *C_lookup_procedure_id(void *ptr);
 C_fctexport void *C_lookup_procedure_ptr(C_char *id);
+C_fctexport C_word C_dunload(C_word name);
 
 #ifdef C_SIXTY_FOUR
 C_fctexport void C_ccall C_peek_signed_integer_32(C_word c, C_word closure, C_word k, C_word v, C_word index) C_noret;

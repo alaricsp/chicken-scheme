@@ -3093,7 +3093,7 @@ EOF
 		 'condition
 		 '(exn breakpoint)
 		 (list '(exn . message) "*** breakpoint ***"
-		       '(exn . arguments) (cons name args)
+		       '(exn . arguments) (list (cons name args))
 		       '(exn . location) name
 		       '(exn . continuation) c) ) ) )
        (set! ##sys#last-breakpoint exn)
@@ -4257,3 +4257,9 @@ EOF
 (define cdddr (getter-with-setter cdddr (lambda (x y) (set-cdr! (cddr x) y))))
 (define string-ref (getter-with-setter string-ref string-set!))
 (define vector-ref (getter-with-setter vector-ref vector-set!))
+
+(define (##sys#dunload name)
+  (and-let* ((r (##core#inline "C_dunload" (##sys#make-c-string name))))
+    (##sys#gc #t) 
+    #t) )
+

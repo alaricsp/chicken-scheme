@@ -1145,8 +1145,9 @@
 	       (fluid-let ([##sys#read-error-with-line-number #t]
 			   [##sys#current-load-file fname]
 			   [##sys#current-load-path
-			    (let ((i (has-sep? fname)))
-			      (if i (##sys#substring fname 0 (fx+ i 1)) "") ) ]
+			    (and fname
+				 (let ((i (has-sep? fname)))
+				   (if i (##sys#substring fname 0 (fx+ i 1)) "") ) ) ]
 			   [##sys#abort-load (lambda () (abrt #f))] )
 		 (let ([in (if fname (open-input-file fname) input)])
 		   (##sys#dynamic-wind
