@@ -292,7 +292,11 @@ static C_TLS int C_uw;
 static C_TLS sigset_t C_sigset;
 #define C_sigemptyset(d)    (sigemptyset(&C_sigset), C_SCHEME_UNDEFINED)
 #define C_sigaddset(s)      (sigaddset(&C_sigset, C_unfix(s)), C_SCHEME_UNDEFINED)
-#define C_sigprocmask(d)    C_fix(sigprocmask(SIG_SETMASK, &C_sigset, NULL))
+#define C_sigdelset(s)      (sigdelset(&C_sigset, C_unfix(s)), C_SCHEME_UNDEFINED)
+#define C_sigismember(s)    C_mk_bool(sigismember(&C_sigset, C_unfix(s)))
+#define C_sigprocmask_set(d)        C_fix(sigprocmask(SIG_SETMASK, &C_sigset, NULL))
+#define C_sigprocmask_block(d)      C_fix(sigprocmask(SIG_BLOCK, &C_sigset, NULL))
+#define C_sigprocmask_unblock(d)    C_fix(sigprocmask(SIG_UNBLOCK, &C_sigset, NULL))
 
 #define C_open(fn, fl, m)   C_fix(open(C_c_string(fn), C_unfix(fl), C_unfix(m)))
 #define C_read(fd, b, n)    C_fix(read(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
@@ -303,9 +307,9 @@ static C_TLS sigset_t C_sigset;
 #define C_fseek(p, n, w)      C_mk_nbool(fseek(C_port_file(p), C_unfix(n), C_unfix(w)))
 #define C_lseek(fd, o, w)     C_fix(lseek(C_unfix(fd), C_unfix(o), C_unfix(w)))
 
-#define C_zero_fd_set(i)    FD_ZERO(&C_fd_sets[ i ])
-#define C_set_fd_set(i, fd) FD_SET(fd, &C_fd_sets[ i ])
-#define C_test_fd_set(i, fd) FD_ISSET(fd, &C_fd_sets[ i ])
+#define C_zero_fd_set(i)      FD_ZERO(&C_fd_sets[ i ])
+#define C_set_fd_set(i, fd)   FD_SET(fd, &C_fd_sets[ i ])
+#define C_test_fd_set(i, fd)  FD_ISSET(fd, &C_fd_sets[ i ])
 #define C_C_select(m)         C_fix(select(C_unfix(m), &C_fd_sets[ 0 ], &C_fd_sets[ 1 ], NULL, NULL))
 #define C_C_select_t(m, t)    (C_timeval.tv_sec = C_unfix(t), C_timeval.tv_usec = 0, C_fix(select(C_unfix(m), &C_fd_sets[ 0 ], &C_fd_sets[ 1 ], NULL, &C_timeval)))
 
@@ -917,6 +921,10 @@ EOF
 
 (let ([oldhook ##sys#interrupt-hook]
       [sigvector (make-vector 256 #f)] )
+  (set! signal-handler
+    (lambda (sig)
+      (##sys#check-exact sig 'signal-handler)
+      (##sys#slot sigvector sig) ) )
   (set! set-signal-handler!
     (lambda (sig proc)
       (##sys#check-exact sig 'set-signal-handler!)
@@ -940,9 +948,41 @@ EOF
        (##sys#check-exact s 'set-signal-mask!)
        (##core#inline "C_sigaddset" s) )
      sigs)
-    (when (fx< (##core#inline "C_sigprocmask" 0) 0)
+    (when (fx< (##core#inline "C_sigprocmask_set" 0) 0)
       (posix-error #:process-error 'set-signal-mask! "can not set signal mask") ) ) )
 
+(define signal-mask
+  (let ([allsigs
+  	  (list
+	    signal/term signal/kill signal/int signal/hup signal/fpe signal/ill
+	    signal/segv signal/abrt signal/trap signal/quit signal/alrm signal/vtalrm
+	    signal/prof signal/io signal/urg signal/chld signal/cont signal/stop
+	    signal/tstp signal/pipe signal/xcpu signal/xfsz signal/usr1 signal/usr2
+	    signal/winch)] )
+    (lambda ()
+      (let loop ([sigs allsigs]
+                 [mask '()])
+      	(if (null? sigs)
+      	  mask
+      	  (let ([sig (car sigs)])
+      	    (loop (cdr sigs)
+      	          (if (##core#inline "C_sigismember" sig) (cons sig mask) mask)) ) ) ) ) ) )
+
+(define (signal-masked? sig)
+  (##sys#check-exact sig 'signal-masked?)
+  (##core#inline "C_sigismember" sig) )
+
+(define (signal-mask! sig)
+  (##sys#check-exact sig 'signal-mask!)
+  (##core#inline "C_sigaddset" sig)
+  (when (fx< (##core#inline "C_sigprocmask_block" 0) 0)
+      (posix-error #:process-error 'signal-mask! "cannot block signal") )  )
+
+(define (signal-unmask! sig)
+  (##sys#check-exact sig 'signal-unmask!)
+  (##core#inline "C_sigdelset" sig)
+  (when (fx< (##core#inline "C_sigprocmask_unblock" 0) 0)
+      (posix-error #:process-error 'signal-unmask! "cannot unblock signal") )  )
 
 ;;; Set SIGINT handler:
 

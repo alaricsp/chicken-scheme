@@ -42,7 +42,8 @@
 ; file-select
 ; symbolic-link?
 ; signal/...
-; set-signal-handler!  set-signal-mask!
+; set-signal-handler!  signal-handler
+; set-signal-mask!  signal-mask  signal-masked?  signal-mask!  signal-unmask!
 ; user-information  group-information  get-groups  set-groups!  initialize-groups
 ; errno/wouldblock
 ; change-file-owner

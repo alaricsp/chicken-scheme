@@ -110,7 +110,7 @@ This will populate your directory with a full working repository.
 INSTALL CMake
 -------------
 
-CMake 2.4.4 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.
+Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.  Note that sometimes the packaged distributions aren't as current as what's available on the CMake website.  If your CMake isn't recent enough, the build will complain and notify you.
 
 
 

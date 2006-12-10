@@ -35,7 +35,7 @@
 
 (declare
   (unit utils)
-  (uses regex extras)
+  (uses regex extras eval)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)
@@ -48,6 +48,7 @@
   (declare
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+      apropos-list apropos
       ##sys#string-append reverse port? read-string with-input-from-file command-line-arguments
       for-each-line ##sys#check-port read-line getenv make-pathname file-exists? call-with-output-file
       decompose-pathname string-search absolute-pathname? string-append ##sys#substring string-match
@@ -72,6 +73,35 @@
   (declare (emit-exports "utils.exports"))] )
 
 (register-feature! 'utils)
+
+
+;;; Environment utilities
+
+(define ##sys#apropos
+  (lambda (patt env)
+    (when (symbol? patt)
+      (set! patt (symbol->string patt)))
+    (when (string? patt)
+      (set! patt (regexp (regexp-escape patt))))
+    (##sys#environment-symbols env
+      (lambda (sym)
+        (not (not (string-search patt (symbol->string sym)))))) ) )
+
+(let ([%apropos-list
+        (lambda (loc patt args)
+	  (let ([env (if (pair? args) (car args) (interaction-environment))])
+	    (##sys#check-structure env 'environment loc)
+	    (unless (or (string? patt) (symbol? patt) (regexp? patt))
+	      (##sys#signal-hook #:type-error loc "bad argument type - not a string, symbol, or regexp" patt))
+	    (##sys#apropos patt env) ) )])
+  (set! apropos-list
+    (lambda (patt . args)
+      (%apropos-list 'apropos-list patt args)))
+  (set! apropos
+    (lambda (patt . args)
+      (for-each
+        (lambda (sym) (display sym) (newline))
+        (%apropos-list 'apropos patt args)) ) ) )
 
 
 ;;; Like `system', but allows format-string and bombs on nonzero return code:

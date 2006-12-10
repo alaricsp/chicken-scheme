@@ -1525,22 +1525,53 @@
 (define ##sys#interaction-environment (##sys#make-structure 'environment #f #t))
 
 (define ##sys#copy-env-table
-  (lambda (e mff mf)
-    (let* ([s (##sys#size e)]
-	   [e2 (##sys#make-vector s '())] )
-      (do ([i 0 (fx+ i 1)])
-	  ((fx>= i s) e2)
-	(##sys#setslot 
-	 e2 i
-	 (let copy ([b (##sys#slot e i)])
-	   (if (null? b)
-	       '()
-	       (let ([bi (##sys#slot b 0)])
-		 (cons (vector 
-			(##sys#slot bi 0)
-			(##sys#slot bi 1)
-			(if mff mf (##sys#slot bi 2)) )
-		       (copy (##sys#slot b 1)) ) ) ) ) ) ) ) ) )
+  (lambda (e mff mf . args)
+    (let ([syms (and (pair? args) (car args))])
+      (let* ([s (##sys#size e)]
+             [e2 (##sys#make-vector s '())] )
+       (do ([i 0 (fx+ i 1)])
+           ((fx>= i s) e2)
+         (##sys#setslot 
+          e2 i
+          (let copy ([b (##sys#slot e i)])
+            (if (null? b)
+                '()
+                (let ([bi (##sys#slot b 0)])
+                  (let ([sym (##sys#slot bi 0)])
+                    (if (or (not syms) (memq sym syms))
+                      (cons (vector
+                              sym
+                              (##sys#slot bi 1)
+                              (if mff mf (##sys#slot bi 2)))
+                            (copy (##sys#slot b 1)))
+                      (copy (##sys#slot b 1)) ) ) ) ) ) ) ) ) ) ) )
+
+(define ##sys#environment-symbols
+  (lambda (env . args)
+    (##sys#check-structure env 'environment)
+    (let ([pred (and (pair? args) (car args))])
+      (let ([envtbl (##sys#slot env 1)])
+        (if envtbl
+            ;then "real" environment
+          (let ([envtblsiz (vector-length envtbl)])
+            (do ([i 0 (fx+ i 1)]
+                 [syms
+                   '()
+                   (let loop ([bucket (vector-ref envtbl i)] [syms syms])
+                     (if (null? bucket)
+                       syms
+                       (let ([sym (vector-ref (car bucket) 0)])
+                         (if (or (not pred) (pred sym))
+                           (loop (cdr bucket) (cons sym syms))
+                           (loop (cdr bucket) syms) ) ) ) )])
+	        ((fx>= i envtblsiz) syms) ) )
+	    ;else interaction-environment
+	  (let ([syms '()])
+	    (##sys#walk-namespace
+	      (lambda (sym)
+	        (when (or (not pred) (pred sym))
+	          (set! syms (cons sym syms)) ) ) )
+	    syms ) ) ) ) ) )
 
 (define (interaction-environment) ##sys#interaction-environment)
 
@@ -1568,7 +1599,7 @@
   (define (initb ht) 
     (lambda (b)
       (let ([loc (##sys#hash-table-location ht b #t)])
-	(##sys#setslot loc 1 (##sys#slot b 0)) ) ) )
+        (##sys#setslot loc 1 (##sys#slot b 0)) ) ) )
   (for-each 
    (initb ##sys#r4rs-environment)
    '(not boolean? eq? eqv? equal? pair? cons car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar

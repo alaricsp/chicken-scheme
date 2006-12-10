@@ -98,27 +98,28 @@ Extensions and libraries:
   htmlprag http http-server-form-posts iconv imlib2 inline irc iset
   japi javahack job-worker jni json kanren lalr lazy-ffi levenshtein
   lightning lirc-client locale logging lookup-table loop loopy-loop
-  macosx magic mailbox make man mapm match-action matcher mathh md5
-  meroon message-digest mime metakit metaphone misc-extn miscmacros
-  mistie modds modules mole mpd-client mysql nbstdin ncurses numbers
-  octave objc object-apply oblist openal opengl openssl orders
-  packedobjects packrat pcap perfect-hash phoghorn pipeline pmatch
-  pop3 postgresql ppi procedure-surface prometheus proplist protobj
-  pty q-lang qt r6rs-libraries readline regex-case remote-launch
-  remote-mailbox rfc3339 rfc822 rgraph ripemd rlimit rpc rss s11n
-  sandbox sassy schelog scheme-dissect sdl sedna sfio sha1 sha2 silex
-  simple-macros slib smtp softscheme spiffy spiffy-utils spread sql
-  sqlite sqlite3 sqlite3-tinyclos srfi-4-comprehensions srfi-19
-  srfi-25 srfi-27 srfi-29 srfi-37 srfi-38 srfi-40 srfi-42 srfi-45
-  srfi-47 srfi-57 srfi-60 srfi-66 srfi-78 srfi-85 srfi-95 ssax stack
-  stream-base64 stream-cgi stream-ext stream-flash
+  macosx magic mailbox make man mapm match-action matchable matcher
+  mathh md5 meroon message-digest mime metakit metaphone misc-extn
+  miscmacros mistie modds modules mole mpd-client mysql nbstdin
+  ncurses numbers octave objc object-apply oblist openal opengl
+  openssl orders packedobjects packrat pcap perfect-hash phoghorn
+  pipeline pmatch pop3 postgresql ppi procedure-surface prometheus
+  proplist protobj pty q-lang qt r6rs-libraries readline regex-case
+  remote-launch remote-mailbox rfc3339 rfc822 rgraph ripemd rlimit rpc
+  rss s11n sandbox sassy schelog scheme-dissect sdl sedna sfio sha1
+  sha2 silex simple-macros slib smtp softscheme spiffy spiffy-utils
+  spread sql sqlite sqlite3 sqlite3-tinyclos srfi-4-comprehensions
+  srfi-19 srfi-25 srfi-27 srfi-29 srfi-37 srfi-38 srfi-40 srfi-42
+  srfi-45 srfi-47 srfi-57 srfi-60 srfi-66 srfi-78 srfi-85 srfi-95 ssax
+  stack stream-base64 stream-cgi stream-ext stream-flash
   stream-flash-tree-map stream-htpasswd stream-httplog stream-ldif
   stream-parser stream-sections stream-wiki structures suspension
   svn-client svn-post-commit-hooks sx sxml-match sxml-tools
-  sxml-transforms sxpath synch syntax-case tar tabexpand tagged-begin
-  test-infrastructure tcc tcp-server tcp6 testeez tiger-hash tinyclos
-  tk udp unix-sockets uri url utf8 uuid-lib uuid-ossp vector-lib
-  web-scheme wt-tree xlib xmi xml-rpc xosd xxexpr z3
+  sxml-transforms sxpath synch syntactic-closures syntax-case tar
+  tabexpand tagged-begin test-infrastructure tcc tcp-server tcp6
+  testeez tiger-hash tinyclos tk udp unix-sockets uri url utf8
+  uuid-lib uuid-ossp vector-lib web-scheme wt-tree xlib xmi xml-rpc
+  xosd xxexpr z3
 
 
 The current development version can be accessed through the "darcs"

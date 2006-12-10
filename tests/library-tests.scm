@@ -1,6 +1,6 @@
 (assert (= -4.0 (round -4.3)))
 (assert (= 4.0 (round 3.5)))
-(assert (= 4 (round 7/2)))
+(assert (= 4 (round (string->number "7/2"))))
 (assert (= 7 (round 7)))
 (assert (zero? (round -0.5))) 		; is actually -0.0
 (assert (zero? (round -0.3)))

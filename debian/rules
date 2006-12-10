@@ -1,0 +1,72 @@
+#!/usr/bin/make -f
+export DH_COMPAT=4
+
+BUILD_ARCH = $(shell dpkg --print-installation-architecture)
+
+CFLAGS= -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+     CFLAGS += -O0
+        else
+     CFLAGS += -O2 -fno-strict-aliasing
+endif
+
+version=0.0.0
+major=0
+
+build: build-stamp
+build-stamp:
+	dh_testdir
+	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
+	$(MAKE)
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	-test -r /usr/share/misc/config.sub && \
+	  cp -f /usr/share/misc/config.sub $(CURDIR)/config.sub
+	-test -r /usr/share/misc/config.guess && \
+	  cp -f /usr/share/misc/config.guess $(CURDIR)/config.guess
+	-$(MAKE) clean
+	-$(MAKE) distclean
+	rm -f c_defaults.h
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	$(MAKE) install prefix=$(CURDIR)/debian/tmp/usr mandir=$(CURDIR)/debian/tmp/usr/share/man
+
+binary-common:
+	dh_testdir
+	dh_testroot
+	dh_movefiles
+	dh_installdocs
+	dh_installman
+	dh_installchangelogs ChangeLog
+	dh_link
+ifeq "$(findstring nostrip,$(DEB_BUILD_OPTIONS))" ""
+	dh_strip
+endif	
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs -V
+	dh_installdeb
+	dh_shlibdeps -l debian/libchicken0/usr/lib
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary-indep: build install
+
+binary-arch: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+binary-%: build install
+	make -f debian/rules binary-common DH_OPTIONS=-p$*
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

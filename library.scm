@@ -3345,7 +3345,11 @@ EOF
 			(let ([msg (cadr msga)]
 			      [loc (and loca (cadr loca))] )
 			  (if (and loc (symbol? loc))
-			      (string-append "(" (##sys#symbol->qualified-string loc) ") " msg)
+			      (string-append
+			       "(" (##sys#symbol->qualified-string loc) ") " 
+			       (cond ((symbol? msg) (##sys#slot msg 1))
+				     ((string? msg) msg)
+				     (else "") ) ) ; Hm...
 			      msg) )
 			"<exn: has no `message' property>")
 		    (if argsa
@@ -4094,9 +4098,7 @@ EOF
 	       (and prefix
 		    (cond [(symbol? prefix) (##sys#slot prefix 1)]
 			  [(string? prefix) prefix]
-			  [else (##sys#signal-hook #:type-error 'import "bad argument type - invalid prefix" prefix)] ) ) ] )
-	  (##sys#check-symbol ns 'import)
-	  (##sys#check-list syms 'import)
+			  [else (##sys#signal-hook #:type-error "bad argument type - invalid prefix" prefix)] ) ) ] )
 	  (let ([nsp (##sys#find-symbol-table (##sys#make-c-string (##sys#slot ns 1)))])
 	    (define (copy s str)
 	      (let ([s2 (##sys#intern-symbol
@@ -4104,7 +4106,7 @@ EOF
 			     (##sys#string-append prefix str)
 			     str) ) ] )
 		(##sys#setslot s2 0 (##sys#slot s 0)) ) )
-	    (unless nsp (##sys#error 'import "undefined namespace" ns))
+	    (unless nsp (##sys#error "undefined namespace" ns))
 	    (if (null? syms)
 		(let ([it (cons -1 '())])
 		  (let loop ()
@@ -4119,30 +4121,38 @@ EOF
 		     (if (and (pair? ss) (pair? (##sys#slot ss 1)))
 			 (begin
 			   (set! old (##sys#slot ss 0))
-			   (set! new (##sys#slot (##sys#slot ss 1) 0)) 
-			   (##sys#check-symbol new 'import) )
+			   (set! new (##sys#slot (##sys#slot ss 1) 0)) )
 			 (begin
 			   (set! old ss)
 			   (set! new ss) ) )
-		     (##sys#check-symbol old 'import) 
 		     (let* ([str (##sys#slot old 1)]
 			    [s (##sys#find-symbol str nsp)] )
 		       (unless s
-			 (##sys#error 'import "symbol not exported from namespace" ss ns) )
+			 (##sys#error "symbol not exported from namespace" ss ns) )
 		       (copy s (##sys#slot new 1)) ) ) )
 		 syms) ) ) ) ) ) ) )
 
 (define (##sys#namespace-ref ns sym . default)
-  (##sys#check-symbol ns 'namespace-ref)
   (let ([s (##sys#find-symbol 
 	    (cond [(symbol? sym) (##sys#slot sym 1)]
 		  [(string? sym) sym]
-		  [else (##sys#signal-hook #:type-error 'namespace-ref "bad argument type - not a valid import name" sym)] ) 
+		  [else (##sys#signal-hook #:type-error "bad argument type - not a valid import name" sym)] ) 
 	    (##sys#find-symbol-table (##sys#make-c-string (##sys#slot ns 1))) ) ] )
     (cond [s (##core#inline "C_retrieve" s)]
 	  [(pair? default) (car default)]
-	  [else (##sys#error 'namespace-ref "symbol not exported from namespace" sym ns)] ) ) )
+	  [else (##sys#error "symbol not exported from namespace" sym ns)] ) ) )
 
+(define (##sys#walk-namespace proc . args)
+  (let ([ns (if (pair? args) (car args) ".")])
+    (let ([nsp (##sys#find-symbol-table ns)]
+          [enum-syms! (foreign-lambda scheme-object "C_enumerate_symbols" c-pointer scheme-object)]
+          [pos (cons -1 '())])
+      (unless nsp (##sys#error "undefined namespace" ns))
+      (let loop ()
+        (let ([sym (enum-syms! nsp pos)])
+          (when sym
+            (proc sym)
+            (loop) ) ) ) ) ) )
 
 ;;; More memory info
 

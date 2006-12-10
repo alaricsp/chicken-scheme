@@ -41,7 +41,7 @@
 #
 #   CMake Useful Variables
 #   http://www.cmake.org/Wiki/CMake_Useful_Variables
-#   This is really important because the CMake 2.4.4 documentation
+#   This is really important because the CMake 2.4.5 documentation
 #   does not document the variables that CMake uses, and there are
 #   quite a few of them.
 #
@@ -94,7 +94,7 @@
 # non-trivial, you are probably exploring non-trivial CMake
 # capabilities somewhere, and backwards compatibility is not assured.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.4 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.5 FATAL_ERROR)
 
 # Bugs typically show up in the current version of CMake you're using.
 # Then you make a bug report to http://www.kitware.com/Bug , and
@@ -104,18 +104,18 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.4.4 FATAL_ERROR)
 # shipped and you don't expect people to be compiling CMake from CVS.
 #
 # To handle this, we need to know what version of CMake we're using.
-# We already issue a fatal error for any CMake less than 2.4.4.
+# We already issue a fatal error for any CMake less than 2.4.5.
 # So this is sufficient for distinguishing whether we've got
-# CMake 2.4.4, or something greater.  We would ideally like to
+# CMake 2.4.5, or something greater.  We would ideally like to
 # make lexical comparisons on CMake version numbers, and be able
 # to say things like "if it's greater than version 2.x.y, do this."
 # But that's work to implement, and this is easy and sufficient for now.
 
-SET(IS_CMAKE_244 false)
+SET(IS_CMAKE_245 false)
 IF(CMAKE_MAJOR_VERSION EQUAL 2)
   IF(CMAKE_MINOR_VERSION EQUAL 4)
     IF(CMAKE_PATCH_VERSION EQUAL 4)
-      SET(IS_CMAKE_244 true)
+      SET(IS_CMAKE_245 true)
     ENDIF(CMAKE_PATCH_VERSION EQUAL 4)
   ENDIF(CMAKE_MINOR_VERSION EQUAL 4)
 ENDIF(CMAKE_MAJOR_VERSION EQUAL 2) 
@@ -357,7 +357,7 @@ MACRO(WINDOWS_PATH cmake_path_in windows_path_out)
   SET(${windows_path_out} \"${${windows_path_out}}\")
 ENDMACRO(WINDOWS_PATH)
 
-# In CMake 2.4.4 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
+# In CMake 2.4.5 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
 # generates Unix style pathnames.  Although this may be correct behavior
 # under the MSYS shell itself, Chicken probably won't be used under the
 # MSYS shell.  Generally MSYS is just there for build assistance.
@@ -1561,7 +1561,7 @@ ADD_DEPENDENCIES(chicken chicken-c)
 #  CREATE STATIC LIBS AND EXES                                     #
 ####################################################################
 
-# CMake 2.4.4, by default, only allows a shared or a static library
+# CMake 2.4.5, by default, only allows a shared or a static library
 # of the same OUTPUT_NAME to be built in the same directory.  This is
 # enforced by clobbering all the .o files before building; I think
 # the last library specified is the winner.  This behavior can be
@@ -1599,7 +1599,7 @@ ADD_SUBDIRECTORY(static)
 #
 # In principle, if we need to use a Darcs command, we should test
 # whether Darcs is available and actually works.  In practice, writing
-# reliable tool tests in CMake 2.4.4 is painful.
+# reliable tool tests in CMake 2.4.5 is painful.
 #
 # You cannot use EXECUTE_PROCESS to write a tool test.  It executes in
 # CMake's environment, not the actual build environment.  For instance,
@@ -1660,7 +1660,7 @@ IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
       #
       #   COMMAND command1 [args...]
       #
-      # command1 has to be a CMake path.  This is not documented in CMake 2.4.4.
+      # command1 has to be a CMake path.  This is not documented in CMake 2.4.5.
       # Think of command1 as receiving "special interpretation" and not really
       # being a "custom" command, i.e. you're not free to do what you like.
       #
@@ -2024,7 +2024,7 @@ ADD_DEPENDENCIES(dist boot-c darcs-changelog)
 # execute unconditionally and will always report success.
 #
 # The ADD_CUSTOM_TARGET bulletproofing is supposed to work, but doesn't!
-# In CMake 2.4.4, when file
+# In CMake 2.4.5, when file
 # dependencies of ADD_CUSTOM_TARGET are not built, the target nevertheless
 # reports success.  So you can use these targets, but don't trust 'em when
 # they tell you they've succeeded.

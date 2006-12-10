@@ -39,7 +39,7 @@
   (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
 	  setup-verbose-flag setup-install-flag installation-prefix find-library find-header
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
-	  test-compile try-compile copy-file run-verbose) )
+	  test-compile try-compile copy-file run-verbose required-chicken-version) )
 
 #>
 #ifndef C_USE_C_DEFAULTS
@@ -96,10 +96,10 @@ static void create_directory(char *pathname) {}
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir") )
+    "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir" "-revision") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
 
 
 (define *install-bin-path* 
@@ -169,6 +169,7 @@ static void create_directory(char *pathname) {}
 (define *local-repository* #f)
 (define *destdir* #f)
 (define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
+(define *revision* #f)
 
 
 (define (yes-or-no? str . default)
@@ -416,6 +417,7 @@ usage: chicken-setup [OPTION ...] FILENAME
       -svn URL                   fetch extension from subversion repository
       -local PATH                fetch extension from local filesystem
       -destdir PATH              specify alternative installation prefix
+      -revision REV              specify SVN revision for checkout
   --                             ignore all following arguments
 
   Builds and installs extension libraries.
@@ -691,6 +693,10 @@ EOF
     (system (sprintf "~A ~A" *remove-command* (quotewrap fname)))
     (zero? r) ) )
 
+(define (required-chicken-version v)
+  (when (string-ci<? (chicken-version) (->string v))
+    (error (sprintf "CHICKEN version ~a or higher is required" v)) ) )
+
 (define test-compile try-compile)
 
 (define (find-library name proc)
@@ -789,7 +795,8 @@ EOF
 	(*svn-repository*
 	 (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" *svn-repository*))
 	 (let ((p (->string item)))
-	   (run (svn co ,(make-pathname *svn-repository* p) ,(make-pathname #f p "egg-dir"))) ) )
+	   (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
+		     ,(make-pathname *svn-repository* p) ,(make-pathname #f p "egg-dir"))) ) )
 	(else
 	 (match hostdata
 	   ((host path port)
@@ -1017,7 +1024,7 @@ EOF
 	 (program-path dir)
 	 (loop more) )
 	(("-version" . _)
-	 (printf "chicken-setup - Version ~A~%" (chicken-version))
+	 (printf "chicken-setup - Version ~A~%" (chicken-version #t))
 	 (exit) )
 	(("-release" . _)
 	 (print (chicken-version))
@@ -1073,6 +1080,9 @@ EOF
 	   (print di) ) )
 	(("-debug" . more)
 	 (set! *debug* #t)
+	 (loop more) )
+	(("-revision" rev . more)
+	 (set! *revision* rev)
 	 (loop more) )
 	(("-check" . more)
 	 (set! *check-repository* #t)

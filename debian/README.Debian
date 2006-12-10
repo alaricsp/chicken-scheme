@@ -1,0 +1,12 @@
+Since version 2.2-1 I decided to drop the old packaging scheme with chicken
+and chicken-dev packages and now we have a libchicken0 package, with runtime
+libs, a libchicken-dev package, with header and static libs and, finally, a
+chicken-bin package that contains the tools.
+chicken-bin needs to depend on both libchicken0 (the compiler is linked against
+it) and on libchicken-dev to be able to compile scm files into C ones: I know
+that this is not a real common approach, but the alternative (merge -bin and
+-dev package) would be probably uglier because we will need to depend on both
+libpcre3 and libpcre3-dev!
+If you want to discuss a better approach feel free to contact me.
+
+Davide Puricelli <evo@debian.org>
