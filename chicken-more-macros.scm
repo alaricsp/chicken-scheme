@@ -86,9 +86,12 @@
        (begin
 	 (##sys#check-syntax 'receive vars 'lambda-list)
 	 (##sys#check-syntax 'receive rest '(_ . _))
-	 `(##sys#call-with-values 
-	   (lambda () ,(car rest))
-	   (lambda ,vars ,@(cdr rest)) ) ) ) ) )
+	 (if (and (pair? vars) (null? (cdr vars)))
+	     `(let ((,(car vars) ,(car rest)))
+		,@(cdr rest))
+	     `(##sys#call-with-values 
+	       (lambda () ,(car rest))
+	       (lambda ,vars ,@(cdr rest)) ) ) ) ) ) )
 
 (##sys#register-macro
  'time 
@@ -232,17 +235,21 @@
  (lambda (test . body)
    `(if ,test (##core#undefined) (begin ,@body)) ) )
 
-(let* ([map map]
-       [assign
+(let* ((map map)
+       (assign
 	(lambda (vars exp)
 	  (##sys#check-syntax 'set!-values/define-values vars '#(symbol 0))
-	  (if (null? vars)
-	      `(##sys#call-with-values (lambda () ,exp) (lambda () (##core#undefined)))
-	      (let ([aliases (map gensym vars)])
-		`(##sys#call-with-values
-		  (lambda () ,exp)
-		  (lambda ,aliases
-		    ,@(map (lambda (v a) `(##core#set! ,v ,a)) vars aliases) ) ) ) ) ) ] )
+	  (cond ((null? vars)
+		 ;; may this be simply "exp"?
+		 `(##sys#call-with-values (lambda () ,exp) (lambda () (##core#undefined))) )
+		((null? (cdr vars))
+		 `(##core#set! ,(car vars) ,exp)) 
+		(else
+		 (let ([aliases (map gensym vars)])
+		   `(##sys#call-with-values
+		     (lambda () ,exp)
+		     (lambda ,aliases
+		       ,@(map (lambda (v a) `(##core#set! ,v ,a)) vars aliases) ) ) ) ) ) ) ) )
   (##sys#register-macro 'set!-values assign)
   (##sys#register-macro 'define-values assign) )
 
@@ -284,10 +291,15 @@
        (let fold ([llists llists]
 		  [exps (map (lambda (x) (cadr x)) vbindings)]
 		  [llists2 llists2] )
-	 (if (null? llists)
-	     `(let ,(map (lambda (v) (##sys#list v (lookup v))) vars) ,@body)
-	     `(##sys#call-with-values (lambda () ,(car exps))
-				      (lambda ,(car llists2) ,(fold (cdr llists) (cdr exps) (cdr llists2))) ) ) ) ) ) ) )
+	 (cond ((null? llists)
+		`(let ,(map (lambda (v) (##sys#list v (lookup v))) vars) ,@body) )
+	       ((and (pair? (car llists2)) (null? (cdar llists2)))
+		`(let (,(caar llists2) ,(car exps))
+		   ,(fold (cdr llists) (cdr exps) (cdr llists2)) ) )
+	       (else
+		`(##sys#call-with-values
+		  (lambda () ,(car exps))
+		  (lambda ,(car llists2) ,(fold (cdr llists) (cdr exps) (cdr llists2))) ) ) ) ) ) ) ) )
 
 (##sys#register-macro-2
  'let*-values

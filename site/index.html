@@ -1,0 +1,203 @@
+<html>
+<head>
+<title>call-with-current-continuation.org</title><style type="text/css"> <!--
+      CODE {
+            color: #666666;
+          }
+
+     DT.definition { 
+                   background: #eee;
+                   color: black;
+                   padding: 0.2em 1em 0.2em 0.7em;
+                   margin-left: 0.2em;
+		   border: 1px solid #bbc;
+                   font-family: "Andale Mono", monospace;
+                 }
+     DD {
+                   margin-top: 0.8em;
+                   margin-bottom: 0.8em;
+     }
+     DIV.subsection {
+                    border-top: 1px solid #448;
+                    padding-left: 1em;
+     }
+	 DIV.section {
+		 margin-bottom: 1.5em;
+	 }
+	 a:link {
+		 color: #336;
+	 }
+	 a:visited { color: #666; }
+	 a:active  { color: #966; }
+	 a:hover   { color: #669; }
+	 body { margin: 0; padding: 0; background: #fff; color: #000; font: 9pt "Lucida Grande", "Verdana", sans-serif; }
+	 H2 {
+		 background: #336;
+		 color: #fff;
+		 padding-top: 0.5em;
+		 padding-bottom: 0.5em;
+		 padding-left: 16px;
+		 margin: 0 0 1em 0;
+	}
+	TT {
+		font-family: "Andale Mono", monospace;
+		/* font-size: 1.2em; */
+	}
+	H3 {
+		color: #113;
+		margin-bottom: 0.5em;
+	}
+     DIV#eggheader {
+         text-align: center;
+		 float: right;
+		 margin-right: 2em;
+     }
+     DIV#header IMG {
+            /* display: block; margin-left: auto; margin-right: auto;  */
+            /* float: right; */
+            border: none;  /* firefox */
+     }
+     DIV#footer {
+                background: #bbd;
+                padding: 0.7em ;
+                border-top: 1px solid #cce;
+     }
+     DIV#footer hr {
+                display: none;
+     }
+     DIV#footer a {
+                float: left;
+     }
+     DIV#revision-history {
+         float: right;
+     }
+     
+     DIV#body {
+		 margin: 1em 1em 1em 16px;
+	 }
+
+     DIV#examples PRE {
+       background: #eef;
+       padding: 0.1em;
+       border: 1px solid #aac;
+     }
+     PRE#license, DIV#examples PRE {
+       padding: 0.5em;
+     }
+     DIV#examples PRE {
+       /* font-size: 85%; */
+     }
+     PRE { font-family: "Andale Mono", monospace; }
+     TABLE {
+       background: #eef;
+       padding: 0.2em;
+       border: 1px solid #aac;
+       width: 100%;
+     }
+     TABLE.symbol-table TD.symbol {
+          width: 15em;
+          font-family: "Andale Mono", monospace;
+          /* font-size: 1.2em; */
+     }
+     P.block { text-align: left; }
+     H3 { margin: 2em; }
+     TH {
+       border-bottom: 1px solid black;
+     } --></style>
+</head>
+<body>
+<h2>call-with-current-continuation.org</h2>
+
+<center>
+<img src="chicken.png">
+<div style="width: 70%; margin: 3em;">
+<font size="5"><em><span>CHICKEN - A practical and portable Scheme system</span></em></font>
+
+<p class="block" style="margin: 3em;">
+CHICKEN is a compiler for the <a href="http://schemers.org/">Scheme</a> programming language. 
+CHICKEN produces portable, efficient C, supports almost all of the current Scheme language standard, 
+<a href="http://schemers.org/Documents/Standards/R5RS/HTML/">R5RS</a> and includes many 
+enhancements and extensions.  CHICKEN runs on MacOS X, Windows, and many Unix flavours.
+</p>
+
+<h3>FEATURES</h3>
+<p class="block"><ul style="text-align: left;">
+<li>Includes a full-featured interactive interpreter as well as an optimizing batch compiler<br>
+<li>Full support for tail recursion, first-class continuations and high-level macros
+<li>Highly portable and known to run on many platforms, including x86, x86-64, IA-64, PowerPC, SPARC and UltraSPARC, Alpha, MIPS, 
+PA-RISC, ARM and S/390<br>
+<li>Distributed free for use and modification under the terms of the BSD License<br>
+<li>Transparent support for dynamically loadable compiled code and linkage to C<br>
+<li>A sophisticated but easy to use foreign function interface for accessing C and C++ libraries from Scheme code<br>
+<li>Lightweight threads based on first-class continuations<br>
+<li>An object system with multiple dispatch, multiple inheritance and meta-object protocol<br>
+<li>Provides the <tt>syntax-case</tt> enhanced high-level macro system (including R5RS <tt>syntax-rules</tt>), and 
+<tt>define-macro</tt> style low-level macros<br>
+<li>Support for syntactic pattern-matching via Andrew Wright's <tt>match</tt> package<br>
+<li>Execution profiling, debugging, backtrace and single-stepping support<br>
+<li>A POSIX interface that covers environment and filesystem access, pipes, processes, signals, locks, sockets, and low-level and memory-mapped I/O<br>
+<li>Support for interpreted or compiled shell scripts under Unix and Windows<br>
+<li>CHICKEN is supported by <a href="http://www.swig.org">SWIG</a> so interfacing to C or C++ can be automated<br>
+<li>Support for a large number of <a href="http://srfi.schemers.org/">Scheme Requests For Implementation</a> (SRFIs)<br>
+<li>Many libraries and extensions are available at <a href="http://www.call-with-current-continuation.org/eggs/">"Eggs unlimited"</a>
+</ul>
+</p>
+
+<h3>DOWNLOAD</h3>
+<p>
+<a href="http://www.call-with-current-continuation.org/chicken-2.5.tar.gz">chicken-2.5.tar.gz</a> (UNIX, Mac OS X and Windows sources)<br>
+<a href="http://www.call-with-current-continuation.org/chicken-2.5.zip">chicken-2.5.zip</a> (the sources as a zip archive)<br>
+<!--<a href="http://www.call-with-current-continuation.org/chicken-2.5-osx-ppc.dmg">chicken-2.5-osx-ppc.dmg</a> (Mac OS X PowerPC binaries)<br>-->
+<!-- <a href="http://www.call-with-current-continuation.org/chicken-2.5-win32-msvc.zip">chicken-2.5-win32-msvc.zip</a> (Windows x86 binaries)<br> -->
+
+<!-- 
+Latest development snapshot: <a href="http://www.call-with-current-continuation.org/chicken-2.5rc1.tar.gz">chicken-2.5rc1.tar.gz</a>
+and <a href="http://www.call-with-current-continuation.org/ChangeLog.txt">(Change log)</a>
+-->
+
+</p>
+
+<h3>DOCUMENTATION</h3>
+<p>
+Browse the <a href="http://chicken.wiki.br/The User's Manual">User's manual</a> at the CHICKEN 
+<a href="http://chicken.wiki.br/">wiki</a>
+</p>
+<p>A slightly older PDF version of the manual is available as well: <a href="chicken.pdf">chicken.pdf</a>.
+</p>
+
+<h3>MAILING LIST</h3>
+<p class="block">
+The <a href="http://mail.nongnu.org/mailman/listinfo/chicken-users">CHICKEN Users</a>
+mailing list is a medium-volume but fast-response list for discussing all
+things related to CHICKEN.  You can send a message to the list by addressing
+it to <a href="mailto:chicken-users@nongnu.org"><tt>chicken-users@nongnu.org</tt></a>.
+</p>
+If you are interested in the development of CHICKEN,
+check out <a href="http://mail.nongnu.org/mailman/listinfo/chicken-hackers">CHICKEN Hackers</a>.
+
+<h3>DEVELOPMENT</h3>
+<p class="block">
+The current CHICKEN development version can be accessed through the <a href="http://www.darcs.net">darcs</a>
+and <a href="http://subversion.tigris.org">Subversion</a> revision control systems, like this:<br>
+<pre>
+$ darcs get --partial <a href="http://galinha.ucpel.tche.br/chicken">http://galinha.ucpel.tche.br/chicken</a>
+</pre>
+
+<pre>
+$ svn co <a href="https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken">https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken</a>
+</pre>
+(username: <tt>anonymous</tt>, password: &lt;none&gt;)
+<p>See the file <tt>README.darcs</tt> for details on how to bootstrap the system.
+</p>
+
+<h3>CONTACT</h3>
+<p class="block">
+If you have any questions, suggestions or insults regarding CHICKEN,
+don't hesitate to send an e-mail to the author: 
+<a href="mailto:felix@call-with-current-continuation.org">felix@call-with-current-continuation.org</a>.
+</p>
+</table>
+</div>
+</center>
+</body>
+</html>

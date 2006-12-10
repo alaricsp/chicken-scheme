@@ -193,7 +193,7 @@ EOF
 (install-lib (dest LIBDIR) "libchicken.a" "libuchicken.a")
 (install-man (dest MANDIR) "chicken.1" "csi.1" "csc.1" "chicken-profile.1" "chicken-setup.1")
 (install-file (dest INCDIR) "chicken.h" "chicken-defaults.h" "chicken-config.h")
-(install-file (dest DOCDIR) #;"ChangeLog" "README" "LICENSE")
+(install-file (dest DOCDIR) "ChangeLog" "README" "LICENSE")
 (install-file (path (dest DOCDIR) "html") (glob "html/*") )
 
 (notfile "spotless")
@@ -203,7 +203,9 @@ EOF
  ^{rm -f ,(suffix "c" LIBSOURCES) ,(suffix "c" CHICKENSOURCES) ,(suffix "c" ULIBSOURCES0) html/*})
 
 (notfile "doc")
-(actions "doc" ^{,CSI -s misc/makehtmldoc})
+(depends "doc" "ChangeLog")
+(actions "doc" ^{,CSI -s misc/makehtmldoc -pdf})
+(actions "ChangeLog" ^{darcs changes >ChangeLog})
 
 (notfile "dist")
 (actions 

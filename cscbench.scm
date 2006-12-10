@@ -19,7 +19,7 @@
       (let loop ([line (read-line)])
 	(if (eof-object? line) 
 	    (abort-run)
-	    (let ([m (string-match " *([-+e0-9]*(\\.[0-9]*)?) seconds elapsed" line)])
+	    (let ([m (string-match " *([-.+e0-9]*(\\.[0-9]*)?) seconds elapsed" line)])
 	      (if m
 		  (string->number (second m)) 
 		  (loop (read-line)) ) ) ) ) ) ) )

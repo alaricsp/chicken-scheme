@@ -41,7 +41,7 @@
 #
 #   CMake Useful Variables
 #   http://www.cmake.org/Wiki/CMake_Useful_Variables
-#   This is really important because the CMake 2.4.3 documentation
+#   This is really important because the CMake 2.4.4 documentation
 #   does not document the variables that CMake uses, and there are
 #   quite a few of them.
 #
@@ -94,7 +94,7 @@
 # non-trivial, you are probably exploring non-trivial CMake
 # capabilities somewhere, and backwards compatibility is not assured.
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.4 FATAL_ERROR)
 
 # Bugs typically show up in the current version of CMake you're using.
 # Then you make a bug report to http://www.kitware.com/Bug , and
@@ -104,19 +104,19 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3 FATAL_ERROR)
 # shipped and you don't expect people to be compiling CMake from CVS.
 #
 # To handle this, we need to know what version of CMake we're using.
-# We already issue a fatal error for any CMake less than 2.4.3.
+# We already issue a fatal error for any CMake less than 2.4.4.
 # So this is sufficient for distinguishing whether we've got
-# CMake 2.4.3, or something greater.  We would ideally like to
+# CMake 2.4.4, or something greater.  We would ideally like to
 # make lexical comparisons on CMake version numbers, and be able
 # to say things like "if it's greater than version 2.x.y, do this."
 # But that's work to implement, and this is easy and sufficient for now.
 
-SET(IS_CMAKE_243 false)
+SET(IS_CMAKE_244 false)
 IF(CMAKE_MAJOR_VERSION EQUAL 2)
   IF(CMAKE_MINOR_VERSION EQUAL 4)
-    IF(CMAKE_PATCH_VERSION EQUAL 3)
-      SET(IS_CMAKE_243 true)
-    ENDIF(CMAKE_PATCH_VERSION EQUAL 3)
+    IF(CMAKE_PATCH_VERSION EQUAL 4)
+      SET(IS_CMAKE_244 true)
+    ENDIF(CMAKE_PATCH_VERSION EQUAL 4)
   ENDIF(CMAKE_MINOR_VERSION EQUAL 4)
 ENDIF(CMAKE_MAJOR_VERSION EQUAL 2) 
 
@@ -321,24 +321,61 @@ MACRO(LIST2STRING alist astring)
   ENDFOREACH(elem)
 ENDMACRO(LIST2STRING)
 
-# In CMake 2.4.2 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
+MACRO(UNESCAPE_WHITESPACE in out)
+  # Remove escaped whitespace.  It causes some shells to choke.
+  STRING(REPLACE "\\ " " " ${out} "${${in}}")
+ENDMACRO(UNESCAPE_WHITESPACE)
+
+MACRO(ESCAPE_BACKSLASHES in out)
+  STRING(REPLACE "\\" "\\\\" ${out} "${${in}}")
+ENDMACRO(ESCAPE_BACKSLASHES)
+
+MACRO(ESCAPE_QUOTES in out)
+  STRING(REPLACE "\"" "\\\"" ${out} "${${in}}")
+ENDMACRO(ESCAPE_QUOTES)
+
+# Sometimes a standard Windows path is required, even on non-native
+# system.  Use this to force it.
+#
+# NOTE: this code doesn't clean up MSYS or Cygwin drive letter
+# conventions.  It will blithely turn /e/path or /cydrive/e/path
+# into \e\path or \cygdrive\e\path.  If it were "done right," it
+# would change both to E:\path.  But I'm too lazy right now.
+# There are some corner cases, like /cygdrive, /cygdrive/, /e,
+# e:/, e:, and so forth.
+#
+# Consequently, this code isn't actually useful.
+
+MACRO(UNQUOTED_WINDOWS_PATH cmake_path_in windows_path_out)  
+  UNESCAPE_WHITESPACE(${cmake_path_in} ${windows_path_out})
+  # Use backslashes for directory separation.
+  STRING(REPLACE "/" "\\" ${windows_path_out} "${${windows_path_out}}")
+ENDMACRO(UNQUOTED_WINDOWS_PATH)
+
+MACRO(WINDOWS_PATH cmake_path_in windows_path_out)
+  UNQUOTED_WINDOWS_PATH(${cmake_path_in} ${windows_path_out})
+  SET(${windows_path_out} \"${${windows_path_out}}\")
+ENDMACRO(WINDOWS_PATH)
+
+# In CMake 2.4.4 under the MSYS generator, FILE(TO_NATIVE_PATH ...)
 # generates Unix style pathnames.  Although this may be correct behavior
 # under the MSYS shell itself, Chicken probably won't be used under the
 # MSYS shell.  Generally MSYS is just there for build assistance.
 # So, manually convert to Windows native pathnames.
 
 MACRO(UNQUOTED_NATIVE_PATH cmake_path_in native_path_out)
-  # Remove escaped whitespace.  It causes shells to choke.
-  STRING(REPLACE "\\ " " " ${native_path_out} "${${cmake_path_in}}")
+  # MSYS should be treated like a Windows native path, generally,
+  # even though it understands Unix-style paths.
+  # Cygwin should generally be treated like a Unix system.
   IF(WIN32 AND NOT CYGWIN)
-    # Use backslashes for directory separation.
-    STRING(REPLACE "/" "\\" ${native_path_out} "${${native_path_out}}")
+    UNQUOTED_WINDOWS_PATH(${cmake_path_in} ${native_path_out})
+  ELSE(WIN32 AND NOT CYGWIN)
+    UNESCAPE_WHITESPACE(${cmake_path_in} ${native_path_out})    
   ENDIF(WIN32 AND NOT CYGWIN)
 ENDMACRO(UNQUOTED_NATIVE_PATH)
 
 MACRO(NATIVE_PATH cmake_path_in native_path_out)
   UNQUOTED_NATIVE_PATH(${cmake_path_in} ${native_path_out})
-  # Quote the results
   SET(${native_path_out} \"${${native_path_out}}\")
 ENDMACRO(NATIVE_PATH)
 
@@ -347,35 +384,9 @@ ENDMACRO(NATIVE_PATH)
 
 MACRO(NATIVE_C_PATH cmake_path_in native_path_out)
   NATIVE_PATH(${cmake_path_in} ${native_path_out})
-  # Need to escape backslashes
-  STRING(REPLACE "\\" "\\\\" ${native_path_out} "${${native_path_out}}")
+  # Don't escape quotes.  C compilers don't want that.
+  ESCAPE_BACKSLASHES(${native_path_out} ${native_path_out})
 ENDMACRO(NATIVE_C_PATH)
-
-# CMake 2.4.3 has a bug where a COMMAND consumes twice the number of
-# escapes as an IF(...) statement!  This makes it impossible to
-# pass Windows native paths to a COMMAND.  Instead we must add
-# more escapes especially-and-only for the COMMAND.  This is filed
-# in the CMake bug tracker http:\\www.cmake.org\Bug as bug #3786.
-
-MACRO(NATIVE_COMMAND_EXE_PATH cmake_path_in native_path_out)
-  NATIVE_PATH(${cmake_path_in} ${native_path_out})
-  # Escape requirements seem to be specific to various generators.
-  # MSVC generators seem to reduce all escapes down to a single backslash.
-  # So, generating MSVC paths is easy.
-  #
-  # Not so for MSYS.  The actual executable in a COMMAND seems to need
-  # excessive numbers of quotes.  And this differs again from what is
-  # needed for command arguments and pipe redirections to files.  This
-  # here just deals with the executable.
-  IF(MINGW)
-    # Really we mean MSYS, but there is no MSYS defined in CMake 2.4.3.
-    # 
-    # Need to escape twice as many backslashes!
-    STRING(REPLACE "\\" "\\\\\\\\" ${native_path_out} "${${native_path_out}}")
-    # Quotes need to be escaped
-    STRING(REPLACE "\"" "\\\"" ${native_path_out} "${${native_path_out}}")
-  ENDIF(MINGW)
-ENDMACRO(NATIVE_COMMAND_EXE_PATH)
 
 
 ####################################################################
@@ -389,20 +400,6 @@ ENDMACRO(NATIVE_COMMAND_EXE_PATH)
 # strings twice, and from making mistakes about STATUS vs. dialog boxes.
 
 MACRO(ECHO_TARGET target quoted_message)
-  # Sanity checking.  Unfortunately, it doesn't have the desired effect.
-  # It won't catch code that isn't being exercised by the current
-  # build settings.  So, a hapless user will receive any fatal errors,
-  # not the developer, whose system is probably configured with all
-  # needed tools and not calling ECHO_TARGET at all.
-
-  # CMake 2.4.3 can't handle apostrophes in -E echo, even when
-  # surrounded by double quotes.
-  STRING(REGEX MATCH "'" CONTAINS_APOSTROPHE ${quoted_message})
-  IF(CONTAINS_APOSTROPHE)
-    MESSAGE(STATUS "CMake 2.4.3 cannot handle ' apostrophes in -E echo.")
-  ENDIF(CONTAINS_APOSTROPHE)
-  
-  # The actual functionality
   MESSAGE(STATUS ${quoted_message})
   ADD_CUSTOM_TARGET(${target}
     COMMAND ${CMAKE_COMMAND} -E echo ${quoted_message})
@@ -1008,6 +1005,32 @@ SET(C_INSTALL_MORE_STATIC_LIBS \"${L_MORE_STATIC_LIBS_STRING}\")
 #  DEFINE C_STACK_GROWS_DOWNWARD                                   #
 ####################################################################
 
+# Sometimes you want to deduce a system property by compiling a piece
+# of code, running it, and seeing what the output does.  For instance,
+# you can detect the Endianness of a platform that way.  In fact,
+# running a code snippet is the only way to get it in general.  Some
+# definitions might be available in a *.h file somewhere, but that's
+# a platform specific solution.  Endianness is not actually a problem
+# in CMake as the TestBigEndian macro is available, but for other
+# odd things, you'll need to write your own tests.
+#
+# Such as the direction of stack growth!  The easiest approach is to
+# write a code snippet that returns a boolean value, 1 or 0.  Give it
+# a logical name like DoesWhatIWant.c.  Return 1 if it does what you
+# want, 0 if it doesn't.  Do a TRY_RUN, and receive this value through
+# the RUN_RESULT_VAR.  Use the RUN_RESULT_VAR later in your build,
+# to control whatever you need to control.
+#
+# When you want your TRY_RUN to just return a simple numerical result
+# code, you don't want to bother with OUTPUT_VARIABLE.  That's stdout;
+# you're going to get a lot of junk from the compiler reportage and
+# have to parse it.  That's a PITA and typically not what you want.
+#
+# The COMPILE_RESULT_VAR is just for diagnostics.  Like, does your
+# code even compile?  Is your code fine, but your shell is toast?
+# You use COMPILE_RESULT_VAR for bulletproofing, not for the results
+# you're actually interested in.
+
 TRY_RUN(C_STACK_GROWS_DOWNWARD
   STACK_TEST_COMPILED
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -1418,12 +1441,11 @@ ELSE(MSVC)
   TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
   ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
+  SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME "chicken")
+  SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME "uchicken")
   IF(CYGWIN)
-    SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME "chicken-0")
-    SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME "uchicken-0")
-  ELSE(CYGWIN)
-    SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME "chicken")
-    SET_TARGET_PROPERTIES(libuchicken PROPERTIES OUTPUT_NAME "uchicken")
+    SET_TARGET_PROPERTIES(libchicken PROPERTIES VERSION 0)
+    SET_TARGET_PROPERTIES(libuchicken PROPERTIES VERSION 0)
   ENDIF(CYGWIN)
 
   IF(WIN32 AND NOT CYGWIN)
@@ -1539,11 +1561,17 @@ ADD_DEPENDENCIES(chicken chicken-c)
 #  CREATE STATIC LIBS AND EXES                                     #
 ####################################################################
 
-# CMake 2.4.3 has a bug where shared and static libraries in the same
-# directory clobber each other if they have the same rootname.  Also,
-# if static and shared libraries are in the same directory, static
-# exes will prefer to link with the shared libraries.  To work around
-# these problems, we build all static libs and exes in a subdirectory.
+# CMake 2.4.4, by default, only allows a shared or a static library
+# of the same OUTPUT_NAME to be built in the same directory.  This is
+# enforced by clobbering all the .o files before building; I think
+# the last library specified is the winner.  This behavior can be
+# modified by using SET_TARGET_PROPERTIES to set CLEAN_DIRECT_OUTPUT
+# to 1.  However, this incurs a risk of linking against shared libs
+# when static libs are intended, and vice versa.  That's why the
+# default behavior is to clobber.
+# 
+# To work around these problems, we build all static libs and exes
+# in a subdirectory.  Then there are no issues.
 
 ADD_SUBDIRECTORY(static)
 
@@ -1552,44 +1580,71 @@ ADD_SUBDIRECTORY(static)
 #  CHANGELOG                                                       #
 ####################################################################
 
-# Note that as of Sept. 2nd, 2006, a Darcs package that understands
-# Cygwin paths is not readily available.  It is possible to compile
-# Darcs from Haskell sources, but that requires GHC, which can be
-# difficult to get working.  The upshot is it's a PITA to access
-# Darcs from Cygwin and hence to create a ChangeLog.
-#
 # A distribution archive (aka a tarball) will have ChangeLog already.
 # A Darcs repository tree will not, however.  We have to generate it.
 #
-# In principle, if we need to use a Darcs command, we should test
-# whether Darcs is available and actually works.  Different shells
-# can cause Darcs to fail.  For instance, running a Windows native
-# Darcs under a Cygwin shell fails, because the Windows native Darcs
-# doesn't understand Cygwin paths.
+# Note that as of Nov. 22nd, 2006, a Darcs package that understands
+# Cygwin paths is not readily available.  It is possible to compile
+# Darcs from Haskell sources, but that requires GHC, which can be
+# difficult to get working.  The upshot is it's a PITA to access
+# Darcs from Cygwin and hence to create a ChangeLog.  It's possible,
+# but one has to proceed carefully.
 #
-# In practice, it is very tedious to write a tool test in CMake 2.4.3.
-# EXECUTE_PROCESS is not correct, as it executes in CMake's environment,
-# not the actual build environment.  For instance, let's say Darcs is
-# available at the Windows command prompt.  EXECUTE_PROCESS will say it
-# works.  However, it won't actually work under Visual Studio, because
-# VS doesn't typically receive all the paths that the command prompt does.
+# Different shells can cause Darcs to fail.  For instance, running a
+# Windows native Darcs under a Cygwin shell can fail, because the
+# Windows native Darcs doesn't understand Cygwin paths.  A workaround
+# is to avoid issuing any Cygwin path to Darcs, and instead use a
+# WORKING_DIRECTORY, so that CMake handles some of its own paths and
+# not Darcs.
+#
+# In principle, if we need to use a Darcs command, we should test
+# whether Darcs is available and actually works.  In practice, writing
+# reliable tool tests in CMake 2.4.4 is painful.
+#
+# You cannot use EXECUTE_PROCESS to write a tool test.  It executes in
+# CMake's environment, not the actual build environment.  For instance,
+# let's say Darcs is available at the Windows command prompt.
+# EXECUTE_PROCESS will say it works.  However, it won't actually work
+# under Visual Studio, because VS doesn't typically receive all the paths
+# that the command prompt does.
 #
 # To write a tool test, Kitware expects one to emit a trivial CMakeLists.txt
-# to a temporary subdirectory, and then TRY_COMPILE it.  This turns out to
-# be impossible to do in the general case, because in CMake 2.4.3 a
-# COMMAND consumes twice as many escapes as it should.  The following is the
-# the result of 3 days worth of workarounds.
+# to a temporary subdirectory, and then TRY_COMPILE it.  In practice, this
+# approach is exceedingly fragile, due to quote consumption problems with
+# FILE(WRITE ...) and with shells.
+#
+# What's really needed is an entirely different / better mechanism for
+# tool testing.  Something that's exactly parallel to the code we'd
+# write here at the toplevel, so that there are no weird extraneous
+# considerations.
 
 SET(CHANGELOG_FILE -NOTFOUND)
 IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
   FIND_PROGRAM(DARCS_EXE darcs)
   IF(DARCS_EXE)
     FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/try-darcs)
+
     # Note the need to escape any quotes that are part of the file output.
+    # I cannot figure out how to get code emitted in a file to quote properly.
+    # Consequently, we use a WORKING_DIRECTORY to duck the issue.
+    #
+    # Note that the \"${DARCS_EXE}\" quotes are necessary here, even though
+    # they are not generally necessary in the toplevel CMakeLists.txt, i.e.
+    # this file you're reading now.  At this level, whitespace is escaped, i.e.
+    #   ${DARCS_EXE} = E:/Program\ Files/darcsdir-w32
+    # But once emitted, the whitespace escapes are lost.  We get
+    #   ${DARCS_EXE} = E:/Program Files/darcsdir-w32
+    # and of course Cygwin dies, as E:/Program isn't a valid command.
+    #
+    # Possibly this emission code should be replaced with a CONFIGURE_FILE
+    # template.  Or else substitutions should be performed with
+    # STRING(CONFIGURE ...).  Anything to get the quote / escape problems
+    # under control.
+
     FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/try-darcs/CMakeLists.txt "
       PROJECT(try-darcs)
       ADD_CUSTOM_TARGET(try
-        WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
+        WORKING_DIRECTORY \"${Chicken_SOURCE_DIR}\"
         COMMAND \"${DARCS_EXE}\" changes --last=0
       )
     ")
@@ -1605,23 +1660,34 @@ IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
       #
       #   COMMAND command1 [args...]
       #
-      # command1 has to be a CMake path.  This is not documented in CMake 2.4.3.
+      # command1 has to be a CMake path.  This is not documented in CMake 2.4.4.
       # Think of command1 as receiving "special interpretation" and not really
       # being a "custom" command, i.e. you're not free to do what you like.
       #
-      # Also, command1 must be quoted as it may contain whitespace.  This is not
-      # a bug, but a common pitfall.  ADD_CUSTOM_COMMAND and ADD_CUSTOM_TARGET
-      # do not document this in CMake 2.4.3.  Hopefully later versions will.
+      # Also, if command1 is an absolute pathname, it must have whitespace
+      # handled properly.  The results of CMake Find* commands always have
+      # whitespace handled properly, but if you're homebrewing your own
+      # pathnames, be careful.
       #
       # Other path statements in [args...] need to be paths that your
       # tool understands.  This means you'll need native paths, unless your
-      # tool happens to like CMake paths.  In CMake 2.4.3, native paths are
-      # problematic as different generators do inconsistent things to quotes
-      # and escapes in the [args...].
+      # tool happens to like CMake paths.
       #
-      # We use a WORKING_DIRECTORY of ${Chicken_SOURCE_DIR} to avoid having to
-      # use --repodir=${Chicken_SOURCE_DIR}, as it comes out badly.
-      # ${NATIVE_CHANGELOG_FILE} is working on MSYS and MSVC, so we use it.
+      # As of November 22, 2006, there is no Cygwin version of Darcs.
+      # Instead, one typically has a Windows native version of
+      # Darcs running under a Cygwin shell.  This Windows native Darcs
+      # does not understand Cygwin paths, i.e. --repodir=/cygdrive/c/whatever
+      # will fail.
+      #
+      # Ideally, we'd complete the implementation of WINDOWS_PATH and provide
+      # proper paths.  Pragmatically, this is a PITA.  We adopt the expedient
+      # of using a working directory so that we don't have to bother with
+      # --repodir.
+      #
+      # stdout is redirected to the CHANGELOG_FILE.  Redirection is a shell
+      # operation, so we need a path that the shell understands.  Generally,
+      # keeping what a CMake comamnd1 needs, separate from what a tool needs,
+      # separate from what a shell needs, is confusing.  But that's the drill.
 
       NATIVE_PATH(CHANGELOG_FILE NATIVE_CHANGELOG_FILE)
 
@@ -1631,9 +1697,9 @@ IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
       # looked at it, so brute force is the workaround.
 
       ADD_CUSTOM_TARGET(darcs-changelog ALL
+        COMMENT "Generating ${NATIVE_CHANGELOG_FILE} from Darcs repository."
         WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
-        COMMAND ${CMAKE_COMMAND} -E echo "Generating ${CHANGELOG_FILE} from Darcs repository."
-        COMMAND "${DARCS_EXE}" changes > ${NATIVE_CHANGELOG_FILE}
+        COMMAND ${DARCS_EXE} changes > ${NATIVE_CHANGELOG_FILE}
       )
     ELSE(DARCS_WORKS)
       ECHO_TARGET(darcs-changelog "Darcs does not work.  Cannot create ChangeLog.")
@@ -1733,38 +1799,10 @@ IF(WIN32)
   INSTALL(FILES csibatch.bat DESTINATION ${BIN_HOME})
 ENDIF(WIN32)
 
-# CMake 2.4.3 can't produce both cygchicken-0.dll and libchicken.dll.a
-# Currently Autoconf must produce the cygchicken-0.dll nomenclature,
-# and that name is needed internally by the libraries for things to
-# work correctly, so we can't ditch it in the source pool.  So we
-# symlink it here.  This workaround courtesy of John Cowan.
-
-# Cygwin CMake 2.4.3 has "cmake -E create_symlink"
-# Note that if this kind of workaround is ever needed on other
-# platforms, some do not have symlinks.  For instance, MinGW / MSYS
-# does not.  In that case a straight copy would be needed.
-
 # Brad King demonstrated \$ENV{DESTDIR} as the preferred method
 # of handling ${CMAKE_INSTALL_PREFIX} when doing INSTALL(CODE ...)
 # But I don't think this can be supported, as the paths must be
 # hardwired into Chicken itself.
-
-IF(CYGWIN)
-  INSTALL(CODE "
-    MESSAGE(STATUS \"Symlinking libchicken-0.dll.a to libchicken.dll.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \"${LIB_HOME}/libchicken.dll.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E create_symlink
-      \"${LIB_HOME}/libchicken-0.dll.a\"
-      \"${LIB_HOME}/libchicken.dll.a\")
-    MESSAGE(STATUS \"Symlinking libuchicken-0.dll.a to libuchicken.dll.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E remove
-      \"${LIB_HOME}/libuchicken.dll.a\")
-    EXECUTE_PROCESS(COMMAND \${CMAKE_COMMAND} -E create_symlink
-      \"${LIB_HOME}/libuchicken-0.dll.a\"
-      \"${LIB_HOME}/libuchicken.dll.a\")
-  ")
-ENDIF(CYGWIN)
 
 # Destination for eggs.  No eggs to install though.
 INSTALL(CODE "
@@ -1986,7 +2024,7 @@ ADD_DEPENDENCIES(dist boot-c darcs-changelog)
 # execute unconditionally and will always report success.
 #
 # The ADD_CUSTOM_TARGET bulletproofing is supposed to work, but doesn't!
-# Found another bug in CMake 2.4.3; reported to Kitware.  When file
+# In CMake 2.4.4, when file
 # dependencies of ADD_CUSTOM_TARGET are not built, the target nevertheless
 # reports success.  So you can use these targets, but don't trust 'em when
 # they tell you they've succeeded.
@@ -2008,9 +2046,8 @@ ADD_CUSTOM_TARGET(install-opengl-egg
   DEPENDS ${EGG_HOME}/opengl.dll ${EGG_HOME}/opengl.setup-info)
 ADD_DEPENDENCIES(install-opengl-egg opengl-temp-dir chicken-setup)
 
-# In CMake 2.4.3 the following line crashes CMakeSetup!
-# A bug report has been sent to Kitware.  Need to find out how to
-# implement post-installation tests.
+# Kitware says "install" is not available as a first-class dependency,
+# and should not be used as such.
 #
 # ADD_DEPENDENCIES(install-opengl-egg install)
 

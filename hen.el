@@ -175,7 +175,7 @@ The value returned is the value of the last form in BODY."
               "and-let*" "let-optionals" "let-optionals*" "let-macro"
               "fluid-let" "let-values" "let*-values" "letrec-values"
               "parameterize"
-              "module" "import-only" "import"
+              "module" "import-only" "import" "import*"
 
               "and" "or" "delay" "andmap" "ormap" "receive"
 

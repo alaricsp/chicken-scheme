@@ -1,0 +1,162 @@
+The CHICKEN Scheme-to-C compiler, Version 2.5 is now
+available at <http://www.call-with-current-continuation.org>.
+
+Things changed since the last release (2.41):
+
+- Bugfixes
+- CHICKEN can now be built using CMake <http://www.cmake.org>, in fact CMake
+  is required to built CHICKEN from sources on Windows with the Microsoft 
+  tools or mingw32
+- the whole build process has been cleaned up and simplified
+- the "easyffi" and "tinyclos" library units have been removed from the base
+  system and are now available as separate extensions
+- the deprecated "set-dispatch-read-syntax!" has been removed
+- Will Farr cleaned up the behaviour of number-type specific numeric operations
+  ("fx..."/"fp...") with respect to safe/unsafe mode
+- added "(finite? NUMBER)"
+- the "$" macro moved into its own separate extension
+- the values of "software-type", "software-version", "machine-type" and "machine-byte-order"
+  are now registered as features and can be tested using "cond-expand" or "#+"
+- all tools now support the "-release" option
+- chicken-setup: added "-test" option
+
+Special thanks to Brandon Van Every, who put considerable effort into
+the CHICKEN build system and who ported it to CMake completely from
+scratch.  The installation instructions and build file are extensively
+documented and may serve as a tutorial for creating non-trivial
+software projects with CMake.  Thanks, Brandon! Also thanks to Bill
+Hoffmann and Brad King from Kitware for their support.
+
+Many thanks to Peter Bex, Toby Butzon, Thomans Chust, John Cowan,
+Alejandro Forero Cuervo, dgym, Alex Drummond, Mario Domenech Goulart,
+Kon Lovett, Benedikt Rosenau and Zbigniew Szadkowski for reporting
+bugs, suggesting improvements and contributing fixes.
+
+
+Features:
+
+- Generates tail-recursive C with full support for first-class 
+  continuations and multiple values (Using the translation
+  scheme as described in Henry Baker's paper "Cheney on the M.T.A.").
+- Fairly R5RS compliant.
+- Support for SRFIs 0, 1, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 
+  23, 25, 26, 27, 28, 29, 30, 31, 37, 38, 39, 40, 42, 43, 45, 47, 55, 57, 60, 
+  61, 62, 63, 66, 69, 72 and 78.
+- Record structures, hash-tables, queues, custom I/O ports, extended string
+  operations, regular expressions, TCP sockets and more...
+- Provides an object system with multiple inheritance, multimethods and a 
+  Meta-Object-Protocol (based on Gregor Kiczales' TinyCLOS).
+- Lightweight threads (based on call/cc).
+- High portability (known to work on Windows, Linux, Free/Net/Open BSD,
+  Solaris, SunOS, MAC OS X, HP-UX, IRIX and probably many more. Supported
+  processors include x86, AMD64, Sparc, PA-RISC, Alpha, ARM, IA64, S/390, MIPS
+  and PowerPC).
+- Freely available under the BSD license.
+- A POSIX interface (partially available for Windows)
+- Powerful pattern matching macros.
+- `syntax-case' macros and module system
+- Generation of profiling information.
+- A extensive Foreign Function Interface with callbacks, finalization,
+  user defined foreign type converters, locatives, embedding of C code inside 
+  Scheme programs, statically allocated (non GC'd) Scheme data and the 
+  possibility of embedding compiled Scheme code into other applications.
+- On many systems compiled code can be loaded dynamically into a running
+  application.
+- Uses a simple static linking system that allows easy creation of self-
+  contained executables.
+- The compiler can be customized in various ways.
+- Support for writing interpreted or compiled UNIX shell scripts or 
+  Windows batch files.
+- A separate utility allows straightforward download, build and installation
+  of extension libraries.
+
+
+Limitations:
+
+- No unlimited-precision integers (bignums), rationals or complex numbers
+  (available seperately as an extension)
+- No support for unicode (also available separately)
+- Procedures can not have more than 126 arguments (more on certain platforms or
+  when libffi is available).
+- Compilation of large files is quite slow.
+
+
+Extensions and libraries:
+
+  Check out <http://www.call-with-current-continuation.org/eggs/index.html>
+  for a rapidly growing list of readily packaged extensions for CHICKEN.
+
+  Currently available:
+
+  F-operator ajax alexpander amb aquaterm args asxt autoload array-lib
+  awk base64 bb binary-parse blas bloom-filter box c3 cairo charconv
+  codewalk coerce complex content-type cookie crc crypt crypt3 csv
+  datatype debug defstruct dissector doctype dollar dpfw easyffi
+  eggdoc environments epeg estraier expat ezxdisp fastcgi format
+  format-modular fp ftp futures g2 gdbm generalised-case generator
+  gettext glut gmp hashes honu hostinfo html-plots html-stream
+  htmlprag http http-server-form-posts iconv imlib2 inline irc iset
+  japi javahack job-worker jni json kanren lalr lazy-ffi levenshtein
+  lightning lirc-client locale logging lookup-table loop loopy-loop
+  macosx magic mailbox make man mapm match-action matcher mathh md5
+  meroon message-digest mime metakit metaphone misc-extn miscmacros
+  mistie modds modules mole mpd-client mysql nbstdin ncurses numbers
+  octave objc object-apply oblist openal opengl openssl orders
+  packedobjects packrat pcap perfect-hash phoghorn pipeline pmatch
+  pop3 postgresql ppi procedure-surface prometheus proplist protobj
+  pty q-lang qt r6rs-libraries readline regex-case remote-launch
+  remote-mailbox rfc3339 rfc822 rgraph ripemd rlimit rpc rss s11n
+  sandbox sassy schelog scheme-dissect sdl sedna sfio sha1 sha2 silex
+  simple-macros slib smtp softscheme spiffy spiffy-utils spread sql
+  sqlite sqlite3 sqlite3-tinyclos srfi-4-comprehensions srfi-19
+  srfi-25 srfi-27 srfi-29 srfi-37 srfi-38 srfi-40 srfi-42 srfi-45
+  srfi-47 srfi-57 srfi-60 srfi-66 srfi-78 srfi-85 srfi-95 ssax stack
+  stream-base64 stream-cgi stream-ext stream-flash
+  stream-flash-tree-map stream-htpasswd stream-httplog stream-ldif
+  stream-parser stream-sections stream-wiki structures suspension
+  svn-client svn-post-commit-hooks sx sxml-match sxml-tools
+  sxml-transforms sxpath synch syntax-case tar tabexpand tagged-begin
+  test-infrastructure tcc tcp-server tcp6 testeez tiger-hash tinyclos
+  tk udp unix-sockets uri url utf8 uuid-lib uuid-ossp vector-lib
+  web-scheme wt-tree xlib xmi xml-rpc xosd xxexpr z3
+
+
+The current development version can be accessed through the "darcs"
+revision control system (available at <http://www.darcs.net>), like
+this:
+
+  $ darcs get http://galinha.ucpel.tche.br/chicken
+
+If you prefer subversion (<http://subversion.tigris.org>) access, get
+it like this:
+
+  $ svn co https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken
+
+(Username is "anonymous", enter <RETURN> when asked for a password)
+
+See the file README.darcs for details on how to bootstrap the system.
+
+A special thanks to Mario Domenech Goulart and the Universidade
+Catolica de Pelotas for providing the server that hosts the source
+repository!
+
+
+The mailing list for CHICKEN users can be found here:
+
+  To post a message send e-mail to <chicken-users@nongnu.org>
+
+  General information about the mailing list is at 
+  <http://mail.nongnu.org/mailman/listinfo/chicken-users>
+
+A mailing list specific to CHICKEN development and porting is
+available at:
+
+  <http://mail.nongnu.org/mailman/listinfo/chicken-hackers>
+
+
+Bug reports, suggestions and comments would be very welcome. Contact
+me at <felix@call-with-current-continuation.org>
+
+
+cheers,
+felix

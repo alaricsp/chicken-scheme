@@ -64,8 +64,8 @@
 #define C_s32poke(b, i, x)     ((((C_s32 *)C_data_pointer(b))[ C_unfix(i) ] = C_num_to_int(x)), C_SCHEME_UNDEFINED)
 #define C_f32poke(b, i, x)     ((((float *)C_data_pointer(b))[ C_unfix(i) ] = C_flonum_magnitude(x)), C_SCHEME_UNDEFINED)
 #define C_f64poke(b, i, x)     ((((double *)C_data_pointer(b))[ C_unfix(i) ] = C_flonum_magnitude(x)), C_SCHEME_UNDEFINED)
-#define C_copy_subvector(to, from, start_from, bytes)   \
-  (C_memcpy((C_char *)C_data_pointer(to), (C_char *)C_data_pointer(from) + C_unfix(start_from), C_unfix(bytes)), \
+#define C_copy_subvector(to, from, start_to, start_from, bytes)   \
+  (C_memcpy((C_char *)C_data_pointer(to) + C_unfix(start_to), (C_char *)C_data_pointer(from) + C_unfix(start_from), C_unfix(bytes)), \
     C_SCHEME_UNDEFINED)
 EOF
 ) )
@@ -590,7 +590,7 @@ EOF
 	   [bv2 (##sys#allocate-vector size2 #t #f #t)] )
       (##core#inline "C_string_to_bytevector" bv2)
       (let ([v (##sys#make-structure t bv2)])
-	(##core#inline "C_copy_subvector" bv2 bv (fx* from es) size2)
+	(##core#inline "C_copy_subvector" bv2 bv 0 (fx* from es) size2)
 	v) ) ) )
 
 (define (subu8vector v from to) (subvector v 'u8vector 1 from to 'subu8vector))
@@ -602,5 +602,37 @@ EOF
 (define (subf32vector v from to) (subvector v 'f32vector 4 from to 'subf32vector))
 (define (subf64vector v from to) (subvector v 'f64vector 8 from to 'subf64vector))
 
+(define (write-u8vector v #!optional (port ##sys#standard-output) (from 0) (to (u8vector-length v)))
+  (##sys#check-structure v 'u8vector 'write-u8vector)
+  (##sys#check-port port 'write-u8vector)
+  (let ((buf (##sys#slot v 1)))
+    (do ((i from (fx+ i 1)))
+	((fx>= i to))
+      (##sys#write-char-0 (integer->char (##core#inline "C_u8peek" buf i)) port) ) ) )
+
+(define (read-u8vector len #!optional (port ##sys#standard-input) v (to 0))
+  (define (finish p)
+    (let ((s (get-output-string p)))
+      (cond (v (let ((n (##sys#size s))
+		     (bv (##sys#slot v 1)) )
+		 (##sys#check-range (fx- (fx+ n to) 1) 0 (##sys#size bv) 'read-u8vector)
+		 (##core#inline "C_copy_subvector" (##sys#slot v 1) s to 0 (##sys#size s))
+		 v))
+	    (else 
+	     (##core#inline "C_string_to_bytevector" s)
+	     (##sys#make-structure 'u8vector s) ) ) ) )
+  (when v (##sys#check-structure v 'u8vector 'read-u8vector))
+  (##sys#check-port port 'read-u8vector)
+  (##sys#check-exact to 'read-u8vector)
+  (let ((o (open-output-string)))
+    (when len (##sys#check-exact len 'read-u8vector))
+    (let loop ((i (or len (and v (fx- (##sys#size (##sys#slot v 1)) to)) -1)))
+      (if (eq? i 0)
+	  (finish o)
+	  (let ((c (##sys#read-char-0 port)))
+	    (cond ((eof-object? c) (finish o))
+		  (else
+		   (##sys#write-char-0 c o)
+		   (loop (fx- i 1)) ) ) ) ) ) ) )
 
 (register-feature! 'srfi-4)

@@ -3,7 +3,7 @@
 exec csi -s $0 "$@"
 |#
 
-;;; usage: misc/makehtmldoc [PAGE]
+;;; usage: misc/makehtmldoc [-pdf] [PAGE]
 
 (use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url)
 
@@ -11,9 +11,15 @@ exec csi -s $0 "$@"
 (define-constant +extension-path+ "wiki-extensions")
 (define-constant +index-page+ "The User's Manual")
 
+(define (but-options args)
+  (filter (lambda (f)
+            (not (string-prefix? "-" f)))
+          args))
+
 (define *pages* (directory "wiki"))
-(define *only* (:optional (command-line-arguments) #f))
-	   
+(define *only* (:optional (but-options (command-line-arguments)) #f))
+(define *generate-pdf* (member "-pdf" (command-line-arguments)))
+
 (define (hyphen s)
   (string-substitute " " "-" s #t) )
 
@@ -43,34 +49,118 @@ exec csi -s $0 "$@"
 	      all) ) ) )
 	 (_ (reverse (cons (substring data i) all))) ) ) ) ) )
 
+;; We need this to keep the order of chapters in the PDF file.
+(define manual-wiki-files
+  '("The User's Manual"
+    "Basic mode of operation"
+    "Using the compiler"
+    "Using the interpreter"
+    "Supported language"
+    "Deviations from the standard"
+    "Extensions to the standard"
+    "Non standard read syntax"
+    "Non standard macros and special forms"
+    "Pattern matching"
+    "Declarations"
+    "Parameters"
+    "Unit library"
+    "Unit eval"
+    "Unit extras"
+    "Unit srfi-1"
+    "Unit srfi-4"
+    "Unit srfi-13"
+    "Unit srfi-14"
+    "Unit match"
+    "Unit regex"
+    "Unit srfi-18"
+    "Unit posix"
+    "Unit utils"
+    "Unit tcp"
+    "Unit lolevel"
+    "Unit tinyclos" ;; not at http://galinha.ucpel.tche.br:8080//Supported%20language anymore
+    "Interface to external functions and variables"
+    "Accessing external objects"
+    "Foreign type specifiers"
+    "Embedding"
+    "Callbacks"
+    "Locations"
+    "Other support procedures"
+    "C interface"
+    "chicken-setup"
+    "Data representation"
+    "Bugs and limitations"
+    "faq"
+    "Acknowledgements"
+    "Bibliography"
+    ))
+
+(define (chapters-sanity-check)
+  "Checks if there all the wiki files listed in `*pages*' are in
+`manual-wiki-files', just in case we forget to update this
+variable when new chapters are added; and if all the files listed
+in `manual-wiki-files' can be found in `*pages*'."
+  (for-each (lambda (file)
+              (when (not (member file manual-wiki-files))
+                (error (conc file " was not found in `manual-wiki-files'."))))
+            *pages*)
+  (for-each (lambda (file)
+              (when (not (member file *pages*))
+                (error (conc "File \"" file "\" was not found under the wiki directory."))))
+            manual-wiki-files))
+  
+(define (html-files->pdf)
+  "Requires htmldoc (http://www.htmldoc.org)."
+  (system (conc "htmldoc --book --numbered --size a4 --title "
+                "--toctitle \"Chicken User's Manual\" "
+                " --header t "
+                "--linkstyle plain --outfile chicken.pdf "
+                (if *only*
+                    (html-pagename *only*)
+                    (string-intersperse
+                     (map html-pagename manual-wiki-files))))))
+
+(define (html-pagename pagename)
+  (hyphen (string-downcase 
+           (make-pathname
+            +outpath+
+            (if (string=? pagename +index-page+) "index" pagename) "html"))))
+
 (define *loaded-extensions* (make-hash-table))
 
 (for-each
  (cut load-extensions-from-file *loaded-extensions* <>)
  (glob (conc +extension-path+ "/*")) )
 
-(for-each
- (lambda (p)
-   (let* ((pagename p)
-	  (po (hyphen (string-downcase 
-		       (make-pathname
-			+outpath+
-			(if (string=? pagename +index-page+) "index" pagename) "html")))))
-     (print p " -> " po " ...")
-     (with-output-to-file po
-       (lambda ()
-	 (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename)
-	 (write-stream
-	  (wiki->html
-	   (string->stream (convert-page p))
-	   stream-null
-	   ""
-	   (constantly stream-null)
-	   (constantly stream-null)
-	   (make-hash-table)
-	   (make-html-header 1)
-	   (constantly stream-null)
-	   (constantly #t)
-	   *loaded-extensions*) )
-	 (printf "~%</body></html>") ) ) ) )
- (if *only* (list *only*) *pages*) )
+(define (wiki-files->html)
+  (for-each
+   (lambda (p)
+     (let* ((pagename p)
+            (po (html-pagename pagename)))
+       (print p " -> " po " ...")
+       (with-output-to-file po
+         (lambda ()
+           (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename)
+           (write-stream
+            (wiki->html
+             (string->stream (convert-page p))
+             stream-null
+             ""
+             (constantly stream-null)
+             (constantly stream-null)
+             (make-hash-table)
+             (make-html-header 1)
+             (constantly stream-null)
+             (constantly #t)
+             *loaded-extensions*) )
+           (printf "~%</body></html>") ) ) ) )
+   (if *only* (list *only*) *pages*) ) )
+
+
+;;; Here come the conversions
+(when *generate-pdf*
+  (chapters-sanity-check))
+
+(wiki-files->html)
+
+(when *generate-pdf*
+  (html-files->pdf))

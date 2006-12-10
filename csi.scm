@@ -588,7 +588,7 @@ EOF
 			 (cond ((fx>= j len)
 				(fprintf out " ~S: ~S" i v)
 				(if (fx> n 1)
-				    (fprintf out "\t(followed by ~A identical instances)~% ...~%" n)
+				    (fprintf out "\t(followed by ~A identical instances)~% ...~%" (fx- n 1))
 				    (newline out) )
 				(loop1 (fx+ i n)) )
 			       ((eq? v (pref x j)) (loop2 (fx+ n 1) (fx+ j 1)))

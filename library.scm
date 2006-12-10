@@ -142,8 +142,10 @@ EOF
 (define (exit . code) (apply (##sys#exit-handler) code))
 (define (reset) ((##sys#reset-handler)))
 
-(define (##sys#error msg . args)
-  (apply ##sys#signal-hook #:error msg args) )
+(define (##sys#error . args)
+  (if (pair? args)
+      (apply ##sys#signal-hook #:error args)
+      (##sys#signal-hook #:error #f)))
 
 (define ##sys#warnings-enabled #t)
 
@@ -3044,7 +3046,7 @@ EOF
 	   (##sys#print "] " #f port) )
 	 (when more1
 	   (##sys#with-print-length-limit
-	    120
+	    100
 	    (lambda ()
 	      (##sys#print more1 #t port) ) ) ) ) )
      chain)
@@ -3195,8 +3197,10 @@ EOF
      (lambda (msg . args)
        (##sys#error-handler (lambda args (##core#inline "C_halt" "error in error")))
        (cond ((##sys#fudge 4)
-	      (##core#inline "C_display_string" ##sys#standard-error "Error: ")
-	      (##sys#print msg #f ##sys#standard-error)
+	      (##core#inline "C_display_string" ##sys#standard-error "Error")
+	      (when msg
+		(##sys#print ": " #f ##sys#standard-error)
+		(##sys#print msg #f ##sys#standard-error) )
 	      (cond [(fx= 1 (length args))
 		     (##core#inline "C_display_string" ##sys#standard-error ": ")
 		     (##sys#print (##sys#slot args 0) #t ##sys#standard-error) ]
@@ -3215,7 +3219,7 @@ EOF
 	      (##core#inline "C_halt" #f) )
 	     (else
 	      (let ((out (open-output-string)))
-		(##sys#print msg #f out)
+		(when msg (##sys#print msg #f out))
 		(##sys#print #\newline #f out)
 		(##sys#for-each (lambda (x) (##sys#print x #t out) (##sys#print #\newline #f out)) args)
 		(##core#inline "C_halt" (get-output-string out)) ) ) ) ) ) ) )
@@ -3280,7 +3284,7 @@ EOF
       [else
        (when (and (symbol? msg) (null? args))
 	 (set! msg (##sys#symbol->string msg)) )
-       (let* ([hasloc (or (not msg) (symbol? msg))]
+       (let* ([hasloc (and (or (not msg) (symbol? msg)) (pair? args))]
 	      [loc (and hasloc msg)]
 	      [msg (if hasloc (##sys#slot args 0) msg)]
 	      [args (if hasloc (##sys#slot args 1) args)] )
@@ -3976,13 +3980,13 @@ EOF
 	     args) ) ] )
     (lambda (ex . args)
       (let-optionals args ([port ##sys#standard-output]
-			   [header "Error:"] )
+			   [header "Error"] )
 	(##sys#check-port port 'print-error-message)
 	(display header port)
-	(##sys#write-char-0 #\space port)
 	(cond [(and (not (##sys#immediate? ex)) (eq? 'condition (##sys#slot ex 0)))
 	       (cond ((errmsg ex) =>
 		      (lambda (msg)
+			(display ": " port)
 			(let ([loc (errloc ex)])
 			  (when (and loc (symbol? loc))
 			    (display (string-append "(" (##sys#symbol->qualified-string loc) ") ") port) ) )
@@ -3990,9 +3994,9 @@ EOF
 		     (else 
 		      (let ((kinds (##sys#slot ex 1)))
 			(if (equal? '(user-interrupt) kinds)
-			    (display "*** user interrupt ***" port)
+			    (display ": *** user interrupt ***" port)
 			    (begin
-			      (display "<condition> " port)
+			      (display ": <condition> " port)
 			      (display (##sys#slot ex 1) port) ) ) ) ) )
 	       (and-let* ([args (errargs ex)])
 		 (if (fx= 1 (length args))
@@ -4262,4 +4266,3 @@ EOF
   (and-let* ((r (##core#inline "C_dunload" (##sys#make-c-string name))))
     (##sys#gc #t) 
     #t) )
-

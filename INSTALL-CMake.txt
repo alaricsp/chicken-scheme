@@ -5,7 +5,7 @@ See LICENSE section at end of file for full license text.
 How to build Chicken Scheme using CMake
 ---------------------------------------
 
-last updated September 7, 2006
+last updated November 21, 2006
 
 If in trouble, please contact me through the Chicken mailing list.  You can subscribe to the list from the Chicken homepage, http://call-with-current-continuation.org.
 
@@ -110,7 +110,7 @@ This will populate your directory with a full working repository.
 INSTALL CMake
 -------------
 
-CMake 2.4.3 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.
+CMake 2.4.4 or later is required.  Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.
 
 
 

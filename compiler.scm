@@ -616,7 +616,7 @@
 			   `(let ,(map (lambda (alias b)
 					 (list alias (walk (cadr b) ae me (car b))) )
 				       aliases bindings)
-			      ,(walk (##sys#canonicalize-body (cddr x) (cut assq <> ae2) me)
+			      ,(walk (##sys#canonicalize-body (cddr x) (cut assq <> ae2) me dest)
 				     ae2
 				     me dest) ) ) )
 
@@ -637,7 +637,7 @@
 				     [ae2 (append (map cons vars aliases) ae)]
 				     [body 
 				      (walk 
-				       (##sys#canonicalize-body obody (cut assq <> ae2) me)
+				       (##sys#canonicalize-body obody (cut assq <> ae2) me dest)
 				       ae2
 				       me #f) ]
 				     [llist2 
@@ -659,7 +659,7 @@
 				(ae2 (append (map cons vars aliases) ae))
 				[body 
 				 (walk 
-				  (##sys#canonicalize-body obody (cut assq <> ae2) me)
+				  (##sys#canonicalize-body obody (cut assq <> ae2) me dest)
 				  ae2
 				  me #f) ] )
 			   (set-real-names! aliases vars)

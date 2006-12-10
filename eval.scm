@@ -394,73 +394,72 @@
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body lookup . me)
-      (let ([me (:optional me '())])
-	(define (fini vars vals mvars mvals body)
-	  (if (and (null? vars) (null? mvars))
-	      (let loop ([body2 body] [exps '()])
-		(if (not (pair? body2)) 
-		    `(begin ,@body)	; no more defines, otherwise we would have called `expand'
-		    (let ([x (##sys#slot body2 0)])
-		      (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
-			  `(begin . ,(##sys#append (reverse exps) (list (expand body2))))
-			  (loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
-	      (let ([vars (reverse vars)])
-		`(let ,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
-				  (apply ##sys#append vars mvars) )
-		   ,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
-		   ,@(map (lambda (vs x)
-			    (let ([tmps (##sys#map gensym vs)])
-			      `(##sys#call-with-values
-				(lambda () ,x)
-				(lambda ,tmps 
-				  ,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
-			  (reverse mvars)
-			  (reverse mvals) )
-		   ,@body) ) ) )
-	(define (expand body)
-	  (let loop ([body body] [vars '()] [vals '()] [mvars '()] [mvals '()])
-	    (if (not (pair? body))
-		(fini vars vals mvars mvals body)
-		(let* ([x (##sys#slot body 0)]
-		       [rest (##sys#slot body 1)] 
-		       [head (and (pair? x) (##sys#slot x 0))] )
-		  (cond [(not head) (fini vars vals mvars mvals body)]
-			[(and (symbol? head) (lookup head))
-			 (fini vars vals mvars mvals body) ]
-			[(eq? 'define head)
-			 (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f)
-			 (let loop2 ([x x])
-			   (let ([head (cadr x)])
-			     (cond [(not (pair? head))
-				    (##sys#check-syntax 'define x '(define variable . #(_ 0)) #f)
-				    (loop rest (cons head vars)
-					  (cons (if (pair? (cddr x))
-						    (caddr x)
-						    '(##sys#void) )
-						vals)
-					  mvars mvals) ]
-				   [(pair? (##sys#slot head 0))
-				    (##sys#check-syntax 'define x '(define (_ . lambda-list) . #(_ 1)) #f)
-				    (loop2 (cons 'define (##sys#expand-curried-define head (cddr x)))) ]
-				   [else
-				    (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f)
-				    (loop rest
-					  (cons (##sys#slot head 0) vars)
-					  (cons `(lambda ,(##sys#slot head 1) ,@(cddr x)) vals)
-					  mvars mvals) ] ) ) ) ]
-			[(eq? 'define-values head)
-			 (##sys#check-syntax 'define-values x '(define-values #(_ 0) _) #f)
-			 (loop rest vars vals (cons (cadr x) mvars) (cons (caddr x) mvals)) ]
-			[(eq? 'begin head)
-			 (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
-			 (loop (##sys#append (##sys#slot x 1) rest) vars vals mvars mvals) ]
-			[else
-			 (let ([x2 (##sys#macroexpand-0 x me)])
-			   (if (eq? x x2)
-			       (fini vars vals mvars mvals body)
-			       (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
-	(expand body) ) ) ) )
+    (lambda (body lookup #!optional me container)
+      (define (fini vars vals mvars mvals body)
+	(if (and (null? vars) (null? mvars))
+	    (let loop ([body2 body] [exps '()])
+	      (if (not (pair? body2)) 
+		  `(begin ,@body) ; no more defines, otherwise we would have called `expand'
+		  (let ([x (##sys#slot body2 0)])
+		    (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
+			`(begin . ,(##sys#append (reverse exps) (list (expand body2))))
+			(loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
+	    (let ([vars (reverse vars)])
+	      `(let ,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
+				(apply ##sys#append vars mvars) )
+		 ,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
+		 ,@(map (lambda (vs x)
+			  (let ([tmps (##sys#map gensym vs)])
+			    `(##sys#call-with-values
+			      (lambda () ,x)
+			      (lambda ,tmps 
+				,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
+			(reverse mvars)
+			(reverse mvals) )
+		 ,@body) ) ) )
+      (define (expand body)
+	(let loop ([body body] [vars '()] [vals '()] [mvars '()] [mvals '()])
+	  (if (not (pair? body))
+	      (fini vars vals mvars mvals body)
+	      (let* ([x (##sys#slot body 0)]
+		     [rest (##sys#slot body 1)] 
+		     [head (and (pair? x) (##sys#slot x 0))] )
+		(cond [(not head) (fini vars vals mvars mvals body)]
+		      [(and (symbol? head) (lookup head))
+		       (fini vars vals mvars mvals body) ]
+		      [(eq? 'define head)
+		       (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f)
+		       (let loop2 ([x x])
+			 (let ([head (cadr x)])
+			   (cond [(not (pair? head))
+				  (##sys#check-syntax 'define x '(define variable . #(_ 0)) #f)
+				  (loop rest (cons head vars)
+					(cons (if (pair? (cddr x))
+						  (caddr x)
+						  '(##sys#void) )
+					      vals)
+					mvars mvals) ]
+				 [(pair? (##sys#slot head 0))
+				  (##sys#check-syntax 'define x '(define (_ . lambda-list) . #(_ 1)) #f)
+				  (loop2 (cons 'define (##sys#expand-curried-define head (cddr x)))) ]
+				 [else
+				  (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f)
+				  (loop rest
+					(cons (##sys#slot head 0) vars)
+					(cons `(lambda ,(##sys#slot head 1) ,@(cddr x)) vals)
+					mvars mvals) ] ) ) ) ]
+		      [(eq? 'define-values head)
+		       (##sys#check-syntax 'define-values x '(define-values #(_ 0) _) #f)
+		       (loop rest vars vals (cons (cadr x) mvars) (cons (caddr x) mvals)) ]
+		      [(eq? 'begin head)
+		       (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
+		       (loop (##sys#append (##sys#slot x 1) rest) vars vals mvars mvals) ]
+		      [else
+		       (let ([x2 (##sys#macroexpand-0 x me)])
+			 (if (eq? x x2)
+			     (fini vars vals mvars mvals body)
+			     (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
+      (expand body) ) ) )
 
 
 ;;; A simple expression matcher
@@ -764,7 +763,7 @@
 				     [vars (map (lambda (x) (car x)) bindings)] 
 				     [e2 (cons vars e)]
 				     [body (##sys#compile-to-closure
-					    (##sys#canonicalize-body (cddr x) (cut defined? <> e2) me)
+					    (##sys#canonicalize-body (cddr x) (cut defined? <> e2) me cntr)
 					    e2
 					    me
 					    cntr) ] )
@@ -824,7 +823,7 @@
 				   (let* ((e2 (cons vars e))
 					  (body 
 					   (##sys#compile-to-closure
-					    (##sys#canonicalize-body body (cut defined? <> e2) me)
+					    (##sys#canonicalize-body body (cut defined? <> e2) me (or h cntr))
 					    e2
 					    me
 					    (or h cntr) ) ) )
@@ -2036,8 +2035,10 @@
 	   (##sys#error-handler
 	    (lambda (msg . args)
 	      (resetports)
-	      (##sys#print "Error: " #f ##sys#standard-error)
-	      (##sys#print msg #f ##sys#standard-error)
+	      (##sys#print "Error" #f ##sys#standard-error)
+	      (when msg
+		(##sys#print ": " #f ##sys#standard-error)
+		(##sys#print msg #f ##sys#standard-error) )
 	      (if (and (pair? args) (null? (cdr args)))
 		  (begin
 		    (##sys#print ": " #f ##sys#standard-error)

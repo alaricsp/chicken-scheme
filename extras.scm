@@ -1584,7 +1584,7 @@ EOF
   (##sys#slot ht 2) )
 
 (define hash-table-update! 
-  ;; This one was suggested by Sven Hartrumpf.
+  ;; This one was suggested by Sven Hartrumpf (and subsequently added in SRFI-69)
   (let ([eq0 eq?]
 	[floor floor] )
     (lambda (ht key proc #!optional
@@ -1612,21 +1612,29 @@ EOF
 		    ;; Fast path (eq? test):
 		    (let loop ((bucket bucket0))
 		      (cond ((eq? bucket '())
-			     (##sys#setslot vec k (cons (cons key (proc (init))) bucket0))
-			     (##sys#setslot ht 2 c) )
+			     (let ((val (proc (init))))
+			       (##sys#setslot vec k (cons (cons key val) bucket0))
+			       (##sys#setslot ht 2 c) 
+			       val) )
 			    (else
 			     (let ((b (##sys#slot bucket 0)))
 			       (if (eq? key (##sys#slot b 0))
-				   (##sys#setslot b 1 (proc (##sys#slot b 1)))
+				   (let ((val (proc (##sys#slot b 1))))
+				     (##sys#setslot b 1 val)
+				     val)
 				   (loop (##sys#slot bucket 1)) ) ) ) ) )
 		    (let loop ((bucket bucket0))
 		      (cond ((eq? bucket '())
-			     (##sys#setslot vec k (cons (cons key (proc (init))) bucket0))
-			     (##sys#setslot ht 2 c) )
+			     (let ((val (proc (init))))
+			       (##sys#setslot vec k (cons (cons key val) bucket0))
+			       (##sys#setslot ht 2 c) 
+			       val) )
 			    (else
 			     (let ((b (##sys#slot bucket 0)))
 			       (if (test key (##sys#slot b 0))
-				   (##sys#setslot b 1 (proc (##sys#slot b 1)))
+				   (let ((val (proc (##sys#slot b 1))))
+				     (##sys#setslot b 1 val)
+				     val) 
 				   (loop (##sys#slot bucket 1)) ) ) ) ) ) ) ) ) ) ) ) ) )
 
 (define hash-table-update!/default 
