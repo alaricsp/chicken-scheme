@@ -1,3 +1,15 @@
+chicken (2.41-2) unstable; urgency=low
+
+  * Update to the package description.
+
+ -- Ivan Raikov <raikov@cc.gatech.edu>  Mon, 11 Dec 2006 11:52:17 -0500
+
+chicken (2.41-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Ivan Raikov <raikov@cc.gatech.edu>  Fri,  8 Dec 2006 10:41:13 -0500
+  
 chicken (2.3-1) unstable; urgency=medium
 
   * New upstream version.

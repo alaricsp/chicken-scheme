@@ -1,7 +1,7 @@
 Source: chicken
 Section: interpreters
 Priority: optional
-Maintainer: Davide Puricelli (evo) <evo@debian.org>
+Maintainer: Ivan Raikov <raikov@cc.gatech.edu>
 Build-Depends: debhelper (>> 3.0.0), autotools-dev
 Standards-Version: 3.6.2
 
@@ -12,10 +12,9 @@ Conflicts: chicken, chicken-dev
 Depends: ${shlibs:Depends}, libchicken-dev (= ${Source-Version})
 Replaces: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - compiler
- CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
- It uses the ideas presented in Baker's paper "Cheney on the MTA", and
- is small and easily extendable, although not a production quality or
- high-performance Scheme system.
+ CHICKEN is a compiler for the Scheme programming language. CHICKEN produces portable,
+ efficient C, supports almost all of the current Scheme language standard, R5RS and includes
+ many enhancements and extensions. CHICKEN runs on MacOS X, Windows, and many Unix flavours.
  .
  This package contains the compiler.
  .
@@ -29,10 +28,9 @@ Replaces: chicken, chicken-dev
 Depends: ${shlibs:Depends}
 Conflicts: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - runtime
- CHICKEN is a Scheme compiler which compiles a subset of R5RS into C. 
- It uses the ideas presented in Baker's paper "Cheney on the MTA", and 
- is small and easily extendable, although not a production quality or
- high-performance Scheme system.
+ CHICKEN is a compiler for the Scheme programming language. CHICKEN produces portable, 
+ efficient C, supports almost all of the current Scheme language standard, R5RS and includes 
+ many enhancements and extensions. CHICKEN runs on MacOS X, Windows, and many Unix flavours.
  .
  This package contains the shared library needed to run programs using
  chicken.
@@ -47,10 +45,9 @@ Conflicts: chicken, chicken-dev
 Depends: libchicken0 (= ${Source-Version}), libpcre3-dev
 Replaces: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - development
- CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
- It uses the ideas presented in Baker's paper "Cheney on the MTA", and
- is small and easily extendable, although not a production quality or
- high-performance Scheme system.
+ CHICKEN is a compiler for the Scheme programming language. CHICKEN produces portable,
+ efficient C, supports almost all of the current Scheme language standard, R5RS and includes
+ many enhancements and extensions. CHICKEN runs on MacOS X, Windows, and many Unix flavours.
  .
  This package contains the header file and static library for developing
  with chicken.
