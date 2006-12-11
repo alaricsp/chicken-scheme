@@ -305,12 +305,27 @@ DISTCLEANFILES = $(PACKAGE)-$(VERSION).*
 clean-local:
 	-rm -rf stage2 stage3 stage2-stamp stage3-stamp
 
+
 # All of the files like manual.tex should be
 # installed by a binary distribution.  Unfortunately there is no
 # standard place to install these sorts of files so we must leave that
 # to the package builder.
-EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt chicken.spec.in *.1
+EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt chicken.spec.in *.1 $(DEBIAN_DIST)
 
+DEBIAN_DIST =   debian/changelog              \
+		debian/control                \
+		debian/copyright              \
+		debian/rules                  \
+		debian/chicken-bin.dirs       \
+		debian/chicken-bin.doc-base   \
+		debian/chicken-bin.docs       \
+		debian/chicken-bin.files      \
+		debian/chicken-bin.manpages   \
+		debian/libchicken0.dirs       \
+		debian/libchicken0.files      \
+		debian/libchicken-dev.dirs    \
+		debian/libchicken-dev.files   \
+		debian/README.Debian         
 
 ## Rules for the chicken maintainer.
 
