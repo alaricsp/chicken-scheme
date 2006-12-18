@@ -292,7 +292,7 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-compression-threshold compressed-literals compressable-literal
-  lookup-exports-file undefine-shadowed-macros
+  lookup-exports-file undefine-shadowed-macros process-lambda-documentation
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result}
@@ -635,15 +635,17 @@
 			    (lambda (vars argc rest)
 			      (let* ([aliases (map gensym vars)]
 				     [ae2 (append (map cons vars aliases) ae)]
-				     [body 
-				      (walk 
-				       (##sys#canonicalize-body obody (cut assq <> ae2) me dest)
-				       ae2
-				       me #f) ]
+				     [body0 (##sys#canonicalize-body obody (cut assq <> ae2) me dest)]
+				     [body (walk body0 ae2 me #f)]
 				     [llist2 
 				      (build-lambda-list
 				       aliases argc
 				       (and rest (list-ref aliases (posq rest vars))) ) ] )
+				(when dest
+				  (match body0
+				    (('begin (or (? string? doc) ('quote doc)) _ . more)
+				     (process-lambda-documentation dest doc) )
+				    (_ #f) ) )
 				(set-real-names! aliases vars)
 				(cond [(and dest emit-profile (eq? 'lambda name))
 				       (expand-profile-lambda dest llist2 body) ]

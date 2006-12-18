@@ -35,7 +35,7 @@
     (display (substring str 0 (min slen len))) ) )
 
 (define (display-f-4.3 n)
-  (let* ([m (string-match "([0-9]*)(\\.([0-9]*))?" (number->string n))]
+  (let* ([m (string-match "([-.+e0-9]*)(\\.([0-9]*))?" (number->string n))]
 	 [is (second m)]
 	 [fs (or (fourth m) "0")] )
     (display-r is 4 #\space)

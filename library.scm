@@ -1542,6 +1542,7 @@ EOF
 ; 4:  (close PORT)
 ; 5:  (flush-output PORT)
 ; 6:  (char-ready? PORT) -> BOOL
+; 7:  (read-string PORT STRING COUNT START) -> COUNT'
 
 (define (##sys#make-port i/o class name type)
   (let ([port (##core#inline_allocate ("C_a_i_port" 17))])
@@ -1568,7 +1569,8 @@ EOF
 	  (lambda (p)			; flush-output
 	    (##core#inline "C_flush_output" p) )
 	  (lambda (p)			; char-ready?
-	    (##core#inline "C_char_ready_p" p) ) ) )
+	    (##core#inline "C_char_ready_p" p) )
+	  #f) )				; read-string
 
 (define ##sys#open-file-port (##core#primitive "C_open_file_port"))
 
@@ -2829,7 +2831,15 @@ EOF
 	      (##sys#setislot p 10 (##sys#slot p 11)) )
 	    (lambda (p) #f)		; flush-output
 	    (lambda (p)			; char-ready?
-	      (fx< (##sys#slot p 10) (##sys#slot p 11)) ) ) ) )
+	      (fx< (##sys#slot p 10) (##sys#slot p 11)) )
+	    (lambda (p n dest start)	; read-string
+	      (let* ((pos (##sys#slot p 10))
+		     (n2 (fx- (##sys#slot p 11) pos) ) )
+		(when (or (not n) (fx> n n2))
+		  (set! n n2))
+		(##core#inline "C_substring_copy" (##sys#slot p 12) dest pos (fx+ pos n) start)
+		(##sys#setislot p 10 (fx+ pos n))
+		n)))))
 
 (define open-input-string 
   (lambda (string)
@@ -4011,6 +4021,7 @@ EOF
 		       (newline port)
 		       (writeargs args port) ) ) ) ]
 	      [(string? ex)
+	       (display ": " port)
 	       (display ex port)
 	       (newline port) ]
 	      [else

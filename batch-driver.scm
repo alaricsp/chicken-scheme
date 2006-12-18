@@ -84,6 +84,7 @@
 
 (define-constant default-profile-name "PROFILE")
 (define-constant default-inline-max-size 10)
+(define-constant funny-message-timeout 60000)
 
 
 ;;; Compile a complete source file:
@@ -133,6 +134,7 @@
 	[dynamic (memq 'dynamic options)]
 	[dumpnodes #f]
 	[quiet (memq 'quiet options)]
+	[start-time #f]
 	[ssize (or (memq 'nursery options) (memq 'stack-size options))] )
 
     (define (cputime) (##sys#fudge 6))
@@ -364,6 +366,7 @@
 	   (debugging 'r "debugging options" debugging-chicken)
 	   (debugging 'r "target heap size" target-heap-size)
 	   (debugging 'r "target stack size" target-stack-size)
+	   (set! start-time (cputime))
 
 	   ;; Read toplevel expressions:
 	   (set! ##sys#line-number-database (make-vector line-number-database-size '()))
@@ -557,6 +560,8 @@
 			    (let ([node3 (perform-closure-conversion node2 db)])
 			      (end-time "closure conversion")
 			      (print-db "final-analysis" '|8| db i)
+			      (when (and ##sys#warnings-enabled (> (- (cputime) start-time) funny-message-timeout))
+				(display "(don't despair - still compiling...)\n") )
 			      (when export-file-name
 				(dump-exported-globals db export-file-name) )
 			      (let ([upap (user-post-analysis-pass)])

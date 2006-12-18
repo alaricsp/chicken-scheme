@@ -1,7 +1,7 @@
 #!/bin/sh
 
 INDENT=indent
-INDENT_OPTS="-st -kr"
+INDENT_OPTS="-st"
 ENSCRIPT=enscript
 ENSCRIPT_OPTS="-q -Ec"
 CSC_OPTS="-to-stdout"

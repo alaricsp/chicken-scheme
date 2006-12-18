@@ -294,7 +294,7 @@
 	 (cond ((null? llists)
 		`(let ,(map (lambda (v) (##sys#list v (lookup v))) vars) ,@body) )
 	       ((and (pair? (car llists2)) (null? (cdar llists2)))
-		`(let (,(caar llists2) ,(car exps))
+		`(let ((,(caar llists2) ,(car exps)))
 		   ,(fold (cdr llists) (cdr exps) (cdr llists2)) ) )
 	       (else
 		`(##sys#call-with-values

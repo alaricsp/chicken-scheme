@@ -1,7 +1,7 @@
 ### Makefile.am - by Doug Quale, modified by felix and improved by Tony Garnock-Jones, and Panagiotis Vossos.
 ###               Unification with CMake build implemented by Brandon Van Every.
 
-AUTOMAKE_OPTIONS = foreign no-dependencies dist-zip
+AUTOMAKE_OPTIONS = foreign no-dependencies
 
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 libtool: $(LIBTOOL_DEPS)

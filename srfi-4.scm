@@ -610,29 +610,41 @@ EOF
 	((fx>= i to))
       (##sys#write-char-0 (integer->char (##core#inline "C_u8peek" buf i)) port) ) ) )
 
-(define (read-u8vector len #!optional (port ##sys#standard-input) v (to 0))
-  (define (finish p)
-    (let ((s (get-output-string p)))
-      (cond (v (let ((n (##sys#size s))
-		     (bv (##sys#slot v 1)) )
-		 (##sys#check-range (fx- (fx+ n to) 1) 0 (##sys#size bv) 'read-u8vector)
-		 (##core#inline "C_copy_subvector" (##sys#slot v 1) s to 0 (##sys#size s))
-		 v))
-	    (else 
-	     (##core#inline "C_string_to_bytevector" s)
-	     (##sys#make-structure 'u8vector s) ) ) ) )
-  (when v (##sys#check-structure v 'u8vector 'read-u8vector))
-  (##sys#check-port port 'read-u8vector)
-  (##sys#check-exact to 'read-u8vector)
-  (let ((o (open-output-string)))
-    (when len (##sys#check-exact len 'read-u8vector))
-    (let loop ((i (or len (and v (fx- (##sys#size (##sys#slot v 1)) to)) -1)))
-      (if (eq? i 0)
-	  (finish o)
-	  (let ((c (##sys#read-char-0 port)))
-	    (cond ((eof-object? c) (finish o))
-		  (else
-		   (##sys#write-char-0 c o)
-		   (loop (fx- i 1)) ) ) ) ) ) ) )
+(define (read-u8vector! n dest #!optional (port ##sys#standard-input) (start 0))
+  (##sys#check-port port 'read-u8vector!)
+  (##sys#check-exact start 'read-u8vector!)
+  (##sys#check-structure dest 'u8vector 'read-u8vector!)
+  (let ((dest (##sys#slot dest 1)))
+    (when n
+      (##sys#check-exact n 'read-u8vector!)
+      (when (fx> (fx+ start n) (##sys#size dest))
+	(set! n (fx- (##sys#size dest) start))))
+    (##sys#read-string! n dest port start) ) )
+
+(define read-u8vector
+  (let ((open-output-string open-output-string)
+	(get-output-string get-output-string) )
+    (lambda (#!optional n (p ##sys#standard-input))
+      (##sys#check-port p 'read-u8vector)
+      (cond (n (##sys#check-exact n 'read-u8vector)
+	       (let* ((str (##sys#allocate-vector n #t #f #t))
+		      (n2 (##sys#read-string! n str p 0)) )
+		 (##sys#make-structure
+		  'u8vector
+		  (if (eq? n n2)
+		      str
+		      (let ((str2 (##sys#allocate-vector n2 #t #f #t)))
+			(##core#inline "C_substring_copy" str str2 0 n2 0)
+			str2) ) ) ) )
+	    (else
+	     (let ([str (open-output-string)])
+	       (let loop ([n n])
+		 (or (and (eq? n 0) (get-output-string str))
+		     (let ([c (##sys#read-char-0 p)])
+		       (if (eof-object? c)
+			   (get-output-string str)
+			   (begin
+			     (##sys#write-char c str) 
+			     (loop (and n (fx- n 1))) ) ) ) ) ) ) ) ) ) ) )
 
 (register-feature! 'srfi-4)

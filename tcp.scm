@@ -340,27 +340,29 @@ EOF
 	     (oclosed #f)
 	     (outbufsize (tbs))
 	     (outbuf (and outbufsize (fx> outbufsize 0) ""))
+	     (read-input
+	      (lambda ()
+		(let loop ()
+		  (let ((n (##net#recv fd buf +input-buffer-size+ 0)))
+		    (cond ((eq? -1 n)
+			   (cond ((eq? errno _ewouldblock) 
+				  (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
+				  (yield)
+				  (loop) )
+				 (else
+				  (##sys#update-errno)
+				  (##sys#signal-hook 
+				   #:network-error
+				   (##sys#string-append "can not read from socket - " strerror) 
+				   fd) ) ) )
+			  (else
+			   (set! buflen n)
+			   (set! bufindex 0) ) ) ) ) ) )
 	     (in
 	      (make-input-port
 	       (lambda ()
 		 (when (fx>= bufindex buflen)
-		   (let ((n (let loop ()
-			      (let ((n (##net#recv fd buf +input-buffer-size+ 0)))
-				(if (eq? -1 n)
-				    (if (eq? errno _ewouldblock) 
-					(begin
-					  (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
-					  (yield)
-					  (loop) )
-					(begin
-					  (##sys#update-errno)
-					  (##sys#signal-hook 
-					   #:network-error
-					   (##sys#string-append "can not read from socket - " strerror) 
-					   fd) ) )
-				    n) ) ) ) )
-		     (set! buflen n)
-		     (set! bufindex 0) ) )
+		   (read-input))
 		 (if (fx>= bufindex buflen)
 		     #!eof
 		     (let ((c (##core#inline "C_subchar" buf bufindex)))
@@ -381,7 +383,22 @@ EOF
 		   (when (and oclosed (eq? -1 (##net#close fd)))
 		     (##sys#update-errno)
 		     (##sys#signal-hook #:network-error (##sys#string-append "can not close socket input port - " strerror)
-					fd) ) ) ) ) )
+					fd) ) ) )
+	       #f
+	       (lambda (p n dest start)
+		 (let loop ((n n) (m 0) (start start))
+		   (cond ((eq? n 0) m)
+			 ((fx< bufindex buflen)
+			  (let* ((rest (fx- buflen bufindex))
+				 (n2 (if (fx< n rest) n rest)))
+			    (##core#inline "C_substring_copy" buf dest bufindex (fx+ bufindex n2) start)
+			    (set! bufindex (fx+ bufindex n2))
+			    (loop (fx- n n2) (fx+ m n2) (fx+ start n2)) ) )
+			 (else
+			  (read-input)
+			  (if (eq? buflen 0) 
+			      m
+			      (loop n m start) ) ) ) ) ) ) )
 	     (output
 	      (lambda (s)
 		(let loop ((len (##sys#size s)) 

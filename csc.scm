@@ -282,22 +282,17 @@
 (define translate-options '("-quiet"))
 
 (define include-dir
-  (let ([id
-    (prefix "" "include" INSTALL_INCLUDE_HOME)
-    ])
-    (and (not (member id '("/usr/include" "/usr/local/include" "")))
+  (let ((id (prefix "" "include" INSTALL_INCLUDE_HOME)))
+    (and (not (member id '("/usr/include" "")))
 	 id) ) )
 
 (define compile-options
   (if win
-    (if (not cmake-build)
-      (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
-      (cons* (string-append "/I" INSTALL_INCLUDE_HOME)
-	     "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
-    )
-    (cons* TARGET_CFLAGS (if include-dir (list "-I" include-dir) '())) 
-  ) 
-)
+      (if (not cmake-build)
+	  (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
+	  (cons* (string-append "/I" INSTALL_INCLUDE_HOME)
+		 "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '())) )
+      (cons* TARGET_CFLAGS (if include-dir (list "-I" include-dir) '())) ) )
 
 (define compile-only-flag
   (if win "/c" "-c") )

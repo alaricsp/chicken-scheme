@@ -2,8 +2,8 @@
 # runtests.sh 
 
 set -e
-export DYLD_LIBRARY_PATH=`pwd`/../.libs
-export LD_LIBRARY_PATH=`pwd`/../.libs
+export DYLD_LIBRARY_PATH=`pwd`/..
+export LD_LIBRARY_PATH=`pwd`/..
 compile="../csc -compiler ../chicken -o a.out"
 
 echo "======================================== library tests ..."

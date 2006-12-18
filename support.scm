@@ -74,7 +74,7 @@
   default-optimization-iterations chop-separator chop-extension follow-without-loop dump-exported-globals
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  lookup-exports-file constant-declarations
+  lookup-exports-file constant-declarations process-lambda-documentation
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
 
 
@@ -334,6 +334,9 @@
 		[else `(begin ,@xs)] ) ) ) ) ) )
 
 (define decompose-lambda-list ##sys#decompose-lambda-list)
+
+(define (process-lambda-documentation id doc)
+  #f)					; Hook this
 
 
 ;;; Profiling instrumentation:

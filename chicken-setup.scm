@@ -39,7 +39,7 @@
   (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
 	  setup-verbose-flag setup-install-flag installation-prefix find-library find-header
 	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
-	  test-compile try-compile copy-file run-verbose required-chicken-version) )
+	  test-compile try-compile copy-file run-verbose required-chicken-version required-extension-version) )
 
 #>
 #ifndef C_USE_C_DEFAULTS
@@ -697,6 +697,31 @@ EOF
   (when (string-ci<? (chicken-version) (->string v))
     (error (sprintf "CHICKEN version ~a or higher is required" v)) ) )
 
+(define (upgrade-message ext msg)
+  (error
+   (sprintf
+    "the installed extension `%s' ~a - please run~%~%  chicken-setup ~a~%~%and repeat the current installation operation."
+    msg ext) ) )
+
+(define (required-extension-version . args)
+  (let looop ((args args))
+    (match args
+      (() #f)
+      ((ext version . more)
+       (let ((info (extension-information ext))
+	     (version (->string version)) )
+	 (if info
+	     (let ((ver (assq 'version info)))
+	       (cond ((not ver) (upgrade-message ext "has no associated version information"))
+		     ((string-ci<? (->string ver) version)
+		      (upgrade-message 
+		       ext
+		       (sprintf "is older than ~a, which is what this extension (`~a') requires"
+				version ext) ) )
+		     (else (loop more)) ) ) 
+	     (upgrade-message ext "is not installed") ) ) )
+      (_ (error 'required-extension-information "bad argument format" args)) ) ) )
+
 (define test-compile try-compile)
 
 (define (find-library name proc)
@@ -1024,7 +1049,7 @@ EOF
 	 (program-path dir)
 	 (loop more) )
 	(("-version" . _)
-	 (printf "chicken-setup - Version ~A~%" (chicken-version #t))
+	 (printf "chicken-setup - ~A~%" (chicken-version #t))
 	 (exit) )
 	(("-release" . _)
 	 (print (chicken-version))

@@ -77,7 +77,7 @@ EOF
     (bound-to-procedure
      ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-string ##sys#substring
      ##sys#for-each ##sys#map ##sys#setslot ##sys#allocate-vector ##sys#check-pair ##sys#not-a-proper-list-error 
-     ##sys#member ##sys#assoc ##sys#error ##sys#signal-hook
+     ##sys#member ##sys#assoc ##sys#error ##sys#signal-hook ##sys#read-string!
      ##sys#check-symbol ##sys#check-vector ##sys#floor ##sys#ceiling ##sys#truncate ##sys#round 
      ##sys#check-number ##sys#cons-flonum
      ##sys#flonum-fraction ##sys#make-port ##sys#fetch-and-check-port-arg ##sys#print ##sys#check-structure 
@@ -446,23 +446,56 @@ EOF
 	      (##sys#check-port port 'read-lines)
 	      (doread port) ) ) ) ) ) )
 
+(define (##sys#read-string! n dest port start)
+  (when (##sys#slot port 6)		; peeked?
+    (##core#inline "C_setsubchar" dest start (##sys#read-char-0 port))
+    (set! start (fx+ start 1)) )
+  (let ((rdstring (##sys#slot (##sys#slot port 2) 7)))
+    (let loop ((start start) (n n) (m 0))
+      (let ((n2 (if rdstring
+		    (rdstring port n dest start) ; *** doesn't update port-position!
+		    (let ((c (##sys#read-char-0 port)))
+		      (if (eof-object? c)
+			  0
+			  (begin
+			    (##core#inline "C_setsubchar" dest start c)
+			    1) ) ) ) ) )
+	(cond ((eq? n2 0) m)
+	      ((or (not n) (fx< n2 n)) 
+	       (loop (fx+ start n2) (and n (fx- n n2)) (fx+ m n2)) )
+	      (else (fx+ n2 m))) ) ) ))
+
+(define (read-string! n dest #!optional (port ##sys#standard-input) (start 0))
+  (##sys#check-port port 'read-string!)
+  (##sys#check-string dest 'read-string!)
+  (when n
+    (##sys#check-exact n 'read-string!)
+    (when (fx> (fx+ start n) (##sys#size dest))
+      (set! n (fx- (##sys#size dest) start))))
+  (##sys#check-exact start 'read-string!)
+  (##sys#read-string! n dest port start) )
+
 (define read-string
-  (let ([open-output-string open-output-string]
-	[get-output-string get-output-string] )
-    (lambda n-and-port
-      (let-optionals n-and-port ([n #f] [p ##sys#standard-input])
-	(##sys#check-port p 'read-string)
-	(let ([str (open-output-string)])
-	  (when n (##sys#check-exact n 'read-string))
-	  (##sys#check-port p 'read-string)
-	  (let loop ([n n])
-	    (or (and (eq? n 0) (get-output-string str))
-		(let ([c (##sys#read-char-0 p)])
-		  (if (eof-object? c)
-		      (get-output-string str)
-		      (begin
-			(##sys#write-char c str) 
-			(loop (and n (fx- n 1))) ) ) ) ) ) ) ) ) ) )
+  (let ((open-output-string open-output-string)
+	(get-output-string get-output-string) )
+    (lambda (#!optional n (p ##sys#standard-input))
+      (##sys#check-port p 'read-string)
+      (cond (n (##sys#check-exact n 'read-string)
+	       (let* ((str (##sys#make-string n))
+		      (n2 (##sys#read-string! n str p 0)) )
+		 (if (eq? n n2)
+		     str
+		     (##sys#substring str 0 n2))))
+	    (else
+	     (let ([str (open-output-string)])
+	       (let loop ([n n])
+		 (or (and (eq? n 0) (get-output-string str))
+		     (let ([c (##sys#read-char-0 p)])
+		       (if (eof-object? c)
+			   (get-output-string str)
+			   (begin
+			     (##sys#write-char c str) 
+			     (loop (and n (fx- n 1))) ) ) ) ) ) ) ) ) ) ) )
 
 (define read-token
   (let ([open-output-string open-output-string]
@@ -561,9 +594,8 @@ EOF
 ;   10: last
 
 (define make-input-port
-  (lambda (read ready? close . peek)
-    (let* ([peek (and (pair? peek) (car peek))]
-	   [class
+  (lambda (read ready? close #!optional peek read-string)
+    (let* ([class
 	    (vector 
 	     (lambda (p)		; read-char
 	       (let ([last (##sys#slot p 10)])
@@ -587,7 +619,8 @@ EOF
 	       (##sys#setislot p 8 #t) )
 	     #f				; flush-output
 	     (lambda (p)		; char-ready?
-	       (ready?) ) ) ] 
+	       (ready?) )
+	     read-string) ]		; read-string
 	   [data (vector #f)] 
 	   [port (##sys#make-port #t class "(custom)" 'custom)] )
       (##sys#setslot port 9 data) 
@@ -610,7 +643,8 @@ EOF
 		 (##sys#setislot p 8 #t) )
 	       (lambda (p)		; flush-output
 		 (when flush (flush)) )
-	       #f) ]			; char-ready?
+	       #f			; char-ready?
+	       #f) ]			; read-string
 	     [data (vector #f)] 
 	     [port (##sys#make-port #f class "(custom)" 'custom)] )
 	(##sys#setslot port 9 data) 
