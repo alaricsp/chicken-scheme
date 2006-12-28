@@ -1910,65 +1910,27 @@ ADD_CUSTOM_TARGET(uninstall
   COMMAND ${CMAKE_COMMAND} -E remove ${SHARE_HOME}/*.scm
 )
 
-####################################################################
-#   GNU AUTOMAKE                                                   #
-####################################################################
-
-# Since CMake is used to generate the canonical Chicken distribution,
-# it must invoke Automake so that ./configure et al are current.
-# We run Automake in the source directory because we don't want to
-# mess with how to do it out-of-directory.
-#
-# Note that this has to be run from a Bourne shell.  No error
-# checking on that, as most people don't need to create Chicken
-# distributions.
-
-SET(AUTOMAKE_FILES aclocal.m4 compile config.guess config.sub configure install-sh Makefile.in missing ltmain.sh)
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${AUTOMAKE_FILES}
-  MAIN_DEPENDENCY autogen.sh
-  DEPENDS configure.in Makefile.am
-  WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
-  COMMAND sh autogen.sh
-)
-
 
 ####################################################################
 #   DISTRIBUTION                                                   #
 ####################################################################
 
-# Unix platforms can build a distro pretty easily, as all needed
-# ingredients are simultaneously available.  Pitfalls await on
-# Windoze, however.  (Don't you just love trying to do open source
-# on Windoze?  If we didn't have CMake....)
+# dist.cmake contains the list of all files that should be present
+# in the distribution.  It also contains a script for creating a
+# distribution tree and verifying its contents.  dist.cmake
+# produces a distribution that works for both CMake and ./configure,
+# and is now the canonical method for creating a distribution.
 #
-# MSVC .sln files run within Visual Studio, not a Bourne shell, so
-# the .sln generators probably can't make a distro.  That said,
-# weird permutations of running MSVC from a Makefile are possible,
-# and noted by Kitware as a "good trick" for parallel compilation
-# and so forth.  Haven't explored this option though.
+# We still support the GNU Autoconf / Automake build.  Thus, to
+# make a distro, Automake has to be run.  Thus, a Bourne shell "sh"
+# must be available, so that Automake can run.  We shouldn't have
+# to run CMakeLists.txt from a Bourne shell; we just need to have,
+# say, a sh.exe available in our path.  We aren't currently
+# doing any error checking on whether "sh" is available or working.
+# Nor whether Automake is installed, for that matter.  Not many people
+# need to build distros.
 #
-# As of Sept. 2nd, 2006, a Darcs that understands Cygwin paths is
-# difficult to obtain.  Hence ChangeLog is difficult to generate.
-# TODO: allow ChangeLog to be supplied manually from outside the build.
-# Cygwin doesn't have any problem with the rest; it's actually the
-# best Windows platform for the Automake flagellation.
-#
-# As of Sept. 3rd, 2006, the various Autoconfs + Automakes
-# distributed with MSYS are complete garbage.  Don't waste your
-# time; I wasted an entire day before giving up.  The GNU Win32
-# distros din't help either.  A project called mingw-install
-# finally did the trick.  http://sourceforge.net/projects/mingw-install
-# Haibin Zhang has solved quite a number of irritating integration
-# issues.  Although, caveat emptor, it'll nuke your entire MinGW
-# installation including GCC, without warning you!  Proper steps:
-#
-# - install MinGW-5.0.3.exe
-# - install mingw-install-20060210/setup/MSYS-1.0.11-2004.04.30-1.exe
-# - install mingw-install-20060210/msys/install.sh
-# - comment out the nasty "rm -rf" statements in
-#   mingw-install-20060210/mingw/install.sh
-# - install mingw-install-20060210/mingw/install.sh
+# dist.cmake handles all the Automake magic.  It's not visible here.
 
 SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
@@ -1977,12 +1939,6 @@ ADD_DEPENDENCIES(boot-c
   all-posix-c all-regex-c lib-common-c lib-safe-c lib-unsafe-c
   chicken-c csc-c csi-c chicken-profile-c chicken-setup-c
 )
-
-# dist.cmake contains the list of all files that should be present
-# in the distribution.  It also contains a script for creating a
-# distribution tree and verifying its contents.  dist.cmake
-# produces a distribution that works for both CMake and ./configure,
-# and is now the canonical method for creating a distribution.
 
 SET(DIST_DIR chicken-${BUILDVERSION})
 

@@ -9,11 +9,11 @@
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -25,7 +25,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-; Send bugs, suggestions and ideas to: 
+; Send bugs, suggestions and ideas to:
 ;
 ; felix@call-with-current-continuation.org
 ;
@@ -52,7 +52,7 @@
 ; create-session
 ; process-group-id  set-process-group-id!
 ; create-symbolic-link  read-symbolic-link
-; file-truncate 
+; file-truncate
 ; file-lock  file-lock/blocking  file-unlock  file-test-lock
 ; create-fifo  fifo?
 ; prot/...
@@ -61,7 +61,7 @@
 ; set-alarm!
 ; terminal-port?  terminal-name
 ; process-fork  process-wait
-; parent-process-id 
+; parent-process-id
 ; process-signal
 
 
@@ -113,12 +113,14 @@ static C_TLS int C_pipefds[ 2 ];
 static C_TLS time_t C_secs;
 static C_TLS struct tm C_tm;
 static C_TLS struct stat C_statbuf;
+
 /* pipe handles */
 static C_TLS HANDLE C_rd0, C_wr0, C_wr0_, C_rd1, C_wr1, C_rd1_;
 static C_TLS HANDLE C_save0, C_save1; /* saved I/O handles */
 static C_TLS char C_rdbuf; /* one-char buffer for read */
 static C_TLS int C_exstatus;
 
+/* platform information */
 static C_TLS char C_hostname[256];
 static C_TLS char C_osver[16];
 static C_TLS char C_osrel[16];
@@ -180,6 +182,7 @@ static DIR *opendir(const char *name)
     free(what);
     return dir;
 }
+
 static int closedir(DIR * dir)
 {
     if (dir)
@@ -190,6 +193,7 @@ static int closedir(DIR * dir)
     }
     return -1;
 }
+
 static struct dirent *readdir(DIR * dir)
 {
     if (dir)
@@ -247,7 +251,7 @@ static C_word C_fcall C_setenv(C_word x, C_word y);
 C_word C_fcall C_setenv(C_word x, C_word y) {
   char *sx = C_data_pointer(x),
        *sy = C_data_pointer(y);
-  int n1 = C_strlen(sx), n2 = C_strlen(sy);				       
+  int n1 = C_strlen(sx), n2 = C_strlen(sy);
   char *buf = (char *)C_malloc(n1 + n2 + 2);
   if(buf == NULL) return(C_fix(0));
   else {
@@ -295,12 +299,16 @@ void C_fcall C_free_exec_args() {
 #define C_asctime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
 #define C_mktime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
 
-/* mapping from Win32 error codes to errno */
+/*
+  mapping from Win32 error codes to errno
+*/
+
 typedef struct
 {
     DWORD   win32;
     int	    libc;
 } errmap_t;
+
 static errmap_t errmap[] =
 {
     {ERROR_INVALID_FUNCTION,      EINVAL},
@@ -372,6 +380,7 @@ static int zero_handles()
     C_save0 = C_save1 = INVALID_HANDLE_VALUE;
     return 1;
 }
+
 static int close_handles()
 {
     if (C_rd0 != INVALID_HANDLE_VALUE)
@@ -398,6 +407,7 @@ static int close_handles()
     }
     return zero_handles();
 }
+
 static int redir_io()
 {
     SECURITY_ATTRIBUTES sa;
@@ -429,6 +439,7 @@ static int redir_io()
     C_rd1 = INVALID_HANDLE_VALUE;
     return 1;
 }
+
 static int run_process(char *cmdline)
 {
     PROCESS_INFORMATION pi;
@@ -460,6 +471,7 @@ static int run_process(char *cmdline)
 	return 0;
     }
 }
+
 static int pipe_write(int hpipe, void* buf, int count)
 {
     DWORD done = 0;
@@ -471,10 +483,10 @@ static int pipe_write(int hpipe, void* buf, int count)
 	return 0;
     }
 }
+
 static int pipe_read(int hpipe)
 {
     DWORD done = 0;
-    DWORD err;
     /* TODO:
     if (!pipe_ready(hpipe))
 	go_to_sleep;
@@ -486,19 +498,16 @@ static int pipe_read(int hpipe)
 	else
 	    return -1;
     }
-    err = GetLastError();
-
-    if(err == ERROR_BROKEN_PIPE) return -2;
-    else set_errno(err);
-
+    set_errno(GetLastError());
     return 0;
 }
+
 static int pipe_ready(int hpipe)
 {
     DWORD avail = 0;
     if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL) && avail)
 	return 1;
-    else 
+    else
     {
 	Sleep(0); /* give pipe a chance */
 	if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL))
@@ -518,7 +527,7 @@ static int pipe_ready(int hpipe)
 #define close_handle(h) CloseHandle((HANDLE)h)
 
 int process_wait(int h, int t)
-{   
+{
     if (WaitForSingleObject((HANDLE)h, (t ? 0 : INFINITE)) == WAIT_OBJECT_0)
     {
 	DWORD ret;
@@ -556,7 +565,7 @@ int sysinfo()
     if (get_hostname() && GetVersionEx(&ovf))
     {
 	SYSTEM_INFO si;
-	_snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d", 
+	_snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
 			   ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
 	switch (ovf.dwPlatformId)
 	{
@@ -575,8 +584,23 @@ int sysinfo()
 	switch (si.wProcessorArchitecture)
 	{
     	case PROCESSOR_ARCHITECTURE_INTEL:
-	    strncpy(C_processor, "Intel", sizeof(C_processor) - 1);
+	    strncpy(C_processor, "x86", sizeof(C_processor) - 1);
 	    break;
+#       ifdef PROCESSOR_ARCHITECTURE_IA64
+    	case PROCESSOR_ARCHITECTURE_IA64:
+	    strncpy(C_processor, "IA64", sizeof(C_processor) - 1);
+	    break;
+#       endif
+#       ifdef PROCESSOR_ARCHITECTURE_AMD64
+    	case PROCESSOR_ARCHITECTURE_AMD64:
+	    strncpy(C_processor, "x64", sizeof(C_processor) - 1);
+	    break;
+#       endif
+#       ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
+    	case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
+	    strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
+	    break;
+#       endif
     	case PROCESSOR_ARCHITECTURE_UNKNOWN:
 	default:
 	    strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
@@ -591,6 +615,144 @@ int sysinfo()
 #define C_get_hostname() (get_hostname() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 #define C_sysinfo() (sysinfo() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 
+/*
+    Spawn a process, either through shell or directly.
+    Params:
+    cmd         Command to execute.
+    env         Environment for the new process (may be NULL).
+    handle, stdin, stdout, stderr
+                Spawned process info are returned in integers.
+                When spawned process shares standard io stream with the parent
+                process the respective value in handle, stdin, stdout, stderr
+                is -1.
+    params      A bitmask controling operation.
+                Bit 1: Child & parent share standard input if this bit is set.
+                Bit 2: Share standard output if bit is set.
+                Bit 3: Share standard error if bit is set.
+                Bit 4: Execute command in shell if bit is set.
+
+    Returns: nonzero return value indicates failure.
+*/
+static
+int C_process(const char * cmd, const char ** env,
+              int * phandle, int * pstdin_fds, int * pstdout_fds, int * pstderr_fds,
+              int params)
+{
+    int exit_code = 0, i = 0;
+    const int
+        f_share_io[3] = { params & 1, params & 2, params & 4},
+        f_use_shell = params & 8;
+
+    char * buf = NULL;
+    const char * invoke_cmd = NULL;
+    int io_fds[3]={-1,-1,-1};
+    HANDLE
+        child_io_handles[3]={NULL,NULL,NULL},
+        standard_io_handles[3]={
+            GetStdHandle(STD_INPUT_HANDLE),
+            GetStdHandle(STD_OUTPUT_HANDLE),
+            GetStdHandle(STD_ERROR_HANDLE)};
+
+    const char modes[3]="rww";
+    HANDLE cur_process = GetCurrentProcess(), child_process = NULL;
+
+    /****** create io handles & fds ***/
+
+    for (i=0; i<3 && exit_code == 0; ++i)
+    {
+        if (f_share_io[i])
+        {
+            exit_code = !DuplicateHandle(
+                cur_process, standard_io_handles[i],
+                cur_process, &child_io_handles[i],
+                0, FALSE, DUPLICATE_SAME_ACCESS);
+        }
+        else
+        {
+            HANDLE a, b, parent_end;
+            exit_code = !CreatePipe(&a,&b,NULL,0);
+            if(0==exit_code)
+            {
+                if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
+                else { parent_end=a; child_io_handles[i]=b; }
+            }
+            exit_code=(io_fds[i]=_open_osfhandle((intptr_t)parent_end,0))<0;
+        }
+    }
+
+    /****** make handles inheritable */
+
+    for (i=0; i<3 && exit_code == 0; ++i)
+        exit_code = !SetHandleInformation(child_io_handles[i], HANDLE_FLAG_INHERIT, -1);
+
+    /****** create command line ******/
+
+    if (f_use_shell && exit_code == 0)
+    {
+        const char * shell = NULL;
+        static const char * const fmt = "%s /c %s";
+
+        shell=getenv("COMSPEC");
+        if (NULL==shell)
+        {
+            OSVERSIONINFO ovf;
+            ovf.dwOSVersionInfoSize = sizeof(ovf);
+            if (GetVersionEx(&ovf) && (ovf.dwPlatformId == VER_PLATFORM_WIN32_NT))
+                shell="cmd.exe";
+            else
+                shell="command.com";
+        }
+
+        buf = (char*) malloc(strlen(fmt)+strlen(shell)+strlen(cmd));
+        exit_code=(NULL==buf);
+        if (0==exit_code) { sprintf(buf,fmt,shell,cmd); invoke_cmd = buf; }
+    }
+    else invoke_cmd = cmd;
+
+    /****** finally spawn process ****/
+
+    if (0==exit_code)
+    {
+        PROCESS_INFORMATION pi;
+        STARTUPINFO si;
+
+        ZeroMemory(&pi,sizeof pi);
+        ZeroMemory(&si,sizeof si);
+        si.cb = sizeof si;
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdInput = child_io_handles[0];
+        si.hStdOutput = child_io_handles[1];
+        si.hStdError = child_io_handles[2];
+
+        exit_code = !CreateProcess(
+            NULL,(char*)invoke_cmd,NULL,NULL,TRUE,0,(char**)env,NULL,&si,&pi);
+
+        if (0==exit_code)
+        {
+            child_process=pi.hProcess;
+            CloseHandle(pi.hThread);
+        }
+    }
+
+    /****** cleanup & return *********/
+
+    free(buf);
+    for (i=0; i<3; ++i) CloseHandle(child_io_handles[i]);
+    if (exit_code != 0)
+    {
+        for (i=0; i<3; ++i) _close(io_fds[i]);
+        set_errno(GetLastError());
+    }
+    else
+    {
+        *phandle = (int)child_process;
+        *pstdin_fds = io_fds[0];
+        *pstdout_fds = io_fds[1];
+        *pstderr_fds = io_fds[2];
+    }
+
+    return exit_code;
+}
 EOF
 ) )
 
@@ -601,7 +763,7 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port 
+     ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port
      ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer
      ##sys#peek-fixnum ##sys#make-structure ##sys#check-structure ##sys#enable-interrupts) ) ] )
 
@@ -800,7 +962,7 @@ EOF
 
 (define file-position
   (lambda (port)
-    (let ([pos (cond [(port? port) 
+    (let ([pos (cond [(port? port)
 		      (if (eq? (##sys#slot port 7) 'stream)
 			  (##core#inline "C_ftell" port)
 			  -1) ]
@@ -817,7 +979,7 @@ EOF
       (##sys#check-exact pos 'set-file-position!)
       (##sys#check-exact whence 'set-file-position!)
       (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
-      (unless (cond [(port? port) 
+      (unless (cond [(port? port)
 		     (and (eq? (##sys#slot port 7) 'stream)
 			  (##core#inline "C_fseek" port pos whence) ) ]
 		    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
@@ -828,7 +990,7 @@ EOF
 
 ;;; Directory stuff:
 
-(define create-directory 
+(define create-directory
   (lambda (name)
     (##sys#check-string name 'create-directory)
     (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
@@ -848,7 +1010,7 @@ EOF
     (unless (zero? (##core#inline "C_rmdir" (##sys#make-c-string (##sys#expand-home-path name))))
       (##sys#update-errno)
       (##sys#signal-hook #:file-error 'delete-directory "can not delete directory" name) ) ) )
-  
+
 (define directory
   (let ([string-append string-append]
 	[make-string make-string]
@@ -868,13 +1030,13 @@ EOF
 	      (if (##sys#null-pointer? entry)
 		  (begin
 		    (##core#inline "C_closedir" handle)
-		    '() ) 
+		    '() )
 		  (let* ([flen (##core#inline "C_foundfile" entry buffer)]
 			 [file (##sys#substring buffer 0 flen)]
 			 [char1 (string-ref file 0)]
 			 [char2 (and (> flen 1) (string-ref file 1))] )
-		    (if (and (eq? char1 #\.) 
-			     (or (not char2) 
+		    (if (and (eq? char1 #\.)
+			     (or (not char2)
 				 (and (eq? char2 #\.) (eq? flen 2))
 				 (not show-dotfiles?) ) )
 			(loop)
@@ -906,7 +1068,7 @@ EOF
   (define (check cmd inp r)
     (##sys#update-errno)
     (if (##sys#null-pointer? r)
-	(##sys#signal-hook #:file-error "can not open pipe" cmd) 
+	(##sys#signal-hook #:file-error "can not open pipe" cmd)
 	(let ([port (##sys#make-port inp ##sys#stream-port-class "(pipe)" 'stream)])
 	  (##core#inline "C_set_file_ptr" port r)
 	  port) ) )
@@ -929,7 +1091,7 @@ EOF
 	 (case m
 	   ((###text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
 	   ((###binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
-	   (else (badmode m)) ) ) ) ) ) 
+	   (else (badmode m)) ) ) ) ) )
   (set! close-input-pipe
     (lambda (port)
       (##sys#check-port port 'close-input-pipe)
@@ -1123,7 +1285,7 @@ EOF
   (define (check fd inp r)
     (##sys#update-errno)
     (if (##sys#null-pointer? r)
-	(##sys#signal-hook #:file-error "can not open file" fd) 
+	(##sys#signal-hook #:file-error "can not open file" fd)
 	(let ([port (##sys#make-port inp ##sys#stream-port-class "(fdport)" 'stream)])
 	  (##core#inline "C_set_file_ptr" port r)
 	  port) ) )
@@ -1162,7 +1324,7 @@ EOF
 
 ;;; Environment access:
 
-(define setenv 
+(define setenv
   (lambda (var val)
     (##sys#check-string var 'setenv)
     (##sys#check-string val 'setenv)
@@ -1197,9 +1359,9 @@ EOF
   (##sys#check-number secs 'seconds->utc-time)
   (##sys#decode-seconds secs #t) )
 
-(define seconds->string 
+(define seconds->string
   (let ([ctime (foreign-lambda c-string "C_ctime" integer)])
-    (lambda (secs) 
+    (lambda (secs)
       (let ([str (ctime secs)])
 	(unless str (##sys#error 'seconds->string "can not convert seconds to string" secs))
 	str) ) ) )
@@ -1246,8 +1408,8 @@ EOF
 		    [else (##sys#error 'set-buffering-mode! "invalid buffering-mode" mode port)] ) ] )
 	(##sys#check-exact size 'set-buffering-mode!)
 	(when (fx< (if (eq? 'stream (##sys#slot port 7))
-		       (##core#inline "C_setvbuf" port mode size) 
-		       -1) 
+		       (##core#inline "C_setvbuf" port mode size)
+		       -1)
 		   0)
 	  (##sys#error 'set-buffering-mode! "can not set buffering mode" port mode size) ) ) ) )
 
@@ -1267,7 +1429,7 @@ EOF
 		(let ([rx (glob->regexp (make-pathname #f (or file "*") ext))])
 		  (let loop ([f (directory (or dir "."))])
 		    (cond [(null? f) (conc (cdr paths))]
-			  [(string-match rx (car f)) 
+			  [(string-match rx (car f))
 			   => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr f)))) ]
 			  [else (loop (cdr f))] ) ) ) ) ) ) ) ) ) )
 
@@ -1287,7 +1449,7 @@ EOF
 (define spawn/detach _p_detach)
 
 (define process-execute
-  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)] 
+  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
 	[freeargs (foreign-lambda void "C_free_exec_args")]
 	[pathname-strip-directory pathname-strip-directory] )
     (lambda (filename #!optional (arglist '()) envlist)
@@ -1298,7 +1460,7 @@ EOF
 	  (setarg 0 s (##sys#size s)) )
 	(do ([al arglist (cdr al)]
 	     [i 1 (fx+ i 1)] )
-	    ((null? al) 
+	    ((null? al)
 	     (setarg i #f 0)
 	     (let ([r (##core#inline "C_execvp" (##sys#make-c-string (##sys#expand-home-path filename)))])
 	       (##sys#update-errno)
@@ -1310,7 +1472,7 @@ EOF
 	    (setarg i s (##sys#size s)) ) ) ) ) ) )
 
 (define process-spawn
-  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)] 
+  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
 	[freeargs (foreign-lambda void "C_free_exec_args")]
 	[pathname-strip-directory pathname-strip-directory] )
     (lambda (mode filename . arglist)
@@ -1322,7 +1484,7 @@ EOF
 	  (setarg 0 s (##sys#size s)) )
 	(do ([al arglist (cdr al)]
 	     [i 1 (fx+ i 1)] )
-	    ((null? al) 
+	    ((null? al)
 	     (setarg i #f 0)
 	     (let ([r (##core#inline "C_spawnvp" mode
 		       (##sys#make-c-string (##sys#expand-home-path filename)))])
@@ -1330,7 +1492,7 @@ EOF
 	       (when (fx= r -1)
 		 (freeargs)
 		 (##sys#error 'process-spawn "can not execute process" filename) )
-	       r) ) 
+	       r) )
 	  (let ([s (car al)])
 	    (##sys#check-string s 'process-spawn)
 	    (setarg i s (##sys#size s)) ) ) ) ) ) )
@@ -1370,52 +1532,17 @@ EOF
 (define close-handle
   (foreign-lambda int "close_handle" bool))
 
+; from original by Mejedi
 (define process
-  (let ([make-input-port make-input-port]
-	[make-output-port make-output-port])
-    (lambda (cmd #!optional args env)
-      (if (##core#inline "C_redir_io")
-	(let* ([h0 _wr0]
-	       [h1 _rd1]
-	       [cmdline (string-append (get-shell) " /c " cmd "\x00")]
-	       [proc (##core#inline "C_run_process" cmdline)])
-	  (if (fx> proc 0)
-	    (values
-	      (make-input-port
-		(lambda () ; read
-		  (if h1
-		      (case (##core#inline "C_pipe_read" h1)
-			[(-2) 
-			 ;; hack to avoid exception on EPIPE'd process
-			 (set! h1 #f)
-			 (set! h0 #f)
-			 #!eof]
-			[(-1) #!eof]
-			[(0) (##sys#error 'process "could not read from pipe")]
-			[(1) _rdbuf])
-		      #!eof) )
-		(lambda () ; ready?
-		  (and h1 (##core#inline "C_pipe_ready" h1) ) )
-		(lambda () ; close
-		  (when h1 (close-handle h1) ) )
-		;(lambda () ; peek
-		;)
-		)
-	      (make-output-port
-		(lambda (s) ; write
-		  (unless (##core#inline "C_pipe_write" h0 s (string-length s))
-		    (##sys#error 'process "could not write to pipe") ) )
-		(lambda () ; close
-		  (when h0 (close-handle h0) ) )
-		)
-	      proc)
-	    (begin
-	      (##sys#update-errno)
-	      (close-handle h0)
-	      (close-handle h1)
-	      (##sys#error 'process "could not create process")))
-	  )
-	(##sys#error 'process "could not redirect I/O") ) ) ) )
+  (let ([c-process (foreign-lambda int "C_process" c-string c-pointer (pointer int) (pointer int) (pointer int) (pointer int) int)])
+    (lambda (commandline . ignore-for-now)
+      (let-location ([handle int] [stdin int] [stdout int] [stderr int])
+        (let ([code (c-process commandline #f (location handle) (location stdin) (location stdout) (location stderr) 12)])
+          (if (eq? 0 code)
+              (values (open-output-file* stdin) (open-input-file* stdout) handle)
+              (begin
+                (##sys#update-errno)
+                (##sys#signal-hook #:process-error 'process "cannot execute process" commandline))) ) ) ) ) )
 
 (define-foreign-variable _exstatus int "C_exstatus")
 
@@ -1454,24 +1581,24 @@ EOF
 
 ;;; Find matching files:
 
-(define find-files 
+(define find-files
   (let ([glob glob]
 	[string-match string-match]
 	[make-pathname make-pathname]
 	[directory? directory?] )
     (lambda (dir pred . action-id-limit)
-      (let-optionals action-id-limit 
+      (let-optionals action-id-limit
 	  ([action (lambda (x y) (cons x y))] ; no eta reduction here - we want cons inlined.
-	   [id '()] 
+	   [id '()]
 	   [limit #f] )
 	(##sys#check-string dir 'find-files)
 	(let* ([depth 0]
 	       [lproc
 		(cond [(not limit) (lambda _ #t)]
 		      [(fixnum? limit) (lambda _ (fx< depth limit))]
-		      [else limit] ) ] 
-	       [pproc 
-		(if (string? pred) 
+		      [else limit] ) ]
+	       [pproc
+		(if (string? pred)
 		    (lambda (x) (string-match pred x))
 		    pred) ] )
 	  (let loop ([fs (glob (make-pathname dir "*"))]

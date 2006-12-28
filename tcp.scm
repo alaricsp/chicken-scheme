@@ -373,8 +373,10 @@ EOF
 		     (let ((f (##net#select fd)))
 		       (when (eq? f -1)
 			 (##sys#update-errno)
-			 (##sys#signal-hook #:network-error (##sys#string-append "can not check socket for input - " strerror) 
-					    fd) )
+			 (##sys#signal-hook
+			  #:network-error
+			  (##sys#string-append "can not check socket for input - " strerror) 
+			  fd) )
 		       (eq? f 1) ) ) )
 	       (lambda ()
 		 (unless iclosed
@@ -382,10 +384,12 @@ EOF
 		   (unless (##sys#slot data 1) (##net#shutdown fd _sd_receive))
 		   (when (and oclosed (eq? -1 (##net#close fd)))
 		     (##sys#update-errno)
-		     (##sys#signal-hook #:network-error (##sys#string-append "can not close socket input port - " strerror)
-					fd) ) ) )
+		     (##sys#signal-hook
+		      #:network-error
+		      (##sys#string-append "can not close socket input port - " strerror)
+		      fd) ) ) )
 	       #f
-	       (lambda (p n dest start)
+	       (lambda (p n dest start)	; read-string!
 		 (let loop ((n n) (m 0) (start start))
 		   (cond ((eq? n 0) m)
 			 ((fx< bufindex buflen)
@@ -398,7 +402,31 @@ EOF
 			  (read-input)
 			  (if (eq? buflen 0) 
 			      m
-			      (loop n m start) ) ) ) ) ) ) )
+			      (loop n m start) ) ) ) ) )
+	       (lambda (p limit)	; read-line
+		 (let loop ((str #f))
+		   (cond ((fx< bufindex buflen)
+			  (##sys#scan-buffer-line
+			   buf 
+			   buflen
+			   bufindex
+			   (lambda (pos2 next)
+			     (let ((dest (##sys#make-string (fx- pos2 bufindex))))
+			       (##core#inline "C_substring_copy" buf dest bufindex pos2 0)
+			       (set! bufindex next)
+			       (cond ((eq? pos2 next) ; no line-terminator encountered
+				      (read-input)
+				      (if (fx>= bufindex buflen)
+					  (or str "")
+					  (loop (if str (##sys#string-append str dest) dest)) ) )
+				     (else 
+				      (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1))
+				      (if str (##sys#string-append str dest) dest)) ) ) ) ) )
+			 (else
+			  (read-input)
+			  (if (fx< bufindex buflen)
+			      (loop str)
+			      #!eof) ) ) ) ) ) )
 	     (output
 	      (lambda (s)
 		(let loop ((len (##sys#size s)) 

@@ -40,31 +40,6 @@
  (foreign-declare #<<EOF
 #define C_hashptr(x)   C_fix(x & C_MOST_POSITIVE_FIXNUM)
 #define C_mem_compare(to, from, n)   C_fix(C_memcmp(C_c_string(to), C_c_string(from), C_unfix(n)))
-
-static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
-  int n = C_unfix(size);
-  int i;
-  int c;
-  char *buf = C_c_string(str);
-  C_FILEPTR fp = C_port_file(port);
-
-  if ((c = getc(fp)) == EOF)
-    return C_SCHEME_END_OF_FILE;
-
-  ungetc(c, fp);
-
-  for (i = 0; i < n; i++) {
-    c = getc(fp);
-    switch (c) {
-    case '\r':
-      if ((c = getc(fp)) != '\n') ungetc(c, fp);
-    case EOF: clearerr(fp);
-    case '\n': return C_fix(i);
-    }
-    buf[i] = c;
-  }
-  return C_SCHEME_FALSE;
-}
 EOF
 ) )
 
@@ -201,6 +176,8 @@ EOF
 		   (begin
 		     (apply h args)
 		     (loop t) ) ) ) ) ) ) ) )
+
+(define (any? x) #t)
 
 
 ;;; List operators:
@@ -380,52 +357,34 @@ EOF
     (lambda args
       (let* ([parg (pair? args)]
 	     [p (if parg (car args) ##sys#standard-input)]
-	     [limit (and parg (pair? (cdr args)) (cadr args))]
-	     [buffer-len (if limit limit 256)]
-	     [buffer (make-string buffer-len)])
+	     [limit (and parg (pair? (cdr args)) (cadr args))])
 	(##sys#check-port p 'read-line)
-	(if (eq? 'stream (##sys#slot p 7))
-	    (begin
-	      (let loop ([len buffer-len]
-			 [buffer buffer]
-			 [result ""]
-			 [f #f])
-		(let ([n (##core#inline "fast_read_line_from_file" buffer p len)])
-		  (cond [(eof-object? n) (if f result #!eof)]
-			[(and limit (not n))
-			 (##sys#string-append result (##sys#substring buffer 0 limit))]
-			[(not n)
-			 (loop (fx* len 2) (make-string (fx* len 2))
-			       (##sys#string-append result
-						    (##sys#substring buffer 0 len))
-			       #t) ]
-			[f (##sys#setslot p 4 (fx+ (##sys#slot p 4) 1))
-			   (##sys#string-append result (##sys#substring buffer 0 n))]
-			[else
-			 (##sys#setslot p 4 (fx+ (##sys#slot p 4) 1))
-			 (##sys#substring buffer 0 n)] ) ) ))
-	    (let loop ([i 0])
-	      (if (and limit (fx>= i limit))
-		  (##sys#substring buffer 0 i)
-		  (let ([c (##sys#read-char-0 p)])
-		    (if (eof-object? c)
-			(if (fx= i 0)
-			    c
-			    (##sys#substring buffer 0 i) ) 
-			(case c
-			  [(#\newline) (##sys#substring buffer 0 i)]
-			  [(#\return)
-			   (let ([c (peek-char p)])
-			     (if (char=? c #\newline)
-				 (begin (##sys#read-char-0 p)
-					(##sys#substring buffer 0 i))
-				 (##sys#substring buffer 0 i) ) ) ]
-			  [else
-			   (when (fx>= i buffer-len)
-				 (set! buffer (##sys#string-append buffer (make-string buffer-len)))
-				 (set! buffer-len (fx+ buffer-len buffer-len)) )
-			   (##core#inline "C_setsubchar" buffer i c)
-			   (loop (fx+ i 1)) ] ) ) ) ) ) ) ) ) ) )
+	(cond ((##sys#slot p 8) => (lambda (rl) (rl p limit)))
+	      (else
+	       (let* ((buffer-len (if limit limit 256))
+		      (buffer (##sys#make-string buffer-len)))
+		 (let loop ([i 0])
+		   (if (and limit (fx>= i limit))
+		       (##sys#substring buffer 0 i)
+		       (let ([c (##sys#read-char-0 p)])
+			 (if (eof-object? c)
+			     (if (fx= i 0)
+				 c
+				 (##sys#substring buffer 0 i) ) 
+			     (case c
+			       [(#\newline) (##sys#substring buffer 0 i)]
+			       [(#\return)
+				(let ([c (peek-char p)])
+				  (if (char=? c #\newline)
+				      (begin (##sys#read-char-0 p)
+					     (##sys#substring buffer 0 i))
+				      (##sys#substring buffer 0 i) ) ) ]
+			       [else
+				(when (fx>= i buffer-len)
+				  (set! buffer (##sys#string-append buffer (make-string buffer-len)))
+				  (set! buffer-len (fx+ buffer-len buffer-len)) )
+				(##core#inline "C_setsubchar" buffer i c)
+				(loop (fx+ i 1)) ] ) ) ) ) ) ) ) ) ) ) ) )
 
 (define read-lines
   (let ([read-line read-line]
@@ -594,8 +553,8 @@ EOF
 ;   10: last
 
 (define make-input-port
-  (lambda (read ready? close #!optional peek read-string)
-    (let* ([class
+  (lambda (read ready? close #!optional peek read-string read-line)
+    (let* ((class
 	    (vector 
 	     (lambda (p)		; read-char
 	       (let ([last (##sys#slot p 10)])
@@ -620,17 +579,18 @@ EOF
 	     #f				; flush-output
 	     (lambda (p)		; char-ready?
 	       (ready?) )
-	     read-string) ]		; read-string
-	   [data (vector #f)] 
-	   [port (##sys#make-port #t class "(custom)" 'custom)] )
+	     read-string 		; read-string
+	     read-line) )		; read-line
+	   (data (vector #f))
+	   (port (##sys#make-port #t class "(custom)" 'custom)) )
       (##sys#setslot port 9 data) 
       port) ) )
 
 (define make-output-port
   (let ([string string])
     (lambda (write close . flush)
-      (let* ([flush (and (pair? flush) (car flush))]
-	     [class
+      (let* ((flush (and (pair? flush) (car flush)))
+	     (class
 	      (vector
 	       #f			; read-char
 	       #f			; peek-char
@@ -644,9 +604,10 @@ EOF
 	       (lambda (p)		; flush-output
 		 (when flush (flush)) )
 	       #f			; char-ready?
-	       #f) ]			; read-string
-	     [data (vector #f)] 
-	     [port (##sys#make-port #f class "(custom)" 'custom)] )
+	       #f			; read-string
+	       #f) )			; read-line
+	     (data (vector #f))
+	     (port (##sys#make-port #f class "(custom)" 'custom)) )
 	(##sys#setslot port 9 data) 
 	port) ) ) )
 
@@ -659,7 +620,6 @@ EOF
 ;
 ; Modified by felix for use with CHICKEN
 ;
-
 
 (define generic-write
   (let ([open-output-string open-output-string]

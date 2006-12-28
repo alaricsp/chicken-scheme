@@ -15,7 +15,6 @@ SEPARATE_ARGUMENTS(BOOT_CFILES)
 
 # Files in the Chicken_SOURCE_DIR
 SET(SOURCE_DIR_FILES
-  aclocal.m4
   autogen.sh
   banner.scm
   batch-driver.scm
@@ -24,7 +23,6 @@ SET(SOURCE_DIR_FILES
   c-backend.scm
   c-platform.scm
   ChangeLog.0-20040412
-  chicken-config.h.in
   chicken-config-cmake.h.in
   chicken-defaults.h.in
   chicken-ffi-macros.scm
@@ -40,11 +38,7 @@ SET(SOURCE_DIR_FILES
   chicken.scm
   chicken.spec.in
   CMakeLists.txt
-  compile
   compiler.scm
-  config.guess
-  config.sub
-  configure
   configure.in
   csc.1
   csc.scm
@@ -57,15 +51,11 @@ SET(SOURCE_DIR_FILES
   hen.el
   INSTALL
   INSTALL-CMake.txt
-  install-sh
   library.scm
   LICENSE
   lolevel.scm
-  ltmain.sh
   Makefile.am
-  Makefile.in
   match.scm
-  missing
   NEWS
   optimizer.scm
   pcre.scm
@@ -128,84 +118,12 @@ SET(SOURCE_DIR_FILES
   benchmarks/others/Makefile
   benchmarks/others/results.txt
   benchmarks/others/setlongjmp.c
-  benchmarks/shootout/ackermann.chicken
-  benchmarks/shootout/ary.chicken
-  benchmarks/shootout/bench
-  benchmarks/shootout/echo.chicken
-  benchmarks/shootout/fibo.chicken
-  benchmarks/shootout/hash.chicken
-  benchmarks/shootout/hash2.chicken
-  benchmarks/shootout/heapsort.chicken
-  benchmarks/shootout/hello.chicken
-  benchmarks/shootout/lists.chicken
-  benchmarks/shootout/lists1.chicken
-  benchmarks/shootout/matrix.chicken
-  benchmarks/shootout/methcall.chicken
-  benchmarks/shootout/moments.chicken
-  benchmarks/shootout/nbody.chicken
-  benchmarks/shootout/nestedloop.chicken
-  benchmarks/shootout/nsieve-bits.scm
-  benchmarks/shootout/objinst.chicken
-  benchmarks/shootout/plugin.chicken
-  benchmarks/shootout/procinst.chicken
-  benchmarks/shootout/prodcons.chicken
-  benchmarks/shootout/random.chicken
-  benchmarks/shootout/regexmatch.chicken
-  benchmarks/shootout/reversefile.chicken
-  benchmarks/shootout/ringmsg.chicken
-  benchmarks/shootout/sieve.chicken
-  benchmarks/shootout/spellcheck.chicken
-  benchmarks/shootout/strcat.chicken
-  benchmarks/shootout/sumcol.chicken
-  benchmarks/shootout/threads-new.chicken
-  benchmarks/shootout/wc.chicken
-  benchmarks/shootout/wordfreq.chicken
   boot/CMakeLists.txt
   tests/library-tests.scm
   tests/locative-stress-test.scm
   tests/r4rstest.scm
   tests/runtests.sh
   tests/srfi-18-tests.scm
-  html/accessing-external-objects.html
-  html/acknowledgements.html
-  html/basic-mode-of-operation.html
-  html/bibliography.html
-  html/bugs-and-limitations.html
-  html/c-interface.html
-  html/callbacks.html
-  html/data-representation.html
-  html/declarations.html
-  html/deviations-from-the-standard.html
-  html/embedding.html
-  html/extensions-to-the-standard.html
-  html/foreign-type-specifiers.html
-  html/interface-to-external-functions-and-variables.html
-  html/locations.html
-  html/non-standard-macros-and-special-forms.html
-  html/non-standard-read-syntax.html
-  html/other-support-procedures.html
-  html/parameters.html
-  html/pattern-matching.html
-  html/supported-language.html
-  html/index.html
-  html/unit-eval.html
-  html/unit-extras.html
-  html/unit-library.html
-  html/unit-lolevel.html
-  html/unit-match.html
-  html/unit-posix.html
-  html/unit-regex.html
-  html/unit-srfi-1.html
-  html/unit-srfi-13.html
-  html/unit-srfi-14.html
-  html/unit-srfi-18.html
-  html/unit-srfi-4.html
-  html/unit-tcp.html
-  html/unit-utils.html
-  html/using-the-compiler.html
-  html/using-the-interpreter.html
-  html/chicken-setup.html
-  html/faq.html
 )
 
 # The BOOT_CFILES also need to be copied
@@ -251,6 +169,59 @@ FOREACH(f ${SOURCE_DIR_FILES})
 ENDFOREACH(f)
 FOREACH(f ${BOOT_CFILES})
   EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${f}" "${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}/boot/cfiles/${f}")
+ENDFOREACH(f)
+
+
+####################################################################
+#   GNU AUTOMAKE                                                   #
+####################################################################
+
+# Since CMake is used to generate the canonical Chicken distribution,
+# it must invoke Automake so that ./configure et al are created.
+# This adds files to the distribution that we haven't previously checked above.
+# We do it now, rather than earlier, because "cmake -E copy" changes the timestamp.
+# This can cause Automake to run twice, which is annoying.
+# Also, doing it here, we can keep ${Chicken_SOURCE_DIR} free of Automake pollution.
+#
+# A Bourne shell "sh"
+# must be available, so that Automake can run.  We shouldn't have
+# to run CMakeLists.txt from a Bourne shell; we just need to have,
+# say, a sh.exe available in our path.  We aren't currently
+# doing any error checking on whether "sh" is available or working.
+# Nor whether Automake is installed, for that matter.  Not many people
+# need to build distros.
+#
+# As of Sept. 3rd, 2006, the various Autoconfs + Automakes
+# distributed with MSYS are complete garbage.  Don't waste your
+# time; I wasted an entire day before giving up.  The GNU Win32
+# distros din't help either.  A project called mingw-install
+# finally did the trick.  http://sourceforge.net/projects/mingw-install
+# Haibin Zhang has solved quite a number of irritating integration
+# issues.  Although, caveat emptor, it'll nuke your entire MinGW
+# installation including GCC, without warning you!  Proper steps:
+#
+# - install MinGW-5.0.3.exe
+# - install mingw-install-20060210/setup/MSYS-1.0.11-2004.04.30-1.exe
+# - install mingw-install-20060210/msys/install.sh
+# - comment out the nasty "rm -rf" statements in
+#   mingw-install-20060210/mingw/install.sh
+# - install mingw-install-20060210/mingw/install.sh
+
+EXECUTE_PROCESS(
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}
+  COMMAND sh autogen.sh
+  RESULT_VARIABLE AUTOGEN_ERROR
+)
+
+IF(AUTOGEN_ERROR)
+  MESSAGE(FATAL_ERROR "autogen.sh failed")
+ENDIF(AUTOGEN_ERROR)
+
+SET(AUTOMAKE_FILES aclocal.m4 compile config.guess config.sub configure install-sh Makefile.in missing ltmain.sh)
+FOREACH(f ${AUTOMAKE_FILES})
+  IF(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}/${f})
+    MESSAGE(FATAL_ERROR "Automake file failed to generate: ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}/${f}")
+  ENDIF(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}/${f})
 ENDFOREACH(f)
 
 

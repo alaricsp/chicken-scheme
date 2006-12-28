@@ -72,6 +72,31 @@
 #define C_peek_c_string_at(ptr, i)    ((C_char *)(((C_char **)ptr)[ i ]))
 
 static C_word one_two_three = 123;
+
+static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
+  int n = C_unfix(size);
+  int i;
+  int c;
+  char *buf = C_c_string(str);
+  C_FILEPTR fp = C_port_file(port);
+
+  if ((c = getc(fp)) == EOF)
+    return C_SCHEME_END_OF_FILE;
+
+  ungetc(c, fp);
+
+  for (i = 0; i < n; i++) {
+    c = getc(fp);
+    switch (c) {
+    case '\r':
+      if ((c = getc(fp)) != '\n') ungetc(c, fp);
+    case EOF: clearerr(fp);
+    case '\n': return C_fix(i);
+    }
+    buf[i] = c;
+  }
+  return C_SCHEME_FALSE;
+}
 EOF
 ) )
 
@@ -102,7 +127,7 @@ EOF
      ##sys#error-handler ##sys#signal ##sys#abort ##sys#port-data
      ##sys#reset-handler ##sys#exit-handler ##sys#dynamic-wind ##sys#port-line
      ##sys#grow-vector ##sys#run-pending-finalizers ##sys#peek-char-0 ##sys#read-char-0
-     ##sys#schedule ##sys#make-thread ##sys#print-to-string
+     ##sys#schedule ##sys#make-thread ##sys#print-to-string ##sys#scan-buffer-line
      ##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer ##sys#user-print-hook 
      ##sys#current-exception-handler ##sys#default-exception-handler ##sys#abandon-mutexes ##sys#make-mutex
      ##sys#port-has-file-pointer? ##sys#infix-list-hook char-name ##sys#open-file-port make-parameter
@@ -1542,7 +1567,8 @@ EOF
 ; 4:  (close PORT)
 ; 5:  (flush-output PORT)
 ; 6:  (char-ready? PORT) -> BOOL
-; 7:  (read-string PORT STRING COUNT START) -> COUNT'
+; 7:  (read-string! PORT STRING COUNT START) -> COUNT'
+; 8:  (read-line PORT LIMIT) -> STRING | EOF
 
 (define (##sys#make-port i/o class name type)
   (let ([port (##core#inline_allocate ("C_a_i_port" 17))])
@@ -1570,7 +1596,29 @@ EOF
 	    (##core#inline "C_flush_output" p) )
 	  (lambda (p)			; char-ready?
 	    (##core#inline "C_char_ready_p" p) )
-	  #f) )				; read-string
+	  #f				; read-string!
+	  (lambda (p limit)		; read-line
+	    (let ((buffer-len (if limit limit 256))
+		  (buffer (make-string buffer-len)))
+	      (let loop ([len buffer-len]
+			 [buffer buffer]
+			 [result ""]
+			 [f #f])
+		(let ([n (##core#inline "fast_read_line_from_file" buffer p len)])
+		  (cond [(eof-object? n) (if f result #!eof)]
+			[(and limit (not n))
+			 (##sys#string-append result (##sys#substring buffer 0 limit))]
+			[(not n)
+			 (loop (fx* len 2) (##sys#make-string (fx* len 2))
+			       (##sys#string-append 
+				result
+				(##sys#substring buffer 0 len))
+			       #t) ]
+			[f (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1))
+			   (##sys#string-append result (##sys#substring buffer 0 n))]
+			[else
+			 (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1))
+			 (##sys#substring buffer 0 n)] ) ) ) ) ) ) )
 
 (define ##sys#open-file-port (##core#primitive "C_open_file_port"))
 
@@ -1860,10 +1908,10 @@ EOF
 		 #!eof)
 	       ((##sys#slot (##sys#slot p 2) 0) p) ) ] ) ; read-char
     (cond [(eq? c #\newline)
-	   (##sys#setslot p 4 (fx+ (##sys#slot p 4) 1))
-	   (##sys#setslot p 5 0) ]
+	   (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1))
+	   (##sys#setislot p 5 0) ]
 	  [(not (##core#inline "C_eofp" c))
-	   (##sys#setslot p 5 (fx+ (##sys#slot p 5) 1)) ] )
+	   (##sys#setislot p 5 (fx+ (##sys#slot p 5) 1)) ] )
     c) )
 
 (define (peek-char . port)
@@ -2796,50 +2844,80 @@ EOF
 		    (##sys#setslot p 12 buf)
 		    (##sys#setislot p 11 limit3)
 		    (check p n) ) ) ) ) ] )
-    (vector (lambda (p)			; read-char
-	      (let ([position (##sys#slot p 10)]
-		    [string (##sys#slot p 12)]
-		    [len (##sys#slot p 11)] )
-		(if (>= position len)
-		    #!eof
-		    (let ((c (##core#inline "C_subchar" string position)))
-		      (##sys#setislot p 10 (fx+ position 1))
-		      c) ) ) )
-	    (lambda (p)			; peek-char
-	      (let ([position (##sys#slot p 10)]
-		    [string (##sys#slot p 12)]
-		    [len (##sys#slot p 11)] )
-		(if (fx>= position len)
-		    #!eof
-		    (##core#inline "C_subchar" string position) ) ) )
-	    (lambda (p c)		; write-char
-	      (check p 1)	
-	      (let ([position (##sys#slot p 10)]
-		    [output (##sys#slot p 12)] )
-		(##core#inline "C_setsubchar" output position c)
-		(##sys#setislot p 10 (fx+ position 1)) ) )
-	    (lambda (p str)		; write-string
-	      (let ([len (##core#inline "C_block_size" str)])
-		(check p len)
-		(let ([position (##sys#slot p 10)]
-		      [output (##sys#slot p 12)] )
-		  (do ((i 0 (fx+ i 1)))
-		      ((fx>= i len) (##sys#setislot p 10 position))
-		    (##core#inline "C_setsubchar" output position (##core#inline "C_subchar" str i))
-		    (set! position (fx+ position 1)) ) ) ) )
-	    (lambda (p)	    		; close
-	      (##sys#setislot p 10 (##sys#slot p 11)) )
-	    (lambda (p) #f)		; flush-output
-	    (lambda (p)			; char-ready?
-	      (fx< (##sys#slot p 10) (##sys#slot p 11)) )
-	    (lambda (p n dest start)	; read-string
-	      (let* ((pos (##sys#slot p 10))
-		     (n2 (fx- (##sys#slot p 11) pos) ) )
-		(when (or (not n) (fx> n n2))
-		  (set! n n2))
-		(##core#inline "C_substring_copy" (##sys#slot p 12) dest pos (fx+ pos n) start)
-		(##sys#setislot p 10 (fx+ pos n))
-		n)))))
+    (vector
+     (lambda (p)			; read-char
+       (let ([position (##sys#slot p 10)]
+	     [string (##sys#slot p 12)]
+	     [len (##sys#slot p 11)] )
+	 (if (>= position len)
+	     #!eof
+	     (let ((c (##core#inline "C_subchar" string position)))
+	       (##sys#setislot p 10 (fx+ position 1))
+	       c) ) ) )
+     (lambda (p)			; peek-char
+       (let ([position (##sys#slot p 10)]
+	     [string (##sys#slot p 12)]
+	     [len (##sys#slot p 11)] )
+	 (if (fx>= position len)
+	     #!eof
+	     (##core#inline "C_subchar" string position) ) ) )
+     (lambda (p c)			; write-char
+       (check p 1)	
+       (let ([position (##sys#slot p 10)]
+	     [output (##sys#slot p 12)] )
+	 (##core#inline "C_setsubchar" output position c)
+	 (##sys#setislot p 10 (fx+ position 1)) ) )
+     (lambda (p str)			; write-string
+       (let ([len (##core#inline "C_block_size" str)])
+	 (check p len)
+	 (let ([position (##sys#slot p 10)]
+	       [output (##sys#slot p 12)] )
+	   (do ((i 0 (fx+ i 1)))
+	       ((fx>= i len) (##sys#setislot p 10 position))
+	     (##core#inline "C_setsubchar" output position (##core#inline "C_subchar" str i))
+	     (set! position (fx+ position 1)) ) ) ) )
+     (lambda (p)	    		; close
+       (##sys#setislot p 10 (##sys#slot p 11)) )
+     (lambda (p) #f)			; flush-output
+     (lambda (p)			; char-ready?
+       (fx< (##sys#slot p 10) (##sys#slot p 11)) )
+     (lambda (p n dest start)		; read-string!
+       (let* ((pos (##sys#slot p 10))
+	      (n2 (fx- (##sys#slot p 11) pos) ) )
+	 (when (or (not n) (fx> n n2)) (set! n n2))
+	 (##core#inline "C_substring_copy" (##sys#slot p 12) dest pos (fx+ pos n) start)
+	 (##sys#setislot p 10 (fx+ pos n))
+	 n))
+     (lambda (p limit)			; read-line
+       (let ((pos (##sys#slot p 10))
+	     (size (##sys#slot p 11)) 
+	     (buf (##sys#slot p 12)) 
+	     (end (if limit (fx+ pos limit) size)))
+	 (if (fx>= pos size)
+	     #!eof
+	     (##sys#scan-buffer-line
+	      buf 
+	      (if (fx> end size) size end)
+	      pos 
+	      (lambda (pos2 next)
+		(when (not (eq? pos2 next))
+		  (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1)) )
+		(let ((dest (##sys#make-string (fx- pos2 pos))))
+		  (##core#inline "C_substring_copy" buf dest pos pos2 0)
+		  (##sys#setislot p 10 next)
+		  dest) ) ) ) ) ) ) ) )
+
+(define (##sys#scan-buffer-line buf limit pos k)
+  (let loop ((pos2 pos))
+    (if (fx>= pos2 limit)
+	(k pos2 pos2)
+	(let ((c (##core#inline "C_subchar" buf pos2)))
+	  (cond ((eq? c #\newline) (k pos2 (fx+ pos2 1)))
+		((and (eq? c #\return) 
+		      (fx> limit (fx+ pos2 1))
+		      (eq (##core#inline "C_subchar" buf (fx+ pos2 1)) #\newline) )
+		 (k pos2 (fx+ pos2 1)) )
+		(else (loop (fx+ pos2 1))) ) ) ) ) )
 
 (define open-input-string 
   (lambda (string)

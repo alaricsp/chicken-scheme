@@ -168,7 +168,7 @@
     u32vector->byte-vector 
     s32vector->byte-vector byte-vector-length block-ref block-set! number-of-slots
     f32vector->byte-vector f64vector->byte-vector byte-vector-ref byte-vector-set!
-    hash-table-ref
+    hash-table-ref any?
     first second third fourth make-record-instance
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length setter
@@ -1038,3 +1038,12 @@
 			       
 (rewrite 'void 3 '##sys#undefined-value)
 (rewrite '##sys#void 3 '##sys#undefined-value)
+
+(rewrite
+ 'any? 8
+ (lambda (db classargs cont callargs) 
+   (and (= 1 (length callargs))
+	(let ((arg (car callargs)))
+	  (and (eq? '##core#variable (node-class arg))
+	       (not (get db (car (node-parameters arg)) 'global))
+	       (make-node '##core#call '(#t) (list cont (qnode #t))))))))
