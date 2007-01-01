@@ -1,6 +1,6 @@
 ;;; c-backend.scm - C-generating backend for the CHICKEN compiler
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following

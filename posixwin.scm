@@ -2,7 +2,7 @@
 ;
 ; By Sergey Khorev
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -676,7 +676,7 @@ int C_process(const char * cmd, const char ** env,
                 if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
                 else { parent_end=a; child_io_handles[i]=b; }
             }
-            exit_code=(io_fds[i]=_open_osfhandle((intptr_t)parent_end,0))<0;
+            exit_code=(io_fds[i]=_open_osfhandle((int *)parent_end,0))<0;
         }
     }
 

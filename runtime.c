@@ -1,6 +1,6 @@
 /* runtime.c - Runtime code for compiler generated executables
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -2535,7 +2535,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   WEAK_TABLE_ENTRY *wep;
   long tgc;
   C_SYMBOL_TABLE *stp;
-  int finalizers_checked;
+  volatile int finalizers_checked;
   FINALIZER_NODE *flist;
   TRACE_INFO *tinfo;
 
@@ -2550,13 +2550,8 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   heap_scan_top = (C_byte *)C_align((C_uword)C_fromspace_top);
   gc_mode = GC_MINOR;
 
-  /* Explicit second-level GC requested? */
-  if((start = C_fromspace_top) >= C_fromspace_limit) 
-    goto full_gc;
-
-  /* Entry point for second-level GC: */
-  if(C_setjmp(gc_restart)) {
-  full_gc:
+  /* Entry point for second-level GC (on explicit request or because of full fromspace): */
+  if(C_setjmp(gc_restart) || (start = C_fromspace_top) >= C_fromspace_limit) {
     if(gc_bell) C_putchar(7);
 
     tgc = cpu_milliseconds();

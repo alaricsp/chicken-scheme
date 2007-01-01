@@ -48,7 +48,7 @@
 
 (if (not (file-exists? "chicken-config.h"))
     (begin
-      (print "generating chicken-config,h ...")
+      (print "generating chicken-config.h ...")
       (with-output-to-file "chicken-config.h"
 	^(print #<<EOF
 #define C_STACK_GROWS_DOWNWARD 1

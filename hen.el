@@ -185,6 +185,8 @@ The value returned is the value of the last form in BODY."
               "with-input-from-pipe" "with-output-to-pipe"
               "with-input-from-string" "with-output-to-string"
 
+	      "loop"
+
               "declare" "include" "require-extension" "require" "require-for-syntax" "use" "quasiquote"
 
               "map" "syntax" "with-syntax" "syntax-case" "identifier-syntax" "syntax-rules") t)

@@ -1,6 +1,6 @@
 ;;;; c-platform.scm - Platform specific parameters and definitions
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -1044,6 +1044,12 @@
  (lambda (db classargs cont callargs) 
    (and (= 1 (length callargs))
 	(let ((arg (car callargs)))
-	  (and (eq? '##core#variable (node-class arg))
-	       (not (get db (car (node-parameters arg)) 'global))
-	       (make-node '##core#call '(#t) (list cont (qnode #t))))))))
+	  (make-node
+	   '##core#call '(#t) 
+	   (list cont
+		 (if (and (eq? '##core#variable (node-class arg))
+			  (not (get db (car (node-parameters arg)) 'global)) )
+		     (qnode #t)
+		     (make-node 
+		      '##core#inline '("C_anyp")
+		      (list arg)) ) ) ) ) ) ) )
