@@ -77,7 +77,6 @@ exec csi -s $0 "$@"
     "Unit utils"
     "Unit tcp"
     "Unit lolevel"
-    "Unit tinyclos" ;; not at http://galinha.ucpel.tche.br:8080//Supported%20language anymore
     "Interface to external functions and variables"
     "Accessing external objects"
     "Foreign type specifiers"

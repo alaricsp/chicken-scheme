@@ -239,6 +239,9 @@ is equivalent to
 (hash-table-set! HT KEY VAL)
 </enscript>
 
+As an extension to SRFI-69, {{hash-table-update!}} and {{hash-table-update!/default}} return
+the new value (after applying the update procedure).
+
 
 === Queues
 
@@ -476,9 +479,11 @@ a string naming a file.
 
 
 ==== read-string
+==== read-string!
 ==== write-string
 
  [procedure] (read-string [NUM [PORT]])
+ [procedure] (read-string! NUM STRING [PORT [START]])
  [procedure] (write-string STRING [NUM [PORT]]
 
 Read or write {{NUM}} characters from/to {{PORT}}, which defaults to the
@@ -486,7 +491,10 @@ value of {{(current-input-port)}} or {{(current-output-port)}}, respectively.
 If {{NUM}} is {{#f}} or not given, then all data
 up to the end-of-file is read, or, in the case of {{write-string}} the whole
 string is written. If no more input is available, {{read-string}} returns the
-empty string.
+empty string. {{read-string!}} reads destructively into the given {{STRING}} argument,
+but never more characters that would fit into {{STRING}}. If {{START}} is given, then
+the read characters are stored starting at that position.
+{{read-string!}} returns the actual number of characters read.
 
 
 ==== read-token
@@ -804,6 +812,12 @@ applied to a list of elements that all satisfy the predicate procedure
 Ignores it's arguments, does nothing and returns an unspecified value.
 
 
+==== any?
+
+ [procedure] (any? X)
+
+Ignores it's argument and always returns {{#t}}. This is actually useful sometimes.
+
 
 === Binary searching
 
@@ -817,6 +831,7 @@ list or vector.  {{PROC}} is called to compare items in the sequence,
 should accept a single argument and return an exact integer: zero if the
 searched value is equal to the current item, negative if the searched
 value is ''less'' than the current item, and positive otherwise.
+Returns the index of the found value or {{#f}} otherwise.
 
 Previous: [[Unit eval]]
 

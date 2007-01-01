@@ -635,7 +635,7 @@ int sysinfo()
 */
 static
 int C_process(const char * cmd, const char ** env,
-              int * phandle, int * pstdin_fds, int * pstdout_fds, int * pstderr_fds,
+              int * phandle, int * pstdin_fd, int * pstdout_fd, int * pstderr_fd,
               int params)
 {
     int exit_code = 0, i = 0;
@@ -746,9 +746,9 @@ int C_process(const char * cmd, const char ** env,
     else
     {
         *phandle = (int)child_process;
-        *pstdin_fds = io_fds[0];
-        *pstdout_fds = io_fds[1];
-        *pstderr_fds = io_fds[2];
+        *pstdin_fd = io_fds[0];
+        *pstdout_fd = io_fds[1];
+        *pstderr_fd = io_fds[2];
     }
 
     return exit_code;
@@ -764,7 +764,7 @@ EOF
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
      ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port
-     ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer
+     ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer ##sys#process
      ##sys#peek-fixnum ##sys#make-structure ##sys#check-structure ##sys#enable-interrupts) ) ] )
 
 (cond-expand
@@ -1533,16 +1533,54 @@ EOF
   (foreign-lambda int "close_handle" bool))
 
 ; from original by Mejedi
-(define process
-  (let ([c-process (foreign-lambda int "C_process" c-string c-pointer (pointer int) (pointer int) (pointer int) (pointer int) int)])
-    (lambda (commandline . ignore-for-now)
-      (let-location ([handle int] [stdin int] [stdout int] [stderr int])
-        (let ([code (c-process commandline #f (location handle) (location stdin) (location stdout) (location stderr) 12)])
-          (if (eq? 0 code)
-              (values (open-output-file* stdin) (open-input-file* stdout) handle)
+(define ##sys#process
+  (let (
+      [c-process
+        (foreign-lambda int "C_process" c-string c-pointer
+          (pointer int) (pointer int) (pointer int) (pointer int)
+          int)])
+    (lambda (loc cmd args env stdoutp stdinp stderrp abexit stdinsz stdoutsz stderrsz)
+      (when (or (port? stdoutp) (port? stdinp) (port? stderrp))
+        (##sys#error loc "cannot specify a port") )
+      (let (
+          [commandline
+            (if args
+              (if (eq? 'exact (car args))
+                (conc cmd " " (cadr args))
+                (let loop ([args args] [cmdlin cmd])
+                  (if (null? args)
+                    cmdlin
+                    (loop (cdr args) (conc cmdlin " " (car args))))))
+              cmd)])
+        (let-location ([handle int -1] [stdin int -1] [stdout int -1] [stderr int -1])
+          (let (
+              [code
+                (c-process commandline env
+                  (location handle) (location stdin_fd) (location stdout_fd) (location stderr_fd)
+                  (bitwise-ior (if stdinp 0 1) (if stdoutp 0 2) (if stderrp 0 4) (if args 0 8)))])
+            (if (fx= 0 code)
+              (values
+                (and stdoutp (open-input-file* stdout_fd)) ;Parent stdin
+                (and stdinp (open-output-file* stdin_fd))  ;Parent stdout
+                handle
+                (and stderrp (open-input-file* stderr_fd))
+                (vector abexit abexit #f #f #f))
               (begin
                 (##sys#update-errno)
-                (##sys#signal-hook #:process-error 'process "cannot execute process" commandline))) ) ) ) ) )
+                (##sys#signal-hook #:process-error loc "cannot execute process" commandline))) ) ) ) ) ) )
+
+(define (process cmd #!optional args env)
+  (##sys#check-string cmd 'process)
+  (when args
+    (##sys#check-list args 'process)
+    (for-each
+      (cut ##sys#check-string <> 'process)
+      (if (and (pair? args) (eq? 'exact (car args))) (cdr args) args)) )
+  (when env
+    (##sys#check-list env 'process)
+    (for-each (cut ##sys#check-string <> 'process) env) )
+  (receive [in out pid err stavec] (##sys#process 'process cmd args env #t #t #f #t #f #f #f)
+    (values in out pid) ) )
 
 (define-foreign-variable _exstatus int "C_exstatus")
 

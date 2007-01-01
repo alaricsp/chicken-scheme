@@ -398,6 +398,22 @@ option or by using the {{-:s...}} runtime option).
 
 === Which non-standard procedures are treated specially when the {{extended-bindings}} or {{usual-integrations}} declaration or compiler option is used?
 
+The following standard bindings are handled specially, depending on optimization options
+and compiler settings:
+
+ + * - / quotient eq? eqv? equal? apply c...r values call-with-values
+ list-ref null? length not char? string? symbol? vector? pair? procedure?
+ boolean? number? complex? rational? real? exact? inexact? list? eof-object?
+ string-ref string-set! vector-ref vector-set! char=? char<? char>? char<=? char>=?
+ char-numeric? char-alphabetic? char-whitespace? char-upper-case?
+ char-lower-case? char-upcae char-downcase list-tail assv memv memq assoc
+ member set-car! set-cdr! abs exp sin cos tan log asin acos atan sqrt
+ zero? positive? negative? vector-length string-length char->integer
+ integer->char inexact->exact = > < >= <= for-each map substring
+ string-append gcd lcm list exact->inexact string->number number->string
+ even? odd? remainder floor ceiling truncate round cons vector string
+ string=? string-ci=? make-vector call-with-current-continuation
+
 The following extended bindings are handled specially: 
 
 {{bitwise-and}} {{bitwise-ior}} {{bitwise-xor}} {{bitwise-not}} {{add1}} {{sub1}}
@@ -441,7 +457,7 @@ The following extended bindings are handled specially:
 {{first}} {{second}} {{third}} {{fourth}} {{null-pointer?}} {{pointer->object}}
 {{make-record-instance}}
 {{locative-ref}} {{locative-set!}} {{locative?}} {{locative->object}} {{identity}}
-{{cpu-time}} {{error}} {{call/cc}}
+{{cpu-time}} {{error}} {{call/cc}} {{any?}}
 
 == Garbage collection
 

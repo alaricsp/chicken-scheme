@@ -41,13 +41,12 @@ Include given strings verbatim into header of generated file.
 
  [syntax] (define-foreign-type NAME TYPE [ARGCONVERT [RETCONVERT]])
 
-Defines an alias for {{TYPE}} with the name {{NAME}} (a symbol). 
-{{TYPE}} may be a type-specifier
-or a string naming a C type. The namespace of foreign type specifiers
-is separate from the normal Scheme namespace.  The optional arguments
-{{ARGCONVERT}} and {{RETCONVERT}} should evaluate to procedures
-that map argument- and result-values to a value that can be transformed
-to {{TYPE}}:
+Defines an alias for {{TYPE}} with the name {{NAME}} (a symbol).
+{{TYPE}} may be a type-specifier or a string naming a C type. The
+namespace of foreign type specifiers is separate from the normal
+Scheme namespace.  The optional arguments {{ARGCONVERT}} and
+{{RETCONVERT}} should evaluate to procedures that map argument- and
+result-values to a value that can be transformed to {{TYPE}}:
 
 <enscript highlight=scheme>
 (define-foreign-type char-vector 
@@ -76,15 +75,15 @@ in multiple files.
  [syntax] (define-foreign-variable NAME TYPE [STRING])
 
 Defines a foreign variable of name {{NAME}} (a symbol). {{STRING}}
-should be the real name of a foreign variable or parameterless macro. If
-{{STRING}} is not given, then the variable name {{NAME}} will
-be converted to a string and used instead. All references and assignments
-(via {{set!}}) are modified to correctly convert values between
-Scheme and C representation. This foreign variable can only be accessed
-in the current compilation unit, but the name can be lexically shadowed.
-Note that {{STRING}} can name an arbitrary C expression. If no
-assignments are performed, then {{STRING}} doesn't even have to
-specify an lvalue.
+should be the real name of a foreign variable or parameterless
+macro. If {{STRING}} is not given, then the variable name {{NAME}}
+will be converted to a string and used instead. All references and
+assignments (via {{set!}}) are modified to correctly convert values
+between Scheme and C representation. This foreign variable can only be
+accessed in the current compilation unit, but the name can be
+lexically shadowed.  Note that {{STRING}} can name an arbitrary C
+expression. If no assignments are performed, then {{STRING}} doesn't
+even have to specify an lvalue.
 
 <enscript highlight=scheme>
 #>

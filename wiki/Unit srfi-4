@@ -96,6 +96,35 @@ not including {{TO}}.
 SRFI-17 Setters for {{XXXvector-ref}} are defined.
 
 
+=== read-u8vector
+
+ [procedure] (read-u8vector LENGTH [PORT])
+
+Reads {{LENGTH}} bytes from the {{PORT}} and returns a fresh
+{{u8vector}} or less of end-of-file is encountered. {{PORT}} defaults to the
+value of {{(current-input-port)}}.
+If {{LENGTH}} is {{#f}}, the vector will be filled completely until end-of-file is reached.
+
+
+=== read-u8vector!
+
+ [procedure] (read-u8vector! LENGTH U8VECTOR [PORT [START]])
+
+Reads {{LENGTH}} bytes from the {{PORT}} writing the read input into
+{{U8VECTOR}} beginning at {{START}} (or 0 if not given). {{PORT}} defaults
+to the value of {{(current-input-port)}}.
+If {{LENGTH}} is {{#f}}, the vector will be filled completely until end-of-file is reached.
+This procedure returns the number of bytes read.
+
+
+=== write-u8vector
+
+ [procedure] (write-u8vector U8VECTOR [PORT [START [END]]])
+
+Writes the bytes {{U8VECTOR}} between the indices {{START}} (inclusive) and {{END}} (exclusive) to {{PORT}}.
+{{PORT}} defaults to the value of {{(current-output-port)}}.
+
+
 Previous: [[Unit srfi-1]]
 
 Next: [[Unit srfi-13]]

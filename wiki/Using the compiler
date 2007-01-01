@@ -241,7 +241,6 @@ or {{g}}). Runtime options may be combined, like {{-:dc}},
 but everything following a {{NUMBER}} argument is ignored. So
 {{-:wh64m}} is OK, but {{-:h64mw}} will not enable GC of
 unused symbols.
- 
 == Examples
 
 === A simple example (with one source file)
@@ -284,7 +283,6 @@ To run your newly compiled executable use:
 
 If you get a {{foo: command not found}} error, you might want to try with {{./foo}} instead
 (or, in Unix machines, modify your {{PATH}} environment variable to include your current directory).
- 
 === An example with multiple files
 
 If multiple bodies of Scheme code are to be combined into a single
@@ -430,7 +428,7 @@ Now we have all files together, and can create an tarball containing all the fil
 This is of naturally rather simplistic. Things like enabling dynamic loading, estimating
 the optimal stack-size and selecting supported features of the host system would need
 more configuration- and build-time support. All this can be addressed using more
-elaborate build-scripts, makefiles or by using autoconf/automake/libtool.
+elaborate build-scripts, makefiles or by using [[autoconf - automake]].
 
 Note also that the size of the application can still be reduced by removing {{extras}} and
 {{eval}} and compiling {{hello.scm}} with the {{-explicit-use}} option.

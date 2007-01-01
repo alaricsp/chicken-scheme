@@ -687,7 +687,7 @@ thread-local.
 
 ==== error
 
- [procedure] (error [LOCATION] STRING EXP ...)
+ [procedure] (error [LOCATION] [STRING] EXP ...)
 
 Prints error message, writes all extra arguments to the
 value of {{(current-error-port)}} and invokes the
@@ -774,7 +774,7 @@ Invokes a garbage-collection and returns the number of free bytes
 in the heap. The flag specifies whether a minor ({{#f}}) or
 major ({{#t}}) GC is to be triggered. If no argument is given,
 {{#t}} is assumed. When the argument is {{#t}}, all pending
-finalizers are executed. 
+finalizers are executed. 
 
 
 ==== memory-statistics
@@ -1065,11 +1065,11 @@ Returns a copy of the procedure {{GETTER}} with the associated setter procedure 
 Contrary to the SRFI specification, the setter of the returned procedure may be changed.
 
 
-==== Reader extensions
+=== Reader extensions
 
 
 
-===== define-reader-ctor
+==== define-reader-ctor
 
  [procedure] (define-reader-ctor SYMBOL PROC)
 
@@ -1077,7 +1077,7 @@ Define new read-time constructor for {{#,}} read syntax. For further information
 the documentation for [[http://srfi.schemers.org/srfi-10/srfi-10.html|SRFI-10]].
 
 
-===== set-read-syntax!
+==== set-read-syntax!
 
  [procedure] (set-read-syntax! CHAR-OR-SYMBOL PROC)
 
@@ -1112,7 +1112,7 @@ Note that all of CHICKEN's special non-standard read-syntax is handled directly 
 to disable built-in read-syntax, define a handler that triggers an error (for example).
 
 
-===== set-sharp-read-syntax!
+==== set-sharp-read-syntax!
 
  [procedure] (set-sharp-read-syntax! CHAR-OR-SYMBOL PROC)
 
@@ -1121,7 +1121,7 @@ If the first argument is a symbol, then this procedure is equivalent to {{set-re
 
 
 
-===== copy-read-table
+==== copy-read-table
 
  [procedure] (copy-read-table READ-TABLE)
 

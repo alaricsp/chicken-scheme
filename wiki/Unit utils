@@ -4,26 +4,41 @@
 
 == Unit utils
 
-This unit contains some utility procedures for Shell scripting and for
-some file operations.
+This unit contains file/pathname oriented procedures, apropos, plus acts as a "grab bag" for procedures without a good home,
+and which don't have to be available by default (as compared to the [[Unit extras|extras]] unit.
 
 This unit uses the {{extras}} and {{regex}} units.
 
 
+=== Environment Query
+
+==== apropos
+
+ [procedure] (apropos SYMBOL-PATTERN [ENVIRONMENT])
+
+Displays symbols matching {{SYMBOL-PATTERN}} in the {{ENVIRONMENT}} on the {{(current-output-port)}}.
+
+; {{SYMBOL-PATTERN}} : A symbol, string, or regex. When symbol or string substring matching is performed.
+
+; {{ENVIRONMENT}} : An environment. When missing the {{(interaction-environment)}} is assumed.
+
+==== apropos-list
+
+ [procedure] (apropos-list SYMBOL-PATTERN [ENVIRONMENT])
+
+Like {{apropos}} but returns a list of matching symbols.
+
+
 === Pathname operations
 
-
-
-
-=== absolute-pathname?
+==== absolute-pathname?
 
  [procedure] (absolute-pathname? PATHNAME)
 
 Returns {{#t}} if the string {{PATHNAME}} names an absolute
 pathname, and returns {{#f}} otherwise.
 
-
-=== decompose-pathname
+==== decompose-pathname
 
  [procedure] (decompose-pathname PATHNAME)
 
@@ -31,9 +46,8 @@ Returns three values: the directory-, filename- and extension-components
 of the file named by the string {{PATHNAME}}.
 For any component that is not contained in {{PATHNAME}}, {{#f}} is returned.
 
-
-=== make-pathname
-=== make-absolute-pathname
+==== make-pathname
+==== make-absolute-pathname
 
  [procedure] (make-pathname DIRECTORY FILENAME [EXTENSION [SEPARATOR]])
  [procedure] (make-absolute-pathname DIRECTORY FILENAME [EXTENSION [SEPARATOR]])
@@ -48,49 +62,41 @@ directory component), a string or a list of strings. {{FILENAME}}
 and {{EXTENSION}} should be strings or {{#f}}.
 {{make-absolute-pathname}} returns always an absolute pathname.
 
-
-=== pathname-directory
+==== pathname-directory
 
  [procedure] (pathname-directory PATHNAME)
 
-
-=== pathname-file
+==== pathname-file
 
  [procedure] (pathname-file PATHNAME)
 
-
-=== pathname-extension
+==== pathname-extension
 
  [procedure] (pathname-extension PATHNAME)
 
 Accessors for the components of {{PATHNAME}}. If the pathname does
 not contain the accessed component, then {{#f}} is returned.
 
-
-=== pathname-replace-directory
+==== pathname-replace-directory
 
  [procedure] (pathname-replace-directory PATHNAME DIRECTORY)
 
-
-=== pathname-replace-file
+==== pathname-replace-file
 
  [procedure] (pathname-replace-file PATHNAME FILENAME)
 
-
-=== pathname-replace-extension
+==== pathname-replace-extension
 
  [procedure] (pathname-replace-extension PATHNAME EXTENSION)
 
 Return a new pathname with the specified component of {{PATHNAME}}
 replaced by a new value.
 
-
-=== pathname-strip-directory
+==== pathname-strip-directory
 
  [procedure] (pathname-strip-directory PATHNAME)
 
-
-=== pathname-strip-extension
+==== pathname-strip-extension
 
  [procedure] (pathname-strip-extension PATHNAME)
 
@@ -98,14 +104,9 @@ Return a new pathname with the specified component of {{PATHNAME}}
 stripped.
 
 
-
-
-
 === Temporary files
 
-
-
-=== create-temporary-file
+==== create-temporary-file
 
  [procedure] (create-temporary-file [EXTENSION])
 
@@ -115,12 +116,9 @@ environment variable {{TMPDIR, TEMP}} or {{TMP}} is set,
 then the pathname names a file in that directory.
 
 
-
-
 === Deleting a file without signalling an error
 
-
-=== delete-file*
+==== delete-file*
 
  [procedure] (delete-file* FILENAME)
 
@@ -129,14 +127,9 @@ is returned.  If the file does not exist, nothing happens and {{#f}}
 is returned.
 
 
-
-
-
 === Iterating over input lines and files
 
-
-
-=== for-each-line
+==== for-each-line
 
  [procedure] (for-each-line PROCEDURE [PORT])
 
@@ -145,8 +138,7 @@ value of {{(current-input-port)}}. The argument passed to {{PORCEDURE}}
 is a string with the contents of the line, excluding any line-terminators.
 When all input has been read from the port, {{for-each-line}} returns some unspecified value.
 
-
-=== for-each-argv-line
+==== for-each-argv-line
 
  [procedure] (for-each-argv-line PROCEDURE)
 
@@ -163,23 +155,24 @@ This code will act as a simple Unix cat(1) command:
 (for-each-argv-line print)
 </enscript>
 
-; {procedure} port-for-each :
-; {procedure} port-map :
-<enscript highlight=scheme>
-(port-for-each FN THUNK)
-(port-map FN THUNK)
-</enscript>
-Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
-until it returns {{#!eof}}. {{port-for-each}} discards the results, while {{port-map}}
-returns a list of the collected results.
+==== port-for-each
 
+ [procedure] (port-for-each FN THUNK)
+
+Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
+until it returns {{#!eof}}, discarding the results.
+
+==== port-map
+
+ [procedure] (port-map FN THUNK)
+
+Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
+until it returns {{#!eof}}, returning a list of the collected results.
 
 
 === Executing shell commands with formatstring and error checking
 
-
-
-=== system*
+==== system*
 
  [procedure] (system* FORMATSTRING ARGUMENT1 ...)
 
@@ -188,11 +181,9 @@ but signals an error if the invoked program should return a nonzero
 exit status.
 
 
-
 === Reading a file's contents
 
-
-=== read-all
+==== read-all
 
  [procedure] (read-all [FILE-OR-PORT])
 
@@ -202,11 +193,9 @@ a string. The port is not closed. If no argument is provided, input will be read
 port that is the current value of {{(current-input-port)}}.
 
 
-
 ===  Miscellaneous handy things
 
-
-=== shift!
+==== shift!
 
  [procedure] (shift! LIST [DEFAULT])
 
@@ -220,7 +209,8 @@ the list is empty, {{#f}} is returned. An example might be clearer, here:
 </enscript> 
 
 The list must at least contain 2 elements.
-=== unshift!
+
+==== unshift!
 
  [procedure] (unshift! X PAIR)
 

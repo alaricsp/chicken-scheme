@@ -43,6 +43,8 @@ The options recognized by the interpreter are:
 
 ; -s  -script PATHNAME : This is equivalent to {{-batch -quiet -no-init PATHNAME}}. Arguments following {{PATHNAME}} are available by using  {{command-line-arguments}} and are not processed as interpreter options. Extra options in the environment variable {{CSI_OPTIONS}} are ignored.
 
+; -ss PATHNAME : The same as {{-s PATHNAME}} but invokes the procedure {{main}} with the value of {{(command-line-arguments)}} as its single argument. If the main procedure returns an integer result, then the interpreter is terminated, returning the integer as the status code back to the invoking process. Any other result terminates the interpreter with a zero exit status.
+
 ; -R  -require-extension NAME : Equivalent to evaluating {{(require-extension NAME)}}.
 
 ; -v  -version : Write the banner with version information to standard output and exit.
@@ -86,6 +88,24 @@ this on Windows:
 Like UNIX scripts, batch files can be compiled. Windows batch scripts do not
 accept more than 8 arguments.
 
+Since it is sometimes useful to run a script into the interpreter without actually running it
+(for example to test specific parts of it), the option {{-ss}} can be used as an alternative to {{-script}}.
+{{-ss PATHNAME}} is equivalent to {{-script PATHNAME}} but invokes {{(main (command-line-arguments))}}
+after loading all top-level forms of the script file. The result of {{main}} is returned as the exit status
+to the shell. Any non-numeric result exits with status zero:
+
+ % cat hi.scm
+ (define (main args)
+   (print "Hi, " (car args))
+   0)
+ % csi -ss hi.scm you
+ Hi, you
+ % csi -q
+ #;1> ,l hi.scm
+ #;2> (main (list "ye all"))
+ Hi, ye all
+ 0
+ #;3>
 
 === Toplevel commands
 
@@ -185,6 +205,43 @@ textual description of the object to the passed output-port. For example:
  #;2> (set-describer! 'point (lambda (pt o) (print "a point with x=" (point-x pt) "and y=" (point-y pt))))
  #;3> ,d (make-point 1 2)
  a point with x=1 and y=2
+
+=== Auto-completion and edition
+
+On platforms that support it, it is possible to get auto-completion of symbols,
+history (over different {{csi}} sessions) and a more feature-full
+editor for the expressions you type
+using the [[readline]] egg by
+Tony Garnock Jones.
+It is very useful for interactive use of csi.
+
+To enable it install the egg and put this in your {{~/.csirc}} file:
+
+ (use readline regex)
+ (current-input-port (make-gnu-readline-port))
+ (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
+
+More details are available in [[readline|the egg's documentation]].
+
+=== Accessing documentation
+
+You can access the manual directly from {{csi}} using the [[man]] extension by [[Mario Domenech Goulart]].
+
+To enable it install the egg and put this in your {{~/.csirc}} file:
+
+ (use man)
+ (man:load)
+
+Then, in {{csi}}, you can search for definitions using {{man:search}} as in:
+
+ (man:search "case")
+
+Note that the search uses regular expressions.
+To view the documentation for one entry from the manual, use {{man:help}} as in:
+
+ (man:help "case-lambda")
+
+----
 
 Previous: [[Using the compiler]]
 

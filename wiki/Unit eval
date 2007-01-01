@@ -9,7 +9,7 @@ option.
 
 === Loading code
 
-=== load
+==== load
 
  [procedure] (load FILE [EVALPROC])
 
@@ -40,25 +40,14 @@ if an active continuation refers to compiled code in the old module).
 
 Support for reloading compiled code dynamically is still experimental.
 
-=== load-relative
-
- [procedure] (load-relative FILE [EVALPROC])
-
-=======
-; {procedure} load-relative :
-<enscript highlight=scheme>
-(load-relative FILE [EVALPROC])
-</enscript>
-=======
-=== load-relative
+==== load-relative
 
  [procedure] (load-relative FILE [EVALPROC])
 
 Similar to {{load}}, but loads {{FILE}} relative to the path
 of the currently loaded file.
 
-
-=== load-noisily
+==== load-noisily
 
  [procedure] (load-noisily FILE #!key EVALUATOR TIME PRINTER)
 
@@ -71,8 +60,7 @@ If {{PRINTER}} is given and not false, then each expression is
 printed before evaluation by applying the expression to the value of this
 argument, which should be a one-argument procedure.
 
-
-=== load-library
+==== load-library
 
  [procedure] (load-library UNIT [LIBRARYFILE])
 
@@ -91,8 +79,7 @@ can be successfully loaded, a feature-identifier named {{UNIT}}
 is registered. If the feature is already registered before loading,
 the {{load-library}} does nothing.
 
-
-=== set-dynamic-load-mode!
+==== set-dynamic-load-mode!
 
  [procedure] (set-dynamic-load-mode! MODELIST)
 
@@ -109,9 +96,10 @@ symbols (or a single symbol) taken from the following set:
 Note that this procedure does not control the way Scheme variables are handled -
 this facility is mainly of interest when accessing foreign code.
 
+
 === Read-eval-print loop
 
-=== repl
+==== repl
 
  [procedure] (repl)
 
@@ -123,7 +111,7 @@ any arguments to the value of {{(current-error-port)}} and reset.
 
 === Macros
 
-=== get-line-number
+==== get-line-number
 
  [procedure] (get-line-number EXPR)
 
@@ -133,37 +121,33 @@ the associated line number. If line-number information is not available,
 then {{#f}} is returned.  Note that line-number information for
 expressions is only available in the compiler.
 
-=== macro?
+==== macro?
 
  [procedure] (macro? SYMBOL)
 
 Returns {{#t}} if there exists a macro-definition for {{SYMBOL}}.
 
-
-=== macroexpand
+==== macroexpand
 
  [procedure] (macroexpand X)
 
 If {{X}} is a macro-form, expand the macro (and repeat expansion
 until expression is a non-macro form).  Returns the resulting expression.
 
-
-=== macroexpand-1
+==== macroexpand-1
 
  [procedure] (macroexpand-1 X)
 
 If {{X}} is a macro-form, expand the macro.  Returns the resulting
 expression.
 
-
-=== undefine-macro!
+==== undefine-macro!
 
  [procedure] (undefine-macro! SYMBOL)
 
 Remove the current macro-definition of the macro named {{SYMBOL}}.
 
-
-=== syntax-error
+==== syntax-error
 
  [procedure] (syntax-error [LOCATION] MESSAGE ARGUMENT ...)
 
@@ -171,13 +155,12 @@ Signals an exception of the kind {{(exn syntax)}}. Otherwise identical to
 {{error}}.
 
 
-
 === Loading extension libraries
-
 
 This functionality is only available on platforms that support dynamic
 loading of compiled code. Currently Linux, BSD, Solaris, Windows (with Cygwin) and HP/UX are supported.
 
+==== repository-path
 
 ; [parameter] repository-path :
 Contains a string naming the path to the extension repository, which defaults to
@@ -185,8 +168,7 @@ either the value of the environment variable {{CHICKEN_REPOSITORY}}, the value
 of the environment variable {{CHICKEN_HOME}} or the default library path
 (usually {{/usr/local/lib/chicken}} on UNIX systems).
 
-
-=== extension-information
+==== extension-information
 
  [procedure] (extension-information ID)
 
@@ -194,25 +176,21 @@ If an extension with the name {{ID}} is installed and if it has a setup-informat
 list registered in the extension repository, then the info-list is returned. Otherwise
 {{extension-information}} returns {{#f}}.
 
-
-=== provide
+==== provide
 
  [procedure] (provide ID ...)
 
 Registers the extension IDs {{ID ...}} as loaded. This is mainly
 intended to provide aliases for certain extension identifiers.
 
-
-=== provided?
+==== provided?
 
  [procedure] (provided? ID ...)
 
 Returns {{#t}} if the extension with the IDs {{ID ...}}
 are currently loaded, or {{#f}} otherwise.
-Works also for feature-ids.
 
-
-=== require
+==== require
 
  [procedure] (require ID ...)
  [procedure] (require-for-syntax ID ...)
@@ -233,9 +211,7 @@ from one of the following locations:
 at compile-time (the argument is still evaluated), while the former
 loads it at run-time.
 
-
-
-=== set-extension-specifier!
+==== set-extension-specifier!
 
  [procedure] (set-extension-specifier! SYMBOL PROC)
 
@@ -276,12 +252,9 @@ if the environment variable {{CHICKEN_PREFIX}} is set, then {{chicken-home}} wil
 {{$CHICKEN_PREFIX/share}}.
 
 
-
 === Eval
 
-
-
-=== eval
+==== eval
 
  [procedure] (eval EXP [ENVIRONMENT])
 

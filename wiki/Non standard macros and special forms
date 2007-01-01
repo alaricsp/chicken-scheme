@@ -6,7 +6,7 @@
 
 === Making extra libraries and extensions available
 
-=== require-extension
+==== require-extension
 
  [syntax] (require-extension ID ...)
  [syntax] (use ID ...)
@@ -46,25 +46,22 @@ defined:
 * {{(srfi NUMBER ...)}} is required for SRFI-55 compatibility and is fully implemented
 * {{(version ID NUMBER)}} is equivalent to {{ID}}, but checks at compile-time whether the extension named {{ID}} is installed and whether its version is equal or higher than {{NUMBER}}. {{NUMBER}} may be a string or a number, the comparison is done lexicographically (using {{string>=?}}).
 
-
 See also: {{set-extension-specifier!}}
 
-
-
-=== define-extension
+==== define-extension
 
  [syntax] (define-extension NAME CLAUSE ...)
 
 This macro simplifies the task of writing extensions that can be linked both statically and dynamically.
 If encountered in interpreted code or code that is compiled into a shared object (specifically if compiled
 with the feature {{chicken-compile-shared}}, done automatically by {{csc}} when compiling with
-the {{-shared}} or {{-dynamic}} option) then the code given by clauses if the form
+the {{-shared}} or {{-dynamic}} option) then the code given by clauses of the form
 
 <enscript highlight=scheme>
 (dynamic EXPRESSION ...)
 </enscript>
 
-is inserted into the output as a {{begin}} form.
+are inserted into the output as a {{begin}} form.
 
 If compiled statically (specifically if the feature {{chicken-compiled-shared}} has not been given), then
 this form expands into the following:
@@ -99,11 +96,9 @@ compiled file with
 </enscript>
 
 
-
 === Binding forms for optional arguments
 
-
-=== :optional
+==== :optional
 
  [syntax] (:optional ARGS DEFAULT)
 
@@ -118,12 +113,11 @@ an error if {{ARGS}} contains more than one value.
 (incr 12 5)                                 ==> 17
 </enscript>
 
-
-=== case-lambda
+==== case-lambda
 
  [syntax] (case-lambda (LAMBDA-LIST1 EXP1 ...) ...)
 
-SRFI-16. Expands into a lambda that invokes the body following the first
+Expands into a lambda that invokes the body following the first
 matching lambda-list.
 
 <enscript highlight=scheme>
@@ -143,13 +137,27 @@ matching lambda-list.
 For more information see the documentation for
 [[http://srfi.schemers.org/srfi-16/srfi-16.html|SRFI-16]]
 
+==== let-optionals
 
-; {syntax} let-optionals :
-; {syntax} let-optionals* :
+ [syntax]  (let-optionals ARGS ((VAR1 DEFAULT1) ...) BODY ...)
+
+Binding constructs for optional procedure arguments. {{ARGS}} should
+be a rest-parameter taken from a lambda-list. {{let-optionals}}
+binds {{VAR1 ...}} to available arguments in parallel, or
+to {{DEFAULT1 ...}} if not enough arguments were provided.
+{{let-optionals*}} binds {{VAR1 ...}} sequentially, so every
+variable sees the previous ones. it is an error if any excess
+arguments are provided.
+
 <enscript highlight=scheme>
-(let-optionals ARGS ((VAR1 DEFAULT1) ...) BODY ...)
-(let-optionals* ARGS ((VAR1 DEFAULT1) ... [RESTVAR]) BODY ...)
+(let-optionals '(one two) ((a 1) (b 2) (c 3))
+  (list a b c) )                               ==> (one two 3)
 </enscript>
+
+==== let-optionals*
+
+ [syntax]  (let-optionals* ARGS ((VAR1 DEFAULT1) ... [RESTVAR]) BODY ...)
+
 Binding constructs for optional procedure arguments. {{ARGS}} should
 be a rest-parameter taken from a lambda-list. {{let-optionals}}
 binds {{VAR1 ...}} to available arguments in parallel, or
@@ -160,19 +168,14 @@ is given, then it is bound to any remaining arguments, otherwise it is
 an error if any excess arguments are provided.
 
 <enscript highlight=scheme>
-(let-optionals '(one two) ((a 1) (b 2) (c 3))
-  (list a b c) )                               ==> (one two 3)
 (let-optionals* '(one two) ((a 1) (b 2) (c a))
   (list a b c) )                               ==> (one two one)
 </enscript>
 
 
-
-
 === Other binding forms
 
-
-=== and-let*
+==== and-let*
 
  [syntax] (and-let* (BINDING ...) EXP1 EXP2 ...)
 
@@ -187,9 +190,7 @@ executed normally and the result of the last expression is the
 result of the {{and-let*}} form. See also the documentation for
 [[http://srfi.schemers.org/srfi-2/srfi-2.html|SRFI-2]].
 
-
-
-=== rec
+==== rec
 
  [syntax] (rec NAME EXPRESSION)
  [syntax] (rec (NAME VARIABLE ...) BODY ...)
@@ -198,40 +199,35 @@ Allows simple definition of recursive definitions. {{(rec NAME EXPRESSION)}} is
 equivalent to {{(letrec ((NAME EXPRESSION)) NAME)}} and {{(rec (NAME VARIABLE ...) BODY ...)}}
 is the same as {{(letrec ((NAME (lambda (VARIABLE ...) BODY ...))) NAME)}}.
 
-
-=== cut
+==== cut
 
  [syntax] (cut SLOT ...)
  [syntax] (cute SLOT ...)
 
 [[http://srfi.schemers.org/srfi-26/srfi-26.html|Syntactic sugar for specializing parameters]].
 
-
-=== define-values
+==== define-values
 
  [syntax] (define-values (NAME ...) EXP)
 
 Defines several variables at once, with the result values of expression
 {{EXP}}.
 
-
-=== fluid-let :
+==== fluid-let
 
  [syntax] (fluid-let ((VAR1 X1) ...) BODY ...)
 
 Binds the variables {{VAR1 ...}} dynamically to the values {{X1 ...}} 
 during execution of {{BODY ...}}.
 
-
-=== let-values
+==== let-values
 
  [syntax] (let-values (((NAME ...) EXP) ...) BODY ...)
 
 Binds multiple variables to the result values of {{EXP ...}}.
 All variables are bound simultaneously.
 
-
-=== let*-values
+==== let*-values
 
  [syntax] (let*-values (((NAME ...) EXP) ...) BODY ...)
 
@@ -244,8 +240,7 @@ The variables are bound sequentially.
   p)                               ==> 5
 </enscript>
 
-
-=== letrec-values
+==== letrec-values
 
  [syntax] (letrec-values (((NAME ...) EXP) ...) BODY ...)
 
@@ -260,8 +255,7 @@ All variables are mutually recursive.
   (odd 17) )                           ==> #t
 </enscript>
 
-
-=== parameterize
+==== parameterize
 
  [syntax] (parameterize ((PARAMETER1 X1) ...) BODY ...)
 
@@ -270,8 +264,7 @@ Binds the parameters {{PARAMETER1 ...}} dynamically to the values
 {{make-parameter}} in @ref{Parameters}). Note that {{PARAMETER}} may be any
 expression that evaluates to a parameter procedure.
 
-
-=== receive
+==== receive
 
  [syntax] (receive (NAME1 ... [. NAMEn]) VALUEEXP BODY ...)
  [syntax] (receive VALUEEXP)
@@ -291,8 +284,7 @@ is equivalent to
 (receive _ VALUEEXP _)
 </enscript>
 
-
-=== set!-values
+==== set!-values
 
  [syntax] (set!-values (NAME ...) EXP)
 
@@ -300,12 +292,9 @@ Assigns the result values of expression {{EXP}} to multiple
 variables.
 
 
-
-
 === Substitution forms and macros
 
-
-=== define-constant
+==== define-constant
 
  [syntax] (define-constant NAME CONST)
 
@@ -322,8 +311,7 @@ value is mutable, then the compiler is careful to preserve its identity.
 constants defined via {{define-constant}} previously.
 This for should only be used at top-level.
 
-
-=== define-inline
+==== define-inline
 
  [syntax] (define-inline (NAME VAR ... [. VAR]) BODY ...)
  [syntax] (define-inline NAME EXP)
@@ -341,8 +329,7 @@ Scheme namespace and can be lexically shadowed.  This construct is
 equivalent to {{define}} when evaluated or interpreted. Inline
 definitions should only appear at toplevel.
 
-
-=== define-macro
+==== define-macro
 
  [syntax] (define-macro (NAME VAR ... [. VAR]) EXP1 ...)
  [syntax] (define-macro NAME (lambda (VAR ... [. VAR]) EXP1 ...))
@@ -364,9 +351,7 @@ Extended lambda list syntax ({{#!optional}}, etc.) can be used but note
 that arguments are source expressions and thus default values for optional
 or keyword arguments should take this into consideration.
 
-
-
-=== define-for-syntax
+==== define-for-syntax
 
  [syntax] (define-for-syntax (NAME VAR ... [. VAR]) EXP1 ...)
  [syntax] (define-for-syntax NAME [VALUE])
@@ -378,17 +363,14 @@ for example.
 
 === Conditional forms
 
-
-
-=== switch
+==== switch
 
  [syntax] (switch EXP (KEY EXP1 ...) ... [(else EXPn ...)])
 
 This is similar to {{case}}, but a) only a single key is allowed,
 and b) the key is evaluated.
 
-
-=== unless
+==== unless
 
  [syntax] (unless TEST EXP1 EXP2 ...)
 
@@ -398,8 +380,7 @@ Equivalent to:
 (if (not TEST) (begin EXP1 EXP2 ...))
 </enscript>
 
-
-=== when
+==== when
 
  [syntax] (when TEST EXP1 EXP2 ...)
 
@@ -410,13 +391,9 @@ Equivalent to:
 </enscript>
 
 
-
-
 === Record structures
 
-
-
-=== define-record
+==== define-record
 
  [syntax] (define-record NAME SLOTNAME ...)
 
@@ -435,8 +412,7 @@ and updated using {{(NAME-SLOTNAME-set!}} {{STRUCT}} {{VALUE)}}.
 (point-y p1)                     ==> 99
 </enscript>
 
-
-=== define-record-printer
+==== define-record-printer
 
  [syntax] (define-record-printer (NAME RECORDVAR PORTVAR) BODY ...)
  [syntax] (define-record-printer NAME PROCEDURE)
@@ -463,8 +439,7 @@ s                                   ==> "#,(foo 1 2 3)"
 
 {{define-record-printer}} works also with SRFI-9 record types.
 
-
-=== define-record-type
+==== define-record-type
 
  [syntax] (define-record-type NAME (CONSTRUCTOR TAG ...) PREDICATE (FIELD ACCESSOR [MODIFIER]) ...)
 
@@ -472,11 +447,9 @@ SRFI-9 record types. For more information see the documentation for
 [[http://srfi.schemers.org/srfi-9/srfi-9.html|SRFI-9]].
 
 
-
 === Other forms
 
-
-=== assert
+==== assert
 
  [syntax] (assert EXP [STRING ARG ...])
 
@@ -487,23 +460,20 @@ by specifying the {{-unsafe}} compiler option or by declaring
 {{(unsafe)}}), then this expression expands to an unspecified value.
 The result is the value of {{EXP}}.
 
-
-=== cond-expand
+==== cond-expand
 
  [syntax] (cond-expand FEATURE-CLAUSE ...)
 
-[[http://srfi.schemers.org/srfi-0/srfi-0.html|SRFI-0]].
- Expands by selecting feature clauses. Predefined
+Expands by selecting feature clauses. Predefined
 feature-identifiers are {{srfi-0}}, {{srfi-2}}, {{srfi-6}},
 {{srfi-8}}, {{srfi-9}}, {{srfi-10}},
- and {{chicken}}. If the source file containing
+and {{chicken}}. If the source file containing
 this form is currently compiled, the feature {{compiling}}
 is defined.  For further information, see the documentation for
 [[http://srfi.schemers.org/srfi-0/srfi-0.html|SRFI-0]] This form
 is allowed to appear in non-toplevel expressions.
 
-
-=== ensure
+==== ensure
 
  [syntax] (ensure PREDICATE EXP [ARGUMENTS ...])
 
@@ -518,8 +488,7 @@ of the error-signalling code, as in {{(error ARGUMENTS ...)}}. If
 no {{ARGUMENTS}} are given, a generic error message is displayed
 with the offending value and {{PREDICATE}} expression.
 
-
-=== eval-when
+==== eval-when
 
  [syntax] (eval-when (SITUATION ...) EXP ...)
 
@@ -536,17 +505,16 @@ and an expression resulting into an unspecified value is compiled instead.
 The following table should make this clearer:
 
 <table>
-<tr><th></th><th>in compiled code</th><th>In interpreted code</th></tr>
+<tr><th></th><th>In compiled code</th><th>In interpreted code</th></tr>
 <tr><td>{{eval}}</td><td>ignore</td><td>evaluate</td></tr>
-<tr><td>{{compile}}</td><td>evaluate at compile time</td><td>ignore </td></tr>
-<tr><td>{{load}}</td><td>compile as normal</td><td>ignore </td></tr>
+<tr><td>{{compile}}</td><td>evaluate at compile time</td><td>ignore</td></tr>
+<tr><td>{{load}}</td><td>compile as normal</td><td>ignore</td></tr>
 </table>
 
 The situation specifiers {{compile-time}} and {{run-time}} are also
 defined and have the same meaning as {{compile}} and {{load}}, respectively.
 
-
-=== include
+==== include
 
  [syntax] (include STRING)
 
@@ -556,16 +524,14 @@ compiled/interpreted program.  If the included file has the extension
 current directory and, if not found, in all directories specified in the
 {{-include-path}} option.
 
-
-=== nth-value
+==== nth-value
 
  [syntax] (nth-value N EXP)
 
 Returns the {{N}}th value (counting from zero) of the values returned
 by expression {{EXP}}.
 
-
-=== time
+==== time
 
  [syntax] (time EXP1 ...)
 

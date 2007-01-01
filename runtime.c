@@ -790,6 +790,8 @@ static C_PTABLE_ENTRY *create_initial_ptable()
   C_pte(C_context_switch);
   C_pte(C_register_finalizer);
   C_pte(C_locative_ref);
+  C_pte(C_call_with_cthulhu);
+  C_pte(C_dunload);
   pt[ i ].id = NULL;
   return pt;
 }

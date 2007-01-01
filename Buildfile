@@ -207,6 +207,9 @@ EOF
 (actions "doc" ^{,CSI -s misc/makehtmldoc -pdf})
 (actions "ChangeLog" ^{darcs changes >ChangeLog})
 
+(notfile "wikisync")
+(actions "wikisync" ^{rsync -av --existing ,(conc WIKIDIR "/") wiki/})
+
 (notfile "dist")
 (actions 
  "dist"
