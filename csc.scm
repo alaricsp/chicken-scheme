@@ -167,13 +167,13 @@
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -run-time-macros -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info -check-imports
-    -emit-external-prototypes-first -inline -extension -release
+    -emit-external-prototypes-first -inline -extension -release -static-extensions
     -analyze-only) )
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -require-extension -inline-limit -profile-name -disable-warning -import
+    -require-extension -inline-limit -profile-name -disable-warning -import -require-static-extension
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
     -compress-literals) )
 
@@ -187,7 +187,6 @@
     (-f "-fixnum-arithmetic")
     (|-D| "-feature")
     (-i "-case-insensitive")
-    (|-R| "-require-extension")
     (|-K| "-keyword-style")
     (|-X| "-extend")
     (|-N| "-no-usual-integrations")
@@ -318,6 +317,8 @@
 (define shared #f)
 (define static #f)
 (define static-libs #f)
+(define static-extensions #f)
+(define required-extensions '())
 (define gui #f)
 
 
@@ -437,6 +438,7 @@
                                 `LIBNAME.lib' on Windows)                                
     -static-libs                link with static CHICKEN libraries
     -static                     generate completely statically linked executable
+    -static-extensions          link with static extensions (if available)
     -F<DIR>                     pass \"-F<DIR>\" to C compiler (add framework 
                                 header path on Mac OS X)
     -framework NAME             passed to linker on Mac OS X
@@ -502,7 +504,7 @@
 	   (when inquiry-only
 	     (when show-cflags (print* (compiler-options) #\space))
 	     (when show-ldflags (print* (linker-options) #\space))
-	     (when show-libs (print* (linker-libraries) #\space))
+	     (when show-libs (print* (linker-libraries #t) #\space))
 	     (newline)
 	     (exit) )
 	   #;(when (null? scheme-files)
@@ -560,6 +562,8 @@
 	       [(-static-libs) 
 		(set! translate-options (cons* "-feature" "chicken-compile-static" translate-options))
 		(set! static-libs #t) ]
+	       [(-static-extensions)
+		(set! static-extensions #t) ]
 	       [(-cflags)
 		(set! inquiry-only #t) 
 		(set! show-cflags #t) ]
@@ -597,6 +601,11 @@
 	       [(-e -embedded)
 		(set! embedded #t)
 		(set! compile-options (cons "-DC_EMBEDDED" compile-options)) ]
+	       [(-require-extension -R)
+		(check s rest)
+		(set! required-extensions (append required-extensions (list (car rest))))
+		(t-options "-require-extension" (car rest))
+		(set! rest (cdr rest)) ]
 	       [(-windows |-W|)
 		(set! gui #t)
 		(when win
@@ -756,6 +765,9 @@
 			    (if to-stdout 
 				'("-to-stdout")
 				`("-output-file" ,fc) )
+			    (if (or static static-libs static-extensions)
+				(map (lambda (e) (conc "-uses " e)) required-extensions)
+				'() )
 			    (map quote-option (append translate-options translation-optimization-options)) ) )
 		    " ") ) )
 	   (exit last-exit-code) )
@@ -815,6 +827,7 @@
 (define (run-linking)
   (let ([files (map cleanup-filename
 		    (append (reverse object-files)
+			    (nth-value 0 (static-extension-info))
 			    (if (or static static-libs)
 				(if gui gui-library-files library-files)
 				(if gui gui-shared-library-files shared-library-files) ) ) ) ] )
@@ -827,24 +840,43 @@
 		       files
 		       (list (string-append link-output-flag (cleanup-filename target-filename)) 
 			     (linker-options)
-			     (linker-libraries) ) ) ) ) ) )
+			     (linker-libraries #f) ) ) ) ) ) )
       (exit last-exit-code) )
     (when (and win (not static) (not static-libs) (not shared))
       (delete-file* (pathname-replace-extension target-filename "exp"))
       (delete-file* (pathname-replace-extension target-filename "lib")) )
     (unless keep-files (for-each delete-file* generated-object-files)) ) )
 
+(define (static-extension-info)
+  (let ((rpath (repository-path)))
+    (if (or static static-libs static-extensions)
+	(let loop ((exts required-extensions) (libs '()) (opts '()))
+	  (if (null? exts)
+	      (values (reverse libs) (reverse opts))
+	      (let ((info (extension-information (car exts))))
+		(if info
+		    (let ((a (assq 'static info)) 
+			  (o (assq 'static-options info)) )
+		      (loop (cdr exts) 
+			(if a (cons (make-pathname rpath (cadr a)) libs) libs)
+			(if o (cons (cadr o) opts) opts) ) ) 
+		    (loop (cdr exts) libs opts)) ) ) )
+	(values '() '()) ) ) )
+
 (define (linker-options)
   (string-append
-   (string-intersperse (append linking-optimization-options link-options))
+   (string-intersperse
+    (append linking-optimization-options link-options
+	    (nth-value 1 (static-extension-info)) ) )
    (if (and static (not win) (not osx)) " -static" "") ) )
 
-(define (linker-libraries)
+(define (linker-libraries #!optional staticexts)
   (string-intersperse
-   (cons (if (or static static-libs) extra-libraries extra-shared-libraries)
-	  (if (or static static-libs) 
-	      (if gui gui-library-files library-files)
-	      (if gui gui-shared-library-files shared-library-files) ) ) ) )
+   (append
+    (if staticexts (nth-value 0 (static-extension-info)) '())
+    (if (or static static-libs) 
+	(if gui gui-library-files library-files)
+	(if gui gui-shared-library-files shared-library-files) ) ) ) )
 
 
 ;;; Helper procedures:

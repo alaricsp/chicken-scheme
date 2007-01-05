@@ -117,6 +117,8 @@
 (define ##sys#core-library-modules
   '(extras lolevel utils tcp regex posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
 
+(define ##sys#explicit-library-modules '())
+
 (define-constant macro-table-size 301)
 (define-constant default-dynamic-load-libraries '("libchicken"))
 (define-constant cygwin-default-dynamic-load-libraries '("cygchicken-0"))
@@ -1415,7 +1417,8 @@
 		   (##sys#load (##sys#resolve-include-filename (##sys#symbol->string id) #t) #f #f) 
 		   (set! ##sys#features (cons fid ##sys#features)) )
 		 (values '(##sys#void) #t) ) ]
-	      [(memq id ##sys#core-library-modules)
+	      [(or (memq id ##sys#core-library-modules)
+		   (memq id ##sys#explicit-library-modules) )
 	       (values
 		(if comp?
 		    `(##core#declare '(uses ,id))

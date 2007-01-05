@@ -629,7 +629,7 @@ int sysinfo()
                 Bit 1: Child & parent share standard input if this bit is set.
                 Bit 2: Share standard output if bit is set.
                 Bit 3: Share standard error if bit is set.
-                Bit 4: Execute command in shell if bit is set.
+                (Bit 4: Execute command in shell if bit is set.)
 
     Returns: nonzero return value indicates failure.
 */
@@ -640,8 +640,11 @@ int C_process(const char * cmd, const char ** env,
 {
     int exit_code = 0, i = 0;
     const int
-        f_share_io[3] = { params & 1, params & 2, params & 4},
+        f_share_io[3] = { params & 1, params & 2, params & 4};
+#if 0
+    const int
         f_use_shell = params & 8;
+#endif
 
     char * buf = NULL;
     const char * invoke_cmd = NULL;
@@ -676,7 +679,7 @@ int C_process(const char * cmd, const char ** env,
                 if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
                 else { parent_end=a; child_io_handles[i]=b; }
             }
-            exit_code=(io_fds[i]=_open_osfhandle((int *)parent_end,0))<0;
+            exit_code=(io_fds[i]=_open_osfhandle((intptr_t)parent_end,0))<0;
         }
     }
 
@@ -687,6 +690,7 @@ int C_process(const char * cmd, const char ** env,
 
     /****** create command line ******/
 
+#if 0
     if (f_use_shell && exit_code == 0)
     {
         const char * shell = NULL;
@@ -707,7 +711,9 @@ int C_process(const char * cmd, const char ** env,
         exit_code=(NULL==buf);
         if (0==exit_code) { sprintf(buf,fmt,shell,cmd); invoke_cmd = buf; }
     }
-    else invoke_cmd = cmd;
+    else
+#endif
+        invoke_cmd = cmd;
 
     /****** finally spawn process ****/
 
@@ -1499,7 +1505,7 @@ EOF
 
 (define current-process-id (foreign-lambda int "C_getpid"))
 
-(define get-shell
+(define ##sys#shell-command
   (foreign-lambda* c-string () #<<EOF
     char *ret = getenv("COMSPEC");
     if (ret)
@@ -1516,13 +1522,17 @@ EOF
 EOF
     ) )
 
+(define (##sys#shell-command-arguments cmdlin)
+  (list "/c" cmdlin) )
+
 (define process-run
   (let ([process-spawn process-spawn]
 	[getenv getenv] )
     (lambda (f . args)
       (let ([args (if (pair? args) (car args) #f)])
-	(if args (process-spawn spawn/nowait f args)
-	    (process-spawn spawn/nowait (get-shell) (list "/c" f)) ) ) ) ) )
+	(if args
+	    (process-spawn spawn/nowait f args)
+	    (process-spawn spawn/nowait (##sys#shell-command) (##sys#shell-command-arguments f)) ) ) ) ) )
 
 ;;; Run subprocess connected with pipes:
 (define-foreign-variable _rdbuf char "C_rdbuf")
@@ -1552,12 +1562,12 @@ EOF
                     cmdlin
                     (loop (cdr args) (conc cmdlin " " (car args))))))
               cmd)])
-        (let-location ([handle int -1] [stdin int -1] [stdout int -1] [stderr int -1])
+        (let-location ([handle int -1] [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
           (let (
               [code
                 (c-process commandline env
                   (location handle) (location stdin_fd) (location stdout_fd) (location stderr_fd)
-                  (bitwise-ior (if stdinp 0 1) (if stdoutp 0 2) (if stderrp 0 4) (if args 0 8)))])
+                  (bitwise-ior (if stdinp 0 1) (if stdoutp 0 2) (if stderrp 0 4)))])
             (if (fx= 0 code)
               (values
                 (and stdoutp (open-input-file* stdout_fd)) ;Parent stdin
@@ -1571,11 +1581,15 @@ EOF
 
 (define (process cmd #!optional args env)
   (##sys#check-string cmd 'process)
-  (when args
-    (##sys#check-list args 'process)
-    (for-each
-      (cut ##sys#check-string <> 'process)
-      (if (and (pair? args) (eq? 'exact (car args))) (cdr args) args)) )
+  (if args
+    (begin
+      (##sys#check-list args 'process)
+      (for-each
+        (cut ##sys#check-string <> 'process)
+        (if (and (pair? args) (eq? 'exact (car args))) (cdr args) args)) )
+      (begin
+        (set! args (##sys#shell-command-arguments cmd))
+        (set! cmd (##sys#shell-command)) ) )
   (when env
     (##sys#check-list env 'process)
     (for-each (cut ##sys#check-string <> 'process) env) )

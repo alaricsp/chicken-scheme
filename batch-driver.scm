@@ -129,6 +129,7 @@
 	[hshrink (memq 'heap-shrinkage options)]
 	[kwstyle (memq 'keyword-style options)]
 	[lcthreshold (memq 'compress-literals options)]
+	[uses-units '()]
 	[uunit (memq 'unit options)]
 	[a-only (memq 'analyze-only options)]
 	[dynamic (memq 'dynamic options)]
@@ -267,6 +268,7 @@
 	      ipath) )
     (when (and outfile filename (string=? outfile filename))
       (quit "source- and output-filename are the same") )
+    (set! uses-units (map string->symbol (collect-options 'uses)))
 
     ;; Handle feature options:
     (for-each register-feature! (collect-options 'feature))
@@ -299,7 +301,7 @@
 		     (else (quit "no filename available for `-extension' option")) ) ) ) ) ) ) )
 
     ;; Append required extensions to initforms:
-    (let ([ids (map string->symbol (collect-options 'require-extension))])
+    (let ([ids (lset-difference eq? (map string->symbol (collect-options 'require-extension)) uses-units)])
       (set! initforms
 	(append initforms (map (lambda (r) `(##core#require-extension ',r)) ids)) ) )
 
@@ -404,9 +406,9 @@
 
 	   (print "source" '|1| forms)
 	   (begin-time)
-	   (let ([us (collect-options 'uses)])
-	     (unless (null? us)
-	       (set! forms (cons `(declare (uses ,@us)) forms)) ) )
+	   (unless (null? uses-units)
+	     (set! ##sys#explicit-library-modules (append uses-units ##sys#explicit-library-modules))
+	     (set! forms (cons `(declare (uses ,@uses-units)) forms)) )
 	   (let* ([exps0 (map canonicalize-expression (append initforms forms))]
 		  [pvec (gensym)]
 		  [plen (length profile-lambda-list)]

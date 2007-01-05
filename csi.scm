@@ -119,12 +119,11 @@ EOF
     (lambda (char port)
       (cond [(or (char=? #\) char) (char-whitespace? char))
 	     `',(history-ref (fx- history-count 1)) ]
-	    [(char-numeric? char)
-	     (let ([n (read port)])
-	       (if (integer? n)
-		   `',(history-ref n)
-		   (##sys#error "invalid syntax in `#<number>' (REPL history)" n) ) ) ]
 	    [else (old-hook char port)] ) ) ) )
+
+(set! ##sys#sharp-number-hook
+  (lambda (port n)
+    `',(history-ref n) ) )
 
 
 ;;; Chop terminating separator from pathname:
