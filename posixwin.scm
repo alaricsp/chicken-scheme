@@ -679,7 +679,7 @@ int C_process(const char * cmd, const char ** env,
                 if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
                 else { parent_end=a; child_io_handles[i]=b; }
             }
-            exit_code=(io_fds[i]=_open_osfhandle((intptr_t)parent_end,0))<0;
+            exit_code=(io_fds[i]=_open_osfhandle((long)parent_end,0))<0;
         }
     }
 

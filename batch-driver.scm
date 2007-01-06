@@ -407,7 +407,7 @@
 	   (print "source" '|1| forms)
 	   (begin-time)
 	   (unless (null? uses-units)
-	     (set! ##sys#explicit-library-modules (append uses-units ##sys#explicit-library-modules))
+	     (set! ##sys#explicit-library-modules (append ##sys#explicit-library-modules uses-units))
 	     (set! forms (cons `(declare (uses ,@uses-units)) forms)) )
 	   (let* ([exps0 (map canonicalize-expression (append initforms forms))]
 		  [pvec (gensym)]
