@@ -472,6 +472,9 @@
   is the same as
 
     -v -k -fixnum-arithmetic -optimize
+
+  The contents of the environment variable CSC_OPTIONS are implicitly
+  passed to every invocation of `csc'.
 "
 ) )
 
@@ -874,9 +877,11 @@
   (string-intersperse
    (append
     (if staticexts (nth-value 0 (static-extension-info)) '())
-    (if (or static static-libs) 
-	(if gui gui-library-files library-files)
-	(if gui gui-shared-library-files shared-library-files) ) ) ) )
+    (cons
+     (if (or static static-libs) extra-libraries extra-shared-libraries)
+     (if (or static static-libs) 
+	 (if gui gui-library-files library-files)
+	 (if gui gui-shared-library-files shared-library-files) ) ) ) ) )
 
 
 ;;; Helper procedures:
@@ -927,4 +932,5 @@
 
 ;;; Run it:
 
-(run (command-line-arguments))
+(run (append (string-split (or (getenv "CSC_OPTIONS") ""))
+	     (command-line-arguments)) )

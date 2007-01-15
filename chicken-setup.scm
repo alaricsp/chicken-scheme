@@ -300,10 +300,8 @@ static void create_directory(char *pathname) {}
 		     (s2 (fixmaketarget s)) 
 		     (date (and (file-exists? s2)
 				(file-modification-time s2))))
-
 		(when (setup-verbose-flag)
 		  (printf "make: ~achecking ~a~%" indent s2))
-
 		(if line
 		    (let ((deps (cadr line)))
 		      (for-each (let ((new-indent (string-append " " indent)))
@@ -855,10 +853,19 @@ EOF
   (define (requirements reqs)
     (fold 
      (lambda (r reqs)
-       (let ((node (assq r *repository-tree*)))
-	 (cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
-	       ((memq r ##sys#core-library-modules) reqs)
-	       (else (error "Broken dependencies: extension does not exist" r) ) ) ) ) 
+       (cond ((symbol? r)
+	      (let ((node (assq r *repository-tree*)))
+		(cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
+		      ((memq r ##sys#core-library-modules) reqs)
+		      (else (error "Broken dependencies: extension does not exist" r) ) ) ) )
+	     (else
+	      (when (setup-verbose-flag) 
+		(print "Testing system:")
+		(pp r) )
+	      (let ((f (eval r)))
+	      (when (setup-verbose-flag) 
+		(print "\t-> " f) )
+	      (requirements f) ) ) ) )
      '() 
      reqs) )
   (and (or *dont-ask*

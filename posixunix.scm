@@ -399,7 +399,7 @@ EOF
     (define-macro (##sys#check-number . _) '(##core#undefined))
     (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
  [else
-  (declare (emit-exports "posixunix.exports")) ] )
+  (declare (emit-exports "posix.exports")) ] )
 
 (register-feature! 'posix)
 
@@ -1162,6 +1162,23 @@ EOF
 (define errno/rofs _erofs)
 (define errno/exist _eexist)
 (define errno/wouldblock _ewouldblock)
+
+(define errno/2big 0)
+(define errno/deadlk 0)
+(define errno/dom 0)
+(define errno/fbig 0)
+(define errno/ilseq 0)
+(define errno/mlink 0)
+(define errno/nametoolong 0)
+(define errno/nfile 0)
+(define errno/nodev 0)
+(define errno/nolck 0)
+(define errno/nosys 0)
+(define errno/notempty 0)
+(define errno/notty 0)
+(define errno/nxio 0)
+(define errno/range 0)
+(define errno/xdev 0)
 
 (cond-expand
  [ecos]

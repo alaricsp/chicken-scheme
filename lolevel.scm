@@ -46,13 +46,6 @@
 #ifndef C_NONUNIX
 # include <sys/mman.h>
 #endif
-#if defined(__i386__) && !defined(C_NONUNIX) && !defined(__CYGWIN__)
-# define C_valloc(n)               valloc(n)
-#elif defined(__i386__) || defined(_M_IX86)
-# define C_valloc(n)               malloc(n)
-#else
-# define C_valloc(n)               NULL
-#endif
 
 #define C_pointer_to_object(ptr)   ((C_word*)C_block_item(ptr, 0))
 #define C_w2b(x)                   C_fix(C_wordstobytes(C_unfix(x)))
@@ -412,7 +405,7 @@ EOF
       [malloc
        (foreign-lambda* scheme-object ((int size))
 	 "char *bv;
-           if((bv = (char *)malloc(size + 3 + sizeof(C_header))) == NULL) return(C_SCHEME_FALSE);
+           if((bv = (char *)C_malloc(size + 3 + sizeof(C_header))) == NULL) return(C_SCHEME_FALSE);
            bv = (char *)C_align((C_word)bv);
            ((C_SCHEME_BLOCK *)bv)->header = C_BYTEVECTOR_TYPE | size;
            return((C_word)bv);") ] )

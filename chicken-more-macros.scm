@@ -117,13 +117,15 @@
        [read read]
        [reverse reverse] )
    (lambda (filename)
-     `(begin
-	,@(with-input-from-file (##sys#resolve-include-filename filename #t)
-	    (lambda ()
-	      (do ([x (read) (read)]
-		   [xs '() (cons x xs)] )
-		  ((eof-object? x) 
-		   (reverse xs))) ) ) ) ) ) )
+     (let ((path (##sys#resolve-include-filename filename #t)))
+       (when (load-verbose) (print "; including " path " ..."))
+       `(begin
+	  ,@(with-input-from-file path
+	      (lambda ()
+		(do ([x (read) (read)]
+		     [xs '() (cons x xs)] )
+		    ((eof-object? x) 
+		     (reverse xs))) ) ) ) ) ) ) )
 
 (##sys#register-macro
  'assert

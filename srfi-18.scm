@@ -281,16 +281,25 @@ EOF
     (##sys#setslot thread 3 'ready)
     (##sys#add-to-ready-queue thread) ) )
 
-(define thread-sleep!
-  (lambda (tm)
-    (unless tm (##sys#signal-hook #:type-error 'thread-sleep! "invalid timeout argument" tm))
+(define thread-sleep!)
+(define thread-sleep!/ms)
+
+(let ()
+  (define (sleep limit loc)
     (##sys#call-with-current-continuation
      (lambda (return)
-       (let ([limit (##sys#compute-time-limit tm)]
-	     [ct ##sys#current-thread] )
+       (let ((ct ##sys#current-thread))
 	 (##sys#setslot ct 1 (lambda () (return (##core#undefined))))
 	 (##sys#thread-block-for-timeout! ct limit)
-	 (##sys#schedule) ) ) ) ) )
+	 (##sys#schedule) ) ) ) )
+  (set! thread-sleep! 
+    (lambda (tm)
+      (unless tm (##sys#signal-hook #:type-error 'thread-sleep! "invalid timeout argument" tm))
+      (sleep (##sys#compute-time-limit tm)) ) )
+  (set! thread-sleep!/ms 
+    (lambda (ms)
+      (##sys#check-exact ms 'thread-sleep!/ms)
+      (sleep (fx+ (##sys#fudge 16) ms)) ) ) )
 
 
 ;;; Mutexes:

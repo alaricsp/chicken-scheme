@@ -569,15 +569,7 @@
 			   (hash-table-update! 
 			    file-requirements 'syntax-requirements (cut lset-union eq? <> ids)
 			    (lambda () ids) )
-			   (let ([rs (##sys#lookup-runtime-requirements ids)])
-			     (hash-table-update!
-			      file-requirements 'runtime-requirements (cut lset-union eq? <> rs)
-			      (lambda () rs))
-			     (walk
-			      (if (null? rs)
-				  '(##core#undefined)
-				  `(##sys#require ,@(map (lambda (x) `',x) rs)) )
-			      ae me dest) ) ) )
+			   '(##core#undefined) ) )
 
 			((##core#require-extension)
 			 (walk
@@ -1125,9 +1117,9 @@
 	(when (and (list? spec) (= 3 (length spec)))
 	  (set! compressed-literals-initializer (third spec)) ) )
        ((emit-exports)
-	(if (null? (cdr spec))
-	    (quit "invalid `emit-exports' declaration" spec)
-	    (set! export-file-name (cadr spec)) ) )
+	(cond ((null? (cdr spec))
+	       (quit "invalid `emit-exports' declaration" spec) )
+	      ((not export-file-name) (set! export-file-name (cadr spec))) ) )
        ((emit-external-prototypes-first)
 	(set! external-protos-first #t) )
        ((lambda-lift) (set! do-lambda-lifting #t))

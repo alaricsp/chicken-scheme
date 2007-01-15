@@ -242,11 +242,9 @@ chickenulibsources = ueval.c uextras.c ulibrary.c ulolevel.c uutils.c utcp.c \
   usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c
 
 if IS_MINGW
-posixexports = posixwin.exports
 chickenlibsources += posixwin.c
 chickenulibsources += uposixwin.c
 else
-posixexports = posixunix.exports
 chickenlibsources += posixunix.c
 chickenulibsources += uposixunix.c
 endif
@@ -281,9 +279,6 @@ pkgdata_DATA = chicken-more-macros.scm \
   banner.scm chicken-ffi-macros.scm library.exports eval.exports srfi-1.exports srfi-4.exports \
   srfi-13.exports srfi-14.exports srfi-18.exports utils.exports extras.exports \
   eval.exports tcp.exports regex.exports posix.exports lolevel.exports scheduler.exports
-
-posix.exports: $(posixexports)
-	cp $(posixexports) posix.exports
 
 regex.exports: $(regexexports)
 	cp $(regexexports) regex.exports

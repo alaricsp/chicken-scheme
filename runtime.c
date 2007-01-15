@@ -623,14 +623,14 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   C_set_or_change_heap_size(heap ? heap : DEFAULT_HEAP_SIZE, 0);
 
   /* Allocate temporary stack: */
-  if((C_temporary_stack_limit = (C_word *)malloc(TEMPORARY_STACK_SIZE * sizeof(C_word))) == NULL)
+  if((C_temporary_stack_limit = (C_word *)C_malloc(TEMPORARY_STACK_SIZE * sizeof(C_word))) == NULL)
     return 0;
   
   C_temporary_stack_bottom = C_temporary_stack_limit + TEMPORARY_STACK_SIZE;
   C_temporary_stack = C_temporary_stack_bottom;
   
   /* Allocate mutation stack: */
-  mutation_stack_bottom = (C_word **)malloc(DEFAULT_MUTATION_STACK_SIZE * sizeof(C_word *));
+  mutation_stack_bottom = (C_word **)C_malloc(DEFAULT_MUTATION_STACK_SIZE * sizeof(C_word *));
 
   if(mutation_stack_bottom == NULL) return 0;
 
@@ -7335,7 +7335,7 @@ C_regparm C_word C_fcall convert_string_to_number(C_char *str, int radix, C_word
   C_word n;
   C_char *eptr, *eptr2;
   double fn;
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
   int len = C_strlen(str);
 
   if(len >= 4) {

@@ -35,7 +35,7 @@
 
 (declare
   (unit utils)
-  (uses regex extras eval)
+  (uses regex extras)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)

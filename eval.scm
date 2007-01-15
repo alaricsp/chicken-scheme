@@ -1426,17 +1426,23 @@
 		#t) ]
 	      [else
 	       (let ([info (##sys#extension-information id 'require-extension)])
-		 (cond [info
-			(values 
-			 (if (or (assq 'syntax info) (assq 'require-at-runtime info))
-			     `(##core#require-for-syntax ',id)
-			     (begin
-			       (add-req id)
-			       `(##sys#require ',id) ) )
-			 #t) ]
-		       [else
+		 (cond (info
+			(let ((s (assq 'syntax info))
+			      (rr (assq 'require-at-runtime info)) )
+			  (when s (add-req id))
+			  (values 
+			   `(begin
+			      ,@(if s `((##core#require-for-syntax ',id)) '())
+			      ,@(if (and (not rr) s)
+				   '()
+				   `((##sys#require
+				      ,@(map (lambda (id) `',id)
+					     (cond (rr (cdr rr))
+						   (else (list id)) ) ) ) ) ) )
+			   #t) ) )
+		       (else
 			(add-req id)
-			(values `(##sys#require ',id) #f)] ) ) ] ) )
+			(values `(##sys#require ',id) #f)) ) ) ] ) )
       (if (and (pair? id) (symbol? (car id)))
 	  (let ([a (assq (##sys#slot id 0) ##sys#extension-specifiers)])
 	    (if a

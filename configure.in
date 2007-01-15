@@ -336,7 +336,7 @@ boot_c="batch-driver.c c-backend.c c-platform.c chicken.c chicken-profile.c \
   usrfi-13.c usrfi-14.c usrfi-18.c utcp.c utils.c uutils.c"
 
 boot_exports="eval.exports extras.exports library.exports lolevel.exports \
-  pcre.exports posixunix.exports posixwin.exports pregexp.exports \
+  pcre.exports posix.exports pregexp.exports \
   regexunix.exports scheduler.exports srfi-1.exports srfi-4.exports \
   srfi-13.exports srfi-18.exports tcp.exports utils.exports"
 

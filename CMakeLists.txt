@@ -617,9 +617,8 @@ SET(BOOT_CFILES
   pcre.c
   pcre.exports
   posixunix.c
-  posixunix.exports
+  posix.exports
   posixwin.c
-  posixwin.exports
   pregexp.c
   pregexp.exports
   profiler.c
@@ -1307,10 +1306,43 @@ LIBRARY_SCM_TO_C(match)
 SIMPLE_SCM_TO_C(optimizer tweaks)
 LIBRARY_SCM_TO_C_EXPORTS(pcre regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(pcre regex-common)
-LIBRARY_SCM_TO_C_EXPORTS(posixunix)
+
+# posixunix.scm and posixwin.scm both generate a file called posix.exports.
+# Thus there is a file collision.  In principle the files should export the same
+# functions, but in practice, Windows often lags behind Unix development.
+# The quick 'n' dirty solution is to compile both at the same time and just
+# take the results of the 2nd compilation as the correct results.  We make
+# the Windows version of posix.exports the "correct" results because it is
+# more likely to be missing stuff.  Thus it'll break someone's code at
+# compile time and we'll know there's a problem.
+#
+# If this quick 'n' dirty approach is deemed insufficient, then the contents
+# of the posix.exports files need to be sorted and compared, to ensure
+# that they are indeed identical.  The sorting could be done with CMake,
+# but sorted output from Chicken itself would be better.  It would be more
+# readable and allow Autoconf to generate the same output.
+
+# Only posixwin.scm is responsible for posix.exports.
+# posixunix.scm emits it anyways, but posixwin.scm will re-emit it.
+# Side effect: posixwin.c is compiled every time posixunix.c is compiled.
+# If we had a command line option to suppress the emit code, we could avoid this.
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/posixunix.c
+  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/posixunix.scm
+  COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/posixunix.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/posixunix.c -explicit-use ${CHICKEN_FLAGS}
+  COMMENT "Compiling ${Chicken_SOURCE_DIR}/posixunix.scm to ${CMAKE_CURRENT_BINARY_DIR}/posixwin.c"
+)
+ADD_CUSTOM_COMMAND(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/posixwin.c ${CMAKE_CURRENT_BINARY_DIR}/posix.exports
+  MAIN_DEPENDENCY ${Chicken_SOURCE_DIR}/posixwin.scm
+  COMMAND ${CURRENT_CHICKEN} ${Chicken_SOURCE_DIR}/posixwin.scm -output-file ${CMAKE_CURRENT_BINARY_DIR}/posixwin.c -explicit-use ${CHICKEN_FLAGS}
+  COMMENT "Compiling ${Chicken_SOURCE_DIR}/posixwin.scm to ${CMAKE_CURRENT_BINARY_DIR}/posixwin.c Exporting ${CMAKE_CURRENT_BINARY_DIR}/posix.exports"
+)
+# Unsafe libraries don't emit anything.
 UNSAFE_LIBRARY_SCM_TO_C(posixunix)
-LIBRARY_SCM_TO_C_EXPORTS(posixwin)
 UNSAFE_LIBRARY_SCM_TO_C(posixwin)
+
 LIBRARY_SCM_TO_C_EXPORTS(pregexp regex-common)
 UNSAFE_LIBRARY_SCM_TO_C(pregexp regex-common)
 LIBRARY_SCM_TO_C(profiler)

@@ -2776,8 +2776,7 @@ EOF
 
 (define (##sys#user-print-hook x readable port)
   (let* ([type (##sys#slot x 0)]
-	 [typename (if (eq? 'record type) (##sys#slot (##sys#slot x 1) 1) type)]
-	 [a (assq typename ##sys#record-printers)] )
+	 [a (assq type ##sys#record-printers)] )
     (cond [a ((##sys#slot a 1) x port)]
 	  [else
 	   (##sys#print "#<" #f port)

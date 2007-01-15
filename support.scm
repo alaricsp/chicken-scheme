@@ -755,15 +755,22 @@
   (unless block-compilation
     (with-output-to-file file
       (lambda ()
-	(##sys#hash-table-for-each
-	 (lambda (sym plist)
-	   (when (and (assq 'global plist) 
-		      (assq 'assigned plist)
-		      (or (and export-list (memq sym export-list))
-			  (not (memq sym block-globals)) ) )
-	     (write sym) 
-	     (newline) ) )
-	 db) ) ) ) )
+	(let ((exports '()))
+	  (##sys#hash-table-for-each
+	   (lambda (sym plist)
+	     (when (and (assq 'global plist) 
+			(assq 'assigned plist)
+			(or (and export-list (memq sym export-list))
+			    (not (memq sym block-globals)) ) )
+	       (set! exports (cons sym exports)) ) )
+	   db)
+	  (for-each 
+	   (lambda (s)
+	     (write s)
+	     (newline) )
+	   (sort exports
+		 (lambda (s1 s2)
+		   (string<? (##sys#slot s1 1) (##sys#slot s2 1)))) ) ) ) ) ) )
 
 (define (dump-undefined-globals db)
   (##sys#hash-table-for-each
