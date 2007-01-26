@@ -134,7 +134,6 @@ c-backend.c : tweaks.scm
 support.c : tweaks.scm banner.scm
 c-platform.c : tweaks.scm
 library.c: build.scm
-pcre.c pregexp.c regexunix.c: regex-common.scm
 
 # Rules to build C files from Scheme sources.  These are not used in a
 # normal build but are required for stage2 and stage3 builds.  They
@@ -193,12 +192,8 @@ utcp.c: tcp.scm
 	$(CHICKEN) tcp.scm $(CHICKEN_UFLAGS) -output-file utcp.c -explicit-use
 ulolevel.c: lolevel.scm
 	$(CHICKEN) lolevel.scm $(CHICKEN_UFLAGS) -output-file ulolevel.c -explicit-use
-uregexunix.c: regexunix.scm regex-common.scm
-	$(CHICKEN) regexunix.scm $(CHICKEN_UFLAGS) -output-file uregexunix.c -explicit-use
-upregexp.c: pregexp.scm regex-common.scm
-	$(CHICKEN) pregexp.scm $(CHICKEN_UFLAGS) -output-file upregexp.c -explicit-use
-upcre.c: pcre.scm regex-common.scm
-	$(CHICKEN) pcre.scm $(CHICKEN_UFLAGS) -output-file upcre.c -explicit-use
+uregex.c: regex.scm
+	$(CHICKEN) regex.scm $(CHICKEN_UFLAGS) -output-file uregex.c -explicit-use
 usrfi-18.c: srfi-18.scm
 	$(CHICKEN) srfi-18.scm $(CHICKEN_UFLAGS) -output-file usrfi-18.c -explicit-use
 
@@ -237,9 +232,9 @@ lib_LTLIBRARIES = libchicken.la libuchicken.la
 
 commonlibsources = match.c profiler.c runtime.c scheduler.c stub.c
 chickenlibsources = eval.c extras.c library.c lolevel.c utils.c tcp.c \
-  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c
+  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c regex.c
 chickenulibsources = ueval.c uextras.c ulibrary.c ulolevel.c uutils.c utcp.c \
-  usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c
+  usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c uregex.c
 
 if IS_MINGW
 chickenlibsources += posixwin.c
@@ -249,28 +244,19 @@ chickenlibsources += posixunix.c
 chickenulibsources += uposixunix.c
 endif
 
-if USE_PCRE
-regexexports = pcre.exports
-chickenlibsources += pcre.c
-chickenulibsources += upcre.c
-else
-if USE_PREGEX
-regexexports = pregexp.exports
-chickenlibsources += pregexp.c
-chickenulibsources += upregexp.c
-else
-regexexports = regexunix.exports
-chickenlibsources += regexunix.c
-chickenulibsources += uregexunix.c
-endif
-endif
+pcresources = pcre/pcre_compile.c pcre/pcre_get.c pcre/pcre_printint.c pcre/pcre_ucp_findchar.c \
+	pcre/pcre_config.c pcre/pcre_globals.c pcre/pcre_refcount.c pcre/pcre_valid_utf8.c \
+	pcre/pcre_dfa_exec.c pcre/pcre_info.c pcre/pcre_study.c pcre/pcre_version.c \
+	pcre/pcre_exec.c pcre/pcre_maketables.c pcre/pcre_tables.c pcre/pcre_xclass.c \
+	pcre/pcre_fullinfo.c pcre/pcre_ord2utf8.c pcre/pcre_try_flipped.c pcre/chartables.c
+pcreoptions = -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC
 
-libchicken_la_SOURCES = $(commonlibsources) $(chickenlibsources)
-libchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN
+libchicken_la_SOURCES = $(commonlibsources) $(chickenlibsources) $(pcresources)
+libchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN $(pcreoptions)
 libchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_STATIC_LIBS)
 
-libuchicken_la_SOURCES =$(commonlibsources) $(chickenulibsources)
-libuchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG
+libuchicken_la_SOURCES =$(commonlibsources) $(chickenulibsources) $(pcresources)
+libuchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG $(pcreoptions)
 libuchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_STATIC_LIBS)
 
 
@@ -279,9 +265,6 @@ pkgdata_DATA = chicken-more-macros.scm \
   banner.scm chicken-ffi-macros.scm library.exports eval.exports srfi-1.exports srfi-4.exports \
   srfi-13.exports srfi-14.exports srfi-18.exports utils.exports extras.exports \
   eval.exports tcp.exports regex.exports posix.exports lolevel.exports scheduler.exports
-
-regex.exports: $(regexexports)
-	cp $(regexexports) regex.exports
 
 # Install docs and sources.
 install-data-local:
@@ -295,7 +278,7 @@ install-data-local:
 # Note that a tarball distribution can clobber its *.c boot files
 # and have no way of getting them back from the Makefile, but the
 # user can always just unpack the tarball again.
-CLEANFILES = c-backend.c c-platform.c chicken-defaults.h chicken-profile.c chicken-setup.c chicken.c compiler.c csc.c csc csi.c eval.c extras.c library.c lolevel.c match.c optimizer.c posixunix.c profiler.c regexunix.c scheduler.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c stub.c support.c tcp.c ueval.c uextras.c ulibrary.c ulolevel.c uposixunix.c uregexunix.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c utcp.c utils.c uutils.c
+CLEANFILES = c-backend.c c-platform.c chicken-defaults.h chicken-profile.c chicken-setup.c chicken.c compiler.c csc.c csc csi.c eval.c extras.c library.c lolevel.c match.c optimizer.c posixunix.c profiler.c scheduler.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c stub.c support.c tcp.c ueval.c uextras.c ulibrary.c ulolevel.c uposixunix.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c utcp.c utils.c uutils.c regex.c uregex.c
 DISTCLEANFILES = $(PACKAGE)-$(VERSION).*
 clean-local:
 	-rm -rf stage2 stage3 stage2-stamp stage3-stamp

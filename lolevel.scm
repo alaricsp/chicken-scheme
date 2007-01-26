@@ -525,6 +525,7 @@ EOF
 		    (car releaser) 
 		    (foreign-lambda void "C_free" c-pointer) ) ] )
       (let release ([x x])
+	(printf "release: ~s~%" x)
 	(cond [(not (##core#inline "C_blockp" x)) x]
 	      [(not (##core#inline "C_permanentp" x)) x]
 	      [else

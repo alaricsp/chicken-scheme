@@ -146,12 +146,24 @@ EOF
 (define (compose . fns)
   (define (rec f0 . fns)
     (if (null? fns)
-      f0
-      (lambda args
-        (call-with-values
-          (lambda () (apply (apply rec fns) args))
-          f0) ) ) )
-  (apply rec fns) )
+	f0
+	(lambda args
+	  (call-with-values
+	      (lambda () (apply (apply rec fns) args))
+	    f0) ) ) )
+  (if (null? fns)
+      values
+      (apply rec fns) ) )
+
+(define (o . fns)
+  (if (null? fns)
+      identity
+      (let loop ((fns fns))
+	(let ((h (##sys#slot fns 0))
+	      (t (##sys#slot fns 1)) )
+	  (if (null? t)
+	      h
+	      (lambda (x) (h ((loop t) x))))))))
 
 (define (list-of pred)
   (lambda (lst)
@@ -213,8 +225,6 @@ EOF
 (define (flatten . lists0)
   (let loop ([lists lists0] [rest '()])
     (cond [(null? lists) rest]
-	  [(cond-expand [unsafe #f] [else (not (pair? lists))])
-	   (##sys#not-a-proper-list-error lists0) ]
 	  [else
 	   (let ([head (##sys#slot lists 0)]
 		 [tail (##sys#slot lists 1)] )

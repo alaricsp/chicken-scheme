@@ -161,7 +161,7 @@
 (define default-extended-bindings
   '(bitwise-and bitwise-ior bitwise-xor bitwise-not add1 sub1 fx+ fx- fx* fx/ fxmod
     fx= fx> fx< fx>= fx<= fixnum? fxneg fxmax fxmin identity fp+ fp- fp* fp/ fpmin fpmax fpneg
-    fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl
+    fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl bit-set?
     arithmetic-shift void flush-output thread-specific thread-specific-set!
     not-pair? atom? null-list? print print* error cpu-time proper-list? call/cc
     u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector 
@@ -1053,3 +1053,15 @@
 		     (make-node 
 		      '##core#inline '("C_anyp")
 		      (list arg)) ) ) ) ) ) ) )
+
+(rewrite
+ 'bit-set? 8
+ (lambda (db classargs cont callargs)
+   (and (= 2 (length callargs))
+	(make-node
+	 '##core#call '(#t)
+	 (list cont
+	       (make-node
+		'##core#inline 
+		(list (if (eq? number-type 'fixnum) "C_u_i_bit_setp" "C_i_bit_setp"))
+		callargs) ) ) ) ) )

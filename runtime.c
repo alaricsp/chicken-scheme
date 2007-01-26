@@ -4148,10 +4148,15 @@ C_regparm C_word C_fcall C_copy_block(C_word from, C_word to)
   int n = C_header_size(from);
   long bytes;
 
-  if(C_header_bits(from) & C_BYTEBLOCK_BIT) bytes = n;
-  else bytes = C_wordstobytes(n);
+  if(C_header_bits(from) & C_BYTEBLOCK_BIT) {
+    bytes = n;
+    C_memcpy((C_SCHEME_BLOCK *)to, (C_SCHEME_BLOCK *)from, bytes + sizeof(C_header));
+  }
+  else {
+    bytes = C_wordstobytes(n);
+    C_memcpy((C_SCHEME_BLOCK *)to, (C_SCHEME_BLOCK *)from, bytes + sizeof(C_header));
+  }
 
-  C_memcpy((C_SCHEME_BLOCK *)to, (C_SCHEME_BLOCK *)from, bytes + sizeof(C_header));
   return to;
 }
 
@@ -5161,6 +5166,25 @@ C_regparm C_word C_fcall C_a_i_bitwise_xor(C_word **a, int c, C_word n1, C_word 
 }
 
 
+C_regparm C_word C_fcall C_i_bit_setp(C_word n, C_word i)
+{
+  double f1;
+  C_uword nn1;
+  int index;
+
+  if((i & C_FIXNUM_BIT) == 0) 
+    barf(C_BAD_ARGUMENT_TYPE_NO_FIXNUM_ERROR, "bit-set?", i);
+
+  index = C_unfix(i);
+
+  if(index < 0 || index >= C_WORD_SIZE)
+    barf(C_OUT_OF_RANGE_ERROR, "bit-set?", n, i);
+
+  C_check_uint(n, f1, nn1, "bit-set?");
+  return C_mk_bool((nn1 & (1 << index)) != 0);
+}
+
+
 C_regparm C_word C_fcall C_a_i_bitwise_not(C_word **a, int c, C_word n)
 {
   double f;
@@ -5828,7 +5852,7 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
   buf[ 0 ] = n + 2;
   buf[ 1 ] = fn;
   buf[ 2 ] = k;
-  memcpy(&buf[ 3 ], C_temporary_stack_limit, n * sizeof(C_word));
+  C_memcpy(&buf[ 3 ], C_temporary_stack_limit, n * sizeof(C_word));
   proc = (void *)C_block_item(fn, 0);
   __asm { 
     mov eax, proc
@@ -8708,7 +8732,7 @@ static void copy_closure_2(void *dummy)
     *p = ptr;
 
   *(p++) = C_CLOSURE_TYPE | cells;
-  C_memcpy(p, C_data_pointer(proc), cells * sizeof(C_word));
+  C_memcpy_slots(p, C_data_pointer(proc), cells);
   C_kontinue(k, (C_word)ptr);
 }
 

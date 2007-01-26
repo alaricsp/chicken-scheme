@@ -681,6 +681,14 @@ is a case-insensitive version of {{substring-index}}.
 
 === Combinators
 
+
+==== any?
+
+ [procedure] (any? X)
+
+Ignores it's argument and always returns {{#t}}. This is actually useful sometimes.
+
+
 ==== constantly
 
  [procedure] (constantly X ...)
@@ -716,6 +724,8 @@ argument-procedures {{PROC1 PROC2 ...}}.
                          (lambda () (apply G args))
                          F))
 </enscript>
+
+{{(compose)}} is equivalent to {{values}}.
 
 
 ==== conjoin
@@ -812,12 +822,12 @@ applied to a list of elements that all satisfy the predicate procedure
 Ignores it's arguments, does nothing and returns an unspecified value.
 
 
-==== any?
+==== o
 
- [procedure] (any? X)
+ [procedure] (o PROC ...)
 
-Ignores it's argument and always returns {{#t}}. This is actually useful sometimes.
-
+A single value version of {{compose}} (slightly faster). {{(o)}} is equivalent
+to {{identity}}.
 
 === Binary searching
 

@@ -326,11 +326,16 @@ an error is signaled.
 
  [procedure] (file-stat FILE [LINK])
 
-Returns a 9-element vector with the following contents: inode-number, mode (as with {{file-permissions}}),
-number of hard links, uid of owner (as with {{file-owner}}), gid of owner, size (as with
-{{file-size}}) and access-, change- and modification-time (as with {{file-access-time}},
-{{file-change-time}} and {{file-modification-time}}).
-If the optional argument {{LINK}} is given and not {{#f}}, then the file-statistics vector will be resolved for symbolic links (otherwise symbolic links are resolved).
+Returns a 13-element vector with the following contents: inode-number,
+mode (as with {{file-permissions}}), number of hard links, uid of
+owner (as with {{file-owner}}), gid of owner, size (as with
+{{file-size}}) and access-, change- and modification-time (as with
+{{file-access-time}}, {{file-change-time}} and
+{{file-modification-time}}, device id, device type (for special file
+inode, blocksize and blocks allocated.  On Windows systems the last 4
+values are undefined.  If the optional argument {{LINK}} is given and
+not {{#f}}, then the file-statistics vector will be resolved for
+symbolic links (otherwise symbolic links are not resolved).
 
 ==== file-position
 

@@ -2,12 +2,10 @@
 
 == Introduction
 
-''(This document describes version 2.511)''
+''(This document describes version 2.517)''
 
 '''CHICKEN is a compiler that translates Scheme source files into C''', which in
-turn can be fed to a C-compiler to generate a standalone executable. This
-principle, which is used by several existing compilers, achieves high
-portability because C is implemented on nearly all available platforms.
+turn can be fed to a C-compiler to generate a standalone executable. 
 An interpreter is also available and can be used as
 a scripting environment or for testing programs before compilation.
 

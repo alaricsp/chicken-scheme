@@ -1396,7 +1396,7 @@
 	     (loop1 (cdr ids)) ) ) ) ) ) )
 
 (define ##sys#do-the-right-thing
-  (let ([vector->list vector->list])
+  (let ((vector->list vector->list))
     (lambda (id comp?)
       (define (add-req id)
 	(when comp?
@@ -1406,26 +1406,35 @@
 	   (cut lset-adjoin eq? <> id) 
 	   (lambda () (list id)))))
       (define (doit id)
-	(cond [(or (memq id builtin-features)
+	(cond ((or (memq id builtin-features)
 		   (if comp?
 		       (memq id builtin-features/compiled)
 		       (##sys#feature? id) ) )
-	       (values '(##sys#void) #t) ]
-	      [(memq id special-syntax-files)
-	       (let ([fid (##sys#->feature-id id)])
+	       (values '(##sys#void) #t) )
+	      ((memq id special-syntax-files)
+	       (let ((fid (##sys#->feature-id id)))
 		 (unless (memq fid ##sys#features)
 		   (##sys#load (##sys#resolve-include-filename (##sys#symbol->string id) #t) #f #f) 
 		   (set! ##sys#features (cons fid ##sys#features)) )
-		 (values '(##sys#void) #t) ) ]
-	      [(or (memq id ##sys#core-library-modules)
-		   (memq id ##sys#explicit-library-modules) )
+		 (values '(##sys#void) #t) ) )
+	      ((memq id ##sys#core-library-modules)
 	       (values
 		(if comp?
 		    `(##core#declare '(uses ,id))
 		    `(load-library ',id) )
-		#t) ]
-	      [else
-	       (let ([info (##sys#extension-information id 'require-extension)])
+		#t) )
+	      ((memq id ##sys#explicit-library-modules)
+	       (let* ((info (##sys#extension-information id 'require-extension))
+		      (s (assq 'syntax info)))
+		 (values
+		  `(begin
+		     ,@(if s `((##core#require-for-syntax ',id)) '())
+		     ,(if comp?
+			  `(##core#declare '(uses ,id)) 
+			  `(load-library ',id) ) )
+		  #t) ) )
+	      (else
+	       (let ((info (##sys#extension-information id 'require-extension)))
 		 (cond (info
 			(let ((s (assq 'syntax info))
 			      (rr (assq 'require-at-runtime info)) )
@@ -1442,23 +1451,23 @@
 			   #t) ) )
 		       (else
 			(add-req id)
-			(values `(##sys#require ',id) #f)) ) ) ] ) )
+			(values `(##sys#require ',id) #f)) ) ) ) ) )
       (if (and (pair? id) (symbol? (car id)))
-	  (let ([a (assq (##sys#slot id 0) ##sys#extension-specifiers)])
+	  (let ((a (assq (##sys#slot id 0) ##sys#extension-specifiers)))
 	    (if a
-		(let ([a ((##sys#slot a 1) id)])
-		  (cond [(string? a) (values `(load ,a) #f)]
-			[(vector? a) 
-			 (let loop ([specs (vector->list a)]
-				    [exps '()]
-				    [f #f] )
+		(let ((a ((##sys#slot a 1) id)))
+		  (cond ((string? a) (values `(load ,a) #f))
+			((vector? a) 
+			 (let loop ((specs (vector->list a))
+				    (exps '())
+				    (f #f) )
 			   (if (null? specs)
 			       (values `(begin ,@(reverse exps)) f)
-			       (let-values ([(exp fi) (##sys#do-the-right-thing (car specs) comp?)])
+			       (let-values (((exp fi) (##sys#do-the-right-thing (car specs) comp?)))
 				 (loop (cdr specs)
 				       (cons exp exps)
-				       (or fi f) ) ) ) ) ]
-			[else (##sys#do-the-right-thing a comp?)] ) )
+				       (or fi f) ) ) ) ) )
+			(else (##sys#do-the-right-thing a comp?)) ) )
 		(##sys#error "undefined extension specifier" id) ) )
 	  (if (symbol? id)
 	      (doit id) 

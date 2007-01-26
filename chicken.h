@@ -285,8 +285,10 @@ int strncasecmp(const char *one, const char *two, size_t n);
 
 #ifdef C_SIXTY_FOUR
 # define C_MOST_POSITIVE_FIXNUM   0x3fffffffffffffffL
+# define C_WORD_SIZE              64
 #else
 # define C_MOST_POSITIVE_FIXNUM   0x3fffffff
+# define C_WORD_SIZE              32
 #endif
 
 #define C_MOST_NEGATIVE_FIXNUM    (-C_MOST_POSITIVE_FIXNUM - 1)
@@ -696,6 +698,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 #define C_return(x)                return(x)
 
+#define C_memcpy_slots(t, f, n)    C_memcpy((t), (f), (n) * sizeof(C_word))
 #define C_block_header(x)          (((C_SCHEME_BLOCK *)(x))->header)
 #define C_header_bits(x)           (C_block_header(x) & C_HEADER_BITS_MASK)
 #define C_header_size(x)           (C_block_header(x) & C_HEADER_SIZE_MASK)
@@ -862,9 +865,9 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
                                                                 (C_char *)C_data_pointer(s2) + C_unfix(start2), \
                                                                 C_unfix(len) ) == 0)
 #define C_subvector_copy(v1, v2, start1, end1, start2) \
-                                        (C_memcpy((C_char *)C_data_pointer(v2) + C_unfix(start2), \
+                                        (C_memcpy_slots((C_char *)C_data_pointer(v2) + C_unfix(start2), \
                                                   (C_char *)C_data_pointer(v1) + C_unfix(start1), \
-                                                  sizeof(C_word) * (C_unfix(end1) - C_unfix(start1)) ), C_SCHEME_UNDEFINED)
+						  C_unfix(end1) - C_unfix(start1) ), C_SCHEME_UNDEFINED)
 #define C_words(n)                      C_fix(C_bytestowords(C_unfix(n)))
 #define C_bytes(n)                      C_fix(C_wordstobytes(C_unfix(n)))
 #define C_random_fixnum(n)              C_fix(rand() % C_unfix(n))
@@ -1033,11 +1036,12 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 #define C_u_i_u8vector_set(x, i, v)     ((((unsigned char *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
 #define C_u_i_s8vector_set(x, i, v)     ((((char *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_u16vector_set(x, i, v)     ((((unsigned short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_s16vector_set(x, i, v)     ((((short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_u32vector_set(x, i, v)     ((((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_unsigned_int(v)), C_SCHEME_UNDEFINED)
-#define C_u_i_s32vector_set(x, i, v)     ((((C_s32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_int(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_u16vector_set(x, i, v)    ((((unsigned short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_s16vector_set(x, i, v)    ((((short *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_unfix(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_u32vector_set(x, i, v)    ((((C_u32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_unsigned_int(v)), C_SCHEME_UNDEFINED)
+#define C_u_i_s32vector_set(x, i, v)    ((((C_s32 *)C_data_pointer(C_block_item((x), 1)))[ C_unfix(i) ] = C_num_to_int(v)), C_SCHEME_UNDEFINED)
 
+#define C_u_i_bit_setp(x, i)            C_mk_bool((C_unfix(x) & (1 << C_unfix(i))) != 0)
 
 #define C_end_of_main
 
@@ -1045,8 +1049,9 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 # ifndef C_WINDOWS_GUI
 #  define C_main_entry_point            int main(int argc, char *argv[]) { return CHICKEN_main(argc, argv, (void*)C_toplevel); } C_end_of_main
 # else
-#  define C_main_entry_point            int WINAPI WinMain(HINSTANCE me, HINSTANCE you, LPSTR cmdline, int show) \
-                                          { return CHICKEN_main(0, NULL, C_toplevel); } C_end_of_main
+#  define C_main_entry_point            \
+  int WINAPI WinMain(HINSTANCE me, HINSTANCE you, LPSTR cmdline, int show) \
+  { return CHICKEN_main(0, NULL, (void *)C_toplevel); } C_end_of_main
 # endif
 #else
 # define C_main_entry_point
@@ -1414,6 +1419,7 @@ C_fctexport C_word C_fcall C_a_i_flonum_negate(C_word **a, int c, C_word n1) C_r
 C_fctexport C_word C_fcall C_a_i_bitwise_and(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_bitwise_ior(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_bitwise_not(C_word **a, int c, C_word n1) C_regparm;
+C_fctexport C_word C_fcall C_i_bit_setp(C_word n, C_word i) C_regparm;
 C_fctexport C_word C_fcall C_a_i_bitwise_xor(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_arithmetic_shift(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_exp(C_word **a, int c, C_word n) C_regparm;

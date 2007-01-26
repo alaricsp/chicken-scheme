@@ -1,4 +1,4 @@
-# Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
+# Copyright (c) 2006..2007 by Brandon J. Van Every under MIT-style license.
 # See LICENSE section at end of file for full license text.
 
 ####################################################################
@@ -72,12 +72,10 @@ ELSE(HAVE_BOOT_CFILES)
   LIBRARY_SCM_TO_C(lolevel)
   LIBRARY_SCM_TO_C(match)
   SIMPLE_SCM_TO_C(optimizer tweaks)
-  LIBRARY_SCM_TO_C(pcre regex-common)
   LIBRARY_SCM_TO_C(posixunix)
   LIBRARY_SCM_TO_C(posixwin)
-  LIBRARY_SCM_TO_C(pregexp regex-common)
   LIBRARY_SCM_TO_C(profiler)
-  LIBRARY_SCM_TO_C(regexunix regex-common)
+  LIBRARY_SCM_TO_C(regex)
   LIBRARY_SCM_TO_C(scheduler)
   LIBRARY_SCM_TO_C(srfi-1)
   LIBRARY_SCM_TO_C(srfi-4)
@@ -106,13 +104,13 @@ ENDIF(HAVE_BOOT_CFILES)
 GET_LIBCHICKEN_C_SOURCES(LIBCHICKEN_BOOT_SOURCES)
 ADD_CUSTOM_TARGET(libchicken-boot-c DEPENDS ${LIBCHICKEN_BOOT_SOURCES})
 
-ADD_LIBRARY(libchicken-boot STATIC ${LIBCHICKEN_BOOT_SOURCES})
+ADD_LIBRARY(libchicken-boot STATIC ${LIBCHICKEN_BOOT_SOURCES} ${PCRE_HEADER})
 SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES
   COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
   OUTPUT_NAME chicken-boot)
-IF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
+IF(MSVC)
   SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES PREFIX "lib")
-ENDIF(WIN32 AND NOT CMAKE_COMPILER_IS_GNUCC)
+ENDIF(MSVC)
 TARGET_LINK_LIBRARIES(libchicken-boot ${MORE_STATIC_LIBS})
 ADD_DEPENDENCIES(libchicken-boot libchicken-boot-c)
 
@@ -126,7 +124,7 @@ ADD_CUSTOM_TARGET(chicken-boot-c DEPENDS ${CHICKEN_BOOT_SOURCES})
 
 ADD_EXECUTABLE(chicken-boot ${CHICKEN_BOOT_SOURCES})
 SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot)
+TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot libpcre-for-static)
 ADD_DEPENDENCIES(chicken-boot chicken-boot-c)
 
 
@@ -134,7 +132,7 @@ ADD_DEPENDENCIES(chicken-boot chicken-boot-c)
 #   LICENSE                                                        #
 ####################################################################
 
-# Copyright (c) 2006 by Brandon J. Van Every
+# Copyright (c) 2006..2007 by Brandon J. Van Every
 # 
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the "Software"),

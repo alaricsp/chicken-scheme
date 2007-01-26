@@ -9,17 +9,13 @@
    (set! CCFLAGS "-fno-common -no-cpp-precomp") )
   ((linux)
    (set!? WIKIDIR "~/stuff/chicken-eggs/wiki")
-   (set! LINKLIBS "-lpcre")
-   (set! STATICLINKLIBS "-lpcre")
    (set! STATICLINKFLAGS "-static")
-   (set! SHAREDLINKFLAGS (conc "-Wl,-R" ($ PREFIX) "/lib"))
-   (set! REGEXFILE "pcre") )
+   (set! SHAREDLINKFLAGS (conc "-Wl,-R" ($ PREFIX) "/lib")) )
   (else (quit "argh!")) )
 
 (set! SCANHEADERS #f)
 (set!? NURSERY "(128*1024)")
 (set!? STACKDIRECTION "1")
-(set!? REGEXFILE "regexunix")
 (set!? BOOTSTRAP_PATH (path PREFIX "bin"))
 (set!? CHICKEN (path BOOTSTRAP_PATH "chicken"))
 (set!? CSI (path BOOTSTRAP_PATH "csi"))
@@ -35,7 +31,7 @@
 (set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -Wall -Wno-undefined -Wno-unused -fno-strict-aliasing")
 (set!+ LINKLIBS "-lffi -ldl -lm")
 (set!+ STATICLINKLIBS "-lffi -lm")
-(set! LIBSOURCES0 `(eval extras library lolevel utils tcp srfi-1 srfi-4 srfi-13 srfi-14 srfi-18 posixunix ,REGEXFILE))
+(set! LIBSOURCES0 `(eval extras library lolevel utils tcp srfi-1 srfi-4 srfi-13 srfi-14 srfi-18 posixunix regex))
 (set! ULIBSOURCES0 (map (cut conc "u" <>) LIBSOURCES0))
 (set! LIBSOURCES1 '(profiler scheduler stub match))
 (set! LIBSOURCES (append LIBSOURCES0 LIBSOURCES1))
@@ -43,8 +39,32 @@
 (set! CHICKENSOURCES '("support" "compiler" "optimizer" "c-platform" "c-backend" "batch-driver"))
 (set! CHICKENFLAGS "-quiet -no-trace -optimize-level 2 -include-path .")
 (set! BUILDVERSION (with-input-from-file "buildversion" read))
-(set! XLIBSOURCES '(pcre pregexp regexunix posixwin))
+(set! XLIBSOURCES '(posixwin))
 (set! UXLIBSOURCES (map (cut conc "u" <>) XLIBSOURCES))
+
+(set! PCRESOURCES
+  '(pcre_compile
+    pcre_get
+    pcre_printint 
+    pcre_ucp_findchar
+    pcre_config
+    pcre_globals
+    pcre_refcount 
+    pcre_valid_utf8
+    pcre_dfa_exec
+    pcre_info
+    pcre_study
+    pcre_version
+    pcre_exec 
+    pcre_maketables
+    pcre_tables
+    pcre_xclass
+    pcre_fullinfo
+    pcre_ord2utf8
+    pcre_try_flipped
+    chartables) )
+
+(set! STATICPCRESOURCES (map (lambda (f) (conc "-static" f)) PCRESOURCES))
 
 (if (not (file-exists? "chicken-config.h"))
     (begin
@@ -69,6 +89,8 @@
 #define HAVE_INTTYPES_H 1
 #define HAVE_LIMITS_H 1
 #define HAVE_SYSEXITS_H 1
+#define HAVE_MEMMOVE 1
+#define HAVE_STRERROR 1
 EOF
 ) ) ) )
 
@@ -135,8 +157,17 @@ EOF
   `(runtime.c ,@(suffix "c" LIBSOURCES ULIBSOURCES XLIBSOURCES UXLIBSOURCES)
 	      chicken.c ,@(suffix "c" CHICKENSOURCES) csc.c csi.c chicken-profile.c chicken-setup.c)) )
 
-(link-shared-library "libchicken" "runtime.o" (suffix "o" LIBSOURCES))
-(link-shared-library "libuchicken" "uruntime.o" (suffix "o" ULIBSOURCES))
+(set! PCREOBJECTS (map (lambda (f) (conc "pcre/" f ".o")) PCRESOURCES))
+
+(@ (begin
+     (set! (on x 'CCFLAGS) (conc CCFLAGS " -I. -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -fPIC -DPIC"))
+     (depends x "pcre/pcre_internal.h" "pcre/pcre.h" "pcre/config.h" "pcre/ucp.h" "pcre/ucp_findchar.c") )
+   PCREOBJECTS)
+
+(@ (object x (suffix "c" x)) PCREOBJECTS)
+
+(link-shared-library "libchicken" "runtime.o" (suffix "o" LIBSOURCES) PCREOBJECTS)
+(link-shared-library "libuchicken" "uruntime.o" (suffix "o" ULIBSOURCES) PCREOBJECTS)
 (object "uruntime.o" "runtime.c")
 (object "runtime.o" "runtime.c")
 
@@ -169,8 +200,16 @@ EOF
 (depends "chicken-profile.c" "chicken-more-macros.scm")
 (depends "chicken-setup.c" "chicken-more-macros.scm")
 
-(link-library "libchicken" "runtime-static.o" (map (cut conc <> "-static.o") LIBSOURCES))
-(link-library "libuchicken" "uruntime-static.o" (map (cut conc <> "-static.o") ULIBSOURCES))
+(set! PCRESTATICOBJECTS (map (lambda (f) (conc "pcre/" f "-static.o")) PCRESOURCES))
+(@ (cc (conc "pcre/" x "-static.o") (conc "pcre/" x ".c")) PCRESOURCES)
+
+(@ (begin
+     (set! (on x 'CCFLAGS) (conc CCFLAGS " -DSUPPORT_UTF8 -DSUPPORT_UCP"))
+     (depends x "pcre/pcre_internal.h" "pcre/pcre.h" "pcre/config.h" "pcre/ucp.h" "pcre/ucp_findchar.c") )
+   PCRESTATICOBJECTS)
+
+(link-library "libchicken" "runtime-static.o" (map (cut conc <> "-static.o") LIBSOURCES) PCRESTATICOBJECTS)
+(link-library "libuchicken" "uruntime-static.o" (map (cut conc <> "-static.o") ULIBSOURCES) PCRESTATICOBJECTS)
 (depends "library.c" "build.scm")
 (depends "ulibrary.c" "build.scm")
 
@@ -203,12 +242,15 @@ EOF
  ^{rm -f ,(suffix "c" LIBSOURCES) ,(suffix "c" CHICKENSOURCES) ,(suffix "c" ULIBSOURCES0) html/*})
 
 (notfile "doc")
-(depends "doc" "ChangeLog")
-(actions "doc" ^{,CSI -s misc/makehtmldoc -pdf})
+(depends "doc" "site/ChangeLog.txt")
+(actions 
+ "doc"
+ ^(begin
+    {rsync -av --existing ,(conc WIKIDIR "/") wiki/}
+    {,CSI -s misc/makedoc -pdf}) )
+(depends "site/ChangeLog.txt" "ChangeLog")
 (actions "ChangeLog" ^{darcs changes >ChangeLog})
-
-(notfile "wikisync")
-(actions "wikisync" ^{rsync -av --existing ,(conc WIKIDIR "/") wiki/})
+(actions "site/ChangeLog.txt" ^{cp ChangeLog site/ChangeLog.txt})
 
 (notfile "dist")
 (actions 
@@ -232,11 +274,6 @@ EOF
     {rm -fr ,distname} ) )
 
 (depends "dist" (suffix "c" XLIBSOURCES UXLIBSOURCES))
-
-(scheme "pregexp" "pregexp")
-(depends "pregexp.c" "regex-common.scm")
-(depends "pcre.c" "regex-common.scm")
-(depends "regexunix.c" "regex-common.scm")
 
 (notfile "tags")
 (actions "tags" ^{etags *.scm runtime.c chicken.h})

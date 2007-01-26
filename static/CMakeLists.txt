@@ -1,4 +1,4 @@
-# Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
+# Copyright (c) 2006..2007 by Brandon J. Van Every under MIT-style license.
 # See LICENSE section at end of file for full license text.
 
 
@@ -57,7 +57,7 @@ IF(MSVC)
   # Eventually, we wish to support different postfixes for debug, release builds etc.
   # For now, the user has to install the 1 configuration she actually wants.
 
-  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
+  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
   SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
     OUTPUT_NAME "chicken" PREFIX "lib"
@@ -65,7 +65,7 @@ IF(MSVC)
   TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
   ADD_DEPENDENCIES(libchicken-static libchicken-c)
 
-  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
+  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_SOURCES})
   SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
     OUTPUT_NAME "uchicken" PREFIX "lib"
@@ -73,7 +73,7 @@ IF(MSVC)
   TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
   ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
 
-  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
+  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
   SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
     OUTPUT_NAME "chickengui" PREFIX "lib"
@@ -83,14 +83,14 @@ IF(MSVC)
 
 ELSE(MSVC)
 
-  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES})
+  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
   SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
     OUTPUT_NAME "chicken")
   TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
   ADD_DEPENDENCIES(libchicken-static libchicken-c)
 
-  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES})
+  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_SOURCES})
   SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
     OUTPUT_NAME "uchicken")
@@ -98,7 +98,7 @@ ELSE(MSVC)
   ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
 
   IF(WIN32 AND NOT CYGWIN)
-    ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES})
+    ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
     SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
       OUTPUT_NAME "chickengui")
@@ -156,7 +156,7 @@ ENDIF(WIN32 AND NOT CYGWIN)
 #   LICENSE                                                        #
 ####################################################################
 
-# Copyright (c) 2006 by Brandon J. Van Every
+# Copyright (c) 2006..2007 by Brandon J. Van Every
 # 
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the "Software"),

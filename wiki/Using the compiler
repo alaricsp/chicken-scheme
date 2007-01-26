@@ -32,7 +32,7 @@ Possible options are:
 
 ; -case-insensitive : Enables the reader to read symbols case insensitive. The default is to read case sensitive (in violation of R5RS).  This option registers the {{case-insensitive}} feature identifier.
 
-; -check-imports : Search for references to undefined global variables. For each library unit accessed via {{(declare (uses ...))}}, the compiler will search a file named {{UNITNAME.exports}} in the current include path and load its contents into the ''import-table'' (if found). Also, export-information for extensions (accessed through {{(require-extension ...)}}) will be searched and stored in the import-table. If a required extensions does not provide explicit exports-innformation and {{.exports}} file is searched (as with used units). After the analysis phase of the compiler, referenced toplevel variables for which no assignment was found will generate a warning. Also, re-assignments of imported variables will trigger a warning.
+; -check-imports : Search for references to undefined global variables. For each library unit accessed via {{(declare (uses ...))}}, the compiler will search a file named {{UNITNAME.exports}} in the current include path and load its contents into the ''import-table'' (if found). Also, export-information for extensions (accessed through {{(require-extension ...)}}) will be searched and stored in the import-table. If a required extension does not provide explicit export-information a {{.exports}} file is searched (as with used units). After the analysis phase of the compiler, referenced toplevel variables for which no assignment was found will generate a warning. Also, re-assignments of imported variables will trigger a warning.
 
 ; -check-syntax : Aborts compilation process after macro-expansion and syntax checks.
 
@@ -166,7 +166,7 @@ Possible options are:
 
 ; -raw : Disables the generation of any implicit code that uses the Scheme libraries (that is all runtime system files besides {{runtime.c}} and {{chicken.h}}).
 
-; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program.
+; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}.
 
 ; -run-time-macros : Makes macros also available at run-time. By default macros are not available at run-time.
 

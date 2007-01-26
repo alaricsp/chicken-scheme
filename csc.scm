@@ -173,7 +173,7 @@
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -require-extension -inline-limit -profile-name -disable-warning -import -require-static-extension
+    -inline-limit -profile-name -disable-warning -import -require-static-extension
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
     -compress-literals) )
 

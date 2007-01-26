@@ -154,7 +154,7 @@ static void create_directory(char *pathname) {}
 (define *tmpdir-created* #f)
 (define *keep-stuff* #f)
 (define *csc-options* '())
-(define *abort-yes-or-no* #f)
+(define *abort-hook* #f)
 (define *dont-ask* #f)
 (define *rebuild-doc-index* #f)
 (define *check-repository* #f)
@@ -170,7 +170,11 @@ static void create_directory(char *pathname) {}
 (define *destdir* #f)
 (define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
 (define *revision* #f)
+(define *repository-tree-downloaded* #f)
 
+
+(define (abort-setup)
+  (*abort-hook* #f) )
 
 (define (yes-or-no? str . default)
   (let ((def (:optional default #f)))
@@ -183,7 +187,7 @@ static void create_directory(char *pathname) {}
 	      ((and def (string=? "" ln)) (set! ln def)) )
 	(cond ((string-ci=? "yes" ln) #t)
 	      ((string-ci=? "no" ln) #f)
-	      ((string-ci=? "abort" ln) (*abort-yes-or-no* #f))
+	      ((string-ci=? "abort" ln) (abort-setup))
 	      (else
 	       (printf "~%Please enter \"yes\", \"no\" or \"abort\".~%")
 	       (loop) ) ) ) ) ) )
@@ -554,11 +558,17 @@ EOF
 	   (_ (error "invalid file-specification" f)) ) )
        flist) )
 
+(define (translate-extension f #!optional default)
+  (pathname-replace-extension
+   (match f
+     (#f default)
+     ("so" ##sys#load-dynamic-extension)
+     ("o" (if *windows-shell* "obj" "o"))
+     ("a" (if *windows-shell* "lib" "a"))
+     (x x) ) ) )
+
 (define (install-extension id files #!optional (info '()))
-  (define (soify f)
-    (if (equal? (pathname-extension f) "so")
-	(pathname-replace-extension f ##sys#load-dynamic-extension)
-	f) )
+  (define (soify f) (translate-extension f))
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (rpath (repo-path))
@@ -605,9 +615,9 @@ EOF
 
 (define (install-program id files #!optional (info '()))
   (define (exify f)
-    (if (not (pathname-extension f)) 
-	(pathname-replace-extension f "exe")
-	f) )
+    (translate-extension
+     f
+     (if *windows-shell* "exe" #f) ) )
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (ppath (if *destdir* (make-pathname *destdir* "bin") (program-path)))
@@ -786,6 +796,7 @@ EOF
 			    (if (string=? "" ln)
 				(begin
 				  (set! *repository-tree* (read i))
+				  (set! *repository-tree-downloaded* #t)
 				  (when *debug*
 				    (print "catalog:")
 				    (pp *repository-tree*) )
@@ -850,6 +861,14 @@ EOF
 	   (x (error "(internal) invalid host" x)) ) ) ) )
 
 (define (fetch-file ext)
+  (define (eval-req r)
+    (when (setup-verbose-flag) 
+      (print "Testing system:")
+      (pp r) )
+    (let ((f (eval r)))
+      (when (setup-verbose-flag) 
+	(print "\t-> " f) )
+      f) )
   (define (requirements reqs)
     (fold 
      (lambda (r reqs)
@@ -858,14 +877,20 @@ EOF
 		(cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
 		      ((memq r ##sys#core-library-modules) reqs)
 		      (else (error "Broken dependencies: extension does not exist" r) ) ) ) )
-	     (else
-	      (when (setup-verbose-flag) 
-		(print "Testing system:")
-		(pp r) )
-	      (let ((f (eval r)))
-	      (when (setup-verbose-flag) 
-		(print "\t-> " f) )
-	      (requirements f) ) ) ) )
+	     ((and *repository-tree-downloaded*
+		   (not *windows*)
+		   (or (zero? (current-user-id))
+		       (not *dont-ask*) ) )
+	      (print "WARNING: executing system test retrieved through potentially insecure network:\n")
+	      (pp r) 
+	      (cond ((yes-or-no?
+		      "Do you want to execute this code ?"
+		      (if (zero? (current-user-id)) "no" "yes") )
+		     (requirements (eval-req r) ) )
+		    (else
+		     (print "Test cancelled - aborting")
+		     (abort-setup) ) ) )
+	     (else (requirements (eval-req r) )) ) ) 
      '() 
      reqs) )
   (and (or *dont-ask*
@@ -1184,7 +1209,7 @@ EOF
       (exit -1) )
   (call/cc
    (lambda (return)
-     (set! *abort-yes-or-no* return)
+     (set! *abort-hook* return)
      (main (append (string-split (or (getenv "CHICKEN_SETUP_OPTIONS") ""))
 		   (command-line-arguments) ) ) ) )
   (rmtmpdir) )

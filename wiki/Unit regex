@@ -3,12 +3,10 @@
 
 == Unit regex
 
-This library unit provides support for regular expressions. The flavor depends on
-the particular installation platform:
-
-* On UNIX systems that have PCRE (the Perl Compatible Regular Expression package) installed, PCRE is used.
-* If PCRE is not available, and the C library provides regular expressions, these are used instead.
-* on Windows (or of PCRE and libc regexes are not available), Dorai Sitaram's portable {{pregexp}} library is used.
+This library unit provides support for regular expressions. The regular 
+expression package used is {{PCRE}} (''Perl Compatible Regular Expressions'') 
+written by Philip Hazel. See [[http://www.pcre.org]] for information about
+the particular regexp flavor and extensions provided by this library.
 
 
 === grep
@@ -45,11 +43,6 @@ The optional arguments {{IGNORECASE}}, {{IGNORESPACE}} and {{UTF8}}
 specify whether the regular expression should be matched with case- or whitespace-differences
 ignored, or whether the string should be treated as containing UTF-8 encoded
 characters, respectively.
-
-Notes:
-
-* regex doesn't allow (?: ) cloisters (non-capturing groups). Currently this means if you use utf8 matching, individual "." matching will return extra submatches.
-* pregexp doesn't allow a # comment w/o a trailing newline.
 
 
 === regexp?
@@ -169,10 +162,6 @@ into a regular expression.
 =>  "\\^\\[0-9\\]\\+:.\n.\\*\\$"
 </enscript>
 
-
-Platform-specific notes:
-
-* due to a bug in the {{pregexp}} library, character classes enclosed in {{[ ... ]}} may not begin with a hyphen ({{-}}). A workaround is either to precede the hyphen with a backslash or use the range {{---}}.
 
 Previous: [[Unit match]]
 

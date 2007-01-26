@@ -23,7 +23,7 @@ Treats {{EXPRESSION}} as a comment.
 Allows user-defined extension of external representations. (For more information see the documentation for
 [[http://srfi.schemers.org/srfi-10/srfi-10.html|SRFI-10]])
 
-=== Synatx Expression
+=== Syntax Expression
 
  #'EXPRESSION
 

@@ -2051,7 +2051,14 @@ EOF
 			   ((#\U)
 			    (let ([s (reverse (string->list (r-usequence "U" 8 #t)))])
 			      (loop (##sys#read-char-0 port) (##sys#append s lst)) ) )
-			   (else (loop (##sys#read-char-0 port) (cons c lst))) ) )
+			   ((#\\ #\' #\")
+			    (loop (##sys#read-char-0 port) (cons c lst)))
+			   (else
+			    (##sys#read-warning 
+			     port 
+			     "undefined escape sequence in string - probably forgot backslash ?"
+			     c)
+			    (loop (##sys#read-char-0 port) (cons c lst))) ) )
 			((eq? term c) (##sys#reverse-list->string lst))
 			(else (loop (##sys#read-char-0 port) (cons c lst))) ) )
 		(##sys#read-error port (string-append "missing `" (string term) "'")) ) )
@@ -2830,6 +2837,9 @@ EOF
 (define (arithmetic-shift x y)
   (##core#inline_allocate ("C_a_i_arithmetic_shift" 4) x y) )
 
+(define (bit-set? n i)
+  (##core#inline "C_i_bit_setp" n i) )
+
 
 ;;; String ports:
 ;
@@ -3366,6 +3376,11 @@ EOF
 	(##sys#print "[debug] forcing finalizers...\n" #f ##sys#standard-output) )
       (when (ffp) (##sys#force-finalizers)) ) ) )
 
+(define (on-exit thunk)
+  (set! ##sys#cleanup-before-exit
+    (let ((old ##sys#cleanup-before-exit))
+      (lambda () (old) (thunk)) ) ) )
+
 
 ;;; Condition handling:
 
@@ -3788,6 +3803,13 @@ EOF
        ms) ) ) )
 
 (define (##sys#schedule) ((##sys#slot ##sys#current-thread 1)))
+
+(define (##sys#thread-yield!)
+  (##sys#call-with-current-continuation
+   (lambda (return)
+     (let ((ct ##sys#current-thread))
+       (##sys#setslot ct 1 (lambda () (return (##core#undefined))))
+       (##sys#schedule) ) ) ) )
 
 
 ;;; Interrupt-handling:

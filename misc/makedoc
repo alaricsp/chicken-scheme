@@ -1,11 +1,11 @@
 #!/bin/sh
-#| ;;; makehtmldoc -*- Hen -*-
+#| ;;; makedoc -*- Hen -*-
 exec csi -s $0 "$@"
 |#
 
 ;;; usage: misc/makehtmldoc [-pdf] [PAGE]
 
-(use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url)
+(use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url posix)
 
 (define-constant +outpath+ "html")
 (define-constant +extension-path+ "wiki-extensions")
@@ -33,7 +33,7 @@ exec csi -s $0 "$@"
 	(else (string-append "http://galinha.ucpel.tche.br/" lnk) ) ) )
 
 (define (convert-page page)
-  (let ((data (read-all (make-pathname "wiki" page))))
+  (let ((data (read-all page)))
     (string-concatenate
      (let loop ((i 0) (all '()))
        (match (string-search-positions "\\[\\[([^]]+)\\]\\]" data i)
@@ -124,6 +124,9 @@ in `manual-wiki-files' can be found in `*pages*'."
             +outpath+
             (if (string=? pagename +index-page+) "index" pagename) "html"))))
 
+(define (wiki-pagename pagename)
+  (make-pathname "wiki" pagename) )
+
 (define *loaded-extensions* (make-hash-table))
 
 (for-each
@@ -134,24 +137,27 @@ in `manual-wiki-files' can be found in `*pages*'."
   (for-each
    (lambda (p)
      (let* ((pagename p)
+	    (pw (wiki-pagename pagename))
             (po (html-pagename pagename)))
-       (print p " -> " po " ...")
-       (with-output-to-file po
-         (lambda ()
-           (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename)
-           (write-stream
-            (wiki->html
-             (string->stream (convert-page p))
-             stream-null
-             ""
-             (constantly stream-null)
-             (constantly stream-null)
-             (make-hash-table)
-             (make-html-header 1)
-             (constantly stream-null)
-             (constantly #t)
-             *loaded-extensions*) )
-           (printf "~%</body></html>") ) ) ) )
+       (when (or (not (file-exists? po))
+		 (> (file-modification-time pw) (file-modification-time po)) )
+	 (print p " -> " po " ...")
+	 (with-output-to-file po
+	   (lambda ()
+	     (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename)
+	     (write-stream
+	      (wiki->html
+	       (string->stream (convert-page pw))
+	       stream-null
+	       ""
+	       (constantly stream-null)
+	       (constantly stream-null)
+	       (make-hash-table)
+	       (make-html-header 1)
+	       (constantly stream-null)
+	       (constantly #t)
+	       *loaded-extensions*) )
+	     (printf "~%</body></html>") ) ) ) ) )
    (if *only* (list *only*) *pages*) ) )
 
 

@@ -58,14 +58,11 @@ SET(SOURCE_DIR_FILES
   match.scm
   NEWS
   optimizer.scm
-  pcre.scm
+  regex.scm
   posixunix.scm
   posixwin.scm
-  pregexp.scm
   profiler.scm
   README
-  regex-common.scm
-  regexunix.scm
   runtime.c
   scheduler.scm
   srfi-1.scm
@@ -79,6 +76,36 @@ SET(SOURCE_DIR_FILES
   tcp.scm
   tweaks.scm
   utils.scm
+  pcre/pcre_compile.c
+  pcre/pcre_get.c
+  pcre/pcre_printint.c
+  pcre/pcre_ucp_findchar.c
+  pcre/pcre_config.c
+  pcre/pcre_globals.c
+  pcre/pcre_refcount.c
+  pcre/pcre_valid_utf8.c
+  pcre/pcre_dfa_exec.c
+  pcre/pcre_info.c
+  pcre/pcre_study.c
+  pcre/pcre_version.c
+  pcre/pcre_exec.c
+  pcre/pcre_maketables.c
+  pcre/pcre_tables.c
+  pcre/pcre_xclass.c
+  pcre/pcre_fullinfo.c
+  pcre/pcre_ord2utf8.c
+  pcre/pcre_try_flipped.c
+  pcre/chartables.c
+  pcre/AUTHORS
+  pcre/COPYING
+  pcre/LICENCE
+  pcre/config.h
+  pcre/pcre.h
+  pcre/pcre_internal.h
+  pcre/ucpinternal.h
+  pcre/ucp.h
+  pcre/ucptable.c
+  pcre/ucp_findchar.c
   static/CMakeLists.txt
   benchmarks/boyer.scm
   benchmarks/browse.scm

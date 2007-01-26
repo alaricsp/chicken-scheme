@@ -24,15 +24,15 @@ following:
 * If {{ID}} names a built in features {{chicken srfi-23 srfi-30 srfi-39 srfi-8 srfi-6 srfi-2 srfi-0 srfi-10 srfi-9 srfi-17 srfi-55}}, then nothing is done.
 * If {{ID}} names one of syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded.
 * {{ID}} names one of the core library units shipped with CHICKEN, then a {{(load-library 'ID)}} will be performed.
-* {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed.
+* {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, probably followed by {{(require ...)}} for any run-time requirements.
 * Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
 
 During compilation one of the following happens instead:
 
 * If {{ID}} names a built in features {{chicken srfi-23 srfi-30 srfi-39 srfi-8 srfi-6 srfi-2 srfi-0 srfi-10 srfi-9 srfi-17 srfi-55}}, then nothing is done.
 * If {{ID}} names one of syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded  at compile-time, making the syntactic extensions available in compiled code.
-* If {{ID}} names one of the core library units shipped with CHICKEN, then a {{(declare (uses ID))}} is generated.
-* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed.
+* If {{ID}} names one of the core library units shipped with CHICKEN, or if the option {{-uses ID}} has been passed to the compiler then a {{(declare (uses ID))}} is generated.
+* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, and code is emitted to {{(require ...)}} any needed run-time requirements.
 * Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
 
 To make long matters short - just use {{require-extension}} and it will normally figure everything out for dynamically
@@ -464,14 +464,21 @@ The result is the value of {{EXP}}.
 
  [syntax] (cond-expand FEATURE-CLAUSE ...)
 
-Expands by selecting feature clauses. Predefined
-feature-identifiers are {{srfi-0}}, {{srfi-2}}, {{srfi-6}},
-{{srfi-8}}, {{srfi-9}}, {{srfi-10}},
-and {{chicken}}. If the source file containing
-this form is currently compiled, the feature {{compiling}}
-is defined.  For further information, see the documentation for
-[[http://srfi.schemers.org/srfi-0/srfi-0.html|SRFI-0]] This form
-is allowed to appear in non-toplevel expressions.
+Expands by selecting feature clauses. This form is allowed to appear in non-toplevel expressions.
+
+Predefined feature-identifiers are "situation" specific:
+
+; compile : {{eval}}, {{library}}, {{match}}, {{compiling}}, {{srfi-11}}, {{srfi-15}}, {{srfi-31}}, {{srfi-26}}, {{srfi-16}}, {{utils}}, {{regex}}, {{srfi-4}}, {{match}}, {{srfi-1}}, {{srfi-69}}, {{srfi-28}}, {{extras}}, {{srfi-8}}, {{srfi-6}}, {{srfi-2}}, {{srfi-0}}, {{srfi-10}}, {{srfi-9}}, {{srfi-55}}, {{srfi-61}} {{chicken}}, {{srfi-23}}, {{srfi-30}}, {{srfi-39}}, {{srfi-62}}, {{srfi-17}}, {{srfi-12}}.
+
+; load : {{srfi-69}}, {{srfi-28}}, {{extras}}, {{srfi-8}}, {{srfi-6}}, {{srfi-2}}, {{srfi-0}}, {{srfi-10}}, {{srfi-9}}, {{srfi-55}}, {{srfi-61}}, {{chicken}}, {{srfi-23}}, {{srfi-30}}, {{srfi-39}}, {{srfi-62}}, {{srfi-17}}, {{srfi-12}}. {{library}} is implicit.
+
+; eval : {{match}}, {{csi}}, {{srfi-11}}, {{srfi-15}}, {{srfi-31}}, {{srfi-26}}, {{srfi-16}}, {{srfi-69}}, {{srfi-28}}, {{extras}}, {{srfi-8}}, {{srfi-6}}, {{srfi-2}}, {{srfi-0}}, {{srfi-10}}, {{srfi-9}}, {{srfi-55}}, {{srfi-61}}, {{chicken}}, {{srfi-23}}, {{srfi-30}}, {{srfi-39}}, {{srfi-62}}, {{srfi-17}}, {{srfi-12}}. {{library}} is implicit.
+
+The following feature-identifiers are available in all situations: {{(machine-byte-order)}}, {{(machine-type)}}, {{(software-type)}}, {{(software-version)}}, where the actual feature-identifier is platform dependent.
+
+In addition the following feature-identifiers may exist: {{applyhook}}, {{extraslot}}, {{ptables}}, {{dload}}, {{libffi}}.
+
+For further information, see the documentation for [[http://srfi.schemers.org/srfi-0/srfi-0.html|SRFI-0]].
 
 ==== ensure
 

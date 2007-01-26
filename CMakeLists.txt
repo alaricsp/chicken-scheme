@@ -1,4 +1,4 @@
-# Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
+# Copyright (c) 2006..2007 by Brandon J. Van Every under MIT-style license.
 # See LICENSE section at end of file for full license text.
 
 ####################################################################
@@ -143,8 +143,14 @@ PROJECT(Chicken)
 # To avoid any possibility of picking up wrong header files from
 # the system, we search our own directories BEFORE searching
 # system directories.
+#
+# CMake generates chicken-config.h in ${CMAKE_BINARY_DIR}
+# ./configure just plops chicken-config.h in the source tree.
+# Avoid collisions by searching ${CMAKE_BINARY_DIR} first.
+# Also, libpcre needs chicken-config.h, so this passes the
+# needed directory.
 
-INCLUDE_DIRECTORIES(BEFORE ${Chicken_SOURCE_DIR})
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_BINARY_DIR} ${Chicken_SOURCE_DIR} ${Chicken_SOURCE_DIR}/pcre)
 
 
 ####################################################################
@@ -614,16 +620,12 @@ SET(BOOT_CFILES
   lolevel.exports
   match.c
   optimizer.c
-  pcre.c
-  pcre.exports
+  regex.c
+  regex.exports
   posixunix.c
   posix.exports
   posixwin.c
-  pregexp.c
-  pregexp.exports
   profiler.c
-  regexunix.c
-  regexunix.exports
   scheduler.c
   scheduler.exports
   srfi-1.c
@@ -644,11 +646,9 @@ SET(BOOT_CFILES
   uextras.c
   ulibrary.c
   ulolevel.c
-  upcre.c
+  uregex.c
   uposixunix.c
   uposixwin.c
-  upregexp.c
-  uregexunix.c
   usrfi-1.c
   usrfi-4.c
   usrfi-13.c
@@ -699,8 +699,7 @@ ENDIF(HAVE_BOOT_CFILES)
 
 # The generated .c files are valid on all platforms, not just the
 # ones they are built on.  In particular, this means the POSIX
-# units (posixunix.c posixwin.c) and the REGEX units
-# (pcre.c pregexp.c regexunix.c) will all be built.  By building all
+# units (posixunix.c posixwin.c) will all be built.  By building all
 # .c files, new platforms can be targeted.
 
 # .o files are of
@@ -867,33 +866,11 @@ CHECK_SYMBOL_EXISTS(alloca "alloca.h malloc.h" HAVE_ALLOCA)
 CHECK_INCLUDE_FILE(crt_externs.h HAVE_CRT_EXTERNS_H)
 CHECK_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
 CHECK_SYMBOL_EXISTS(gcvt stdlib.h HAVE_GCVT)
+CHECK_SYMBOL_EXISTS(memmove string.h HAVE_MEMMOVE)
+CHECK_SYMBOL_EXISTS(strerror string.h HAVE_STRING)
 CHECK_INCLUDE_FILE(grp.h HAVE_GRP_H)
 CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
 CHECK_INCLUDE_FILE(sysexits.h HAVE_SYSEXITS_H)
-
-# We can create REGEX .c files for all platforms when
-# generating .scm --> c. code.  However, we can only
-# generate the .o file appropriate to this platform.
-# If no REGEX is available, don't generate any REGEX_UNIT
-# at all.
-
-# Note that in practice, right now we're not generating
-# all the REGEX files we could.  Will need to address
-# this when preparing a .c snapshot for other platforms.
-
-SET(REGEX_UNIT )
-CHECK_INCLUDE_FILE(pcre.h HAVE_PCRE_H)
-IF(HAVE_PCRE_H)
-  SET(REGEX_UNIT pcre)
-  SET(MORE_LIBS ${MORE_LIBS} pcre)
-  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} pcre)
-ELSE(HAVE_PCRE_H)
-  IF(WIN32 AND NOT CYGWIN)
-    SET(REGEX_UNIT pregexp)
-  ELSE(WIN32 AND NOT CYGWIN)
-    SET(REGEX_UNIT regexunix)
-  ENDIF(WIN32 AND NOT CYGWIN)
-ENDIF(HAVE_PCRE_H)
 
 CHECK_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 IF(HAVE_DLFCN_H)
@@ -1163,7 +1140,7 @@ SET(LIB_SAFE_CGEN
   library
   lolevel
   ${POSIX_UNIT}
-  ${REGEX_UNIT}
+  regex
   srfi-1
   srfi-4
   srfi-13
@@ -1200,8 +1177,8 @@ SET(LIB_EXPORTS
   extras
   library
   lolevel
-  ${POSIX_UNIT}
-  ${REGEX_UNIT}
+  posix
+  regex
   scheduler
   srfi-1
   srfi-4
@@ -1270,6 +1247,65 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 
 
 ####################################################################
+#  PCRE LIBRARY                                                     #
+####################################################################
+
+# The PCRE code is used several times by the various Chicken libraries.  We statically compile it for
+# convenience, so that the user doesn't have to type -lpcre when linking.  Also, we don't want the
+# user linking against a system PCRE library, as we may have our own bugfixes and customizations.
+#
+# PCRE is compiled statically for both our shared and static libraries.   pcre.h needs these definitions
+# so that dll imports are correct, and for UTF8 and UCP support.
+
+ADD_DEFINITIONS(-DPCRE_STATIC -DSUPPORT_UTF8 -DSUPPORT_UCP)
+
+SET(PCRE_HEADER ${Chicken_SOURCE_DIR}/pcre/pcre.h)
+SET(PCRE_SOURCES
+  chartables.c
+  config.h
+  pcre.h
+  pcre_compile.c
+  pcre_config.c
+  pcre_dfa_exec.c
+  pcre_exec.c
+  pcre_fullinfo.c
+  pcre_get.c
+  pcre_globals.c
+  pcre_internal.h
+  pcre_maketables.c
+  pcre_ord2utf8.c
+  pcre_printint.c
+  pcre_refcount.c
+  pcre_study.c
+  pcre_tables.c
+  pcre_try_flipped.c
+  pcre_ucp_findchar.c
+  pcre_valid_utf8.c
+  pcre_version.c
+  pcre_xclass.c
+)
+ADD_PREFIX(${Chicken_SOURCE_DIR}/pcre/ PCRE_SOURCES)
+
+# We can easily include a static PCRE library in shared Chicken library. Unfortunately, we
+# cannot include a static PCRE library in a *static* Chicken library.  "ar" is the underlying library
+# tool on several platforms, and it can't put static libraries in static libraries.  The
+# workaround is to compile the PCRE source straight into the static Chicken libraries.
+#
+# Unfortunately this leads to compilation redundancy.  We need libchicken-boot, libchicken-static,
+# and libuchicken-static.  On Windows we also need libchicken-gui-static and libuchicken-gui-static.
+#
+# libchicken-boot is consumed only by chicken-boot.  Thus it's no big deal to manually link
+# libchicken-boot as a dependency.  We build an appropriate library in the /pcre subdirectory for
+# this purpose.
+#
+# For libchicken-static, libuchicken-static, libchicken-gui-static, and libuchicken-gui-static, we
+# simply include the source files directly.  Possibly we could generate the object files only once, but
+# this is more complicated to specify in CMake, and we're blowing it off for now.
+
+ADD_SUBDIRECTORY(pcre)
+
+
+####################################################################
 #  BOOTSTRAP                                                       #
 ####################################################################
 
@@ -1283,11 +1319,6 @@ GET_TARGET_PROPERTY(CHICKEN_BOOT_EXE chicken-boot LOCATION)
 SET(CURRENT_CHICKEN ${CHICKEN_BOOT_EXE})
 
 # Now we're compiling with the up-to-date version of Chicken. Yippie!
-
-# ./configure just plops chicken-config.h in the source tree.
-# Try to avoid collisions with it by searching 
-# ${CMAKE_CURRENT_BINARY_DIR} first.
-INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 
 ####################################################################
@@ -1304,8 +1335,8 @@ LIBRARY_SCM_TO_C_EXPORTS(lolevel)
 UNSAFE_LIBRARY_SCM_TO_C(lolevel)
 LIBRARY_SCM_TO_C(match)
 SIMPLE_SCM_TO_C(optimizer tweaks)
-LIBRARY_SCM_TO_C_EXPORTS(pcre regex-common)
-UNSAFE_LIBRARY_SCM_TO_C(pcre regex-common)
+LIBRARY_SCM_TO_C_EXPORTS(regex)
+UNSAFE_LIBRARY_SCM_TO_C(regex)
 
 # posixunix.scm and posixwin.scm both generate a file called posix.exports.
 # Thus there is a file collision.  In principle the files should export the same
@@ -1343,11 +1374,7 @@ ADD_CUSTOM_COMMAND(
 UNSAFE_LIBRARY_SCM_TO_C(posixunix)
 UNSAFE_LIBRARY_SCM_TO_C(posixwin)
 
-LIBRARY_SCM_TO_C_EXPORTS(pregexp regex-common)
-UNSAFE_LIBRARY_SCM_TO_C(pregexp regex-common)
 LIBRARY_SCM_TO_C(profiler)
-LIBRARY_SCM_TO_C_EXPORTS(regexunix regex-common)
-UNSAFE_LIBRARY_SCM_TO_C(regexunix regex-common)
 LIBRARY_SCM_TO_C_EXPORTS(scheduler)
 LIBRARY_SCM_TO_C_EXPORTS(srfi-1)
 UNSAFE_LIBRARY_SCM_TO_C(srfi-1)
@@ -1377,16 +1404,6 @@ ADD_CUSTOM_TARGET(all-posix-c DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/uposixwin.c
 )
 ADD_DEPENDENCIES(all-posix-c chicken-boot)
-
-ADD_CUSTOM_TARGET(all-regex-c DEPENDS
-  ${CMAKE_CURRENT_BINARY_DIR}/pcre.c
-  ${CMAKE_CURRENT_BINARY_DIR}/upcre.c
-  ${CMAKE_CURRENT_BINARY_DIR}/pregexp.c
-  ${CMAKE_CURRENT_BINARY_DIR}/upregexp.c
-  ${CMAKE_CURRENT_BINARY_DIR}/regexunix.c
-  ${CMAKE_CURRENT_BINARY_DIR}/uregexunix.c
-)
-ADD_DEPENDENCIES(all-regex-c chicken-boot)
 
 GET_LIB_COMMON_CGEN(COMMON_C)
 ADD_CUSTOM_TARGET(lib-common-c DEPENDS ${COMMON_C})
@@ -1426,28 +1443,28 @@ IF(MSVC)
   # Eventually, we wish to support different postfixes for debug, release builds etc.
   # For now, the user has to install the 1 configuration she actually wants.
 
-  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
+  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
   SET_TARGET_PROPERTIES(libchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
     OUTPUT_NAME "chicken" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "" DEBUG_POSTFIX "" RELWITHDEBINFO_POSTFIX "")
-  TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
+  TARGET_LINK_LIBRARIES(libchicken libpcre-for-shared ${MORE_LIBS})
   ADD_DEPENDENCIES(libchicken libchicken-c)
 
-  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
+  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_HEADER})
   SET_TARGET_PROPERTIES(libuchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
     OUTPUT_NAME "uchicken" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "" DEBUG_POSTFIX "" RELWITHDEBINFO_POSTFIX "")
-  TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
+  TARGET_LINK_LIBRARIES(libuchicken libpcre-for-shared ${MORE_LIBS})
   ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
-  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
+  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
   SET_TARGET_PROPERTIES(libchickengui PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
     OUTPUT_NAME "chickengui" PREFIX "lib" IMPORT_PREFIX "lib"
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "" DEBUG_POSTFIX "" RELWITHDEBINFO_POSTFIX "")
-  TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
+  TARGET_LINK_LIBRARIES(libchickengui libpcre-for-shared ${GUI_LIBS} ${MORE_LIBS})
   ADD_DEPENDENCIES(libchickengui libchicken-c)
 
 ELSE(MSVC)
@@ -1461,16 +1478,16 @@ ELSE(MSVC)
   # prefix onto every library.  For cross-platform stuff,
   # this often results in the 'liblibfoo" problem.
     
-  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES})
+  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
   SET_TARGET_PROPERTIES(libchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}")
-  TARGET_LINK_LIBRARIES(libchicken ${MORE_LIBS})
+  TARGET_LINK_LIBRARIES(libchicken libpcre-for-shared ${MORE_LIBS})
   ADD_DEPENDENCIES(libchicken libchicken-c)
 
-  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES})
+  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_HEADER})
   SET_TARGET_PROPERTIES(libuchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}")
-  TARGET_LINK_LIBRARIES(libuchicken ${MORE_LIBS})
+  TARGET_LINK_LIBRARIES(libuchicken libpcre-for-shared ${MORE_LIBS})
   ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
   SET_TARGET_PROPERTIES(libchicken PROPERTIES OUTPUT_NAME "chicken")
@@ -1481,11 +1498,11 @@ ELSE(MSVC)
   ENDIF(CYGWIN)
 
   IF(WIN32 AND NOT CYGWIN)
-    ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES})
+    ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
     SET_TARGET_PROPERTIES(libchickengui PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
       OUTPUT_NAME "chickengui")
-    TARGET_LINK_LIBRARIES(libchickengui ${GUI_LIBS} ${MORE_LIBS})
+    TARGET_LINK_LIBRARIES(libchickengui libpcre-for-shared ${GUI_LIBS} ${MORE_LIBS})
     ADD_DEPENDENCIES(libchickengui libchicken-c)
   ENDIF(WIN32 AND NOT CYGWIN)
 
@@ -1968,7 +1985,7 @@ SET(BOOT_CFILES_DEPS ${BOOT_CFILES})
 ADD_PREFIX(${CMAKE_CURRENT_BINARY_DIR}/ BOOT_CFILES_DEPS)
 ADD_CUSTOM_TARGET(boot-c DEPENDS ${BOOT_CFILES_DEPS})
 ADD_DEPENDENCIES(boot-c
-  all-posix-c all-regex-c lib-common-c lib-safe-c lib-unsafe-c
+  all-posix-c lib-common-c lib-safe-c lib-unsafe-c
   chicken-c csc-c csi-c chicken-profile-c chicken-setup-c
 )
 
@@ -2065,7 +2082,7 @@ ADD_DEPENDENCIES(install-opengl-egg opengl-temp-dir chicken-setup)
 #   LICENSE                                                        #
 ####################################################################
 
-# Copyright (c) 2006 by Brandon J. Van Every
+# Copyright (c) 2006..2007 by Brandon J. Van Every
 # 
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the "Software"),

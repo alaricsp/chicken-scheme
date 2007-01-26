@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2003 Felix L. Winkelmann
 
-  Version 2.515
+  Version 2.517
 
 
  1. Introduction:
@@ -115,11 +115,6 @@
 
 	  to compile all C files with icc. Note that shared libraries
 	  are not yet supported for this configuration.
-
-          If you prefer to use Dorai Sitaram's PREGEXP regular
-	  expression package instead of the one in the C runtime
-	  library, add the option `--with-pregexp' to the invocation
-	  of "./configure". Note that PREGEXP is much slower.
 
 	  If you always want to enable garbage collection for unused
           symbols in the symbols table by default, pass the

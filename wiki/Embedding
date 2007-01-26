@@ -159,12 +159,14 @@ An example:
  (define (bar x) (gc) (* x x))
  
  (define-external (baz (int i)) double
-   (sqrt i) 
+   (sqrt i))
+ (return-to-host)
  
+
  % cat y.c
  /* y.c */
  
- #include "chicken.h"
+ #include <chicken.h>
  #include <assert.h>
  
  extern double baz(int);
@@ -220,11 +222,9 @@ Re-enters Scheme execution. {{k}} is the continuation received from the previous
 of {{CHICKEN_run}} or {{CHICKEN_continue}}. When {{return-to-host}} is called again,
 this function returns another continuation that can be used to restart again.
 
-Note: if you invoke callbacks prior to calling {{CHICKEN_continue}}, make sure that the
+If you invoke callbacks prior to calling {{CHICKEN_continue}}, make sure that the
 continuation is not reclaimed by garbage collection. This can be avoided by using {{C_gc_protect}}
 or gc-roots.
-
-
 
 Another example:
 
@@ -249,7 +249,7 @@ Another example:
    (loop) )
  
  % cat y.c
- #include "chicken.h"
+ #include <chicken.h>
  
  int main()
  {
@@ -263,6 +263,10 @@ Another example:
  
  % csc x.scm y.c -embedded
 
+It is advisable not to mix repeated uses of {{CHICKEN_continue}}/{{return-to-host}}
+(as in the example above) with callbacks. Once {{return-to-host}} is invoked, the runtime system
+and any Scheme code executed prior to the invocation is initialized and can be conveniently
+used via callbacks.
 
 A simpler interface For handling GC-safe references to Scheme data are the so called ''gc-roots'':
 

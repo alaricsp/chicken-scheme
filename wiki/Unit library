@@ -1029,7 +1029,7 @@ Calls the procedure {{THUNK}} with no arguments and the implicit continuation
 
  [procedure] (continuation-return CONT VALUE ...)
 
-Returns the value(s) to the continuation {{CONT}}. {{continuation-result}} could
+Returns the value(s) to the continuation {{CONT}}. {{continuation-return}} could
 be implemented like this:
 
 <enscript highlight=scheme>
@@ -1119,6 +1119,16 @@ to disable built-in read-syntax, define a handler that triggers an error (for ex
 Similar to {{set-read-syntax!}}, but allows defining new {{#<CHAR> ...}} reader syntax.
 If the first argument is a symbol, then this procedure is equivalent to {{set-read-syntax!}}.
 
+
+==== set-parameterized-read-syntax!
+
+ [procedure] (set-parameterized-read-syntax! CHAR-OR-SYMBOL PROC)
+
+Similar to {{set-sharp-read-syntax!}}, but intended for defining reader syntax of the
+form {{#<NUMBER><CHAR> ...}}. The handler procedure {{PROC}} will be called with two
+arguments: the input port and the number preceding
+the dispatching character.
+If the first argument is a symbol, then this procedure is equivalent to {{set-read-syntax!}}.
 
 
 ==== copy-read-table

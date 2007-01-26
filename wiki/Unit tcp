@@ -108,7 +108,10 @@ Marks the socket port {{PORT}} as abandoned. This is mainly useful to close down
 without breaking the connection.
 
 
-; {parameter} tcp-buffer-size :
+=== tcp-buffer-size
+
+ [parameter] tcp-buffer-size
+
 Sets the size of the output buffer. By default no output-buffering for
 TCP output is done, but to improve performance by minimizing the
 number of TCP packets, buffering may be turned on by setting this
