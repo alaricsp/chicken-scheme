@@ -877,7 +877,10 @@ EOF
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
 	 [script (member* '("-s" "-ss" "-script") args)])
     (cond [script
-	   (unless (pair? (cdr script)) (##sys#error "missing script argument"))
+	   (when (or (not (pair? (cdr script)))
+		     (zero? (string-length (cadr script)))
+		     (char=? #\- (string-ref (cadr script) 0)) )
+	     (##sys#error "missing or invalid script argument"))
 	   (command-line-arguments (cddr script))
 	   (register-feature! 'script)
 	   (set-cdr! (cdr script) '()) 

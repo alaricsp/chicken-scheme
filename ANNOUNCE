@@ -88,12 +88,12 @@ Extensions and libraries:
 
   Currently available:
 
-  ajax alexpander amb aquaterm args asxt autoload array-lib awk base64
-  bb binary-parse blas bloom-filter box c3 cairo charconv codewalk
-  coerce complex content-type cookie crc crypt crypt3 csv datatype
-  debug defstruct dissector doctype dollar dpfw easyffi eggdoc
-  environments epeg estraier expat ezxdisp F-operator fancypants
-  fastcgi format format-modular fp ftp futures g2 gdbm
+  aalib ajax alexpander amb aquaterm args asxt autoload array-lib awk
+  base64 bb binary-parse blas bloom-filter box c3 cairo charconv
+  codewalk coerce complex content-type cookie crc crypt crypt3 csv
+  datatype debug defstruct dissector doctype dollar dpfw easyffi
+  eggdoc environments epeg estraier expat ezxdisp F-operator
+  fancypants fastcgi format format-modular fp ftp futures g2 gdbm
   generalised-case generator gettext glut gmp hashes honu hostinfo
   html-plots html-stream htmlprag http http-server-form-posts iconv
   imlib2 inline irc iset japi javahack job-worker jni json kanren lalr
@@ -143,12 +143,31 @@ Catolica de Pelotas for providing the server that hosts the source
 repository!
 
 
+Documentation can be found at the CHICKEN wiki: 
+
+  <http://chicken.wiki.br>
+
+You might also find the CHICKEN documentation browser helpful:
+
+  <http://callcc.org>
+
+
 The mailing list for CHICKEN users can be found here:
 
   To post a message send e-mail to <chicken-users@nongnu.org>
 
   General information about the mailing list is at 
   <http://mail.nongnu.org/mailman/listinfo/chicken-users>
+
+
+Bug and feature requests should be directed towards the CHICKEN
+bug tracker at:
+
+  <http://trac.callcc.org>
+
+Many thanks to Arto Bendiken for providing and maintaining this
+service!
+
 
 A mailing list specific to CHICKEN development and porting is
 available at:

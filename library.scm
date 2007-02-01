@@ -458,19 +458,24 @@ EOF
 (define (string-set! s i c) (##core#inline "C_i_string_set" s i c))
 
 (define (##sys#make-string size . fill)
-  (##sys#check-exact size 'make-string)
-  (cond-expand 
-   [unsafe] 
-   [else (when (fx< size 0) (##sys#signal-hook #:bounds-error 'make-string "size is negative" size))])
   (##sys#allocate-vector
    size #t
    (if (null? fill)
        #\space
-       (let ((c (car fill)))
-	 (begin (##sys#check-char c 'make-string) c) ) )
+       (car fill))
    #f) )
 
-(define make-string ##sys#make-string)
+(define (make-string size . fill)
+  (##sys#check-exact size 'make-string)
+  #+(not unsafe)
+  (when (fx< size 0)
+    (##sys#signal-hook #:bounds-error 'make-string "size is negative" size))
+  (##sys#make-string 
+   size 
+   (if (null? fill)
+       #\space
+       (let ((c (car fill)))
+	 (begin (##sys#check-char c 'make-string) c) ) ) ) )
 
 (define string->list 
   (lambda (s)
