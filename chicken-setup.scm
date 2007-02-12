@@ -228,9 +228,6 @@ static void create_directory(char *pathname) {}
       (pathname-replace-extension file ##sys#load-dynamic-extension)
       file) )
 
-(define (unformatify str)
-  (string-translate* str '(("~" . "~~"))) )
-
 (define (run:execute explist)
   (define (smooth lst)
     (let ((slst (map ->string lst)))
@@ -238,7 +235,7 @@ static void create_directory(char *pathname) {}
   (for-each
    (lambda (cmd)
      (when (run-verbose) (printf "  ~A~%~!" cmd))
-     (system* (unformatify cmd) ))
+     (system* "~a" cmd) )
    (map smooth explist) ) )
 
 (define-macro (run . explist)
@@ -288,11 +285,11 @@ static void create_directory(char *pathname) {}
 
 (define (make:check-argv argv)
   (or (string? argv)
-      (and (vector? argv)
-	   (andmap string? (vector->list argv)))
-      (error "argument is not a string or string vector" argv)))
+      (andmap string? argv)
+      (error "argument is not a string or string list" argv)))
 
 (define (make:make/proc/helper spec argv)
+  (when (vector? argv) (set! argv (vector->list argv)))
   (make:check-spec spec)
   (make:check-argv argv)
   (letrec ((made '())
@@ -349,8 +346,8 @@ static void create_directory(char *pathname) {}
 		      (error (sprintf "don't know how to make ~a" s2))))))))
     (cond
      ((string? argv) (make-file argv ""))
-     ((equal? argv '#()) (make-file (caar spec) ""))
-     (else (for-each (lambda (f) (make-file f "")) (vector->list argv))))
+     ((null? argv) (make-file (caar spec) ""))
+     (else (for-each (lambda (f) (make-file f "")) argv)))
     (when (setup-verbose-flag)
       (for-each (lambda (item)
 		  (printf "make: made ~a~%" item))
@@ -358,35 +355,31 @@ static void create_directory(char *pathname) {}
 
 (define make/proc
   (case-lambda
-   ((spec) (make:make/proc/helper spec '#()))
+   ((spec) (make:make/proc/helper spec '()))
    ((spec argv) (make:make/proc/helper spec argv))))
 
-(define-macro (make spec . argv)
-  (let ((make (lambda (spec argv)
-		(let ((form-error (lambda (s . p) (apply error s spec p))))
-		  (and (or (list? spec) (form-error "illegal specification (not a sequence)"))
-		       (or (pair? spec) (form-error "empty specification"))
-		       (andmap
-			(lambda (line)
-			  (and (or (and (list? line) (>= (length line) 2))
-				   (form-error "clause does not have at least 2 parts" line))
-			       (let ((name (car line)))
-				 (or (list? (cadr line))
-				     (make:line-error "second part of clause is not a sequence" (cadr line) name)))))
-			spec))
-		  `(make/proc (list ,@(map (lambda (line)
-					     `(list ,(car line)
-						    (list ,@(cadr line))
-						    ,@(let ((l (cddr line)))
-							(if (null? l)
-							    '()
-							    `((lambda ()
-								,@l))))))
-					   spec))
-			      ,(if (vector? argv) `',argv (car argv)))))))
-    (if (pair? argv)
-	(make spec argv)
-	(make spec '#())) ) )
+(define-macro (make spec #!optional (argv '()))
+  (let ((form-error (lambda (s . p) (apply error s spec p))))
+    (and (or (list? spec) (form-error "illegal specification (not a sequence)"))
+	 (or (pair? spec) (form-error "empty specification"))
+	 (andmap
+	  (lambda (line)
+	    (and (or (and (list? line) (>= (length line) 2))
+		     (form-error "clause does not have at least 2 parts" line))
+		 (let ((name (car line)))
+		   (or (list? (cadr line))
+		       (make:line-error "second part of clause is not a sequence" (cadr line) name)))))
+	  spec))
+    `(make/proc (list ,@(map (lambda (line)
+			       `(list ,(car line)
+				      (list ,@(cadr line))
+				      ,@(let ((l (cddr line)))
+					  (if (null? l)
+					      '()
+					      `((lambda ()
+						  ,@l))))))
+			     spec))
+		,argv)))
 
 (define (usage)
   (display #<<EOF
@@ -559,8 +552,8 @@ EOF
        flist) )
 
 (define (translate-extension f #!optional default)
-  (pathname-replace-extension
-   (match f
+  (pathname-replace-extension f
+   (match (pathname-extension f)
      (#f default)
      ("so" ##sys#load-dynamic-extension)
      ("o" (if *windows-shell* "obj" "o"))

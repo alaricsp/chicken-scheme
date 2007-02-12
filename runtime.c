@@ -3485,6 +3485,7 @@ C_regparm void C_fcall C_trace(C_char *name)
 }
 
 
+/* DEPRECATED: throw out at some stage: */
 C_regparm C_word C_fcall C_emit_trace_info(C_word x, C_word y, C_word t)
 {
   if(trace_buffer_top >= trace_buffer_limit) {
@@ -3493,6 +3494,22 @@ C_regparm C_word C_fcall C_emit_trace_info(C_word x, C_word y, C_word t)
   }
 
   trace_buffer_top->raw = "<eval>";
+  trace_buffer_top->cooked1 = x;
+  trace_buffer_top->cooked2 = y;
+  trace_buffer_top->thread = t;
+  ++trace_buffer_top;
+  return x;
+}
+
+
+C_regparm C_word C_fcall C_emit_trace_info2(char *raw, C_word x, C_word y, C_word t)
+{
+  if(trace_buffer_top >= trace_buffer_limit) {
+    trace_buffer_top = trace_buffer;
+    trace_buffer_full = 1;
+  }
+
+  trace_buffer_top->raw = raw;
   trace_buffer_top->cooked1 = x;
   trace_buffer_top->cooked2 = y;
   trace_buffer_top->thread = t;
@@ -7275,7 +7292,12 @@ void C_ccall C_string_to_number(C_word c, C_word closure, C_word k, C_word str, 
     goto fini;
   }
 
-  C_memcpy(sptr = buffer, C_c_string(str), n);
+  if(n >= STRING_BUFFER_SIZE - 1) {
+    n = C_SCHEME_FALSE;
+    goto fini;
+  }
+
+  C_memcpy(sptr = buffer, C_c_string(str), n > (STRING_BUFFER_SIZE - 1) ? STRING_BUFFER_SIZE : n);
   buffer[ n ] = '\0';
   
   while(*sptr == '#') {

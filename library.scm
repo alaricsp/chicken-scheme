@@ -1231,14 +1231,10 @@ EOF
 	  ((fx>= i n))
 	(##sys#setslot to i (##sys#slot from i)) ) ) ) )
 
-(define (vector-resize v n . init)
+(define (vector-resize v n #!optional init)
   (##sys#check-vector v 'vector-resize)
   (##sys#check-exact n 'vector-resize)
-  (let ([v2 (##sys#apply ##sys#make-vector n init)]
-	[len (##sys#size v)] )
-    (do ([i 0 (fx+ i 1)])
-	((fx>= i len) v2)
-      (##sys#setslot v2 i (##sys#slot v i)) ) ) )
+  (##sys#grow-vector v n init) )
 
 (define ##sys#grow-vector 
   (lambda (v n init)
@@ -1328,7 +1324,7 @@ EOF
 	[names-to-chars '()] )
     (define (lookup-char c)
       (let* ([code (char->integer c)]
-	     [key (fxmod code char-name-table-size)] )
+	     [key (##core#inline "C_fixnum_modulo" code char-name-table-size)] )
 	(let loop ([b (##sys#slot chars-to-names key)])
 	  (and (pair? b)
 	       (let ([a (##sys#slot b 0)])
@@ -1350,7 +1346,7 @@ EOF
 		       (if b
 			   (##sys#setislot b 1 chr)
 			   (set! names-to-chars (cons (cons x chr) names-to-chars)) ) )
-		     (let ([key (fxmod (char->integer chr) char-name-table-size)])
+		     (let ([key (##core#inline "C_fixnum_modulo" (char->integer chr) char-name-table-size)])
 		       (set! names-to-chars (cons (cons x chr) names-to-chars))
 		       (##sys#setslot 
 			chars-to-names key
@@ -3151,9 +3147,9 @@ EOF
 			  (loop (fx+ i 4)) )
 		    (loop (fx+ i 4))) ) ) ) ) ) ) )
 
-(define (##sys#really-print-call-chain port chain)
+(define (##sys#really-print-call-chain port chain header)
   (when (pair? chain)
-    (##sys#print "\n\tCall history:\n" #f port)
+    (##sys#print header #f port)
     (for-each
      (lambda (info) 
        (let ((more1 (##sys#slot info 1))
@@ -3175,8 +3171,9 @@ EOF
     (##sys#print "\t<--\n" #f port) ) )
 
 (define print-call-chain
-  (lambda (#!optional (port ##sys#standard-output) (start 0) (thread ##sys#current-thread))
-    (##sys#really-print-call-chain port (##sys#get-call-chain start thread))) )
+  (lambda (#!optional (port ##sys#standard-output) (start 0) (thread ##sys#current-thread)
+		      (header "\n\tCall history:\n") )
+    (##sys#really-print-call-chain port (##sys#get-call-chain start thread) header) ) )
 
 (define get-call-chain ##sys#get-call-chain)
 (define print-backtrace print-call-chain) ; DEPRECATED

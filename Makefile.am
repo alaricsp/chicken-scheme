@@ -39,10 +39,33 @@ C_INSTALL_MORE_LIBS=\"$(MORE_LIBS)\"
 C_INSTALL_MORE_STATIC_LIBS=\"$(MORE_STATIC_LIBS)\"
 C_DEFAULT_TARGET_STACK_SIZE=(128*1024)
 C_STACK_GROWS_DOWNWARD=($(STACK_GROWS_DOWNWARD))
-TARGET_CC=\"@TARGET_CC@\"
-TARGET_CXX=\"@TARGET_CXX@\"
-TARGET_CFLAGS=\"@TARGET_CFLAGS@\"
-TARGET_LFLAGS=\"@TARGET_LFLAGS@\"
+C_TARGET_CC=\"@TARGET_CC@\"
+C_TARGET_CXX=\"@TARGET_CXX@\"
+C_TARGET_CFLAGS=\"@TARGET_CFLAGS@\"
+
+if USE_TARGET_MORE_LIBS
+ C_TARGET_MORE_LIBS=\"@TARGET_MORE_LIBS@\"
+else
+ C_TARGET_MORE_LIBS=\"$(MORE_LIBS)\"
+endif
+
+if USE_TARGET_MORE_LIBS
+ C_TARGET_MORE_STATIC_LIBS=\"@TARGET_MORE_STATIC_LIBS@\"
+else
+ C_TARGET_MORE_STATIC_LIBS=\"$(MORE_STATIC_LIBS)\"
+endif
+
+if USE_TARGET_PREFIX
+ C_TARGET_LIB_HOME=\"@TARGET_PREFIX@/lib\"
+ C_TARGET_SHARE_HOME=\"@TARGET_PREFIX@/share\"
+ C_TARGET_INCLUDE_HOME=\"@TARGET_PREFIX@/include\"
+ C_TARGET_STATIC_LIB_HOME=\"@TARGET_PREFIX@/lib\"
+else
+ C_TARGET_LIB_HOME=\"$(libdir)\"
+ C_TARGET_SHARE_HOME=\"$(pkgdatadir)\"
+ C_TARGET_INCLUDE_HOME=\"$(includedir)\"
+ C_TARGET_STATIC_LIB_HOME=\"$(libdir)/lib\"
+endif
 
 BOOTSTRAP_PATH = .
 CHICKEN = $(BOOTSTRAP_PATH)/chicken
@@ -98,10 +121,15 @@ chicken-defaults.h: chicken-defaults.h.in Makefile
 	    -e "s%@C_INSTALL_MORE_LIBS[@]%$(C_INSTALL_MORE_LIBS)%" \
 	    -e "s%@C_INSTALL_MORE_STATIC_LIBS[@]%$(C_INSTALL_MORE_STATIC_LIBS)%" \
 	    -e "s%@C_DEFAULT_TARGET_STACK_SIZE[@]%$(C_DEFAULT_TARGET_STACK_SIZE)%" \
-	    -e "s,@C_TARGET_CC[@],$(TARGET_CC)," \
-	    -e "s,@C_TARGET_CXX[@],$(TARGET_CXX)," \
-	    -e "s,@C_TARGET_CFLAGS[@],$(TARGET_CFLAGS)," \
-	    -e "s,@C_TARGET_LFLAGS[@],$(TARGET_LFLAGS)," \
+	    -e "s%@C_TARGET_MORE_LIBS[@]%$(C_TARGET_MORE_LIBS)%" \
+	    -e "s%@C_TARGET_MORE_STATIC_LIBS[@]%$(C_TARGET_MORE_STATIC_LIBS)%" \
+	    -e "s,@C_TARGET_CC[@],$(C_TARGET_CC)," \
+	    -e "s,@C_TARGET_CXX[@],$(C_TARGET_CXX)," \
+	    -e "s,@C_TARGET_CFLAGS[@],$(C_TARGET_CFLAGS)," \
+	    -e "s,@C_TARGET_LIB_HOME[@],$(C_TARGET_LIB_HOME)," \
+	    -e "s,@C_TARGET_STATIC_LIB_HOME[@],$(C_TARGET_STATIC_LIB_HOME)," \
+	    -e "s,@C_TARGET_INCLUDE_HOME[@],$(C_TARGET_INCLUDE_HOME)," \
+	    -e "s,@C_TARGET_SHARE_HOME[@],$(C_TARGET_SHARE_HOME)," \
 	    -e "s,@C_STACK_GROWS_DOWNWARD[@],$(C_STACK_GROWS_DOWNWARD),g" \
 	  <$(srcdir)/chicken-defaults.h.in >chicken-defaults.h;
 
@@ -262,7 +290,7 @@ libuchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_S
 
 # Scheme library files to install.
 pkgdata_DATA = chicken-more-macros.scm \
-  banner.scm chicken-ffi-macros.scm library.exports eval.exports srfi-1.exports srfi-4.exports \
+  chicken-ffi-macros.scm library.exports eval.exports srfi-1.exports srfi-4.exports \
   srfi-13.exports srfi-14.exports srfi-18.exports utils.exports extras.exports \
   eval.exports tcp.exports regex.exports posix.exports lolevel.exports scheduler.exports
 

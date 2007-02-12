@@ -292,7 +292,7 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-compression-threshold compressed-literals compressable-literal
-  lookup-exports-file undefine-shadowed-macros process-lambda-documentation
+  lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result}
@@ -502,16 +502,17 @@
 			  t) ) ) ]
 		 [else x] ) )
 	  ((and (not-pair? x) (constant? x)) `(quote ,x))
-	  ((not-pair? x) (quit "syntax error - illegal atomic form `~s'" x))
+	  ((not-pair? x) (syntax-error "illegal atomic form" x))
 	  ((symbol? (car x))
 	   (let* ([head (car x)]
 		  [rest (cdr x)]
 		  [ln (get-line x)]
 		  [name (resolve head ae)] )
+	     (emit-syntax-trace-info x #f)
 	     (unless (proper-list? x)
 	       (if ln
-		   (quit "syntax error in line ~s - malformed expression `~s'" ln x)
-		   (quit "syntax error - malformed expression `~s'" x) ) )
+		   (syntax-error (sprintf "(in line ~s) - malformed expression" ln) x)
+		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
 	     (let* ([x2 (cons name rest)]
 		    [xexpanded (##sys#macroexpand-1-local x2 me)] )
@@ -561,7 +562,8 @@
 				    (set! block-globals (cons var block-globals))
 				    var) ] ) ) )
 
-			((##core#undefined ##core#callunit ##core#primitive ##core#inline_ref ##core#inline_loc_ref) x)
+			((##core#undefined ##core#callunit ##core#primitive ##core#inline_ref 
+					   ##core#inline_loc_ref) x)
 
 			((##core#require-for-syntax)
 			 (let ([ids (map eval (cdr x))])
@@ -669,7 +671,7 @@
 			     (set! always-bound-to-procedure
 			       (lset-adjoin eq? always-bound-to-procedure var))
 			     (set! always-bound (lset-adjoin eq? always-bound var)) )
-			   (when (eq? var var0)
+			   (when (eq? var var0) ; global?
 			     (when (macro? var)
 			       (compiler-warning 
 				'var "assigned global variable `~S' is a macro ~A"
@@ -774,7 +776,9 @@
 				    (walk
 				     `(begin
 					(##core#set! ,arg ,(first conv))
-					(##core#set! ,ret ,(if (pair? (cdr conv)) (second conv) '##sys#values)) ) 
+					(##core#set! 
+					 ,ret 
+					 ,(if (pair? (cdr conv)) (second conv) '##sys#values)) ) 
 				     ae me dest) ) ]
 				 [else
 				  (##sys#hash-table-set! foreign-type-table name type)
@@ -806,7 +810,11 @@
 			   `(let (,(let ([size (words (estimate-foreign-result-location-size type))])
 				     ;; Add 2 words: 1 for the header, 1 for double-alignment:
 				     ;; Note: C_a_i_bytevector takes number of words, not bytes
-				     (list store `(##core#inline_allocate ("C_a_i_bytevector" ,(+ 2 size)) ',size)) ) )
+				     (list 
+				      store
+				      `(##core#inline_allocate
+					("C_a_i_bytevector" ,(+ 2 size))
+					',size)) ) )
 			      ,(walk
 				`(begin
 				   ,@(if init
@@ -833,7 +841,9 @@
 			 (let* ([name (cadr (second x))]
 				[valexp (third x)]
 				[val (handle-exceptions ex
-					 (quit "error in constant evaluation of ~S for named constant ~S" valexp name)
+					 ;; could show line number here
+					 (quit "error in constant evaluation of ~S for named constant ~S" 
+					       valexp name)
 				       (if (collapsable-literal? valexp)
 					   valexp
 					   (eval `(let ,defconstant-bindings ,valexp)) ) ) ] )
@@ -872,11 +882,12 @@
 			     (let ([name (cadr name)])
 			       (if (valid-c-identifier? name)
 				   (set! callback-names (cons name callback-names))
-				   (quit "name `~S' of external definition is not a valid C identifier" name) ) )
+				   (quit "name `~S' of external definition is not a valid C identifier"
+					 name) ) )
 			     (when (or (not (proper-list? vars)) 
 				       (not (proper-list? atypes))
 				       (not (= (length vars) (length atypes))) )
-			       (##sys#syntax-error-hook 
+			       (syntax-error 
 				"non-matching or invalid argument list to foreign callback-wrapper"
 				vars atypes) )
 			     `(##core#foreign-callback-wrapper
@@ -901,8 +912,8 @@
 						   ((or '(const nonnull-c-string) 'nonnull-c-string)
 						    `((##sys#make-c-string (let () ,@(cddr lam)))))
 						   ((or '(const c-string*) 'c-string*)
-						    (##sys#syntax-error-hook
-						     "`c-string*' is not a valid resulte type for callback procedures"
+						    (syntax-error
+						     "`c-string*' is not a valid result type for callback procedures"
 						     name) )
 						   ((or 'c-string '(const c-string))
 						    `((let ((r (let () ,@(cddr lam))))
@@ -944,15 +955,17 @@
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
 
 	  ((not (proper-list? x))
-	   (quit "syntax error - malformed expression `~s'" x) )
+	   (syntax-error "malformed expression" x) )
 
 	  ((constant? (car x))
+	   (emit-syntax-trace-info x #f)
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
 	   (mapwalk x ae me) )
 
 	  ((and (pair? (car x)) (eq? 'lambda (caar x)))
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
+	     (emit-syntax-trace-info x #f)
 	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)))
 	     (let ([llist (cadr lexp)])
 	       (if (and (proper-list? llist) (= (length llist) (length args)))
@@ -963,12 +976,15 @@
 			 (,var ,@(cdr x)) )
 		      ae me dest) ) ) ) ) )
 	  
-	  (else (mapwalk x ae me)) ) )
+	  (else
+	   (emit-syntax-trace-info x #f)
+	   (mapwalk x ae me)) ) )
   
   (define (mapwalk xs ae me)
     (map (lambda (x) (walk x ae me #f)) xs) )
 
   (when (memq 'c debugging-chicken) (newline) (pretty-print exp))
+  (##sys#clear-trace-buffer)
   ;; Process visited definitions and main expression:
   (walk 
    `(begin
@@ -985,11 +1001,11 @@
   (define (check-decl spec minlen . maxlen)
     (let ([n (length (cdr spec))])
       (if (or (< n minlen) (> n (:optional maxlen 99999)))
-	  (quit "syntax error in declaration: `~s'" spec) ) ) )  
+	  (syntax-error "invalid declaration" spec) ) ) )  
   (call-with-current-continuation
    (lambda (return)
      (unless (pair? spec)
-       (quit "invalid specification syntax: ~S" spec) )
+       (syntax-error "invalid declaration specification" spec) )
      (case (car spec)
        ((uses)
 	(let ([us (cdr spec)])
@@ -1053,10 +1069,10 @@
 	(let ([fds (cdr spec)])
 	  (if (every string? fds)
 	      (set! foreign-declarations (append foreign-declarations fds))
-	      (quit "syntax error in declaration: `~S'" spec) ) ) )
+	      (syntax-error "invalid declaration" spec) ) ) )
        ((custom-declare)
 	(if (or (not (list? spec)) (not (list? (cadr spec))) (< (length (cadr spec)) 3))
-	    (quit "syntax error in declaration: `~S'" spec)
+	    (syntax-error "invalid declaration" spec)
 	    (process-custom-declaration (cadr spec) (cddr spec)) ) )
        ((c-options)
 	(emit-control-file-item `(c-options ,@(cdr spec))) )

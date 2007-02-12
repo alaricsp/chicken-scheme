@@ -633,6 +633,12 @@
 		    x2) )
 	      x2) ) )
 
+      (define (emit-trace-info tf info cntr) 
+	(##core#inline "C_emit_eval_trace_info" info cntr ##sys#current-thread) )
+
+      (define (emit-syntax-trace-info tf info cntr) 
+	(##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) )
+
       (define (decorate p ll h cntr)
 	(##sys#eval-decorator p ll h cntr) )
 
@@ -676,6 +682,7 @@
 	       (lambda v x) ]
 	      [(not (pair? x)) (##sys#syntax-error-hook "illegal non-atomic object" x)]
 	      [(symbol? (##sys#slot x 0))
+	       (emit-syntax-trace-info tf x cntr)
 	       (let ([head (##sys#slot x 0)])
 		 (if (defined? head e)
 		     (compile-call x e tf cntr)
@@ -947,7 +954,8 @@
 			      (compile `(set! ,(cadadr x) ,@(cddr x)) e #f tf cntr) ]
                    
 			     [(##core#primitive ##core#inline ##core#inline_allocate ##core#foreign-lambda 
-						##core#define-foreign-variable ##core#define-external-variable ##core#let-location
+						##core#define-foreign-variable 
+						##core#define-external-variable ##core#let-location
 						##core#foreign-primitive
 						##core#foreign-lambda* ##core#define-foreign-type)
 			      (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
@@ -963,7 +971,9 @@
 
 			   (compile x2 e h tf cntr) ) ) ) ) ]
 
-	      [else (compile-call x e tf cntr)] ) )
+	      [else
+	       (emit-syntax-trace-info tf x cntr)
+	       (compile-call x e tf cntr)] ) )
 
       (define (fudge-argument-list n alst)
 	(if (null? alst) 
@@ -980,9 +990,6 @@
 	  (cond [(null? lst) n]
 		[(pair? lst) (loop (##sys#slot lst 1) (fx+ n 1))]
 		[else #f] ) ) )
-
-      (define (emit-trace-info tf info cntr) 
-	(##core#inline "C_emit_trace_info" info cntr ##sys#current-thread) )
 
       (define (compile-call x e tf cntr)
 	(let* ([fn (compile (##sys#slot x 0) e #f #f cntr)]

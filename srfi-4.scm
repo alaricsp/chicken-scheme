@@ -510,7 +510,8 @@ EOF
     (lambda (str)
       (##sys#check-byte-vector str loc)
       (let ([len (##core#inline "C_block_size" str)])
-	(if (or (eq? #t sz) (##core#inline "C_eqp" 0 (fxmod len sz)))
+	(if (or (eq? #t sz) 
+		(##core#inline "C_eqp" 0 (##core#inline "C_fixnum_modulo" len sz)))
 	    (##sys#make-structure tag str) 
 	    (##sys#error loc "bytevector does not have correct size for packing" tag len sz) ) ) ) )
 
@@ -583,7 +584,7 @@ EOF
   (##sys#check-structure v t loc)
   (let* ([bv (##sys#slot v 1)]
 	 [len (##sys#size bv)]
-	 [ilen (fx/ len es)] )
+	 [ilen (##core#inline "C_fixnum_divide" len es)] )
     (##sys#check-range from 0 (fx+ ilen 1) loc)
     (##sys#check-range to 0 (fx+ ilen 1) loc)
     (let* ([size2 (fx* es (fx- to from))]

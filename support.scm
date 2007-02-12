@@ -49,7 +49,7 @@
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  dependency-list broken-constant-nodes inline-substitutions-enabled
+  dependency-list broken-constant-nodes inline-substitutions-enabled emit-syntax-trace-info
   always-bound-to-procedure block-variable-literal copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
   direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string
   expand-profile-lambda profile-lambda-list profile-lambda-index profile-info-vector-name
@@ -121,9 +121,15 @@
 (set! ##sys#syntax-error-hook
   (lambda (msg . args)
     (let ([out (current-error-port)])
-      (fprintf out "Syntax error: ~a~%" msg) 
-      (for-each (lambda (x) (write x out) (newline out)) args)
+      (fprintf out "Syntax error: ~a~%~%" msg) 
+      (for-each (cut fprintf out "\t~s~%" <>) args)
+      (print-call-chain out 0 ##sys#current-thread "\n\tExpansion history:\n")
       (exit 70) ) ) )
+
+(set! syntax-error ##sys#syntax-error-hook)
+
+(define (emit-syntax-trace-info info cntr) 
+  (##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) )
 
 (define (map-llist proc llist)
   (let loop ([llist llist])

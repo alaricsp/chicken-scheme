@@ -1,8 +1,8 @@
 
   README file for the CHICKEN compiler
-  (c)2000-2003 Felix L. Winkelmann
+  (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.517
+  Version 2.520
 
 
  1. Introduction:
@@ -38,7 +38,7 @@
  2. Installation:
 
 	First unzip the package ("unzip chicken-<version>.zip", "tar
-        xvzf chicken-<version>.tar.gz" on UNIX or useyour favorite
+        xvzf chicken-<version>.tar.gz" on UNIX or use your favorite
         extraction program on Windows), then configure the system and
         generate the binaries by invoking the "make" program.
 
@@ -100,7 +100,7 @@
 	  (Note: a more recent development snapshot of libffi is
 	  available at
 	  http://www.call-with-current-continuation.org/tarballs/libffi-3.tgz).
-	  If you experience any problems with your libfi installation,
+	  If you experience any problems with your libffi installation,
 	  you can disable support for it by passing "--without-libffi"
 	  to configure.
 
@@ -235,7 +235,7 @@
 
      	- For Mac OS X, Chicken requires libdl, for loading compiled
 	  code dynamically. This library is available on Mac OS X 10.4
-	  (Tiger) by default. For older version ou can find it here:
+	  (Tiger) by default. For older version you can find it here:
 
 	    http://www.opendarwin.org/projects/dlcompat
 

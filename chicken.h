@@ -914,6 +914,9 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 # define C_tty_portp(p)                 C_mk_bool(isatty(fileno(C_port_file(p))))
 #endif
 
+#define C_emit_eval_trace_info(x, y, z) C_emit_trace_info2("<eval>", x, y, z)
+#define C_emit_syntax_trace_info(x, y, z) C_emit_trace_info2("<syntax>", x, y, z)
+
 /* These expect C_VECTOR_TYPE to be 0: */
 #define C_vector_to_structure(v)        (((C_SCHEME_BLOCK *)(v))->header |= C_STRUCTURE_TYPE, C_SCHEME_UNDEFINED)
 #define C_vector_to_closure(v)          (((C_SCHEME_BLOCK *)(v))->header |= C_CLOSURE_TYPE, C_SCHEME_UNDEFINED)
@@ -1210,6 +1213,7 @@ C_fctexport int C_fcall C_in_heapp(C_word x) C_regparm;
 C_fctexport int C_fcall C_in_fromspacep(C_word x) C_regparm;
 C_fctexport void C_fcall C_trace(C_char *name) C_regparm;
 C_fctexport C_word C_fcall C_emit_trace_info(C_word x, C_word y, C_word t) C_regparm;
+C_fctexport C_word C_fcall C_emit_trace_info2(char *raw, C_word x, C_word y, C_word t) C_regparm;
 C_fctexport C_word C_fcall C_hash_string(C_word str) C_regparm;
 C_fctexport C_word C_fcall C_hash_string_ci(C_word str) C_regparm;
 C_fctexport C_word C_halt(C_word msg);

@@ -397,18 +397,22 @@ EOF
 				(loop (fx+ i 1)) ] ) ) ) ) ) ) ) ) ) ) ) )
 
 (define read-lines
-  (let ([read-line read-line]
-	[call-with-input-file call-with-input-file] 
-	[reverse reverse] )
+  (let ((read-line read-line)
+	(call-with-input-file call-with-input-file) 
+	(reverse reverse) )
     (lambda port-and-max
-      (let* ([port (if (pair? port-and-max) (##sys#slot port-and-max 0) ##sys#standard-input)]
-	     [rest (and (pair? port-and-max) (##sys#slot port-and-max 1))]
-	     [max (if (pair? rest) (##sys#slot rest 0) #f)] )
+      (let* ((port (if (pair? port-and-max) (##sys#slot port-and-max 0) ##sys#standard-input))
+	     (rest (and (pair? port-and-max) (##sys#slot port-and-max 1)))
+	     (max (if (pair? rest) (##sys#slot rest 0) #f)) )
 	(define (doread port)
-	  (do ([ln (read-line port) (read-line port)]
-	       [lns '() (cons ln lns)]
-	       [n (or max 1000000) (fx- n 1)] )
-	      ((or (eof-object? ln) (eq? n 0)) (reverse lns)) ) )
+	  (let loop ((lns '())
+		     (n (or max 1000000)) )
+	    (if (eq? n 0)
+		(reverse lns)
+		(let ((ln (read-line port)))
+		  (if (eof-object? ln)
+		      (reverse lns)
+		      (loop (cons ln lns) (fx- n 1)) ) ) ) ) )
 	(if (string? port)
 	    (call-with-input-file port doread)
 	    (begin
@@ -1449,7 +1453,7 @@ EOF
 	(and (fx> len 0)
 	     (let loop ([ps 0]
 			[pe len] )
-	       (let ([p (fx+ ps (fx/ (fx- pe ps) 2))])
+	       (let ([p (fx+ ps (##core#inline "C_fixnum_divide" (fx- pe ps) 2))])
 		 (let* ([x (##sys#slot vec p)]
 			[r (proc x)] )
 		   (cond [(fx= r 0) p]

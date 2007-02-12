@@ -17,7 +17,7 @@
 (set! SCANHEADERS #f)
 (set!? NURSERY "(128*1024)")
 (set!? STACKDIRECTION "1")
-(set!? BOOTSTRAP_PATH (path DESTDIR "bin"))
+(set!? BOOTSTRAP_PATH (path PREFIX "bin"))
 (set!? CHICKEN (path BOOTSTRAP_PATH "chicken"))
 (set!? CSI (path BOOTSTRAP_PATH "csi"))
 (set! BINARYVERSION "1")
@@ -29,7 +29,7 @@
 (set! EGGDIR (path (list LIBDIR "chicken") BINARYVERSION))
 (set! MANDIR (path DESTDIR "man"))
 (set! OPTIM "-g")
-(set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -Wall -Wno-undefined -Wno-unused -fno-strict-aliasing")
+(set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -Wall -Wno-unused -fno-strict-aliasing")
 (set!+ LINKLIBS "-lffi -ldl -lm")
 (set!+ STATICLINKLIBS "-lffi -lm")
 (set! LIBSOURCES0 `(eval extras library lolevel utils tcp srfi-1 srfi-4 srfi-13 srfi-14 srfi-18 posixunix regex))
@@ -42,6 +42,12 @@
 (set! BUILDVERSION (with-input-from-file "buildversion" read))
 (set! XLIBSOURCES '(posixwin))
 (set! UXLIBSOURCES (map (cut conc "u" <>) XLIBSOURCES))
+(set!? TARGET_PREFIX PREFIX)
+(set! TARGET_LIB_HOME (path TARGET_PREFIX "lib"))
+(set! TARGET_INCLUDE_HOME (path TARGET_PREFIX "include"))
+(set! TARGET_STATIC_LIB_HOME (path TARGET_PREFIX "lib"))
+(set! TARGET_SHARE_HOME (path TARGET_PREFIX "share"))
+(set!? TARGET_CFLAGS CCFLAGS)
 
 (set! PCRESOURCES
   '(pcre_compile
@@ -140,8 +146,13 @@ sed -e "s,@C_INSTALL_CC[@],\"#{CC}\"," \
       -e "s%@C_DEFAULT_TARGET_STACK_SIZE[@]%#{NURSERY}%" \
       -e "s,@C_TARGET_CC[@],\"#{CC}\"," \
       -e "s,@C_TARGET_CXX[@],\"#{C++}\"," \
-      -e "s,@C_TARGET_CFLAGS[@],\"\"," \
-      -e "s,@C_TARGET_LFLAGS[@],\"\"," \
+      -e "s,@C_TARGET_CFLAGS[@],\"#{TARGET_CFLAGS}\"," \
+      -e "s,@C_TARGET_LIB_HOME[@],\"#{TARGET_LIB_HOME}\"," \
+      -e "s,@C_TARGET_STATIC_LIB_HOME[@],\"#{TARGET_STATIC_LIB_HOME}\"," \
+      -e "s,@C_TARGET_INCLUDE_HOME[@],\"#{TARGET_INCLUDE_HOME}\"," \
+      -e "s,@C_TARGET_SHARE_HOME[@],\"#{TARGET_SHARE_HOME}\"," \
+      -e "s%@C_TARGET_MORE_LIBS[@]%\"#{LINKLIBS}\"%" \
+      -e "s%@C_TARGET_MORE_STATIC_LIBS[@]%\"#{STATICLINKLIBS}\"%" \
       -e "s,@C_STACK_GROWS_DOWNWARD[@],#{STACKDIRECTION},g" \
     <#{(suffix "h.in" f)} >#{(suffix "h" f)}
 EOF
@@ -240,7 +251,10 @@ EOF
 (depends "spotless" "clean")
 (actions
  "spotless"
- ^{rm -f ,(suffix "c" LIBSOURCES) ,(suffix "c" CHICKENSOURCES) ,(suffix "c" ULIBSOURCES0) html/*})
+ ^{rm -f ,(suffix "c" LIBSOURCES) 
+      ,(suffix "c" CHICKENSOURCES) 
+      ,(suffix "c" ULIBSOURCES0) 
+      html/*})
 
 (notfile "doc")
 (depends "doc" "site/ChangeLog.txt")
@@ -257,9 +271,12 @@ EOF
 (actions 
  "dist"
  ^(let* ((files (read-lines "distribution/manifest"))
-	(distname (conc "chicken-" BUILDVERSION)) 
-	(distfiles (map (cut prefix distname <>) files)) )
-    {mkdir -p ,distname ,@(map (cut path distname <>) (delete-duplicates (filter-map prefix files) string=?))}
+	 (distname (conc "chicken-" BUILDVERSION)) 
+	 (distfiles (map (cut prefix distname <>) files)) )
+    {rm -fr ,distname}
+    {mkdir -p ,distname
+	   ,@(map (cut path distname <>) 
+		  (delete-duplicates (filter-map prefix files) string=?))}
     (for-each
      (lambda (f)
        (if (equal? "boot/cfiles" (prefix f))
@@ -270,8 +287,8 @@ EOF
 		 (warning "file does not exist" f) ) ) ) )
      files)
     {cd ,distname ";" sh autogen.sh}
-    {tar cfz ,(conc distname ".tar.gz") ,@distfiles}
-    {zip -q ,(conc distname ".zip") ,@distfiles}
+    {tar cfz ,(conc distname ".tar.gz") ,distname}
+    {zip -qr ,(conc distname ".zip") ,distname}
     {rm -fr ,distname} ) )
 
 (depends "dist" (suffix "c" XLIBSOURCES UXLIBSOURCES))

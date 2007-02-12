@@ -122,7 +122,8 @@
 
 (define valid-compiler-options
   '(-help h help version verbose explicit-use quiet no-trace no-warnings unsafe block
-    check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info profile inline
+    check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
+    profile inline keep-shadowed-macros
     fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
     lambda-lift run-time-macros tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 

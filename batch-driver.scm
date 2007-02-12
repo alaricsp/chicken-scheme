@@ -44,7 +44,7 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   compiler-cleanup-hook check-global-exports disabled-warnings check-global-imports
-  file-io-only
+  file-io-only undefine-shadowed-macros
   unit-name insert-timer-checks used-units inline-max-size
   debugging perform-lambda-lifting! disable-stack-overflow-checking
   foreign-declarations emit-trace-info block-compilation line-number-database-size
@@ -269,6 +269,8 @@
     (when (and outfile filename (string=? outfile filename))
       (quit "source- and output-filename are the same") )
     (set! uses-units (map string->symbol (collect-options 'uses)))
+    (when (memq 'keep-shadowed-macros options)
+      (set! undefine-shadowed-macros #f) )
 
     ;; Handle feature options:
     (for-each register-feature! (collect-options 'feature))

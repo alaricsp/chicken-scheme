@@ -853,8 +853,6 @@ SET(C_INSTALL_CC \"${THE_CC}\")
 SET(C_INSTALL_CXX \"${THE_CXX}\")
 SET(C_TARGET_CC ${C_INSTALL_CC})
 SET(C_TARGET_CXX ${C_INSTALL_CXX})
-SET(C_TARGET_CFLAGS \"\")
-SET(C_TARGET_LFLAGS \"\")
 
 # Historically, MSVC was given a stack size of 300000.
 # Not convinced this is necessary, but noted in case of problems.
@@ -1072,14 +1070,6 @@ CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken.spec.in
 
 
 ####################################################################
-#  CHICKEN_CONFIG_H                                                #
-####################################################################
-
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
-
-
-####################################################################
 #  CHICKEN_DEFAULTS_H                                              #
 ####################################################################
 
@@ -1089,6 +1079,21 @@ GET_DIRECTORY_PROPERTY(RAW_CFLAGS
   DEFINITIONS
 )
 SET(C_INSTALL_CFLAGS \"${RAW_CFLAGS}\")
+SET(C_TARGET_CFLAGS ${C_INSTALL_CFLAGS})
+SET(C_TARGET_LIB_HOME ${C_INSTALL_LIB_HOME})
+SET(C_TARGET_SHARE_HOME ${C_INSTALL_SHARE_HOME})
+SET(C_TARGET_INCLUDE_HOME ${C_INSTALL_INCLUDE_HOME})
+SET(C_TARGET_STATIC_LIB_HOME ${C_INSTALL_STATIC_HOME})
+SET(C_TARGET_MORE_LIBS ${C_INSTALL_MORE_LIBS}\")
+SET(C_TARGET_MORE_STATIC_LIBS ${C_INSTALL_MORE_LIBS})
+
+####################################################################
+#  CHICKEN_CONFIG_H                                                #
+####################################################################
+
+CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-config-cmake.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h)
+
 
 # ./configure does the substitutions at make time, not
 # configuration time.  Will this cause problems if

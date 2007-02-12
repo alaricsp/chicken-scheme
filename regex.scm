@@ -338,20 +338,38 @@ EOF
 ;;; Some useful things:
 
 (define glob->regexp
-  (let ([list->string list->string]
-	[string->list string->list] )
+  (let ((list->string list->string)
+	(string->list string->list) )
     (lambda (s)
       (##sys#check-string s 'glob->regexp)
       (list->string
-       (let loop ([cs (string->list s)])
+       (let loop ((cs (string->list s)))
 	 (if (null? cs)
 	     '()
-	     (let ([c (car cs)]
-		   [rest (cdr cs)] )
-	       (cond [(char=? c #\*) `(#\. #\* ,@(loop rest))]
-		     [(char=? c #\?) (cons '#\. (loop rest))]
-		     [(or (char-alphabetic? c) (char-numeric? c)) (cons c (loop rest))]
-		     [else `(#\\ ,c ,@(loop rest))] ) ) ) ) ) ) ) )
+	     (let ((c (car cs))
+		   (rest (cdr cs)) )
+	       (cond ((char=? c #\*) `(#\. #\* ,@(loop rest)))
+		     ((char=? c #\?) (cons '#\. (loop rest)))
+		     ((char=? c #\[)
+		      (cons
+		       #\[
+		       (let loop2 ((rest rest))
+			 (match rest
+			   ((#\] . more)
+			    (cons #\] (loop more)) )
+			   ((#\- c . more)
+			    `(#\- ,c ,@(loop2 more)) )
+			   ((c1 #\- c2 . more)
+			    `(,c1 #\- ,c2 ,@(loop2 more)) )
+			   ((c . more) 
+			    (cons c (loop2 more)) )
+			   (() 
+			    (error 
+			     'glob->regexp
+			     "unexpected end of character class" 
+			     s)) ) ) ) )
+		     ((or (char-alphabetic? c) (char-numeric? c)) (cons c (loop rest)))
+		     (else `(#\\ ,c ,@(loop rest))) ) ) ) ) ) ) ) )
 
 (define grep
   (let ([string-search string-search])

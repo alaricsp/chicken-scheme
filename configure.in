@@ -36,9 +36,6 @@ AC_ARG_ENABLE(symbol-gc, [  --enable-symbol-gc      always GC unused symbols],[A
 dnl Enable generation of procedure tables?
 AC_ARG_ENABLE(procedure-tables, [  --disable-procedure-tables  disable generation of procedure-tables for serialization],[ptables=$enableval], [ptables=yes])
 
-dnl Compile thread-safe runtime system (doesn't work yet)
-dnl AC_ARG_ENABLE(thread-safety, [  --enable-thread-safety  enable thread-safe runtime-system],[AC_DEFINE(C_ENABLE_TLS,1,[Define if runtime-system should be thread-safe.])])
-
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
@@ -199,12 +196,6 @@ if test "x$STACK_GROWS_DOWNWARD" = "x-1"; then
     AC_MSG_RESULT([WARNING: unknown stack growth direction. Assuming stack grows downward.])
 fi
 
-dnl Check sizeof(double)
-AC_MSG_CHECKING([sizeof(double)])
-AC_TRY_RUN([int main() { return sizeof(double) == 2; }], 
-AC_MSG_RESULT([sizeof(double) is not 2])
-AC_MSG_RESULT([sizeof(double) is 2]), AC_DEFINE(C_DOUBLE_IS_32_BITS,$SMALLDOUBLES,[define if sizeof(double) == 2]))
-
 dnl If we're using gcc, try to find better CFLAGS than the default -g -O2.
 AC_MSG_CHECKING([for better CFLAGS])
 case "$CC" in
@@ -255,18 +246,25 @@ fi
 
 AC_SUBST(TARGET_CC)
 
-if test "$TARGET_CC" = ""; then
-  TARGET_CC=$CC
-fi
-
-AC_SUBST(TARGET_CXX)
-
 if test "$TARGET_CXX" = ""; then
   TARGET_CXX=$CXX
 fi
 
+AC_SUBST(TARGET_CXX)
+
+if test "$TARGET_CFLAGS" = ""; then
+  TARGET_CFLAGS="-DHAVE_CHICKEN_CONFIG $CFLAGS"
+fi
+
 AC_SUBST(TARGET_CFLAGS)
-AC_SUBST(TARGET_LFLAGS)
+
+AM_CONDITIONAL(USE_TARGET_PREFIX, [test "$TARGET_PREFIX" != ""])
+AC_SUBST(TARGET_PREFIX)
+
+AM_CONDITIONAL(USE_TARGET_MORE_LIBS, [test "$TARGET_MORE_LIBS" != ""])
+AC_SUBST(TARGET_MORE_LIBS)
+AM_CONDITIONAL(USE_TARGET_MORE_STATIC_LIBS, [test "$TARGET_MORE_STATIC_LIBS" != ""])
+AC_SUBST(TARGET_MORE_STATIC_LIBS)
 
 dnl Checking for generating "...-static" executables.
 AM_CONDITIONAL(NO_STATIC_EXECUTABLES, [test "${enable_shared}" = "no" -o "${enable_static}" = "no"])
@@ -291,8 +289,9 @@ boot_exports="eval.exports extras.exports library.exports lolevel.exports \
   scheduler.exports srfi-1.exports srfi-4.exports \
   srfi-13.exports srfi-18.exports tcp.exports utils.exports"
 
+HAVE_ALL_BOOT_CFILES=true
+
 if test "$cross_compiling" = "yes"; then
-  HAVE_ALL_BOOT_CFILES=true
   BOOT_CFILES="$boot_c $boot_exports"
 else
   BOOT_CFILES=
