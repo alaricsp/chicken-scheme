@@ -143,6 +143,7 @@ EOF
      string->keyword keyword? string->keyword getenv ##sys#number->string ##sys#copy-bytes
      call-with-current-continuation ##sys#string->number ##sys#inexact->exact ##sys#exact->inexact
      ##sys#reverse-list->string reverse ##sys#inexact? list? string ##sys#char->utf8-string 
+     ##sys#unicode-surrogate? ##sys#surrogates->codepoint
      ##sys#update-errno ##sys#file-info close-output-port close-input-port ##sys#peek-unsigned-integer
      continuation-graft char-downcase string-copy remainder floor ##sys#exact? list->string
      ##sys#append ##sys#list ##sys#cons ##sys#list->vector ##sys#list ##sys#apply ##sys#make-vector
@@ -2013,20 +2014,25 @@ EOF
 		     (##sys#read-char-0 port)
 		     (loop (##sys#peek-char-0 port)) ) ) ) )
 
-          (define (r-usequence u n utf8?)
+          (define (r-usequence u n)
 	    (let loop ([seq '()] [n n])
 	      (if (eq? n 0)
-		  (let* ([str (##sys#reverse-list->string seq)]
-			 [n (string->number str 16)])
-		    (if n
-			(if utf8?
-			    (##sys#char->utf8-string (integer->char n))
-			    (string (integer->char n)) )
-			(##sys#read-error port (string-append "invalid escape-sequence '\\" u str "\'")) ) )
-		  (let ([x (##sys#read-char-0 port)])
-		    (if (or (eof-object? x) (char=? #\" x))
-			(##sys#read-error port "unterminated string constant") 
-			(loop (cons x seq) (fx- n 1)) ) ) ) ) )
+                (let* ([str (##sys#reverse-list->string seq)]
+                       [n (string->number str 16)])
+                  (or n
+                      (##sys#read-error port (string-append "invalid escape-sequence '\\" u str "\'")) ) )
+                (let ([x (##sys#read-char-0 port)])
+                  (if (or (eof-object? x) (char=? #\" x))
+                    (##sys#read-error port "unterminated string constant") 
+                    (loop (cons x seq) (fx- n 1)) ) ) ) ) )
+
+          (define (r-cons-codepoint cp lst)
+            (let* ((s (##sys#char->utf8-string (integer->char cp)))
+                   (len (string-length s)))
+              (let lp ((i 0) (lst lst))
+                (if (fx>= i len)
+                  lst
+                  (lp (fx+ i 1) (cons (##core#inline "C_subchar" s i) lst))))))
 
           (define (r-string term)
             (if (eq? (##sys#read-char-0 port) term)
@@ -2044,14 +2050,26 @@ EOF
 			   ((#\v) (loop (##sys#read-char-0 port) (cons (integer->char 11) lst)))
 			   ((#\f) (loop (##sys#read-char-0 port) (cons (integer->char 12) lst)))
 			   ((#\x) 
-			    (let ([s (string->list (r-usequence "x" 2 #f))])
-			      (loop (##sys#read-char-0 port) (cons (car s) lst)) ) )
+			    (let ([ch (integer->char (r-usequence "x" 2))])
+			      (loop (##sys#read-char-0 port) (cons ch lst)) ) )
 			   ((#\u)
-			    (let ([s (reverse (string->list (r-usequence "u" 4 #t)))])
-			      (loop (##sys#read-char-0 port) (##sys#append s lst)) ) )
+			    (let ([n (r-usequence "u" 4)])
+			      (if (##sys#unicode-surrogate? n)
+                                  (if (and (eqv? #\\ (##sys#read-char-0 port))
+                                           (eqv? #\u (##sys#read-char-0 port)))
+                                      (let* ((m (r-usequence "u" 4))
+                                             (cp (##sys#surrogates->codepoint n m)))
+                                        (if cp
+                                            (loop (##sys#read-char-0 port)
+                                                  (r-cons-codepoint cp lst))
+                                            (##sys#read-error port "bad surrogate pair" n m)))
+                                      (##sys#read-error port "unpaired escaped surrogate" n))
+                                  (loop (##sys#read-char-0 port) (r-cons-codepoint n lst)) ) ))
 			   ((#\U)
-			    (let ([s (reverse (string->list (r-usequence "U" 8 #t)))])
-			      (loop (##sys#read-char-0 port) (##sys#append s lst)) ) )
+			    (let ([n (r-usequence "U" 8)])
+			      (if (##sys#unicode-surrogate? n)
+                                  (##sys#read-error port (string-append "invalid escape (surrogate)" n))
+                                  (loop (##sys#read-char-0 port) (r-cons-codepoint n lst)) )))
 			   ((#\\ #\' #\")
 			    (loop (##sys#read-char-0 port) (cons c lst)))
 			   (else
@@ -2427,39 +2445,33 @@ EOF
 ;;; This is taken from Alex Shinn's UTF8 egg:
 
 (define (##sys#char->utf8-string c)
-  (define (ucs-integer->length x)
+  (let ((i (char->integer c)))
     (cond
-     ((fx<= x #x7F)       1)
-     ((fx<= x #x7FF)      2)
-     ((fx<= x #xFFFF)     3)
-     ((fx<= x #x1FFFFF)   4)
-     (else (##sys#error "unicode codepoint out of range:" x))))
-  (define (string-int-set! s i c)
-    (string-set! s i (integer->char c)))
-  (define (extract-bit-field size position n)
-    (fxand (fxnot (fxshl -1 size))
-	   (fxshr n position)))
-  (let* ((c-i (char->integer c))
-	 (len (ucs-integer->length c-i)))
-    (if (fx<= len 1)
-	(string c)
-	(let* ((s (make-string len))
-	       (tag (fx- (expt 2 len) 1))
-	       (tag-shift (fxshl tag (fx- 8 len)))
-	       (body (extract-bit-field (fx- 7 len)
-					(fx* 6 (fx- len 1))
-					c-i))
-	       (b1 (fxior tag-shift body)))
-	  (string-int-set! s 0 b1)
-	  (let loop ((i 1))
-	    (unless (eq? i len)
-	      (let ((b (fxior
-			#b10000000
-			(extract-bit-field 6 (fx* 6 (fx- (fx- len i) 1)) c-i))))
-		(string-int-set! s i b)
-		(loop (fx+ i 1)))))
-	  s) ) ) )
+      ((fx<= i #x7F) (string c))
+      ((fx<= i #x7FF)
+       (string (integer->char (fxior #b11000000 (fxshr i 6)))
+               (integer->char (fxior #b10000000 (fxand i #b111111)))))
+      ((fx<= i #xFFFF)
+       (string (integer->char (fxior #b11100000 (fxshr i 12)))
+               (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
+               (integer->char (fxior #b10000000 (fxand i #b111111)))))
+      ((fx<= i #x1FFFFF)
+       (string (integer->char (fxior #b11110000 (fxshr i 18)))
+               (integer->char (fxior #b10000000 (fxand (fxshr i 12) #b111111)))
+               (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
+               (integer->char (fxior #b10000000 (fxand i #b111111)))))
+      (else (error "unicode codepoint out of range:" i)))))
 
+(define (##sys#unicode-surrogate? n)
+  (and (fx<= #xD800 n) (fx<= n #xDFFF)))
+
+;; returns #f if the inputs are not a valid surrogate pair (hi followed by lo)
+(define (##sys#surrogates->codepoint hi lo)
+  (and (fx<= #xD800 hi) (fx<= hi #xDBFF)
+       (fx<= #xDC00 lo) (fx<= lo #xDFFF)
+       (fxior (fxshl (fx+ 1 (fxand (fxshr hi 6) #b11111)) 16)
+              (fxior (fxshl (fxand hi #b111111) 10)
+                     (fxand lo #b1111111111)))))
 
 ;;; Hooks for user-defined read-syntax:
 ;
