@@ -1,3 +1,65 @@
+2.52
+
+- Mountains of bugfixes
+- Better support for Sun's C compiler
+- Input-performance has been improved
+- PCRE (Perl compatible regular expressions) by Philip Hazel is now
+  bundled with CHICKEN
+- Static linking of extensions is now possible (when supported by
+  the egg)
+- The interpreter warns about references to potentially unbound variables
+  in loaded code and expressions entered on the REPL
+- The expansion process is traced during compilation and interpretation
+  to give (slightly) more usable syntactic context in error messages
+- library:
+  * added `any?`, `bit-set?' and `on-exit'
+- eval:
+  * new procedure `set-parameterized-read-syntax!'
+- posix: 
+  * SRFI-17 setters for `file-position`, `current-user-id', 
+    `current-group-id', `process-group-id'; the respective setter-procedures
+    are still available but have been deprecated
+  * `file-stat' returns more information (including device info)
+  * added `process*'
+- extras:
+  * added `read-string!'
+- utils:
+  * `apropos' and `apropos-list' procedures
+- srfi-4:
+  * added `read-u8vector', `read-u8vector!' and `write-u8vector'
+- srfi-18:  
+  * added `time->milliseconds' and `milliseconds->time'
+- csi:
+  * `-ss SCRIPTNAME' option
+- csc:
+  * accepts options given in the environment variable `CSC_OPTIONS'
+  * new options `-static-extensions' and `-host'
+- chicken/csc:
+  * new option `-keep-shadowed-macros'
+- chicken-setup:
+  * accepts options given in the environment variable `CHICKEN_SETUP_OPTIONS'
+  * allows retrieval and installation of eggs from subversion repository
+    and the local filesystem
+  * new options `-tree FILENAME', `-svn', `-local', `-revsion' and 
+    `-destdir PATHNAME'
+  * added helper procedures `required-chicken-version' and
+    `required-extension-version'
+- Lots of improvements in the CMake build
+
+Many thanks to Ingo Bungener, Peter Busser, John Cowan, Marc Feeley,
+Stephen Gilardi, Mario Domenech Goulart, Joshua Griffith, Sven
+Hartrumpf, Daishi Kato, mejedi, Dan Muresan, Deanna
+Phillips, Robin Lee Powell, Ivan Raikov, Danial Sadilek, Alex Shinn,
+Tony Sideaway, Minh Thu for reporting bugs, suggesting improvements
+and contributing fixes.
+
+Thanks again to Brandon Van Every for his extensive work on the CMake
+build process.
+
+Special thanks to Kon Lovett for many improvements made in the posix
+library.
+
+
 2.5
 
 - Bugfixes

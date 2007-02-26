@@ -577,6 +577,7 @@
      p) ) )
 
 (define ##sys#unbound-in-eval #f)
+(define ##sys#eval-debug-level 1)
 
 (define ##sys#compile-to-closure
   (let ([macro? macro?]
@@ -634,11 +635,13 @@
 	      x2) ) )
 
       (define (emit-trace-info tf info cntr) 
-	(##core#inline "C_emit_eval_trace_info" info cntr ##sys#current-thread) )
+	(when (fx> ##sys#eval-debug-level 0)
+	  (##core#inline "C_emit_eval_trace_info" info cntr ##sys#current-thread) ) )
 
       (define (emit-syntax-trace-info tf info cntr) 
-	(##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) )
-
+	(when (fx> ##sys#eval-debug-level 0)
+	  (##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) ) )
+	
       (define (decorate p ll h cntr)
 	(##sys#eval-decorator p ll h cntr) )
 
@@ -720,7 +723,7 @@
 
 			     [(if)
 			      (##sys#check-syntax 'if x '(if _ _ . #(_)) #f)
-			      (let* ([test (compile (cadr x) e #f #f cntr)]
+			      (let* ([test (compile (cadr x) e #f tf cntr)]
 				     [cns (compile (caddr x) e #f tf cntr)]
 				     [alt (if (pair? (cdddr x))
 					      (compile (cadddr x) e #f tf cntr)
@@ -734,12 +737,12 @@
 				(case len
 				  [(0) (compile '(##core#undefined) e #f tf cntr)]
 				  [(1) (compile (##sys#slot body 0) e #f tf cntr)]
-				  [(2) (let* ([x1 (compile (##sys#slot body 0) e #f #f cntr)]
+				  [(2) (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr)]
 					      [x2 (compile (cadr body) e #f tf cntr)] )
 					 (lambda (v) (##core#app x1 v) (##core#app x2 v)) ) ]
 				  [else
-				   (let* ([x1 (compile (##sys#slot body 0) e #f #f cntr)]
-					  [x2 (compile (cadr body) e #f #f cntr)] 
+				   (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr)]
+					  [x2 (compile (cadr body) e #f tf cntr)] 
 					  [x3 (compile `(begin ,@(##sys#slot (##sys#slot body 1) 1)) e #f tf cntr)] )
 				     (lambda (v) (##core#app x1 v) (##core#app x2 v) (##core#app x3 v)) ) ] ) ) ]
 
@@ -747,7 +750,7 @@
 			      (##sys#check-syntax 'set! x '(_ variable _) #f)
 			      (let ([var (cadr x)])
 				(receive (i j) (lookup var e)
-				  (let ([val (compile (caddr x) e var #f cntr)])
+				  (let ([val (compile (caddr x) e var tf cntr)])
 				    (cond [(not i)
 					   (if ##sys#eval-environment
 					       (let ([loc (##sys#hash-table-location
@@ -777,26 +780,26 @@
 					    me
 					    cntr) ] )
 				(case n
-				  [(1) (let ([val (compile (cadar bindings) e (car vars) #f cntr)])
+				  [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr)])
 					 (lambda (v)
 					   (##core#app body (cons (vector (##core#app val v)) v)) ) ) ]
-				  [(2) (let ([val1 (compile (cadar bindings) e (car vars) #f cntr)]
-					     [val2 (compile (cadadr bindings) e (cadr vars) #f cntr)] )
+				  [(2) (let ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
+					     [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] )
 					 (lambda (v)
 					   (##core#app body (cons (vector (##core#app val1 v) (##core#app val2 v)) v)) ) ) ]
-				  [(3) (let* ([val1 (compile (cadar bindings) e (car vars) #f cntr)]
-					      [val2 (compile (cadadr bindings) e (cadr vars) #f cntr)] 
+				  [(3) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
+					      [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] 
 					      [t (cddr bindings)]
-					      [val3 (compile (cadar t) e (caddr vars) #f cntr)] )
+					      [val3 (compile (cadar t) e (caddr vars) tf cntr)] )
 					 (lambda (v)
 					   (##core#app 
 					    body
 					    (cons (vector (##core#app val1 v) (##core#app val2 v) (##core#app val3 v)) v)) ) ) ]
-				  [(4) (let* ([val1 (compile (cadar bindings) e (car vars) #f cntr)]
-					      [val2 (compile (cadadr bindings) e (cadr vars) #f cntr)] 
+				  [(4) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
+					      [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] 
 					      [t (cddr bindings)]
-					      [val3 (compile (cadar t) e (caddr vars) #f cntr)] 
-					      [val4 (compile (cadadr t) e (cadddr vars) #f cntr)] )
+					      [val3 (compile (cadar t) e (caddr vars) tf cntr)] 
+					      [val4 (compile (cadadr t) e (cadddr vars) tf cntr)] )
 					 (lambda (v)
 					   (##core#app 
 					    body
@@ -806,7 +809,7 @@
 							  (##core#app val4 v))
 						  v)) ) ) ]
 				  [else
-				   (let ([vals (map (lambda (x) (compile (cadr x) e (car x) #f cntr)) bindings)])
+				   (let ([vals (map (lambda (x) (compile (cadr x) e (car x) tf cntr)) bindings)])
 				     (lambda (v)
 				       (let ([v2 (##sys#make-vector n)])
 					 (do ([i 0 (fx+ i 1)]
@@ -992,7 +995,7 @@
 		[else #f] ) ) )
 
       (define (compile-call x e tf cntr)
-	(let* ([fn (compile (##sys#slot x 0) e #f #f cntr)]
+	(let* ([fn (compile (##sys#slot x 0) e #f tf cntr)]
 	       [args (##sys#slot x 1)]
 	       [argc (checked-length args)]
 	       [info x] )
@@ -1001,29 +1004,29 @@
 	    [(0) (lambda (v)
 		   (emit-trace-info tf info cntr)
 		   ((fn v)))]
-	    [(1) (let ([a1 (compile (##sys#slot args 0) e #f #f cntr)])
+	    [(1) (let ([a1 (compile (##sys#slot args 0) e #f tf cntr)])
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v))) ) ]
-	    [(2) (let* ([a1 (compile (##sys#slot args 0) e #f #f cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f #f cntr)] )
+	    [(2) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v))) ) ]
-	    [(3) (let* ([a1 (compile (##sys#slot args 0) e #f #f cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f #f cntr)]
-			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f #f cntr)] )
+	    [(3) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)]
+			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v) (##core#app a3 v))) ) ]
-	    [(4) (let* ([a1 (compile (##sys#slot args 0) e #f #f cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f #f cntr)]
-			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f #f cntr)] 
-			[a4 (compile (##core#inline "C_u_i_list_ref" args 3) e #f #f cntr)] )
+	    [(4) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)]
+			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr)] 
+			[a4 (compile (##core#inline "C_u_i_list_ref" args 3) e #f tf cntr)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v) (##core#app a3 v) (##core#app a4 v))) ) ]
-	    [else (let ([as (##sys#map (lambda (a) (compile a e #f #f cntr)) args)])
+	    [else (let ([as (##sys#map (lambda (a) (compile a e #f tf cntr)) args)])
 		    (lambda (v)
 		      (emit-trace-info tf info cntr)
 		      (apply (##core#app fn v) (##sys#map (lambda (a) (##core#app a v)) as))) ) ] ) ) )
@@ -2050,12 +2053,13 @@
 (define ##sys#clear-trace-buffer (foreign-lambda void "C_clear_trace_buffer"))
 
 (define repl
-  (let ([eval eval]
-	[read read]
-	[call-with-current-continuation call-with-current-continuation]
-	[print-call-chain print-call-chain]
-	[flush-output flush-output]
-	[reset reset] )
+  (let ((eval eval)
+	(read read)
+	(call-with-current-continuation call-with-current-continuation)
+	(print-call-chain print-call-chain)
+	(flush-output flush-output)
+	(load-verbose load-verbose)
+	(reset reset) )
     (lambda ()
 
       (define (write-one x port)
@@ -2074,6 +2078,7 @@
 	    (stderr ##sys#standard-error)
 	    (ehandler (##sys#error-handler))
 	    (rhandler (##sys#reset-handler)) 
+	    (lv #f)
 	    (uie ##sys#unbound-in-eval) )
 
 	(define (saveports)
@@ -2088,6 +2093,8 @@
 
 	(##sys#dynamic-wind
 	 (lambda ()
+	   (set! lv (load-verbose))
+	   (load-verbose #t)
 	   (##sys#error-handler
 	    (lambda (msg . args)
 	      (resetports)
@@ -2149,6 +2156,7 @@
 		   (write-results result) 
 		   (loop) ) ) ) ) )
 	 (lambda ()
+	   (load-verbose lv)
 	   (set! ##sys#unbound-in-eval uie)
 	   (##sys#error-handler ehandler)
 	   (##sys#reset-handler rhandler) ) ) ) ) ) )

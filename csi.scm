@@ -588,8 +588,8 @@ EOF
 				(fprintf out " ~S: ~S" i v)
 				(if (fx> n 1)
 				    (fprintf out "\t(followed by ~A identical instance~a)~% ...~%" 
-					     (if (eq? n 2) "" "s")
-					     s(fx- n 1))
+					     (fx- n 1)
+					     (if (eq? n 2) "" "s"))
 				    (newline out) )
 				(loop1 (fx+ i n)) )
 			       ((eq? v (pref x j)) (loop2 (fx+ n 1) (fx+ j 1)))
@@ -670,20 +670,6 @@ EOF
 	       (hash-table-walk
 		x
 		(lambda (k v) (fprintf out " ~S\t-> ~S~%" k v)) ) ]
-	      [(##sys#structure? x 'array)
-	       (let* ([shp (##sys#slot x 3)]
-		      [vec (##sys#slot x 1)] 
-		      (n (##sys#size vec)) )
-		 (fprintf out "array of rank ~S with ~A element~a~% shape: "
-			  (fx/ (##sys#size shp) 2)
-			  n
-			  (if (fx= n 1) "" "s") )
-		 (let loop ([s (vector->list shp)])
-		   (unless (null? s)
-		     (let ([next (##sys#slot s 1)])
-		       (fprintf out " ~A..~A " (##sys#slot s 0) (##sys#slot next 0))
-		       (loop (##sys#slot next 1)) ) ) )
-		 (##sys#write-char-0 #\newline out) ) ]
 	      [(##sys#structure? x 'condition)
 	       (fprintf out "condition: ~s~%" (##sys#slot x 1))
 	       (for-each

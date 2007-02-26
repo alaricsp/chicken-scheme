@@ -1084,7 +1084,7 @@ SET(C_TARGET_LIB_HOME ${C_INSTALL_LIB_HOME})
 SET(C_TARGET_SHARE_HOME ${C_INSTALL_SHARE_HOME})
 SET(C_TARGET_INCLUDE_HOME ${C_INSTALL_INCLUDE_HOME})
 SET(C_TARGET_STATIC_LIB_HOME ${C_INSTALL_STATIC_HOME})
-SET(C_TARGET_MORE_LIBS ${C_INSTALL_MORE_LIBS}\")
+SET(C_TARGET_MORE_LIBS ${C_INSTALL_MORE_LIBS})
 SET(C_TARGET_MORE_STATIC_LIBS ${C_INSTALL_MORE_LIBS})
 
 ####################################################################
@@ -1265,49 +1265,90 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 ADD_DEFINITIONS(-DPCRE_STATIC -DSUPPORT_UTF8 -DSUPPORT_UCP)
 
 SET(PCRE_HEADER ${Chicken_SOURCE_DIR}/pcre/pcre.h)
+SET(PCRE_ROOTS
+  chartables
+  pcre_compile
+  pcre_config
+  pcre_dfa_exec
+  pcre_exec
+  pcre_fullinfo
+  pcre_get
+  pcre_globals
+  pcre_maketables
+  pcre_ord2utf8
+  pcre_printint
+  pcre_refcount
+  pcre_study
+  pcre_tables
+  pcre_try_flipped
+  pcre_ucp_findchar
+  pcre_valid_utf8
+  pcre_version
+  pcre_xclass
+)
+SET(PCRE_SOURCES ${PCRE_ROOTS})
+ADD_SUFFIX(PCRE_SOURCES .c)
 SET(PCRE_SOURCES
-  chartables.c
   config.h
   pcre.h
-  pcre_compile.c
-  pcre_config.c
-  pcre_dfa_exec.c
-  pcre_exec.c
-  pcre_fullinfo.c
-  pcre_get.c
-  pcre_globals.c
   pcre_internal.h
-  pcre_maketables.c
-  pcre_ord2utf8.c
-  pcre_printint.c
-  pcre_refcount.c
-  pcre_study.c
-  pcre_tables.c
-  pcre_try_flipped.c
-  pcre_ucp_findchar.c
-  pcre_valid_utf8.c
-  pcre_version.c
-  pcre_xclass.c
+  ucp.h
+  ${PCRE_SOURCES}
 )
 ADD_PREFIX(${Chicken_SOURCE_DIR}/pcre/ PCRE_SOURCES)
 
+# The shared libraries
+#    libchicken, libuchicken, libchicken-gui, libuchicken-gui
+# and the static libraries
+#    libchicken-boot, libchicken-static, libuchicken-static, libchicken-gui-static, libuchicken-gui-static
+# all need the static PCRE library.
+#
 # We can easily include a static PCRE library in shared Chicken library. Unfortunately, we
 # cannot include a static PCRE library in a *static* Chicken library.  "ar" is the underlying library
-# tool on several platforms, and it can't put static libraries in static libraries.  The
-# workaround is to compile the PCRE source straight into the static Chicken libraries.
+# tool on several platforms, and it can't put static libraries in static libraries.  
 #
-# Unfortunately this leads to compilation redundancy.  We need libchicken-boot, libchicken-static,
-# and libuchicken-static.  On Windows we also need libchicken-gui-static and libuchicken-gui-static.
+# One workaround is to compile the PCRE sources straight into the static Chicken libraries.  
+# This is relatively simple to implement, and has the advantage of depending on 100% well defined
+# CMake interfaces.  But, it leads to compilation redundancy in 5 static libraries.
+#
+# Another workaround is to deduce where the PCRE object files live, and include the object files
+# directly into the static Chicken libraries.  With this approach we can eliminate the compilation
+# redundancy.  However, it relies on some assumptions about what directories CMake uses,
+# and these directories could change in the future.  For now though, it is the most efficient route.
+# 
+# Once this code is proven good, I'll make a CMake feature request, for a standard way to get the
+# object directories and possibly the objects.  This would take the black magic out of the approach.
 #
 # libchicken-boot is consumed only by chicken-boot.  Thus it's no big deal to manually link
 # libchicken-boot as a dependency.  We build an appropriate library in the /pcre subdirectory for
-# this purpose.
-#
-# For libchicken-static, libuchicken-static, libchicken-gui-static, and libuchicken-gui-static, we
-# simply include the source files directly.  Possibly we could generate the object files only once, but
-# this is more complicated to specify in CMake, and we're blowing it off for now.
+# this purpose.  This also produces all of the object files we want.  
 
 ADD_SUBDIRECTORY(pcre)
+
+# Then we use the following voodoo to reuse the objects.
+#
+# CMake generators are currently of 2 types: those which build single configurations, and those
+# which build multiple configurations.  These 2 types use 2 different directory structures for where
+# they put their object files.  The currently recommended way to deduce which type of generator
+# we're using, is to see if CMAKE_CONFIGURATION_TYPES is empty or not.  If it's empty, then it's
+# single configuration.  If it's non-empty, then it's multiple configuration, and contains a list of all
+# the configurations available.  We're not interested in that list, only whether it's empty or non-empty.
+
+IF(CMAKE_CONFIGURATION_TYPES)
+  # We have a multiple configuration generator.  Use this directory structure:
+  SET(PCRE_FOR_STATIC_OBJ_DIR
+    ${CMAKE_BINARY_DIR}/pcre/libpcre-for-static.dir/${CMAKE_BUILD_TYPE})
+ELSE(CMAKE_CONFIGURATION_TYPES)
+  # We have a single configuration generator.  Use this directory structure:
+  SET(PCRE_FOR_STATIC_OBJ_DIR
+    ${CMAKE_BINARY_DIR}/pcre${CMAKE_FILES_DIRECTORY}/libpcre-for-static.dir)
+ENDIF(CMAKE_CONFIGURATION_TYPES)
+
+# Now we know what directory the objects live in.  Construct the actual list of objects:
+
+SET(PCRE_FOR_STATIC_OBJS ${PCRE_ROOTS})
+ADD_SUFFIX(PCRE_FOR_STATIC_OBJS ${CMAKE_C_OUTPUT_EXTENSION})
+ADD_PREFIX(${PCRE_FOR_STATIC_OBJ_DIR}/ PCRE_FOR_STATIC_OBJS)
 
 
 ####################################################################

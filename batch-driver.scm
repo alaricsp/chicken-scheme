@@ -404,7 +404,7 @@
 	   (let ([proc (user-preprocessor-pass)])
 	     (when proc
 	       (when verbose (printf "User preprocessing pass...~%~!"))
-	       (set! forms (cons (first forms) (map proc (cdr forms)))) ) )
+	       (set! forms (map proc forms))))
 
 	   (print "source" '|1| forms)
 	   (begin-time)

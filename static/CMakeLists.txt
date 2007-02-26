@@ -49,6 +49,7 @@ SET_SOURCE_FILES_PROPERTIES(
   ${CHICKEN_UNSAFE_LIB_SOURCES}
   ${CSI_EXE_SOURCES}
   ${CHICKEN_EXE_SOURCES}
+  ${PCRE_FOR_STATIC_OBJS}
   PROPERTIES GENERATED true
 )
 
@@ -57,53 +58,53 @@ IF(MSVC)
   # Eventually, we wish to support different postfixes for debug, release builds etc.
   # For now, the user has to install the 1 configuration she actually wants.
 
-  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
+  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER} ${PCRE_FOR_STATIC_OBJS})
   SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
     OUTPUT_NAME "chicken" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-s" DEBUG_POSTFIX "-s" RELWITHDEBINFO_POSTFIX "-s")
   TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchicken-static libchicken-c)
+  ADD_DEPENDENCIES(libchicken-static libchicken-c libpcre-for-static)
 
-  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_SOURCES})
+  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_HEADER} ${PCRE_FOR_STATIC_OBJS})
   SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
     OUTPUT_NAME "uchicken" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-s" DEBUG_POSTFIX "-s" RELWITHDEBINFO_POSTFIX "-s")
   TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
+  ADD_DEPENDENCIES(libuchicken-static libuchicken-c libpcre-for-static)
 
-  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
+  ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER} ${PCRE_FOR_STATIC_OBJS})
   SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
     OUTPUT_NAME "chickengui" PREFIX "lib"
     RELEASE_POSTFIX "-s" MINSIZEREL_POSTFIX "-s" DEBUG_POSTFIX "-s" RELWITHDEBINFO_POSTFIX "-s")
   TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchickengui-static libchicken-c)
+  ADD_DEPENDENCIES(libchickengui-static libchicken-c libpcre-for-static)
 
 ELSE(MSVC)
 
-  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
+  ADD_LIBRARY(libchicken-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER} ${PCRE_FOR_STATIC_OBJS})
   SET_TARGET_PROPERTIES(libchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
     OUTPUT_NAME "chicken")
   TARGET_LINK_LIBRARIES(libchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libchicken-static libchicken-c)
+  ADD_DEPENDENCIES(libchicken-static libchicken-c libpcre-for-static)
 
-  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_SOURCES})
+  ADD_LIBRARY(libuchicken-static STATIC ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_HEADER} ${PCRE_FOR_STATIC_OBJS})
   SET_TARGET_PROPERTIES(libuchicken-static PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${STATIC_FLAGS}"
     OUTPUT_NAME "uchicken")
   TARGET_LINK_LIBRARIES(libuchicken-static ${MORE_STATIC_LIBS})
-  ADD_DEPENDENCIES(libuchicken-static libuchicken-c)
+  ADD_DEPENDENCIES(libuchicken-static libuchicken-c libpcre-for-static)
 
   IF(WIN32 AND NOT CYGWIN)
-    ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_SOURCES})
+    ADD_LIBRARY(libchickengui-static STATIC ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER} ${PCRE_FOR_STATIC_OBJS})
     SET_TARGET_PROPERTIES(libchickengui-static PROPERTIES
       COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${STATIC_FLAGS}"
       OUTPUT_NAME "chickengui")
     TARGET_LINK_LIBRARIES(libchickengui-static ${GUI_LIBS} ${MORE_STATIC_LIBS})
-    ADD_DEPENDENCIES(libchickengui-static libchicken-c)
+    ADD_DEPENDENCIES(libchickengui-static libchicken-c libpcre-for-static)
   ENDIF(WIN32 AND NOT CYGWIN)
 
 ENDIF(MSVC)

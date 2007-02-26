@@ -40,7 +40,7 @@
   (usual-integrations)
   (hide ##sys#dynamic-unwind ##sys#find-symbol
 	##sys#grow-vector ##sys#default-parameter-vector 
-	##sys#print-length-limit setter-tag read-marks
+	print-length-limit current-print-length setter-tag read-marks
 	##sys#fetch-and-check-port-arg ##sys#print-exit)
   (foreign-declare #<<EOF
 #include <string.h>
@@ -2028,7 +2028,7 @@ EOF
 
           (define (r-cons-codepoint cp lst)
             (let* ((s (##sys#char->utf8-string (integer->char cp)))
-                   (len (string-length s)))
+                   (len (##sys#size s)))
               (let lp ((i 0) (lst lst))
                 (if (fx>= i len)
                   lst
@@ -2582,8 +2582,8 @@ EOF
   (##sys#flush-output ##sys#standard-output)
   arg1)
 
-(define ##sys#current-print-length 0)
-(define ##sys#print-length-limit #f)
+(define current-print-length 0)
+(define print-length-limit #f)
 (define ##sys#print-exit #f)
 
 (define ##sys#print
@@ -2597,25 +2597,25 @@ EOF
 	    [ksp (ksp)] )
 
 	(define (outstr port str)
-	  (if ##sys#print-length-limit
+	  (if print-length-limit
 	      (let* ((len (##sys#size str))
-		     (cpl (fx+ ##sys#current-print-length len)) )
-		(if (fx>= cpl ##sys#print-length-limit)
+		     (cpl (fx+ current-print-length len)) )
+		(if (fx>= cpl print-length-limit)
 		    (cond ((fx> len 3)
-			   (let ((n (fx- ##sys#print-length-limit ##sys#current-print-length)))
+			   (let ((n (fx- print-length-limit current-print-length)))
 			     (when (fx> n 0) (outstr0 port (##sys#substring str 0 n)))
 			     (outstr0 port "...") ) )
 			  (else (outstr0 port str)) )
 		    (outstr0 port str) )
-		(set! ##sys#current-print-length cpl) )
+		(set! current-print-length cpl) )
 	      (outstr0 port str) ) )
 	       
 	(define (outstr0 port str)
 	  ((##sys#slot (##sys#slot port 2) 3) port str) )
 
 	(define (outchr port chr)
-	  (set! ##sys#current-print-length (fx+ ##sys#current-print-length 1))
-	  (when (and ##sys#print-length-limit (fx>= ##sys#current-print-length ##sys#print-length-limit))
+	  (set! current-print-length (fx+ current-print-length 1))
+	  (when (and print-length-limit (fx>= current-print-length print-length-limit))
 	    (outstr0 port "...")
 	    (##sys#print-exit #t) )
 	  ((##sys#slot (##sys#slot port 2) 2) port chr) )
@@ -2815,9 +2815,9 @@ EOF
     (lambda (limit thunk)
       (call-with-current-continuation
        (lambda (return)
-	 (fluid-let ((##sys#print-length-limit limit)
+	 (fluid-let ((print-length-limit limit)
 		     (##sys#print-exit return) 
-		     (##sys#current-print-length 0) )
+		     (current-print-length 0) )
 	   (thunk) ) ) ) ) ) )
 
 
@@ -3055,7 +3055,8 @@ EOF
 		   (if (##sys#fudge 32) " gchooks" "") 
 		   (if (##sys#fudge 33) " extraslot" "")
 		   (if (##sys#fudge 35) " applyhook" "") 
-		   (if (##sys#fudge 38) " cmake" "") ) ) )
+		   (if (##sys#fudge 38) " cmake" "")
+		   (if (##sys#fudge 39) " cross" "") ) ) )
 	(string-append 
 	 "Version " +build-version+
 	 " - " (get-config)
