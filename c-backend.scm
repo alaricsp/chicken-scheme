@@ -485,7 +485,8 @@
 	    n) )
       (match (##sys#decode-seconds (current-seconds) #f)
 	[#(_ min hour mday mon year _ _ _ _)
-	  (gen "/* Generated from " source-file " by the Chicken compiler" #t
+	  (gen "/* Generated from " source-file " by the CHICKEN compiler" #t
+	       "   http://www.call-with-current-continuation.org" #t
 	       "   " (+ 1900 year) #\- (pad0 (add1 mon)) #\- (pad0 mday) #\space (pad0 hour) #\: (pad0 min) #t
 	       "   " (chicken-version #t) #t
 	       "   command line: ")
@@ -495,9 +496,6 @@
 		[else 
 		 (gen "   used units: ")
 		 (gen-list used-units) ] )
-	  (unless unit-name
-	    (gen #t "   default heap size: " default-default-target-heap-size #t)
-	    (gen "   default nursery (stack) size: " default-default-target-stack-size) )
 	  (gen #t "*/" #t #t "#include \"" target-include-file "\"")
 	  (when external-protos-first
 	    (generate-foreign-callback-stub-prototypes foreign-callback-stubs) )

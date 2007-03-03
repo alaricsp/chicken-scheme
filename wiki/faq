@@ -416,7 +416,8 @@ and compiler settings:
 
 The following extended bindings are handled specially: 
 
-{{bitwise-and}} {{bitwise-ior}} {{bitwise-xor}} {{bitwise-not}} {{add1}} {{sub1}}
+{{bitwise-and}} {{bitwise-ior}} {{bitwise-xor}} {{bitwise-not}} 
+{{bit-set?}} {{add1}} {{sub1}}
 {{fx+}}
 {{fx-}} {{fx*}} {{fx/}} {{fxmod}}
 {{fx=}} {{fx>}} {{fx>=}} {{fixnum?}} {{fxneg}} {{fxmax}} {{fxmin}}

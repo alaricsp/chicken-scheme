@@ -2,7 +2,7 @@
 
 == Introduction
 
-''(This document describes version 2.517)''
+''(This document describes version 2.6)''
 
 '''CHICKEN is a compiler that translates Scheme source files into C''', which in
 turn can be fed to a C-compiler to generate a standalone executable. 

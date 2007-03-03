@@ -36,10 +36,14 @@
 (declare
   (run-time-macros)
   (uses srfi-1 regex utils posix tcp match srfi-18 srfi-13)
-  (export move-file run:execute make/proc uninstall-extension install-extension install-program install-script
-	  setup-verbose-flag setup-install-flag installation-prefix find-library find-header
-	  program-path remove-file* patch yes-or-no? setup-build-directory setup-root-directory create-directory
-	  test-compile try-compile copy-file run-verbose required-chicken-version required-extension-version) )
+  (export move-file run:execute make/proc uninstall-extension
+	  install-extension install-program install-script
+	  setup-verbose-flag setup-install-flag installation-prefix
+	  find-library find-header program-path remove-file* patch
+	  yes-or-no? setup-build-directory setup-root-directory
+	  create-directory test-compile try-compile copy-file run-verbose
+	  required-chicken-version required-extension-version
+	  cross-chicken) )
 
 #>
 #ifndef C_USE_C_DEFAULTS
@@ -126,6 +130,8 @@ static void create_directory(char *pathname) {}
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
 (define *move-command* (if *windows-shell* 'move 'mv))
+
+(define (cross-chicken) (##sys#fudge 39))
 
 (define create-directory
   (let ()
@@ -455,9 +461,12 @@ EOF
 		      '() ) 
 		,@info)) )
       (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
-      (let ((sid (->string id)))
-	(with-output-to-file (make-setup-info-pathname sid (repo-path #t))
-	  (cut pp info) ) ) ) ) )
+      (let* ((sid (->string id))
+	    (setup-file (make-setup-info-pathname sid (repo-path #t)))
+	    (write-setup-info (with-output-to-file setup-file
+				(cut pp info))))
+	(unless *windows-shell* (run (chmod a+r ,setup-file)))
+	write-setup-info))))
 
 (define (fix-exports id info)
   (let-values (((einfo oinfo) (partition (lambda (item) (eq? 'exports (car item))) info)))
@@ -578,7 +587,9 @@ EOF
 			       (to (make-dest-pathname rpathd f)) )
 			   (when (and (not *windows*) (equal? "so" (pathname-extension to)))
 			     (run (,*remove-command* ,to)) )
-			   (copy-file from to) 
+			   (copy-file from to)
+			   (unless *windows-shell*
+				   (run (chmod a+r ,to)))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) )
@@ -601,6 +612,9 @@ EOF
 	(for-each 
 	 (lambda (f)
 	   (copy-file f (make-pathname *example-directory* f))
+	   (unless *windows-shell*
+		   (run (chmod a+rx ,*example-directory*)))
+
 	   (print "  * " f) )
 	 (cdr exs))
 	(newline) )
@@ -625,6 +639,8 @@ EOF
 			 (let ((from (if (pair? f) (car f) f))
 			       (to (make-dest-pathname ppath f)) )
 			   (copy-file from to) 
+			   (unless *windows-shell*
+				   (run (chmod a+r ,to)))
 			   to) )
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -637,10 +653,12 @@ EOF
 			  (let ((from (if (pair? f) (car f) f))
 				(to (make-dest-pathname ppath f)) )
 			    (copy-file from to) 
+			    (unless *windows-shell*
+				    (run (chmod a+r ,to)))
 			    to) )
 			files) ) )
       (unless *windows-shell*
-	(run (chmod a+x ,(string-intersperse pfiles " "))) )
+	(run (chmod a+rx ,(string-intersperse pfiles " "))) )
       (write-info id pfiles info) ) ) )
 
 (define (uninstall-extension ext)
@@ -673,7 +691,10 @@ EOF
     (if (file-exists? dir)
 	(unless (directory? dir)
 	  (error "can not create directory: a file with the same name already exists") )
-	(create-directory dir) ) ) )
+	(begin
+	  (create-directory dir)
+	  (unless *windows-shell*
+		  (run (chmod a+x ,dir)))))))
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
   (let* ((fname (create-temporary-file "c"))
@@ -705,24 +726,24 @@ EOF
 (define (upgrade-message ext msg)
   (error
    (sprintf
-    "the installed extension `%s' ~a - please run~%~%  chicken-setup ~a~%~%and repeat the current installation operation."
-    msg ext) ) )
+    "the required extension `~s' ~a - please run~%~%  chicken-setup ~a~%~%and repeat the current installation operation."
+    ext msg ext) ) )
 
 (define (required-extension-version . args)
-  (let looop ((args args))
+  (let loop ((args args))
     (match args
       (() #f)
       ((ext version . more)
        (let ((info (extension-information ext))
 	     (version (->string version)) )
 	 (if info
-	     (let ((ver (assq 'version info)))
+	     (let ((ver (and (assq 'version info) (cadr (assq 'version info)))))
 	       (cond ((not ver) (upgrade-message ext "has no associated version information"))
 		     ((string-ci<? (->string ver) version)
 		      (upgrade-message 
 		       ext
-		       (sprintf "is older than ~a, which is what this extension (`~a') requires"
-				version ext) ) )
+		       (sprintf "is older than ~a, which is what this extension requires"
+				version) ) )
 		     (else (loop more)) ) ) 
 	     (upgrade-message ext "is not installed") ) ) )
       (_ (error 'required-extension-information "bad argument format" args)) ) ) )

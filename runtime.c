@@ -4052,6 +4052,13 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     return C_SCHEME_FALSE;
 #endif
 
+  case C_fix(39):
+#if defined(C_CROSS_CHICKEN) && C_CROSS_CHICKEN
+    return C_SCHEME_TRUE;
+#else
+    return C_SCHEME_FALSE;
+#endif
+
   default: return C_SCHEME_UNDEFINED;
   }
 }
@@ -5945,7 +5952,6 @@ PTR_O_p0_##p0(((n0-2)&0xFE)+1));
     CASE_C_PROC_p3 (50,51,52,53,54,55,56,57,  0,1,1,0)
     CASE_C_PROC_p3 (58,59,60,61,62,63,64,65,  0,1,1,1)
     CASE_C_PROC_p0 (66,  1,0,0,0,0,0,0)
-#ifdef C_128_PARAMETERS
     CASE_C_PROC_p0 (67,  1,0,0,0,0,0,1)
     CASE_C_PROC_p1 (68,69,  1,0,0,0,0,1)
     CASE_C_PROC_p2 (70,71,72,73,  1,0,0,0,1)
@@ -5958,7 +5964,6 @@ PTR_O_p0_##p0(((n0-2)&0xFE)+1));
     CASE_C_PROC_p2 (122,123,124,125,  1,1,1,1,0)
     CASE_C_PROC_p1 (126,127,  1,1,1,1,1,0)
     CASE_C_PROC_p0 (128,  1,1,1,1,1,1,0)
-#endif
   default: barf(C_TOO_MANY_PARAMETERS_ERROR, "apply");
   }
 }
@@ -7515,7 +7520,7 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
       }
     } 
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(__MINGW32__)
     if(C_isnan(f)) {
       C_strcpy(p = buffer, "+nan.0");
       goto fini;

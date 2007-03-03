@@ -42,6 +42,7 @@ C_STACK_GROWS_DOWNWARD=($(STACK_GROWS_DOWNWARD))
 C_TARGET_CC=\"@TARGET_CC@\"
 C_TARGET_CXX=\"@TARGET_CXX@\"
 C_TARGET_CFLAGS=\"@TARGET_CFLAGS@\"
+C_CROSS_CHICKEN=@CROSS_CHICKEN@
 
 if USE_TARGET_MORE_LIBS
  C_TARGET_MORE_LIBS=\"@TARGET_MORE_LIBS@\"
@@ -131,6 +132,7 @@ chicken-defaults.h: chicken-defaults.h.in Makefile
 	    -e "s,@C_TARGET_INCLUDE_HOME[@],$(C_TARGET_INCLUDE_HOME)," \
 	    -e "s,@C_TARGET_SHARE_HOME[@],$(C_TARGET_SHARE_HOME)," \
 	    -e "s,@C_STACK_GROWS_DOWNWARD[@],$(C_STACK_GROWS_DOWNWARD),g" \
+	    -e "s,@C_CROSS_CHICKEN[@],$(C_CROSS_CHICKEN),g" \
 	  <$(srcdir)/chicken-defaults.h.in >chicken-defaults.h;
 
 # If we're a tarball and planning a chickenless boot, we need to copy
@@ -311,27 +313,12 @@ DISTCLEANFILES = $(PACKAGE)-$(VERSION).*
 clean-local:
 	-rm -rf stage2 stage3 stage2-stamp stage3-stamp
 
-
 # All of the files like manual.tex should be
 # installed by a binary distribution.  Unfortunately there is no
 # standard place to install these sorts of files so we must leave that
 # to the package builder.
-EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt chicken.spec.in *.1 $(DEBIAN_DIST)
+EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt chicken.spec.in *.1
 
-DEBIAN_DIST =   debian/changelog              \
-		debian/control                \
-		debian/copyright              \
-		debian/rules                  \
-		debian/chicken-bin.dirs       \
-		debian/chicken-bin.doc-base   \
-		debian/chicken-bin.docs       \
-		debian/chicken-bin.files      \
-		debian/chicken-bin.manpages   \
-		debian/libchicken0.dirs       \
-		debian/libchicken0.files      \
-		debian/libchicken-dev.dirs    \
-		debian/libchicken-dev.files   \
-		debian/README.Debian         
 
 ## Rules for the chicken maintainer.
 

@@ -635,11 +635,11 @@
 	      x2) ) )
 
       (define (emit-trace-info tf info cntr) 
-	(when (fx> ##sys#eval-debug-level 0)
+	(when tf
 	  (##core#inline "C_emit_eval_trace_info" info cntr ##sys#current-thread) ) )
 
       (define (emit-syntax-trace-info tf info cntr) 
-	(when (fx> ##sys#eval-debug-level 0)
+	(when tf
 	  (##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) ) )
 	
       (define (decorate p ll h cntr)
@@ -1031,7 +1031,7 @@
 		      (emit-trace-info tf info cntr)
 		      (apply (##core#app fn v) (##sys#map (lambda (a) (##core#app a v)) as))) ) ] ) ) )
 
-      (compile exp env #f #t (:optional cntr #f)) ) ) )
+      (compile exp env #f (fx> ##sys#eval-debug-level 0) (:optional cntr #f)) ) ) )
 
 (define ##sys#eval-handler 
   (make-parameter
@@ -2235,7 +2235,7 @@
 
 (declare
   (hide last-error run-safe store-result store-string
-	CHICKEN_yield 
+	CHICKEN_yield CHICKEN_apply_to_string
 	CHICKEN_eval CHICKEN_eval_string CHICKEN_eval_to_string CHICKEN_eval_string_to_string
 	CHICKEN_apply CHICKEN_eval_apply CHICKEN_eval_to_string
 	CHICKEN_read CHICKEN_load CHICKEN_get_error_message) )

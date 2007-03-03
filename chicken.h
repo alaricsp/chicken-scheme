@@ -152,7 +152,6 @@ char *alloca ();
 #endif
 
 #define C_TIMER_INTERRUPTS
-#define C_128_PARAMETERS
 
 #ifdef C_DEFAULT_TARGET_STACK_SIZE
 # define C_resize_stack(n)           C_do_resize_stack(C_DEFAULT_TARGET_STACK_SIZE)
@@ -191,7 +190,7 @@ char *alloca ();
 #include <time.h>
 
 #ifdef C_SIXTY_FOUR
-# ifdef HAVE_STDINT_H
+# if defined(HAVE_STDINT_H)
 #  include <stdint.h>
 # else
 #  include <sys/types.h>
@@ -587,8 +586,6 @@ DECL_C_PROC_p3 (48,49,50,51,52,53,54,55,  0,0,1,1,0)
 DECL_C_PROC_p3 (56,57,58,59,60,61,62,63,  0,0,1,1,1)
 DECL_C_PROC_p1 (64,65,  0,1,0,0,0,0,0)
 DECL_C_PROC_p0 (66,  0,1,0,0,0,0,1,0)
-
-#ifdef C_128_PARAMETERS
 DECL_C_PROC_p0 (67,  0,1,0,0,0,0,1,1)
 DECL_C_PROC_p2 (68,69,70,71,  0,1,0,0,0,1)
 DECL_C_PROC_p3 (72,73,74,75,76,77,78,79,  0,1,0,0,1)
@@ -599,7 +596,6 @@ DECL_C_PROC_p3 (104,105,106,107,108,109,110,111,  0,1,1,0,1)
 DECL_C_PROC_p3 (112,113,114,115,116,117,118,119,  0,1,1,1,0)
 DECL_C_PROC_p3 (120,121,122,123,124,125,126,127,  0,1,1,1,1)
 DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
-#endif
 
 
 /* Macros: */

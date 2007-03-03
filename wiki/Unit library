@@ -36,6 +36,13 @@ than {{N1}} is shifted to the right.
 These operations only accept exact integers or inexact integers in word range
 (32 bit signed on 32-bit platforms, or 64 bit signed on 64-bit platforms).
 
+==== bit-set?
+
+ [procedure] (bit-set? N INDEX)
+
+Returns {{#t}} if the bit at the position {{INDEX}} in the integer {{N}} is set,
+or {{#f}} otherwise. The rightmost/least-significant bit is bit 0.
+
 
 ==== fixnum?
 
@@ -578,6 +585,17 @@ currently running, which is one of the following:
  x86
  x86-64
  unknown
+
+
+==== on-exit
+
+ [procedure] (on-exit THUNK)
+
+Schedules the zero-argument procexdures {{THUNK}} to be executed before
+the process exits, either explicitly via {{exit}} or implicitly after exection
+of the last toplevel form. Note that finalizers for unreferenced finalized
+data are run before exit procedures.
+
 
 ==== software-type
 

@@ -129,6 +129,8 @@ Possible options are:
 
 ; -keyword-style STYLE : Enables alternative keyword syntax, where {{STYLE}} may be either {{prefix}} (as in Common Lisp), {{suffix}} (as in DSSSL) or {{none}}. Any other value is ignored. The default is {{suffix}}.
 
+; -keep-shadowed-macros : Do not remove macro definitions with the same name as assigned toplevel variables (the default is to remove the macro definition).
+
 ; -lambda-lift : Enable the optimization known as lambda-lifting.
 
 ; -no-lambda-info : Don't emit additional information for each {{lambda}} expression (currently the argument-list, after alpha-conversion/renaming).
@@ -199,8 +201,7 @@ compiler itself) accept a small set of runtime options:
 
 ; {{-:b}} : Enter a read-eval-print-loop when an error is encountered.
 
-; {{-:c}} : Forces console mode. Currently this is only used in the interpreter ({{csi}}) to force output of the {{#;N>}} prompt even if stdin
-is not a terminal (for example if running in an {{emacs}} buffer under Windows).
+; {{-:c}} : Forces console mode. Currently this is only used in the interpreter ({{csi}}) to force output of the {{#;N>}} prompt even if stdin is not a terminal (for example if running in an {{emacs}} buffer under Windows).
 
 ; {{-:d}} : Prints some debug-information at runtime.
 

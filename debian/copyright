@@ -1,8 +1,6 @@
 This package was debianized by zhaoway <zw@debian.org> on Mon, 21 Jan
 2002 20:40:17 +0800
 Davide Puricelli (evo) <evo@debian.org> is the actual maintainer.
-Ivan Raikov <raikov@cc.gatech.edu> is the maintainer of the 
-unofficial Debian package available through the Chicken web site.
 
 It was downloaded from http://www.call-with-current-continuation.org
 

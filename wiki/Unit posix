@@ -264,6 +264,22 @@ the file with the file-descriptor {{FILENO}}. If the optional
 argument {{SIZE}} is given, then only the specified number of bytes
 are written.
 
+==== file-control
+
+ [procedure] (file-control FILENO COMMAND  [ARGUMENT])
+
+Performs the fcntl operation {{COMMAND}} with the given
+{{FILENO}} and optional {{ARGUMENT}}. The return value is
+meaningful depending on the {{COMMAND}}.
+
+==== fcntl/dupfd
+==== fcntl/getfd
+==== fcntl/setfd
+==== fcntl/getfl
+==== fcntl/setfl
+
+These variables contain commands for {{file-control}}.
+
 ==== fileno/stdin
 ==== fileno/stdout
 ==== fileno/stderr
@@ -477,6 +493,16 @@ passed to {{process-execute}} (as is {{ENVIRONMENT}}).
 Not using the shell may be preferrable for security reasons.
 
 On native Windows the {{ARGUMENTLIST}} and {{ENVIRONMENT}} arguments are ignored.
+
+==== process*
+
+ [procedure] (process* COMMANDLINE [ARGUMENTLIST [ENVIRONMENT]])
+
+Like {{process}} but returns 4 values: an input port from
+which data written by the sub-process can be read, an output port from
+which any data written to will be received as input in the sub-process,
+the process-id of the started sub-process, and an input port from
+which data written by the sub-process to {{stderr}} can be read.
 
 ==== sleep
 
@@ -1098,6 +1124,8 @@ read
 access
 </td></tr><tr><td> file-select
 select
+</td></tr><tr><td> file-control
+fcntl
 </td></tr><tr><td> file-stat
 stat
 </td></tr><tr><td> file-test-lock
@@ -1202,9 +1230,8 @@ Microsoft tools or with MingW):
 
  open/noctty  open/nonblock  open/fsync  open/sync
  perm/isvtx  perm/isuid  perm/isgid
- file-select
- signal/...
- set-signal-handler!  signal-handler
+ file-select file-control
+ signal/... (except signal/term, signal/int, signal/fpe, signal/ill, signal/segv, signal/abrt, signal/break)
  set-signal-mask!  signal-mask  signal-masked?  signal-mask!  signal-unmask!
  user-information  group-information  get-groups  set-groups!  initialize-groups
  errno/wouldblock

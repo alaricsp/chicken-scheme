@@ -780,6 +780,46 @@ MACRO(UNSAFE_LIBRARY_SCM_TO_C saferoot)
 ENDMACRO(UNSAFE_LIBRARY_SCM_TO_C)
 
 ####################################################################
+#  USER OPTIONS                                                    #
+####################################################################
+
+# These appear as checkbox items in the CMakeSetup and CCMake GUIs.
+
+OPTION(ENABLE_PROCEDURE_TABLES "enable support for serialization of procedures" TRUE)
+IF(ENABLE_PROCEDURE_TABLES)
+  ADD_DEFINITIONS(-DC_ENABLE_PTABLES)
+ENDIF(ENABLE_PROCEDURE_TABLES)
+
+OPTION(ENABLE_SYMBOL_GC "enable support for GC of unused symbols" FALSE)
+IF(ENABLE_SYMBOL_GC)
+  ADD_DEFINITIONS(-DC_COLLECT_ALL_SYMBOLS)
+ENDIF(ENABLE_SYMBOL_GC)
+
+OPTION(ENABLE_EXTRA_SYMBOL_SLOT "enable extra data slot for symbols" FALSE)
+IF(ENABLE_EXTRA_SYMBOL_SLOT)
+  ADD_DEFINITIONS(-DC_EXTRA_SYMBOL_SLOT)
+ENDIF(ENABLE_EXTRA_SYMBOL_SLOT)
+
+OPTION(DISABLE_APPLY_HOOK "disable apply hook" FALSE)
+IF(DISABLE_APPLY_HOOK)
+  ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
+ENDIF(DISABLE_APPLY_HOOK)
+
+OPTION(ENABLE_DEBUG_BUILD "select debugging options for C compiler" FALSE)
+
+# Should this be on by default?
+
+IF(MSVC)
+  OPTION(USE_DYNAMIC_C_RUNTIME "use dynamically linked multithreaded C runtime" FALSE)
+  IF(USE_DYNAMIC_C_RUNTIME)
+    ADD_DEFINITIONS(/MD)
+  ENDIF(USE_DYNAMIC_C_RUNTIME)
+ELSE(MSVC)
+  OPTION(WITHOUT_LIBFFI "disable use if libffi, even if installed" FALSE)
+ENDIF(MSVC)
+
+
+####################################################################
 #  DEDUCE OS SPECIFIC BUILD OPTIONS                                #
 ####################################################################
 
@@ -801,6 +841,8 @@ SET(MORE_STATIC_LIBS )
 
 # Any CMake-specific defines are in chicken-config.h
 ADD_DEFINITIONS(-DHAVE_CHICKEN_CONFIG_H)
+
+ADD_DEFINITIONS(-DC_NO_PIC_NO_DLL)
 
 # Compiler optimizations.  Beware that these must be
 # passed to C_INSTALL_CFLAGS somehow.
@@ -888,11 +930,18 @@ IF(HAVE_DL_H)
 ENDIF(HAVE_DL_H)
 
 CHECK_INCLUDE_FILE(ffi.h HAVE_FFI_H)
-IF(HAVE_FFI_H)
-  SET(MORE_LIBS ${MORE_LIBS} ffi)
-  SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ffi)
-ENDIF(HAVE_FFI_H)
 
+IF(NOT MSVC)
+  IF(WITHOUT_LIBFFI)
+    SET(HAVE_FFI_H FALSE)
+  ELSE(WITHOUT_LIBFFI)
+    IF(HAVE_FFI_H)
+      SET(MORE_LIBS ${MORE_LIBS} ffi)
+      SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ffi)
+    ENDIF(HAVE_FFI_H)
+  ENDIF(WITHOUT_LIBFFI)
+ENDIF(NOT MSVC)
+  
 # check for windows.h
 CHECK_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
 IF(HAVE_WINDOWS_H)
@@ -944,11 +993,11 @@ ENDIF(UNIX)
 # In CMake, SET(x a b c) produces x="a;b;c"
 # SET(x "a b c") produces x="a b c", which is what we want.
 
-SET(SHARED_FLAGS "-DPIC -DC_NO_PIC_NO_DLL")
-  IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    SET(SHARED_FLAGS "${SHARED_FLAGS} -fno-common -no-cpp-precomp")
-  ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-SET(STATIC_FLAGS -DC_NO_PIC_NO_DLL)
+SET(SHARED_FLAGS "-DPIC")
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  SET(SHARED_FLAGS "${SHARED_FLAGS} -fno-common -no-cpp-precomp")
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 # Unix platforms can get into trouble if they don't have -lm.
 # Windows platforms generally don't need it.
@@ -1023,44 +1072,6 @@ MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${C_STACK_GROWS_DOWNWARD}")
 
 
 ####################################################################
-#  USER OPTIONS                                                    #
-####################################################################
-
-# These appear as checkbox items in the CMakeSetup and CCMake GUIs.
-
-OPTION(ENABLE_PROCEDURE_TABLES "enable support for serialization of procedures" TRUE)
-IF(ENABLE_PROCEDURE_TABLES)
-  ADD_DEFINITIONS(-DC_ENABLE_PTABLES)
-ENDIF(ENABLE_PROCEDURE_TABLES)
-
-OPTION(ENABLE_SYMBOL_GC "enable support for GC of unused symbols" FALSE)
-IF(ENABLE_SYMBOL_GC)
-  ADD_DEFINITIONS(-DC_COLLECT_ALL_SYMBOLS)
-ENDIF(ENABLE_SYMBOL_GC)
-
-OPTION(ENABLE_EXTRA_SYMBOL_SLOT "enable extra data slot for symbols" FALSE)
-IF(ENABLE_EXTRA_SYMBOL_SLOT)
-  ADD_DEFINITIONS(-DC_EXTRA_SYMBOL_SLOT)
-ENDIF(ENABLE_EXTRA_SYMBOL_SLOT)
-
-OPTION(DISABLE_APPLY_HOOK "disable apply hook" FALSE)
-IF(DISABLE_APPLY_HOOK)
-  ADD_DEFINITIONS(-DC_NO_APPLY_HOOK)
-ENDIF(DISABLE_APPLY_HOOK)
-
-OPTION(ENABLE_DEBUG_BUILD "select debugging options for C compiler" FALSE)
-
-# Should this be on by default?
-
-IF(MSVC)
-  OPTION(USE_DYNAMIC_C_RUNTIME "use dynamically linked multithreaded C runtime" FALSE)
-  IF(USE_DYNAMIC_C_RUNTIME)
-    ADD_DEFINITIONS(/MD)
-  ENDIF(USE_DYNAMIC_C_RUNTIME)
-ENDIF(MSVC)
-
-
-####################################################################
 #  CHICKEN_SPEC                                                    #
 ####################################################################
 
@@ -1078,6 +1089,7 @@ GET_DIRECTORY_PROPERTY(RAW_CFLAGS
   DIRECTORY ${Chicken_SOURCE_DIR}
   DEFINITIONS
 )
+
 SET(C_INSTALL_CFLAGS \"${RAW_CFLAGS}\")
 SET(C_TARGET_CFLAGS ${C_INSTALL_CFLAGS})
 SET(C_TARGET_LIB_HOME ${C_INSTALL_LIB_HOME})
@@ -1086,6 +1098,7 @@ SET(C_TARGET_INCLUDE_HOME ${C_INSTALL_INCLUDE_HOME})
 SET(C_TARGET_STATIC_LIB_HOME ${C_INSTALL_STATIC_HOME})
 SET(C_TARGET_MORE_LIBS ${C_INSTALL_MORE_LIBS})
 SET(C_TARGET_MORE_STATIC_LIBS ${C_INSTALL_MORE_LIBS})
+SET(C_CROSS_CHICKEN 0)
 
 ####################################################################
 #  CHICKEN_CONFIG_H                                                #
@@ -1335,9 +1348,15 @@ ADD_SUBDIRECTORY(pcre)
 # the configurations available.  We're not interested in that list, only whether it's empty or non-empty.
 
 IF(CMAKE_CONFIGURATION_TYPES)
-  # We have a multiple configuration generator.  Use this directory structure:
+  # We have a multiple configuration generator.  Use this directory structure.
+  #
+  # Note that CMAKE_BUILD_TYPE has no value when Visual Studio .sln files are generated.
+  # This is because on MSVC, no build type is actually selected at generation time.  The MSVC
+  # user typically selects her build type after opening the .sln file.  CMAKE_CFG_INTDIR expands
+  # to a Visual Studio macro that will contain the right value, once Visual Studio is opened and
+  # a build type is selected.
   SET(PCRE_FOR_STATIC_OBJ_DIR
-    ${CMAKE_BINARY_DIR}/pcre/libpcre-for-static.dir/${CMAKE_BUILD_TYPE})
+    ${CMAKE_BINARY_DIR}/pcre/libpcre-for-static.dir/${CMAKE_CFG_INTDIR})
 ELSE(CMAKE_CONFIGURATION_TYPES)
   # We have a single configuration generator.  Use this directory structure:
   SET(PCRE_FOR_STATIC_OBJ_DIR
@@ -1570,6 +1589,7 @@ ADD_EXECUTABLE(csc
   ${CMAKE_CURRENT_BINARY_DIR}/csc.c
 )
 SET_TARGET_PROPERTIES(csc PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+SET_TARGET_PROPERTIES(csc PROPERTIES INSTALL_RPATH "${LIB_HOME}")
 TARGET_LINK_LIBRARIES(csc libchicken)
 ADD_DEPENDENCIES(csc csc-c)
 
@@ -1590,6 +1610,7 @@ SET(CSI_EXE_SOURCES
 )
 ADD_EXECUTABLE(csi ${CSI_EXE_SOURCES})
 SET_TARGET_PROPERTIES(csi PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+SET_TARGET_PROPERTIES(csi PROPERTIES INSTALL_RPATH "${LIB_HOME}")
 TARGET_LINK_LIBRARIES(csi libchicken)
 ADD_DEPENDENCIES(csi csi-c)
 
@@ -1609,6 +1630,7 @@ ADD_EXECUTABLE(chicken-profile
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-profile.c
 )
 SET_TARGET_PROPERTIES(chicken-profile PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+SET_TARGET_PROPERTIES(chicken-profile PROPERTIES INSTALL_RPATH "${LIB_HOME}")
 TARGET_LINK_LIBRARIES(chicken-profile libchicken)
 ADD_DEPENDENCIES(chicken-profile chicken-profile-c)
 
@@ -1628,6 +1650,7 @@ ADD_EXECUTABLE(chicken-setup
   ${CMAKE_CURRENT_BINARY_DIR}/chicken-setup.c
 )
 SET_TARGET_PROPERTIES(chicken-setup PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+SET_TARGET_PROPERTIES(chicken-setup PROPERTIES INSTALL_RPATH "${LIB_HOME}")
 TARGET_LINK_LIBRARIES(chicken-setup libchicken)
 ADD_DEPENDENCIES(chicken-setup chicken-boot chicken-setup-c)
 
@@ -1648,6 +1671,7 @@ ADD_DEPENDENCIES(chicken-c chicken-boot)
 
 ADD_EXECUTABLE(chicken ${CHICKEN_EXE_SOURCES})
 SET_TARGET_PROPERTIES(chicken PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+SET_TARGET_PROPERTIES(chicken PROPERTIES INSTALL_RPATH "${LIB_HOME}")
 TARGET_LINK_LIBRARIES(chicken libchicken)
 ADD_DEPENDENCIES(chicken chicken-c)
 

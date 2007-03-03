@@ -29,7 +29,7 @@
 (set! EGGDIR (path (list LIBDIR "chicken") BINARYVERSION))
 (set! MANDIR (path DESTDIR "man"))
 (set! OPTIM "-g")
-(set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -Wall -Wno-unused -fno-strict-aliasing")
+(set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -fno-strict-aliasing")
 (set!+ LINKLIBS "-lffi -ldl -lm")
 (set!+ STATICLINKLIBS "-lffi -lm")
 (set! LIBSOURCES0 `(eval extras library lolevel utils tcp srfi-1 srfi-4 srfi-13 srfi-14 srfi-18 posixunix regex))
@@ -47,7 +47,7 @@
 (set! TARGET_INCLUDE_HOME (path TARGET_PREFIX "include"))
 (set! TARGET_STATIC_LIB_HOME (path TARGET_PREFIX "lib"))
 (set! TARGET_SHARE_HOME (path TARGET_PREFIX "share"))
-(set!? TARGET_CFLAGS CCFLAGS)
+(set!? TARGET_CFLAGS (conc CCFLAGS " " OPTIM))
 
 (set! PCRESOURCES
   '(pcre_compile
@@ -154,6 +154,7 @@ sed -e "s,@C_INSTALL_CC[@],\"#{CC}\"," \
       -e "s%@C_TARGET_MORE_LIBS[@]%\"#{LINKLIBS}\"%" \
       -e "s%@C_TARGET_MORE_STATIC_LIBS[@]%\"#{STATICLINKLIBS}\"%" \
       -e "s,@C_STACK_GROWS_DOWNWARD[@],#{STACKDIRECTION},g" \
+      -e "s,@C_CROSS_CHICKEN[@],0,g" \
     <#{(suffix "h.in" f)} >#{(suffix "h" f)}
 EOF
 } ) )
@@ -256,13 +257,16 @@ EOF
       ,(suffix "c" ULIBSOURCES0) 
       html/*})
 
+(notfile "wikisync")
+(actions "wikisync" ^{rsync -av --existing ,(conc WIKIDIR "/") wiki/})
+
 (notfile "doc")
 (depends "doc" "site/ChangeLog.txt")
 (actions 
  "doc"
  ^(begin
-    {rsync -av --existing ,(conc WIKIDIR "/") wiki/}
-    {,CSI -s misc/makedoc -pdf}) )
+    {,CSI -s misc/makedoc -pdf}
+    {cp chicken.pdf site}))
 (depends "site/ChangeLog.txt" "ChangeLog")
 (actions "ChangeLog" ^{darcs changes >ChangeLog})
 (actions "site/ChangeLog.txt" ^{cp ChangeLog site/ChangeLog.txt})
@@ -272,8 +276,10 @@ EOF
  "dist"
  ^(let* ((files (read-lines "distribution/manifest"))
 	 (distname (conc "chicken-" BUILDVERSION)) 
-	 (distfiles (map (cut prefix distname <>) files)) )
-    {rm -fr ,distname}
+	 (distfiles (map (cut prefix distname <>) files)) 
+	 (tgz (conc distname ".tar.gz"))
+	 (zip (conc distname ".zip")) )
+    {rm -fr ,distname ,tgz ,zip}
     {mkdir -p ,distname
 	   ,@(map (cut path distname <>) 
 		  (delete-duplicates (filter-map prefix files) string=?))}
@@ -289,9 +295,39 @@ EOF
     {cd ,distname ";" sh autogen.sh}
     {tar cfz ,(conc distname ".tar.gz") ,distname}
     {zip -qr ,(conc distname ".zip") ,distname}
+    {cp ,tgz ,zip site}
     {rm -fr ,distname} ) )
 
-(depends "dist" (suffix "c" XLIBSOURCES UXLIBSOURCES))
+(depends "dist" (suffix "c" XLIBSOURCES UXLIBSOURCES) "site/ChangeLog.txt")
 
 (notfile "tags")
 (actions "tags" ^{etags *.scm runtime.c chicken.h})
+
+(notfile "testdist")
+(actions 
+ "testdist"
+ ^(let* ((bdir "/tmp/test-dist-build")
+	 (sdir "/tmp/test-dist-build/chicken-*")
+	 (bbdir "/tmp/test-dist-build/build")
+	 (idir "/tmp/test-dist-build/inst")
+	 (tgz (conc "chicken-" BUILDVERSION ".tar.gz")) )
+    {build dist}
+    {mkdir -p ,bdir}
+    {tar xfz ,(conc "site/" tgz) -C ,bdir}
+    {cd ,sdir ";" ./configure ,(conc "--prefix=" bdir "/inst")}
+    {cd ,sdir ";" make}
+    {cd ,sdir ";" make install}
+    {cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n}
+    {cd ,idir ";" bin/chicken-setup -dv bloom-filter}
+    {rm -fr ,sdir ,idir}
+    {tar xfz *.tar.gz -C ,bdir}
+    {mkdir -p ,bbdir}
+    {cd ,bbdir ";" cmake ,(conc "-DCMAKE_INSTALL_PREFIX=" idir) ../chicken-*}
+    {cd ,bbdir ";" make VERBOSE=1}
+    {cd ,bbdir ";" make VERBOSE=1 install}
+    {cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n}
+    {cd ,idir ";" bin/chicken-setup -dv bloom-filter}
+    {rm -fr ,bdir} ) )
+
+(notfile "release")
+(depends "release" "dist" "doc")

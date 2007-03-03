@@ -33,6 +33,14 @@ Converts the file-pattern {{PATTERN}} into a regular expression.
 => "foo\..*"
 </enscript>
 
+{{PATTERN}} should follow "glob" syntax. Allowed wildcards are
+
+ *
+ [C...]
+ [C1-C2]
+ [-C...]
+ ?
+
 
 === regexp
 

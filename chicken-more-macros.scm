@@ -769,7 +769,6 @@
   (let ([vars (cdr conser)]
 	[slotnames (map car slots)] )
     `(begin
-       (define ,t ',t)
        (define ,conser
 	 (##sys#make-structure 
 	  ',t 

@@ -184,7 +184,7 @@
     ##sys#call-with-current-continuation ##sys#size ##sys#byte ##sys#setbyte
     ##sys#pointer? ##sys#generic-structure? ##sys#structure? ##sys#check-structure
     ##sys#check-exact ##sys#check-number ##sys#check-list ##sys#check-pair ##sys#check-string ##sys#check-symbol 
-    ##sys#check-char ##sys#check-vector ##sys#check-byte-vector ##sys#list
+    ##sys#check-char ##sys#check-vector ##sys#check-byte-vector ##sys#list ##sys#cons
     ##sys#call-with-values ##sys#fits-in-int? ##sys#fits-in-unsigned-int? ##sys#flonum-in-fixnum-range? 
     ##sys#fudge ##sys#immediate? ##sys#direct-return ##sys#context-switch
     ##sys#make-structure ##sys#apply ##sys#apply-values ##sys#continuation-graft

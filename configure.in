@@ -240,11 +240,15 @@ dnl Binary compatibility version.
 AC_SUBST(BINARY_VERSION)
 
 dnl Passing target compilers to chicken-setup/csc.
+CROSS_CHICKEN=0
 if test "$TARGET_CC" = ""; then
   TARGET_CC=$CC
+else
+  CROSS_CHICKEN=1
 fi
 
 AC_SUBST(TARGET_CC)
+AC_SUBST(CROSS_CHICKEN)
 
 if test "$TARGET_CXX" = ""; then
   TARGET_CXX=$CXX

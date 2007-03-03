@@ -131,6 +131,7 @@ and {{server.scm}}:
 
 <enscript highlight=scheme>
 ; client.scm
+(declare (uses tcp))
 (define-values (i o) (tcp-connect "localhost" 4242))
 (write-line "Good Bye!" o)
 (print (read-line i))
@@ -138,6 +139,7 @@ and {{server.scm}}:
 
 <enscript highlight=scheme>
 ; server.scm
+(declare (uses tcp))
 (define l (tcp-listen 4242))
 (define-values (i o) (tcp-accept l))
 (write-line "Hello!" o)
@@ -146,9 +148,10 @@ and {{server.scm}}:
 (close-output-port o)
 </enscript>
 
- % csi -script server.scm &
- [1] 1409
- % csi -script client.scm
+ % csc server.scm
+ % csc client.scm
+ % ./server &
+ % ./client
  Good Bye!
  Hello!
 
