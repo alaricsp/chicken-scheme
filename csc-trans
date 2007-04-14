@@ -9,15 +9,15 @@ CSC=csc
 
 # check for options
 COLOR="--color"
-MODE=ansi
+MODE=""
 OUTPUT=-
 ALL=0
 while getopts ":a23ufbihprcotl:" opt; do
    case $opt in
       a ) ALL="1";;
-      h ) MODE="html";;
-      p ) MODE="PostScript";;
-      r ) MODE="rtf";;
+      h ) MODE="--language=html";;
+      p ) MODE="--language=PostScript";;
+      r ) MODE="--language=rtf";;
       t ) NOENSCRIPT="1";;
       c ) COLOR="";; # disable color (on by default)
       o ) OUTPUT=$OPTARG;;
@@ -45,7 +45,7 @@ else
   PASS2=cat
 fi
 if type $ENSCRIPT >/dev/null 2>&1; then
-  PASS3="$ENSCRIPT $ENSCRIPT_OPTS --language=$MODE $COLOR -o $OUTPUT"
+  PASS3="$ENSCRIPT $ENSCRIPT_OPTS $MODE $COLOR -o $OUTPUT"
 else
   PASS3=cat
 fi
@@ -59,5 +59,5 @@ if [ "x$ALL" == "x1" ]; then
 else
   $CSC $CSC_OPTS $FILE |\
   perl -an000e 'print if /C_trace/&&!/##sys#implicit/ || (/\/\* [-!%\w]+ in k\d+ / && ! /\/\* k\d+ /)' |\
-  $PASS2 2>/dev/null | $PASS3 2>/dev/null
+  $PASS2 | $PASS3
 fi

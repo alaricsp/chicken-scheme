@@ -122,10 +122,11 @@
        `(begin
 	  ,@(with-input-from-file path
 	      (lambda ()
-		(do ([x (read) (read)]
-		     [xs '() (cons x xs)] )
-		    ((eof-object? x) 
-		     (reverse xs))) ) ) ) ) ) ) )
+		(fluid-let ((##sys#current-source-filename path))
+		  (do ([x (read) (read)]
+		       [xs '() (cons x xs)] )
+		      ((eof-object? x) 
+		       (reverse xs))) ) ) ) ) ) ) ) )
 
 (##sys#register-macro
  'assert

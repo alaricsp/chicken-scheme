@@ -85,11 +85,12 @@
       (set! patt (regexp (regexp-escape patt))))
     (##sys#environment-symbols env
       (lambda (sym)
-        (not (not (string-search patt (symbol->string sym)))))) ) )
+        (and (string-search patt (symbol->string sym))
+	     (##sys#symbol-has-toplevel-binding? sym))))))
 
 (let ([%apropos-list
         (lambda (loc patt args)
-	  (let ([env (if (pair? args) (car args) (interaction-environment))])
+	  (let ([env (:optional args (interaction-environment))])
 	    (##sys#check-structure env 'environment loc)
 	    (unless (or (string? patt) (symbol? patt) (regexp? patt))
 	      (##sys#signal-hook #:type-error loc "bad argument type - not a string, symbol, or regexp" patt))
@@ -274,6 +275,19 @@
 		(loop)
 		(call-with-output-file pn (lambda (p) pn)) ) ) ) ) ) ) )
 
+;; Directory string or list only contains path-separators
+;; and/or current-directory names.
+
+(define (directory-null? dir)
+  (let loop ([lst
+              (if (list? dir)
+                  dir ; Don't bother to check for strings here
+                  (begin
+                    (##sys#check-string dir 'directory-null?)
+                    (string-split dir "/\\" #t)))])
+    (or (null? lst)
+        (and (member (car lst) '("" "."))
+             (loop (cdr lst)) ) ) ) )
 
 ;;; Handy I/O procedures:
 
@@ -351,3 +365,53 @@
 	  (if (eq? x #!eof)
 	      (reverse xs)
 	      (loop (cons (fn x) xs))))))))
+
+(define (port-fold fn acc thunk)
+  (let loop ([acc acc])
+    (let ([x (thunk)])
+      (if (eq? x #!eof)
+        acc
+        (loop (fn x acc))) ) ) )
+
+;;;; funky-ports
+
+(define (make-broadcast-port . ports)
+  (make-output-port
+   (lambda (s) (for-each (cut write-string s #f <>) ports))
+   noop
+   (lambda () (for-each flush-output ports)) ) )
+
+(define (make-concatenated-port p1 . ports)
+  (let ((ports (cons p1 ports)))
+    (make-input-port
+     (lambda ()
+       (let loop ()
+	 (if (null? ports)
+	     #!eof
+	     (let ((c (read-char (car ports))))
+	       (cond ((eof-object? c)
+		      (set! ports (cdr ports))
+		      (loop) )
+		     (else c) ) ) ) ) )
+     (lambda ()
+       (and (not (null? ports))
+	    (char-ready? (car ports))))
+     noop
+     (lambda ()
+       (let loop ()
+	 (if (null? ports)
+	     #!eof
+	     (let ((c (peek-char (car ports))))
+	       (cond ((eof-object? c)
+		      (set! ports (cdr ports))
+		      (loop) )
+		     (else c))))))
+     (lambda (p n dest start)
+       (let loop ((n n) (c 0))
+	 (cond ((null? ports) c)
+	       ((fx<= n 0) c)
+	       (else
+		(let ((m (read-string! n dest (car ports) (fx+ start c))))
+		  (when (fx< m n)
+		    (set! ports (cdr ports)) )
+		  (loop (fx- n m) (fx+ c m))))))))))

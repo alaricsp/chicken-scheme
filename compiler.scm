@@ -77,6 +77,7 @@
 ; (emit-exports <string>)
 ; (keep-shadowed-macros)
 ; (import <symbol-or-string> ...)
+; (unused <symbol> ...)
 ;
 ;   <type> = fixnum | generic
 ;
@@ -275,7 +276,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
   expand-foreign-lambda* data-declarations emit-control-file-item expand-foreign-primitive
-  process-declaration external-protos-first basic-literal? emit-line-info
+  process-declaration external-protos-first basic-literal?
   transform-direct-lambdas! expand-foreign-callback-lambda* debugging emit-unsafe-marker
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
@@ -285,7 +286,7 @@
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database export-list csc-control-file
-  estimate-foreign-result-location-size compressed-literals-initializer
+  estimate-foreign-result-location-size compressed-literals-initializer unused-variables
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
   units-used-by-default words-per-flonum disable-stack-overflow-checking
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
@@ -373,7 +374,6 @@
 (define do-lambda-lifting #f)
 (define inline-max-size -1)
 (define emit-closure-info #t)
-(define emit-line-info #f)
 (define export-file-name #f)
 (define import-table #f)
 (define use-import-table #f)
@@ -429,6 +429,7 @@
 (define not-inline-list '())
 (define file-requirements #f)
 (define postponed-initforms '())
+(define unused-variables '())
 
 
 ;;; Initialize globals:
@@ -475,32 +476,38 @@
       [('quote x) x]
       [x x] ) )
 
+  (define (resolve-atom x ae me dest)
+    (cond [(and constants-used (##sys#hash-table-ref constant-table x)) 
+	   => (lambda (val) (walk (car val) ae me dest)) ]
+	  [(and inline-table-used (##sys#hash-table-ref inline-table x))
+	   => (lambda (val) (walk val ae me dest)) ]
+	  [(assq x foreign-variables)
+	   => (lambda (fv) 
+		(let* ([t (second fv)]
+		       [ft (final-foreign-type t)] 
+		       [body `(##core#inline_ref (,(third fv) ,t))] )
+		  (foreign-type-convert-result
+		   (finish-foreign-result ft body)
+		   t) ) ) ]
+	  [(assq x location-pointer-map)
+	   => (lambda (a)
+		(let* ([t (third a)]
+		       [ft (final-foreign-type t)] 
+		       [body `(##core#inline_loc_ref (,t) ,(second a))] )
+		  (foreign-type-convert-result
+		   (finish-foreign-result ft body)
+		   t) ) ) ]
+	  [else #f] ) )
+
   (define (walk x ae me dest)
     (cond ((symbol? x)
-	   (cond [(assq x ae) 
-		  => (lambda (n)
-		       (walk (##sys#macroexpand-1-local (cdr n) me) ae me dest) ) ]
-		 [(and constants-used (##sys#hash-table-ref constant-table x)) 
-		  => (lambda (val) (walk (car val) ae me dest)) ]
-		 [(and inline-table-used (##sys#hash-table-ref inline-table x))
-		  => (lambda (val) (walk val ae me dest)) ]
-		 [(assq x foreign-variables)
-		  => (lambda (fv) 
-		       (let* ([t (second fv)]
-			      [ft (final-foreign-type t)] 
-			      [body `(##core#inline_ref (,(third fv) ,t))] )
-			 (foreign-type-convert-result
-			  (finish-foreign-result ft body)
-			  t) ) ) ]
-		 [(assq x location-pointer-map)
-		  => (lambda (a)
-		       (let* ([t (third a)]
-			      [ft (final-foreign-type t)] 
-			      [body `(##core#inline_loc_ref (,t) ,(second a))] )
-			 (foreign-type-convert-result
-			  (finish-foreign-result ft body)
-			  t) ) ) ]
-		 [else x] ) )
+	   (cond ((assq x ae) => 
+		  (lambda (a)
+		    (let ((alias (cdr a)))
+		      (or (resolve-atom alias ae me dest)
+			  alias) ) ) )
+		 ((resolve-atom x ae me dest))
+		 (else (##sys#alias-global-hook x))) )
 	  ((and (not-pair? x) (constant? x)) `(quote ,x))
 	  ((not-pair? x) (syntax-error "illegal atomic form" x))
 	  ((symbol? (car x))
@@ -667,11 +674,12 @@
 				[var (resolve var0 ae)]
 				[ln (get-line x)]
 				[val (walk (caddr x) ae me var0)] )
-			   (when (and safe-globals-flag (eq? var var0))
-			     (set! always-bound-to-procedure
-			       (lset-adjoin eq? always-bound-to-procedure var))
-			     (set! always-bound (lset-adjoin eq? always-bound var)) )
 			   (when (eq? var var0) ; global?
+			     (set! var (##sys#alias-global-hook var))
+			     (when safe-globals-flag
+			       (set! always-bound-to-procedure
+				 (lset-adjoin eq? always-bound-to-procedure var))
+			       (set! always-bound (lset-adjoin eq? always-bound var)) )
 			     (when (macro? var)
 			       (compiler-warning 
 				'var "assigned global variable `~S' is a macro ~A"
@@ -909,13 +917,25 @@
 					  ,(foreign-type-convert-argument
 					    `(let ()
 					       ,@(match rtype
-						   ((or '(const nonnull-c-string) 'nonnull-c-string)
+						   ((or '(const nonnull-c-string) 
+							'(const nonnull-unsigned-c-string)
+							'nonnull-unsigned-c-string
+							'nonnull-c-string)
 						    `((##sys#make-c-string (let () ,@(cddr lam)))))
-						   ((or '(const c-string*) 'c-string*)
+						   ((or '(const c-string*)
+							'(const unsigned-c-string*)
+							'unsigned-c-string*
+							'c-string*
+							'c-string-list
+							'c-string-list*)
 						    (syntax-error
-						     "`c-string*' is not a valid result type for callback procedures"
+						     "not a valid result type for callback procedures"
+						     rtype
 						     name) )
-						   ((or 'c-string '(const c-string))
+						   ((or 'c-string
+							'(const unsigned-c-string)
+							'unsigned-c-string
+							'(const c-string))
 						    `((let ((r (let () ,@(cddr lam))))
 							(and r (##sys#make-c-string r)) ) ) )
 						   (_ (cddr lam)) ) )
@@ -1085,6 +1105,8 @@
        ((block) (set! block-compilation #t))
        ((separate) (set! block-compilation #f))
        ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
+       ((unused)
+	(set! unused-variables (append (cdr spec) unused-variables)))
        ((not)
 	(check-decl spec 1)
 	(case (second spec)
@@ -1641,7 +1663,10 @@
 
 	 ;; If this is the first analysis and the variable is global and has no references and we are
 	 ;;  in block mode, then issue warning:
-	 (when (and first-analysis global (null? references))
+	 (when (and first-analysis 
+		    global
+		    (null? references)
+		    (not (memq sym unused-variables)))
 	   (when assigned-locally
 	     (compiler-warning 'var "local assignment to unused variable `~S' may be unintended" sym) )
 	   (when (and (or block-compilation

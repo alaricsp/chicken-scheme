@@ -34,7 +34,6 @@
 ;; This mode assumes:
 ;;     - the user has chicken.info install
 ;;     - the csi executable can be launch as "csi"
-;;     - the #csi##oblist and co are available from oblist library
 
 ;;
 ;; Changes by Micky Latowicki:
@@ -56,18 +55,23 @@
 ;; libraries into csi, because the way it works now the user cannot choose
 ;; to keep srfi-1 and regex out of her csi environment.
 
+;; Changes by felix:
+;;
+;; * removed hen-describe-symbol
+;; * various cleaning up
+;; * still pretty bad...
+
 
 ;;; Code:
 
 (defconst hen-version (substring "$Revision: 1.13 $" 11 -2)
  "$Id: hen.el,v 1.13 2004/11/22 22:36:11 flw Exp $
 
-Report bugs to: Linh Dang <linhd@>")
+Report bugs to: Felix Winkelmann <bunny351@gmail.com>")
 (defvar hen-load-hook nil
  "*Hooks run after loading hen.")
 
 (require 'scheme)
-(require 'info-look)
 (require 'compile)
 
 ;; with-temp-message pasted from a mailing list. It's not available in my xemacs 21.4
@@ -113,30 +117,20 @@ The value returned is the value of the last form in BODY."
                            "define-external"
                            "define-constant"
                            "define-datatype"
-                           "define-external-variable"
                            "define-foreign-type"
                            "define-foreign-variable"
                            "define-foreign-record"
-                           "define-functor"
                            "define-generic"
-                           "define-handy-method"
                            "define-inline"
-                           "define-internal-meroon-macro"
                            "define-macro"
                            "define-method"
-                           "define-optionals"
                            "define-reader-ctor"
                            "define-record"
                            "defstruct"
                            "define-record-printer"
                            "define-record-type"
-                           "define-record-scheme"
-                           "define-signature"
-                           "define-structure"
                            "define-syntax"
                            "define-for-syntax"
-                           "define-syntax-form"
-                           "define-optimizer"
                            "define-values") 1) "\\)"
                            "\\s-+(?\\(\\(\\sw\\|\\s_\\)+\\)")
 
@@ -153,45 +147,35 @@ The value returned is the value of the last form in BODY."
      (cons
       (concat
        "\\<" (regexp-opt
-            '("begin" "begin0" "begin-form" "else"
-              "call-with-current-continuation" "call/cc"
-              "call-with-input-pipe" "call-with-output-pipe"
-              "call-with-input-file" "call-with-output-file"
-              "call-with-input-string" "call-with-output-string"
-              "call-with-values"
+            '("begin" "begin0" "else"
               "else"
               "foreign-lambda*" "foreign-safe-lambda*" "foreign-primitive"
-	      "foreign-declare"
+	      "foreign-declare" "foreign-parse" "foreign-parse/declare"
               "foreign-lambda" "foreign-safe-lambda" "foreign-code"
               "match" "match-lambda" "match-lambda*" "match-define" "match-let" "match-let*"
 
               "case" "case-lambda" "cond" "cond-expand" "condition-case" "switch"
 	      "handle-exceptions"
-	      "record-compose"
               "cut" "cute" "time" "regex-case"
 
-              "do" "else" "for-each" "if" "lambda" "when" "while" "if*" "unless"
+              "do" "else" "if" "lambda" "when" "while" "if*" "unless"
 
 	      "let-location" "location" "rec"
               "let" "let*" "let-syntax" "letrec" "letrec-syntax" "set!-values"
-              "and-let*" "let-optionals" "let-optionals*" "let-macro"
+              "and-let*" "let-optionals" "let-optionals*"
               "fluid-let" "let-values" "let*-values" "letrec-values"
               "parameterize"
               "module" "import-only" "import" "import*"
 
-              "and" "or" "delay" "andmap" "ormap" "receive"
+              "and" "or" "delay" "receive"
 
-              "assert" "ignore-errors" "critical-section" "ensure" "eval-when"
+              "assert" "ignore-errors" "ensure" "eval-when"
 
-              "with-input-from-file" "with-output-to-file"
-              "with-input-from-pipe" "with-output-to-pipe"
-              "with-input-from-string" "with-output-to-string"
-
-	      "loop"
+	      "loop" "sc-macro-transformer"
 
               "declare" "include" "require-extension" "require" "require-for-syntax" "use" "quasiquote"
 
-              "map" "syntax" "with-syntax" "syntax-case" "identifier-syntax" "syntax-rules") t)
+              "syntax" "with-syntax" "syntax-case" "identifier-syntax" "syntax-rules") t)
        "\\>") 'font-lock-keyword-face)
      '("\\<set!" . font-lock-keyword-face)
      ;;
@@ -209,7 +193,7 @@ The value returned is the value of the last form in BODY."
 
 (mapc (lambda (cell)
        (put (car cell) 'scheme-indent-function (cdr cell)))
-     '((begin0 . 0) (begin-form . 0)
+     '((begin0 . 0)
 
        (when . 1) (while . 1) (unless . 1)
        (and-let* . 1) (fluid-let . 1)
@@ -253,18 +237,16 @@ The value returned is the value of the last form in BODY."
                    `(("Error:.+in line \\([0-9]+\\):" 0 1 nil ,(buffer-file-name)))
                    (lambda (ignored) "*csc*")))
 
-(defun hen-build-unit ()
+(defun hen-build-extension ()
  (interactive)
  (let* ((file-name (file-name-nondirectory
-                     (buffer-file-name)))
-        (base-name (file-name-sans-extension file-name)))
-   (hen-build "csc" (list "-s" file-name "-o" (concat base-name ".so")) )))
+		    (buffer-file-name))))
+   (hen-build "csc" (list "-s" file-name))))
 
 (defun hen-build-program ()
  (interactive)
  (let* ((file-name (file-name-nondirectory
-                     (buffer-file-name)))
-        (base-name (file-name-sans-extension file-name)))
+                     (buffer-file-name))))
    (hen-build "csc" (list file-name) )))
 
 (define-derived-mode hen-mode scheme-mode "Hen"
@@ -274,10 +256,8 @@ The value returned is the value of the last form in BODY."
 \\[hen-csi-eval-region] evaluates the region in csi.
 \\[hen-csi-apropos] lists the csi's symbols matching a regex.
 \\[hen-csi-send] reads a s-exp from the user and evaluates it csi.
-\\[hen-describe-symbol] looks up info documentation for a symbol from.
-the R5RS and Chicken info files.
-\\[hen-build-unit] compiles the current file as a shared object
-\\[hen-describe-symbol] compiles the current file as a program
+\\[hen-build-extension] compiles the current file as a shared object
+\\[hen-build-program] compiles the current file as a program
 "
 
  (set-syntax-table hen-syntax-table)
@@ -287,20 +267,20 @@ the R5RS and Chicken info files.
  (define-key hen-mode-map (kbd "C-c C-e") 'hen-csi-eval-last-sexp)
  (define-key hen-mode-map (kbd "C-c C-r") 'hen-csi-eval-region)
  (define-key hen-mode-map (kbd "C-c C-a") 'hen-csi-apropos)
- (define-key hen-mode-map (kbd "C-c C-h") 'hen-describe-symbol)
  (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-unit)
  (define-key hen-mode-map (kbd "C-c C-x") 'hen-csi-send)
- (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-unit)
+ (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-extension)
  (define-key hen-mode-map (kbd "C-c C-c") 'hen-build-program)
 
  (define-key hen-mode-map [menu-bar scheme run-scheme] nil)
  (define-key hen-mode-map [menu-bar shared build-prog] '("Compile File" hen-build-program))
  (define-key hen-mode-map [menu-bar shared send-to-csi] '("Evaluate" . hen-csi-send))
- (define-key hen-mode-map [menu-bar scheme build-as-unit] '("Compile File as Unit" . hen-build-unit))
- (define-key hen-mode-map [menu-bar scheme describe-sym] '("Lookup Documentation for Symbol" . hen-describe-symbol))
+ (define-key hen-mode-map [menu-bar scheme build-as-extension]
+   '("Compile File as Extension" . hen-build-extension))
  (define-key hen-mode-map [menu-bar scheme apropos] '("Symbol Apropos" . hen-csi-apropos))
  (define-key hen-mode-map [menu-bar scheme eval-region] '("Eval Region" . hen-csi-eval-region))
- (define-key hen-mode-map [menu-bar scheme eval-last-sexp] '("Eval Last S-Expression" . hen-csi-eval-last-sexp))
+ (define-key hen-mode-map [menu-bar scheme eval-last-sexp]
+   '("Eval Last S-Expression" . hen-csi-eval-last-sexp))
 
  (setq font-lock-defaults
        '((hen-font-lock-keywords
@@ -375,10 +355,9 @@ waiting."
    (if (and (processp proc)
             (eq (process-status proc) 'run))
        proc
-     (setq proc (start-process "csi" (hen-csi-buffer) "csi" "-no-init" "-quiet"))
+     (setq proc (start-process "csi" (hen-csi-buffer) "csi" "-no-init" "-quiet" "-:c"))
      (with-current-buffer (hen-csi-buffer)
        (hen-proc-wait-prompt proc hen-prompt-pattern)
-       ;(hen-proc-send "(require 'oblist)" proc hen-prompt-pattern)
        proc))))
 
 (defun hen-csi-send (sexp)
@@ -434,20 +413,9 @@ waiting."
 
 (defun hen-csi-completions-alist (prefix)
  (read (hen-csi-send
-        ;; this used to not work because srfi-1 and regex were needed. I don't want to
-        ;; require them inside this expression because that would pollute the namespace and
-        ;; the user will have no choice but to develop his programs with those libs in the
-        ;; environment.
-        ;; I should check the csi compilation code - why it doesn't statically link in regex
-        ;; and srfi-1, since it seems to rely on them.
-        (concat "(begin (require 'regex) (require 'srfi-1)"
-                ;; TODO: this is an ugly hack that pollutes the namespace. should be done
-                ;; in a seperate process, but process-fork requires posix, which would pollute the namespace too.
-                ;; The solution is to statically link the required routines (either posix or srfi-1+regex) into the csi
-                ;; executable.
-                "(pp (map list (delete-duplicates (##csi#name-of-symbols-starting-with \""
+        (concat "(pp (map list (delete-duplicates (##csi#name-of-symbols-starting-with \""
                 prefix
-                "\")))))"))))
+                "\"))))"))))
 
 (defun hen-complete-symbol (thing)
  "Complete symbol at point in Hen mode. THING is used as the prefix."
@@ -492,11 +460,6 @@ waiting."
  (list (completing-read prompt 'hen-csi-completion-table
                         nil nil nil 'hen-lookup-history (hen-identifier-at-point))))
 
-(defun hen-describe-symbol (name)
- "Lookup documentation for symbol NAME."
- (interactive (hen-csi-symbol-completing-read "Describe symbol: "))
- (info-lookup-symbol name 'hen-mode))
-
 (defun hen-csi-apropos (regex)
  "List the symbols matching REGEX."
  (interactive "sApropos (chicken's global symbols): ")
@@ -509,38 +472,15 @@ waiting."
                          "                 (##sys#slot sym 0) '<unbound> ))))\n"
                          "  (delete-duplicates! (##csi#symbols-matching \"" regex  "\"))))"))
           (results-alist (read (hen-csi-send query))))
-     (if (display-mouse-p)
-         (insert "If moving the mouse over text changes the text's color,\n"
-                 (substitute-command-keys
-                  "you can click \\[apropos-mouse-follow] on that text to get more information.\n")))
-     (insert "In this buffer, go to the name of the command, or function,"
-             " or variable,\n"
-             (substitute-command-keys
-              "and type \\[apropos-follow] to get full documentation.\n\n"))
-
      (dolist (item results-alist)
        (let ((name (car item))
              (obj (cdr item)))
          (insert (car item) " ")
-         (add-text-properties (line-beginning-position) (1- (point))
-                              `(item ,name action hen-describe-symbol
-                                     face bold mouse-face highlight
-                                     help-echo "mouse-2: display help on this item"))
          (indent-to-column 40)
          (insert (cdr item) "\n")))
 
      (apropos-mode)))
  (pop-to-buffer "*Chicken Apropos*" t))
-
-(info-lookup-add-help
-:mode 'hen-mode
-:regexp "[^()'\" \t\n]+"
-:ignore-case t
-;; Aubrey Jaffer's rendition from <URL:ftp://ftp-swiss.ai.mit.edu/pub/scm>
-:doc-spec '(("(chicken)Index" nil
-             "^[ \t]+- [^:\n]+:[ \t]*" "")
-            ("(r5rs)Index" nil
-             "^[ \t]+- [^:\n]+:[ \t]*" "")))
 
 (provide 'hen)
 (run-hooks 'hen-load-hook)

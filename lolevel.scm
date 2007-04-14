@@ -429,6 +429,22 @@ EOF
 	  p)
 	(##sys#error 'static-byte-vector->pointer "can not coerce non-static bytevector" bv) ) ) )
 
+(define (byte-vector-move! src src-start src-end dst dst-start)
+  (let ((from (make-locative src src-start))
+        (to   (make-locative dst dst-start)) )
+    (move-memory! from to (- src-end src-start)) ) )
+
+(define (byte-vector-append . vectors)
+  (define (append-rest-at i vectors)
+    (if (pair? vectors)
+        (let* ((src (car vectors))
+               (len (byte-vector-length src))
+               (dst (append-rest-at (+ i len) (cdr vectors))) )
+          (byte-vector-move! src 0 len dst i)
+          dst )
+        (make-byte-vector i) ) )
+  (append-rest-at 0 vectors) )
+
 
 ;;; Accessors for arbitrary block objects:
 

@@ -93,32 +93,19 @@
 # expect old CMake binaries to simply work!  If your project is
 # non-trivial, you are probably exploring non-trivial CMake
 # capabilities somewhere, and backwards compatibility is not assured.
-
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.5 FATAL_ERROR)
-
-# Bugs typically show up in the current version of CMake you're using.
-# Then you make a bug report to http://www.kitware.com/Bug , and
-# often the bug gets fixed in the CVS repository.  Then you want to
-# verify that the bug was actually fixed.  But, you want to keep
-# running your old code, because the next version of CMake hasn't
-# shipped and you don't expect people to be compiling CMake from CVS.
 #
-# To handle this, we need to know what version of CMake we're using.
-# We already issue a fatal error for any CMake less than 2.4.5.
-# So this is sufficient for distinguishing whether we've got
-# CMake 2.4.5, or something greater.  We would ideally like to
-# make lexical comparisons on CMake version numbers, and be able
-# to say things like "if it's greater than version 2.x.y, do this."
-# But that's work to implement, and this is easy and sufficient for now.
+# Generally, the required CMake version number will be bumped up anytime
+# there's a suspicion that CMake itself may be a source of problems.
+# Suspicion shall be deemed sufficient, not proof.  I don't want old bug
+# reports about problems that may have been solved already, and my time
+# as a CMake maintainer is too scarce to be asking, "Are you using the
+# most recent CMake?" over and over again.  Note that CMake bugs can be
+# platform or compiler specific, so just because it works fine for you with
+# an older version, doesn't mean it works fine for everyone else.  That
+# said, the CMake version number won't be bumped without probable
+# cause.
 
-SET(IS_CMAKE_245 false)
-IF(CMAKE_MAJOR_VERSION EQUAL 2)
-  IF(CMAKE_MINOR_VERSION EQUAL 4)
-    IF(CMAKE_PATCH_VERSION EQUAL 4)
-      SET(IS_CMAKE_245 true)
-    ENDIF(CMAKE_PATCH_VERSION EQUAL 4)
-  ENDIF(CMAKE_MINOR_VERSION EQUAL 4)
-ENDIF(CMAKE_MAJOR_VERSION EQUAL 2) 
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)
 
 
 ####################################################################
@@ -842,8 +829,6 @@ SET(MORE_STATIC_LIBS )
 # Any CMake-specific defines are in chicken-config.h
 ADD_DEFINITIONS(-DHAVE_CHICKEN_CONFIG_H)
 
-ADD_DEFINITIONS(-DC_NO_PIC_NO_DLL)
-
 # Compiler optimizations.  Beware that these must be
 # passed to C_INSTALL_CFLAGS somehow.
 
@@ -1093,11 +1078,13 @@ GET_DIRECTORY_PROPERTY(RAW_CFLAGS
 SET(C_INSTALL_CFLAGS \"${RAW_CFLAGS}\")
 SET(C_TARGET_CFLAGS ${C_INSTALL_CFLAGS})
 SET(C_TARGET_LIB_HOME ${C_INSTALL_LIB_HOME})
+SET(C_TARGET_RUN_LIB_HOME ${C_INSTALL_LIB_HOME})
 SET(C_TARGET_SHARE_HOME ${C_INSTALL_SHARE_HOME})
 SET(C_TARGET_INCLUDE_HOME ${C_INSTALL_INCLUDE_HOME})
 SET(C_TARGET_STATIC_LIB_HOME ${C_INSTALL_STATIC_HOME})
 SET(C_TARGET_MORE_LIBS ${C_INSTALL_MORE_LIBS})
 SET(C_TARGET_MORE_STATIC_LIBS ${C_INSTALL_MORE_LIBS})
+SET(C_TARGET_DLL_EXTENSION "NULL")
 SET(C_CROSS_CHICKEN 0)
 
 ####################################################################

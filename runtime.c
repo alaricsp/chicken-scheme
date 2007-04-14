@@ -45,7 +45,7 @@
 # include <sysexits.h>
 #endif
 
-#if defined(C_NO_PIC_NO_DLL) && !defined(PIC)
+#if !defined(PIC)
 # define NO_DLOAD2
 #endif
 
@@ -338,6 +338,7 @@ C_TLS int C_entry_point_status;
 C_TLS int (*C_gc_mutation_hook)(C_word *slot, C_word val);
 C_TLS void (*C_gc_trace_hook)(C_word *var, int mode);
 C_TLS C_word(*C_get_unbound_variable_value_hook)(C_word sym);
+C_TLS void (*C_panic_hook)(C_char *msg);
 
 C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
 C_TLS void (*C_post_gc_hook)(int mode);
@@ -472,6 +473,7 @@ static void global_signal_handler(int signum);
 static C_word arg_val(C_char *arg);
 static void barf(int code, char *loc, ...) C_noret;
 static void panic(C_char *msg) C_noret;
+static void usual_panic(C_char *msg) C_noret;
 static void horror(C_char *msg) C_noret;
 static void C_fcall initial_trampoline(void *proc) C_regparm C_noret;
 static C_ccall void termination_continuation(C_word c, C_word self, C_word result) C_noret;
@@ -614,6 +616,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
 
   if(debug_mode) C_printf(C_text("[debug] application startup...\n"));
 
+  C_panic_hook = usual_panic;
   symbol_table_list = NULL;
 
   if((symbol_table = C_new_symbol_table(".", symbols ? symbols : DEFAULT_SYMBOL_TABLE_SIZE)) == NULL)
@@ -1287,6 +1290,13 @@ void C_ccall termination_continuation(C_word c, C_word self, C_word result)
 /* Signal unrecoverable runtime error: */
 
 void panic(C_char *msg)
+{
+  C_panic_hook(msg);
+  usual_panic(msg);
+}
+
+
+void usual_panic(C_char *msg)
 {
   C_char *dmp = C_dump_trace(0);
 
@@ -3835,14 +3845,7 @@ C_regparm C_word C_fcall C_execute_shell_command(C_word string)
 
   if(buf != buffer) C_free(buf);
 
-  if(n == -1)
-    return C_fix(errno);
-
-#ifdef C_NONUNIX
   return C_fix(n);
-#else
-  return C_fix(WIFEXITED(n) ? WEXITSTATUS(n) : (WIFSIGNALED(n) ? WTERMSIG(n) : WSTOPSIG(n)));
-#endif
 }
 
 
@@ -7271,7 +7274,7 @@ void C_ccall C_cons_flonum(C_word c, C_word closure, C_word k)
 
 void C_ccall C_string_to_number(C_word c, C_word closure, C_word k, C_word str, ...)
 {
-  int radix, radixpf = 0, sharpf = 0, ratp = 0, exactf, exactpf = 0;
+  int radix, radixpf = 0, sharpf = 0, ratp = 0, exactf, exactpf = 0, periodf = 0;
   C_word n1, n, *a = C_alloc(WORDS_PER_FLONUM);
   C_char *sptr, *eptr;
   double fn1, fn;
@@ -7297,10 +7300,7 @@ void C_ccall C_string_to_number(C_word c, C_word closure, C_word k, C_word str, 
     goto fini;
   }
 
-  if(n >= STRING_BUFFER_SIZE - 1) {
-    n = C_SCHEME_FALSE;
-    goto fini;
-  }
+  if(n >= STRING_BUFFER_SIZE - 1) goto fail;
 
   C_memcpy(sptr = buffer, C_c_string(str), n > (STRING_BUFFER_SIZE - 1) ? STRING_BUFFER_SIZE : n);
   buffer[ n ] = '\0';
@@ -7319,15 +7319,23 @@ void C_ccall C_string_to_number(C_word c, C_word closure, C_word k, C_word str, 
     ++sptr;
   }
 
-  /* check for embedded '#'s: */
-  while((eptr = C_strchr(sptr, '#')) != NULL) {
-    if(eptr[ 1 ] == '\0' || C_strchr("#.0123456789", eptr[ 1 ]) != NULL) {
-      sharpf = 1;
-      *eptr = '0';
-    }
-    else {
-      n = C_SCHEME_FALSE;
-      goto fini;
+  /* check for embedded '#'s and double '.'s: */
+  for(eptr = sptr; *eptr != '\0'; ++eptr) {
+    switch(*eptr) {
+    case '.': 
+      if(periodf) goto fail;
+      
+      periodf = 1;
+      break;
+
+    case '#':
+      if(eptr[ 1 ] == '\0' || C_strchr("#.0123456789", eptr[ 1 ]) != NULL) {
+	sharpf = 1;
+	*eptr = '0';
+      }
+      else goto fail;
+      
+      break;
     }
   }
 
@@ -7415,7 +7423,9 @@ C_regparm C_word C_fcall convert_string_to_number(C_char *str, int radix, C_word
       errno = 0;
       ln = C_strtoul(str, &eptr, radix);
       
-      if((ln == 0 && errno == EINVAL) || (ln == ULONG_MAX && errno == ERANGE)) return 0;
+      if((ln == 0 && errno == EINVAL) || (ln == ULONG_MAX && errno == ERANGE) ||
+	 *eptr != '\0')
+	return 0;
 
       *flo = (double)ln;
       return 2;
@@ -7447,6 +7457,22 @@ C_regparm C_word C_fcall convert_string_to_number(C_char *str, int radix, C_word
 }
 
 
+static char *to_binary(C_uword num)
+{
+  char *p;
+
+  buffer[ 65 ] = '\0';
+  p = buffer + 65;
+  
+  do {
+    *(--p) = (num & 1) ? '1' : '0';
+    num /= 2;
+  } while(num);
+
+  return p;
+}
+
+
 void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, ...)
 {
   C_word radix, *a;
@@ -7470,14 +7496,7 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 
     switch(radix) {
     case 2:
-      buffer[ 65 ] = '\0';
-      p = buffer + 65;
-
-      do {
-	*(--p) = (num & 1) ? '1' : '0';
-	num /= 2;
-      } while(num);
-
+      p = to_binary(num);
       break;
      
 #ifdef C_SIXTY_FOUR
@@ -7510,13 +7529,17 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 
     if(C_fits_in_unsigned_int_p(num) == C_SCHEME_TRUE) {
       switch(radix) {
-	case 8:
-	  C_sprintf(p = buffer, "%o", (unsigned int)f);
-	  goto fini;
+      case 2:
+	p = to_binary((unsigned int)f);
+	goto fini;
 
-	case 16:
-	  C_sprintf(p = buffer, "%x", (unsigned int)f);
-	  goto fini;
+      case 8:
+	C_sprintf(p = buffer, "%o", (unsigned int)f);
+	goto fini;
+
+      case 16:
+	C_sprintf(p = buffer, "%x", (unsigned int)f);
+	goto fini;
       }
     } 
 
@@ -7916,9 +7939,12 @@ void C_ccall C_decode_seconds(C_word c, C_word closure, C_word k, C_word secs, C
 		  C_fix(tmt->tm_wday), C_fix(tmt->tm_yday),
 		  tmt->tm_isdst > 0 ? C_SCHEME_TRUE : C_SCHEME_FALSE,
 #ifdef C_MACOSX
-		  C_fix(tmt->tm_gmtoff)
+                  /* negative for west of UTC, but we want positive */
+		  C_fix(-tmt->tm_gmtoff)
+#elif defined(__CYGWIN__) || defined(__MINGW32__) || defined(_WIN32) || defined(__WINNT__)
+                  C_fix(_timezone)
 #else
-		  C_fix(timezone)
+                  C_fix(timezone)
 #endif
 		  );
   C_kontinue(k, info);

@@ -344,7 +344,7 @@
 
 (define (%string-map! proc s start end)
   (do ((i (- end 1) (- i 1)))
-      ((< i start))
+      ((< i start) s)
     (string-set! s i (proc (string-ref s i)))))
 
 (define (string-fold kons knil s . maybe-start+end)

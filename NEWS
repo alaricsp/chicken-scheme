@@ -1,6 +1,6 @@
 2.52
 
-- Mountains of bugfixes
+- Many bugfixes
 - Better support for Sun's C compiler
 - Input-performance has been improved
 - PCRE (Perl compatible regular expressions) by Philip Hazel is now

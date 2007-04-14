@@ -174,6 +174,8 @@ static C_TLS struct stat C_statbuf;
 #define C_chmod(fn, m)      C_fix(chmod(C_data_pointer(fn), C_unfix(m)))
 #define C_setuid(id)        C_fix(setuid(C_unfix(id)))
 #define C_setgid(id)        C_fix(setgid(C_unfix(id)))
+#define C_seteuid(id)       C_fix(seteuid(C_unfix(id)))
+#define C_setegid(id)       C_fix(setegid(C_unfix(id)))
 #define C_setsid(dummy)     C_fix(setsid())
 #define C_setpgid(x, y)     C_fix(setpgid(C_unfix(x), C_unfix(y)))
 #define C_getpgid(x)        C_fix(getpgid(C_unfix(x)))
@@ -1234,8 +1236,23 @@ EOF
       (when (fx< (##core#inline "C_chown" (##sys#make-c-string (##sys#expand-home-path fn)) uid gid) 0)
         (posix-error #:file-error 'change-file-owner "cannot change file owner" fn uid gid) ) ) )
 
-  (define current-effective-user-id (foreign-lambda int "C_geteuid"))
-  (define current-effective-group-id (foreign-lambda int "C_getegid"))
+  (define current-effective-user-id
+    (getter-with-setter
+     (foreign-lambda int "C_geteuid")
+     (lambda (id)
+      (when (fx< (##core#inline "C_seteuid" id) 0)
+        (##sys#update-errno)
+        (##sys#error 
+	 'effective-user-id!-setter "cannot set effective user ID" id) ) ) ) )
+
+  (define current-effective-group-id
+    (getter-with-setter 
+     (foreign-lambda int "C_getegid")
+     (lambda (id)
+      (when (fx< (##core#inline "C_setegid" id) 0)
+        (##sys#update-errno)
+        (##sys#error 
+	 'effective-group-id!-setter "cannot set effective group ID" id) ) ) ) )
 
   (define set-user-id!                  ; DEPRECATED
     (lambda (id)

@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.6rc1
+  Version 2.610
 
 
  1. Introduction:
@@ -251,8 +251,8 @@
  5. What's next?
 
 	If you have any more questions or problems (even the slightest
-        problems, or the most stupid questions), then please contact
-        me at:
+        problems, or the most stupid questions), then please subscribe
+	to the CHICKEN mailing list or contact me at:
 
 	<felix@call-with-current-continuation.org>.
 

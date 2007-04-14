@@ -53,7 +53,7 @@
   target-initial-heap-size disable-stack-overflow-checking
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  mutable-constants emit-line-info
+  mutable-constants
   broken-constant-nodes inline-substitutions-enabled
   direct-call-ids foreign-type-table first-analysis block-variable-literal?
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database 
@@ -297,11 +297,6 @@
 		    (empty-closure (and customizable (zero? (lambda-literal-closure-size (find-lambda call-id)))))
 		    (fn (car subs)) )
 	       (when name
-		 (when emit-line-info
-		   (match name
-		     ((file (? number? ln) _)
-		      (gen #t "#line " ln " \"" (slashify file) "\"") )
-		     (_ #f) ) )
 		 (if emit-trace-info
 		     (gen #t "C_trace(\"" (slashify name-str) "\");")
 		     (gen #t "/* " (uncommentify name-str) " */") ) )
@@ -1161,11 +1156,11 @@
 		  byte unsigned-byte)
 	    ns]
 	   [(float double c-pointer unsigned-integer unsigned-integer32 long integer integer32 unsigned-long 
-		   nonnull-c-pointer number integer64)
+		   nonnull-c-pointer number integer64 c-string-list c-string-list*)
 	    (string-append ns "+3") ]
-	   [(c-string c-string*)
+	   [(c-string c-string* unsigned-c-string unsigned-c-string unsigned-c-string*)
 	    (string-append ns "+2+(" var "==NULL?1:C_bytestowords(C_strlen(" var ")))") ]
-	   [(nonnull-c-string nonnull-c-string* symbol)
+	   [(nonnull-c-string nonnull-c-string* nonnull-unsigned-c-string nonnull-unsigned-c-string* symbol)
 	    (string-append ns "+2+C_bytestowords(C_strlen(" var "))") ]
 	   [else
 	    (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type)) 
@@ -1223,8 +1218,8 @@
 	[str (lambda (ts) (string-append ts " " target))] )
     (case type
       [(scheme-object) (str "C_word")]
-      [(char byte) (str "char")]
-      [(unsigned-char unsigned-byte) (str "unsigned char")]
+      [(char byte) (str "C_char")]
+      [(unsigned-char unsigned-byte) (str "unsigned C_char")]
       [(unsigned-int unsigned-integer) (str "unsigned int")]
       [(unsigned-int32 unsigned-integer32) (str "C_u32")]
       [(int integer bool) (str "int")]
@@ -1237,8 +1232,10 @@
       [(float) (str "float")]
       [(double number) (str "double")]
       ;; pointer and nonnull-pointer are DEPRECATED
-      [(pointer nonnull-pointer c-pointer nonnull-c-pointer scheme-pointer nonnull-scheme-pointer)
+      [(pointer nonnull-pointer c-pointer nonnull-c-pointer scheme-pointer 
+		nonnull-scheme-pointer)
        (str "void *")]
+      [(c-string-list c-string-list*) "C_char **"]
       [(byte-vector nonnull-byte-vector u8vector nonnull-u8vector) (str "unsigned char *")]
       [(u16vector nonnull-u16vector) (str "unsigned short *")]
       [(s8vector nonnull-s8vector) (str "char *")]
@@ -1247,7 +1244,9 @@
       [(s32vector nonnull-s32vector) (str "int *")]
       [(f32vector nonnull-f32vector) (str "float *")]
       [(f64vector nonnull-f64vector) (str "double *")]
-      [(nonnull-c-string c-string nonnull-c-string* c-string* symbol) (str "char *")]
+      [(nonnull-c-string c-string nonnull-c-string* c-string* 
+			 nonnull-unsigned-c-string nonnull-unsigned-c-string*
+			 symbol) (str "char *")]
       [(void) (str "void")]
       [else
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))
@@ -1332,8 +1331,9 @@
       ((nonnull-f32vector) "C_c_f32vector(")
       ((f64vector) "C_c_f64vector_or_null(")
       ((nonnull-f64vector) "C_c_f64vector(")
-      ((c-string c-string*) "C_string_or_null(")
-      ((nonnull-c-string nonnull-c-string* symbol) "C_c_string(")
+      ((c-string c-string* unsigned-c-string unsigned-c-string*) "C_string_or_null(")
+      ((nonnull-c-string nonnull-c-string* nonnull-unsigned-c-string 
+			 nonnull-unsigned-c-string* symbol) "C_c_string(")
       ((bool) "C_truep(")
       (else
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))
@@ -1368,7 +1368,9 @@
       ((unsigned-byte) "C_fix(0xff&(C_word)")
       ((float double integer64) (sprintf "C_flonum(&~a," dest))	;*** suboptimal for int64
       ((number) (sprintf "C_number(&~a," dest))
-      ((nonnull-c-string c-string nonnull-c-pointer c-string* nonnull-c-string* symbol) 
+      ((nonnull-c-string c-string nonnull-c-pointer c-string* nonnull-c-string* 
+			 unsigned-c-string unsigned-c-string* nonnull-unsigned-c-string
+			 nonnull-unsigned-c-string* symbol c-string-list c-string-list*) 
        (sprintf "C_mpointer(&~a,(void*)" dest) )
       ((c-pointer) (sprintf "C_mpointer_or_false(&~a,(void*)" dest))
       ((integer integer32) (sprintf "C_int_to_num(&~a," dest))

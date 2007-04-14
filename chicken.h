@@ -77,7 +77,7 @@ char *alloca ();
 #define C_fctexport
 #define C_externimport             C_extern
 #define C_externexport             C_extern
-#if !(defined(C_NO_PIC_NO_DLL) && !defined(PIC))
+#if defined(PIC)
 # if defined(__CYGWIN__) || defined(__MINGW32__)
 #  ifndef C_BUILDING_LIBCHICKEN
 #   undef  C_varextern
@@ -1077,6 +1077,7 @@ C_varextern C_TLS int C_entry_point_status;
 
 C_varextern C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
 C_varextern C_TLS void (*C_post_gc_hook)(int mode);
+C_varextern C_TLS void (*C_panic_hook)(C_char *msg);
 
 C_varextern C_TLS int
   C_abort_on_thread_exceptions,

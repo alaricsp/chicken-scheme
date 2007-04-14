@@ -43,7 +43,7 @@
 	  yes-or-no? setup-build-directory setup-root-directory
 	  create-directory test-compile try-compile copy-file run-verbose
 	  required-chicken-version required-extension-version
-	  cross-chicken) )
+	  cross-chicken ##sys#current-source-filename) )
 
 #>
 #ifndef C_USE_C_DEFAULTS
@@ -529,11 +529,14 @@ EOF
 		 (run (tar ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
     (set! *temporary-directory* tmpdir) ) )
 
-(define (copy-file from to)
+(define (copy-file from to #!optional (err #t))
   (let ((from (if (pair? from) (car from) from))
 	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
     (ensure-directory to)
-    (run (,*copy-command* ,(quotewrap from) ,(quotewrap to)) ) ) )
+    (cond ((file-exists? from)
+	   (run (,*copy-command* ,(quotewrap from) ,(quotewrap to))) )
+	  (err (error "file does not exist" from))
+	  (else (warning "file does not exist" from)))))
 
 (define (move-file from to)
   (let ((from (if (pair? from) (car from) from))
@@ -585,14 +588,16 @@ EOF
 	   (dests (map (lambda (f)
 			 (let ((from (if (pair? f) (car f) f))
 			       (to (make-dest-pathname rpathd f)) )
-			   (when (and (not *windows*) (equal? "so" (pathname-extension to)))
+			   (when (and (not *windows*) 
+				      (equal? "so" (pathname-extension to)))
 			     (run (,*remove-command* ,to)) )
 			   (copy-file from to)
 			   (unless *windows-shell*
 				   (run (chmod a+r ,to)))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
-					(equal? (cadr static) from) )
+					(equal? (cadr static) from) 
+					(equal? (pathname-extension to) "a"))
 			       (run (ranlib ,to)) ) )
 			   (make-dest-pathname rpath f)))
 		       files) ) )
@@ -601,21 +606,17 @@ EOF
 	  (print "\n* Installing documentation files in " docpath ":")
 	  (for-each
 	   (lambda (f)
-	     (if (file-exists? f)
-		 (copy-file f (make-pathname docpath f))
-		 (print "Warning: file " f " doesn't seem to exist") )
-	     (print "  * " <>) (cdr docs)) 
-	   (newline)
-	   (set! *rebuild-doc-index* #t)) ) )
+	     (copy-file f (make-pathname docpath f) #f) )
+	   (cdr docs))
+	  (newline)
+	  (set! *rebuild-doc-index* #t)) )
       (and-let* ((exs (assq 'examples info)))
 	(print "\n* Installing example files in " *example-directory* ":")
 	(for-each 
 	 (lambda (f)
-	   (copy-file f (make-pathname *example-directory* f))
+	   (copy-file f (make-pathname *example-directory* f) #f)
 	   (unless *windows-shell*
-		   (run (chmod a+rx ,*example-directory*)))
-
-	   (print "  * " f) )
+	     (run (chmod a+rx ,*example-directory*))) )
 	 (cdr exs))
 	(newline) )
       (write-info id dests info) ) ) )
@@ -958,6 +959,9 @@ EOF
 (define (doc-index #!optional ddir?)
   (make-pathname (repo-path ddir?) "index.html"))
 
+(define (doc-stylesheet #!optional ddir?)
+  (make-pathname (repo-path ddir?) "style.css"))
+
 (define (extension-documented? rpath fn)
   (let ([pn (make-setup-info-pathname fn rpath)])
     (and (file-exists? pn)
@@ -971,38 +975,115 @@ EOF
 (define (build-doc-index)
   (let ((rpath (repository-path))
 	(hn (get-host-name)))
+    (with-output-to-file (doc-stylesheet)
+      (lambda () (display #<<EOF
+body, html {
+  color: #000;
+  background-color: #fff;
+  font: 9pt "Lucida Grande", "Verdana", sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+    color: #669;
+    text-decoration: none;
+}
+a:visited { color: #555; }
+a:active  { color: #966; }
+a:hover   { color: #bbd; }
+
+#title {
+    border-bottom: 1px solid #669;
+    background-color: #669;
+    margin: 0;
+    padding: 0 3em 0.2em;
+    float: left;
+    color: #fff;
+}
+
+#install-info {
+    clear: left;
+    padding: 1em;
+}
+
+#official-index {
+    padding: 1em;
+    float: right;
+}
+
+#egg-index {
+    width: 60%;
+    margin: auto;
+    border-spacing: 0;
+}
+
+/* Everything but the first one is aligned right */
+#egg-index tr > * {
+    text-align: left;
+}
+
+#egg-index tr > * + * {
+    text-align: right;
+}
+
+#egg-index a {
+    display: block;
+}
+
+thead tr {
+    color: #fff;
+    background-color: #669;
+}
+
+th {
+    padding: 0.1em 1em 0.3em;
+}
+
+td {
+    padding: 0.3em 1em;
+}
+
+tr.even {
+    background-color: #eee;
+}
+tr {
+    background-color: white;
+}
+EOF
+			  )))
     (with-output-to-file (doc-index)
       (lambda ()
-	(printf "<html><head><title>Egg documentation index for ~a</title></head>~%" hn)
-	(printf "<body><font size=\"-1\"><p style=\"text-align: right\"><i><a href=\"http://www.call-with-current-continuation.org/eggs/index.html\">Visit the official egg index</a></i></p></font>~%")
-	(printf "<font face='Arial, Helvetica'><h1>Egg documentation index:</h1>~%")
-	(printf "<p>CHICKEN: ~a<br>Host: ~a<br>Repository path: ~a<br><p>~%" 
+	(printf "<html><head><title>Egg documentation index for ~a</title><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/></head>~%" hn)
+	(printf "<body><a id=\"official-index\" href=\"http://www.call-with-current-continuation.org/eggs/index.html\">Visit the official egg index</a>~%")
+	(printf "<h1 id=\"title\">Egg documentation index:</h1>~%")
+	(printf "<p id=\"install-info\">CHICKEN: ~a<br>Host: ~a<br>Repository path: ~a<br><p>~%" 
 		(chicken-version #t)
 		(get-host-name)
 		rpath)
-	(display "<center><table border='0' width='70%' cellpadding='3' cellspacing='0'>\n")
+	(printf "<table id=\"egg-index\">~%")
+	(printf "<thead><tr><th>Egg name</th><th>Version</th><th>Release</th></tr></thead>~%<tbody>~%")
 	(let ((c 0))
 	  (for-each
 	   (lambda (f)
 	     (and-let* ((info (extension-information f)))
-	       (printf "<tr style='background-color: #~a'><td>" (if (odd? c) "ffffff" "c6eff7"))
+	       (printf "<tr~a><td>" (if (even? c) " class=\"even\"" ""))
 	       (set! c (add1 c))
 	       (let ((doc (assq 'documentation info)))
 		 (if doc
 		     (printf "<a href=\"~a\">~a</a>" (cadr doc) f) 
 		     (display f) )
-		 (display "</td><td align='right'>")
-		 (and-let* ((v (assq 'version info)))
-		   (printf "Version: ~A" (cadr v)) )
-		 (and-let* ((r (assq 'release info)))
-		   (printf " Release: ~a" (cadr r)))
-		 (display "</td></tr>\n") ) ) )
+		 (printf "</td>~%")
+		 (printf "<td>~A</td>" (car (alist-ref 'version info eq? '(""))))
+		 (printf "<td>~A</td>" (car (alist-ref 'release info eq? '(""))))
+		 (printf "</tr>~%") ) ) )
 	   (delete-undocumented-extensions 
 	    rpath
 	    (sort (delete-duplicates
 		   (grep "^[^.].*\\.*$" (map pathname-file (directory rpath))) string=?)
 		  string<?) ) )
-	  (display "</table></center></body></font></html>\n") ) ) ) ) )
+	  (display "</tbody></table></body></font></html>\n") ) ) ) ) )
 
 (define (format-string str cols #!optional right (padc #\space))
   (let* ((len (string-length str))

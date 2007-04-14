@@ -44,7 +44,7 @@
 
 (define (compile-and-run file extras decls options coptions unsafe)
   (system* "~A ~A -quiet -no-warnings -heap-size 8m -output-file tmpfile.c ~A ~A ~A" chicken file extras decls options)
-  (system* "~a ~a -I.. ~a -DC_NO_PIC_NO_DLL tmpfile.c -o tmpfile ../.libs/lib~achicken.a -lm ~a"
+  (system* "~a ~a -I.. ~a tmpfile.c -o tmpfile ../.libs/lib~achicken.a -lm ~a"
 	   cc coptions 
 	   (if (eq? (software-version) 'macosx) "" "-static")
 	   (if unsafe "u" "")

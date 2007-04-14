@@ -42,7 +42,8 @@
   (fixnum)
   (disable-interrupts)
   (export regexp string-match string-search string-match-positions string-search-positions regexp-escape
-	  string-split-fields string-substitute string-substitute* glob->regexp grep regexp?)
+	  string-split-fields string-substitute string-substitute* glob->regexp grep regexp?
+	  glob?)
   (bound-to-procedure
    get-output-string open-output-string ##sys#write-char-0 string-search string->list list->string
    ##sys#substring string-search-positions reverse ##sys#fragments->string substring make-string
@@ -102,12 +103,16 @@ EOF
 (define finalizer
   (foreign-lambda void "pcre_free" c-pointer) )
 
-(define re-compile
-  (lambda (regexp loc)
+(define re-compile/verify
+  (lambda (regexp flags loc)
     (##sys#check-string regexp loc)
-    (let ([pcre (re-compile-pattern regexp 0)])
+    (let ([pcre (re-compile-pattern regexp flags)])
       (or pcre
 	  (##sys#error loc (##sys#string-append "can not compile regular expression - " C_regex_error) regexp) ) ) ) )
+
+(define re-compile
+  (lambda (regexp loc)
+    (re-compile/verify regexp 0 loc)))
 
 (define (re-compile-options->integer ls)
   (if (null? ls)
@@ -123,7 +128,7 @@ EOF
 
 (define (regexp rx . o)
   (##sys#check-string rx 'regexp)
-  (let ([rt (re-compile-pattern rx (re-compile-options->integer o))])
+  (let ([rt (re-compile/verify rx (re-compile-options->integer o) 'regexp)])
     (set-finalizer! rt finalizer)
     (##sys#make-structure 'regexp rt) ) )
 
@@ -336,6 +341,13 @@ EOF
 
 
 ;;; Some useful things:
+
+(define (glob? str)
+  (let loop ([idx (sub1 (string-length str))])
+    (and (not (negative? idx))
+         (case (string-ref str idx)
+           [(#\* #\[ #\?) #t]
+           [else (loop (sub1 idx))]) ) ) )
 
 (define glob->regexp
   (let ((list->string list->string)

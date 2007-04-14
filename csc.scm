@@ -71,6 +71,14 @@
 #ifndef C_TARGET_SHARE_HOME
 # define C_TARGET_SHARE_HOME  C_INSTALL_SHARE_HOME
 #endif
+
+#ifndef C_TARGET_RUN_LIB_HOME
+# define C_TARGET_RUN_LIB_HOME    C_TARGET_LIB_HOME
+#endif
+
+#ifndef C_TARGET_DLL_EXTENSION
+# define C_TARGET_DLL_EXTENSION    NULL
+#endif
 <#
 
 (define-foreign-variable INSTALL_BIN_HOME c-string "C_INSTALL_BIN_HOME")
@@ -93,6 +101,8 @@
 (define-foreign-variable TARGET_LIB_HOME c-string "C_TARGET_LIB_HOME")
 (define-foreign-variable TARGET_INCLUDE_HOME c-string "C_TARGET_INCLUDE_HOME")
 (define-foreign-variable TARGET_STATIC_LIB_HOME c-string "C_TARGET_STATIC_LIB_HOME")
+(define-foreign-variable TARGET_RUN_LIB_HOME c-string "C_TARGET_RUN_LIB_HOME")
+(define-foreign-variable TARGET_DLL_EXTENSION c-string "C_TARGET_DLL_EXTENSION")
 
 
 ;;; Parameters:
@@ -167,9 +177,15 @@
       (define executable-extension "")
       (define compile-output-flag "-o ")
       (define nonstatic-compilation-options '())
-      (define shared-library-extension (cond ((or cygwin mingw) "dll")
-                                             ;(hpux-hppa "sl")
-                                             (else "so")))))
+      (define shared-library-extension
+	(let ()
+	  (define (getext)
+	    (cond ((or cygwin mingw) "dll")
+		  ;;((hpux) "sl")
+		  (else ##sys#load-dynamic-extension) ) )
+	  (if host-mode
+	      (or TARGET_DLL_EXTENSION (getext))
+	      (getext))))))
 
 (define default-translation-optimization-options '())
 
@@ -352,11 +368,11 @@
 (define compile-options
   (if win
       (if (not cmake-build)
-	  (cons* "/I%CHICKEN_HOME%" "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
+	  (cons* "/I%CHICKEN_HOME%" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
 	  (cons* (string-append 
 		  "/I" 
 		  (if host-mode INSTALL_INCLUDE_HOME TARGET_INCLUDE_HOME)
-		 "/DC_NO_PIC_NO_DLL" (if (eq? (c-runtime) 'dynamic) '("/MD") '())) ) )
+		 (if (eq? (c-runtime) 'dynamic) '("/MD") '())) ) )
       (if include-dir (list "-I" include-dir) '())) )
 
 (define compile-only-flag
@@ -375,11 +391,14 @@
 				       INSTALL_LIB_HOME
 				       TARGET_LIB_HOME)) )))]
 	[else 
-	 (let ((p (quotewrap (prefix "" "lib"
-				     (if host-mode
-					 INSTALL_LIB_HOME
-					 TARGET_LIB_HOME)))))
-	   (list (conc "-L" p " -Wl,-R" p) ) ) ] ) )
+	 (list (conc "-L" (quotewrap (prefix "" "lib"
+					     (if host-mode
+						 INSTALL_LIB_HOME
+						 TARGET_LIB_HOME))))
+	       (conc " -Wl,-R" (quotewrap (prefix "" "lib"
+						  (if host-mode
+						      INSTALL_LIB_HOME
+						      TARGET_RUN_LIB_HOME))))) ] ) )
 
 (define target-filename #f)
 (define verbose #f)
@@ -754,6 +773,9 @@
 		  (set! link-options (append link-options (list (string-append "-Wl,-R" (car rest)))))
 		  (set! rest (cdr rest)) ) ]
 	       [(-host) #f]
+	       [(-) 
+		(set! target-filename (make-pathname #f "a" executable-extension))
+		(set! scheme-files (cons "-" scheme-files))]
 	       [else
 		(when (memq s '(-unsafe -benchmark-mode))
 		  (when (eq? s '-benchmark-mode)
@@ -998,7 +1020,9 @@
   (set! last-exit-code
     (if dry-run 
 	0
-	(system str)) )
+	(if (zero? (system str))
+	    0
+	    1)))
   (unless (zero? last-exit-code)
     (printf "*** Shell command terminated with exit status ~S: ~A~%" last-exit-code str) )
   last-exit-code)

@@ -29,7 +29,7 @@
 (set! EGGDIR (path (list LIBDIR "chicken") BINARYVERSION))
 (set! MANDIR (path DESTDIR "man"))
 (set! OPTIM "-g")
-(set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -fno-strict-aliasing")
+(set!+ CCFLAGS " -DHAVE_CHICKEN_CONFIG_H -DC_ENABLE_PTABLES -fno-strict-aliasing")
 (set!+ LINKLIBS "-lffi -ldl -lm")
 (set!+ STATICLINKLIBS "-lffi -lm")
 (set! LIBSOURCES0 `(eval extras library lolevel utils tcp srfi-1 srfi-4 srfi-13 srfi-14 srfi-18 posixunix regex))
@@ -44,9 +44,11 @@
 (set! UXLIBSOURCES (map (cut conc "u" <>) XLIBSOURCES))
 (set!? TARGET_PREFIX PREFIX)
 (set! TARGET_LIB_HOME (path TARGET_PREFIX "lib"))
+(set! TARGET_RUN_LIB_HOME (path TARGET_PREFIX "lib"))
 (set! TARGET_INCLUDE_HOME (path TARGET_PREFIX "include"))
 (set! TARGET_STATIC_LIB_HOME (path TARGET_PREFIX "lib"))
 (set! TARGET_SHARE_HOME (path TARGET_PREFIX "share"))
+(set! TARGET_DLL_EXTENSION "so")
 (set!? TARGET_CFLAGS (conc CCFLAGS " " OPTIM))
 
 (set! PCRESOURCES
@@ -148,9 +150,11 @@ sed -e "s,@C_INSTALL_CC[@],\"#{CC}\"," \
       -e "s,@C_TARGET_CXX[@],\"#{C++}\"," \
       -e "s,@C_TARGET_CFLAGS[@],\"#{TARGET_CFLAGS}\"," \
       -e "s,@C_TARGET_LIB_HOME[@],\"#{TARGET_LIB_HOME}\"," \
+      -e "s,@C_TARGET_RUN_LIB_HOME[@],\"#{TARGET_RUN_LIB_HOME}\"," \
       -e "s,@C_TARGET_STATIC_LIB_HOME[@],\"#{TARGET_STATIC_LIB_HOME}\"," \
       -e "s,@C_TARGET_INCLUDE_HOME[@],\"#{TARGET_INCLUDE_HOME}\"," \
       -e "s,@C_TARGET_SHARE_HOME[@],\"#{TARGET_SHARE_HOME}\"," \
+      -e "s,@C_TARGET_DLL_EXTENSION[@],\"#{TARGET_DLL_EXTENSION}\"," \
       -e "s%@C_TARGET_MORE_LIBS[@]%\"#{LINKLIBS}\"%" \
       -e "s%@C_TARGET_MORE_STATIC_LIBS[@]%\"#{STATICLINKLIBS}\"%" \
       -e "s,@C_STACK_GROWS_DOWNWARD[@],#{STACKDIRECTION},g" \
@@ -235,18 +239,19 @@ EOF
 (cc "uruntime-static.o" "runtime.c")
 (cc "runtime-static.o" "runtime.c")
 
-(define (dest d)
-  (if (->boolean ($ DESTDIR))
-      (path DESTDIR (pathname-file d))
-      d) )
-
-(install-bin (dest BINDIR) "chicken" "chicken-static" "csi" "csi-static" "csc" "chicken-profile" "chicken-setup")
-(install-bin (dest LIBDIR) (suffix SUFSHR "libchicken" "libuchicken"))
-(install-lib (dest LIBDIR) "libchicken.a" "libuchicken.a")
-(install-man (dest MANDIR) "chicken.1" "csi.1" "csc.1" "chicken-profile.1" "chicken-setup.1")
-(install-file (dest INCDIR) "chicken.h" "chicken-defaults.h" "chicken-config.h")
-(install-file (dest DOCDIR) "ChangeLog" "README" "LICENSE")
-(install-file (path (dest DOCDIR) "html") (glob "html/*") )
+(install-bin BINDIR "chicken" "chicken-static" "csi" "csi-static" "csc" "chicken-profile" "chicken-setup")
+(install-bin LIBDIR (suffix SUFSHR "libchicken" "libuchicken"))
+(install-lib LIBDIR "libchicken.a" "libuchicken.a")
+(install-man MANDIR "chicken.1" "csi.1" "csc.1" "chicken-profile.1" "chicken-setup.1")
+(install-file INCDIR "chicken.h" "chicken-defaults.h" "chicken-config.h")
+(install-file DOCDIR "ChangeLog" "README" "LICENSE")
+(install-file (path DOCDIR "html") (glob "html/*") )
+(install-file 
+ SHAREDIR
+ "chicken-more-macros.scm"
+ (map (cut make-pathname #f <> "exports") 
+      '("library" "eval" "srfi-1" "srfi-4" "srfi-13" "srfi-14" "srfi-18" "utils" "extras"
+	"tcp" "regex" "posix" "lolevel" "scheduler") ) )
 
 (notfile "spotless")
 (depends "spotless" "clean")
@@ -317,16 +322,16 @@ EOF
     {cd ,sdir ";" ./configure ,(conc "--prefix=" bdir "/inst")}
     {cd ,sdir ";" make}
     {cd ,sdir ";" make install}
-    {cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n}
     {cd ,idir ";" bin/chicken-setup -dv bloom-filter}
+    {cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n -R bloom-filter}
     {rm -fr ,sdir ,idir}
-    {tar xfz *.tar.gz -C ,bdir}
+    {tar xfz ,(conc "site/" tgz) -C ,bdir}
     {mkdir -p ,bbdir}
     {cd ,bbdir ";" cmake ,(conc "-DCMAKE_INSTALL_PREFIX=" idir) ../chicken-*}
     {cd ,bbdir ";" make VERBOSE=1}
     {cd ,bbdir ";" make VERBOSE=1 install}
-    {cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n}
     {cd ,idir ";" bin/chicken-setup -dv bloom-filter}
+    {cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n -R bloom-filter}
     {rm -fr ,bdir} ) )
 
 (notfile "release")

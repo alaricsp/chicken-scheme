@@ -1,36 +1,66 @@
-The CHICKEN Scheme-to-C compiler, Version 2.5 is now
+The CHICKEN Scheme-to-C compiler, Version 2.6 is now
 available at <http://www.call-with-current-continuation.org>.
 
-Things changed since the last release (2.41):
+Things changed since the last release (2.5):
 
-- Bugfixes
-- CHICKEN can now be built using CMake <http://www.cmake.org>, in fact CMake
-  is required to built CHICKEN from sources on Windows with the Microsoft 
-  tools or mingw32
-- the whole build process has been cleaned up and simplified
-- the "easyffi" and "tinyclos" library units have been removed from the base
-  system and are now available as separate extensions
-- the deprecated "set-dispatch-read-syntax!" has been removed
-- Will Farr cleaned up the behaviour of number-type specific numeric operations
-  ("fx..."/"fp...") with respect to safe/unsafe mode
-- added "(finite? NUMBER)"
-- the "$" macro moved into its own separate extension
-- the values of "software-type", "software-version", "machine-type" and "machine-byte-order"
-  are now registered as features and can be tested using "cond-expand" or "#+"
-- all tools now support the "-release" option
-- chicken-setup: added "-test" option
+- Many bugfixes
+- Better support for Sun's C compiler
+- Input-performance has been improved
+- PCRE (Perl compatible regular expressions) by Philip Hazel is now
+  bundled with CHICKEN
+- Static linking of extensions is now possible (when supported by
+  the egg)
+- The interpreter warns about references to potentially unbound variables
+  in loaded code and expressions entered on the REPL
+- The expansion process is traced during compilation and interpretation
+  to give (slightly) more usable syntactic context in error messages
+- library:
+  * added `any?`, `bit-set?' and `on-exit'
+- eval:
+  * new procedure `set-parameterized-read-syntax!'
+- posix: 
+  * SRFI-17 setters for `file-position`, `current-user-id', 
+    `current-group-id', `process-group-id'; the respective setter-procedures
+    are still available but have been deprecated
+  * `file-stat' returns more information (including device info)
+  * added `process*'
+- extras:
+  * added `read-string!'
+- utils:
+  * `apropos' and `apropos-list' procedures
+- srfi-4:
+  * added `read-u8vector', `read-u8vector!' and `write-u8vector'
+- srfi-18:  
+  * added `time->milliseconds' and `milliseconds->time'
+- csi:
+  * `-ss SCRIPTNAME' option
+- csc:
+  * accepts options given in the environment variable `CSC_OPTIONS'
+  * new options `-static-extensions' and `-host'
+- chicken/csc:
+  * new option `-keep-shadowed-macros'
+- chicken-setup:
+  * accepts options given in the environment variable `CHICKEN_SETUP_OPTIONS'
+  * allows retrieval and installation of eggs from subversion repository
+    and the local filesystem
+  * new options `-tree FILENAME', `-svn', `-local', `-revision' and 
+    `-destdir PATHNAME'
+  * added helper procedures `required-chicken-version' and
+    `required-extension-version'
+- Lots of improvements in the CMake build
 
-Special thanks to Brandon Van Every, who put considerable effort into
-the CHICKEN build system and who ported it to CMake completely from
-scratch.  The installation instructions and build file are extensively
-documented and may serve as a tutorial for creating non-trivial
-software projects with CMake.  Thanks, Brandon! Also thanks to Bill
-Hoffmann and Brad King from Kitware for their support.
+Many thanks to Ingo Bungener, Peter Busser, John Cowan, Marc Feeley,
+Stephen Gilardi, Mario Domenech Goulart, Joshua Griffith, Sven
+Hartrumpf, Paulo Jabardo, Daishi Kato, mejedi, Dan Muresan, Deanna
+Phillips, Robin Lee Powell, Ivan Raikov, Danial Sadilek, Alex Shinn,
+Tony Sideaway, Minh Thu for reporting bugs, suggesting improvements
+and contributing fixes.
 
-Many thanks to Peter Bex, Toby Butzon, Thomans Chust, John Cowan,
-Alejandro Forero Cuervo, dgym, Alex Drummond, Mario Domenech Goulart,
-Kon Lovett, Benedikt Rosenau and Zbigniew Szadkowski for reporting
-bugs, suggesting improvements and contributing fixes.
+Thanks again to Brandon Van Every for his extensive work on the CMake
+build process.
+
+Special thanks to Kon Lovett for many improvements made in the posix
+library.
 
 
 Features:
@@ -93,23 +123,23 @@ Extensions and libraries:
   codewalk coerce complex content-type cookie crc crypt crypt3 csv
   datatype debug defstruct dissector doctype dollar dpfw easyffi
   eggdoc environments epeg estraier expat ezxdisp F-operator
-  fancypants fastcgi format format-modular fp ftp futures g2 dgb gdbm
+  fancypants fastcgi format format-modular fp ftp futures g2 gdb gdbm
   generalised-case generator gettext glut gmp gtk2 gtk2-glade
   gtk2-gobject hashes honu hostinfo html-plots html-stream htmlprag
   http http-server-form-posts iconv imlib2 inline irc iset japi
   javahack job-worker jni json kanren lalr lazy-ffi levenshtein
   lightning lirc-client locale logging lookup-table loop loopy-loop
-  macosx magic mailbox make man mapm match-action matchable matcher
-  mathh md5 meroon message-digest mime metakit metaphone misc-extn
-  miscmacros mistie modds modules mole mpd-client mysql nbstdin
-  ncurses numbers octave objc object-apply oblist openal opengl
-  openssl orders packedobjects packrat patch pcap perfect-hash
+  macosx magic mailbox make man mapm mat5-lib match-action matchable
+  matcher mathh md5 meroon message-digest mime metakit metaphone
+  misc-extn miscmacros mistie modds modules mole mpd-client mysql
+  nbstdin ncurses numbers octave objc object-apply oblist openal
+  opengl openssl orders packedobjects packrat patch pcap perfect-hash
   phoghorn pipeline pmatch pop3 postgresql ppi procedure-surface
   prometheus proplist protobj pty q-lang qt r6rs-libraries readline
   records regex-case remote-launch remote-mailbox rfc3339 rfc822
   rgraph ripemd rlimit rpc rss s11n sandbox sassy schelog
-  scheme-dissect sdl sedna sfio sha1 sha2 silex simple-macros slib
-  smtp softscheme spiffy spiffy-utils spread sql sqlite sqlite3
+  scheme-dissect sdl sedna sfio sha1 sha2 silex simple-macros slang
+  slib smtp softscheme spiffy spiffy-utils spread sql sqlite sqlite3
   sqlite3-tinyclos sqlora srfi-4-comprehensions srfi-19 srfi-25
   srfi-27 srfi-29 srfi-37 srfi-38 srfi-40 srfi-42 srfi-45 srfi-47
   srfi-57 srfi-60 srfi-66 srfi-78 srfi-85 srfi-95 ssax stack
@@ -148,7 +178,7 @@ Documentation can be found at the CHICKEN wiki:
 
   <http://chicken.wiki.br>
 
-You might also find the CHICKEN documentation browser helpful:
+Toby Butzon kindly provided the CHICKEN documentation browser:
 
   <http://callcc.org>
 
@@ -161,6 +191,12 @@ The mailing list for CHICKEN users can be found here:
   <http://mail.nongnu.org/mailman/listinfo/chicken-users>
 
 
+A mailing list specific to CHICKEN development and porting is
+available at:
+
+  <http://mail.nongnu.org/mailman/listinfo/chicken-hackers>
+
+
 Bug and feature requests should be directed towards the CHICKEN
 bug tracker at:
 
@@ -168,12 +204,6 @@ bug tracker at:
 
 Many thanks to Arto Bendiken for providing and maintaining this
 service!
-
-
-A mailing list specific to CHICKEN development and porting is
-available at:
-
-  <http://mail.nongnu.org/mailman/listinfo/chicken-hackers>
 
 
 Bug reports, suggestions and comments would be very welcome. Contact

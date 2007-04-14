@@ -65,6 +65,7 @@
 #define C_fetch_c_strlen(b, i) C_fix(strlen((C_char *)C_block_item(b, C_unfix(i))))
 #define C_peek_c_string(b, i, to, len) (C_memcpy(C_data_pointer(to), (C_char *)C_block_item(b, C_unfix(i)), C_unfix(len)), C_SCHEME_UNDEFINED)
 #define C_free_mptr(p, i)     (C_free((void *)C_block_item(p, C_unfix(i))), C_SCHEME_UNDEFINED)
+#define C_free_sptr(p, i)     (C_free((void *)(((C_char **)C_block_item(p, 0))[ C_unfix(i) ])), C_SCHEME_UNDEFINED)
 
 #define C_direct_continuation(dummy)  t1
 
@@ -337,7 +338,11 @@ EOF
 
 (define (system cmd)
   (##sys#check-string cmd 'system)
-  (##core#inline "C_execute_shell_command" cmd) )
+  (let ((r (##core#inline "C_execute_shell_command" cmd)))
+    (cond ((fx< r 0)
+	   (##sys#update-errno)
+	   (##sys#signal-hook #:process-error 'system "`system' invocation failed" cmd) )
+	  (else r) ) ) )
 
 
 ;;; Operations on booleans:
@@ -1340,6 +1345,8 @@ EOF
 	      [chr
 	       (##sys#check-symbol x 'char-name)
 	       (##sys#check-char chr 'char-name)
+	       (when (fx< (##sys#size (##sys#slot x 1)) 2)
+		 (##sys#signal-hook #:type-error 'char-name "invalid character name" x) )
 	       (let ([a (lookup-char chr)])
 		 (if a 
 		     (let ([b (assq x names-to-chars)])
@@ -1569,7 +1576,7 @@ EOF
 ; 4:  (close PORT)
 ; 5:  (flush-output PORT)
 ; 6:  (char-ready? PORT) -> BOOL
-; 7:  (read-string! PORT STRING COUNT START) -> COUNT'
+; 7:  (read-string! PORT COUNT STRING START) -> COUNT'
 ; 8:  (read-line PORT LIMIT) -> STRING | EOF
 
 (define (##sys#make-port i/o class name type)
@@ -2226,13 +2233,36 @@ EOF
 		(##sys#read-error port "missing \'|\'") ) )
           
 	  (define (r-char)
+	    ;; Code contributed by Alex Shinn
 	    (let* ([c (##sys#peek-char-0 port)]
-		   [tk (r-token)] )
-	      (cond [(char-name (##sys#intern-symbol tk))]
-		    [(fx> (string-length tk) 1) 
+		   [tk (r-token)]
+		   [len (##sys#size tk)])
+	      (cond [(fx> len 1)
 		     (cond [(and (or (char=? #\x c) (char=? #\u c) (char=? #\U c))
-				 (string->number (##sys#substring tk 1 (##sys#size tk)) 16) )
+				 (##sys#string->number (##sys#substring tk 1 len) 16) )
 			    => (lambda (n) (integer->char n)) ]
+			   [(and-let* ((c0 (char->integer (##core#inline "C_subchar" tk 0)))
+				       ((fx<= #xC0 c0)) ((fx<= c0 #xF7))
+				       (n0 (fxand (fxshr c0 4) 3))
+				       (n (fx+ 2 (fxand (fxior n0 (fxshr n0 1)) (fx- n0 1))))
+				       ((fx= len n))
+				       (res (fx+ (fxshl (fxand c0 (fx- (fxshl 1 (fx- 8 n)) 1)) 6)
+						 (fxand (char->integer 
+							 (##core#inline "C_subchar" tk 1)) 
+							#b111111))))
+			      (cond ((fx>= n 3)
+				     (set! res (fx+ (fxshl res 6)
+						    (fxand 
+						     (char->integer
+						      (##core#inline "C_subchar" tk 2)) 
+						     #b111111)))
+				     (if (fx= n 4)
+					 (set! res (fx+ (fxshl res 6)
+							(fxand (char->integer
+								(##core#inline "C_subchar" tk 3)) 
+							       #b111111))))))
+			      (integer->char res))]
+			   [(char-name (##sys#intern-symbol tk))]
 			   [else (##sys#read-error port "unknown named character" tk)] ) ]
 		    [(memq c terminating-characters) (##sys#read-char-0 port)]
 		    [else c] ) ) )
@@ -2548,7 +2578,9 @@ EOF
    (let ((t1 (##sys#slot rt 1)))
      (and t1 (##sys#grow-vector t1 (##sys#size t1) #f) ) )
    (let ((t2 (##sys#slot rt 2)))
-     (and t2 (##sys#grow-vector t2 (##sys#size t2) #f) ) ) ))
+     (and t2 (##sys#grow-vector t2 (##sys#size t2) #f) ) )
+   (let ((t3 (##sys#slot rt 3)))
+     (and t3 (##sys#grow-vector t3 (##sys#size t3) #f) ) ) ))
 
 
 ;;; Output:
@@ -3713,6 +3745,21 @@ EOF
 	      (if s
 		  (cons s (loop (fx+ i 1)))
 		  '() ) ) ) ) ) ) )
+
+(define ##sys#peek-and-free-c-string-list 
+  (let ((fetch (foreign-lambda c-string "C_peek_c_string_at" c-pointer int))
+	(free (foreign-lambda void "C_free" c-pointer)))
+    (lambda (ptr n)
+      (let ((lst (let loop ((i 0))
+		   (if (and n (fx>= i n))
+		       '()
+		       (let ((s (fetch ptr i)))
+			 (cond (s
+				(##core#inline "C_free_sptr" ptr i)
+				(cons s (loop (fx+ i 1))) )
+			       (else '() ) ) ) ) ) ) )
+	(free ptr)
+	lst) ) ) )
 
 (define (##sys#vector->closure! vec addr)
   (##core#inline "C_vector_to_closure" vec)

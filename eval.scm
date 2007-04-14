@@ -71,7 +71,7 @@
      ##sys#pointer->address ##sys#compile-to-closure ##sys#make-string ##sys#make-lambda-info
      ##sys#number? ##sys#symbol->qualified-string ##sys#decorate-lambda ##sys#string-append
      ##sys#ensure-heap-reserve ##sys#syntax-error-hook ##sys#read-prompt-hook
-     ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator
+     ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator ##sys#alias-global-hook
      open-output-string get-output-string make-parameter software-type software-version machine-type
      build-platform getenv set-extensions-specifier! ##sys#string->symbol list->vector
      extension-information syntax-error ->string chicken-home ##sys#expand-curried-define
@@ -578,6 +578,7 @@
 
 (define ##sys#unbound-in-eval #f)
 (define ##sys#eval-debug-level 1)
+(define (##sys#alias-global-hook s) s)
 
 (define ##sys#compile-to-closure
   (let ([macro? macro?]
@@ -649,23 +650,24 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e)
 		 (cond [(not i)
-			(if ##sys#eval-environment
-			    (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
-			      (unless loc (##sys#syntax-error-hook "reference to undefined identifier" x))
-			      (cond-expand 
-			       [unsafe (lambda v (##sys#slot loc 1))]
+			(let ((x (##sys#alias-global-hook x)))
+			  (if ##sys#eval-environment
+			      (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
+				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" x))
+				(cond-expand 
+				 [unsafe (lambda v (##sys#slot loc 1))]
+				 [else
+				  (lambda v 
+				    (let ([val (##sys#slot loc 1)])
+				      (if (eq? unbound val)
+					  (##sys#error "unbound variable" x)
+					  val) ) ) ] ) )
+			      (cond-expand
+			       [unsafe (lambda v (##core#inline "C_slot" x 0))]
 			       [else
-				(lambda v 
-				  (let ([val (##sys#slot loc 1)])
-				    (if (eq? unbound val)
-					(##sys#error "unbound variable" x)
-					val) ) ) ] ) )
-			    (cond-expand
-			     [unsafe (lambda v (##core#inline "C_slot" x 0))]
-			     [else
-			      (when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
-				(set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
-			      (lambda v (##core#inline "C_retrieve" x))] ) ) ]
+				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
+				  (set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
+				(lambda v (##core#inline "C_retrieve" x))] ) ) ) ]
 		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
 		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
 	      [(##sys#number? x)
@@ -748,20 +750,22 @@
 
 			     [(set! ##core#set!)
 			      (##sys#check-syntax 'set! x '(_ variable _) #f)
-			      (let ([var (cadr x)])
+			      (let ((var (cadr x)))
 				(receive (i j) (lookup var e)
-				  (let ([val (compile (caddr x) e var tf cntr)])
+				  (let ((val (compile (caddr x) e var tf cntr)))
 				    (cond [(not i)
-					   (if ##sys#eval-environment
-					       (let ([loc (##sys#hash-table-location
-							   ##sys#eval-environment 
-							   var
-							   ##sys#environment-is-mutable) ] )
-						 (unless loc (##sys#error "assignment of undefined identifier" var))
-						 (if (##sys#slot loc 2)
-						     (lambda (v) (##sys#setslot loc 1 (##core#app val v)))
-						     (lambda v (##sys#error "assignment to immutable variable" var)) ) )
-					       (lambda (v) (##sys#setslot j 0 (##core#app val v))) ) ]
+					   (let ([var (##sys#alias-global-hook var)])
+					     (if ##sys#eval-environment
+						 (let ([loc (##sys#hash-table-location
+							     ##sys#eval-environment 
+							     var
+							     ##sys#environment-is-mutable) ] )
+						   (unless loc (##sys#error "assignment of undefined identifier" var))
+						   (if (##sys#slot loc 2)
+						       (lambda (v) (##sys#setslot loc 1 (##core#app val v)))
+						       (lambda v (##sys#error "assignment to immutable variable" var)) ) )
+						 (lambda (v)
+						   (##sys#setslot var 0 (##core#app val v))) ) ) ]
 					  [(zero? i) (lambda (v) (##sys#setslot (##sys#slot v 0) j (##core#app val v)))]
 					  [else
 					   (lambda (v)
@@ -1081,7 +1085,7 @@
 (define load-verbose (make-parameter (##sys#fudge 13)))
 
 (define (##sys#abort-load) #f)
-(define ##sys#current-load-file #f)
+(define ##sys#current-source-filename #f)
 (define ##sys#current-load-path "")
 
 (define-foreign-variable _dlerror c-string "C_dlerror")
@@ -1154,7 +1158,7 @@
 	    (call-with-current-continuation
 	     (lambda (abrt)
 	       (fluid-let ([##sys#read-error-with-line-number #t]
-			   [##sys#current-load-file fname]
+			   [##sys#current-source-filename fname]
 			   [##sys#current-load-path
 			    (and fname
 				 (let ((i (has-sep? fname)))

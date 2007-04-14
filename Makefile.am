@@ -42,6 +42,7 @@ C_STACK_GROWS_DOWNWARD=($(STACK_GROWS_DOWNWARD))
 C_TARGET_CC=\"@TARGET_CC@\"
 C_TARGET_CXX=\"@TARGET_CXX@\"
 C_TARGET_CFLAGS=\"@TARGET_CFLAGS@\"
+C_TARGET_DLL_EXTENSION=@TARGET_DLL_EXTENSION@
 C_CROSS_CHICKEN=@CROSS_CHICKEN@
 
 if USE_TARGET_MORE_LIBS
@@ -61,11 +62,17 @@ if USE_TARGET_PREFIX
  C_TARGET_SHARE_HOME=\"@TARGET_PREFIX@/share\"
  C_TARGET_INCLUDE_HOME=\"@TARGET_PREFIX@/include\"
  C_TARGET_STATIC_LIB_HOME=\"@TARGET_PREFIX@/lib\"
+ C_TARGET_RUN_LIB_HOME=\"@TARGET_PREFIX@/lib\"
 else
  C_TARGET_LIB_HOME=\"$(libdir)\"
  C_TARGET_SHARE_HOME=\"$(pkgdatadir)\"
  C_TARGET_INCLUDE_HOME=\"$(includedir)\"
  C_TARGET_STATIC_LIB_HOME=\"$(libdir)/lib\"
+ C_TARGET_RUN_LIB_HOME=\"$(libdir)\"
+endif
+
+if USE_TARGET_RUN_PATH
+ C_TARGET_RUN_LIB_HOME=\"@TARGET_RUN_PATH@/lib\"
 endif
 
 BOOTSTRAP_PATH = .
@@ -128,9 +135,11 @@ chicken-defaults.h: chicken-defaults.h.in Makefile
 	    -e "s,@C_TARGET_CXX[@],$(C_TARGET_CXX)," \
 	    -e "s,@C_TARGET_CFLAGS[@],$(C_TARGET_CFLAGS)," \
 	    -e "s,@C_TARGET_LIB_HOME[@],$(C_TARGET_LIB_HOME)," \
+	    -e "s,@C_TARGET_RUN_LIB_HOME[@],$(C_TARGET_RUN_LIB_HOME)," \
 	    -e "s,@C_TARGET_STATIC_LIB_HOME[@],$(C_TARGET_STATIC_LIB_HOME)," \
 	    -e "s,@C_TARGET_INCLUDE_HOME[@],$(C_TARGET_INCLUDE_HOME)," \
 	    -e "s,@C_TARGET_SHARE_HOME[@],$(C_TARGET_SHARE_HOME)," \
+	    -e "s,@C_TARGET_DLL_EXTENSION[@],$(C_TARGET_DLL_EXTENSION)," \
 	    -e "s,@C_STACK_GROWS_DOWNWARD[@],$(C_STACK_GROWS_DOWNWARD),g" \
 	    -e "s,@C_CROSS_CHICKEN[@],$(C_CROSS_CHICKEN),g" \
 	  <$(srcdir)/chicken-defaults.h.in >chicken-defaults.h;
@@ -294,7 +303,7 @@ libuchicken_la_LDFLAGS = -version-info=$(lt_version_info) -no-undefined $(MORE_S
 pkgdata_DATA = chicken-more-macros.scm \
   chicken-ffi-macros.scm library.exports eval.exports srfi-1.exports srfi-4.exports \
   srfi-13.exports srfi-14.exports srfi-18.exports utils.exports extras.exports \
-  eval.exports tcp.exports regex.exports posix.exports lolevel.exports scheduler.exports
+  tcp.exports regex.exports posix.exports lolevel.exports scheduler.exports
 
 # Install docs and sources.
 install-data-local:

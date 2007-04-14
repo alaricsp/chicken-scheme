@@ -55,7 +55,7 @@
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
   broken-constant-nodes inline-substitutions-enabled
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
-  direct-call-ids foreign-type-table first-analysis emit-closure-info emit-line-info
+  direct-call-ids foreign-type-table first-analysis emit-closure-info
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call emit-unsafe-marker
@@ -239,7 +239,6 @@
     (when (memq 'block options) (set! block-compilation #t))
     (when (memq 'emit-external-prototypes-first options) (set! external-protos-first #t))
     (when (memq 'inline options) (set! inline-max-size default-inline-max-size))
-    (when (memq 'track-scheme options) (set! emit-line-info #t))
     (and-let* ([inlimit (memq 'inline-limit options)])
       (set! inline-max-size 
 	(let ([arg (option-arg inlimit)])
@@ -393,12 +392,13 @@
 				     (reverse forms)
 				     (map string->expr postlude) ) ) )
 			(let* ((f (car files))
-			       (in (check-and-open-input-file f)) 
-			       (x1 (read-form in)) )
-			  (do ((x x1 (read-form in)))
-			      ((eof-object? x) 
-			       (close-checked-input-file in f) )
-			    (set! forms (cons x forms)) ) ) ) ] ) ) )
+			       (in (check-and-open-input-file f)) )
+			  (fluid-let ((##sys#current-source-filename f))
+			    (let ((x1 (read-form in)) )
+			      (do ((x x1 (read-form in)))
+				  ((eof-object? x) 
+				   (close-checked-input-file in f) )
+				(set! forms (cons x forms)) ) ) ) ) ) ] ) ) )
 
 	   ;; Start compilation passes:
 	   (let ([proc (user-preprocessor-pass)])

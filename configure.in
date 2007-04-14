@@ -214,7 +214,6 @@ if test x"${ptables}" = xyes; then
   CFLAGS="$CFLAGS -DC_ENABLE_PTABLES"
 fi
 
-CFLAGS="$CFLAGS -DC_NO_PIC_NO_DLL"
 AC_MSG_RESULT($CFLAGS)
 
 dnl Checking whether linker supports -export-dynamic.
@@ -261,14 +260,21 @@ if test "$TARGET_CFLAGS" = ""; then
 fi
 
 AC_SUBST(TARGET_CFLAGS)
-
 AM_CONDITIONAL(USE_TARGET_PREFIX, [test "$TARGET_PREFIX" != ""])
 AC_SUBST(TARGET_PREFIX)
+AM_CONDITIONAL(USE_TARGET_RUN_PATH, [test "$TARGET_RUN_PATH" != ""])
+AC_SUBST(TARGET_RUN_PATH)
 
 AM_CONDITIONAL(USE_TARGET_MORE_LIBS, [test "$TARGET_MORE_LIBS" != ""])
 AC_SUBST(TARGET_MORE_LIBS)
 AM_CONDITIONAL(USE_TARGET_MORE_STATIC_LIBS, [test "$TARGET_MORE_STATIC_LIBS" != ""])
 AC_SUBST(TARGET_MORE_STATIC_LIBS)
+
+if test "$TARGET_DLL_EXTENSION" = ""; then
+  TARGET_DLL_EXTENSION="NULL"
+fi
+
+AC_SUBST(TARGET_DLL_EXTENSION)
 
 dnl Checking for generating "...-static" executables.
 AM_CONDITIONAL(NO_STATIC_EXECUTABLES, [test "${enable_shared}" = "no" -o "${enable_static}" = "no"])

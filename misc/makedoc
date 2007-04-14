@@ -3,7 +3,7 @@
 exec csi -s $0 "$@"
 |#
 
-;;; usage: misc/makehtmldoc [-pdf] [PAGE]
+;;; usage: misc/makedoc [-pdf] [PAGE]
 
 (use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url posix)
 
@@ -161,7 +161,15 @@ in `manual-wiki-files' can be found in `*pages*'."
    (if *only* (list *only*) *pages*) ) )
 
 
-;;; Here come the conversions
+
+;;; Check for help command line options
+(let ((args (command-line-arguments)))
+  (when (and (not (null? args)) (member (car args) '("-h" "-help" "--help" "-?")))
+    (print "Usage: misc/makedoc [-h | --help | -?]\n"
+           "       misc/makedoc [-pdf] [PAGE]")
+    (exit)))
+
+;;; Here come the conversions          
 (when *generate-pdf*
   (chapters-sanity-check))
 

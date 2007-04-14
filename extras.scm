@@ -1704,8 +1704,7 @@ EOF
       (##sys#hash-new-len (##sys#slot tab 1) req)))
 
 (define hash-table-delete!
-  (let ([eq0 eq?]
-	[floor floor])
+  (let ([eq0 eq?])
     (lambda (ht key)
       (##sys#check-structure ht 'hash-table 'hash-table-delete!)
       (let* ((vec (##sys#slot ht 1))
@@ -1717,32 +1716,50 @@ EOF
 	(let ((bucket0 (##sys#slot vec k)))
 	  (if (eq? eq0 test)
 	      ;; Fast path (eq? test):
-	      (let loop ((prev '())
+	      (let loop ((prev #f)
 			 (bucket bucket0))
 		(if (null? bucket)
 		    #f
 		    (let ((b (##sys#slot bucket 0)))
 		      (if (eq? key (##sys#slot b 0))
 			  (begin
-			    (if (null? prev)
+			    (if (not prev)
 				(##sys#setslot vec k (##sys#slot bucket 1))
 				(##sys#setslot prev 1 (##sys#slot bucket 1)))
 			    (##sys#setslot ht 2 c)
 			    #t)
 			  (loop bucket (##sys#slot bucket 1))))))
-	      (let loop ((prev '())
+	      (let loop ((prev #f)
 			 (bucket bucket0))
 		(if (null? bucket)
 		    #f
 		    (let ((b (##sys#slot bucket 0)))
 		      (if (test key (##sys#slot b 0))
 			  (begin
-			    (if (null? prev)
+			    (if (not prev)
 				(##sys#setslot vec k (##sys#slot bucket 1))
 				(##sys#setslot prev 1 (##sys#slot bucket 1)))
 			    (##sys#setslot ht 2 c)
 			    #t)
 			  (loop bucket (##sys#slot bucket 1))))))))))))
+
+(define (hash-table-remove! ht proc)
+  (##sys#check-structure ht 'hash-table 'hash-table-remove!)
+  (let* ((vec (##sys#slot ht 1))
+	 (len (##sys#size vec))
+	 (c (##sys#slot ht 2)) )
+    (do ((i 0 (fx+ i 1)))
+	((fx>= i len) (##sys#setislot ht 2 c))
+      (let loop ((prev #f)
+		 (bucket (##sys#slot vec i)) )
+	(unless (null? bucket)
+	  (let ((b (##sys#slot bucket 0)))
+	    (when (proc (##sys#slot b 0) (##sys#slot b 1))
+	      (if prev
+		  (##sys#setslot prev 1 (##sys#slot bucket 1))
+		  (##sys#setslot vec i (##sys#slot bucket 1)) )
+	      (set! c (fx- c 1)) )
+	    (loop bucket (##sys#slot bucket 1) ) ) ) ) ) ) )
 
 (define hashtab-rehash
   (lambda (vec1 vec2 hashf)

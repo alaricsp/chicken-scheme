@@ -14,8 +14,7 @@ Replaces: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - compiler
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
  It uses the ideas presented in Baker's paper "Cheney on the MTA", and
- is small and easily extendable, although not a production quality or
- high-performance Scheme system.
+ has a small core and is easily extendable.
  .
  This package contains the compiler.
  .
@@ -31,8 +30,7 @@ Conflicts: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - runtime
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C. 
  It uses the ideas presented in Baker's paper "Cheney on the MTA", and 
- is small and easily extendable, although not a production quality or
- high-performance Scheme system.
+ has a small core and is easily extendable.
  .
  This package contains the shared library needed to run programs using
  chicken.
@@ -49,8 +47,7 @@ Replaces: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - development
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
  It uses the ideas presented in Baker's paper "Cheney on the MTA", and
- is small and easily extendable, although not a production quality or
- high-performance Scheme system.
+ has a small core and is easily extendable.
  .
  This package contains the header file and static library for developing
  with chicken.

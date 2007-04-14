@@ -41,7 +41,6 @@ benchmarks/others/setlongjmp.c
 benchmarks/plists.scm
 benchmarks/puzzle.scm
 benchmarks/scheme.scm
-benchmarks/stack-size.cmake
 benchmarks/tak.scm
 benchmarks/takl.scm
 benchmarks/takr.scm

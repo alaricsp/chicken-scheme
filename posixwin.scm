@@ -1451,7 +1451,10 @@ EOF
       (##sys#cons-flonum)
       (##sys#error 'local-time->seconds "cannot convert time vector to seconds" tm) ) )
 
-
+(define local-timezone-abbreviation
+  (foreign-lambda* c-string ()
+   "char *z = (daylight ? _tzname[1] : _tzname[0]);"
+   "return(z);") )
 
 ;;; Other things:
 
@@ -1613,14 +1616,7 @@ EOF
           (pointer int) (pointer int) (pointer int) (pointer int)
           int)])
     (lambda (loc cmd args env stdoutf stdinf stderrf)
-      (let (
-          [commandline
-            (if args
-              (let loop ([args args] [cmdlin cmd])
-                (if (null? args)
-                  cmdlin
-                  (loop (cdr args) (conc cmdlin " " (car args)))))
-              cmd)])
+      (let ([commandline (if args (string-intersperse (cons cmd args)) cmd)])
         (let-location ([handle int -1] [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
           (let (
               [code
@@ -1652,8 +1648,7 @@ EOF
           (when env
             (##sys#check-list env loc)
             (for-each (cut ##sys#check-string <> loc) env) )
-          (receive [in out pid err]
-                      (##sys#process loc cmd args env #t #t err?)
+          (receive [in out pid err] (##sys#process loc cmd args env #t #t err?)
             (if err?
               (values in out pid err)
               (values in out pid) ) ) )] )
@@ -1769,7 +1764,6 @@ EOF
 (define-unimplemented get-groups)
 (define-unimplemented group-information)
 (define-unimplemented initialize-groups)
-(define-unimplemented local-timezone-abbreviation)
 (define-unimplemented memory-mapped-file-pointer)
 (define-unimplemented parent-process-id)
 (define-unimplemented process-fork)

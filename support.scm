@@ -484,7 +484,8 @@
 		   (loop (cdr es)) ) ) )
 	   (cond [(and val (not (eq? val 'unknown)))
 		  (printf "\tval=~s" (cons (node-class val) (node-parameters val))) ]
-		 [pval (printf "\tpval=~s" (cons (node-class val) (node-parameters val)))] )
+		 [(and pval (not (eq? pval 'unknown)))
+		  (printf "\tpval=~s" (cons (node-class pval) (node-parameters pval)))] )
 	   (when (pair? refs) (printf "\trefs=~s" (length refs)))
 	   (when (pair? csites) (printf "\tcss=~s" (length csites)))
 	   (newline) ) )
@@ -541,11 +542,14 @@
 		   (car x)
 		   (list (if (and (pair? arg) (eq? 'quote (car arg))) (cadr arg) arg))
 		   (map walk (cddr x)) ) ) )
-	       ((set! ##core#inline ##core#callunit) 
+	       ((##core#inline ##core#callunit) 
 		(make-node (car x) (list (cadr x)) (map walk (cddr x))) )
 	       ((##core#proc)
 		(make-node '##core#proc (list (cadr x) #t) '()) )
-	       ((##core#set!) (make-node 'set! (list (cadr x)) (map walk (cddr x))))
+	       ((set! ##core#set!)
+		(make-node
+		 'set! (list (cadr x))
+		 (map walk (cddr x))))
 	       ((##core#foreign-callback-wrapper)
 		(let ([name (cadr (second x))])
 		  (make-node
@@ -558,8 +562,7 @@
 	       ((##core#app)
 		(make-node '##core#call '(#t) (map walk (cdr x))) )
 	       (else
-		(receive
-		    (name ln) (get-line-2 x)
+		(receive (name ln) (get-line-2 x)
 		  (make-node
 		   '##core#call
 		   (list (cond [(memq name always-bound-to-procedure)
@@ -938,7 +941,7 @@
 	      (if unsafe
 		  param
 		  `(##sys#foreign-unsigned-integer-argument ,param) ) ]
-	     [(c-pointer)
+	     [(c-pointer c-string-list c-string-list*)
 	      (let ([tmp (gensym)])
 		`(let ([,tmp ,param])
 		   (if ,tmp
@@ -1027,7 +1030,8 @@
        ((char int short bool void unsigned-short scheme-object unsigned-char unsigned-int byte unsigned-byte
 	      int32 unsigned-int32) 
 	0)
-       ((c-string nonnull-c-string c-pointer nonnull-c-pointer symbol c-string* nonnull-c-string*)
+       ((c-string nonnull-c-string c-pointer nonnull-c-pointer symbol c-string* nonnull-c-string*
+		  c-string-list c-string-list*)
 	(words->bytes 3) )
        ((unsigned-integer long integer unsigned-long integer32 unsigned-integer32)
 	(words->bytes 4) )
@@ -1055,7 +1059,7 @@
        ((char int short bool unsigned-short unsigned-char unsigned-int long unsigned-long byte unsigned-byte
 	      c-pointer pointer nonnull-c-pointer unsigned-integer integer float c-string symbol
 	      scheme-pointer nonnull-scheme-pointer int32 unsigned-int32 integer32 unsigned-integer32
-	      nonnull-c-string c-string* nonnull-c-string*) ; pointer and nonnull-pointer are DEPRECATED
+	      nonnull-c-string c-string* nonnull-c-string* c-string-list c-string-list*) ; pointer and nonnull-pointer are DEPRECATED
 	(words->bytes 1) )
        ((double number)
 	(words->bytes 2) )
@@ -1080,6 +1084,8 @@
     [(c-string*) `(##sys#peek-and-free-c-string ,body '0)]
     [(nonnull-c-string*) `(##sys#peek-and-free-nonnull-c-string ,body '0)]
     [(symbol) `(##sys#intern-symbol (##sys#peek-c-string ,body '0))]
+    [(c-string-list) `(##sys#peek-c-string-list ,body '#f)]
+    [(c-string-list*) `(##sys#peek-and-free-c-string-list ,body '#f)]
     [else
      (match type
        [((or 'instance 'instance-ref) cname sname)
@@ -1366,7 +1372,7 @@ EOF
 (define (display-real-name-table)
   (##sys#hash-table-for-each
    (lambda (key val)
-     (printf "~S ~S~%" key val) )
+     (printf "~S\t~S~%" key val) )
    real-name-table) )
 
 (define (source-info->string info)
