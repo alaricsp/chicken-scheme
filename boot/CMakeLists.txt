@@ -6,9 +6,9 @@
 ####################################################################
 
 # Files built here are only used for the bootstrap.  They are never installed.
-# Consequently, we don't need to build everything.  We only build static
-# libraries and executables, no need to fool with anything more complicated.
-# We build:
+# Consequently, we don't need to build everything.
+# Apple only officially supports dynamic linking on Mac OS X.  To simplify maintenance,
+# we use dynamic linking for the bootstrap on all operating systems.  We build:
 #  libchicken-boot
 #  chicken-boot
 #
@@ -104,14 +104,14 @@ ENDIF(HAVE_BOOT_CFILES)
 GET_LIBCHICKEN_C_SOURCES(LIBCHICKEN_BOOT_SOURCES)
 ADD_CUSTOM_TARGET(libchicken-boot-c DEPENDS ${LIBCHICKEN_BOOT_SOURCES})
 
-ADD_LIBRARY(libchicken-boot STATIC ${LIBCHICKEN_BOOT_SOURCES} ${PCRE_HEADER})
+ADD_LIBRARY(libchicken-boot SHARED ${LIBCHICKEN_BOOT_SOURCES} ${PCRE_HEADER})
 SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES
-  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${STATIC_FLAGS}"
+  COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
   OUTPUT_NAME chicken-boot)
 IF(MSVC)
   SET_TARGET_PROPERTIES(libchicken-boot PROPERTIES PREFIX "lib")
 ENDIF(MSVC)
-TARGET_LINK_LIBRARIES(libchicken-boot ${MORE_STATIC_LIBS})
+TARGET_LINK_LIBRARIES(libchicken-boot libpcre-for-shared ${MORE_LIBS})
 ADD_DEPENDENCIES(libchicken-boot libchicken-boot-c)
 
 
@@ -123,8 +123,8 @@ GET_CHICKEN_C_SOURCES(CHICKEN_BOOT_SOURCES)
 ADD_CUSTOM_TARGET(chicken-boot-c DEPENDS ${CHICKEN_BOOT_SOURCES})
 
 ADD_EXECUTABLE(chicken-boot ${CHICKEN_BOOT_SOURCES})
-SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot libpcre-for-static)
+SET_TARGET_PROPERTIES(chicken-boot PROPERTIES COMPILE_FLAGS "${SHARED_FLAGS}")
+TARGET_LINK_LIBRARIES(chicken-boot libchicken-boot)
 ADD_DEPENDENCIES(chicken-boot chicken-boot-c)
 
 

@@ -12,7 +12,7 @@ COLOR="--color"
 MODE=""
 OUTPUT=-
 ALL=0
-while getopts ":a23ufbihprcotl:" opt; do
+while getopts ":a23ufbihprcotlI:" opt; do
    case $opt in
       a ) ALL="1";;
       h ) MODE="--language=html";;
@@ -24,7 +24,8 @@ while getopts ":a23ufbihprcotl:" opt; do
       u ) CSC_OPTS="$CSC_OPTS -unsafe";;
       b ) CSC_OPTS="$CSC_OPTS -block";;
       f ) CSC_OPTS="$CSC_OPTS -fixnum-arithmetic";;
-      i ) CSC_OPTS="$CSC_OPTS -disable-interrupts";;
+      i ) CSC_OPTS="$CSC_OPTS -inline";;
+      I ) CSC_OPTS="$CSC_OPTS -disable-interrupts";;
       2 ) CSC_OPTS="$CSC_OPTS -O2";;
       3 ) CSC_OPTS="$CSC_OPTS -O3";;
       l ) CSC="./csc -compiler ./chicken-static";;

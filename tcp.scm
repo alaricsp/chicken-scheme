@@ -107,8 +107,7 @@ EOF
     (define-macro (##sys#check-char x) '(##core#undefined))
     (define-macro (##sys#check-exact x) '(##core#undefined))
     (define-macro (##sys#check-port x) '(##core#undefined))
-    (define-macro (##sys#check-number x) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector x) '(##core#undefined)) ) )
+    (define-macro (##sys#check-number x) '(##core#undefined))))
  (else
   (declare (emit-exports "tcp.exports"))) )
 

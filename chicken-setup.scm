@@ -59,18 +59,6 @@
 # endif
 #endif
 
-#ifdef _WIN32
-/* It is an error to include <windows.h> prematurely.  For instance,
- * <winsock2.h> must be included before <windows.h> */ 
-# include <windows.h>
-static void create_directory(char *pathname)
-{
-  CreateDirectory(pathname, NULL);
-}
-#else
-static void create_directory(char *pathname) {}
-#endif
-
 #ifndef C_TARGET_CC
 # define C_TARGET_CC  C_INSTALL_CC
 #endif
@@ -98,12 +86,12 @@ static void create_directory(char *pathname) {}
 
 
 (define-constant long-options
-  '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script" "-check"
+  '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
     "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir" "-revision") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\C #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
 
 
 (define *install-bin-path* 
@@ -133,6 +121,14 @@ static void create_directory(char *pathname) {}
 
 (define (cross-chicken) (##sys#fudge 39))
 
+(define create-directory/parents
+  (let ([create-directory create-directory])
+    (lambda (dir)
+      (let loop ([dir dir])
+        (when (and dir (not (directory? dir)))
+          (loop (pathname-directory dir))
+          (create-directory dir))) ) ) )
+
 (define create-directory
   (let ()
     (define (verb dir)
@@ -140,7 +136,7 @@ static void create_directory(char *pathname) {}
     (if *windows-shell*
 	(lambda (dir)
 	  (verb dir)
-	  ((foreign-lambda void "create_directory" c-string) dir) ) 
+	  (create-directory/parents dir) ) 
 	(lambda (dir)
 	  (verb dir)
 	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
@@ -163,7 +159,6 @@ static void create_directory(char *pathname) {}
 (define *abort-hook* #f)
 (define *dont-ask* #f)
 (define *rebuild-doc-index* #f)
-(define *check-repository* #f)
 (define *repository-tree* #f)
 (define *last-decent-host* #f)
 (define *proxy-host* #f)
@@ -176,7 +171,6 @@ static void create_directory(char *pathname) {}
 (define *destdir* #f)
 (define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
 (define *revision* #f)
-(define *repository-tree-downloaded* #f)
 
 
 (define (abort-setup)
@@ -409,7 +403,6 @@ usage: chicken-setup [OPTION ...] FILENAME
   -d  -dont-ask                  always download, if asked
   -n  -no-install                don't install generated binaries and support files
   -i  -docindex                  display path for documentation index
-  -C  -check                     check for available upgrades
   -e  -eval EXPRESSION           evaluate expression
   -t  -test EXTENSION ...        return success if all given extensions are installed
       -ls EXTENSION              list installed files for extension
@@ -533,7 +526,7 @@ EOF
   (let ((from (if (pair? from) (car from) from))
 	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
     (ensure-directory to)
-    (cond ((file-exists? from)
+    (cond ((or (glob? from) (file-exists? from))
 	   (run (,*copy-command* ,(quotewrap from) ,(quotewrap to))) )
 	  (err (error "file does not exist" from))
 	  (else (warning "file does not exist" from)))))
@@ -568,7 +561,6 @@ EOF
    (match (pathname-extension f)
      (#f default)
      ("so" ##sys#load-dynamic-extension)
-     ("o" (if *windows-shell* "obj" "o"))
      ("a" (if *windows-shell* "lib" "a"))
      (x x) ) ) )
 
@@ -649,7 +641,7 @@ EOF
 (define (install-script id files #!optional (info '()))
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
-	   (ppath (program-path)) 
+	   (ppath (if *destdir* (make-pathname *destdir* "bin") (program-path)))
 	   (pfiles (map (lambda (f)
 			  (let ((from (if (pair? f) (car f) f))
 				(to (make-dest-pathname ppath f)) )
@@ -697,7 +689,8 @@ EOF
 	  (unless *windows-shell*
 		  (run (chmod a+x ,dir)))))))
 
-(define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") (verb (setup-verbose-flag)) (compile-only #f))
+(define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
+		     (verb (setup-verbose-flag)) (compile-only #f))
   (let* ((fname (create-temporary-file "c"))
 	 (oname (pathname-replace-extension fname "o"))
 	 (r (begin
@@ -811,7 +804,6 @@ EOF
 			    (if (string=? "" ln)
 				(begin
 				  (set! *repository-tree* (read i))
-				  (set! *repository-tree-downloaded* #t)
 				  (when *debug*
 				    (print "catalog:")
 				    (pp *repository-tree*) )
@@ -876,14 +868,6 @@ EOF
 	   (x (error "(internal) invalid host" x)) ) ) ) )
 
 (define (fetch-file ext)
-  (define (eval-req r)
-    (when (setup-verbose-flag) 
-      (print "Testing system:")
-      (pp r) )
-    (let ((f (eval r)))
-      (when (setup-verbose-flag) 
-	(print "\t-> " f) )
-      f) )
   (define (requirements reqs)
     (fold 
      (lambda (r reqs)
@@ -892,19 +876,6 @@ EOF
 		(cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
 		      ((memq r ##sys#core-library-modules) reqs)
 		      (else (error "Broken dependencies: extension does not exist" r) ) ) ) )
-	     ((and *repository-tree-downloaded*
-		   (not *windows*)
-		   (or (zero? (current-user-id))
-		       (not *dont-ask*) ) )
-	      (print "WARNING: executing system test retrieved through potentially insecure network:\n")
-	      (pp r) 
-	      (cond ((yes-or-no?
-		      "Do you want to execute this code ?"
-		      (if (zero? (current-user-id)) "no" "yes") )
-		     (requirements (eval-req r) ) )
-		    (else
-		     (print "Test cancelled - aborting")
-		     (abort-setup) ) ) )
 	     (else (requirements (eval-req r) )) ) ) 
      '() 
      reqs) )
@@ -1110,21 +1081,6 @@ EOF
 	  (grep "^[^.].*\\.*$" (map pathname-file (directory (repository-path)))) string=?)
 	 string<?) ) )
 
-(define (check-for-upgrades)
-  (download-repository-tree)
-  (for-each
-   (match-lambda
-     ((name props . _)
-      (and-let* ((a (assq 'date props))
-		 (info (extension-information name)) )
-	(let ((infoa (assq 'release info)))
-	  (when (or (not infoa) (string>? (cadr a) (cadr infoa)))
-	    (print 
-	     (format-string (symbol->string name) 32) 
-	     (if infoa (conc "installed: " (cadr infoa) ", ") "")
-	     "available: " (cadr a) ) ) ) ) ) )
-   *repository-tree*) )
-
 (define (main args)
   (define (parse-host host eggdir)
     (set! *repository-hosts*
@@ -1240,10 +1196,6 @@ EOF
 	(("-revision" rev . more)
 	 (set! *revision* rev)
 	 (loop more) )
-	(("-check" . more)
-	 (set! *check-repository* #t)
-	 (set! anydone #t)
-	 (loop more) )
 	(("-svn" url . more)
 	 (set! *svn-repository* url)
 	 (set! *dont-ask* #t)
@@ -1289,7 +1241,6 @@ EOF
 	     (if (null? setups)
 		 (printf "No setup scripts to process~%")
 		 (for-each (if uinst uninstall-extension install) setups) ) ) )
-	 (when *check-repository* (check-for-upgrades))
 	 (when *fetch-tree-only*
 	   (download-repository-tree)
 	   (pp *repository-tree*) )

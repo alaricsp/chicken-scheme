@@ -1799,12 +1799,22 @@ EOF
 	    (set! ##sys#standard-output old)
 	    (apply ##sys#values results) ) ) ) ) ) )
 
-(define (file-exists? name)
-  (##sys#check-string name 'file-exists?)
-  (##sys#pathname-resolution
-   name
-   (lambda (name) (and (##sys#file-info name) name))
-   #:exists?) )
+(define file-exists?
+  (let ((bp (string->symbol ((##core#primitive "C_build_platform"))))
+	(fixsuffix (or (eq? bp 'msvc) (eq? bp 'mingw32))))
+    (lambda (name)
+      (##sys#check-string name 'file-exists?)
+      (##sys#pathname-resolution
+       name
+       (lambda (name) 
+	 (let* ((len (##sys#size name))
+		(name2 (if (and fixsuffix
+			       (let ((c (##core#inline "C_subchar" name (fx- len 1))))
+				 (or (eq? c #\\) (eq? c #\/)) ) )
+			  (##sys#substring name 0 (fx- len 1))
+			  name) ) )
+	   (and (##sys#file-info name2) name)) ) 
+       #:exists?) ) ) )
 
 (define (##sys#flush-output port)
   ((##sys#slot (##sys#slot port 2) 5) port) ; flush-output
@@ -2656,7 +2666,7 @@ EOF
 	  (let ([c (char->integer chr)])
 	    (or (fx<= c 32)
 		(fx>= c 128)
-		(memq chr '(#\( #\) #\| #\, #\[ #\] #\{ #\} #\' #\" #\; #\\)) ) ) )
+		(memq chr '(#\( #\) #\| #\, #\[ #\] #\{ #\} #\' #\" #\; #\\ #\`)) ) ) )
 
 	(define (outreadablesym port str)
 	  (let ([len (##sys#size str)])
@@ -2665,7 +2675,7 @@ EOF
 	      (if (fx>= i len)
 		  (outchr port #\|)
 		  (let ([c (##core#inline "C_subchar" str i)])
-		    (when (eq? c #\|) (outchr port #\\))
+		    (when (or (eq? c #\|) (eq? c #\\)) (outchr port #\\))
 		    (outchr port c)
 		    (loop (fx+ i 1)) ) ) ) ) )
 
@@ -4206,7 +4216,7 @@ EOF
 	       (display ex port)
 	       (newline port) ]
 	      [else
-	       (display "uncaught exception: " port)
+	       (display ": uncaught exception: " port)
 	       (writeargs (list ex) port) ] ) ) ) ) )
 
 

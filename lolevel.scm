@@ -50,6 +50,7 @@
 #define C_pointer_to_object(ptr)   ((C_word*)C_block_item(ptr, 0))
 #define C_w2b(x)                   C_fix(C_wordstobytes(C_unfix(x)))
 #define C_pointer_eqp(x, y)        C_mk_bool(C_c_pointer_nn(x) == C_c_pointer_nn(y))
+#define C_memmove_o(to, from, n, toff, foff) C_memmove((char *)(to) + (toff), (char *)(from) + (foff), (n))
 EOF
 ) )
 
@@ -93,20 +94,20 @@ EOF
 ;;; Move arbitrary blocks of memory around:
 
 (define move-memory!
-  (let ([memmove1 (foreign-lambda void "C_memmove" c-pointer c-pointer int)]
-	[memmove2 (foreign-lambda void "C_memmove" c-pointer scheme-pointer int)]
-	[memmove3 (foreign-lambda void "C_memmove" scheme-pointer c-pointer int)]
-	[memmove4 (foreign-lambda void "C_memmove" scheme-pointer scheme-pointer int)]
+  (let ([memmove1 (foreign-lambda void "C_memmove_o" c-pointer c-pointer int int int)]
+	[memmove2 (foreign-lambda void "C_memmove_o" c-pointer scheme-pointer int int int)]
+	[memmove3 (foreign-lambda void "C_memmove_o" scheme-pointer c-pointer int int int)]
+	[memmove4 (foreign-lambda void "C_memmove_o" scheme-pointer scheme-pointer int int int)]
 	[slot1structs '(mmap u8vector u16vector u32vector s8vector s16vector s32vector f32vector f64vector)] )
-    (lambda (from to . n)
+    (lambda (from to #!optional n (foffset 0) (toffset 0))
       (define (err) (##sys#error 'move-memory! "need number of bytes to move" from to))
       (define (xerr x) (##sys#signal-hook #:type-error 'move-memory! "invalid argument type" x))
-      (define (checkn n nmax)
-	(if (cond-expand [unsafe #t] [else (fx<= n nmax)])
+      (define (checkn n nmax off)
+	(if (cond-expand [unsafe #t] [else (fx<= n (fx- nmax off))])
 	    n
 	    (##sys#error 'move-memory! "number of bytes to move too large" from to n nmax) ) )
-      (define (checkn2 n nmax nmax2)
-	(if (cond-expand [unsafe #t] [else (and (fx<= n nmax) (fx<= n nmax2))])
+      (define (checkn2 n nmax nmax2 off1 off2)
+	(if (cond-expand [unsafe #t] [else (and (fx<= n (fx- nmax off1)) (fx<= n (fx- nmax2 off2)))])
 	    n
 	    (##sys#error 'move-memory! "number of bytes to move too large" from to n nmax nmax2) ) )
       (let move ([from from] [to to])
@@ -119,16 +120,18 @@ EOF
 		   (move from (##sys#slot to 1))
 		   (xerr to) ) ]
 	      [(or (##sys#pointer? from) (##sys#locative? from))
-	       (cond [(or (##sys#pointer? to) (##sys#locative? to)) (memmove1 to from (:optional n (err)))]
+	       (cond [(or (##sys#pointer? to) (##sys#locative? to))
+		      (memmove1 to from (or n (err)) toffset foffset)]
 		     [(or (##sys#bytevector? to) (string? to))
-		      (memmove3 to from (checkn (:optional n (err)) (##sys#size to))) ]
+		      (memmove3 to from (checkn (or n (err)) (##sys#size to) toffset) toffset foffset) ]
 		     [else (xerr to)] ) ]
 	      [(or (##sys#bytevector? from) (string? from))
 	       (let ([nfrom (##sys#size from)])
 		 (cond [(or (##sys#pointer? to) (##sys#locative? to))
-			(memmove2 to from (checkn (:optional n nfrom) nfrom))]
+			(memmove2 to from (checkn (or n nfrom) nfrom foffset) toffset foffset)]
 		       [(or (##sys#bytevector? to) (string? to))
-			(memmove4 to from (checkn2 (:optional n nfrom) nfrom (##sys#size to))) ]
+			(memmove4 to from (checkn2 (or n nfrom) nfrom (##sys#size to) foffset toffset)
+				  toffset foffset) ]
 		       [else (xerr to)] ) ) ]
 	      [else (xerr from)] ) ) ) ) )
 
@@ -497,7 +500,7 @@ EOF
 	      [else
 	       (let* ([n (##sys#size x)]
 		      [words (if (##core#inline "C_byteblockp" x) (##core#inline "C_words" n) n)]
-		      [y (##core#inline "C_copy_block" x (make-vector words))] ) ; shamelessly mutating vector into something else
+		      [y (##core#inline "C_copy_block" x (make-vector words))] )
 		 (unless (or (##core#inline "C_byteblockp" x) (symbol? x))
 		   (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
 		       ((fx>= i n))
@@ -681,6 +684,15 @@ EOF
 		 (loop (##sys#slot lst 1)) ) ]
 	      [else (##sys#signal-hook #:type-error 'object-become! "bad argument type - not an a-list")] ) )
       (##sys#become! lst) ) ] ) )
+
+(define (mutate-procedure old proc)
+  (unless (##core#check (procedure? old))
+    (##sys#signal-hook #:type-error 'mutate-procedure "bad argument type - not a procedure" old))
+  (let* ((n (##sys#size old))
+	 (words (##core#inline "C_words" n))
+	 (y (##core#inline "C_copy_block" old (make-vector words))) )
+    (##sys#become! (list (cons old (proc y))))
+    y) )
 
 
 ;;; locatives:

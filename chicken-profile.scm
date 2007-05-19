@@ -35,22 +35,29 @@
 
 (declare
   (block)
-  (uses srfi-1))
-
+  (uses srfi-1
+	srfi-13))
 
 (define sort-by #f)
 (define file #f)
 (define no-unused #f)
+(define seconds-digits 3)
+(define average-digits 3)
+(define percent-digits 3)
+(define top 0)
 
 (define (print-usage)
-  (display #<<EOF
+  (display #<#EOF
 Usage: chicken-profile [FILENAME | OPTION] ...
 
  -sort-by-calls            sort output by call frequency
  -sort-by-time             sort output by procedure execution time
  -sort-by-avg              sort output by average procedure execution time
  -sort-by-name             sort output alphabetically by procedure name
+ -decimals DDD             set number of decimals for seconds, average and
+                           percent columns (three digits, default: #{seconds-digits}#{average-digits}#{percent-digits})
  -no-unused                remove procedures that are never called
+ -top N                    display only the top N entries
  -help                     show this text and exit
  -version                  show version and exit
  -release                  show release number and exit
@@ -69,6 +76,15 @@ EOF
 	  (write-profile) )
 	(let ([arg (car args)]
 	      [rest (cdr args)] )
+	  (define (next-arg)
+	    (if (null? rest)
+		(error "missing argument to option" arg)
+		(let ((narg (car rest)))
+		  (set! rest (cdr rest))
+		  narg)))
+	  (define (next-number)
+	    (let ((n (string->number (next-arg))))
+	      (if (and n (> n 0)) n (error "invalid argument to option" arg))))
 	  (match arg
 	    [(or "-h" "-help" "--help") (print-usage)]
 	    [(or "-v" "-version") 
@@ -78,10 +94,12 @@ EOF
 	     (print (chicken-version))
 	     (exit) ]
 	    ["-no-unused" (set! no-unused #t)]
+	    ["-top" (set! top (next-number))]
 	    ["-sort-by-calls" (set! sort-by sort-by-calls)]
 	    ["-sort-by-time" (set! sort-by sort-by-time)]
 	    ["-sort-by-avg" (set! sort-by sort-by-avg)]
 	    ["-sort-by-name" (set! sort-by sort-by-name)]
+	    ["-decimals" (set-decimals (next-arg))]
 	    [_ (cond [(and (> (string-length arg) 1) (char=? #\- (string-ref arg 0)))
 		      (error "invalid option" arg) ]
 		     [file (print-usage)]
@@ -114,6 +132,20 @@ EOF
 
 (set! sort-by sort-by-time)
 
+(define (set-decimals arg)
+  (if (= (string-length arg) 3)
+      (begin
+	(define (arg-digit n)
+	  (let ((n (- (char->integer (string-ref arg n))
+		      (char->integer #\0))))
+	    (if (<= 0 n 9)
+		(if (= n 9) 8 n) ; 9 => overflow in format-real
+		(error "invalid argument to -decimals option" arg))))
+	(set! seconds-digits (arg-digit 0))
+	(set! average-digits (arg-digit 1))
+	(set! percent-digits (arg-digit 2)))
+      (error "invalid argument to -decimals option" arg)))
+
 (define (read-profile)
   (let ((hash (make-hash-table eq?)))
     (do ((line (read) (read)))
@@ -129,15 +161,17 @@ EOF
 	(string-append pad str)
 	(string-append str pad) ) ) )
 
-(define (format-real n cols fcols)
-  (let ((an (abs n)))
-    (format-string
-     (string-append
-      (number->string (inexact->exact (truncate n)))
-      "."
-      (let ((fstr (format-string (substring (number->string (exact->inexact (- an (truncate an)))) 2) fcols #f #\0)))
-	(substring fstr 0 (fxmin (string-length fstr) fcols))) )
-     cols #t #\space) ) )
+(define (format-real n d)
+  (let ((exact-value (inexact->exact (truncate n))))
+    (string-append
+     (number->string exact-value)
+     (if (> d 0) "." "")
+     (substring
+      (number->string
+       (inexact->exact
+	(truncate
+	 (* (- n exact-value -1) (expt 10 d)))))
+      1 (+ d 1)))))
 
 (define (write-profile)
   (let* ([data0 (with-input-from-file file read-profile)]
@@ -154,34 +188,36 @@ EOF
 							0)
 						    ))))
 		      data0)
-                     sort-by)]
-	 [line (make-string 79 #\-)] )
-    (print (format-string "procedure" 38)
-	   " "
-	   (format-string "calls" 9 #t)
-	   " "
-	   (format-string "seconds" 9 #t)
-	   " "
-	   (format-string "average" 9 #t)
-	   " "
-	   (format-string "percent" 8 #t) )
-    (print line)
-    (for-each
-     (lambda (entry)
-       (let ([c (second entry)]
-	     [t (third entry)]
-	     [a (cadddr entry)]
-	     [p (list-ref entry 4)] )
-	 (unless (and (zero? c) no-unused)
-	   (print (format-string (##sys#symbol->qualified-string (first entry)) 38)
-		  " "
-		  (format-string (number->string c) 9 #t)
-		  " "
-		  (format-real (/ t 1000) 9 3)
-		  " "
-		  (format-real (/ a 1000) 9 3)
-		  " "
-		  (format-real p 8 4) ) ) ) )
-     data) ) )
-
+                     sort-by)])
+    (if (< 0 top (length data))
+	(set! data (take data top)))
+    (set! data (map (lambda (entry)
+		      (let ([c (second entry)]
+			    [t (third entry)]
+			    [a (cadddr entry)]
+			    [p (list-ref entry 4)] )
+			(list (##sys#symbol->qualified-string (first entry))
+			      (number->string c)
+			      (format-real (/ t 1000) seconds-digits)
+			      (format-real (/ a 1000) average-digits)
+			      (format-real p percent-digits))))
+		    (filter (lambda (entry) (not (and (zero? (second entry)) no-unused)))
+			    data)))
+    (let* ([headers (list "procedure" "calls" "seconds" "average" "percent")]
+	   [alignments (list #f #t #t #t #t)]
+	   [spacing 2]
+	   [spacer (make-string spacing #\space)]
+	   [column-widths (fold
+			   (lambda (row max-widths)
+			     (map max (map string-length row) max-widths))
+			   (list 0 0 0 0 0)
+			   (cons headers data))])
+      (define (print-row row)
+	(print (string-join (map format-string row column-widths alignments) spacer)))
+      (print-row headers)
+      (print (make-string (+ (reduce + 0 column-widths)
+			     (* spacing (- (length alignments) 1)))
+			  #\-))
+      (for-each print-row data))))
+  
 (run (command-line-arguments))

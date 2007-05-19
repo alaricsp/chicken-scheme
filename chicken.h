@@ -169,11 +169,6 @@ char *alloca ();
 
 #if defined(__APPLE__) && defined(__MACH__)
 # define C_MACOSX
-/*
- * Darwin provides gcvt/ecvt/fcvt for compatibility with legacy code.
- * (They don't even have a header definition!)
- * Use snprintf instead.
- */
 #endif
 
 #if defined(_MSC_VER) || defined(__MWERKS__) || defined(__DJGPP__) || defined(__MINGW32__) || defined(__WATCOMC__)
@@ -225,7 +220,7 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # include <malloc.h>
 #endif
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#if defined(C_MACOSX) || defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 # define C_GNU_ENV
 #endif
 

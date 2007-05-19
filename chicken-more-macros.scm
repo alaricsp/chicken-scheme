@@ -892,7 +892,7 @@
 	  (else (syntax-error 'define-extension "invalid clause syntax" cs)) ) ) )
 
 
-;;;; SRFI-31
+;;; SRFI-31
 
 (define-macro (rec head . args)
   (if (pair? head)
@@ -914,7 +914,37 @@
 	'(begin) ) ) )
 
 
-;;;; Register features provided by this file
+;;; Not for general use, yet
+
+(define-macro (define-compiler-macro head . body)
+  (define (bad)
+    (syntax-error 'define-compiler-macro "invalid compiler macro definition" head) )
+  (unless ##compiler#compiler-macro-table
+    (set! ##compiler#compiler-macro-table (make-vector 301 '())) )
+  (if (and (pair? head) (symbol? (car head)))
+      (cond ((memq 'compiling ##sys#features)
+	     (warning "compile macros are not available in interpreted code" 
+		      (car head) )
+	     '(void) )
+	    (else
+	     (let* ((wvar (gensym))
+		    (llist
+		     (let loop ((llist head))
+		       (cond ((not (pair? llist)) llist)
+			     ((eq? #:whole (car llist))
+			      (unless (pair? (cdr llist)) (bad))
+			      (set! wvar (cadr llist))
+			      (cddr llist) )
+			     (else (cons (car llist) (loop (cdr llist)))) ) ) ) )
+	       (##sys#hash-table-set!
+		##compiler#compiler-macro-table
+		(car head)
+		(eval `(lambda (,wvar) (apply (lambda ,llist ,@body) ,wvar))) )
+	       '(void) ) ) )
+      (bad) ) )
+
+
+;;; Register features provided by this file
 
 (eval-when (compile load eval)
   (register-feature! 'srfi-8 'srfi-16 'srfi-26 'srfi-31 'srfi-15 'srfi-11) )

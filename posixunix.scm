@@ -243,18 +243,14 @@ static void C_fcall C_set_arg_string(char **where, int i, char *a, int len) {
   where[ i ] = ptr;
 }
 
-static void C_fcall C_free_exec_args() {
-  char **a = C_exec_args;
-  while((*a) != NULL) C_free(*(a++));
+static void C_fcall C_free_arg_string(char **where) {
+  while((*where) != NULL) C_free(*(where++));
 }
 
-static void C_fcall C_free_exec_env() {
-  char **a = C_exec_env;
-  while((*a) != NULL) C_free(*(a++));
-}
-
-#define C_set_exec_arg(i, a, len)      C_set_arg_string(C_exec_args, i, a, len)
-#define C_set_exec_env(i, a, len)      C_set_arg_string(C_exec_env, i, a, len)
+#define C_set_exec_arg(i, a, len)	C_set_arg_string(C_exec_args, i, a, len)
+#define C_free_exec_args()		C_free_arg_string(C_exec_args)
+#define C_set_exec_env(i, a, len)	C_set_arg_string(C_exec_env, i, a, len)
+#define C_free_exec_env()		C_free_arg_string(C_exec_env)
 
 #define C_execvp(f)         C_fix(execvp(C_data_pointer(f), C_exec_args))
 #define C_execve(f)         C_fix(execve(C_data_pointer(f), C_exec_args, C_exec_env))
@@ -1863,12 +1859,13 @@ EOF
         (##sys#check-string filename 'process-execute)
         (##sys#check-list arglist 'process-execute)
         (let ([s (pathname-strip-directory filename)])
-        (setarg 0 s (##sys#size s)) )
+          (setarg 0 s (##sys#size s)) )
         (do ([al arglist (cdr al)]
              [i 1 (fx+ i 1)] )
             ((null? al)
              (setarg i #f 0)
              (when envlist
+               (##sys#check-list envlist 'process-execute)
                (do ([el envlist (cdr el)]
                     [i 0 (fx+ i 1)] )
                    ((null? el) (setenv i #f 0))
@@ -1923,8 +1920,6 @@ EOF
         (##sys#check-exact sig 'process-signal)
         (let ([r (##core#inline "C_kill" id sig)])
         (when (fx= r -1) (posix-error #:process-error 'process-signal "could not send signal to process" id sig) ) ) ) ) )
-
-  ;FIXME - shouldn't be private
 
   (define (##sys#shell-command)
     (or (getenv "SHELL") "/bin/sh") )
@@ -2050,22 +2045,21 @@ EOF
   #;(define process* (void))
   (let ([%process
           (lambda (loc err? cmd args env)
-            (##sys#check-string cmd loc)
-            (if args
-              (begin
-                (##sys#check-list args loc)
-                (for-each (cut ##sys#check-string <> loc) args) )
-              (begin
-                (set! args (##sys#shell-command-arguments cmd))
-                (set! cmd (##sys#shell-command)) ) )
-            (when env
-              (##sys#check-list env loc)
-              (for-each (cut ##sys#check-string <> loc) env) )
-            (receive [in out pid err]
-                       (##sys#process loc cmd args env #t #t err?)
-              (if err?
-                (values in out pid err)
-                (values in out pid) ) ) )] )
+            (let ([chkstrlst
+                   (lambda (lst)
+                     (##sys#check-list lst loc)
+                     (for-each (cut ##sys#check-string <> loc) lst) )])
+              (##sys#check-string cmd loc)
+              (if args
+                (chkstrlst args)
+                (begin
+                  (set! args (##sys#shell-command-arguments cmd))
+                  (set! cmd (##sys#shell-command)) ) )
+              (when env (chkstrlst env))
+              (receive [in out pid err] (##sys#process loc cmd args env #t #t err?)
+                (if err?
+                  (values in out pid err)
+                  (values in out pid) ) ) ) )] )
     (set! process
       (lambda (cmd #!optional args env)
         (%process 'process #f cmd args env) ))

@@ -63,12 +63,20 @@
 ; process-signal
 
 
+; Issues
+;
+; - Use of a UTF8 encoded string will not work properly. Windows uses a
+; 16-bit UNICODE character string encoding and specialized system calls
+; and/or structure settings for the use of such strings.
+
+
 (declare
   (unit posix)
   (uses scheduler regex extras utils)
   (disable-interrupts)
   (usual-integrations)
-  (hide ##sys#stat close-handle posix-error)
+  (hide ##sys#stat close-handle posix-error
+        $quote-args-list $exec-setup $exec-teardown)
   (foreign-declare #<<EOF
 #ifndef WIN32_LEAN_AND_MEAN
 # define WIN32_LEAN_AND_MEAN
@@ -103,10 +111,14 @@ int C_not_implemented() { return -1; }
 
 #include <time.h>
 
-#define ARG_MAX 256
-#define PIPE_BUF 512
+#define ARG_MAX		256
+#define PIPE_BUF	512
+#ifndef ENV_MAX
+# define ENV_MAX        1024
+#endif
 
 static C_TLS char *C_exec_args[ ARG_MAX ];
+static C_TLS char *C_exec_env[ ENV_MAX ];
 static C_TLS struct group *C_group;
 static C_TLS int C_pipefds[ 2 ];
 static C_TLS time_t C_secs;
@@ -119,11 +131,12 @@ static C_TLS HANDLE C_save0, C_save1; /* saved I/O handles */
 static C_TLS char C_rdbuf; /* one-char buffer for read */
 static C_TLS int C_exstatus;
 
-/* platform information */
-static C_TLS char C_hostname[256];
-static C_TLS char C_osver[16];
-static C_TLS char C_osrel[16];
-static C_TLS char C_processor[16];
+/* platform information; initialized for cached testing */
+static C_TLS char C_hostname[256] = "";
+static C_TLS char C_osver[16] = "";
+static C_TLS char C_osrel[16] = "";
+static C_TLS char C_processor[16] = "";
+static C_TLS char C_shlcmd[256] = "";
 
 #define C_mkdir(str)        C_fix(mkdir(C_c_string(str)))
 #define C_chdir(str)        C_fix(chdir(C_c_string(str)))
@@ -261,8 +274,7 @@ C_word C_fcall C_setenv(C_word x, C_word y) {
   }
 }
 
-static void C_fcall C_set_exec_arg(int i, char *a, int len);
-void C_fcall C_set_exec_arg(int i, char *a, int len) {
+static void C_fcall C_set_arg_string(char **where, int i, char *a, int len) {
   char *ptr;
   if(a != NULL) {
     ptr = (char *)C_malloc(len + 1);
@@ -270,33 +282,40 @@ void C_fcall C_set_exec_arg(int i, char *a, int len) {
     ptr[ len ] = '\0';
   }
   else ptr = NULL;
-  C_exec_args[ i ] = ptr;
+  where[ i ] = ptr;
 }
 
-static void C_fcall C_free_exec_args();
-void C_fcall C_free_exec_args() {
-  char **a = C_exec_args;
-  while((*a) != NULL) C_free(*(a++));
+static void C_fcall C_free_arg_string(char **where) {
+  while((*where) != NULL) C_free(*(where++));
 }
+
+#define C_set_exec_arg(i, a, len)	C_set_arg_string(C_exec_args, i, a, len)
+#define C_free_exec_args()		C_free_arg_string(C_exec_args)
+#define C_set_exec_env(i, a, len)	C_set_arg_string(C_exec_env, i, a, len)
+#define C_free_exec_env()		C_free_arg_string(C_exec_env)
 
 #define C_execvp(f)         C_fix(execvp(C_data_pointer(f), (const char *const *)C_exec_args))
+#define C_execve(f)         C_fix(execve(C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
 
 /* MS replacement for the fork-exec pair */
 #define C_spawnvp(m, f)	    C_fix(spawnvp(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args))
+#define C_spawnvpe(m, f)    C_fix(spawnvpe(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
 
 #define C_open(fn, fl, m)   C_fix(open(C_c_string(fn), C_unfix(fl), C_unfix(m)))
 #define C_read(fd, b, n)    C_fix(read(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
 #define C_write(fd, b, n)   C_fix(write(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
 #define C_mkstemp(t)        C_fix(mktemp(C_c_string(t)))
 
-#define C_ftell(p)            C_fix(ftell(C_port_file(p)))
-#define C_fseek(p, n, w)      C_mk_nbool(fseek(C_port_file(p), C_unfix(n), C_unfix(w)))
-#define C_lseek(fd, o, w)     C_fix(lseek(C_unfix(fd), C_unfix(o), C_unfix(w)))
+#define C_ftell(p)          C_fix(ftell(C_port_file(p)))
+#define C_fseek(p, n, w)    C_mk_nbool(fseek(C_port_file(p), C_unfix(n), C_unfix(w)))
+#define C_lseek(fd, o, w)   C_fix(lseek(C_unfix(fd), C_unfix(o), C_unfix(w)))
+
+#define C_flushall()        C_fix(_flushall())
 
 #define C_ctime(n)          (C_secs = (n), ctime(&C_secs))
 
 #define C_asctime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
-#define C_mktime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
+#define C_mktime(v)         (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
 
 /*
   mapping from Win32 error codes to errno
@@ -371,6 +390,12 @@ static void set_errno(DWORD w32err)
     }
 }
 
+static int set_last_errno()
+{
+    set_errno(GetLastError());
+    return 0;
+}
+
 /* functions for creating process with redirected I/O */
 static int zero_handles()
 {
@@ -427,7 +452,7 @@ static int redir_io()
 	    || !DuplicateHandle(GetCurrentProcess(), C_rd1, GetCurrentProcess(),
 		&C_rd1_, 0, FALSE, DUPLICATE_SAME_ACCESS))
     {
-	set_errno(GetLastError());
+	set_last_errno();
 	close_handles();
 	return 0;
     }
@@ -451,7 +476,7 @@ static int run_process(char *cmdline)
     C_wr0_ = C_rd1_ = INVALID_HANDLE_VALUE; /* these handles are saved */
 
     if (CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL,
-		NULL, &si, &pi))
+		      NULL, &si, &pi))
     {
 	CloseHandle(pi.hThread);
 
@@ -465,10 +490,7 @@ static int run_process(char *cmdline)
 	return (int)pi.hProcess;
     }
     else
-    {
-	set_errno(GetLastError());
-	return 0;
-    }
+	return set_last_errno();
 }
 
 static int pipe_write(int hpipe, void* buf, int count)
@@ -477,10 +499,7 @@ static int pipe_write(int hpipe, void* buf, int count)
     if (WriteFile((HANDLE)hpipe, buf, count, &done, NULL))
 	return 1;
     else
-    {
-	set_errno(GetLastError());
-	return 0;
-    }
+	return set_last_errno();
 }
 
 static int pipe_read(int hpipe)
@@ -497,8 +516,7 @@ static int pipe_read(int hpipe)
 	else
 	    return -1;
     }
-    set_errno(GetLastError());
-    return 0;
+    return set_last_errno();
 }
 
 static int pipe_ready(int hpipe)
@@ -537,8 +555,7 @@ int process_wait(int h, int t)
 	    return 1;
 	}
     }
-    set_errno(GetLastError());
-    return 0;
+    return set_last_errno();
 }
 
 #define C_process_wait(p, t) (process_wait(C_unfix(p), C_truep(t)) ? C_SCHEME_TRUE : C_SCHEME_FALSE)
@@ -546,78 +563,112 @@ int process_wait(int h, int t)
 
 int get_hostname()
 {
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(1, 1), &wsa) == 0)
+    /* Do we already have hostname? */
+    if (strlen(C_hostname))
     {
-	int nok = gethostname(C_hostname, 256);
-	WSACleanup();
-	return !nok;
+        return 1;
     }
-    return 0;
+    else
+    {
+        WSADATA wsa;
+        if (WSAStartup(MAKEWORD(1, 1), &wsa) == 0)
+        {
+	    int nok = gethostname(C_hostname, sizeof(C_hostname));
+	    WSACleanup();
+	    return !nok;
+        }
+        return 0;
+    }
 }
 
 int sysinfo()
 {
-    OSVERSIONINFO ovf;
-    ZeroMemory(&ovf, sizeof(ovf));
-    ovf.dwOSVersionInfoSize = sizeof(ovf);
-    if (get_hostname() && GetVersionEx(&ovf))
+    /* Do we need to build the sysinfo? */
+    if (!strlen(C_osrel))
     {
-	SYSTEM_INFO si;
-	_snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
-			   ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
-	switch (ovf.dwPlatformId)
-	{
-	case VER_PLATFORM_WIN32s:
-	    strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
-	    break;
-	case VER_PLATFORM_WIN32_WINDOWS:
-	    strncpy(C_osrel, "Win9x", sizeof(C_osrel) - 1);
-	    break;
-	case VER_PLATFORM_WIN32_NT:
-	default:
-	    strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
-	    break;
-	}
-	GetSystemInfo(&si);
-	switch (si.wProcessorArchitecture)
-	{
-    	case PROCESSOR_ARCHITECTURE_INTEL:
-	    strncpy(C_processor, "x86", sizeof(C_processor) - 1);
-	    break;
-#       ifdef PROCESSOR_ARCHITECTURE_IA64
-    	case PROCESSOR_ARCHITECTURE_IA64:
-	    strncpy(C_processor, "IA64", sizeof(C_processor) - 1);
-	    break;
-#       endif
-#       ifdef PROCESSOR_ARCHITECTURE_AMD64
-    	case PROCESSOR_ARCHITECTURE_AMD64:
-	    strncpy(C_processor, "x64", sizeof(C_processor) - 1);
-	    break;
-#       endif
-#       ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
-    	case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
-	    strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
-	    break;
-#       endif
-    	case PROCESSOR_ARCHITECTURE_UNKNOWN:
-	default:
-	    strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
-	    break;
-	}
-	return 1;
+        OSVERSIONINFO ovf;
+        ZeroMemory(&ovf, sizeof(ovf));
+        ovf.dwOSVersionInfoSize = sizeof(ovf);
+        if (get_hostname() && GetVersionEx(&ovf))
+        {
+	    SYSTEM_INFO si;
+	    _snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
+	                ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
+	    switch (ovf.dwPlatformId)
+	    {
+	    case VER_PLATFORM_WIN32s:
+	        strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
+	        break;
+	    case VER_PLATFORM_WIN32_WINDOWS:
+	        strncpy(C_osrel, "Win9x", sizeof(C_osrel) - 1);
+	        break;
+	    case VER_PLATFORM_WIN32_NT:
+	    default:
+	        strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
+	        break;
+	    }
+	    GetSystemInfo(&si);
+	    switch (si.wProcessorArchitecture)
+	    {
+    	    case PROCESSOR_ARCHITECTURE_INTEL:
+	        strncpy(C_processor, "x86", sizeof(C_processor) - 1);
+	        break;
+#           ifdef PROCESSOR_ARCHITECTURE_IA64
+    	    case PROCESSOR_ARCHITECTURE_IA64:
+	        strncpy(C_processor, "IA64", sizeof(C_processor) - 1);
+	        break;
+#           endif
+#           ifdef PROCESSOR_ARCHITECTURE_AMD64
+    	    case PROCESSOR_ARCHITECTURE_AMD64:
+	        strncpy(C_processor, "x64", sizeof(C_processor) - 1);
+	        break;
+#           endif
+#           ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
+    	    case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
+	        strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
+	        break;
+#           endif
+    	    case PROCESSOR_ARCHITECTURE_UNKNOWN:
+	    default:
+	        strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
+	        break;
+	    }
+        }
+        else
+            return set_last_errno();
     }
-    set_errno(GetLastError());
-    return 0;
+    return 1;
+}
+
+static int get_shlcmd()
+{
+    /* Do we need to build the shell command pathname? */
+    if (!strlen(C_shlcmd))
+    {
+        if (sysinfo())
+        {
+            char *cmdnam = (0 == strcmp(C_osrel, "WinNT")) ? "\\cmd.exe" : "\\command.com";
+            UINT len = GetSystemDirectory(C_shlcmd, sizeof(C_shlcmd) - strlen(cmdnam));
+            if (0 != len)
+                strcpy(C_shlcmd + len, cmdnam);
+            else
+                return set_last_errno();
+        }
+        else
+            return 0;
+    }
+    return 1;
 }
 
 #define C_get_hostname() (get_hostname() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 #define C_sysinfo() (sysinfo() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
+#define C_get_shlcmd() (get_shlcmd() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 
 /*
-    Spawn a process, either through shell or directly.
+    Spawn a process directly.
     Params:
-    cmd         Command to execute.
+    app         Command to execute.
+    cmdlin      Command line (arguments).
     env         Environment for the new process (may be NULL).
     handle, stdin, stdout, stderr
                 Spawned process info are returned in integers.
@@ -628,95 +679,86 @@ int sysinfo()
                 Bit 1: Child & parent share standard input if this bit is set.
                 Bit 2: Share standard output if bit is set.
                 Bit 3: Share standard error if bit is set.
-                (Bit 4: Execute command in shell if bit is set.)
 
-    Returns: nonzero return value indicates failure.
+    Returns: zero return value indicates failure.
 */
-static
-int C_process(const char * cmd, const char ** env,
-              int * phandle, int * pstdin_fd, int * pstdout_fd, int * pstderr_fd,
-              int params)
+static int C_process(const char * app, const char * cmdlin, const char ** env,
+                     int * phandle,
+                     int * pstdin_fd, int * pstdout_fd, int * pstderr_fd,
+                     int params)
 {
-    int exit_code = 0, i = 0;
-    const int
-        f_share_io[3] = { params & 1, params & 2, params & 4};
-#if 0
-    const int
-        f_use_shell = params & 8;
-#endif
-
-    char * buf = NULL;
-    const char * invoke_cmd = NULL;
-    int io_fds[3]={-1,-1,-1};
+    int i;
+    int success = TRUE;
+    const int f_share_io[3] = { params & 1, params & 2, params & 4};
+    int io_fds[3] = { -1, -1, -1 };
     HANDLE
-        child_io_handles[3]={NULL,NULL,NULL},
-        standard_io_handles[3]={
+        child_io_handles[3] = { NULL, NULL, NULL },
+        standard_io_handles[3] = {
             GetStdHandle(STD_INPUT_HANDLE),
             GetStdHandle(STD_OUTPUT_HANDLE),
             GetStdHandle(STD_ERROR_HANDLE)};
-
-    const char modes[3]="rww";
+    const char modes[3] = "rww";
     HANDLE cur_process = GetCurrentProcess(), child_process = NULL;
+    void* envblk = NULL;
 
     /****** create io handles & fds ***/
 
-    for (i=0; i<3 && exit_code == 0; ++i)
+    for (i=0; i<3 && success; ++i)
     {
         if (f_share_io[i])
         {
-            exit_code = !DuplicateHandle(
+            success = DuplicateHandle(
                 cur_process, standard_io_handles[i],
                 cur_process, &child_io_handles[i],
                 0, FALSE, DUPLICATE_SAME_ACCESS);
         }
         else
         {
-            HANDLE a, b, parent_end;
-            exit_code = !CreatePipe(&a,&b,NULL,0);
-            if(0==exit_code)
+            HANDLE a, b;
+            success = CreatePipe(&a,&b,NULL,0);
+            if(success)
             {
+                HANDLE parent_end;
                 if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
-                else { parent_end=a; child_io_handles[i]=b; }
+                else               { parent_end=a; child_io_handles[i]=b; }
+                success = (io_fds[i] = _open_osfhandle((long)parent_end,0)) >= 0;
             }
-            exit_code=(io_fds[i]=_open_osfhandle((long)parent_end,0))<0;
         }
     }
 
     /****** make handles inheritable */
 
-    for (i=0; i<3 && exit_code == 0; ++i)
-        exit_code = !SetHandleInformation(child_io_handles[i], HANDLE_FLAG_INHERIT, -1);
+    for (i=0; i<3 && success; ++i)
+        success = SetHandleInformation(child_io_handles[i], HANDLE_FLAG_INHERIT, -1);
 
-    /****** create command line ******/
+#if 0 /* Requires a sorted list by key! */
+    /****** create environment block if necessary ****/
 
-#if 0
-    if (f_use_shell && exit_code == 0)
+    if (env && success)
     {
-        const char * shell = NULL;
-        static const char * const fmt = "%s /c %s";
+        char** p;
+        int len = 0;
 
-        shell=getenv("COMSPEC");
-        if (NULL==shell)
+        for (p = env; *p; ++p) len += strlen(*p) + 1;
+
+        if (envblk = C_malloc(len + 1))
         {
-            OSVERSIONINFO ovf;
-            ovf.dwOSVersionInfoSize = sizeof(ovf);
-            if (GetVersionEx(&ovf) && (ovf.dwPlatformId == VER_PLATFORM_WIN32_NT))
-                shell="cmd.exe";
-            else
-                shell="command.com";
+            char* pb = (char*)envblk;
+            for (p = env; *p; ++p)
+            {
+                strcpy(pb, *p);
+                pb += strlen(*p) + 1;
+            }
+            *pb = '\0';
         }
-
-        buf = (char*) malloc(strlen(fmt)+strlen(shell)+strlen(cmd));
-        exit_code=(NULL==buf);
-        if (0==exit_code) { sprintf(buf,fmt,shell,cmd); invoke_cmd = buf; }
+        else
+     	    success = FALSE;
     }
-    else
 #endif
-        invoke_cmd = cmd;
 
     /****** finally spawn process ****/
 
-    if (0==exit_code)
+    if (success)
     {
         PROCESS_INFORMATION pi;
         STARTUPINFO si;
@@ -729,34 +771,39 @@ int C_process(const char * cmd, const char ** env,
         si.hStdOutput = child_io_handles[1];
         si.hStdError = child_io_handles[2];
 
-        exit_code = !CreateProcess(
-            NULL,(char*)invoke_cmd,NULL,NULL,TRUE,0,(char**)env,NULL,&si,&pi);
+	/* FIXME passing 'app' param causes failure & possible stack corruption */
+        success = CreateProcess(
+            NULL, (char*)cmdlin, NULL, NULL, TRUE, 0, envblk, NULL, &si, &pi);
 
-        if (0==exit_code)
+        if (success)
         {
             child_process=pi.hProcess;
             CloseHandle(pi.hThread);
         }
+        else
+            set_last_errno();
     }
+    else
+        set_last_errno();
 
     /****** cleanup & return *********/
 
-    free(buf);
+    /* parent must close child end */
     for (i=0; i<3; ++i) CloseHandle(child_io_handles[i]);
-    if (exit_code != 0)
-    {
-        for (i=0; i<3; ++i) _close(io_fds[i]);
-        set_errno(GetLastError());
-    }
-    else
+
+    if (success)
     {
         *phandle = (int)child_process;
         *pstdin_fd = io_fds[0];
         *pstdout_fd = io_fds[1];
         *pstderr_fd = io_fds[2];
     }
+    else
+    {
+        for (i=0; i<3; ++i) _close(io_fds[i]);
+    }
 
-    return exit_code;
+    return success;
 }
 EOF
 ) )
@@ -1520,73 +1567,93 @@ EOF
 (define spawn/nowaito _p_nowaito)
 (define spawn/detach _p_detach)
 
-(define process-execute
-  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
-	[freeargs (foreign-lambda void "C_free_exec_args")]
-	[pathname-strip-directory pathname-strip-directory] )
-    (lambda (filename #!optional (arglist '()) envlist)
-      (##sys#check-string filename 'process-execute)
-      (let ([arglist (if (pair? arglist) (car arglist) '())])
-	(##sys#check-list arglist 'process-execute)
-	(let ([s (pathname-strip-directory filename)])
-	  (setarg 0 s (##sys#size s)) )
-	(do ([al arglist (cdr al)]
-	     [i 1 (fx+ i 1)] )
-	    ((null? al)
-	     (setarg i #f 0)
-	     (let ([r (##core#inline "C_execvp" (##sys#make-c-string (##sys#expand-home-path filename)))])
-	       (##sys#update-errno)
-	       (when (fx= r -1)
-		 (freeargs)
-		 (##sys#error 'process-execute "cannot execute process" filename) ) ) )
-	  (let ([s (car al)])
-	    (##sys#check-string s 'process-execute)
-	    (setarg i s (##sys#size s)) ) ) ) ) ) )
+; Windows uses a commandline style for process arguments. Thus any
+; arguments with embedded whitespace will parse incorrectly. Must
+; string-quote such arguments.
+(define $quote-args-list
+  (let ([char-whitespace? char-whitespace?]
+        [string-length string-length]
+        [string-ref string-ref]
+        [string-append string-append])
+    (lambda (lst exactf)
+      (if exactf
+        lst
+        (let ([needs-quoting?
+                ; This is essentially (string-any char-whitespace? s) but we don't
+                ; want a SRFI-13 dependency. (Do we?)
+                (lambda (s)
+                  (let ([len (string-length s)])
+                    (let loop ([i 0])
+                      (cond
+                        [(fx= i len) #f]
+                        [(char-whitespace? (string-ref s i)) #t]
+                        [else (loop (fx+ i 1))]))))])
+            (let loop ([ilst lst] [olst '()])
+              (if (null? ilst)
+                (reverse olst)
+                (let ([str (car ilst)])
+                  (loop
+                    (cdr ilst)
+                    (cons
+                      (if (needs-quoting? str) (string-append "\"" str "\"") str)
+                      olst)) ) ) ) ) ) ) ) )
 
-(define process-spawn
+(define $exec-setup
   (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
-	[freeargs (foreign-lambda void "C_free_exec_args")]
-	[pathname-strip-directory pathname-strip-directory] )
-    (lambda (mode filename . arglist)
-      (##sys#check-exact mode 'process-spawn)
-      (##sys#check-string filename 'process-spawn)
-      (let ([arglist (if (pair? arglist) (car arglist) '())])
-	(##sys#check-list arglist 'process-spawn)
-	(let ([s (pathname-strip-directory filename)])
-	  (setarg 0 s (##sys#size s)) )
-	(do ([al arglist (cdr al)]
-	     [i 1 (fx+ i 1)] )
-	    ((null? al)
-	     (setarg i #f 0)
-	     (let ([r (##core#inline "C_spawnvp" mode
-		       (##sys#make-c-string (##sys#expand-home-path filename)))])
-	       (##sys#update-errno)
-	       (when (fx= r -1)
-		 (freeargs)
-		 (##sys#error 'process-spawn "cannot execute process" filename) )
-	       r) )
-	  (let ([s (car al)])
-	    (##sys#check-string s 'process-spawn)
-	    (setarg i s (##sys#size s)) ) ) ) ) ) )
+        [setenv (foreign-lambda void "C_set_exec_env" int scheme-pointer int)]
+        [pathname-strip-directory pathname-strip-directory]
+        [build-exec-arr
+          (lambda (loc lst setarr idx)
+            (if lst
+              (begin
+                (##sys#check-list lst loc)
+                (do ([l lst (cdr l)]
+                     [i idx (fx+ i 1)] )
+                    ((null? l) (setarr i #f 0))
+                  (let ([s (car l)])
+                    (##sys#check-string s loc)
+                    (setarr i s (##sys#size s)) ) ) )
+              (setarr idx #f 0) ) )])
+    (lambda (loc filename arglst envlst exactf)
+      (##sys#check-string filename loc)
+      (let ([s (pathname-strip-directory filename)])
+        (setarg 0 s (##sys#size s)) )
+      (build-exec-arr loc ($quote-args-list arglst exactf) setarg 1)
+      (build-exec-arr loc envlst setenv 0)
+      (##core#inline "C_flushall")
+      (##sys#make-c-string (##sys#expand-home-path filename)) ) ) )
+
+(define $exec-teardown
+  (let ([freeargs (foreign-lambda void "C_free_exec_args")]
+        [freeenv (foreign-lambda void "C_free_exec_env")])
+    (lambda (loc msg filename res)
+      (##sys#update-errno)
+      (freeargs)
+      (freeenv)
+      (when (fx= res -1) (##sys#error loc msg filename) )
+      res ) ) )
+
+(define (process-execute filename #!optional arglst envlst exactf)
+  (let ([prg ($exec-setup 'process-execute filename arglst envlst exactf)])
+    ($exec-teardown 'process-execute "cannot execute process" filename
+      (if envlst (##core#inline "C_execve" prg) (##core#inline "C_execvp" prg))) ) )
+
+(define (process-spawn mode filename #!optional arglst envlst exactf)
+  (let ([prg ($exec-setup 'process-spawn filename arglst envlst exactf)])
+    ($exec-teardown 'process-spawn "cannot spawn process" filename
+      (if envlst (##core#inline "C_spawnvpe" mode prg) (##core#inline "C_spawnvp" mode prg))) ) )
 
 (define current-process-id (foreign-lambda int "C_getpid"))
 
-(define ##sys#shell-command
-  (foreign-lambda* c-string () #<<EOF
-    char *ret = getenv("COMSPEC");
-    if (ret)
-	return (ret);
-    else
-    {
-	OSVERSIONINFO ovf;
-	ovf.dwOSVersionInfoSize = sizeof(ovf);
-	if (GetVersionEx(&ovf) && (ovf.dwPlatformId == VER_PLATFORM_WIN32_NT))
-	    return ("cmd.exe");
-	else
-	    return ("command.com");
-    }
-EOF
-    ) )
+(define-foreign-variable _shlcmd c-string "C_shlcmd")
+
+(define (##sys#shell-command)
+  (or (getenv "COMSPEC")
+      (if (##core#inline "C_get_shlcmd")
+          _shlcmd
+          (begin
+	    (##sys#update-errno)
+	    (##sys#error '##sys#shell-command "cannot retrieve system directory") ) ) ) )
 
 (define (##sys#shell-command-arguments cmdlin)
   (list "/c" cmdlin) )
@@ -1609,21 +1676,35 @@ EOF
   (foreign-lambda int "close_handle" bool))
 
 ; from original by Mejedi
+;; ##sys#process
+; loc            caller procedure symbol
+; cmd            pathname or commandline
+; args           string-list or '()
+; env            string-list or #f (currently ignored)
+; stdoutf        #f then share, or #t then create
+; stdinf         #f then share, or #t then create
+; stderrf        #f then share, or #t then create
+;
+; (values stdin-input-port? stdout-output-port? pid stderr-input-port?)
+; where stdin-input-port?, etc. is a port or #f, indicating no port created.
+
 (define ##sys#process
-  (let (
-      [c-process
-        (foreign-lambda int "C_process" c-string c-pointer
-          (pointer int) (pointer int) (pointer int) (pointer int)
-          int)])
-    (lambda (loc cmd args env stdoutf stdinf stderrf)
-      (let ([commandline (if args (string-intersperse (cons cmd args)) cmd)])
-        (let-location ([handle int -1] [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
-          (let (
-              [code
-                (c-process commandline env
-                  (location handle) (location stdin_fd) (location stdout_fd) (location stderr_fd)
-                  (+ (if stdinf 0 1) (if stdoutf 0 2) (if stderrf 0 4)))])
-            (if (fx= 0 code)
+  (let ([c-process
+          (foreign-lambda bool "C_process" c-string c-string c-pointer
+            (pointer int) (pointer int) (pointer int) (pointer int) int)])
+    ; The environment list must be sorted & include current directory
+    ; information for the system drives. i.e !C:=...
+    ; For now any environment is ignored.
+    (lambda (loc cmd args env stdoutf stdinf stderrf #!optional exactf)
+      (let ([cmdlin (string-intersperse ($quote-args-list (cons cmd args) exactf))])
+        (let-location ([handle int -1]
+                       [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
+          (let ([res
+                  (c-process cmd cmdlin #f
+                    (location handle)
+                    (location stdin_fd) (location stdout_fd) (location stderr_fd)
+                    (+ (if stdinf 0 1) (if stdoutf 0 2) (if stderrf 0 4)))])
+            (if res
               (values
                 (and stdoutf (open-input-file* stdout_fd)) ;Parent stdin
                 (and stdinf (open-output-file* stdin_fd))  ;Parent stdout
@@ -1631,33 +1712,34 @@ EOF
                 (and stderrf (open-input-file* stderr_fd)))
               (begin
                 (##sys#update-errno)
-                (##sys#signal-hook #:process-error loc "cannot execute process" commandline))) ) ) ) ) ) )
+                (##sys#signal-hook #:process-error loc "cannot execute process" cmdlin))) ) ) ) ) ) )
 
 #;(define process (void))
 #;(define process* (void))
 (let ([%process
-        (lambda (loc err? cmd args env)
-          (##sys#check-string cmd loc)
-          (if args
-            (begin
-              (##sys#check-list args loc)
-              (for-each (cut ##sys#check-string <> loc) args) )
+        (lambda (loc err? cmd args env exactf)
+          (let ([chkstrlst
+                 (lambda (lst)
+                   (##sys#check-list lst loc)
+                   (for-each (cut ##sys#check-string <> loc) lst) )])
+            (##sys#check-string cmd loc)
+            (if args
+              (chkstrlst args)
               (begin
+                (set! exactf #t)
                 (set! args (##sys#shell-command-arguments cmd))
                 (set! cmd (##sys#shell-command)) ) )
-          (when env
-            (##sys#check-list env loc)
-            (for-each (cut ##sys#check-string <> loc) env) )
-          (receive [in out pid err] (##sys#process loc cmd args env #t #t err?)
-            (if err?
-              (values in out pid err)
-              (values in out pid) ) ) )] )
+            (when env (chkstrlst env))
+            (receive [in out pid err] (##sys#process loc cmd args env #t #t err? exactf)
+              (if err?
+                (values in out pid err)
+                (values in out pid) ) ) ) )] )
   (set! process
-    (lambda (cmd #!optional args env)
-      (%process 'process #f cmd args env) ))
+    (lambda (cmd #!optional args env exactf)
+      (%process 'process #f cmd args env exactf) ))
   (set! process*
-    (lambda (cmd #!optional args env)
-      (%process 'process* #t cmd args env) )) )
+    (lambda (cmd #!optional args env exactf)
+      (%process 'process* #t cmd args env exactf) )) )
 
 (define-foreign-variable _exstatus int "C_exstatus")
 

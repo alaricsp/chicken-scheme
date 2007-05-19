@@ -128,6 +128,11 @@
       (make-pathname (list chicken-prefix dir) str)
       default) )
 
+(define (quotewrap str)
+  (if (string-any char-whitespace? str)
+      (string-append "\"" str "\"") 
+      str) )
+
 (define home
   (or (getenv "CHICKEN_HOME") 
       (if (and win (not cmake-build))
@@ -138,11 +143,6 @@
 )
 
 (define (homize str) (make-pathname home str))
-
-(define (quotewrap str)
-  (if (string-any char-whitespace? str)
-      (string-append "\"" str "\"") 
-      str) )
 
 (define translator
   (if (and win (not cmake-build))
@@ -191,13 +191,19 @@
 
 (if win
     (begin
+      ; Windows cmd parsing precludes quoting anything but the command!
+      ; This makes driving the various translators with whitespace embedded
+      ; filenames impossible.
       (define (cleanup-filename s) (string-translate s "/" "\\")) ; we need this to please the MSVC tools
       (define default-compilation-optimization-options '("/nologo"))
       (define default-linking-optimization-options '("/nologo"))
       (define best-linking-optimization-options '("/nologo"))
       (define best-compilation-optimization-options '("/O2" "/nologo")) )
     (begin
-      (define (cleanup-filename s) s)
+      (define cleanup-filename
+        (if (not mingw)
+            (lambda (s) (quotewrap s)) ; allow filenames w/ whitespace
+            (lambda (s) s)))
       (define default-compilation-optimization-options (string-split (if host-mode INSTALL_CFLAGS TARGET_CFLAGS)))
       (define best-compilation-optimization-options default-compilation-optimization-options)
       (define default-linking-optimization-options '())
@@ -371,8 +377,8 @@
 	  (cons* "/I%CHICKEN_HOME%" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
 	  (cons* (string-append 
 		  "/I" 
-		  (if host-mode INSTALL_INCLUDE_HOME TARGET_INCLUDE_HOME)
-		 (if (eq? (c-runtime) 'dynamic) '("/MD") '())) ) )
+		  (if host-mode INSTALL_INCLUDE_HOME TARGET_INCLUDE_HOME))
+		 (if (eq? (c-runtime) 'dynamic) '("/MD") '())) )
       (if include-dir (list "-I" include-dir) '())) )
 
 (define compile-only-flag
@@ -546,6 +552,7 @@
     -ldflags                    show required linker flags and exit
     -libs                       show required libraries and exit
     -cc-name                    show name of default C compiler used
+    -cxx-name                   show name of default C++ compiler used
     -ld-name                    show name of default linker used
     -dry-run                    just show commands executed, don't run them 
                                  (implies `-v')
@@ -634,7 +641,7 @@
 	       (when (member target-filename scheme-files)
 		 (printf "Warning: output file will overwrite source file `~A' - renaming source to `~A.old'~%"
 			 target-filename target-filename)
-		 (unless (zero? (system* (sprintf "mv ~A ~A.old" target-filename target-filename)))
+		 (unless (zero? ($system (sprintf "mv ~A ~A.old" target-filename target-filename)))
 		   (exit last-exit-code) ) )
 	       (run-linking)) ) ]
 	  [else
@@ -671,6 +678,7 @@
 		(set! inquiry-only #t)
 		(set! show-ldflags #t) ]
 	       [(-cc-name) (print compiler) (exit 0)]
+	       [(-cxx-name) (print c++-compiler) (exit 0)]
 	       [(-ld-name) (print linker) (exit 0)]
 	       [(-home) (print home) (exit 0)]
 	       [(-libs)
@@ -855,7 +863,7 @@
        (when (and (file-exists? cscf)
 		  (let ([x (with-input-from-file cscf read-line)])
 		    (or (eof-object? x) (string=? "#%eof" x)) ) )
-	 (delete-file* cscf) )
+	 ($delete-file cscf) )
        (let ([fc (pathname-replace-extension
 		  (if (= 1 (length scheme-files))
 		      target-filename
@@ -864,13 +872,13 @@
 			(objc-mode "m")
 			(else "c") ) ) ] )
 	 (unless (zero?
-		  (system* 
+		  ($system 
 		   (string-intersperse 
-		    (cons* translator f 
+		    (cons* translator (cleanup-filename f) 
 			   (append 
 			    (if to-stdout 
 				'("-to-stdout")
-				`("-output-file" ,fc) )
+				`("-output-file" ,(cleanup-filename fc)) )
 			    (if (or static static-libs static-extensions)
 				(map (lambda (e) (conc "-uses " e)) required-extensions)
 				'() )
@@ -886,16 +894,16 @@
 	       (for-each
 		(match-lambda
  		  [('post-process commands ...)
- 		   (for-each system* commands) ]
+ 		   (for-each $system commands) ]
  		  [('c-options opts ...)
  		   (set! compile-options (append compile-options opts)) ]
  		  [('link-options opts ...)
  		   (set! link-options (append link-options opts)) ]
 		  [x (error "invalid entry in csc control file" x)] )
 		(read-file) ) ) )
-	   (delete-file* cscf) ) ) ) )
+	   ($delete-file cscf) ) ) ) )
    (reverse scheme-files) )
-  (unless keep-files (for-each delete-file* generated-scheme-files)) )
+  (unless keep-files (for-each $delete-file generated-scheme-files)) )
 
 
 ;;; Compile all C files:
@@ -905,7 +913,7 @@
    (lambda (f)
      (let ([fo (pathname-replace-extension f object-extension)])
        (unless (zero?
-		(system*
+		($system
 		 (string-intersperse
 		  (list (cond (cpp-mode c++-compiler)
 			      (else compiler) )
@@ -917,7 +925,7 @@
        (set! generated-object-files (cons fo generated-object-files))
        (set! object-files (cons fo object-files)) ) )
    (reverse c-files) )
-  (unless keep-files (for-each delete-file* generated-c-files)) )
+  (unless keep-files (for-each $delete-file generated-c-files)) )
 
 (define (compiler-options)
   (string-intersperse
@@ -938,7 +946,7 @@
 				(if gui gui-library-files library-files)
 				(if gui gui-shared-library-files shared-library-files) ) ) ) ] )
     (unless (zero?
-	     (system*
+	     ($system
 	      (string-intersperse 
 	       (cons* (cond (cpp-mode c++-linker)
 			    (else linker) )
@@ -949,9 +957,9 @@
 			     (linker-libraries #f) ) ) ) ) ) )
       (exit last-exit-code) )
     (when (and win (not static) (not static-libs) (not shared))
-      (delete-file* (pathname-replace-extension target-filename "exp"))
-      (delete-file* (pathname-replace-extension target-filename "lib")) )
-    (unless keep-files (for-each delete-file* generated-object-files)) ) )
+      ($delete-file (pathname-replace-extension target-filename "exp"))
+      ($delete-file (pathname-replace-extension target-filename "lib")) )
+    (unless keep-files (for-each $delete-file generated-object-files)) ) )
 
 (define (static-extension-info)
   (let ((rpath (repository-path)))
@@ -991,13 +999,6 @@
 
 (define-constant +hairy-chars+ '(#\\ #\#))
 
-(define (quote-option x)
-  (if (any (lambda (c)
-	     (or (char-whitespace? c) (memq c +hairy-chars+)) )
-	   (string->list x) )
-      (cleanup x)
-      x) )
-
 (define (cleanup s)
   (let* ((q #f)
 	 (s (list->string
@@ -1013,9 +1014,16 @@
 	(string-append "\"" (string-translate* s '(("\"" . "\\\""))) "\"")
 	s) ) )
 
+(define (quote-option x)
+  (if (any (lambda (c)
+	     (or (char-whitespace? c) (memq c +hairy-chars+)) )
+	   (string->list x) )
+      (cleanup x)
+      x) )
+
 (define last-exit-code #f)
 
-(define (system* str)
+(define ($system str)
   (when verbose (print str))
   (set! last-exit-code
     (if dry-run 
@@ -1027,7 +1035,7 @@
     (printf "*** Shell command terminated with exit status ~S: ~A~%" last-exit-code str) )
   last-exit-code)
 
-(define (delete-file* str)
+(define ($delete-file str)
   (when verbose 
     (if win
 	(print "del " str) 

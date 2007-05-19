@@ -15,6 +15,9 @@ echo "======================================== srfi-18 tests ..."
 echo "======================================== ffi tests ..."
 $compile ffi-test.scm && ./a.out
 
+echo "======================================== path tests ..."
+$compile path-tests.scm && ./a.out
+
 echo "======================================== r4rstest ..."
 ../csi -i -s r4rstest.scm >/dev/null
 

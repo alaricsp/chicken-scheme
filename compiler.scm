@@ -207,7 +207,7 @@
 ;   foldable -> <boolean>                    If true: variable names foldable standard-binding
 ;   boxed -> <boolean>                       If true: variable has to be boxed after closure-conversion
 ;   contractable -> <boolean>                If true: variable names contractable procedure
-;   inlinable -> <boolean>                  If true: variable names potentially inlinable procedure
+;   inlinable -> <boolean>                   If true: variable names potentially inlinable procedure
 ;   collapsable -> <boolean>                 If true: variable refers to collapsable constant
 ;   removable -> <boolean>                   If true: variable is not used
 ;   replacable -> <variable>                 Variable can be replaced by another variable
@@ -271,7 +271,7 @@
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names namespace-table disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning import-table use-import-table
+  compiler-warning import-table use-import-table compiler-macro-table
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
@@ -430,6 +430,7 @@
 (define file-requirements #f)
 (define postponed-initforms '())
 (define unused-variables '())
+(define compiler-macro-table #f)
 
 
 ;;; Initialize globals:
@@ -972,6 +973,13 @@
 					       (walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ] )
 					(walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ) ) ]
 				 
+				 ((and compiler-macro-table (##sys#hash-table-ref compiler-macro-table name)) =>
+				  (lambda (cm)
+				    (let ((cx (cm x)))
+				      (if (equal? cx x)
+					  (handle-call)
+					  (walk cx ae me dest)))))
+
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
 
 	  ((not (proper-list? x))

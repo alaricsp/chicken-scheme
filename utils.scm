@@ -67,8 +67,7 @@
     (define-macro (##sys#check-char . _) '(##core#undefined))
     (define-macro (##sys#check-exact . _) '(##core#undefined))
     (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
+    (define-macro (##sys#check-number . _) '(##core#undefined)))]
  [else
   (declare (emit-exports "utils.exports"))] )
 
@@ -206,7 +205,7 @@
 	 [set (##sys#string-append "\\/\\" pds)]
 	 [rx1 (string-append "^(.*[" set "])?([^" set "]+)(\\.([^" set ".]+))$")]
 	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")]
-	 [string-match string-match]
+	 [string-search string-search]
 	 [strip-pds
 	   (lambda (dir)
 	      (and dir
@@ -223,7 +222,7 @@
 		(let ([m (string-search rx2 pn)])
 		  (if m
 		      (values (strip-pds (cadr m)) (caddr m) #f)
-		      (values pn #f #f) ) ) ) ) ) ) ) )
+		      (values (strip-pds pn) #f #f) ) ) ) ) ) ) ) )
 
 (let ([decompose-pathname decompose-pathname])
   (set! pathname-directory

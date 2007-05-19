@@ -536,7 +536,7 @@ ENDIF(HAVE_CHICKEN_HOME)
 
 IF(NOT EXTANT_CHICKEN)
   FIND_PROGRAM(EXTANT_CHICKEN
-    NAMES chicken-static chicken
+    NAMES chicken chicken-static
     PATHS $ENV{CHICKEN_HOME} $ENV{CHICKEN_HOME}/bin
   )
   IF(EXTANT_CHICKEN)
@@ -981,8 +981,14 @@ ENDIF(UNIX)
 SET(SHARED_FLAGS "-DPIC")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  SET(SHARED_FLAGS "${SHARED_FLAGS} -fno-common -no-cpp-precomp")
+  SET(MACOSX TRUE)
+ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  SET(MACOSX FALSE)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+IF(MACOSX)
+  SET(SHARED_FLAGS "${SHARED_FLAGS} -fno-common -no-cpp-precomp")
+ENDIF(MACOSX)
 
 # Unix platforms can get into trouble if they don't have -lm.
 # Windows platforms generally don't need it.
@@ -1678,8 +1684,13 @@ ADD_DEPENDENCIES(chicken chicken-c)
 # 
 # To work around these problems, we build all static libs and exes
 # in a subdirectory.  Then there are no issues.
+#
+# Apple has depreciated static linkage on Mac OS X, so we don't build or install static libraries
+# or executables on that platform at all.
 
-ADD_SUBDIRECTORY(static)
+IF(NOT MACOSX)
+  ADD_SUBDIRECTORY(static)
+ENDIF(NOT MACOSX)
 
 
 ####################################################################

@@ -420,23 +420,25 @@ EOF
 	      (doread port) ) ) ) ) ) )
 
 (define (##sys#read-string! n dest port start)
-  (when (##sys#slot port 6)		; peeked?
-    (##core#inline "C_setsubchar" dest start (##sys#read-char-0 port))
-    (set! start (fx+ start 1)) )
-  (let ((rdstring (##sys#slot (##sys#slot port 2) 7)))
-    (let loop ((start start) (n n) (m 0))
-      (let ((n2 (if rdstring
-		    (rdstring port n dest start) ; *** doesn't update port-position!
-		    (let ((c (##sys#read-char-0 port)))
-		      (if (eof-object? c)
-			  0
-			  (begin
-			    (##core#inline "C_setsubchar" dest start c)
-			    1) ) ) ) ) )
-	(cond ((eq? n2 0) m)
-	      ((or (not n) (fx< n2 n)) 
-	       (loop (fx+ start n2) (and n (fx- n n2)) (fx+ m n2)) )
-	      (else (fx+ n2 m))) ) ) ))
+  (cond ((eq? n 0) 0)
+	(else
+	 (when (##sys#slot port 6)	; peeked?
+	   (##core#inline "C_setsubchar" dest start (##sys#read-char-0 port))
+	   (set! start (fx+ start 1)) )
+	 (let ((rdstring (##sys#slot (##sys#slot port 2) 7)))
+	   (let loop ((start start) (n n) (m 0))
+	     (let ((n2 (if rdstring
+			   (rdstring port n dest start) ; *** doesn't update port-position!
+			   (let ((c (##sys#read-char-0 port)))
+			     (if (eof-object? c)
+				 0
+				 (begin
+				   (##core#inline "C_setsubchar" dest start c)
+				   1) ) ) ) ) )
+	       (cond ((eq? n2 0) m)
+		     ((or (not n) (fx< n2 n)) 
+		      (loop (fx+ start n2) (and n (fx- n n2)) (fx+ m n2)) )
+		     (else (fx+ n2 m))) ) ) ))))
 
 (define (read-string! n dest #!optional (port ##sys#standard-input) (start 0))
   (##sys#check-port port 'read-string!)

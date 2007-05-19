@@ -114,32 +114,21 @@ ENDIF(MSVC)
 #  CREATE CSI-STATIC                                               #
 ####################################################################
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  SET(MACOSX TRUE)
-ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  SET(MACOSX FALSE)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-SET(MACOSX TRUE)
-
-IF(NOT MACOSX)
-  ADD_EXECUTABLE(csi-static ${CSI_EXE_SOURCES})
-  SET_TARGET_PROPERTIES(csi-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-  TARGET_LINK_LIBRARIES(csi-static libchicken-static)
-  ADD_DEPENDENCIES(csi-static csi-c)
-ENDIF(NOT MACOSX)
+ADD_EXECUTABLE(csi-static ${CSI_EXE_SOURCES})
+SET_TARGET_PROPERTIES(csi-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
+TARGET_LINK_LIBRARIES(csi-static libchicken-static)
+ADD_DEPENDENCIES(csi-static csi-c)
 
 
 ####################################################################
 #  CREATE CHICKEN-STATIC.EXE                                       #
 ####################################################################
 
-IF(NOT MACOSX)
-  ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
-  SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
-  TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
-  ADD_DEPENDENCIES(chicken-static chicken-c)
-ENDIF(NOT MACOSX)
+ADD_EXECUTABLE(chicken-static ${CHICKEN_EXE_SOURCES})
+SET_TARGET_PROPERTIES(chicken-static PROPERTIES COMPILE_FLAGS "${STATIC_FLAGS}")
+TARGET_LINK_LIBRARIES(chicken-static libchicken-static)
+ADD_DEPENDENCIES(chicken-static chicken-c)
 
 
 ####################################################################
@@ -159,12 +148,11 @@ IF(WIN32 AND NOT CYGWIN)
     ARCHIVE DESTINATION ${LIB_HOME})
 ENDIF(WIN32 AND NOT CYGWIN)
 
-IF(NOT MACOSX)
-  INSTALL(TARGETS
-    chicken-static
-    csi-static
-    RUNTIME DESTINATION ${BIN_HOME})
-ENDIF(NOT MACOSX)
+INSTALL(TARGETS
+  chicken-static
+  csi-static
+  RUNTIME DESTINATION ${BIN_HOME}
+)
 
 
 ####################################################################
