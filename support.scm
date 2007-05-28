@@ -909,7 +909,7 @@
 	     [(int unsigned-int short unsigned-short byte unsigned-byte int32 unsigned-int32)
 	      (if unsafe param `(##sys#foreign-fixnum-argument ,param))]
 	     [(float double number) (if unsafe param `(##sys#foreign-flonum-argument ,param))]
-	     [(pointer byte-vector scheme-pointer) ; pointer is DEPRECATED
+	     [(pointer byte-vector blob scheme-pointer) ; pointer and byte-vector are DEPRECATED
 	      (let ([tmp (gensym)])
 		`(let ([,tmp ,param])
 		   (if ,tmp
@@ -917,7 +917,7 @@
 			    tmp
 			    `(##sys#foreign-block-argument ,tmp) )
 		       '#f) ) ) ]
-	     [(nonnull-pointer nonnull-scheme-pointer nonnull-byte-vector) ; nonnull-pointer is DEPRECATED
+	     [(nonnull-pointer nonnull-scheme-pointer nonnull-blob nonnull-byte-vector) ; nonnull-pointer and nonnull-blob are DEPRECATED
 	      (if unsafe
 		  param
 		  `(##sys#foreign-block-argument ,param) ) ]

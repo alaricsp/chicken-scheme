@@ -431,7 +431,8 @@ static C_TLS int
   dlopen_flags,
   heap_size_changed,
   chicken_is_running,
-  chicken_ran_once;
+  chicken_ran_once,
+  callback_continuation_level;
 static C_TLS unsigned int
   mutation_count,
   stack_size,
@@ -718,6 +719,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   current_module_name = NULL;
   current_module_handle = NULL;
   reload_lf = NULL;
+  callback_continuation_level = 0;
   C_randomize(time(NULL));
   return 1;
 }
@@ -1254,7 +1256,7 @@ C_word CHICKEN_run(void *toplevel)
 C_word CHICKEN_continue(C_word k)
 {
   if(C_temporary_stack_bottom != C_temporary_stack)
-    panic(C_text("invalid level of temporary stack"));
+    panic(C_text("invalid temporary stack level"));
 
   if(!chicken_is_initialized)
     panic(C_text("runtime system has not been initialized - `CHICKEN_run' has probably not been called"));
@@ -1478,7 +1480,7 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_BYTEVECTOR_ERROR:
-    msg = C_text("bad argument type - not a bytevector");
+    msg = C_text("bad argument type - not a blob");
     c = 1;
     break;
 
@@ -1627,12 +1629,13 @@ int C_fcall C_save_callback_continuation(C_word **ptr, C_word k)
   C_word p = C_pair(ptr, k, C_block_item(callback_continuation_stack_symbol, 0));
   
   C_mutate(&C_block_item(callback_continuation_stack_symbol, 0), p);
-  return 0;
+  return ++callback_continuation_level;
 }
 
 
 C_word C_fcall C_restore_callback_continuation(void) 
 {
+  /* obsolete, but retained for keeping old code working */
   C_word p = C_block_item(callback_continuation_stack_symbol, 0),
          k;
 
@@ -1640,6 +1643,25 @@ C_word C_fcall C_restore_callback_continuation(void)
   k = C_u_i_car(p);
 
   C_mutate(&C_block_item(callback_continuation_stack_symbol, 0), C_u_i_cdr(p));
+  --callback_continuation_level;
+  return k;
+}
+
+
+C_word C_fcall C_restore_callback_continuation2(int level) 
+{
+  C_word p = C_block_item(callback_continuation_stack_symbol, 0),
+         k;
+
+#ifndef C_UNSAFE_RUNTIME
+  if(level != callback_continuation_level || C_immediatep(p) || C_block_header(p) != C_PAIR_TAG)
+    panic(C_text("unbalanced callback continuation stack"));
+#endif
+
+  k = C_u_i_car(p);
+
+  C_mutate(&C_block_item(callback_continuation_stack_symbol, 0), C_u_i_cdr(p));
+  --callback_continuation_level;
   return k;
 }
 
@@ -1650,6 +1672,12 @@ C_word C_fcall C_callback(C_word closure, int argc)
   C_word 
     *a = C_alloc(2),
     k = C_closure(&a, 1, (C_word)callback_return_continuation);
+  int old = chicken_is_running;
+
+#ifndef C_UNSAFE_RUNTIME
+  if(old && C_block_item(callback_continuation_stack_symbol, 0) == C_SCHEME_END_OF_LIST)
+    panic(C_text("callback invoked in non-safe context"));
+#endif
 
   C_memcpy(&prev, &C_restart, sizeof(jmp_buf));
   callback_returned_flag = 0;       
@@ -1657,14 +1685,13 @@ C_word C_fcall C_callback(C_word closure, int argc)
 
   if(!C_setjmp(C_restart)) C_do_apply(argc, closure, k);
 
-  chicken_is_running = 0;
-
   if(!callback_returned_flag) (C_restart_trampoline)(C_restart_address);
   else {
     C_memcpy(&C_restart, &prev, sizeof(jmp_buf));
     callback_returned_flag = 0;
   }
  
+  chicken_is_running = old;
   return C_restore;
 }
 
@@ -2175,7 +2202,7 @@ C_regparm C_word C_fcall C_pbytevector(int len, C_char *str)
 {
   C_SCHEME_BLOCK *pbv = C_malloc(len + sizeof(C_header));
 
-  if(pbv == NULL) panic(C_text("out of memory - can not allocate permanent bytevector"));
+  if(pbv == NULL) panic(C_text("out of memory - can not allocate permanent blob"));
 
   pbv->header = C_BYTEVECTOR_TYPE | len;
   C_memcpy(pbv->data, str, len);
@@ -8802,4 +8829,27 @@ void C_call_with_cthulhu(C_word c, C_word self, C_word k, C_word proc)
   
   k = C_closure(&a, 1, (C_word)termination_continuation);
   C_apply(4, C_SCHEME_UNDEFINED, k, proc, C_SCHEME_END_OF_LIST);
+}
+
+
+/* fixnum arithmetic with overflow detection (from "Hacker's Delight" by Hank Warren) */
+
+C_regparm C_word C_i_o_fixnum_plus(C_word n1, C_word n2)
+{
+  C_word x1 = C_unfix(n1);
+  C_word x2 = C_unfix(n2);
+  C_word s = x1 + x2;
+  
+  if((((s ^ x1) & (s ^ x2)) >> 30) != 0) return C_SCHEME_FALSE;
+  else return C_fix(s);
+}
+
+C_regparm C_word C_i_o_fixnum_difference(C_word n1, C_word n2)
+{
+  C_word x1 = C_unfix(n1);
+  C_word x2 = C_unfix(n2);
+  C_word s = x1 - x2;
+  
+  if((((s ^ x1) & ~(s ^ x2)) >> 30) != 0) return C_SCHEME_FALSE;
+  else return C_fix(s);
 }

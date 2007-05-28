@@ -124,7 +124,7 @@ EOF
      ##sys#enable-interrupts ##sys#disable-interrupts ##sys#->feature-id
      ##sys#fudge ##sys#user-read-hook ##sys#check-range ##sys#read
      ##sys#string->symbol ##sys#symbol->string ##sys#dynamic-unwind ##sys#pathname-resolution
-     ##sys#expand-home-path ##sys#string-append ##sys#symbol->qualified-string
+     ##sys#platform-fixup-pathname ##sys#expand-home-path ##sys#string-append ##sys#symbol->qualified-string
      ##sys#error-handler ##sys#signal ##sys#abort ##sys#port-data
      ##sys#reset-handler ##sys#exit-handler ##sys#dynamic-wind ##sys#port-line
      ##sys#grow-vector ##sys#run-pending-finalizers ##sys#peek-char-0 ##sys#read-char-0
@@ -1688,6 +1688,20 @@ EOF
 
 (define (##sys#port-data port) (##sys#slot port 9))
 
+(define ##sys#platform-fixup-pathname
+  (let* ([bp (string->symbol ((##core#primitive "C_build_platform")))]
+	 [fixsuffix (or (eq? bp 'msvc) (eq? bp 'mingw32))])
+    (lambda (name)
+      (if fixsuffix
+        (let ([end (fx- (##sys#size name) 1)])
+          (if (fx>= end 0)
+            (let ([c (##core#inline "C_subchar" name end)])
+              (if (or (eq? c #\\) (eq? c #\/))
+                (##sys#substring name 0 end)
+                name) )
+            name) )
+        name) ) ) )
+
 (define (##sys#pathname-resolution name thunk . _)
   (thunk (##sys#expand-home-path name)) )
 
@@ -1799,22 +1813,13 @@ EOF
 	    (set! ##sys#standard-output old)
 	    (apply ##sys#values results) ) ) ) ) ) )
 
-(define file-exists?
-  (let ((bp (string->symbol ((##core#primitive "C_build_platform"))))
-	(fixsuffix (or (eq? bp 'msvc) (eq? bp 'mingw32))))
+(define (file-exists? name)
+  (##sys#check-string name 'file-exists?)
+  (##sys#pathname-resolution
+    name
     (lambda (name)
-      (##sys#check-string name 'file-exists?)
-      (##sys#pathname-resolution
-       name
-       (lambda (name) 
-	 (let* ((len (##sys#size name))
-		(name2 (if (and fixsuffix
-			       (let ((c (##core#inline "C_subchar" name (fx- len 1))))
-				 (or (eq? c #\\) (eq? c #\/)) ) )
-			  (##sys#substring name 0 (fx- len 1))
-			  name) ) )
-	   (and (##sys#file-info name2) name)) ) 
-       #:exists?) ) ) )
+      (and (##sys#file-info (##sys#platform-fixup-pathname name)) name) )
+    #:exists?) )
 
 (define (##sys#flush-output port)
   ((##sys#slot (##sys#slot port 2) 5) port) ; flush-output
@@ -2789,9 +2794,11 @@ EOF
 		   (out (##sys#slot x 0)) ) )
 		((##core#inline "C_bytevectorp" x)
 		 (if (##core#inline "C_permanentp" x)
-		     (outstr port "#<static byte-vector>")
-		     (outstr port "#<byte-vector>") ) )
-		((##core#inline "C_structurep" x) (##sys#user-print-hook x readable port))
+		     (outstr port "#<static blob of size")
+		     (outstr port "#<blob of size ") )
+		 (outstr port (number->string (##core#inline "C_block_size" x)))
+		 (outchr port #\>) )
+   	        ((##core#inline "C_structurep" x) (##sys#user-print-hook x readable port))
 		((##core#inline "C_closurep" x) (outstr port (##sys#procedure->string x)))
  		((##core#inline "C_locativep" x) (outstr port "#<locative>"))
 		((##core#inline "C_lambdainfop" x)
@@ -3847,7 +3854,7 @@ EOF
    '()					; #8 owned mutexes
    q					; #9 quantum
    (##core#undefined)			; #10 specific
-   #f					; #11 block-thread (currently unused)
+   #f					; #11 block object (type depends on blocking type)
    '() ) )				; #12 recipients (currently unused)
 
 (define ##sys#primordial-thread (##sys#make-thread #f 'running 'primordial ##sys#default-thread-quantum))

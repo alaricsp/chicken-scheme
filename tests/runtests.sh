@@ -1,5 +1,5 @@
 #!/bin/sh
-# runtests.sh 
+# runtests.sh
 
 set -e
 export DYLD_LIBRARY_PATH=`pwd`/..
@@ -9,11 +9,11 @@ compile="../csc -compiler ../chicken -o a.out"
 echo "======================================== library tests ..."
 ../csi -w -s library-tests.scm
 
+echo "======================================== fixnum tests ..."
+$compile fixnum-tests.scm && ./a.out
+
 echo "======================================== srfi-18 tests ..."
 ../csi -w -s srfi-18-tests.scm
-
-echo "======================================== ffi tests ..."
-$compile ffi-test.scm && ./a.out
 
 echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out

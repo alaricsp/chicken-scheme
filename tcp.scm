@@ -545,7 +545,7 @@ EOF
 	      (let ((f (##net#select-write s)))
 		(when (eq? f -1) (fail))
 		(unless (eq? f 1)
-		  ;(##sys#thread-block-for-i/o! ##sys#current-thread s #t)
+		  (##sys#thread-block-for-i/o! ##sys#current-thread s #:all)
 		  (yield)
 		  (loop) ) ) )
 	    (fail) ) )

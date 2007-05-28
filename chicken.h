@@ -1112,6 +1112,7 @@ C_fctexport void CHICKEN_interrupt();
 C_fctexport void C_check_nursery_minimum(C_word size);
 C_fctexport int C_fcall C_save_callback_continuation(C_word **ptr, C_word k);
 C_fctexport C_word C_fcall C_restore_callback_continuation(void);
+C_fctexport C_word C_fcall C_restore_callback_continuation2(int level);
 C_fctexport C_word C_fcall C_callback(C_word closure, int argc);
 C_fctexport C_word C_fcall C_callback_wrapper(void *proc, int argc);
 C_fctexport void C_fcall C_callback_adjust_stack_limits(C_word *base);
@@ -1428,6 +1429,8 @@ C_fctexport C_word C_fcall C_a_i_acos(C_word **a, int c, C_word n) C_regparm;
 C_fctexport C_word C_fcall C_a_i_atan(C_word **a, int c, C_word n) C_regparm;
 C_fctexport C_word C_fcall C_a_i_atan2(C_word **a, int c, C_word n1, C_word n2) C_regparm;
 C_fctexport C_word C_fcall C_a_i_sqrt(C_word **a, int c, C_word n) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_plus(C_word x, C_word y) C_regparm;
+C_fctexport C_word C_fcall C_i_o_fixnum_difference(C_word x, C_word y) C_regparm;
 
 C_fctexport C_word C_fcall C_i_foreign_char_argumentp(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_foreign_fixnum_argumentp(C_word x) C_regparm;

@@ -280,9 +280,10 @@ EOF
 (define shuffle
   ;; this should really shadow SORT! and RANDOM...
   (lambda (l)
-    (map cdr
-	 (sort! (map (lambda (x) (cons (random 10000) x)) l)
-		(lambda (x y) (< (car x) (car y)))) ) ) )
+    (let ((len (length l)))
+      (map cdr
+	   (sort! (map (lambda (x) (cons (random len) x)) l)
+		  (lambda (x y) (< (car x) (car y)))) ) ) ) )
 
 
 ;;; Alists:
@@ -492,7 +493,7 @@ EOF
     (lambda (s . more)
       (##sys#check-string s 'write-string)
       (let-optionals more ([n #f] [port ##sys#standard-output])
-	(##sys#check-port port 'read-string)
+	(##sys#check-port port 'write-string)
 	(when n (##sys#check-exact n 'write-string))
 	(display 
 	 (if (and n (fx< n (##sys#size s)))
@@ -724,17 +725,23 @@ EOF
 	      ((eof-object? obj)  (out "#<eof>" col))
 	      ((##core#inline "C_undefinedp" obj) (out "#<unspecified>" col))
 	      ((##core#inline "C_anypointerp" obj) (out (##sys#pointer->string obj) col))
+	      ((eq? obj (##sys#slot '##sys#arbitrary-unbound-symbol 0))
+	       (out "#<unbound value>" col) )
 	      ((##sys#generic-structure? obj)
 	       (let ([o (open-output-string)])
 		 (##sys#user-print-hook obj #t o)
 		 (out (get-output-string o) col) ) )
 	      ((port? obj) (out (string-append "#<port " (##sys#slot obj 3) ">") col))
+	      ((##core#inline "C_bytevectorp" obj)
+	       (if (##core#inline "C_permanentp" obj)
+		   (out "#<static blob of size" col)
+		   (out "#<blob of size " col) )
+	       (out (number->string (##core#inline "C_block_size" obj)) col)
+	       (out ">" col) )
 	      ((##core#inline "C_lambdainfop" obj)
 	       (out "#<lambda info " col)
 	       (out (##sys#lambda-info->string obj) col)
 	       (out "#>" col) )
-	      ((eq? obj (##sys#slot '##sys#arbitrary-unbound-symbol 0))
-	       (out "#<unbound value>" col) )
 	      (else               (out "#<unprintable object>" col)) ) )
 
       (define (pp obj col)

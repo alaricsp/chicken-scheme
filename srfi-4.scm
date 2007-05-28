@@ -504,34 +504,89 @@ EOF
   (define (pack tag loc)
     (lambda (v)
       (##sys#check-structure v tag loc)
-      (##core#inline "C_slot" v 1) ) )
+      (##sys#slot v 1) ) )
+
+  (define (pack-copy tag loc)
+    (lambda (v)
+      (##sys#check-structure v tag loc)
+      (let* ((old (##sys#slot v 1))
+	     (new (make-string (##sys#size old))))
+	(##core#inline "C_copy_block" old new) ) ) )
 
   (define (unpack tag sz loc)
     (lambda (str)
       (##sys#check-byte-vector str loc)
-      (let ([len (##core#inline "C_block_size" str)])
+      (let ([len (##sys#size str)])
 	(if (or (eq? #t sz) 
-		(##core#inline "C_eqp" 0 (##core#inline "C_fixnum_modulo" len sz)))
+		(eq? 0 (##core#inline "C_fixnum_modulo" len sz)))
 	    (##sys#make-structure tag str) 
-	    (##sys#error loc "bytevector does not have correct size for packing" tag len sz) ) ) ) )
+	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )
 
-  (set! u8vector->byte-vector (pack 'u8vector 'u8vector->byte-vector))
-  (set! s8vector->byte-vector (pack 's8vector 's8vector->byte-vector))
-  (set! u16vector->byte-vector (pack 'u16vector 'u16vector->byte-vector))
-  (set! s16vector->byte-vector (pack 's16vector 's16vector->byte-vector))
-  (set! u32vector->byte-vector (pack 'u32vector 'u32vector->byte-vector))
-  (set! s32vector->byte-vector (pack 's32vector 's32vector->byte-vector))
-  (set! f32vector->byte-vector (pack 'f32vector 'f32vector->byte-vector))
-  (set! f64vector->byte-vector (pack 'f64vector 'f64vector->byte-vector)) 
+  (define (unpack-copy tag sz loc)
+    (lambda (str)
+      (##sys#check-byte-vector str loc)
+      (let* ((len (##sys#size str))
+	    (new (make-string len)))
+	(if (or (eq? #t sz) 
+		(eq? 0 (##core#inline "C_fixnum_modulo" len sz)))
+	    (##sys#make-structure 
+	     tag 
+	     (##core#inline "C_copy_block" str new) )
+	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )    
 
-  (set! byte-vector->u8vector (unpack 'u8vector #t 'byte-vector->u8vector))
-  (set! byte-vector->s8vector (unpack 's8vector #t 'byte-vector->s8vector))
-  (set! byte-vector->u16vector (unpack 'u16vector 2 'byte-vector->u16vector))
-  (set! byte-vector->s16vector (unpack 's16vector 2 'byte-vector->s16vector))
-  (set! byte-vector->u32vector (unpack 'u32vector 4 'byte-vector->u32vector))
-  (set! byte-vector->s32vector (unpack 's32vector 4 'byte-vector->s32vector))
-  (set! byte-vector->f32vector (unpack 'f32vector 4 'byte-vector->f32vector))
-  (set! byte-vector->f64vector (unpack 'f64vector 8 'byte-vector->f64vector)) )
+  (set! u8vector->byte-vector (pack 'u8vector 'u8vector->byte-vector)) ; DEPRECATED
+  (set! s8vector->byte-vector (pack 's8vector 's8vector->byte-vector)) ; DEPRECATED
+  (set! u16vector->byte-vector (pack 'u16vector 'u16vector->byte-vector)) ; DEPRECATED
+  (set! s16vector->byte-vector (pack 's16vector 's16vector->byte-vector)) ; DEPRECATED
+  (set! u32vector->byte-vector (pack 'u32vector 'u32vector->byte-vector)) ; DEPRECATED
+  (set! s32vector->byte-vector (pack 's32vector 's32vector->byte-vector)) ; DEPRECATED
+  (set! f32vector->byte-vector (pack 'f32vector 'f32vector->byte-vector)) ; DEPRECATED
+  (set! f64vector->byte-vector (pack 'f64vector 'f64vector->byte-vector)) ; DEPRECATED
+
+  (set! u8vector->blob/shared (pack 'u8vector 'u8vector->blob/shared))
+  (set! s8vector->blob/shared (pack 's8vector 's8vector->blob/shared))
+  (set! u16vector->blob/shared (pack 'u16vector 'u16vector->blob/shared))
+  (set! s16vector->blob/shared (pack 's16vector 's16vector->blob/shared))
+  (set! u32vector->blob/shared (pack 'u32vector 'u32vector->blob/shared))
+  (set! s32vector->blob/shared (pack 's32vector 's32vector->blob/shared))
+  (set! f32vector->blob/shared (pack 'f32vector 'f32vector->blob/shared))
+  (set! f64vector->blob/shared (pack 'f64vector 'f64vector->blob/shared)) 
+
+  (set! u8vector->blob (pack-copy 'u8vector 'u8vector->blob))
+  (set! s8vector->blob (pack-copy 's8vector 's8vector->blob))
+  (set! u16vector->blob (pack-copy 'u16vector 'u16vector->blob))
+  (set! s16vector->blob (pack-copy 's16vector 's16vector->blob))
+  (set! u32vector->blob (pack-copy 'u32vector 'u32vector->blob))
+  (set! s32vector->blob (pack-copy 's32vector 's32vector->blob))
+  (set! f32vector->blob (pack-copy 'f32vector 'f32vector->blob))
+  (set! f64vector->blob (pack-copy 'f64vector 'f64vector->blob)) 
+
+  (set! byte-vector->u8vector (unpack 'u8vector #t 'byte-vector->u8vector)) ; DEPRECATED
+  (set! byte-vector->s8vector (unpack 's8vector #t 'byte-vector->s8vector)) ; DEPRECATED
+  (set! byte-vector->u16vector (unpack 'u16vector 2 'byte-vector->u16vector)) ; DEPRECATED
+  (set! byte-vector->s16vector (unpack 's16vector 2 'byte-vector->s16vector)) ; DEPRECATED
+  (set! byte-vector->u32vector (unpack 'u32vector 4 'byte-vector->u32vector)) ; DEPRECATED
+  (set! byte-vector->s32vector (unpack 's32vector 4 'byte-vector->s32vector)) ; DEPRECATED
+  (set! byte-vector->f32vector (unpack 'f32vector 4 'byte-vector->f32vector)) ; DEPRECATED
+  (set! byte-vector->f64vector (unpack 'f64vector 8 'byte-vector->f64vector)) ; DEPRECATED
+
+  (set! blob->u8vector/shared (unpack 'u8vector #t 'blob->u8vector/shared))
+  (set! blob->s8vector/shared (unpack 's8vector #t 'blob->s8vector/shared))
+  (set! blob->u16vector/shared (unpack 'u16vector 2 'blob->u16vector/shared))
+  (set! blob->s16vector/shared (unpack 's16vector 2 'blob->s16vector/shared))
+  (set! blob->u32vector/shared (unpack 'u32vector 4 'blob->u32vector/shared))
+  (set! blob->s32vector/shared (unpack 's32vector 4 'blob->s32vector/shared))
+  (set! blob->f32vector/shared (unpack 'f32vector 4 'blob->f32vector/shared))
+  (set! blob->f64vector/shared (unpack 'f64vector 8 'blob->f64vector/shared))
+
+  (set! blob->u8vector (unpack-copy 'u8vector #t 'blob->u8vector))
+  (set! blob->s8vector (unpack-copy 's8vector #t 'blob->s8vector))
+  (set! blob->u16vector (unpack-copy 'u16vector 2 'blob->u16vector))
+  (set! blob->s16vector (unpack-copy 's16vector 2 'blob->s16vector))
+  (set! blob->u32vector (unpack-copy 'u32vector 4 'blob->u32vector))
+  (set! blob->s32vector (unpack-copy 's32vector 4 'blob->s32vector))
+  (set! blob->f32vector (unpack-copy 'f32vector 4 'blob->f32vector))
+  (set! blob->f64vector (unpack-copy 'f64vector 8 'blob->f64vector)) )
 
 
 ;;; Read syntax:

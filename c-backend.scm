@@ -36,8 +36,6 @@
 (declare (unit backend))
 
 
-;; The unspeakable namespace hack
-
 #{compiler
   compiler-arguments process-command-line find-early-refs
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
@@ -567,7 +565,7 @@
 			  (gen ",C_word t" (+ n 1) ") C_noret;") ) ) ]
 		   [else 
 		    (gen #\))
-					;(when customizable (gen " C_c_regparm"))
+		    ;;(when customizable (gen " C_c_regparm"))
 		    (unless direct (gen " C_noret"))
 		    (gen #\;) ] ) ) )
 	 lambdas) 
@@ -997,7 +995,7 @@
     (trailer) ) )
 
 
-;;; Emit prrocedure table:
+;;; Emit procedure table:
 
 (define (emit-procedure-table-info lambdas sf)
   (gen #t #t "#ifdef C_ENABLE_PTABLES"
@@ -1093,7 +1091,9 @@
        (gen #t)
        (when rname
 	 (gen #t "/* from " (cleanup rname) " */") )
-       (when body (gen #t "#define return(x) C_cblock C_r = (" rconv "(x))); goto C_return; C_cblockend"))
+       (when body
+	 (gen #t "#define return(x) C_cblock C_r = (" rconv 
+	      "(x))); goto C_ret; C_cblockend"))
        (if cps
 	   (gen #t "C_noret_decl(" id ")"
 		#t "static void C_ccall " id "(C_word C_c,C_word C_self,C_word C_k,")
@@ -1114,13 +1114,13 @@
 	       "=(" (foreign-type-declaration type "") #\)
 	       (foreign-argument-conversion type) "C_a" index ");") )
 	types (iota n) names)
-       (when callback (gen #t "int C_dummy=C_save_callback_continuation(&C_a,C_k);"))
+       (when callback (gen #t "int C_level=C_save_callback_continuation(&C_a,C_k);"))
        (cond [body
 	      (gen #t body
-		   #t "C_return:")
+		   #t "C_ret:")
 	      (gen #t "#undef return" #t)
 	      (cond [callback
-		     (gen #t "C_k=C_restore_callback_continuation();"
+		     (gen #t "C_k=C_restore_callback_continuation2(C_level);"
 			  #t "C_kontinue(C_k,C_r);") ]
 		    [cps (gen #t "C_kontinue(C_k,C_r);")]
 		    [else (gen #t "return C_r;")] ) ]
@@ -1133,7 +1133,7 @@
 	      (unless (eq? rtype 'void) (gen #\)))
 	      (gen ");")
 	      (cond [callback
-		     (gen #t "C_k=C_restore_callback_continuation();"
+		     (gen #t "C_k=C_restore_callback_continuation2(level);"
 			  #t "C_kontinue(C_k,C_r);") ]
 		    [cps (gen "C_kontinue(C_k,C_r);")]
 		    [else (gen #t "return C_r;")] ) ] )
@@ -1236,7 +1236,8 @@
 		nonnull-scheme-pointer)
        (str "void *")]
       [(c-string-list c-string-list*) "C_char **"]
-      [(byte-vector nonnull-byte-vector u8vector nonnull-u8vector) (str "unsigned char *")]
+      [(byte-vector) (str "unsigned char *")] ; DEPRECATED
+      [(blob nonnull-byte-vector u8vector nonnull-u8vector) (str "unsigned char *")]
       [(u16vector nonnull-u16vector) (str "unsigned short *")]
       [(s8vector nonnull-s8vector) (str "char *")]
       [(u32vector nonnull-u32vector) (str "unsigned int *")]
@@ -1313,8 +1314,10 @@
       ((nonnull-pointer nonnull-scheme-pointer) "C_data_pointer(") ; nonnull-pointer is DEPRECATED
       ((c-pointer) "C_c_pointer_or_null(")
       ((nonnull-c-pointer) "C_c_pointer_nn(")
-      ((byte-vector) "C_c_bytevector_or_null(")
-      ((nonnull-byte-vector) "C_c_bytevector(")
+      ((blob) "C_c_bytevector_or_null(")
+      ((byte-vector) "C_c_bytevector_or_null(") ; DEPRECATED
+      ((nonnull-blob) "C_c_bytevector(")
+      ((nonnull-byte-vector) "C_c_bytevector(") ; DEPRECATED
       ((u8vector) "C_c_u8vector_or_null(")
       ((nonnull-u8vector) "C_c_u8vector(")
       ((u16vector) "C_c_u16vector_or_null(")

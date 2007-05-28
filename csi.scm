@@ -658,7 +658,7 @@ EOF
 	      [(##sys#pointer? x) (fprintf out "machine pointer ~X~%" (##sys#peek-unsigned-integer x 0))]
 	      [(##sys#bytevector? x)
 	       (let ([len (##sys#size x)])
-		 (fprintf out "byte vector of size ~S:~%" len)
+		 (fprintf out "blob of size ~S:~%" len)
 		 (hexdump x len ##sys#byte out) ) ]
 	      [(##core#inline "C_lambdainfop" x)
 	       (fprintf out "lambda information: ~s~%" (##sys#lambda-info->string x)) ]

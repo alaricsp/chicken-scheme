@@ -165,10 +165,16 @@
     fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl bit-set?
     arithmetic-shift void flush-output thread-specific thread-specific-set!
     not-pair? atom? null-list? print print* error cpu-time proper-list? call/cc
-    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector 
-    u32vector->byte-vector 
-    s32vector->byte-vector byte-vector-length block-ref block-set! number-of-slots
-    f32vector->byte-vector f64vector->byte-vector byte-vector-ref byte-vector-set!
+    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector ; DEPRECATED
+    u32vector->byte-vector s32vector->byte-vector byte-vector-length ; DEPRECATED
+    f32vector->byte-vector f64vector->byte-vector byte-vector-ref byte-vector-set! ; DEPRECATED
+    blob-size u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared
+    s16vector->blob/shared u32vector->blob/shared s32vector->blob/shared
+    f32vector->blob/shared f64vector->blob/shared
+    blob->u8vector/shared blob->s8vector/shared blob->u16vector/shared
+    blob->s16vector/shared blob->u32vector/shared blob->s32vector/shared
+    blob->f32vector/shared blob->f64vector/shared
+    block-ref block-set! number-of-slots
     hash-table-ref any?
     first second third fourth make-record-instance
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
@@ -213,9 +219,14 @@
 
 (define non-foldable-extended-bindings
   '(##sys#slot ##sys#setslot ##sys#call-with-current-continuation ##sys#fudge flush-output print void
-    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector u32vector->byte-vector 
-    s32vector->byte-vector ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
-    f32vector->byte-vector f64vector->byte-vector ##sys#byte ##sys#setbyte byte-vector-ref byte-vector-set!
+    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector u32vector->byte-vector ; DEPRECATED
+    f32vector->byte-vector f64vector->byte-vector s32vector->byte-vector ;DEPRECATED
+    u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared s16vector->blob/shared u32vector->blob/shared
+    f32vector->blob/shared f64vector->blob/shared
+    s32vector->blob/shared
+    ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
+    ##sys#byte ##sys#setbyte 
+    byte-vector-ref byte-vector-set!	; DEPRECATED
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length ##sys#apply-values ##sys#setter setter
     u8vector-ref s8vector-ref u16vector-ref s16vector-ref u32vector-ref s32vector-ref
@@ -898,9 +909,10 @@
 (rewrite '##sys#foreign-unsigned-integer-argument 17 1 "C_i_foreign_unsigned_integer_argumentp")
 (rewrite '##sys#direct-return 17 2 "C_direct_return")
 
-(rewrite 'byte-vector-ref 2 2 "C_subbyte" #f #f)
-(rewrite 'byte-vector-set! 2 3 "C_setbyte" #f #f)
-(rewrite 'byte-vector-length 2 1 "C_block_size" #f #f)
+(rewrite 'byte-vector-ref 2 2 "C_subbyte" #f #f) ; DEPRECATED
+(rewrite 'byte-vector-set! 2 3 "C_setbyte" #f #f) ; DEPRECATED
+(rewrite 'byte-vector-length 2 1 "C_block_size" #f #f) ; DEPRECATED
+(rewrite 'blob-size 2 1 "C_block_size" #f #f) ; DEPRECATED
 
 (rewrite 'u8vector-ref 2 2 "C_u_i_u8vector_ref" #f #f)
 (rewrite 's8vector-ref 2 2 "C_u_i_s8vector_ref" #f #f)
@@ -930,14 +942,23 @@
 (rewrite 'atom? 17 1 "C_i_not_pair_p")
 (rewrite 'null-list? 17 1 "C_i_null_list_p" "C_i_nullp")
 
-(rewrite 'u8vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 's8vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'u16vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 's16vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'u32vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 's32vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'f32vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'f64vector->byte-vector 7 1 "C_slot" 1 #f)
+(rewrite 'u8vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 's8vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'u16vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 's16vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'u32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 's32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'f32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'f64vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+
+(rewrite 'u8vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 's8vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'u16vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 's16vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'u32vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 's32vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'f32vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'f64vector->blob/shared 7 1 "C_slot" 1 #f)
 
 (let ()
   (define (rewrite-make-vector db classargs cont callargs)
@@ -1000,7 +1021,7 @@
     (cdr . set-cdr!)
     (hash-table-ref . hash-table-set!)
     (block-ref . block-set!)
-    (byte-vector-ref . byte-vector-set!)
+    (byte-vector-ref . byte-vector-set!) ; DEPRECATED
     (locative-ref . locative-set!)
     (u8vector-ref . u8vector-set!)
     (s8vector-ref . s8vector-set!)

@@ -93,7 +93,6 @@
 (define-constant short-options
   '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
 
-
 (define *install-bin-path* 
   (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	(make-pathname p "bin") )
@@ -171,6 +170,7 @@
 (define *destdir* #f)
 (define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
 (define *revision* #f)
+(define *run-tests* #f)
 
 
 (define (abort-setup)
@@ -404,7 +404,7 @@ usage: chicken-setup [OPTION ...] FILENAME
   -n  -no-install                don't install generated binaries and support files
   -i  -docindex                  display path for documentation index
   -e  -eval EXPRESSION           evaluate expression
-  -t  -test EXTENSION ...        return success if all given extensions are installed
+  -t  -test                      run test suite, if it exists
       -ls EXTENSION              list installed files for extension
       -fetch-tree                download and show repository catalog
       -tree FILENAME             use repository catalog from given file
@@ -441,7 +441,17 @@ EOF
 
 (define (run-setup-script filename)
   (when (setup-verbose-flag) (printf "executing ~A ...~%" filename))
-  (load filename) )
+  (load filename) 
+  (when (and *run-tests* 
+	     (file-exists? "tests")
+	     (directory? "tests") 
+	     (file-exists? (make-pathname "tests" "run.scm")) )
+    (let ((old (current-directory)))
+      (change-directory "tests")
+      (when (setup-verbose-flag)
+	(printf "running test cases ...~%") )
+      (run (csi -s run.scm ,(pathname-file filename)))
+      (change-directory old))))
 
 (define (write-info id files info)
   (let-values (((exports info) (fix-exports id info)))
@@ -518,7 +528,7 @@ EOF
 	   (let ((fn2 (string-append "../" filename))
 		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
-		 (run (gunzip -c ,fn2 |\|| tar ,(if v 'xvf 'xf) -))
+		 (run (gzip -d -c ,fn2 |\|| tar ,(if v 'xvf 'xf) -))
 		 (run (tar ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
     (set! *temporary-directory* tmpdir) ) )
 
@@ -1200,6 +1210,9 @@ EOF
 	 (set! *svn-repository* url)
 	 (set! *dont-ask* #t)
 	 (loop more) )
+	(("-test" . more)
+	 (set! *run-tests* #t)
+	 (loop more) )
 	(("-local" path . more)
 	 (set! *local-repository* path)
 	 (set! *dont-ask* #t)
@@ -1208,12 +1221,6 @@ EOF
 	 (set! *fetch-tree-only* #t)
 	 (set! anydone #t)
 	 (loop more) )
-	(("-test" . exts)
-	 (let ((missing (remove extension-info exts)))
-	   (cond ((pair? missing) 
-		  (print "the following extensions are currently not installed: " missing)
-		  1)
-		 (else (exit 0)) ) ) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" "-tree" "-local" "-svn" "-eval"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)

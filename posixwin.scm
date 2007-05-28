@@ -250,7 +250,7 @@ static struct dirent *readdir(DIR * dir)
 #define C_dup2(x, y)        C_fix(dup2(C_unfix(x), C_unfix(y)))
 #define C_setvbuf(p, m, s)  C_fix(setvbuf(C_port_file(p), NULL, C_unfix(m), C_unfix(s)))
 #define C_access(fn, m)     C_fix(access((char *)C_data_pointer(fn), C_unfix(m)))
-#define C_pipe(d)           C_fix(_pipe(C_pipefds, PIPE_BUF, O_BINARY))
+#define C_pipe(d, m)        C_fix(_pipe(C_pipefds, PIPE_BUF, C_unfix(m)))
 #define C_close(fd)         C_fix(close(C_unfix(fd)))
 
 #define C_getenventry(i)   environ[ i ]
@@ -863,6 +863,7 @@ EOF
 (define-foreign-variable _o_trunc int "O_TRUNC")
 (define-foreign-variable _o_binary int "O_BINARY")
 (define-foreign-variable _o_text int "O_TEXT")
+(define-foreign-variable _o_noinherit int "O_NOINHERIT")
 
 (define open/rdonly _o_rdonly)
 (define open/wronly _o_wronly)
@@ -875,6 +876,7 @@ EOF
 (define open/trunc _o_trunc)
 (define open/binary _o_binary)
 (define open/text _o_text)
+(define open/noinherit _o_noinherit)
 
 (define-foreign-variable _s_irusr int "S_IREAD")
 (define-foreign-variable _s_iwusr int "S_IWRITE")
@@ -929,7 +931,7 @@ EOF
       (##sys#check-exact size 'file-read)
       (let ([buf (if (pair? buffer) (car buffer) (make-string size))])
 	(unless (and (##core#inline "C_blockp" buf) (##core#inline "C_byteblockp" buf))
-	  (##sys#signal-hook #:type-error 'file-read "bad argument type - not a string or byte-vector" buf) )
+	  (##sys#signal-hook #:type-error 'file-read "bad argument type - not a string or blob" buf) )
 	(let ([n (##core#inline "C_read" fd buf size)])
 	  (when (eq? -1 n)
 	    (##sys#update-errno)
@@ -940,7 +942,7 @@ EOF
   (lambda (fd buffer . size)
     (##sys#check-exact fd 'file-write)
     (unless (and (##core#inline "C_blockp" buffer) (##core#inline "C_byteblockp" buffer))
-      (##sys#signal-hook #:type-error 'file-write "bad argument type - not a string or byte-vector" buffer) )
+      (##sys#signal-hook #:type-error 'file-write "bad argument type - not a string or blob" buffer) )
     (let ([size (if (pair? size) (car size) (##sys#size buffer))])
       (##sys#check-exact size 'file-write)
       (let ([n (##core#inline "C_write" fd buffer size)])
@@ -1097,7 +1099,8 @@ EOF
 
 (define (directory? fname)
   (##sys#check-string fname 'directory?)
-  (let ((info (##sys#file-info (##sys#expand-home-path fname))))
+  (let ((info (##sys#file-info
+  		(##sys#platform-fixup-pathname (##sys#expand-home-path fname)))))
     (and info (fx= 1 (##sys#slot info 4))) ) )
 
 (define current-directory
@@ -1201,8 +1204,8 @@ EOF
 (define-foreign-variable _pipefd1 int "C_pipefds[ 1 ]")
 
 (define create-pipe
-    (lambda ()
-      (when (fx< (##core#inline "C_pipe" #f) 0)
+    (lambda (#!optional (mode (fxior open/binary open/noinherit)))
+      (when (fx< (##core#inline "C_pipe" #f mode) 0)
 	(##sys#update-errno)
 	(##sys#signal-hook #:file-error 'create-pipe "cannot create pipe") )
       (values _pipefd0 _pipefd1) ) )

@@ -332,9 +332,12 @@ EOF
 	  (if (fx= fd (car a)) 
 	      (##sys#setslot a 1 (cons t (cdr a)))
 	      (loop (cdr lst)) ) ) ) )
-  (if i/o
-      (##sys#fdset-input-set fd)
-      (##sys#fdset-output-set fd) )
+  (case i/o
+    ((#t #:input) (##sys#fdset-input-set fd))
+    ((#f #:output) (##sys#fdset-output-set fd))
+    ((#:all)
+     (##sys#fdset-input-set fd)
+     (##sys#fdset-output-set fd) ) )
   (##sys#setslot t 3 'blocked)
   (##sys#setslot t 11 (cons fd i/o)) )
 
