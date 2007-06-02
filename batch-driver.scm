@@ -571,8 +571,8 @@
 			      (let ([upap (user-post-analysis-pass)])
 				(when upap 
 				  (upap db
-					(lambda (k p) (cut get db <> <>))
-					(lambda (k p x) (cut put! db <> <>)) ) ) )
+					(cut get db <> <>)
+					(cut put! db <> <> <>) ) ) )
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 
