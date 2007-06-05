@@ -106,7 +106,7 @@ EOF
     (define-macro (##sys#check-string x) '(##core#undefined))
     (define-macro (##sys#check-char x) '(##core#undefined))
     (define-macro (##sys#check-exact x) '(##core#undefined))
-    (define-macro (##sys#check-port x) '(##core#undefined))
+    (define-macro (##sys#check-port x . _) '(##core#undefined))
     (define-macro (##sys#check-number x) '(##core#undefined))))
  (else
   (declare (emit-exports "tcp.exports"))) )
@@ -475,8 +475,8 @@ EOF
 	(##sys#setslot out 3 "(tcp)")
 	(##sys#setslot in 7 'socket)
 	(##sys#setslot out 7 'socket)
-	(##sys#setslot (##sys#port-data in) 0 data)
-	(##sys#setslot (##sys#port-data out) 0 data)
+	(##sys#setslot in 9 data)
+	(##sys#setslot out 9 data)
 	(values in out) ) ) ) )
 
 (define (tcp-accept tcpl)
@@ -557,14 +557,7 @@ EOF
       (##net#io-ports s) ) ) )
 
 (define (##sys#tcp-port->fileno p)
-  (##sys#slot (##sys#tcp-port-data p) 0) )
-
-(define (##sys#tcp-port-data p)
-  (##sys#check-port p)
-  (let ((d (##sys#port-data p)))
-    (if d
-	(##sys#slot d 0)
-	(##sys#signal-hook #:type-error "bad argument type - not a TCP port - " p) ) ) )
+  (##sys#slot (##sys#port-data p) 0) )
 
 (define (tcp-addresses p)
   (let ((fd (##sys#tcp-port->fileno p)))
@@ -593,10 +586,11 @@ EOF
     port) )
 
 (define (tcp-abandon-port p)
+  (##sys#check-port p 'tcp-abandon-port)
   (##sys#setislot
-   (##sys#tcp-port-data p)
+   (##sys#port-data p)
    (if (##sys#slot p 1) 2 1)
-   #t) ) 
+   #t) )
 
 (define (tcp-listener-fileno l)
   (##sys#check-structure l 'tcp-listener 'tcp-listener-fileno)
