@@ -298,7 +298,7 @@
 ; 4) an argument marker may not be specified more than once
 ; 5) no special handling of extra keywords (no error)
 ; 6) default value of optional/key args is #f
-; 7) mixing with dotted llist syntax is allowed
+; 7) mixing with dotted list syntax is allowed
 
 (define (##sys#extended-lambda-list? llist)
   (let loop ([llist llist])

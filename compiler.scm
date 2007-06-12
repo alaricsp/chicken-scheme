@@ -1295,14 +1295,12 @@
 ;;; Traverse expression and update line-number db with all contained calls:
 
 (define (update-line-number-database! exp ln)
-
   (define (mapupdate xs)
     (let loop ((xs xs))
       (if (pair? xs)
 	  (begin
 	    (walk (car xs))
 	    (loop (cdr xs)) ) ) ) )
-
   (define (walk x)
     (cond ((not-pair? x))
 	  ((symbol? (car x))
@@ -1312,7 +1310,6 @@
 		 (##sys#hash-table-set! ##sys#line-number-database name (alist-cons x ln old)) )
 	     (mapupdate (cdr x)) ) )
 	  (else (mapupdate x)) ) )
-
   (walk exp) )
 
 

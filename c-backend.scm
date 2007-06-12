@@ -1133,7 +1133,7 @@
 	      (unless (eq? rtype 'void) (gen #\)))
 	      (gen ");")
 	      (cond [callback
-		     (gen #t "C_k=C_restore_callback_continuation2(level);"
+		     (gen #t "C_k=C_restore_callback_continuation2(C_level);"
 			  #t "C_kontinue(C_k,C_r);") ]
 		    [cps (gen "C_kontinue(C_k,C_r);")]
 		    [else (gen #t "return C_r;")] ) ] )

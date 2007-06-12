@@ -570,7 +570,7 @@
 				(dump-exported-globals db export-file-name) )
 			      (let ([upap (user-post-analysis-pass)])
 				(when upap 
-				  (upap db
+				  (upap db node3
 					(cut get db <> <>)
 					(cut put! db <> <> <>) ) ) )
 			      (when a-only (exit 0))

@@ -1294,7 +1294,18 @@ EOF
 	(apply fprintf out fstr args)
 	(get-output-string out) ) ) ) )
 
-(define format sprintf)
+
+(define format
+  (let ((fprintf fprintf) (sprintf sprintf) (printf printf))
+    (lambda (fmt-or-dst . args)
+      (apply
+        (cond
+          [(not fmt-or-dst)          sprintf]
+          [(boolean? fmt-or-dst)     printf]
+          [(string? fmt-or-dst)      (set! args (cons fmt-or-dst args)) sprintf]
+          [(output-port? fmt-or-dst) (set! args (cons fmt-or-dst args)) fprintf]
+          [else (##sys#error 'format "illegal destination" fmt-or-dst args)])
+        args) ) ) )
 
 (register-feature! 'srfi-28)
 
