@@ -38,8 +38,6 @@
   (uses extras srfi-1 srfi-13 regex utils))
 
 #>
-#include "chicken-defaults.h"
-
 #ifndef C_TARGET_CC
 # define C_TARGET_CC  C_INSTALL_CC
 #endif
@@ -119,7 +117,7 @@
   (exit 64) )
 
 (define chicken-prefix (getenv "CHICKEN_PREFIX"))
-(define cmake-build (##sys#fudge 38))
+(define cmake-build (eq? 'cmake (build-style)))
 (define arguments (command-line-arguments))
 (define host-mode (member "-host" arguments))
 
@@ -215,7 +213,7 @@
     -check-syntax -case-insensitive -benchmark-mode -shared -run-time-macros -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info -check-imports
     -emit-external-prototypes-first -inline -extension -release -static-extensions
-    -analyze-only -keep-shadowed-macros) )
+    -analyze-only -keep-shadowed-macros -disable-compiler-macros) )
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
@@ -498,6 +496,7 @@
     -disable-stack-overflow-checks  disables detection of stack-overflows
     -inline                     enable inlining
     -inline-limit               set inlining threshold
+    -disable-compiler-macros    disable expansion of compiler macros
 
   Configuration options:
 
@@ -766,7 +765,7 @@
 		(set! compile-options (append compile-options (string-split (car rest))))
 		(set! rest (cdr rest)) ]
 	       [(-strip)
-		(unless win (set! link-options (append link-options "-s")))]
+		(unless win (set! link-options (append link-options (list "-s"))))]
 	       [(|-L|)
 		(check s rest)
 		(set! link-options (append link-options (string-split (car rest))))

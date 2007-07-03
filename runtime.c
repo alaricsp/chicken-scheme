@@ -4080,7 +4080,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 #endif
 
   case C_fix(38):
-#ifdef CMAKE_BUILD
+#ifdef C_CMAKE_BUILD
     return C_SCHEME_TRUE;
 #else
     return C_SCHEME_FALSE;
@@ -8117,6 +8117,30 @@ void C_ccall C_c_runtime(C_word c, C_word closure, C_word k)
 }
 
 
+void C_ccall C_build_style(C_word c, C_word closure, C_word k)
+{
+  C_word *a, s;
+
+  if(c != 2) C_bad_argc(c, 2);
+
+#ifdef C_CMAKE_BUILD
+  a = C_alloc(2 + C_bytestowords(5));
+  s = C_string2(&a, "cmake");
+#elif defined(C_DIY_BUILD)
+  a = C_alloc(2 + C_bytestowords(3));
+  s = C_string2(&a, "diy");
+#elif defined(C_AUTOTOOLS_BUILD)
+  a = C_alloc(2 + C_bytestowords(9));
+  s = C_string2(&a, "autotools");
+#else
+  a = C_alloc(2 + C_bytestowords(7));
+  s = C_string2(&a, "custom");
+#endif
+
+ C_kontinue(k, s);  
+}
+
+
 void C_ccall C_software_version(C_word c, C_word closure, C_word k)
 {
   C_word *a, s;
@@ -8836,19 +8860,28 @@ void C_call_with_cthulhu(C_word c, C_word self, C_word k, C_word proc)
 
 C_regparm C_word C_i_o_fixnum_plus(C_word n1, C_word n2)
 {
-  C_word x1 = C_unfix(n1);
-  C_word x2 = C_unfix(n2);
-  C_word s = x1 + x2;
+  C_word x1, x2, s;
   
+  if((n1 & C_FIXNUM_BIT) == 0 || (n2 & C_FIXNUM_BIT) == 0) return C_SCHEME_FALSE;
+
+  x1 = C_unfix(n1);
+  x2 = C_unfix(n2);
+  s = x1 + x2;
+
   if((((s ^ x1) & (s ^ x2)) >> 30) != 0) return C_SCHEME_FALSE;
   else return C_fix(s);
 }
 
+
 C_regparm C_word C_i_o_fixnum_difference(C_word n1, C_word n2)
 {
-  C_word x1 = C_unfix(n1);
-  C_word x2 = C_unfix(n2);
-  C_word s = x1 - x2;
+  C_word x1, x2, s;
+
+  if((n1 & C_FIXNUM_BIT) == 0 || (n2 & C_FIXNUM_BIT) == 0) return C_SCHEME_FALSE;
+
+  x1 = C_unfix(n1);
+  x2 = C_unfix(n2);
+  s = x1 - x2;
   
   if((((s ^ x1) & ~(s ^ x2)) >> 30) != 0) return C_SCHEME_FALSE;
   else return C_fix(s);

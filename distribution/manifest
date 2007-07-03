@@ -8,6 +8,7 @@ Makefile.am
 NEWS
 README
 StackGrowsDownward.c
+libffi-test.c
 autogen.sh
 banner.scm
 batch-driver.scm
@@ -106,6 +107,7 @@ boot/cfiles/utils.c
 boot/cfiles/utils.exports
 boot/cfiles/uutils.c
 build.scm
+version.scm
 buildversion
 c-backend.scm
 c-platform.scm
@@ -237,3 +239,8 @@ pcre/ucp_findchar.c
 pcre/ucp.h
 pcre/ucpinternal.h
 pcre/ucptable.c
+bootstrap.sh
+chicken-build.scm
+chicken-build.c
+chicken-gzip.exe
+chicken-tar.exe

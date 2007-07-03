@@ -332,3 +332,19 @@
 (define-deprecated-macro foreign-callback-lambda foreign-safe-lambda)
 (define-deprecated-macro foreign-callback-lambda* foreign-safe-lambda*)
 (define-deprecated-macro foreign-callback-wrapper foreign-safe-wrapper)
+
+
+;;; Not for general use, yet
+
+(define-macro (define-compiler-macro head . body)
+  (define (bad)
+    (syntax-error
+     'define-compiler-macro "invalid compiler macro definition" head) )
+  (if (and (pair? head) (symbol? (car head)))
+      (cond ((memq 'compiling ##sys#features)
+	     (warning "compile macros are not available in interpreted code" 
+		      (car head) ) )
+	    ((not (##compiler#register-compiler-macro (car head) (cdr head) body))
+	     (bad) ) )
+      (bad) )
+  '(void) )

@@ -1511,7 +1511,6 @@ EOF
 (define _exit
   (let ([ex0 (foreign-lambda void "_exit" int)])
     (lambda code
-      (##sys#cleanup-before-exit)
       (ex0 (if (pair? code) (car code) 0)) ) ) )
 
 (define-foreign-variable _iofbf int "_IOFBF")

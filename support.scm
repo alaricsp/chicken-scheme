@@ -42,7 +42,7 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
-  file-io-only banner custom-declare-alist disabled-warnings
+  file-io-only banner custom-declare-alist disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
   foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size check-global-exports check-global-imports
@@ -75,6 +75,7 @@
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
   lookup-exports-file constant-declarations process-lambda-documentation
+  compiler-macro-table register-compiler-macro
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
 
 
@@ -450,45 +451,52 @@
 		 (contractable . con) (standard-binding . stb) (foldable . fld) (simple . sim) (inlinable . inl)
 		 (side-effecting . sef) (collapsable . col) (removable . rem) (constant . con)
 		 (undefined . und) (replacing . rpg) (unused . uud) (extended-binding . xtb) (inline-export . ilx)
-		 (customizable . cst) (has-unused-parameters . hup) (boxed-rest . bxr) ) ) )
+		 (customizable . cst) (has-unused-parameters . hup) (boxed-rest . bxr) ) ) 
+	(omit #f))
     (lambda (db)
+      (unless omit
+	(set! omit 
+	  (append default-standard-bindings
+		  default-extended-bindings
+		  internal-bindings) ) )
       (##sys#hash-table-for-each
        (lambda (sym plist)
 	 (let ([val #f]
 	       [pval #f]
 	       [csites '()]
 	       [refs '()] )
-	   (write sym)
-	   (let loop ((es plist))
-	     (if (pair? es)
-		 (begin
-		   (case (caar es)
-		     ((captured assigned boxed global contractable standard-binding foldable assigned-locally
-		       side-effecting collapsable removable undefined replacing unused simple inlinable inline-export
-		       has-unused-parameters extended-binding customizable constant boxed-rest)
-		      (printf "\t~a" (cdr (assq (caar es) names))) )
-		     ((unknown)
-		      (set! val 'unknown) )
-		     ((value)
-		      (unless (eq? val 'unknown) (set! val (cdar es))) )
-		     ((potential-value)
-		      (set! pval (cdar es)) )
-		     ((replacable home contains contained-in use-expr closure-size rest-parameter
-		       o-r/access-count captured-variables explicit-rest)
-		      (printf "\t~a=~s" (caar es) (cdar es)) )
-		     ((references)
-		      (set! refs (cdar es)) )
-		     ((call-sites)
-		      (set! csites (cdar es)) )
-		     (else (bomb "Illegal property" (car es))) )
-		   (loop (cdr es)) ) ) )
-	   (cond [(and val (not (eq? val 'unknown)))
-		  (printf "\tval=~s" (cons (node-class val) (node-parameters val))) ]
-		 [(and pval (not (eq? pval 'unknown)))
-		  (printf "\tpval=~s" (cons (node-class pval) (node-parameters pval)))] )
-	   (when (pair? refs) (printf "\trefs=~s" (length refs)))
-	   (when (pair? csites) (printf "\tcss=~s" (length csites)))
-	   (newline) ) )
+	   (unless (memq sym omit)
+	     (write sym)
+	     (let loop ((es plist))
+	       (if (pair? es)
+		   (begin
+		     (case (caar es)
+		       ((captured assigned boxed global contractable standard-binding foldable assigned-locally
+				  side-effecting collapsable removable undefined replacing unused simple inlinable inline-export
+				  has-unused-parameters extended-binding customizable constant boxed-rest)
+			(printf "\t~a" (cdr (assq (caar es) names))) )
+		       ((unknown)
+			(set! val 'unknown) )
+		       ((value)
+			(unless (eq? val 'unknown) (set! val (cdar es))) )
+		       ((potential-value)
+			(set! pval (cdar es)) )
+		       ((replacable home contains contained-in use-expr closure-size rest-parameter
+				    o-r/access-count captured-variables explicit-rest)
+			(printf "\t~a=~s" (caar es) (cdar es)) )
+		       ((references)
+			(set! refs (cdar es)) )
+		       ((call-sites)
+			(set! csites (cdar es)) )
+		       (else (bomb "Illegal property" (car es))) )
+		     (loop (cdr es)) ) ) )
+	     (cond [(and val (not (eq? val 'unknown)))
+		    (printf "\tval=~s" (cons (node-class val) (node-parameters val))) ]
+		   [(and pval (not (eq? pval 'unknown)))
+		    (printf "\tpval=~s" (cons (node-class pval) (node-parameters pval)))] )
+	     (when (pair? refs) (printf "\trefs=~s" (length refs)))
+	     (when (pair? csites) (printf "\tcss=~s" (length csites)))
+	     (newline) ) ) )
        db) ) ) )       
 
 
@@ -986,6 +994,8 @@
 		       [('nonnull-instance . _)
 			`(slot-ref ,param 'this) ]
 		       [('const t) (repeat t)]
+		       [('enum _) 
+			(if unsafe param `(##sys#foreign-integer-argument ,param))]
 		       [((or 'nonnull-pointer 'nonnull-c-pointer) . _)
 			`(##sys#foreign-pointer-argument ,param) ]
 		       [_ param] ) ]
@@ -1473,3 +1483,27 @@ EOF
 	  (close-output-port csc-control-file)
 	  (old) ) ) ) )
   (fprintf csc-control-file "~S~%" item) )
+
+
+;;; Compiler macro registration
+
+(define (register-compiler-macro name llist body)
+  (unless compiler-macro-table
+    (set! compiler-macro-table (make-vector 301 '())) )
+  (call/cc
+   (lambda (return)
+     (let* ((wvar (gensym))
+	    (llist
+	     (let loop ((llist llist))
+	       (cond ((not (pair? llist)) llist)
+		     ((eq? #:whole (car llist))
+		      (unless (pair? (cdr llist))
+			(return #f) )
+		      (set! wvar (cadr llist))
+		      (cddr llist) )
+		     (else (cons (car llist) (loop (cdr llist)))) ) ) ) )
+       (##sys#hash-table-set!
+	compiler-macro-table
+	name
+	(eval `(lambda (,wvar) (apply (lambda ,llist ,@body) (cdr ,wvar))) ) )
+       #t) ) ) )

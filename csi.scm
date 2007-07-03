@@ -290,6 +290,7 @@ EOF
 			((utr) (do-untrace (map string->symbol (string-split (read-line)))))
 			((br) (do-break (map string->symbol (string-split (read-line)))))
 			((ubr) (do-unbreak (map string->symbol (string-split (read-line)))))
+			((uba) (do-unbreak-all))
 			((breakall) 
 			 (set! ##sys#break-in-thread #f) ) 
 			((breakonly)
@@ -336,6 +337,7 @@ EOF
  ,utr NAME ...     Untrace procedures
  ,br NAME ...      Set breakpoints
  ,ubr NAME ...     Remove breakpoints
+ ,uba              Remove all breakpoints
  ,breakall         Break in all threads (default)
  ,breakonly THREAD Break only in specified thread
  ,c                Continue from breakpoint
@@ -478,6 +480,13 @@ EOF
 		(set! broken-procedures (del p broken-procedures eq?) ) ) ) ) )
      names) ) )
 
+(define do-unbreak-all
+  (lambda ()
+    (for-each (lambda (bp)
+                (##sys#setslot (car bp) 0 (cdr bp)))
+              broken-procedures)
+    (set! broken-procedures '())
+    (##sys#void)))
 
 ;;; Parse options from string:
 
@@ -867,6 +876,7 @@ EOF
 		     (zero? (string-length (cadr script)))
 		     (char=? #\- (string-ref (cadr script) 0)) )
 	     (##sys#error "missing or invalid script argument"))
+	   (program-name (cadr script))
 	   (command-line-arguments (cddr script))
 	   (register-feature! 'script)
 	   (set-cdr! (cdr script) '()) 

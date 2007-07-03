@@ -132,7 +132,7 @@ EOF
      ##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer ##sys#user-print-hook 
      ##sys#current-exception-handler ##sys#default-exception-handler ##sys#abandon-mutexes ##sys#make-mutex
      ##sys#port-has-file-pointer? ##sys#infix-list-hook char-name ##sys#open-file-port make-parameter
-     ##sys#intern-symbol ##sys#make-string ##sys#number? software-type build-platform
+     ##sys#intern-symbol ##sys#make-string ##sys#number? software-type build-platform build-style
      open-output-string get-output-string print-call-chain ##sys#symbol-has-toplevel-binding? repl
      argv condition-property-accessor ##sys#decorate-lambda ##sys#become! ##sys#lambda-decoration
      getter-with-setter ##sys#lambda-info ##sys#lambda-info->string open-input-string ##sys#gc
@@ -152,7 +152,7 @@ EOF
      ##sys#default-read-info-hook ##sys#read-error) ) ] )
 
 
-(include "build.scm")
+(include "version.scm")
 
 
 (define-constant namespace-size 997)
@@ -3083,6 +3083,10 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_build_platform")))])
     (lambda () sym) ) )
 
+(define build-style
+  (let ([sym (string->symbol ((##core#primitive "C_build_style")))])
+    (lambda () sym) ) )
+
 (define (chicken-version . full)
   (define (get-config)
     (let ([bp (build-platform)]
@@ -3103,13 +3107,15 @@ EOF
 		   (if (##sys#fudge 28) " ptables" "")
 		   (if (##sys#fudge 32) " gchooks" "") 
 		   (if (##sys#fudge 33) " extraslot" "")
-		   (if (##sys#fudge 35) " applyhook" "") 
-		   (if (##sys#fudge 38) " cmake" "")
+		   (if (##sys#fudge 35) " applyhook" "")
 		   (if (##sys#fudge 39) " cross" "") ) ) )
 	(string-append 
 	 "Version " +build-version+
 	 " - " (get-config)
-	 (if (eq? 0 (##sys#size spec)) "" (string-append " - [" spec " ]") ) ))
+	 (if (eq? 0 (##sys#size spec))
+	     ""
+	     (string-append " - [" spec " ]") )
+	 " - " (symbol->string (build-style)) ) )
       +build-version+) )
 
 (define ##sys#pathname-directory-separator
@@ -3147,6 +3153,7 @@ EOF
 		 (set! ##sys#features (cons (##sys#->feature-id f) ##sys#features))))))
   (check (software-type))
   (check (software-version))
+  (check (build-style))
   (check (machine-type))
   (check (machine-byte-order)) )
 
@@ -4003,6 +4010,13 @@ EOF
 
 ;;; Script invocation:
 
+(define program-name
+  (make-parameter
+   (car (argv))
+   (lambda (x)
+     (##sys#check-string x 'program-name)
+     x) ) )
+
 (define command-line-arguments
   (make-parameter
    (let ([args (argv)])
@@ -4292,6 +4306,8 @@ EOF
 
 
 ;;; Importing from other namespaces:
+;
+; Some of these should go. Are they used anywhere?
 
 (define ##sys#find-symbol 
   (foreign-lambda scheme-object "C_find_symbol" scheme-object c-pointer) )

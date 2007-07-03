@@ -322,6 +322,8 @@
 ;;; You want compiler support for high-level transforms on fold and unfold ops.
 ;;; You'd at least like a lot of inlining for clients of these procedures.
 ;;; Don't hold your breath.
+;;;
+;;; Shut up, Olin.
 
 (define (string-map proc s . maybe-start+end)
 ;  (check-arg procedure? proc string-map)
@@ -331,10 +333,10 @@
 (define (%string-map proc s start end)	; Internal utility
   (let* ((len (- end start))
 	 (ans (make-string len)))
-    (do ((i (- end 1) (- i 1))
-	 (j (- len 1) (- j 1)))
-	((< j 0))
-      (string-set! ans j (proc (string-ref s i))))
+    (do ((i 0 (+ i 1))
+	 (j start (+ j 1)))
+	((>= i len))
+      (string-set! ans i (proc (string-ref s j))))
     ans))
 
 (define (string-map! proc s . maybe-start+end)
@@ -343,8 +345,8 @@
     (%string-map! proc s start end)))
 
 (define (%string-map! proc s start end)
-  (do ((i (- end 1) (- i 1)))
-      ((< i start) s)
+  (do ((i start (+ i 1)))
+      ((>= i end) s)
     (string-set! s i (proc (string-ref s i)))))
 
 (define (string-fold kons knil s . maybe-start+end)

@@ -1,1 +1,378 @@
-(define-constant +build-version+ "2.620")
+;;;; build.scm
+
+
+(use (srfi 1) posix utils)
+
+
+(define *verbose* #f)
+(define *dependencies* (make-hash-table string=?))
+(define *variables* (make-hash-table string=?))
+(define *actions* (make-hash-table string=?))
+(define *pseudo-targets* '())
+(define *sleep-delay* 2)
+
+
+;;; Verbosity and output
+
+(define *tty* 
+  (and (##sys#tty-port? (current-output-port)) 
+       (not (equal? (getenv "EMACS") "t"))
+       (not (equal? (getenv "TERM") "dumb"))))
+
+(define *info-message-escape* (if *tty* "\x1b[0m\x1b[2m" ""))
+(define *target-message-escape* (if *tty* "\x1b[0m\x1b[32m" ""))
+(define *error-message-escape* (if *tty* "\x1b[0m\x1b[31m" ""))
+(define *command-message-escape* (if *tty* "\x1b[0m\x1b[33m" ""))
+(define *reset-escape* (if *tty* "\x1b[0m" ""))
+
+(define (message fstr . args)
+  (printf "~a* ~?~a~%" *info-message-escape* fstr args *reset-escape*) )
+
+(define (target-message fstr . args)
+  (printf "~a~?~a~%" *target-message-escape* fstr args *reset-escape*) )
+
+(define (command-message fstr . args)
+  (printf "~a  ~?~a~%" *command-message-escape* fstr args *reset-escape*) )
+
+(define (error-message fstr . args)
+  (sprintf "~a~?~a~%" *error-message-escape* fstr args *reset-escape*) )
+
+(define (quit fstr . args)
+  (display (apply error-message fstr args) (current-error-port))
+  (reset) )
+
+
+;;; make-code stolen from PLT
+
+(define (find-matching-line str spec)
+  (let ([match? (lambda (s) (string=? s str))])
+    (let loop ([lines spec])
+      (cond
+       [(null? lines) #f]
+       [else (let* ([line (car lines)]
+		    [names (if (string? (car line))
+			       (list (car line))
+			       (car line))])
+	       (if (ormap match? names)
+		   line
+		   (loop (cdr lines))))]))))
+
+(define (form-error s p) (quit "~a: ~s" s p))
+(define (line-error s p n) (quit "~a: ~s in line ~a" s p))
+
+(define (check-spec spec)
+  (and (or (list? spec) (form-error "specification is not a list" spec))
+       (or (pair? spec) (form-error "specification is an empty list" spec))
+       (andmap
+	(lambda (line)
+	  (and (or (and (list? line) (<= 2 (length line) 3))
+		   (form-error "list is not a list with 2 or 3 parts" line))
+	       (or (or (string? (car line))
+		       (and (list? (car line))
+			    (andmap string? (car line))))
+		   (form-error "line does not start with a string or list of strings" line))
+	       (let ([name (car line)])
+		 (or (list? (cadr line))
+		     (line-error "second part of line is not a list" (cadr line) name)
+		     (andmap (lambda (dep)
+			       (or (string? dep)
+				   (form-error "dependency item is not a string" dep)))
+			     (cadr line)))
+		 (or (null? (cddr line))
+		     (procedure? (caddr line))
+		     (line-error "command part of line is not a thunk" (caddr line) name)))))
+	spec)))
+
+(define (check-argv argv)
+  (or (string? argv)
+      (and (vector? argv)
+	   (andmap string? (vector->list argv)))
+      (error "argument is not a string or string vector" argv)))
+
+(define (make/proc/helper spec argv)
+  (check-spec spec)
+  (check-argv argv)
+  (letrec ([made '()]
+	   [exn? (condition-predicate 'exn)]
+	   [exn-message (condition-property-accessor 'exn 'message)]
+	   [make-file
+	    (lambda (s indent)
+	      (let ([line (find-matching-line s spec)]
+		    [date (and (not (member s *pseudo-targets*))
+			       (file-exists? s)
+			       (file-modification-time s))])
+		(if line
+		    (let ([deps (cadr line)])
+		      (for-each (let ([new-indent (string-append " " indent)])
+				  (lambda (d) (make-file d new-indent)))
+				deps)
+		      (let ([reason
+			     (or (not date)
+				 (ormap (lambda (dep)
+					  (unless (file-exists? dep)
+					    (quit "dependancy ~a was not made~%" dep))
+					  (and (> (file-modification-time dep) date)
+					       dep))
+					deps))])
+			(when reason
+			  (let ([l (cddr line)])
+			    (unless (null? l)
+			      (set! made (cons s made))
+			      ((car l)))))))
+		    (when (not date) 
+		      (quit "don't know how to make ~a" s)))))])
+    (cond
+     [(string? argv) (make-file argv "")]
+     [(equal? argv '#()) (make-file (caar spec) "")]
+     [else (for-each (lambda (f) (make-file f "")) (vector->list argv))]) ) )
+
+(define make/proc
+  (case-lambda
+   [(spec) (make/proc/helper spec '#())]
+   [(spec argv) (make/proc/helper spec argv)]))
+
+
+;;; Run subcommands
+
+(define (execute exps)
+  (for-each
+   (lambda (exp)
+     (let ((cmd (string-intersperse (map ->string (flatten exps)))))
+       (when *verbose* (command-message "~A" cmd))
+       (let ((s (system cmd)))
+	 (unless (zero? s)
+	   (quit (sprintf "invocation of command failed with non-zero exit-status ~a: ~a~%" s cmd) s) ) ) ) )
+   exps) )
+
+(define-macro (run . explist)
+  `(execute (list ,@(map (lambda (x) (list 'quasiquote x)) explist))))
+
+
+;;; String and path helper functions
+
+(define (prefix dir . files)
+  (if (null? files)
+      (pathname-directory dir)
+      (let ((files2 (map (cut make-pathname dir <>) (normalize files))))
+	(if (or (pair? (cdr files)) (pair? (car files)))
+	    files2
+	    (car files2) ) ) ) )
+
+(define (suffix suf . files)
+  (if (null? files)
+      (pathname-extension suf)
+      (let ((files2 (map (cut pathname-replace-extension <> suf) (normalize files))))
+	(if (or (pair? (cdr files)) (pair? (car files)))
+	    files2
+	    (car files2) ) ) ) )
+
+(define (normalize fs)
+  (delete-duplicates
+   (map ->string
+	(if (pair? fs)
+	    (flatten fs)
+	    (list fs) ) )
+   equal?) )
+
+(define path make-pathname)
+
+
+;;; "Stateful" build interface
+
+(define (build-clear)
+  (set! *dependencies* (make-hash-table string=?)) 
+  (set! *actions* (make-hash-table string=?)) 
+  (set! *variables* (make-hash-table string=?)) )
+
+(define (depends target . deps)
+  (let ((deps (normalize deps)))
+    (hash-table-update!
+     *dependencies* target
+     (lambda (old) (lset-union string=? old deps))
+     (lambda () deps) ) ) )
+
+(define actions
+  (let ((doaction 
+	  (lambda (name target proc)
+	    (hash-table-update! *dependencies* target identity (constantly '()))
+	    (hash-table-set! 
+	     *actions* target 
+	     (lambda ()
+	       (target-message "~a\t~a" name target)
+	       (proc) ) ) ) ) )
+    (case-lambda
+     ((target proc) (doaction "build " target proc))
+     ((name target proc) (doaction name target proc)) ) ) )
+
+(define (notfile . targets)
+  (set! *pseudo-targets* (lset-union string=? *pseudo-targets* targets)))
+
+(define (clean-on-error t thunk)
+  (handle-exceptions ex
+      (begin
+	(when (file-exists? t)
+	  (when *verbose* (message "deleting ~a" t))
+	  (delete-file t) )
+	(abort ex) )
+    (thunk) ) )
+
+(define (build #!optional
+	       (targets "all")
+	       #!key
+	       continuous
+	       (verbose *verbose*) )
+  (fluid-let ((*verbose* verbose))
+    (let* ((deps (hash-table->alist *dependencies*))
+	   (wdeps (delete-duplicates (append-map cdr deps) string=?))
+	   (targets (list->vector (normalize targets)) ) 
+	  (ftable (and continuous (make-hash-table string=?))))
+      (when continuous
+	(for-each 
+	 (lambda (dep)
+	   (when (file-exists? dep) 
+	     (hash-table-set! ftable dep (file-modification-time dep))))
+	 wdeps))
+      (let loop ()
+	(make/proc
+	 (map (match-lambda 
+		((target . deps)
+		 (list target deps
+		       (eval
+			`(lambda ()
+			   (clean-on-error
+			    ',target
+			    (lambda ()
+			      ((hash-table-ref/default *actions* ',target noop)))))))))
+	      deps)
+	 targets)
+	(when continuous
+	  (watch-dependencies wdeps ftable)
+	  (loop))))))
+
+(define (build-dump #!optional (port (current-output-port)))
+  (with-output-to-port port
+    (lambda ()
+      (message "dependencies:")
+      (for-each show-dependencies (hash-table-keys *dependencies*))
+      (when (positive? (hash-table-size *variables*))
+	(message "variables:")
+	(hash-table-walk
+	 *variables*
+	 (lambda (v x)
+	   (message "  ~s:" v)
+	   (for-each
+	    (lambda (p)
+	      (message "    ~a\t-> ~s~%" (car p) (cadr p))) 
+	    x))) ) ) ) )
+
+(define (show-dependencies target)
+  (let ((i ""))
+    (let loop ((t target))
+      (message "~a~a ~a" i t (if (member t *pseudo-targets*) "(p)" ""))
+      (fluid-let ((i (string-append i " ")))
+	(for-each loop (hash-table-ref/default *dependencies* t '())) ) ) ) )
+
+
+;;; Command line processing
+
+(define (build* . args)
+  (let ((continuous #f)
+	(targets '()) 
+	(debug #f) )
+    (let-values (((procs arglists) (partition procedure? args)))
+      (let loop ((args (if (null? arglists) 
+			   (command-line-arguments) 
+			   (concatenate arglists))) )
+	(cond ((null? args) 
+	       (when debug (build-dump))
+	       (for-each (lambda (p) (p)) procs)
+	       (build 
+		(if (null? targets) "all" (reverse targets))
+		verbose: *verbose*
+		continuous: continuous) )
+	      (else
+	       (let ((x (car args)))
+		 (cond ((and (> (string-length x) 0) (char=? #\- (string-ref x 0)))
+			(cond ((string=? "-v" x) 
+			       (set! *verbose* #t) )
+			      ((member x '("-h" "-help" "--help"))
+			       (usage 0) )
+			      ((string=? "-c" x)
+			       (set! continuous #t) )
+			      ((string=? "-d" x)
+			       (set! debug #t) )
+			      (else (usage 1)) )
+			(loop (cdr args)) )
+		       ((string-match "([-_A-Za-z0-9]+)=(.*)" x) =>
+			(lambda (m)
+			  (let* ((sym (string->symbol (cadr m))))
+			    (if (##sys#symbol-has-toplevel-binding? sym)
+				(let ((val (##sys#slot sym 0)))
+				  (if (or (boolean? val) (string? val) (symbol? val) (eq? (void) val))
+				      (##sys#setslot sym 0 (caddr m)) 
+				      (quit "variable `~a' already has a suspicious value" sym) ) )
+				(##sys#setslot sym 0 (caddr m)) )
+			    (loop (cdr args)) ) ) )
+		       (else
+			(set! targets (cons x targets))
+			(loop (cdr args))))))))) ) )
+
+(define (usage code)
+  (print "usage: " (car (argv)) " [ -v | -c | -d | TARGET | VARIABLE=VALUE ] ...")
+  (exit code) )
+
+
+;;; Check dependencies for changes
+
+(define (watch-dependencies deps tab)
+  (let loop ((f #f))
+    (sleep *sleep-delay*)
+    (cond ((any (lambda (dep)
+		  (and-let* (((file-exists? dep))
+			     (ft (file-modification-time dep))
+			     ((> ft (hash-table-ref/default tab dep 0))))
+		    (hash-table-set! tab dep ft)
+		    (when *verbose* (message "~a changed" dep))
+		    #t) )
+		deps))
+	  (f (loop #t))
+	  (else 
+	   (message "waiting for changes ...")
+	   (loop #t)))))
+
+
+;;; Other useful procedures
+
+(define -e file-exists?)
+(define -d (conjoin file-exists? directory?))
+(define -x (conjoin file-exists? file-execute-access?))
+
+(define cwd current-directory)
+(define (cd #!optional d) (if d (current-directory d) (getenv "HOME")))
+
+(define (with-cwd dir thunk)
+  (if (or (not dir) (equal? "." dir))
+      (thunk)
+      (let ((old #f))
+	(dynamic-wind
+	    (lambda () (set! old (current-directory)))
+	    (lambda ()
+	      (when *verbose* (command-message "cd ~a" dir))
+	      (change-directory dir)
+	      (thunk) )
+	    (lambda ()
+	      (change-directory old)
+	      (when *verbose* (command-message "cd ~a" old) ) ) ) ) ) )
+
+(define (try-run code #!optional (msg "trying to compile and run some C code") (flags "") (cc "cc"))
+  (let ((tmp (create-temporary-file "c")))
+    (with-output-to-file tmp (lambda () (display code)))
+    (when *verbose* (printf "~a ... ~!" msg))
+    (let ((r (zero? (system (sprintf "~a ~a ~a 2>/dev/null && ./a.out" cc tmp flags)))))
+      (delete-file* tmp)
+      (when *verbose*
+	(print (if r "ok" "failed")))
+      r) ) )
+
+(define (true? x)
+  (and x (not (member x '("no" "false" "off" "0" "")))))

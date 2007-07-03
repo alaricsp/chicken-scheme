@@ -1509,7 +1509,9 @@ EOF
 (define make-hash-table
   (let ([make-vector make-vector])
     (lambda test-and-size
-      (let-optionals test-and-size ([test equal?] [hashf %hash] [len hashtab-default-size])
+      (let-optionals test-and-size ([test equal?] 
+				    [hashf %hash] 
+				    [len hashtab-default-size])
 	(##sys#check-exact len 'make-hash-table)
 	(##sys#make-structure 'hash-table (make-vector len '()) 0 test hashf) ) ) ) )
 
@@ -1568,7 +1570,7 @@ EOF
 	    ((##core#inline "C_symbolp" x) (##core#inline "C_hash_string" (##sys#slot x 1)))
 	    ((list? x) (fx+ (length x) (hash-with-test (##sys#slot x 0) d)))
 	    ((pair? x) 
-	     (fx+ (arithmetic-shift (hash-with-test (##sys#slot x 0) d) 16)
+	     (fx+ (fxshl (hash-with-test (##sys#slot x 0) d) 16)
 		  (hash-with-test (##sys#slot x 1) d) ) )
 	    ((##core#inline "C_portp" x) (if (input-port? x) 260 261))
 	    ((##core#inline "C_byteblockp" x) (##core#inline "C_hash_string" x))
@@ -1593,12 +1595,14 @@ EOF
 (define hash-by-identity hash)
 
 (define (string-hash s #!optional (bound default-hash-bound))
+  (##sys#check-string s 'string-hash)
   (##core#inline 
    "C_fixnum_modulo"
    (##core#inline "C_hash_string" s)
    bound) )
 
 (define (string-ci-hash s #!optional (bound default-hash-bound))
+  (##sys#check-string s 'string-ci-hash)
   (##core#inline 
    "C_fixnum_modulo"
    (##core#inline "C_hash_string_ci" s)

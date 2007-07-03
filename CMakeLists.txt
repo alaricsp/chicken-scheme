@@ -916,6 +916,22 @@ ENDIF(HAVE_DL_H)
 
 CHECK_INCLUDE_FILE(ffi.h HAVE_FFI_H)
 
+TRY_RUN(LIBFFI_TEST_SUCCEEDED
+  LIBFFI_TEST_COMPILED
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${Chicken_SOURCE_DIR}/libffi-test.c)
+IF(LIBFFI_TEST_COMPILED)
+  IF(LIBFFI_TEST_SUCCEEDED STREQUAL "FAILED_TO_RUN")
+    MESSAGE("libffi test failed")
+    SET(WITHOUT_LIBFFI TRUE)
+  ELSE(LIBFFI_TEST_SUCCEEDED STREQUAL "FAILED_TO_RUN")
+    MESSAGE("libffi seems to work")
+  ENDIF(LIBFFI_TEST_SUCCEEDED STREQUAL "FAILED_TO_RUN")
+ELSE(LIBFFI_TEST_COMPILED)
+  MESSAGE("Unable to compile libffi test - no libffi support available")
+  SET(WITHOUT_LIBFFI TRUE)
+ENDIF(LIBFFI_TEST_COMPILED)
+
 IF(NOT MSVC)
   IF(WITHOUT_LIBFFI)
     SET(HAVE_FFI_H FALSE)
@@ -1264,11 +1280,6 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 # The PCRE code is used several times by the various Chicken libraries.  We statically compile it for
 # convenience, so that the user doesn't have to type -lpcre when linking.  Also, we don't want the
 # user linking against a system PCRE library, as we may have our own bugfixes and customizations.
-#
-# PCRE is compiled statically for both our shared and static libraries.   pcre.h needs these definitions
-# so that dll imports are correct, and for UTF8 and UCP support.
-
-ADD_DEFINITIONS(-DPCRE_STATIC -DSUPPORT_UTF8 -DSUPPORT_UCP)
 
 SET(PCRE_HEADER ${Chicken_SOURCE_DIR}/pcre/pcre.h)
 SET(PCRE_ROOTS
@@ -1952,6 +1963,10 @@ IF(CHANGELOG_FILE)
 ENDIF(CHANGELOG_FILE)
 
 INSTALL(FILES ${HTMLDOC_FILES} DESTINATION ${DOC_HOME}/html)
+
+IF(WIN32 AND NOT CYGWIN)
+  INSTALL(PROGRAMS chicken-gzip chicken-tar DESTINATION ${BIN_HOME})
+ENDIF(WIN32 AND NOT CYGWIN)
 
 
 ####################################################################

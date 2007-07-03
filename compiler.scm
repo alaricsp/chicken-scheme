@@ -271,7 +271,7 @@
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names namespace-table disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning import-table use-import-table compiler-macro-table
+  compiler-warning import-table use-import-table compiler-macro-table compiler-macros-enabled
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
@@ -431,6 +431,7 @@
 (define postponed-initforms '())
 (define unused-variables '())
 (define compiler-macro-table #f)
+(define compiler-macros-enabled #t)
 
 
 ;;; Initialize globals:
@@ -973,7 +974,9 @@
 					       (walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ] )
 					(walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ) ) ]
 				 
-				 ((and compiler-macro-table (##sys#hash-table-ref compiler-macro-table name)) =>
+				 ((and compiler-macros-enabled
+				       compiler-macro-table
+				       (##sys#hash-table-ref compiler-macro-table name)) =>
 				  (lambda (cm)
 				    (let ((cx (cm x)))
 				      (if (equal? cx x)

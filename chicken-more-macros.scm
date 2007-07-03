@@ -618,7 +618,7 @@
 ;;; - If REST-ARG has 1 element, return that element.
 ;;; - If REST-ARG has >1 element, error.
 
-(define-macro (:optional rest default-exp)
+(define-macro (optional rest default-exp)
   (let ([var (gensym)])
     `(let ((,var ,rest))
        (if (null? ,var) 
@@ -626,6 +626,9 @@
 	   (if (##core#check (null? (cdr ,var)))
 	       (car ,var)
 	       (##sys#error (##core#immutable '"too many optional arguments") ,var))))))
+
+(define-macro (:optional . args)	; DEPRECATED to avoid conflicts with keyword-style prefix
+  `(optional ,@args) )
 
 
 ;;; (LET-OPTIONALS* args ((var1 default1) ... [rest]) body1 ...)
@@ -912,36 +915,6 @@
     (if ##sys#enable-runtime-macros
 	`(define ,name ,body)
 	'(begin) ) ) )
-
-
-;;; Not for general use, yet
-
-(define-macro (define-compiler-macro head . body)
-  (define (bad)
-    (syntax-error 'define-compiler-macro "invalid compiler macro definition" head) )
-  (unless ##compiler#compiler-macro-table
-    (set! ##compiler#compiler-macro-table (make-vector 301 '())) )
-  (if (and (pair? head) (symbol? (car head)))
-      (cond ((memq 'compiling ##sys#features)
-	     (warning "compile macros are not available in interpreted code" 
-		      (car head) )
-	     '(void) )
-	    (else
-	     (let* ((wvar (gensym))
-		    (llist
-		     (let loop ((llist head))
-		       (cond ((not (pair? llist)) llist)
-			     ((eq? #:whole (car llist))
-			      (unless (pair? (cdr llist)) (bad))
-			      (set! wvar (cadr llist))
-			      (cddr llist) )
-			     (else (cons (car llist) (loop (cdr llist)))) ) ) ) )
-	       (##sys#hash-table-set!
-		##compiler#compiler-macro-table
-		(car head)
-		(eval `(lambda (,wvar) (apply (lambda ,llist ,@body) ,wvar))) )
-	       '(void) ) ) )
-      (bad) ) )
 
 
 ;;; Register features provided by this file

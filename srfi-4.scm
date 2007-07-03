@@ -680,27 +680,32 @@ EOF
 (define read-u8vector
   (let ((open-output-string open-output-string)
 	(get-output-string get-output-string) )
+    (define (wrap str n)
+      (##sys#make-structure
+       'u8vector
+       (let ((str2 (##sys#allocate-vector n #t #f #t)))
+	 (##core#inline "C_string_to_bytevector" str2) 
+	 (##core#inline "C_substring_copy" str str2 0 n 0)
+	 str2) ) )
     (lambda (#!optional n (p ##sys#standard-input))
       (##sys#check-port p 'read-u8vector)
       (cond (n (##sys#check-exact n 'read-u8vector)
 	       (let* ((str (##sys#allocate-vector n #t #f #t))
 		      (n2 (##sys#read-string! n str p 0)) )
-		 (##sys#make-structure
-		  'u8vector
-		  (if (eq? n n2)
-		      str
-		      (let ((str2 (##sys#allocate-vector n2 #t #f #t)))
-			(##core#inline "C_substring_copy" str str2 0 n2 0)
-			str2) ) ) ) )
+		 (##core#inline "C_string_to_bytevector" str) 
+		 (if (eq? n n2)
+		     (##sys#make-structure 'u8vector str)
+		     (wrap str n2) ) ) )
 	    (else
 	     (let ([str (open-output-string)])
-	       (let loop ([n n])
-		 (or (and (eq? n 0) (get-output-string str))
-		     (let ([c (##sys#read-char-0 p)])
-		       (if (eof-object? c)
-			   (get-output-string str)
-			   (begin
-			     (##sys#write-char c str) 
-			     (loop (and n (fx- n 1))) ) ) ) ) ) ) ) ) ) ) )
+	       (let loop ()
+		 (let ([c (##sys#read-char-0 p)])
+		   (if (eof-object? c)
+		       (let* ((s (get-output-string str))
+			      (n (##sys#size s)) )
+			 (wrap s n) )
+		       (begin
+			 (##sys#write-char c str) 
+			 (loop)))))))))))
 
 (register-feature! 'srfi-4)

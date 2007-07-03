@@ -172,7 +172,7 @@ optimizer.c : tweaks.scm
 c-backend.c : tweaks.scm
 support.c : tweaks.scm banner.scm
 c-platform.c : tweaks.scm
-library.c: build.scm
+library.c: version.scm
 
 # Rules to build C files from Scheme sources.  These are not used in a
 # normal build but are required for stage2 and stage3 builds.  They
@@ -183,7 +183,7 @@ library.c: build.scm
 # circular dependency a change to a single Scheme source file would
 # force make to recompile all of them.)
 
-chicken.c: chicken.scm chicken-more-macros.scm build.scm chicken-ffi-macros.scm tweaks.scm
+chicken.c: chicken.scm chicken-more-macros.scm version.scm chicken-ffi-macros.scm tweaks.scm
 	$(CHICKEN) chicken.scm $(CHICKEN_FLAGS) -output-file chicken.c
 
 csi.c: csi.scm banner.scm chicken-more-macros.scm
@@ -209,7 +209,7 @@ SUFFIXES = .scm
 # Specific rules for unsafe library units:
 ueval.c: eval.scm
 	$(CHICKEN) eval.scm $(CHICKEN_UFLAGS) -output-file ueval.c -explicit-use
-ulibrary.c: library.scm $(srcdir)/build.scm
+ulibrary.c: library.scm $(srcdir)/version.scm
 	$(CHICKEN) library.scm $(CHICKEN_UFLAGS) -output-file ulibrary.c -explicit-use
 uextras.c: extras.scm
 	$(CHICKEN) extras.scm $(CHICKEN_UFLAGS) -output-file uextras.c -explicit-use
@@ -288,7 +288,7 @@ pcresources = pcre/pcre_compile.c pcre/pcre_get.c pcre/pcre_printint.c pcre/pcre
 	pcre/pcre_dfa_exec.c pcre/pcre_info.c pcre/pcre_study.c pcre/pcre_version.c \
 	pcre/pcre_exec.c pcre/pcre_maketables.c pcre/pcre_tables.c pcre/pcre_xclass.c \
 	pcre/pcre_fullinfo.c pcre/pcre_ord2utf8.c pcre/pcre_try_flipped.c pcre/chartables.c
-pcreoptions = -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC
+pcreoptions = -Ipcre
 
 libchicken_la_SOURCES = $(commonlibsources) $(chickenlibsources) $(pcresources)
 libchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN $(pcreoptions)

@@ -190,6 +190,7 @@ The value returned is the value of the last form in BODY."
                            "defstruct"
                            "define-record-printer"
                            "define-record-type"
+			   "define-compiler-macro"
                            "define-syntax"
                            "define-for-syntax"
                            "define-values") 1) "\\)"
@@ -223,7 +224,7 @@ The value returned is the value of the last form in BODY."
 
 	      "let-location" "location" "rec"
               "let" "let*" "let-syntax" "letrec" "letrec-syntax" "set!-values"
-              "and-let*" "let-optionals" "let-optionals*"
+              "and-let*" "let-optionals" "let-optionals*" "optional"
               "fluid-let" "let-values" "let*-values" "letrec-values"
               "parameterize"
               "module" "import-only" "import" "import*"
@@ -482,7 +483,7 @@ reset."
       (setq proc
 	    (eval `(start-process hen-csi-proc-name (hen-csi-buffer)
 				  hen-csi-program
-				  "-no-init" "-quiet" "-:c"
+				  "-no-init" "-quiet" "-:c" "-R" "regex" "-R" "utils"
 				  ,@(split-string hen-eval-init-arg))))
       (with-current-buffer (hen-csi-buffer)
 	(hen-proc-wait-prompt proc hen-csi-prompt-pattern)

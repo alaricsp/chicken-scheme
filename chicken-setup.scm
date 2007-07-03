@@ -117,6 +117,8 @@
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
 (define *move-command* (if *windows-shell* 'move 'mv))
+(define *gzip-program* (if *windows-shell* 'chicken-gzip 'gzip))
+(define *tar-program* (if *windows-shell* 'chicken-tar 'tar))
 
 (define (cross-chicken) (##sys#fudge 39))
 
@@ -171,6 +173,7 @@
 (define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
 (define *revision* #f)
 (define *run-tests* #f)
+(define *fetched-eggs* '())
 
 
 (define (abort-setup)
@@ -442,16 +445,17 @@ EOF
 (define (run-setup-script filename)
   (when (setup-verbose-flag) (printf "executing ~A ...~%" filename))
   (load filename) 
-  (when (and *run-tests* 
-	     (file-exists? "tests")
+  (when *run-tests* 
+    (if (and (file-exists? "tests")
 	     (directory? "tests") 
 	     (file-exists? (make-pathname "tests" "run.scm")) )
-    (let ((old (current-directory)))
-      (change-directory "tests")
-      (when (setup-verbose-flag)
-	(printf "running test cases ...~%") )
-      (run (csi -s run.scm ,(pathname-file filename)))
-      (change-directory old))))
+	(let ((old (current-directory)))
+	  (change-directory "tests")
+	  (when (setup-verbose-flag)
+	    (printf "running test cases ...~%") )
+	  (run (csi -s run.scm ,(pathname-file filename))) 
+	  (change-directory old))
+	(print "egg has no test suite.") ) ) )
 
 (define (write-info id files info)
   (let-values (((exports info) (fix-exports id info)))
@@ -528,8 +532,8 @@ EOF
 	   (let ((fn2 (string-append "../" filename))
 		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
-		 (run (gzip -d -c ,fn2 |\|| tar ,(if v 'xvf 'xf) -))
-		 (run (tar ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
+		 (run (,*gzip-program* -d -c ,fn2 |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
+		 (run (,*tar-program* ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
     (set! *temporary-directory* tmpdir) ) )
 
 (define (copy-file from to #!optional (err #t))
@@ -935,7 +939,12 @@ EOF
 		   (loop sfile)
 		   (rmtmpdir) ) ) ) )
 	    ((fetch-file filename) 
-	     (when df (loop (pathname-file filename))) ) ) ) ) )
+	     (set! *fetched-eggs* 
+	       (append 
+		*fetched-eggs* 
+		(list (make-pathname (current-directory) filename "egg"))))
+	     (when df
+	       (loop (pathname-file filename))))))))
 
 (define (doc-index #!optional ddir?)
   (make-pathname (repo-path ddir?) "index.html"))
@@ -1254,6 +1263,10 @@ EOF
 	 (when *rebuild-doc-index*
 	   (when (setup-verbose-flag) (printf "Rebuilding documentation index...\n"))
 	   (build-doc-index) )
+	 (for-each 
+	  (lambda (f)
+	    (run (,*remove-command* ,(quotewrap f))) )
+	  *fetched-eggs*)
 	 #f) ) ) ) )
 
 (handle-exceptions ex 

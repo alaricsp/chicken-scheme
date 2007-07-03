@@ -9,6 +9,7 @@ AC_CONFIG_SRCDIR([runtime.c])
 AM_INIT_AUTOMAKE(1.8.3)
 AC_CONFIG_HEADERS(chicken-config.h)
 AC_DEFINE(C_USE_C_DEFAULTS,1,[Use hardwired installation pathnames])
+AC_DEFINE(C_AUTOTOOLS_BUILD,1,[Built using autotools])
 
 AC_CANONICAL_HOST
 

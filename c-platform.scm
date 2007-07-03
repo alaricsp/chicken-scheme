@@ -127,7 +127,7 @@
     fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
     lambda-lift run-time-macros tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
-    emit-external-prototypes-first release
+    emit-external-prototypes-first release disable-compiler-macros
     analyze-only dynamic extension) )
 
 (define valid-compiler-options-with-argument

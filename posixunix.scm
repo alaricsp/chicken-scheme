@@ -818,8 +818,8 @@ EOF
            'open-input-pipe
            cmd #t
            (case m
-             ((###text) (##core#inline_allocate ("open_text_input_pipe" 2) (##sys#make-c-string cmd)))
-             ((###binary) (##core#inline_allocate ("open_binary_input_pipe" 2) (##sys#make-c-string cmd)))
+             ((#:text) (##core#inline_allocate ("open_text_input_pipe" 2) (##sys#make-c-string cmd)))
+             ((#:binary) (##core#inline_allocate ("open_binary_input_pipe" 2) (##sys#make-c-string cmd)))
              (else (badmode m)) ) ) ) ) )
     (set! open-output-pipe
       (lambda (cmd . m)
@@ -829,8 +829,8 @@ EOF
            'open-output-pipe
            cmd #f
            (case m
-             ((###text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
-             ((###binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
+             ((#:text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
+             ((#:binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
              (else (badmode m)) ) ) ) ) )
     (set! close-input-pipe
       (lambda (port)
@@ -1801,7 +1801,6 @@ EOF
 (define _exit
   (let ([ex0 (foreign-lambda void "_exit" int)])
     (lambda code
-      (##sys#cleanup-before-exit)
       (ex0 (if (pair? code) (car code) 0)) ) ) )
 
 (define set-alarm! (foreign-lambda int "C_alarm" int))

@@ -53,7 +53,7 @@
   target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  broken-constant-nodes inline-substitutions-enabled
+  broken-constant-nodes inline-substitutions-enabled compiler-macros-enabled
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
   direct-call-ids foreign-type-table first-analysis emit-closure-info
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
@@ -136,6 +136,7 @@
 	[dumpnodes #f]
 	[quiet (memq 'quiet options)]
 	[start-time #f]
+	(upap #f)
 	[ssize (or (memq 'nursery options) (memq 'stack-size options))] )
 
     (define (cputime) (##sys#fudge 6))
@@ -199,6 +200,14 @@
     (define (read-form in)
       (##sys#read in infohook) )
 
+    (define (analyze pass node)
+      (let ((db (analyze-expression node)))
+	(when upap
+	  (upap pass db node
+		(cut get db <> <>)
+		(cut put! db <> <> <>) ) )
+	db) )
+
     (when uunit
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
     (set! debugging-chicken 
@@ -209,6 +218,7 @@
        (collect-options 'debug) ) )
     (set! dumpnodes (memq '|D| debugging-chicken))
     (when (memq 'lambda-lift options) (set! do-lambda-lifting #t))
+    (when (memq 'disable-compiler-macros options) (set! compiler-macros-enabled #f))
     (when (memq 't debugging-chicken) (##sys#start-timer))
     (when (memq 'b debugging-chicken) (set! time-breakdown #t))
     (and-let* ((xfile (memq 'emit-exports options)))
@@ -267,12 +277,18 @@
 	      ipath) )
     (when (and outfile filename (string=? outfile filename))
       (quit "source- and output-filename are the same") )
-    (set! uses-units (map string->symbol (collect-options 'uses)))
+    (set! uses-units
+      (map string->symbol 
+	   (append-map
+	    (cut string-split <> ",")
+	    (collect-options 'uses))))
     (when (memq 'keep-shadowed-macros options)
       (set! undefine-shadowed-macros #f) )
 
     ;; Handle feature options:
-    (for-each register-feature! (collect-options 'feature))
+    (for-each 
+     register-feature!
+     (append-map (cut string-split <> ",") (collect-options 'feature)))
 
     ;; Load extensions:
     (set! ##sys#features (cons #:compiler-extension ##sys#features))
@@ -286,6 +302,7 @@
     (set! ##sys#features (cons '#:compiling ##sys#features))
     (set! ##sys#features (cons #:match ##sys#features))
     (##sys#provide 'match) 
+    (set! upap (user-post-analysis-pass))
 
     ;; Insert postponed initforms:
     (set! initforms (append initforms postponed-initforms))
@@ -302,7 +319,13 @@
 		     (else (quit "no filename available for `-extension' option")) ) ) ) ) ) ) )
 
     ;; Append required extensions to initforms:
-    (let ([ids (lset-difference eq? (map string->symbol (collect-options 'require-extension)) uses-units)])
+    (let ([ids (lset-difference 
+		eq?
+		(map string->symbol
+		     (append-map
+		      (cut string-split <> ",")
+		      (collect-options 'require-extension)))
+		uses-units)])
       (set! initforms
 	(append initforms (map (lambda (r) `(##core#require-extension ',r)) ids)) ) )
 
@@ -486,7 +509,7 @@
 		 (when verbose (printf "Secondary user pass...~%"))
 		 (begin-time)
 		 (set! first-analysis #f)
-		 (let ([db (analyze-expression node0)])
+		 (let ([db (analyze 'user node0)])
 		   (print-db "analysis (u)" '|0| db 0)
 		   (end-time "pre-analysis (u)")
 		   (begin-time)
@@ -498,7 +521,7 @@
 	       (when do-lambda-lifting
 		 (begin-time)
 		 (set! first-analysis #f)
-		 (let ([db (analyze-expression node0)])
+		 (let ([db (analyze 'lift node0)])
 		   (print-db "analysis" '|0| db 0)
 		   (end-time "pre-analysis")
 		   (begin-time)
@@ -522,7 +545,7 @@
 		 (let loop ([i 1] [node2 node1] [progress #t])
 
 		   (begin-time)
-		   (let ([db (analyze-expression node2)])
+		   (let ([db (analyze 'opt node2)])
 		     (when first-analysis
 		       (when use-import-table (check-global-imports db))
 		       (check-global-exports db)
@@ -549,7 +572,7 @@
 				     (loop (add1 i) node2 #t) ]
 				    [optimize-leaf-routines
 				     (begin-time)
-				     (let ([db (analyze-expression node2)])
+				     (let ([db (analyze 'leaf node2)])
 				       (end-time "analysis")
 				       (begin-time)
 				       (let ([progress (transform-direct-lambdas! node2 db)])
@@ -568,11 +591,6 @@
 				(display "(don't despair - still compiling...)\n") )
 			      (when export-file-name
 				(dump-exported-globals db export-file-name) )
-			      (let ([upap (user-post-analysis-pass)])
-				(when upap 
-				  (upap db node3
-					(cut get db <> <>)
-					(cut put! db <> <> <>) ) ) )
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 

@@ -134,9 +134,9 @@
       [disp-proc
         (lambda (proc labl)
           (let ([info (procedure-information proc)])
-            (if info
-              (display (cons labl (cdr info)))
-              (display labl) ) ) )]
+            (cond ((pair? info) (display (cons labl (cdr info))))
+		  (info (display labl))
+		  (else (display labl) ) ) ) ) ]
       [symlen
         (lambda (sym)
           (let ([len (##sys#size (##sys#symbol->qualified-string sym))])
