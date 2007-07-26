@@ -96,6 +96,12 @@ A boolean indicating whether loading of source files, compiled code
 (if available) and compiled libraries should display a message.
 
 
+=== program-name
+The name of the currently executing program. This is equivalent to
+{{(car (argv))}} for compiled programs or the filename following the
+{{-script}} option in interpreted scripts.
+
+
 === repl-prompt
 A procedure that should evaluate to a string that will be printed before reading 
 interactive input from the user in a read-eval-print loop. Defaults to 

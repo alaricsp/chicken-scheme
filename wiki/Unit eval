@@ -60,6 +60,7 @@ If {{PRINTER}} is given and not false, then each expression is
 printed before evaluation by applying the expression to the value of this
 argument, which should be a one-argument procedure.
 
+See also the [[http://chicken.wiki.br/Parameters#load-verbose|load-verbose]] parameter.
 ==== load-library
 
  [procedure] (load-library UNIT [LIBRARYFILE])

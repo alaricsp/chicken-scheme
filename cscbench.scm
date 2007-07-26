@@ -35,9 +35,9 @@
     (display (substring str 0 (min slen len))) ) )
 
 (define (display-f-4.3 n)
-  (let* ([m (string-match "([-.+e0-9]*)(\\.([0-9]*))?" (number->string n))]
+  (let* ([m (string-match "([-+e0-9]*)(\\.([0-9]*))?" (number->string n))]
 	 [is (second m)]
-	 [fs (or (fourth m) "0")] )
+	 [fs (fourth m)] )
     (display-r is 4 #\space)
     (display #\.)
     (display-r fs 3 #\0) ) )
@@ -54,9 +54,12 @@
 		 (set! abort-run (cut abort #f))
 		 (/ (+ (run) (run) (run)) 3) ) ) ] )
     (display #\space)
-    (if time
-	(display-f-4.3 time)
-	(display "FAILED") ) ) )
+    (cond (time
+            (display-f-4.3 time)
+            time)
+          (else
+            (display "FAILED")
+            9999.9))))
 
 (define (dflush x)
   (display x)
@@ -83,7 +86,10 @@
       (system* "~A -v" cc) )
   (dflush "\nCFLAGS:\n")
   (system* "echo `../csc -cflags`")
-  (display "\n                    base      unsafe        max\n")
+  (display "\n                  base       unsafe     max\n")
+  (let ((sum-base 0.0)
+        (sum-unsafe 0.0)
+        (sum-max 0.0))
   (for-each
    (lambda (file)
      (let* ([name (pathname-file file)]
@@ -93,18 +99,22 @@
 	    [options (string-intersperse options " ")] )
        (display-l name 16 #\space)
        (flush-output)
-       (compile-and-run file extras "-debug-level 0 -optimize-level 1 -lambda-lift" options "" #f)
+       (set! sum-base (+ sum-base (compile-and-run file extras "-debug-level 0 -optimize-level 1 -lambda-lift" options "" #f)))
        (dflush "  ")
-       (compile-and-run 
-	file extras
-	"-debug-level 0 -optimize-level 3 -block -disable-interrupts -lambda-lift"
-	options "" #t)
+       (set! sum-unsafe (+ sum-unsafe (compile-and-run file extras "-debug-level 0 -optimize-level 3 -block -disable-interrupts -lambda-lift" options "" #t)))
        (dflush "  ")
-       (when (not (member name flonum-files))
-	 (compile-and-run file extras "-benchmark-mode" options "" #t) )
+       (unless (member name flonum-files)
+         (set! sum-max (+ sum-max (compile-and-run file extras "-benchmark-mode" options "" #t) )))
        (newline)
        (flush-output) ) )
    (lset-difference string=? (sort (glob "*.scm") string<?) '("plists.scm")))
- 0)
+  (display "\nTOTAL            ")
+  (display-f-4.3 sum-base)
+  (display "   ")
+  (display-f-4.3 sum-unsafe)
+  (display "   ")
+  (display-f-4.3 sum-max)
+  (newline)
+ 0))
 
 (main (command-line-arguments))

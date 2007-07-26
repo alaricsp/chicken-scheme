@@ -31,6 +31,8 @@ SET(SOURCE_DIR_FILES
   chicken-profile.scm
   chicken-setup.1
   chicken-setup.scm
+  chicken-tar.exe
+  chicken-gzip.exe
   chicken.1
   chicken.h
   chicken.ico

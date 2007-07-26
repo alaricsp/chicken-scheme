@@ -8858,7 +8858,7 @@ void C_call_with_cthulhu(C_word c, C_word self, C_word k, C_word proc)
 
 /* fixnum arithmetic with overflow detection (from "Hacker's Delight" by Hank Warren) */
 
-C_regparm C_word C_i_o_fixnum_plus(C_word n1, C_word n2)
+C_regparm C_word C_fcall C_i_o_fixnum_plus(C_word n1, C_word n2)
 {
   C_word x1, x2, s;
   
@@ -8873,7 +8873,7 @@ C_regparm C_word C_i_o_fixnum_plus(C_word n1, C_word n2)
 }
 
 
-C_regparm C_word C_i_o_fixnum_difference(C_word n1, C_word n2)
+C_regparm C_word C_fcall C_i_o_fixnum_difference(C_word n1, C_word n2)
 {
   C_word x1, x2, s;
 

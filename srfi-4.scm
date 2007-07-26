@@ -705,7 +705,7 @@ EOF
 			      (n (##sys#size s)) )
 			 (wrap s n) )
 		       (begin
-			 (##sys#write-char c str) 
+			 (##sys#write-char/port c str) 
 			 (loop)))))))))))
 
 (register-feature! 'srfi-4)

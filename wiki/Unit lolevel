@@ -323,114 +323,39 @@ Changes the data object contained in the extended procedure
 (foo)                                         ==> hello
 </enscript>
 
-=== Bytevectors
+=== Blobs
+
+"blobs" are collections of unstructured bytes. You can't do much
+with them, but allow conversion to and from SRFI-4 number vectors.
 
 
+==== blob?
 
-==== byte-vector
+ [procedure] (blob? X)
 
- [procedure] (byte-vector FIXNUM ...)
-
-Returns a freshly allocated byte-vector with {{FIXNUM ...}} as its
-initial contents.
-
-
-==== byte-vector?
-
- [procedure] (byte-vector? X)
-
-Returns {{#t}} if {{X}} is a byte-vector object, or
+Returns {{#t}} if {{X}} is a blob object, or
 {{#f}} otherwise.
 
 
-==== byte-vector-fill!
+==== blob-size
 
- [procedure] (byte-vector-fill! BYTE-VECTOR N)
+ [procedure] (blob-size BLOB)
 
-Sets each element of {{BYTE-VECTOR}} to {{N}}, which should
-be an exact integer.
-
-
-==== byte-vector->list
-
- [procedure] (byte-vector->list BYTE-VECTOR)
-
-Returns a list with elements taken from {{BYTE-VECTOR}}.
+Returns the number of bytes in {{BLOB}}.
 
 
-==== byte-vector->string
+==== blob->string
 
- [procedure] (byte-vector->string BYTE-VECTOR)
+ [procedure] (blob->string BLOB)
 
-Returns a string with the contents of {{BYTE-VECTOR}}.
-
-
-==== byte-vector-length
-
- [procedure] (byte-vector-length BYTE-VECTOR)
-
-Returns the number of elements in {{BYTE-VECTOR}}.
+Returns a string with the contents of {{BLOB}}.
 
 
-==== byte-vector-ref
+==== string->blob
 
- [procedure] (byte-vector-ref BYTE-VECTOR INDEX)
+ [procedure] (string->blob STRING)
 
-Returns the byte at the {{INDEX}}th position of {{BYTE-VECTOR}}.
-
-
-==== byte-vector-set!
-
- [procedure] (byte-vector-set! BYTE-VECTOR INDEX N)
- [procedure] (set! (byte-vector-ref BYTE-VECTOR INDEX) N)
-
-Sets the byte at the {{INDEX}}th position of {{BYTE-VECTOR}}
-to the value of the exact integer {{n}}.
-
-
-==== list->byte-vector
-
- [procedure] (list->byte-vector LIST)
-
-Returns a byte-vector with elements taken from {{LIST}}, where the
-elements of {{LIST}} should be exact integers.
-
-
-==== make-byte-vector
-
- [procedure] (make-byte-vector SIZE [INIT])
-
-Creates a new byte-vector of size {{SIZE}}. If {{INIT}} is
-given, then it should be an exact integer with which every element of
-the byte-vector is initialized.
-
-
-==== make-static-byte-vector
-
- [procedure] (make-static-byte-vector SIZE [INIT])
-
-As {{make-byte-vector}}, but allocates the byte-vector in storage
-that is not subject to garbage collection.  To free the allocated memory,
-one has to call {{object-release}} explicitly.
-
-Exceptions: {{(exn bounds)}}, {{(exn runtime)}}
-
-
-==== static-byte-vector->pointer
-
- [procedure] (static-byte-vector->pointer PBYTE-VECTOR)
-
-Returns a pointer object pointing to the data in the statically allocated
-byte-vector {{PBYTE-VECTOR}}.
-
-
-==== string->byte-vector
-
- [procedure] (string->byte-vector STRING)
-
-Returns a byte-vector with the contents of {{STRING}}.
-
-
+Returns a blob with the contents of {{STRING}}.
 
 
 
@@ -683,7 +608,7 @@ expands into something quite similar to:
 
 ==== move-memory!
 
- [procedure] (move-memory! FROM TO [BYTES])
+ [procedure] (move-memory! FROM TO [BYTES [FROM-OFFSET [TO-OFFSET]])
 
 Copies {{BYTES}} bytes of memory from {{FROM}} to {{TO}}.
 {{FROM}} and {{TO}} may be strings, primitive byte-vectors,
@@ -694,6 +619,9 @@ or destination operand is known then the maximal number of bytes will
 be copied. Moving memory to the storage returned by locatives will cause havoc, 
 if the locative refers to containers of non-immediate data, like vectors
 or pairs.
+
+The additional fourth and fifth argument specify starting offsets 
+(in bytes) for the source and destination arguments.
 
 
 ==== number-of-bytes
@@ -794,6 +722,24 @@ Note: this operation invokes a major garbage collection.
 The effect of using {{object-become!}} on evicted data (see {{object-evict}})
 is undefined.
 
+
+==== mutate-procedure
+
+ [procedure] (mutate-procedure OLD PROC)
+
+Replaces the procedure {{OLD}} with the result of calling the one-argument
+procedure {{PROC}}. {{PROC}} will receive a copy of {{OLD}} that will
+be identical in behaviour to the result of {{PROC}}:
+
+<enscript highlight=scheme>
+;;; Replace arbitrary procedure with tracing one:
+
+(mutate-procedure my-proc 
+  (lambda (new) 
+    (lambda args
+      (printf "~s called with arguments: ~s~%" new args)
+      (apply new args) ) ) )
+</enscript>
 
 
 Previous: [[Unit tcp]]

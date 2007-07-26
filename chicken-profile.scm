@@ -109,9 +109,9 @@ EOF
 (define (sort-by-calls x y)
   (let ([c1 (second x)]
 	[c2 (second y)] )
-    (if (= c1 c2)
+    (if (eqv? c1 c2)
 	(> (third x) (third y))
-	(> c1 c2) ) ) )
+	(if c1 (if c2 (> c1 c2) #t) #t) ) ) )
 
 (define (sort-by-time x y)
   (let ([c1 (third x)]
@@ -123,7 +123,7 @@ EOF
 (define (sort-by-avg x y)
   (let ([c1 (cadddr x)]
 	[c2 (cadddr y)] )
-    (if (= c1 c2)
+    (if (eqv? c1 c2)
 	(> (third x) (third y))
 	(> c1 c2) ) ) )
 
@@ -150,8 +150,11 @@ EOF
   (let ((hash (make-hash-table eq?)))
     (do ((line (read) (read)))
 	((eof-object? line))
-      (hash-table-set! hash (first line)
-		       (map + (hash-table-ref/default hash (first line) '(0 0)) (cdr line))))
+      (hash-table-set!
+       hash (first line)
+       (map (lambda (x y) (and x y (+ x y)))
+	    (hash-table-ref/default hash (first line) '(0 0)) 
+	    (cdr line))))
     (hash-table->alist hash)))
 
 (define (format-string str cols #!optional right (padc #\space))
@@ -182,7 +185,7 @@ EOF
 	 [data (sort (map
 		      (lambda (t) (append t (let ((c (second t))
 						  (t (third t)))
-					      (list (or (and (> c 0) (/ t c))
+					      (list (or (and c (> c 0) (/ t c))
 							0)
 						    (or (and (> max-t 0) (* (/ t max-t) 100))
 							0)
@@ -197,11 +200,14 @@ EOF
 			    [a (cadddr entry)]
 			    [p (list-ref entry 4)] )
 			(list (##sys#symbol->qualified-string (first entry))
-			      (number->string c)
+			      (if (not c) "overflow" (number->string c))
 			      (format-real (/ t 1000) seconds-digits)
 			      (format-real (/ a 1000) average-digits)
 			      (format-real p percent-digits))))
-		    (filter (lambda (entry) (not (and (zero? (second entry)) no-unused)))
+		    (remove (lambda (entry) 
+			      (if (second entry) 
+				  (and (zero? (second entry)) no-unused)
+				  #f) )
 			    data)))
     (let* ([headers (list "procedure" "calls" "seconds" "average" "percent")]
 	   [alignments (list #f #t #t #t #t)]

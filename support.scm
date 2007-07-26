@@ -75,7 +75,7 @@
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
   lookup-exports-file constant-declarations process-lambda-documentation
-  compiler-macro-table register-compiler-macro
+  compiler-macro-table register-compiler-macro export-dump-hook export-import-hook
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
 
 
@@ -768,6 +768,8 @@
 
 ;;; Some safety checks and database dumping:
 
+(define (export-dump-hook db file) (void))
+
 (define (dump-exported-globals db file)
   (unless block-compilation
     (with-output-to-file file
@@ -787,7 +789,8 @@
 	     (newline) )
 	   (sort exports
 		 (lambda (s1 s2)
-		   (string<? (##sys#slot s1 1) (##sys#slot s2 1)))) ) ) ) ) ) )
+		   (string<? (##sys#slot s1 1) (##sys#slot s2 1)))) )
+	  (export-dump-hook db file) ) ) ) ) )
 
 (define (dump-undefined-globals db)
   (##sys#hash-table-for-each
@@ -823,6 +826,8 @@
 		(compiler-warning 'var "variable `~s' used but not imported" sym) ) ) ) ) )
    db) )
 
+(define (export-import-hook x id) (void))
+
 (define (lookup-exports-file id)
   (and-let* ((xfile (##sys#resolve-include-filename 
 		     (string-append (->string id) ".exports")
@@ -830,7 +835,12 @@
 	     ((file-exists? xfile)) )
     (when verbose-mode 
       (printf "loading exports file ~a ...~%" xfile) )
-    (for-each (cut ##sys#hash-table-set! import-table <> id) (read-file xfile)) ) )
+    (for-each
+     (lambda (exp)
+       (if (symbol? exp)
+	   (##sys#hash-table-set! import-table exp id) 
+	   (export-import-hook exp id) ) )
+     (read-file xfile)) ) )
 
 
 ;;; Compute general statistics from analysis database:

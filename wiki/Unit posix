@@ -45,8 +45,8 @@ to be empty.
  [procedure] (directory [PATHNAME [SHOW-DOTFILES?]])
 
 Returns a list with all files that are contained in the directory with the name {{PATHNAME}}
-(which defaults to the value of {{(current-directory)}}). If {{SHOW-DOTFILES?}} is given
-and not {{#f}}, then files beginning with ''.'' are not included in the directory listing.
+(which defaults to the value of {{(current-directory)}}).
+Files beginning with {{.}} are included only if {{SHOW-DOTFILES?}} is given and not {{#f}}.
 
 ==== directory?
 
@@ -429,8 +429,6 @@ be of the form {{("<NAME>=<VALUE>" ...)}} is given
 to the invoked process. Note that {{execvp(3)}} respects the current setting
 of the {{PATH}} environment variable while {{execve(3)}} does not.
 
-On native Windows, {{process-execute}} ignores the {{ENVIRONMENT-LIST}} arguments.
-
 ==== process-fork
 
  [procedure] (process-fork [THUNK])
@@ -442,15 +440,14 @@ with no arguments and terminates.
 
 ==== process-run
 
- [procedure] (process-run PATHNAME [LIST])
+ [procedure] (process-run COMMANDLINE])
+ [procedure] (process-run COMMAND ARGUMENT-LIST)
 
-Creates a new child process using the UNIX system call {{fork()}}
-that executes the program given by the string {{PATHNAME}} using
-the UNIX system call {{execv()}}.  The PID of the new process is
-returned. If {{LIST}} is not specified, then {{PATHNAME}}
-is passed to a program named by the environment variable {{SHELL}}
-(or {{/bin/sh}}, if the variable is not defined), so usual argument
-expansion can take place.
+Creates a new child process. The PID of the new process is returned.
+
+* The single parameter version passes the {{COMMANDLINE}} to the system shell, so usual
+argument expansion can take place.
+* The multiple parameter version directly invokes the {{COMMAND}} with the {{ARGUMENT-LIST}}.
 
 ==== process-signal
 
@@ -471,32 +468,33 @@ waits for any child process. If {{NOHANG}} is given and not
 {{#f}} then the current process is not suspended.  This procedure
 returns three values:
 
-* {{PID}} or 0, if {{NOHANG}} is true and the child process has not terminated yet
-* {{#t}} if the process exited normally or {{#f}} otherwise
+* {{PID}} or 0, if {{NOHANG}} is true and the child process has not terminated yet.
+* {{#t}} if the process exited normally or {{#f}} otherwise.
 * either the exit status, if the process terminated normally or the signal number that terminated/stopped the process.
 
 ==== process
 
- [procedure] (process COMMANDLINE [ARGUMENTLIST [ENVIRONMENT]])
+ [procedure] (process COMMANDLINE)
+ [procedure] (process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])
 
-Passes the string {{COMMANDLINE}} to the host-system's shell that
-is invoked as a subprocess and returns three values: an input port from
+Creates a subprocess and returns three values: an input port from
 which data written by the sub-process can be read, an output port from
 which any data written to will be received as input in the sub-process
 and the process-id of the started sub-process. Blocking reads and writes
 to or from the ports returned by {{process}} only block the current
 thread, not other threads executing concurrently.
 
-If {{ARGUMENTLIST}} is given, then the invocation of the subprocess
-is not done via the shell, but directly. The arguments are directly
-passed to {{process-execute}} (as is {{ENVIRONMENT}}).
-Not using the shell may be preferrable for security reasons.
+* The single parameter version passes the string {{COMMANDLINE}} to the host-system's shell that
+is invoked as a subprocess.
+* The multiple parameter version directly invokes the {{COMMAND}} as a subprocess. The {{ARGUMENT-LIST}}
+is directly passed, as is {{ENVIRONMENT-LIST}}.
 
-On native Windows the {{ARGUMENTLIST}} and {{ENVIRONMENT}} arguments are ignored.
+Not using the shell may be preferrable for security reasons.
 
 ==== process*
 
- [procedure] (process* COMMANDLINE [ARGUMENTLIST [ENVIRONMENT]])
+ [procedure] (process* COMMANDLINE)
+ [procedure] (process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])
 
 Like {{process}} but returns 4 values: an input port from
 which data written by the sub-process can be read, an output port from
@@ -592,11 +590,15 @@ exact integers) using the {{chown()}} system call.
 ==== current-effective-group-id
 
  [procedure] (current-user-id)
+ [setter] (set! (current-user-id) UID)
  [procedure] (current-group-id)
+ [setter] (set! (current-group-id) GID)
  [procedure] (current-effective-user-id)
+ [setter] (set! (current-effective-user-id) UID)
  [procedure] (current-effective-group-id)
+ [setter] (set! (current-effective-group-id) GID)
 
-Return the user- and group-ids of the current process.
+Get or set the real/effective user- and group-ids of the current process.
 
 ==== process-group-id
 
@@ -653,22 +655,6 @@ Only the superuser may invoke this procedure.
 ==== perm/isgid
 
 These variables contain permission bits as used in {{change-file-mode}}.
-
-==== set-user-id!
-
- [procedure] (set-user-id! UID)
- [setter] (set! (current-user-id) UID)
-
-Sets the effective user id of the current process to {{UID}},
-which should be a positive integer.
-
-==== set-group-id!
-
- [procedure] (set-group-id! GID)
- [setter] (set! (current-group-id) GID)
-
-Sets the effective group id of the current process to {{GID}},
-which should be a positive integer.
 
 ==== set-process-group-id!
 
@@ -919,7 +905,7 @@ the number of seconds since the first of January, 1970 UTC.
 
 ==== local-timezone-abbreviation
 
- [procedure] (local-timezone-abbrevtiation)
+ [procedure] (local-timezone-abbreviation)
 
 Returns the abbreviation for the local timezone as a string.
 
@@ -1225,8 +1211,36 @@ timegm
 
 === Windows specific notes
 
+Use of UTF8 encoded strings is for pathnames is not supported. Windows uses a
+16-bit UNICODE encoding with special system calls for wide-character support.
+Only single-byte string encoding can be used.
+
+==== Procedure Changes
+
+Exceptions to the above procedure definitions.
+
+ [procedure] (create-pipe [MODE])
+
+The optional parameter {{MODE}}, default {{open/binary | open/noinherit}}. This can be {{open/binary}} or
+{{open/text}}, optionally or'ed with {{open/noinherit}}.
+
+ [procedure] (process-wait [PID [NOHANG]])
+
+{{process-wait}} always returns {{#t}} for a terminated process and only the exit
+status is available. (Windows does not provide signals as an interprocess
+communication method.)
+
+ [procedure] (process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])
+ [procedure] (process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])
+ [procedure] (process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])
+
+The optional parameter {{EXACT-FLAG}}, default {{#f}}. When {{#f}} any argument string with
+embedded whitespace will be wrapped in quotes. When {{#t}} no such wrapping occurs.
+
+==== Unsupported Definitions
+
 The following definitions are not supported for native Windows builds (compiled with the
-Microsoft tools or with MingW):
+Microsoft tools or with MinGW):
 
  open/noctty  open/nonblock  open/fsync  open/sync
  perm/isvtx  perm/isuid  perm/isgid
@@ -1252,15 +1266,22 @@ Microsoft tools or with MingW):
  process-fork  process-signal
  parent-process-id 
  set-root-directory!
- utc-time->seconds local-timezone-abbreviation
+ utc-time->seconds
 
-Additionally, the following definitions are only available for Windows:
+==== Additional Definitions
 
-==== spawn/overlay
-==== spawn/wait
-==== spawn/nowait
-==== spawn/nowaito
-==== spawn/detach
+Only available for Windows
+
+* open/noinherit
+
+This variable is a mode value for {{create-pipe}}. Useful when spawning a child process.
+
+* spawn/overlay
+* spawn/wait
+* spawn/nowait
+* spawn/nowaito
+* spawn/detach
+
 These variables contains special flags that specify the exact semantics of {{process-spawn}}:
 {{spawn/overlay}} replaces the current process with the new one. 
 {{spawn/wait}} suspends execution of the current process until the spawned process returns. 
@@ -1270,11 +1291,19 @@ documentation) and runs the process asynchronously.
 
 ==== process-spawn
 
- [procedure] (process-spawn MODE FILENAME ARGUMENT ...)
+ [procedure] (process-spawn MODE COMMAND [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])
 
-Creates and runs a new process with the given filename and command-line arguments. {{MODE}} specifies
-how exactly the process should be executed and must be one or more of the {{spawn/...}} flags defined
-above.
+Creates and runs a new process with the given {{COMMAND}} filename and the optional
+{{ARGUMENT-LIST}} and {{ENVIRONMENT-LIST}}. {{MODE}} specifies how exactly the process
+should be executed and must be one or more of the {{spawn/...}} flags defined above.
+
+The {{EXACT-FLAG}}, default {{#f}}, controls quote-wrapping of argument strings. When {{#t}}
+quote-wrapping is not performed.
+
+Returns:
+* the exit status when synchronous
+* the PID when asynchronous
+* -1 when failure
 
 
 Previous: [[Unit srfi-18]]

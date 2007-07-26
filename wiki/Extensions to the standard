@@ -80,7 +80,7 @@ expands into
      (baz foo) ) )
 
 [5.2] {{define}} with a single argument is allowed and initializes the toplevel or local binding
-to an unspecified value. CHICKEN supports ''curried'' definitions, where the the variable name
+to an unspecified value. CHICKEN supports ''curried'' definitions, where the variable name
 may also be a list specifying a name and a nested lambda list. So
 
  (define ((make-adder x) y) (+ x y))

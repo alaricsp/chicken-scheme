@@ -41,7 +41,8 @@
   (hide ##sys#dynamic-unwind ##sys#find-symbol
 	##sys#grow-vector ##sys#default-parameter-vector 
 	print-length-limit current-print-length setter-tag read-marks
-	##sys#fetch-and-check-port-arg ##sys#print-exit)
+	##sys#print-exit
+        ##sys#format-here-doc-warning)
   (foreign-declare #<<EOF
 #include <string.h>
 #include <ctype.h>
@@ -113,12 +114,12 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-string ##sys#substring ##sys#check-port-mode
+     ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-port* ##sys#check-string ##sys#substring ##sys#check-port-mode
      ##sys#for-each ##sys#map ##sys#setslot ##sys#allocate-vector ##sys#check-pair 
      ##sys#not-a-proper-list-error ##sys#error ##sys#warn ##sys#signal-hook
      ##sys#check-symbol ##sys#check-vector ##sys#floor ##sys#ceiling ##sys#truncate ##sys#round 
      ##sys#check-number ##sys#cons-flonum ##sys#check-integer ##sys#check-special
-     ##sys#flonum-fraction ##sys#make-port ##sys#fetch-and-check-port-arg ##sys#print 
+     ##sys#flonum-fraction ##sys#make-port ##sys#print 
      ##sys#check-structure ##sys#make-structure ##sys#procedure->string
      ##sys#gcd ##sys#lcm ##sys#ensure-heap-reserve ##sys#check-list 
      ##sys#enable-interrupts ##sys#disable-interrupts ##sys#->feature-id
@@ -128,6 +129,7 @@ EOF
      ##sys#error-handler ##sys#signal ##sys#abort ##sys#port-data
      ##sys#reset-handler ##sys#exit-handler ##sys#dynamic-wind ##sys#port-line
      ##sys#grow-vector ##sys#run-pending-finalizers ##sys#peek-char-0 ##sys#read-char-0
+     ##sys#read-char/port ##sys#write-char/port
      ##sys#schedule ##sys#make-thread ##sys#print-to-string ##sys#scan-buffer-line
      ##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer ##sys#user-print-hook 
      ##sys#current-exception-handler ##sys#default-exception-handler ##sys#abandon-mutexes ##sys#make-mutex
@@ -144,7 +146,7 @@ EOF
      string->keyword keyword? string->keyword getenv ##sys#number->string ##sys#copy-bytes
      call-with-current-continuation ##sys#string->number ##sys#inexact->exact ##sys#exact->inexact
      ##sys#reverse-list->string reverse ##sys#inexact? list? string ##sys#char->utf8-string 
-     ##sys#unicode-surrogate? ##sys#surrogates->codepoint
+     ##sys#unicode-surrogate? ##sys#surrogates->codepoint ##sys#write-char/port
      ##sys#update-errno ##sys#file-info close-output-port close-input-port ##sys#peek-unsigned-integer
      continuation-graft char-downcase string-copy remainder floor ##sys#exact? list->string
      ##sys#append ##sys#list ##sys#cons ##sys#list->vector ##sys#list ##sys#apply ##sys#make-vector
@@ -323,6 +325,7 @@ EOF
     (define-macro (##sys#check-char . _) '(##core#undefined))
     (define-macro (##sys#check-exact . _) '(##core#undefined))
     (define-macro (##sys#check-port . _) '(##core#undefined))
+    (define-macro (##sys#check-port* . _) '(##core#undefined))
     (define-macro (##sys#check-port-mode . _) '(##core#undefined))
     (define-macro (##sys#check-number . _) '(##core#undefined))
     (define-macro (##sys#check-special . _) '(##core#undefined))
@@ -483,7 +486,7 @@ EOF
        (let ((c (car fill)))
 	 (begin (##sys#check-char c 'make-string) c) ) ) ) )
 
-(define string->list 
+(define ##sys#string->list 
   (lambda (s)
     (##sys#check-string s 'string->list)
     (let ((len (##core#inline "C_block_size" s)))
@@ -493,7 +496,9 @@ EOF
 	    (cons (##core#inline "C_subchar" s i)
 		  (loop (fx+ i 1)) ) ) ) ) ) )
 
-(define (list->string lst0)
+(define string->list ##sys#string->list)
+
+(define (##sys#list->string lst0)
   (cond-expand
     [unsafe
     (let* ([len (length lst0)]
@@ -515,6 +520,7 @@ EOF
             (##core#inline "C_setsubchar" s i c) ) ) ) )]
     ))
 
+(define list->string ##sys#list->string)
 
 (define (string-fill! s c)
   (##sys#check-string s 'string-fill!)
@@ -1652,14 +1658,11 @@ EOF
        #:type-error (if (pair? loc) (car loc) #f)
        (if mode "port is not an input port" "port is not an output-port") ) ) ) )
 
-(define (##sys#fetch-and-check-port-arg parg default)
-  (let ((p (if (eq? parg '())
-	       default
-	       (##sys#slot parg 0) ) ) )
-    (##sys#check-port p)
-    (when (##sys#slot p 8)
-      (##sys#signal-hook #:file-error "port already closed" p) )
-    p) )
+(define (##sys#check-port* p loc)
+  (##sys#check-port p)
+  (when (##sys#slot p 8)
+    (##sys#signal-hook #:file-error loc "port already closed" p) )
+  p)
 
 (define (current-input-port . arg)
   (if (pair? arg)
@@ -1825,13 +1828,13 @@ EOF
   ((##sys#slot (##sys#slot port 2) 5) port) ; flush-output
   (##core#undefined) )
 
-(define (flush-output . port)
-  (let ([port (##sys#fetch-and-check-port-arg port ##sys#standard-output)])
-    (##sys#check-port-mode port #f 'flush-output)
-    (##sys#flush-output port) ) )
+(define (flush-output #!optional (port ##sys#standard-output))
+  (##sys#check-port* port 'flush-output)
+  (##sys#check-port-mode port #f 'flush-output)
+  (##sys#flush-output port) )
 
 (define port-name
-  (lambda (port)
+  (lambda (#!optional (port ##sys#standard-input))
     (##sys#check-port port 'port-name)
     (##sys#slot port 3) ) )
 
@@ -1845,7 +1848,7 @@ EOF
        (##sys#slot port 4) ) )
 
 (define port-position
-  (lambda (#!optional port ##sys#standard-input)
+  (lambda (#!optional (port ##sys#standard-input))
     (##sys#check-port port 'port-position)
     (if (##sys#slot port 1) 
 	(##sys#values (##sys#slot port 4) (##sys#slot port 5))
@@ -1915,15 +1918,18 @@ EOF
 
 (define (eof-object? x) (##core#inline "C_eofp" x))
 
-(define (char-ready? . port)
-  (let ([port (##sys#fetch-and-check-port-arg port ##sys#standard-input)])
-    (##sys#check-port-mode port #t 'char-ready?)
-    ((##sys#slot (##sys#slot port 2) 6) port) ) ) ; char-ready?
+(define (char-ready? #!optional (port ##sys#standard-input))
+  (##sys#check-port* port 'char-ready?)
+  (##sys#check-port-mode port #t 'char-ready?)
+  ((##sys#slot (##sys#slot port 2) 6) port) ) ; char-ready?
 
-(define (read-char . port)
-  (let ([p (##sys#fetch-and-check-port-arg port ##sys#standard-input)])
-    (##sys#check-port-mode p #t 'read-char)
-    (##sys#read-char-0 p) ) )
+(define (read-char #!optional (port ##sys#standard-input))
+  (##sys#read-char/port port) )
+
+(define (##sys#read-char/port port)
+  (##sys#check-port* port 'read-char)
+  (##sys#check-port-mode port #t 'read-char)
+  (##sys#read-char-0 port) )
 
 (define (##sys#read-char-0 p)
   (let ([c (if (##sys#slot p 6)
@@ -1938,10 +1944,10 @@ EOF
 	   (##sys#setislot p 5 (fx+ (##sys#slot p 5) 1)) ] )
     c) )
 
-(define (peek-char . port)
-  (let ([p (##sys#fetch-and-check-port-arg port ##sys#standard-input)])
-    (##sys#check-port-mode p #t 'peek-char)
-    (##sys#peek-char-0 p) ) )
+(define (peek-char #!optional (port ##sys#standard-input))
+  (##sys#check-port* port 'peek-char)
+  (##sys#check-port-mode port #t 'peek-char)
+  (##sys#peek-char-0 port) )
 
 (define (##sys#peek-char-0 p)
   (if (##sys#slot p 6)
@@ -1951,10 +1957,10 @@ EOF
 	  (##sys#setislot p 6 #t) )
 	c) ) )
 
-(define (read . port)
-  (let ([port (##sys#fetch-and-check-port-arg port ##sys#standard-input)])
-    (##sys#check-port-mode port #t 'read)
-    (##sys#read port ##sys#default-read-info-hook) ) )
+(define (read #!optional (port ##sys#standard-input))
+  (##sys#check-port* port 'read)
+  (##sys#check-port-mode port #t 'read)
+  (##sys#read port ##sys#default-read-info-hook) )
 
 (define ##sys#default-read-info-hook #f)
 (define ##sys#read-error-with-line-number #f)
@@ -2097,7 +2103,7 @@ EOF
 			   (else
 			    (##sys#read-warning 
 			     port 
-			     "undefined escape sequence in string - probably forgot backslash ?"
+			     "undefined escape sequence in string - probably forgot backslash"
 			     c)
 			    (loop (##sys#read-char-0 port) (cons c lst))) ) )
 			((eq? term c) (##sys#reverse-list->string lst))
@@ -2196,6 +2202,7 @@ EOF
 		   (let ([c2 (##sys#read-char-0 port)])
 		     (cond [(eof-object? c2) (##sys#read-error port "unexpected end of numeric literal")]
 			   [(char=? c2 #\x) (r-number 16)]
+			   [(char=? c2 #\d) (r-number 10)]
 			   [(char=? c2 #\o) (r-number 8)]
 			   [(char=? c2 #\b) (r-number 2)]
 			   [else (##sys#read-error port "illegal number syntax - invalid radix" c2)] ) ) ]
@@ -2405,6 +2412,7 @@ EOF
 			       (h dchar port)
 			       (case (char-downcase dchar)
 				 ((#\x) (##sys#read-char-0 port) (r-number-with-exactness 16))
+				 ((#\d) (##sys#read-char-0 port) (r-number-with-exactness 10))
 				 ((#\o) (##sys#read-char-0 port) (r-number-with-exactness 8))
 				 ((#\b) (##sys#read-char-0 port) (r-number-with-exactness 2))
 				 ((#\i) (##sys#read-char-0 port) (##sys#exact->inexact (r-number-with-radix)))
@@ -2603,20 +2611,27 @@ EOF
 (define (##sys#write-char-0 c p)
   ((##sys#slot (##sys#slot p 2) 2) p c) )
 
-(define (##sys#write-char c . port)
+(define (##sys#write-char/port c port)
+  (##sys#check-port* port 'write-char)
   (##sys#check-char c 'write-char)
-  (let ([p (##sys#fetch-and-check-port-arg port ##sys#standard-output)])
-    (##sys#check-port-mode p #f 'write-char)
-    (##sys#write-char-0 c p) ) )
+  (##sys#write-char-0 c port) )
 
-(define write-char ##sys#write-char)
-(define (newline . port) (apply ##sys#write-char #\newline port))
+(define (write-char c #!optional (port ##sys#standard-output))
+  (##sys#check-char c 'write-char)
+  (##sys#check-port* port 'write-char)
+  (##sys#check-port-mode port #f 'write-char)
+  (##sys#write-char-0 c port) )
 
-(define (write x . port)
-  (##sys#print x #t (##sys#fetch-and-check-port-arg port ##sys#standard-output)) )
+(define (newline #!optional (port ##sys#standard-output))
+  (##sys#write-char/port #\newline port) )
 
-(define (display x . port)
-  (##sys#print x #f (##sys#fetch-and-check-port-arg port ##sys#standard-output)) )
+(define (write x #!optional (port ##sys#standard-output))
+  (##sys#check-port* port 'write)
+  (##sys#print x #t port) )
+
+(define (display x #!optional (port ##sys#standard-output))
+  (##sys#check-port* port 'display)
+  (##sys#print x #f port) )
 
 (define print
   (lambda (arg1 . args)
@@ -3154,6 +3169,7 @@ EOF
   (check (software-type))
   (check (software-version))
   (check (build-style))
+  (check (build-platform))
   (check (machine-type))
   (check (machine-byte-order)) )
 
@@ -3917,6 +3933,10 @@ EOF
   (set! errno (lambda () rn)) )
 
 
+;;; Format error string for unterminated here-docs
+(define (##sys#format-here-doc-warning end)
+  (##sys#print-to-string `("unterminated here-doc string literal `" ,end "'")))
+
 ;;; Special string quoting syntax:
 
 (set! ##sys#user-read-hook
@@ -3954,10 +3974,21 @@ EOF
 		(let ([str (open-output-string)]
 		      [end (readln port)] 
 		      [f #f] )
+                  (let ((endlen (string-length end)))
+                    (cond
+                     ((fx= endlen 0)
+                      (##sys#read-warning
+                       port "Missing tag after #<< here-doc token"))
+                     ((or (char=? (string-ref end (fx- endlen 1)) #\space)
+                          (char=? (string-ref end (fx- endlen 1)) #\tab))
+                      (##sys#read-warning
+                       port "Whitespace after #<< here-doc tag"))
+                     ))                     
 		  (do ([ln (readln port) (readln port)])
 		      ((or (eof-object? ln) (string=? end ln)) 
 		       (when (eof-object? ln)
-			 (##sys#read-warning port "unterminated `here' string literal") )
+			 (##sys#read-warning port
+                          (##sys#format-here-doc-warning end)))
 		       (get-output-string str) )
 		    (if f 
 			(##sys#write-char-0 #\newline str)
@@ -3971,6 +4002,18 @@ EOF
 		    (let ((s (get-output-string str)))
 		      (set! str (open-output-string))
 		      s))
+
+                  (let ((endlen (string-length end)))
+                    (cond
+                     ((fx= endlen 0)
+                      (##sys#read-warning
+                       port "Missing tag after #<# here-doc token"))
+                     ((or (char=? (string-ref end (fx- endlen 1)) #\space)
+                          (char=? (string-ref end (fx- endlen 1)) #\tab))
+                      (##sys#read-warning
+                       port "Whitespace after #<# here-doc tag"))
+                     ))
+
 		  (let loop [(lst '())]
 		    (let ([c (##sys#read-char-0 port)])
 		      (case c
@@ -3978,7 +4021,9 @@ EOF
 			 (let ([s (get/clear-str)])
 			   (cond [(or (eof-object? c) (string=? end s))
 				  (when (eof-object? c)
-				    (##sys#read-warning port "unterminated `here' string literal") )
+				    (##sys#read-warning
+                                     port (##sys#format-here-doc-warning end))
+                                     )
 				  `(##sys#print-to-string
 				    ;;Can't just use `(list ,@lst) because of 126 argument apply limit
 				    ,(let loop2 ((lst (cdr lst)) (next-string '()) (acc ''())) ; drop last newline

@@ -14,17 +14,17 @@ This unit uses the {{extras}} and {{regex}} units.
 
 ==== apropos
 
- [procedure] (apropos SYMBOL-PATTERN [ENVIRONMENT])
+ [procedure] (apropos SYMBOL-PATTERN [ENVIRONMENT] [#:MACROS?])
 
-Displays symbols matching {{SYMBOL-PATTERN}} in the {{ENVIRONMENT}} on the {{(current-output-port)}}.
+Displays symbols & type matching {{SYMBOL-PATTERN}} in the {{ENVIRONMENT} on the {{(current-output-port)}}.
 
 ; {{SYMBOL-PATTERN}} : A symbol, string, or regex. When symbol or string substring matching is performed.
-
 ; {{ENVIRONMENT}} : An environment. When missing the {{(interaction-environment)}} is assumed.
+; {{#:MACROS?}} : Keyword argument. A boolean. Include macro symbols? When missing {{#f}} is assumed.
 
 ==== apropos-list
 
- [procedure] (apropos-list SYMBOL-PATTERN [ENVIRONMENT])
+ [procedure] (apropos-list SYMBOL-PATTERN [ENVIRONMENT] [#:MACROS?])
 
 Like {{apropos}} but returns a list of matching symbols.
 
@@ -103,6 +103,14 @@ replaced by a new value.
 Return a new pathname with the specified component of {{PATHNAME}}
 stripped.
 
+==== directory-null?
+
+ [procedure] (directory-null? DIRECTORY)
+
+Does the {{DIRECTORY}} consist only of path separators and the period?
+
+{{DIRECTORY}} may be a string or a list of strings.
+
 
 === Temporary files
 
@@ -142,7 +150,7 @@ When all input has been read from the port, {{for-each-line}} returns some unspe
 
  [procedure] (for-each-argv-line PROCEDURE)
 
- Opens each file listed on the command line in order, passing one line
+Opens each file listed on the command line in order, passing one line
 at a time into {{PROCEDURE}}.  The filename {{-}} is interpreted as
 {{(current-input-port)}}.  If no arguments are given on the command line
 it again uses the value of {{(current-input-port)}}. During execution of
@@ -169,6 +177,13 @@ until it returns {{#!eof}}, discarding the results.
 Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
 until it returns {{#!eof}}, returning a list of the collected results.
 
+==== port-fold
+
+ [procedure] (port-map FN ACC THUNK)
+
+Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}},
+passing the {{ACC}} value as the second argument. The {{FN}} result becomes the new
+{{ACC}} value. When {{THUNK}} returns {{#!eof}}, the last {{FN}} result is returned.
 
 === Executing shell commands with formatstring and error checking
 
@@ -193,6 +208,25 @@ a string. The port is not closed. If no argument is provided, input will be read
 port that is the current value of {{(current-input-port)}}.
 
 
+=== Funky ports
+
+==== make-broadcast-port
+
+ [procedure] (make-broadcast-port PORT ...)
+
+Returns a custom output port that emits everything written into it to
+the ports given as {{PORT ...}}. Closing the broadcast port does not close
+any of the argument ports.
+
+==== make-concatenated-port
+
+ [procedure] (make-concatenated-port PORT1 PORT2 ...)
+
+Returns a custom input port that reads its input from {{PORT1}}, until it
+is empty, then from {{PORT2}} and so on. Closing the concatenated port
+does not close any of the argument ports.
+
+
 ===  Miscellaneous handy things
 
 ==== shift!
@@ -208,7 +242,7 @@ the list is empty, {{#f}} is returned. An example might be clearer, here:
 (shift! lst)             ==> 1, lst is now (2 3)
 </enscript> 
 
-The list must at least contain 2 elements.
+The list must contain at least 2 elements.
 
 ==== unshift!
 

@@ -89,17 +89,16 @@ will be passed. If it is any other object, then this type is treated as {{scheme
 
 Not allowed as a result type.
 
-=== [nonnull-] byte-vector
+=== [nonnull-] blob
 
-A byte-vector object, passed as a pointer to its contents. Arguments
-of type {{byte-vector}} may optionally be {{#f}}, which is
+A blob object, passed as a pointer to its contents. Arguments
+of type {{blob}} may optionally be {{#f}}, which is
 passed as a NULL pointer.  This is not allowed as a return type.
 
 === [nonnull-] u8vector [nonnull-] u16vector [nonnull-] u32vector [nonnull-] s8vector [nonnull-] s16vector [nonnull-] s32vector [nonnull-] f32vector [nonnull-] f64vector
 
 A SRFI-4 number-vector object, passed as a pointer to its
-contents. Arguments of type {{byte-vector}} may optionally be
-{{#f}}, which is passed as a NULL pointer.  These are not allowed
+contents. These type specifiers are not allowed
 as return types.
 
 === c-string
@@ -119,9 +118,24 @@ As {{c-string}}, but guaranteed not to be {{#f/NULL}}.
 
 Similar to {{[nonnull-]c-string}}, but if used as a result-type,
 the pointer returned by the foreign code will be freed (using the
-C-libraries {{free()}})
+C-libraries {{free(1)}})
 after copying. This type specifier is not valid as a result type
 for callbacks defined with {{define-external}}.
+
+=== [nonnull-] unsigned-c-string[*]
+
+Same as {{c-string}}, but maps to the {{unsigned char *}} C type.
+
+=== c-string-list
+
+Expects a pointer to a list of C strings teminated by a {{NULL}} pointer
+and returns a list of strings. Only valid as a result type of non-callback
+functions.
+
+=== c-string-list*
+
+Similar to {{c-string-list}} but releases the storage of each string and
+the pointer array using {{free(1)}}.
 
 === void
 
@@ -211,7 +225,7 @@ double
 void *
 </td></tr><tr><td>[nonnull-]c-pointer</td><td>
 void *
-</td></tr><tr><td>[nonnull-]byte-vector</td><td>
+</td></tr><tr><td>[nonnull-]blob</td><td>
 unsigned char *
 </td></tr><tr><td>[nonnull-]u8vector</td><td>
 unsigned char *
@@ -231,7 +245,11 @@ float *
 double *
 </td></tr><tr><td>[nonnull-]c-string</td><td>
 char *
-</td></tr><tr><td>symbol</td><td>
+</td></tr><tr><td>[nonnull-]unsigned-c-string</td><td>
+unsigned char *
+</td></tr>
+<tr><td>c-string-list</td><td>char **</td></tr>
+<tr><td>symbol</td><td>
 char *
 </td></tr><tr><td>void</td><td>
 void

@@ -27,9 +27,11 @@ where R5RS requires
 
 * [4.3] {{syntax-rules}} macros are not provided but available separately.
 
+* [6.1] {{equal?}} compares all structured data recursively, while R5RS specifies that {{eqv?}} is used for data other than pairs, strings and vectors. 
+
 * [6.2.4]  The runtime system uses the numerical string-conversion routines of the underlying C library and so does only understand standard (C-library) syntax for floating-point constants.
 
-* [6.2.5] There is no built-in support for rationals, complex numbers or extended-precision integers (bignums). The routines {{complex?}}, {{real?}} and {{rational?}} are identical to the standard procedure {{number?}}. The procedures {{numerator}}, {{denominator}}, {{rationalize}}, {{make-rectangular}} and {{make-polar}} are not implemented. Support for extended numbers is available as a separate package, provided the GNU multiprecision library is installed.
+* [6.2.5] There is no built-in support for rationals, complex numbers or extended-precision integers (bignums). The routines {{complex?}}, {{real?}} and {{rational?}} are identical to the standard procedure {{number?}}. The procedures {{numerator}}, {{denominator}}, {{rationalize}}, {{make-rectangular}} and {{make-polar}} are not implemented. Fixnums are limited to ±2<nowiki><sup>30</sup></nowiki> (or ±2<nowiki><sup>62</sup></nowiki> on 64-bit hardware).  Support for extended numbers is available as a separate package, provided the GNU multiprecision library is installed.
 
 * [6.2.6] The procedure {{string->number}} does not obey read/write invariance on inexact numbers.
 

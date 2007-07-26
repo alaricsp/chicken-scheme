@@ -6,8 +6,11 @@
 at 1 and beginning with the lowest-order bit.''
 
 There exist two different kinds of data objects in the CHICKEN system:
-immediate and non-immediate objects. Immediate objects are represented
-by a single machine word, which is usually of 32 bits length, or 64 bits
+immediate and non-immediate objects. 
+
+=== Immediate objects
+
+Immediate objects are represented by a single machine word, which is usually of 32 bits length, or 64 bits
 on 64-bit architectures.   The immediate objects
 come in four different flavors:
 
@@ -21,24 +24,32 @@ Unicode code point of the character is encoded in bits 9 to 32.
 '''booleans''', where bits 1-4 are equal to {{C_BOOLEAN_BITS}}. Bit 5
 is one for #t and zero for #f.
 
-other values: the empty list, the value of unbound identifiers,
+'''other values''': the empty list, the value of unbound identifiers,
 the undefined value (void), and end-of-file.  Bits 1-4 are equal to {{C_SPECIAL_BITS}}; bits 5 to 8 contain an identifying
 number for this type of object.  The following constants are
 defined: {{C_SCHEME_END_OF_LIST C_SCHEME_UNDEFINED C_SCHEME_UNBOUND
 C_SCHEME_END_OF_FILE}}
 
+Collectively, bits 1 and 2 are known as the ''immediate mark bits''.  When bit 1 is set, the object is a fixnum, as described above.  When bit 2 is set, it is an immediate object other than a fixnum.  If neither is set, the object is non-immediate, as described below.  (By definition, bits 1 and 2 may not both be set.)
+
+=== Non-immediate objects
+
 Non-immediate objects are blocks of data represented by a pointer into
-the heap. The first word of the data block contains a header, which gives
+the heap.  The pointer's immediate mark bits (bits 1 and 2) must be zero to indicate the object is non-immediate;
+this guarantees the data block is aligned on a 4-byte boundary, at minimum.  Alignment of data words
+is required on modern architectures anyway, so we get the ability to distinguish between immediate and non-immediate objects for free.
+
+The first word of the data block contains a header, which gives
 information about the type of the object. The header has the size of a
 machine word, usually 32 bits (64 bits on 64 bit architectures).
 
-bits 1 to 24 contain the length of the data object, which is either
+Bits 1 to 24 contain the length of the data object, which is either
 the number of bytes in a string (or byte-vector) or the the number
 of elements for a vector or for a structure type.
 
-bits 25 to 28 contain the type code of the object.
+Bits 25 to 28 contain the type code of the object.
 
-bits 29 to 32 contain miscellaneous flags used for garbage
+Bits 29 to 32 contain miscellaneous flags used for garbage
 collection or internal data type dispatching.
 These flags are:
 
@@ -54,42 +65,42 @@ The actual data follows immediately after the header. Note that
 block-addresses are always aligned to the native machine-word
 boundary. Scheme data objects map to blocks in the following manner:
 
-pairs: vector-like object (type bits {{C_PAIR_TYPE}}),
+'''pairs''': vector-like object (type bits {{C_PAIR_TYPE}}),
 where the car and the cdr are contained in the first and second slots,
 respectively.
 
-vectors: vector object (type bits {{C_VECTOR_TYPE}}).
+'''vectors''': vector object (type bits {{C_VECTOR_TYPE}}).
 
-strings: byte-vector object (type bits {{C_STRING_TYPE}}).
+'''strings''': byte-vector object (type bits {{C_STRING_TYPE}}).
 
-procedures: special vector object (type bits
+'''procedures''': special vector object (type bits
 {{C_CLOSURE_TYPE}}). The first slot contains a pointer to a
 compiled C function. Any extra slots contain the free variables (since
 a flat closure representation is used).
 
-flonum: a byte-vector object (type bits
+'''flonums''': a byte-vector object (type bits
 {{C_FLONUM_BITS}}). Slots one and two (or a single slot on
 64 bit architectures) contain a 64-bit floating-point number, in the
 representation used by the host systems C compiler.
 
-symbol: a vector object (type bits {{C_SYMBOL_TYPE}}). Slots
+'''symbols''': a vector object (type bits {{C_SYMBOL_TYPE}}). Slots
 one and two contain the toplevel variable value and the print-name
 (a string) of the symbol, respectively.
 
-port: a special vector object (type bits
+'''ports''': a special vector object (type bits
 {{C_PORT_TYPE}}). The first slot contains a pointer to a file-
 stream, if this is a file-pointer, or NULL if not. The other slots
 contain housekeeping data used for this port.
 
-structure: a vector object (type bits
+'''structures''': a vector object (type bits
 {{C_STRUCTURE_TYPE}}). The first slot contains a symbol that
 specifies the kind of structure this record is an instance of. The other
 slots contain the actual record items.
 
-pointer: a special vector object (type bits
+'''pointers''': a special vector object (type bits
 {{C_POINTER_TYPE}}). The single slot contains a machine pointer.
 
-tagged pointer: similar to a pointer (type bits 
+'''tagged pointers''': similar to a pointer (type bits 
 {{C_TAGGED_POINTER_TYPE}}), but the object contains an additional
 slot with a tag (an arbitrary data object) that identifies the type
 of the pointer.

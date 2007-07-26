@@ -73,10 +73,6 @@
 #ifndef C_TARGET_RUN_LIB_HOME
 # define C_TARGET_RUN_LIB_HOME    C_TARGET_LIB_HOME
 #endif
-
-#ifndef C_TARGET_DLL_EXTENSION
-# define C_TARGET_DLL_EXTENSION    NULL
-#endif
 <#
 
 (define-foreign-variable INSTALL_BIN_HOME c-string "C_INSTALL_BIN_HOME")
@@ -100,13 +96,11 @@
 (define-foreign-variable TARGET_INCLUDE_HOME c-string "C_TARGET_INCLUDE_HOME")
 (define-foreign-variable TARGET_STATIC_LIB_HOME c-string "C_TARGET_STATIC_LIB_HOME")
 (define-foreign-variable TARGET_RUN_LIB_HOME c-string "C_TARGET_RUN_LIB_HOME")
-(define-foreign-variable TARGET_DLL_EXTENSION c-string "C_TARGET_DLL_EXTENSION")
 
 
 ;;; Parameters:
 
 (define win (eq? (build-platform) 'msvc))
-(define cygwin (eq? (build-platform) 'cygwin))
 (define mingw (eq? (build-platform) 'mingw32))
 (define osx (eq? (software-version) 'macosx))
 (define hpux-hppa (and (eq? (software-version) 'hpux)
@@ -162,7 +156,6 @@
       (define link-output-flag "/out:")
       (define compile-output-flag "/Fo")
       (define executable-extension "exe")
-      (define shared-library-extension "dll")
       (define nonstatic-compilation-options '("/DPIC")) )
     (begin
       (define compiler (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
@@ -174,17 +167,9 @@
       (define link-output-flag "-o ")
       (define executable-extension "")
       (define compile-output-flag "-o ")
-      (define nonstatic-compilation-options '())
-      (define shared-library-extension
-	(let ()
-	  (define (getext)
-	    (cond ((or cygwin mingw) "dll")
-		  ;;((hpux) "sl")
-		  (else ##sys#load-dynamic-extension) ) )
-	  (if host-mode
-	      (or TARGET_DLL_EXTENSION (getext))
-	      (getext))))))
+      (define nonstatic-compilation-options '()) ) )
 
+(define shared-library-extension ##sys#load-dynamic-extension)
 (define default-translation-optimization-options '())
 
 (if win
@@ -782,7 +767,7 @@
 	       [(-host) #f]
 	       [(-) 
 		(set! target-filename (make-pathname #f "a" executable-extension))
-		(set! scheme-files (cons "-" scheme-files))]
+		(set! scheme-files (append scheme-files '("-")))]
 	       [else
 		(when (memq s '(-unsafe -benchmark-mode))
 		  (when (eq? s '-benchmark-mode)
@@ -831,20 +816,20 @@
 			     [else (quit "invalid option `~A'" s)] ) ]
 		      [(file-exists? arg)
 		       (let-values ([(dirs name ext) (decompose-pathname arg)])
-			 (cond [(not ext) (set! scheme-files (cons arg scheme-files))]
+			 (cond [(not ext) (set! scheme-files (append scheme-files (list arg)))]
 			       [(member ext '("h" "c"))
-				(set! c-files (cons arg c-files)) ]
+				(set! c-files (append c-files (list arg))) ]
 			       [(member ext '("cpp" "C" "cc" "cxx" "hpp"))
 				(when osx (set! compile-options (cons "-no-cpp-precomp" compile-options)))
 				(set! cpp-mode #t)
-				(set! c-files (cons arg c-files)) ]
+				(set! c-files (append c-files (list arg))) ]
 			       [(member ext '("m" "M" "mm"))
 				(set! objc-mode #t)
-				(set! c-files (cons arg c-files)) ]
+				(set! c-files (append c-files (list arg))) ]
 			       [(or (string=? ext object-extension)
 				    (string=? ext library-extension) )
-				(set! object-files (cons arg object-files)) ]
-			       [else (set! scheme-files (cons arg scheme-files))] ) ) ]
+				(set! object-files (append object-files (list arg))) ]
+			       [else (set! scheme-files (append scheme-files (list arg)))] ) ) ]
 		      [else
 		       (let ([f2 (string-append arg ".scm")])
 			 (if (file-exists? f2)
@@ -901,30 +886,32 @@
 		  [x (error "invalid entry in csc control file" x)] )
 		(read-file) ) ) )
 	   ($delete-file cscf) ) ) ) )
-   (reverse scheme-files) )
+   scheme-files)
   (unless keep-files (for-each $delete-file generated-scheme-files)) )
 
 
 ;;; Compile all C files:
 
 (define (run-compilation)
-  (for-each
-   (lambda (f)
-     (let ([fo (pathname-replace-extension f object-extension)])
-       (unless (zero?
-		($system
-		 (string-intersperse
-		  (list (cond (cpp-mode c++-compiler)
-			      (else compiler) )
-			(cleanup-filename f)
-			(string-append compile-output-flag (cleanup-filename fo)) 
-			compile-only-flag
-			(compiler-options) ) ) ) )
-	 (exit last-exit-code) )
-       (set! generated-object-files (cons fo generated-object-files))
-       (set! object-files (cons fo object-files)) ) )
-   (reverse c-files) )
-  (unless keep-files (for-each $delete-file generated-c-files)) )
+  (let ((ofiles '()))
+    (for-each
+     (lambda (f)
+       (let ([fo (pathname-replace-extension f object-extension)])
+	 (unless (zero?
+		  ($system
+		   (string-intersperse
+		    (list (cond (cpp-mode c++-compiler)
+				(else compiler) )
+			  (cleanup-filename f)
+			  (string-append compile-output-flag (cleanup-filename fo)) 
+			  compile-only-flag
+			  (compiler-options) ) ) ) )
+	   (exit last-exit-code) )
+	 (set! generated-object-files (cons fo generated-object-files))
+	 (set! ofiles (cons fo ofiles))))
+     c-files)
+    (set! object-files (append (reverse ofiles) object-files)) ; put generated object files first
+    (unless keep-files (for-each $delete-file generated-c-files)) ) )
 
 (define (compiler-options)
   (string-intersperse
@@ -939,7 +926,7 @@
 
 (define (run-linking)
   (let ([files (map cleanup-filename
-		    (append (reverse object-files)
+		    (append object-files
 			    (nth-value 0 (static-extension-info))
 			    (if (or static static-libs)
 				(if gui gui-library-files library-files)

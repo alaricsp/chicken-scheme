@@ -86,6 +86,5 @@ Makefile (use --disable-stack-for-recursion). */
 
 #define SUPPORT_UTF8
 #define SUPPORT_UCP
-#define PCRE_STATIC
 
 /* End */

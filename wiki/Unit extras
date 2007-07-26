@@ -132,10 +132,7 @@ Returns true if {{X}} is one of the tails (cdr's) of {{LIST}}.
 
 
 
-
-
 === String-port extensions
-
 
 
 ==== call-with-input-string
@@ -171,23 +168,20 @@ bound to a string-output-port and return the accumulated output string.
 
 
 
-
-
 === Formatted output
 
 
-
-
 ==== printf
+==== fprintf
+==== sprintf
 
  [procedure] (fprintf PORT FORMATSTRING ARG ...)
  [procedure] (printf FORMATSTRING ARG)
  [procedure] (sprintf FORMATSTRING ARG ...)
- [procedure] (format FORMATSTRING ARG ...)
 
 Simple formatted output to a given port ({{fprintf}}), the
-value of {{(current-output-port) }} ({{printf}}) or a string
-({{sprintf}}/{{format}}).  The {{FORMATSTRING}} can contain any sequence
+value of {{(current-output-port)}} ({{printf}}) or a string
+({{sprintf}}).  The {{FORMATSTRING}} can contain any sequence
 of characters. The character `~' prefixes special formatting directives:
 
 <table>
@@ -216,9 +210,20 @@ flush all pending output
 </td></tr><tr><td> ~?
 invoke formatted output routine recursively with the next two arguments as format-string and list of parameters
 </td></tr></table>
- 
 
 
+==== format
+
+ [procedure] (format [DESTINATION] FORMATSTRING ARG ...)
+
+The parameters  {{FORMATSTRING}} and {{ARG ...}} are as for
+({{printf}}/{{sprintf}}/{{fprintf}}).
+
+The optional {{DESTINATION}}, when supplied, performs
+a ({{sprintf}}) for a  {{#f}},
+a ({{printf}}) for a {{#t}},
+and a ({{fprintf}}) for an output-port.
+When missing a ({{sprintf}}) is performed.
 
 
 
@@ -242,10 +247,16 @@ is equivalent to
 As an extension to SRFI-69, {{hash-table-update!}} and {{hash-table-update!/default}} return
 the new value (after applying the update procedure).
 
+==== hash-table-remove!
+
+ [procedure] (hash-table-remove! HASHTABLE PROC)
+
+Calls {{PROC}} for all entries in {{HASHTABLE}} with the key and value of each
+entry. If {{PROC}} returns true, then that entry is removed.
+
+
 
 === Queues
-
-
 
 
 ==== list->queue
@@ -336,9 +347,7 @@ so that {{(car LIST)}} becomes the next removable item.
 
 
 
-
 === Sorting
-
 
 
 ==== merge
@@ -369,11 +378,7 @@ Returns true if the list or vector {{SEQUENCE}} is already sorted.
 
 
 
-
-
 === Random numbers
-
-
 
 
 ==== random
@@ -393,10 +398,7 @@ is initialized with the current time.
 
 
 
-
-
 === Input/Output extensions
-
 
 
 ==== make-input-port
@@ -441,6 +443,15 @@ of {{(current-output-port)}}.
 ==== pretty-print-width
 (Parameter) Specifies the maximal line-width for pretty printing, after which line
 wrap will occur.
+
+==== read-byte
+==== write-byte
+
+ [procedure] (read-byte [PORT])
+ [procedure] (write-byte BYTE [PORT])
+
+Read/write a byte to the port given in {{PORT}}, which default to the values
+of {{(current-input-port)}} and {{(current-output-port)}}, respectively.
 
 ==== read-file
 
@@ -528,7 +539,6 @@ bound to {{PORT}}.
 
 Call procedure {{THUNK}} with the current output-port temporarily
 bound to {{PORT}}.
-
 
 
 
@@ -648,7 +658,7 @@ the string {{MATCH}} in {{STRING}} will be replaced by the string
 <enscript highlight=scheme>
 (string-translate*
   "<h1>this is a \"string\"</h1>"
-  '(("<" . "&lt:") (">" . "&gt;") ("\"" . "&quot;")) )
+  '(("<" . "&lt;") (">" . "&gt;") ("\"" . "&quot;")) )
 =>  "&lt;h1&gt;this is a &quot;string&quot;&lt;/ht&gt;"
 </enscript>
 
@@ -677,8 +687,6 @@ is a case-insensitive version of {{substring-index}}.
 
 
 
-
-
 === Combinators
 
 
@@ -686,7 +694,7 @@ is a case-insensitive version of {{substring-index}}.
 
  [procedure] (any? X)
 
-Ignores it's argument and always returns {{#t}}. This is actually useful sometimes.
+Ignores its argument and always returns {{#t}}. This is actually useful sometimes.
 
 
 ==== constantly

@@ -1106,7 +1106,6 @@ SET(C_TARGET_INCLUDE_HOME ${C_INSTALL_INCLUDE_HOME})
 SET(C_TARGET_STATIC_LIB_HOME ${C_INSTALL_STATIC_HOME})
 SET(C_TARGET_MORE_LIBS ${C_INSTALL_MORE_LIBS})
 SET(C_TARGET_MORE_STATIC_LIBS ${C_INSTALL_MORE_LIBS})
-SET(C_TARGET_DLL_EXTENSION "NULL")
 SET(C_CROSS_CHICKEN 0)
 
 ####################################################################
@@ -1280,7 +1279,11 @@ ENDMACRO(GET_CHICKEN_C_SOURCES)
 # The PCRE code is used several times by the various Chicken libraries.  We statically compile it for
 # convenience, so that the user doesn't have to type -lpcre when linking.  Also, we don't want the
 # user linking against a system PCRE library, as we may have our own bugfixes and customizations.
+#
+# PCRE is compiled statically for both our shared and static libraries.   pcre.h needs these definitions
+# so that dll imports are correct, and for UTF8 and UCP support.
 
+ADD_DEFINITIONS(-DPCRE_STATIC)
 SET(PCRE_HEADER ${Chicken_SOURCE_DIR}/pcre/pcre.h)
 SET(PCRE_ROOTS
   chartables
@@ -1965,7 +1968,7 @@ ENDIF(CHANGELOG_FILE)
 INSTALL(FILES ${HTMLDOC_FILES} DESTINATION ${DOC_HOME}/html)
 
 IF(WIN32 AND NOT CYGWIN)
-  INSTALL(PROGRAMS chicken-gzip chicken-tar DESTINATION ${BIN_HOME})
+  INSTALL(PROGRAMS chicken-gzip.exe chicken-tar.exe DESTINATION ${BIN_HOME})
 ENDIF(WIN32 AND NOT CYGWIN)
 
 

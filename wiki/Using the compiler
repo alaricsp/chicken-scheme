@@ -77,6 +77,8 @@ Possible options are:
 
 ; -disable-interrupts : Equivalent to the {{(disable-interrupts)}} declaration. No interrupt-checks are generated for compiled programs.
 
+; -disable-compiler-macros : disable expansion of compiler macros.
+
 ; -disable-stack-overflow-checks : Disables detection of stack overflows. This is equivalent to running the compiled executable with the {{-:o}} runtime option.
 
 ; -disable-warning CLASS : Disables specific class of warnings, may be given multiple times. The following classes are defined:
@@ -105,7 +107,7 @@ Possible options are:
 
 ; -extension : Mostly equivalent to {{-prelude '(define-extension <NAME>)'}}, where {{<NAME>}} is the basename of the currently compiled file. Note that if you want to compile a file as a normal (dynamically loadable) extension library, you should also pass the {{-shared}} option.
 
-; -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}}.
+; -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}}. Multiple symbols may be given, if comma-separated.
 
 ; -fixnum-arithmetic : Equivalent to {{(fixnum-arithmetic)}} declaration. Assume all mathematical operations use small integer arguments.
 
@@ -168,7 +170,7 @@ Possible options are:
 
 ; -raw : Disables the generation of any implicit code that uses the Scheme libraries (that is all runtime system files besides {{runtime.c}} and {{chicken.h}}).
 
-; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}.
+; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}. Multiple names may be given and should be separated by {{,}}.
 
 ; -run-time-macros : Makes macros also available at run-time. By default macros are not available at run-time.
 
@@ -180,7 +182,7 @@ Possible options are:
 
 ; -unsafe-libraries : Marks the generated file for being linked with the unsafe runtime system. This should be used when generating shared object files that are to be loaded dynamically. If the marker is present, any attempt to load code compiled with this option will signal an error.
 
-; -uses NAME : Use definitions from the library unit {{NAME}}. This is equivalent to {{-prelude "(declare (uses NAME))"}}
+; -uses NAME : Use definitions from the library unit {{NAME}}. This is equivalent to {{-prelude "(declare (uses NAME))"}}. Multiple arguments may be given, separated by {{,}}.
 
 ; -no-usual-integrations : Specifies that standard procedures and certain internal procedures may be redefined, and can not be inlined. This is equivalent to declaring {{(not usual-integrations)}}.
 
@@ -290,7 +292,7 @@ If multiple bodies of Scheme code are to be combined into a single
 executable, then we have to compile each file and link the resulting
 object files together with the runtime system.
 
-Lets consider an example where your program consists of multiple source files.
+Let's consider an example where your program consists of multiple source files.
 
 ==== Writing your source files
 
@@ -369,7 +371,7 @@ see: [[Supported language]].
 
 ; [parameter] user-pass-2 : Holds a procedure of three arguments, which is called with the canonicalized node-graph as its sole argument. The result is ignored, so this pass has to mutate the node-structure to cause any effect.
 
-; [parameter] user-post-analysis-pass : Holds a procedure that will be called after the last performed program analysis. The procedure (when defined) will be called with three arguments: the program database, a getter and a  setter-procedure which can be used to access and manipulate the program database, which holds various information about the compiled program. The getter procedure should be called with two arguments: a symbol representing the binding for which information should be retrieved, and a symbol that specifies the database-entry. The current value of the database entry will be returned or {{#f}}, if no such entry is available. The setter procedure is called with three arguments: the symbol and key and the new value. For information about the contents of the program database contact the author.
+; [parameter] user-post-analysis-pass : Holds a procedure that will be called after every performed program analysis pass. The procedure (when defined) will be called with five arguments: a symbol indicating the analysis pass, the program database, the current node graph, a getter and a setter-procedure which can be used to access and manipulate the program database, which holds various information about the compiled program. The getter procedure should be called with two arguments: a symbol representing the binding for which information should be retrieved, and a symbol that specifies the database-entry. The current value of the database entry will be returned or {{#f}}, if no such entry is available. The setter procedure is called with three arguments: the symbol and key and the new value. For information about the contents of the program database contact the author.
 
 Loaded code (via the {{-extend}} option) has access to the library
 units {{extras, srfi-1, srfi-4, utils, regex}} and the pattern matching macros. 

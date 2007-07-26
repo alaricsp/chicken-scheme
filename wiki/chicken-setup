@@ -524,10 +524,10 @@ Available options:
 ; {{-d  -dont-ask}} : Do not ask the user before trying to download required extensions.
 ; {{-n  -no-install}} : Do not install generated binaries and/or support files. Any invocations of {{install-program}}, {{install-extension}} or {{install-script}} will be be no-ops. 
 ; {{-i  -docindex}} : Displays the path to the index-page of any installed extension-documentation. If the index page does not exist, it is created.
-; {{-C  -check}} : Downloads the repository-index and lists locally installed extensions for which a newer release is available for download.
 ; {{-t  -test EXTENSION ...}} : return success if all given extensions are installed
 ; {{-ls EXTENSION}} : List installed files for extension
 ; {{-fetch-tree}} : Download and print the repository catalog
+; {{-t  -test}} : If the extension sources contain a directory named {{tests}} and this directory includes a file named {{run.scm}} then this file is executed (with {{tests}} being the current working directory).
 ; {{-tree FILENAME}} : Download and show the repository catalog
 ; {{-svn URL}} : Fetch extension from [[http://subversion.tigris.org|Subversion]] repository
 ; {{-revision REV}} : Specifies SVN revision to check out

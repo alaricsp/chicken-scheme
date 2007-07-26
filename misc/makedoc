@@ -3,22 +3,50 @@
 exec csi -s $0 "$@"
 |#
 
-;;; usage: misc/makedoc [-pdf] [PAGE]
 
-(use html-stream stream-ext srfi-40 stream-wiki utils srfi-13 url posix)
+(use syntax-case)
+(use srfi-40)
+(use html-stream stream-ext stream-wiki utils srfi-13 url posix regex)
+(use matchable)
+
+(define (simple-args #!optional (args (command-line-arguments)) (error error))
+  (define (assign var val)
+    (##sys#setslot 
+     (string->symbol (string-append "*" var "*"))
+     0
+     (if (string? val) 
+	 (or (string->number val) val)
+	 val)))
+  (let loop ((args args) (vals '()))
+    (cond ((null? args) (reverse vals))
+	  ((string-match "(-{1,2})?([-_A-Za-z0-9]+)(=)?\\s*(.+)?" (car args)) 
+	   =>
+	   (lambda (m)
+	     (let*-values (((next) (cdr args))
+			   ((var val)
+			    (match m
+			      ((_ _ opt "=" val)
+			       (cond (val (values opt val))
+				     (else 
+				      (when (null? next)
+					(error "missing argument for option" (car args)) )
+				      (set! next (cdr next))
+				      (values opt (car next)) ) ) )
+			      ((_ (? string?) opt #f #f) (values opt #t))
+			      (_ (values #f #f)) ) ) )
+	       (cond (var 
+		      (assign var val)
+		      (loop next vals) )
+		     (else (loop next (cons (car args) vals)))))))
+	  (else (loop (cdr args) (cons (car args) vals))))))
 
 (define-constant +outpath+ "html")
-(define-constant +extension-path+ "wiki-extensions")
 (define-constant +index-page+ "The User's Manual")
 
-(define (but-options args)
-  (filter (lambda (f)
-            (not (string-prefix? "-" f)))
-          args))
-
+(define *pdf* #f)
+(define *extension-path* #f)
 (define *pages* (directory "wiki"))
-(define *only* (:optional (but-options (command-line-arguments)) #f))
-(define *generate-pdf* (member "-pdf" (command-line-arguments)))
+(define *page* #f)
 
 (define (hyphen s)
   (string-substitute " " "-" s #t) )
@@ -129,10 +157,6 @@ in `manual-wiki-files' can be found in `*pages*'."
 
 (define *loaded-extensions* (make-hash-table))
 
-(for-each
- (cut load-extensions-from-file *loaded-extensions* <>)
- (glob (conc +extension-path+ "/*")) )
-
 (define (wiki-files->html)
   (for-each
    (lambda (p)
@@ -160,20 +184,22 @@ in `manual-wiki-files' can be found in `*pages*'."
 	     (printf "~%</body></html>") ) ) ) ) )
    (if *only* (list *only*) *pages*) ) )
 
+(define (usage code)
+  (print "makedoc --extension-path=EXTPATH [--pdf] [--page=PAGENAME]") 
+  (exit code) )
 
-
-;;; Check for help command line options
-(let ((args (command-line-arguments)))
-  (when (and (not (null? args)) (member (car args) '("-h" "-help" "--help" "-?")))
-    (print "Usage: misc/makedoc [-h | --help | -?]\n"
-           "       misc/makedoc [-pdf] [PAGE]")
-    (exit)))
-
-;;; Here come the conversions          
-(when *generate-pdf*
-  (chapters-sanity-check))
-
-(wiki-files->html)
-
-(when *generate-pdf*
-  (html-files->pdf))
+(tool-main
+ (command-line-arguments)
+ (lambda (args)
+   (unless *extension-path* (usage 1))
+   (system* "mkdir -p html")
+   (for-each
+    (lambda (f)
+      (unless (string-suffix? ".svn" f)
+	(load-extensions-from-file *loaded-extensions* f)))
+    (glob (conc *extension-path* "/*")) )
+   (when *pdf*
+     (chapters-sanity-check))
+   (wiki-files->html)
+   (when *pdf*
+     (html-files->pdf)) ) )

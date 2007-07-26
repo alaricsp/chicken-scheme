@@ -420,6 +420,9 @@ EOF
 	      (##sys#check-port port 'read-lines)
 	      (doread port) ) ) ) ) ) )
 
+
+;;; Extended I/O 
+
 (define (##sys#read-string! n dest port start)
   (cond ((eq? n 0) 0)
 	(else
@@ -451,10 +454,10 @@ EOF
   (##sys#check-exact start 'read-string!)
   (##sys#read-string! n dest port start) )
 
-(define read-string
+(define ##sys#read-string/port
   (let ((open-output-string open-output-string)
 	(get-output-string get-output-string) )
-    (lambda (#!optional n (p ##sys#standard-input))
+    (lambda (n p)
       (##sys#check-port p 'read-string)
       (cond (n (##sys#check-exact n 'read-string)
 	       (let* ((str (##sys#make-string n))
@@ -470,8 +473,11 @@ EOF
 		       (if (eof-object? c)
 			   (get-output-string str)
 			   (begin
-			     (##sys#write-char c str) 
+			     (##sys#write-char/port c str) 
 			     (loop (and n (fx- n 1))) ) ) ) ) ) ) ) ) ) ) )
+
+(define (read-string #!optional n (port ##sys#standard-input))
+  (##sys#read-string/port n port) )
 
 (define read-token
   (let ([open-output-string open-output-string]
@@ -512,6 +518,21 @@ EOF
 	(##sys#check-string str 'write-line)
 	(display str p)
 	(newline p) ) ) ) )
+
+
+;;; Binary I/O
+
+(define (read-byte #!optional (port ##sys#standard-input))
+  (##sys#check-port port 'read-byte)
+  (let ((x (##sys#read-char-0 port)))
+    (if (eof-object? x)
+	x
+	(char->integer x) ) ) )
+
+(define (write-byte byte #!optional (port ##sys#standard-output))
+  (##sys#check-exact byte 'write-byte)
+  (##sys#check-port port 'write-byte)
+  (##sys#write-char-0 (integer->char byte) port) )
 
 
 ;;; Redirect standard ports:
@@ -980,18 +1001,24 @@ EOF
 	      [else 
 	       (loop (fx+ istart 1)
 		     (fx+ iend 1) ) ] ) ) ) )
-  (set! substring-index 
-    (lambda (which where . start)
+  (set! ##sys#substring-index 
+    (lambda (which where start)
       (traverse 
-       which where (if (pair? start) (car start) 0) 
+       which where start
        (lambda (i l) (##core#inline "C_substring_compare" which where 0 i l))
        'substring-index) ) )
-  (set! substring-index-ci 
-    (lambda (which where . start)
+  (set! ##sys#substring-index-ci 
+    (lambda (which where start)
       (traverse
-       which where (if (pair? start) (car start) 0) 
+       which where start
        (lambda (i l) (##core#inline "C_substring_compare_case_insensitive" which where 0 i l)) 
        'substring-index-ci) ) ) )
+
+(define (substring-index which where #!optional (start 0))
+  (##sys#substring-index which where start) )
+
+(define (substring-index-ci which where #!optional (start 0))
+  (##sys#substring-index-ci which where start) )
 
 
 ;;; 3-Way string comparison:
@@ -1021,34 +1048,32 @@ EOF
 
 ;;; Substring comparison:
 
-(define (substring=? s1 s2 . start)
+(define (##sys#substring=? s1 s2 start1 start2 n)
   (##sys#check-string s1 'substring=?)
   (##sys#check-string s2 'substring=?)
-  (let* ([n (length start)]
-	 [start1 (if (fx>= n 1) (car start) 0)]
-	 [start2 (if (fx>= n 2) (cadr start) 0)] 
-	 [len (if (fx> n 2) 
-		  (caddr start) 
-		  (fxmin (fx- (##sys#size s1) start1)
-			 (fx- (##sys#size s2) start2) ) ) ] )
+  (let ((len (or n
+		 (fxmin (fx- (##sys#size s1) start1)
+			(fx- (##sys#size s2) start2) ) ) ) )
     (##sys#check-exact start1 'substring=?)
     (##sys#check-exact start2 'substring=?)
     (##core#inline "C_substring_compare" s1 s2 start1 start2 len) ) )
 
-(define (substring-ci=? s1 s2 . start)
+(define (substring=? s1 s2 #!optional (start1 0) (start2 0) len)
+  (##sys#substring=? s1 s2 start1 start2 len) )
+
+(define (##sys#substring-ci=? s1 s2 start1 start2 n)
   (##sys#check-string s1 'substring-ci=?)
   (##sys#check-string s2 'substring-ci=?)
-  (let* ([n (length start)]
-	 [start1 (if (fx>= n 1) (car start) 0)]
-	 [start2 (if (fx>= n 2) (cadr start) 0)] 
-	 [len (if (fx> n 2) 
-		  (caddr start) 
-		  (fxmin (fx- (##sys#size s1) start1)
-			 (fx- (##sys#size s2) start2) ) ) ] )
+  (let ((len (or n
+		 (fxmin (fx- (##sys#size s1) start1)
+			(fx- (##sys#size s2) start2) ) ) ) )
     (##sys#check-exact start1 'substring-ci=?)
     (##sys#check-exact start2 'substring-ci=?)
     (##core#inline "C_substring_compare_case_insensitive"
 		   s1 s2 start1 start2 len) ) )
+
+(define (substring-ci=? s1 s2 #!optional (start1 0) (start2 0) len)
+  (##sys#substring-ci=? s1 s2 start1 start2 len) )
 
 
 ;;; Split string into substrings:

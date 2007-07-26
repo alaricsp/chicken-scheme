@@ -76,13 +76,6 @@ Readies the suspended thread {{THREAD}}.
 Converts a time object (as created via {{current-time}}) into an exact integer representing
 the number of milliseconds since process startup.
 
-=== time->milliseconds
-
- [procedure] (time->milliseconds TIME)
-
-Converts a time object (as created via {{current-time}}) into an exact integer representing
-the number of milliseconds since process startup.
-
 
 Previous: [[Unit regex]]
 

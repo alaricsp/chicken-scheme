@@ -157,7 +157,7 @@
     read-char substring string-fill! vector-fill! make-string make-vector open-input-file
     open-output-file call-with-input-file call-with-output-file close-input-port close-output-port
     values call-with-values vector procedure? memq memv member assq assv assoc list-tail
-    list-ref abs char-ready? peek-char) )
+    list-ref abs char-ready? peek-char list->string string->list) )
 
 (define default-extended-bindings
   '(bitwise-and bitwise-ior bitwise-xor bitwise-not add1 sub1 fx+ fx- fx* fx/ fxmod
@@ -174,8 +174,8 @@
     blob->u8vector/shared blob->s8vector/shared blob->u16vector/shared
     blob->s16vector/shared blob->u32vector/shared blob->s32vector/shared
     blob->f32vector/shared blob->f64vector/shared
-    block-ref block-set! number-of-slots
-    hash-table-ref any?
+    block-ref block-set! number-of-slots substring-index substring-index-ci
+    hash-table-ref any? read-string substring=? substring-ci=?
     first second third fourth make-record-instance
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length setter
@@ -210,7 +210,8 @@
     call-with-values eval) )
 
 (define non-foldable-standard-bindings
-  '(vector cons list string make-vector make-string string->symbol values current-input-port current-output-port) )
+  '(vector cons list string make-vector make-string string->symbol values current-input-port current-output-port
+	   read-char write-char) )
 
 (define foldable-standard-bindings
   (lset-difference 
@@ -223,7 +224,7 @@
     f32vector->byte-vector f64vector->byte-vector s32vector->byte-vector ;DEPRECATED
     u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared s16vector->blob/shared u32vector->blob/shared
     f32vector->blob/shared f64vector->blob/shared
-    s32vector->blob/shared
+    s32vector->blob/shared read-string read-string!
     ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
     ##sys#byte ##sys#setbyte 
     byte-vector-ref byte-vector-set!	; DEPRECATED
@@ -243,7 +244,7 @@
     quotient remainder modulo floor ceiling truncate round exact->inexact inexact->exact exp log sin
     cons tan atan expt sqrt asin acos number->string char-upcase char-downcase string-append string
     string->list list->string vector->list list->vector read-char substring make-string make-vector
-    open-input-file open-output-file vector) )
+    open-input-file open-output-file vector write-char) )
 
 (define side-effect-free-standard-bindings-that-never-return-false
   (lset-difference
@@ -748,6 +749,8 @@
 (rewrite 'make-record-instance 11 #f '##sys#make-structure #f)
 (rewrite 'substring 11 3 '##sys#substring #f)
 (rewrite 'string-append 11 2 '##sys#string-append #f)
+(rewrite 'string->list 11 1 '##sys#string->list #t)
+(rewrite 'list->string 11 1 '##sys#list->string #t)
 
 (rewrite 'vector-set! 11 3 '##sys#setslot #f)
 (rewrite 'vector-set! 2 3 "C_i_vector_set" #t #f)
@@ -1087,3 +1090,12 @@
 		'##core#inline 
 		(list (if (eq? number-type 'fixnum) "C_u_i_bit_setp" "C_i_bit_setp"))
 		callargs) ) ) ) ) )
+
+(rewrite 'read-char 23 0 '##sys#read-char/port '##sys#standard-input)
+(rewrite 'write-char 23 0 '##sys#write-char/port '##sys#standard-output)
+(rewrite 'read-string 23 1 '##sys#read-string/port '##sys#standard-input)
+
+(rewrite 'substring=? 24 2 '##sys#substring=? 0 0 #f)
+(rewrite 'substring-ci=? 24 2 '##sys#substring-ci=? 0 0 #f)
+(rewrite 'substring-index 24 2 '##sys#substring-index 0)
+(rewrite 'substring-index-ci 24 2 '##sys#substring-index-ci 0)

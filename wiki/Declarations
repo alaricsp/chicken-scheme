@@ -257,8 +257,7 @@ redefined.
  [declaration specifier] (extended-bindings SYMBOL ...)
  [declaration specifier] (not extended-bindings SYMBOL ...)
 
-Declares that all given non-standard and CHICKEN-specific procedures
- [declaration specifier] (or all if no symbols are specified) are never globally redefined.
+Declares that all given non-standard and CHICKEN-specific procedures (or all if no symbols are specified) are never globally redefined.
 If {{not}} is specified, then all but the given extended bindings
 are assumed to be never redefined.
 
@@ -293,6 +292,13 @@ Do not generate safety-checks. This is the same as specifying the
 
  (declare (no-bound-checks) (no-procedure-checks) (no-argc-checks))
 
+
+=== unused
+
+ [declaration specifier] (unused SYMBOL ...)
+
+Disables any warnings when the global variable {{SYMBOL}} is not defined but used, 
+or defined but never used and not exported.
 
 
 === uses

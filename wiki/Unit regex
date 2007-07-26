@@ -8,6 +8,13 @@ expression package used is {{PCRE}} (''Perl Compatible Regular Expressions'')
 written by Philip Hazel. See [[http://www.pcre.org]] for information about
 the particular regexp flavor and extensions provided by this library.
 
+To test that PCRE support has been built into Chicken properly, try:
+
+<enscript highlight=scheme>
+(require 'regex)
+(test-feature? 'pcre) => t
+</enscript>
+
 
 === grep
 
@@ -40,6 +47,16 @@ Converts the file-pattern {{PATTERN}} into a regular expression.
  [C1-C2]
  [-C...]
  ?
+
+
+=== glob?
+
+ [procedure] (glob? STRING)
+
+Does the {{STRING}} have any "glob" wildcards?
+
+A string without any "glob" wildcards does not meet the criteria,
+even though it technically is a valid "glob" file-pattern.
 
 
 === regexp
@@ -80,6 +97,8 @@ substring (in the case of {{string-match}}). Note that the exact string
 is matched. For searching a pattern inside a string, see below.
 Note also that {{string-match}} is implemented by calling
 {{string-search}} with the regular expression wrapped in {{^ ... $}}.
+If invoked with a precompiled regular expression argument (by using
+{{regexp}}), {{string-match}} is identical to {{string-search}}.
 
 
 === string-search

@@ -1213,11 +1213,7 @@
 	      (eq? (machine-type) 'hppa)) hppa-load-library-extension]
 	[else default-load-library-extension] ) )
 
-(define ##sys#load-dynamic-extension	; this also...
-  (cond [(eq? (software-version) 'macosx) default-load-library-extension]
-	[(and (eq? (software-version) 'hpux)
-	      (eq? (machine-type) 'hppa)) default-load-library-extension]
-	[else ##sys#load-library-extension] ) )
+(define ##sys#load-dynamic-extension default-load-library-extension)
 
 (define ##sys#default-dynamic-load-libraries 
   (case (build-platform)
@@ -2046,6 +2042,10 @@
 (define ##sys#repl-print-length-limit #f)
 (define ##sys#repl-read-hook #f)
 
+(define (##sys#repl-print-hook x port)
+  (##sys#with-print-length-limit ##sys#repl-print-length-limit (cut ##sys#print x #t port))
+  (##sys#write-char-0 #\newline port) )
+
 (define repl-prompt (make-parameter (lambda () "#;> ")))
 
 (define ##sys#read-prompt-hook
@@ -2066,16 +2066,12 @@
 	(reset reset) )
     (lambda ()
 
-      (define (write-one x port)
-	(##sys#with-print-length-limit ##sys#repl-print-length-limit (cut ##sys#print x #t port))
-	(##sys#write-char-0 #\newline port) )
-
       (define (write-err xs)
-	(for-each (cut write-one <> ##sys#standard-error) xs) )
+	(for-each (cut ##sys#repl-print-hook <> ##sys#standard-error) xs) )
 
       (define (write-results xs)
 	(unless (or (null? xs) (eq? (##core#undefined) (car xs)))
-	  (for-each (cut write-one <> ##sys#standard-output) xs) ) )
+	  (for-each (cut ##sys#repl-print-hook <> ##sys#standard-output) xs) ) )
 
       (let ((stdin ##sys#standard-input)
 	    (stdout ##sys#standard-output)

@@ -114,12 +114,7 @@
 
 (register-feature! 'chicken-setup)
 
-(define *copy-command* (if *windows-shell* 'copy "cp -r"))
-(define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
-(define *move-command* (if *windows-shell* 'move 'mv))
-(define *gzip-program* (if *windows-shell* 'chicken-gzip 'gzip))
-(define *tar-program* (if *windows-shell* 'chicken-tar 'tar))
-
+(define program-path (make-parameter *install-bin-path*))
 (define (cross-chicken) (##sys#fudge 39))
 
 (define create-directory/parents
@@ -151,6 +146,20 @@
 (define setup-build-directory (make-parameter (current-directory)))
 (define setup-verbose-flag (make-parameter #f))
 (define setup-install-flag (make-parameter #t))
+
+(define *copy-command* (if *windows-shell* 'copy "cp -r"))
+(define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
+(define *move-command* (if *windows-shell* 'move 'mv))
+
+(define *gzip-program*
+  (if *windows-shell* 
+      (quotewrap (make-pathname (program-path) "chicken-gzip"))
+      'gzip))
+
+(define *tar-program*
+  (if *windows-shell*
+      (quotewrap (make-pathname (program-path) "chicken-tar"))
+      'tar))
 
 (define *fetch-only* #f)
 (define *temporary-directory* #f)
@@ -426,8 +435,6 @@ EOF
 (define (make-setup-info-pathname fn #!optional (rpath (repository-path)))
   (make-pathname rpath fn setup-file-extension) )
 
-(define program-path (make-parameter *install-bin-path*))
-
 (define installation-prefix
   (make-parameter
    (or (getenv "CHICKEN_PREFIX")
@@ -579,18 +586,10 @@ EOF
      (x x) ) ) )
 
 (define (install-extension id files #!optional (info '()))
-  (define (soify f) (translate-extension f))
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (rpath (repo-path))
 	   (rpathd (repo-path #t))
-	   (files (if *windows*
-		      (map (lambda (f) 
-			     (if (pair? f)
-				 (list (soify (car f)) (soify (cadr f)))
-				 (soify f)))
-			   files)
-		      files) ) 
 	   (dests (map (lambda (f)
 			 (let ((from (if (pair? f) (car f) f))
 			       (to (make-dest-pathname rpathd f)) )
@@ -599,7 +598,7 @@ EOF
 			     (run (,*remove-command* ,to)) )
 			   (copy-file from to)
 			   (unless *windows-shell*
-				   (run (chmod a+r ,to)))
+			     (run (chmod a+r ,to)))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) 
@@ -1170,6 +1169,7 @@ EOF
 	 (loop more) )
 	(("-fetch" . more)
 	 (set! *fetch-only* #t)
+         (set! *keep-stuff* #t)
 	 (loop more) )
 	(("-host" host . more)
 	 (match (string-match "http://(.*)" host)
@@ -1263,10 +1263,11 @@ EOF
 	 (when *rebuild-doc-index*
 	   (when (setup-verbose-flag) (printf "Rebuilding documentation index...\n"))
 	   (build-doc-index) )
-	 (for-each 
-	  (lambda (f)
-	    (run (,*remove-command* ,(quotewrap f))) )
-	  *fetched-eggs*)
+         (unless *keep-stuff*
+             (for-each 
+              (lambda (f)
+                (run (,*remove-command* ,(quotewrap f))) )
+              *fetched-eggs*))
 	 #f) ) ) ) )
 
 (handle-exceptions ex 

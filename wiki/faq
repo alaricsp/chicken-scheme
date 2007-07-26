@@ -28,7 +28,7 @@ for the existence of CHICKEN are:
 
 === What should I do if I find a bug?
 
-Send e-mail to {{felix@@call-with-current-continuation.org}}
+Send e-mail to felix@call-with-current-continuation.org
 with some hints about the problem, like
 version/build of the compiler, platform, system configuration, code that
 causes the bug, etc.
@@ -162,7 +162,10 @@ The Windows development tools include a C# compiler with the same name. Either i
 pathname, or put the directory where you installed CHICKEN in front of the MS development tool path in the {{PATH}}
 environment variable.
 
+=== On Windows source and/or output filenames with embedded whitespace are not found.
 
+There is no current workaround. Do not use filenames with embedded whitespace for code. However, command
+names with embedded whitespace will work correctly.
 == Customization
 
 
@@ -218,15 +221,20 @@ On platforms that support it (Linux ELF, Solaris, Windows + VC++), compiled code
 just like source files (see {{load}} in the User's Manual).
 
 
-== Macros
+== Compiled macros
 
-=== Why doesn't my fancy macro work in compiled code?
+=== Why is {{define-macro}} complaining about unbound variables?
 
 Macro bodies that are defined and used in a compiled source-file are
-evaluated during compilation and so have no access to definitions in the
-compiled file. Note also that during compile-time macros are only available in
-the same source file in which they are defined. Files included via {{include}}
-are considered part of the containing file.
+evaluated during compilation and so have no access to anything created with {{define}}. Use {{define-for-syntax}} instead.
+
+=== Why isn't {{load}} properly loading my library of macros?
+
+During compile-time, macros are only available in the source file in which they are defined. Files included via {{include}} are considered part of the containing file.
+
+=== Why is {{include}} unable to load my hygienic macros?
+
+It is not sufficient for the included file to require the {{syntax-case}} extension. Call {{(require-extension syntax-case)}} ''before'' calling {{include}}.
 
 === Why are macros not visible outside of the compilation unit in which they are defined?
 
@@ -426,11 +434,11 @@ The following extended bindings are handled specially:
 {{fp-}} {{fp*}} {{fp/}} {{atom?}}
 {{fp=}} {{fp>}} {{fp>=}} {{fpneg}} {{fpmax}} {{fpmin}}
 {{arithmetic-shift}} {{signum}} {{flush-output}} {{thread-specific}} {{thread-specific-set!}}
-{{not-pair?}} {{null-list?}} {{print}} {{print*}} {{u8vector->bytevector}}
-{{s8vector->bytevector}} {{u16vector->bytevector}} {{s16vector->bytevector}}
-{{u32vector->bytevector}}
-{{s32vector->bytevector}} {{f32vector->bytevector}} {{f64vector->bytevector}} {{block-ref}}
-{{byte-vector-length}}
+{{not-pair?}} {{null-list?}} {{print}} {{print*}} {{u8vector->blob/shared}}
+{{s8vector->blob/shared}} {{u16vector->blob/shared}} {{s16vector->blob/shared}}
+{{u32vector->blob/shared}}
+{{s32vector->blob/shared}} {{f32vector->blob/shared}} {{f64vector->blob/shared}} {{block-ref}}
+{{blob-size}}
 {{u8vector-length}}
 {{s8vector-length}}
 {{u16vector-length}}
@@ -459,6 +467,18 @@ The following extended bindings are handled specially:
 {{make-record-instance}}
 {{locative-ref}} {{locative-set!}} {{locative?}} {{locative->object}} {{identity}}
 {{cpu-time}} {{error}} {{call/cc}} {{any?}}
+
+=== Can I load compiled code at runtime?
+
+Yes.
+You can load compiled at code at runtime with {{load}} just as
+well as you can load Scheme source code.
+Compiled code will, of course, run faster.
+
+To do this, pass to {{load}} a path for a shared object.
+Use a form such as {{(load "foo.so")}} and run
+{{csc -shared foo.scm}} to produce {{foo.so}} from {{foo.scm}} (at
+which point {{foo.scm}} will no longer be required).
 
 == Garbage collection
 
@@ -515,6 +535,15 @@ After installing the egg, add the following to your {{~/.csirc}} or equivalent f
 (current-input-port (make-gnu-readline-port))
 (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
 </enscript>
+
+Users of *nix-like systems (including Cygwin), may also want to check out [[http://utopia.knoware.nl/~hlub/rlwrap/|rlwrap]].  This program lets you "wrap" another process (e.g. {{rlwrap csi}}) with the readline library, giving you history, autocompletion, and the ability to set the keystroke set. Vi fans can get vi keystrokes by adding "set editing-mode vi" to their {{.inputrc}} file.
+
+=== Does code loaded with {{load}} run compiled or interpreted?
+
+If you compile a file with a call to {{load}}, the code will be loaded at
+runtime and, if the file loaded is a Scheme source code file
+(instead of a shared object), it will be
+interpreted (even if the caller program is compiled).
 
 == Extensions ==
 

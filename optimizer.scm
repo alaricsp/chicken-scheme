@@ -1217,6 +1217,49 @@
 			(list (second classargs) w)
 			callargs) ) ) ) ) ) )
 
+    ;; (<op> <arg1> ... <argN> <specialarg>) ->
+    ;;   (<primitiveop> <arg1> ... <argN> <specialarg>)
+    ;; (<op> <arg1> ... <argN>) ->
+    ;;   (<primitiveop> <arg1> ... <argN> <defaultvar>)
+    ((23) ; classargs = (<N> <primitiveop> <defaultvar>)
+     (let ((argc (first classargs))
+	   (rargc (length callargs)))
+       (and inline-substitutions-enabled
+	    (<= argc rargc (add1 argc))
+	    (or (test name 'standard-binding) (test name 'extended-binding))
+	    (make-node
+	     '##core#call '(#t)
+	     (append 
+	      (list (varnode (second classargs)) cont)
+	      callargs
+	      (if (= rargc argc)
+		  (list (varnode (third classargs)))
+		  '() ) ) ) ) ) )
+
+    ;; (<op> <arg1> ... <argN>) -> (<primitiveop> ...)
+    ;; (<op> <arg1> ... <argN-I> <literalN-I>) -> (<primitiveop> ...)
+    ((24) ; classargs = (<argc> <primitiveop> <literal1> ...)
+     (and inline-substitutions-enabled
+	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (let ([argc (first classargs)])
+	    (and (>= (length callargs) (first classargs))
+		 (make-node 
+		  '##core#call (list #t (second classargs))
+		  (cons*
+		   (varnode (second classargs))
+		   cont
+		   (let-values (((req opt) (split-at callargs argc)))
+		     (append
+		      req
+		      (let loop ((ca opt) 
+				 (da (cddr classargs)) )
+			(cond ((null? ca)
+			       (if (null? da)
+				   '()
+				   (cons (qnode (car da)) (loop '() (cdr da))) ) )
+			      ((null? da) '())
+			      (else (cons (car ca) (loop (cdr ca) (cdr da))))))))))))))
+
     (else (bomb "bad type (optimize)")) ) )
 
 

@@ -272,6 +272,7 @@ in {{STRING ...}}:
 For obscure technical reasons you should use the {{C_return}} macro instead of the normal {{return}} statement
 to return a result from the foreign lambda body as some cleanup code has to be run before execution
 commences in the calling code.
+
 === foreign-safe-lambda
 
  [syntax] (foreign-safe-lambda RETURNTYPE NAME ARGTYPE ...)

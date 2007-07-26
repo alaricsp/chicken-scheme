@@ -376,3 +376,49 @@
 
 (define (true? x)
   (and x (not (member x '("no" "false" "off" "0" "")))))
+
+(define (simple-args #!optional (args (command-line-arguments)) (error error))
+  (define (assign var val)
+    (##sys#setslot 
+     (string->symbol (string-append "*" var "*"))
+     0
+     (if (string? val) 
+	 (or (string->number val) val)
+	 val)))
+  (let loop ((args args) (vals '()))
+    (cond ((null? args) (reverse vals))
+	  ((string-match "(-{1,2})?([-_A-Za-z0-9]+)(=)?\\s*(.+)?" (car args)) 
+	   =>
+	   (lambda (m)
+	     (let*-values (((next) (cdr args))
+			   ((var val)
+			    (match m
+			      ((_ _ opt "=" val)
+			       (cond (val (values opt val))
+				     (else 
+				      (when (null? next)
+					(error "missing argument for option" (car args)) )
+				      (set! next (cdr next))
+				      (values opt (car next)) ) ) )
+			      ((_ (? string?) opt #f #f) (values opt #t))
+			      (_ (values #f #f)) ) ) )
+	       (cond (var 
+		      (assign var val)
+		      (loop next vals) )
+		     (else (loop next (cons (car args) vals)))))))
+	  (else (loop (cdr args) (cons (car args) vals))))))
+
+(define (yes-or-no? str . default)
+  (let ((def (:optional default #f)))
+    (let loop ()
+      (printf "~%~A (yes/no) " str)
+      (when def (printf "[~A] " def))
+      (flush-output)
+      (let ((ln (read-line)))
+	(cond ((eof-object? ln) (set! ln "abort"))
+	      ((and def (string=? "" ln)) (set! ln def)) )
+	(cond ((string-ci=? "yes" ln) #t)
+	      ((string-ci=? "no" ln) #f)
+	      (else
+	       (printf "~%Please enter \"yes\" or \"no\".~%")
+	       (loop) ) ) ) ) ) )

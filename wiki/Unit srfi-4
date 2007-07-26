@@ -24,52 +24,84 @@ is true.
 
 Additionally, the following procedures are provided:
 
-=== u8vector->byte-vector
-=== s8vector->byte-vector
-=== u16vector->byte-vector
-=== s16vector->byte-vector
-=== u32vector->byte-vector
-=== s32vector->byte-vector
-=== f32vector->byte-vector
-=== f64vector->byte-vector
+=== u8vector->blob
+=== s8vector->blob
+=== u16vector->blob
+=== s16vector->blob
+=== u32vector->blob
+=== s32vector->blob
+=== f32vector->blob
+=== f64vector->blob
+=== u8vector->blob/shared
+=== s8vector->blob/shared
+=== u16vector->blob/shared
+=== s16vector->blob/shared
+=== u32vector->blob/shared
+=== s32vector->blob/shared
+=== f32vector->blob/shared
+=== f64vector->blob/shared
 
- [procedure] (u8vector->byte-vector U8VECTOR)
- [procedure] (s8vector->byte-vector S8VECTOR)
- [procedure] (u16vector->byte-vector U16VECTOR)
- [procedure] (s16vector->byte-vector S16VECTOR)
- [procedure] (u32vector->byte-vector U32VECTOR)
- [procedure] (s32vector->byte-vector S32VECTOR)
- [procedure] (f32vector->byte-vector F32VECTOR)
- [procedure] (f64vector->byte-vector F64VECTOR)
+ [procedure] (u8vector->blob U8VECTOR)
+ [procedure] (s8vector->blob S8VECTOR)
+ [procedure] (u16vector->blob U16VECTOR)
+ [procedure] (s16vector->blob S16VECTOR)
+ [procedure] (u32vector->blob U32VECTOR)
+ [procedure] (s32vector->blob S32VECTOR)
+ [procedure] (f32vector->blob F32VECTOR)
+ [procedure] (f64vector->blob F64VECTOR)
+ [procedure] (u8vector->blob/shared U8VECTOR)
+ [procedure] (s8vector->blob/shared S8VECTOR)
+ [procedure] (u16vector->blob/shared U16VECTOR)
+ [procedure] (s16vector->blob/shared S16VECTOR)
+ [procedure] (u32vector->blob/shared U32VECTOR)
+ [procedure] (s32vector->blob/shared S32VECTOR)
+ [procedure] (f32vector->blob/shared F32VECTOR)
+ [procedure] (f64vector->blob/shared F64VECTOR)
 
 Each of these procedures return the contents of the given vector as a
-'packed' byte-vector. The byte order in that vector is platform-dependent
-(for example little-endian on an '''Intel''' processor). The returned
-byte-vector shares memory with the contents of the vector.
+'packed' blob. The byte order in that vector is platform-dependent
+(for example little-endian on an '''Intel''' processor). The {{/shared}}
+variants return a blob that shares memory with the contents of the vector.
 
 
-=== byte-vector->u8vector
-=== byte-vector->s8vector
-=== byte-vector->u16vector
-=== byte-vector->s16vector
-=== byte-vector->u32vector
-=== byte-vector->s32vector
-=== byte-vector->f32vector
-=== byte-vector->f64vector
+=== blob->u8vector
+=== blob->s8vector
+=== blob->u16vector
+=== blob->s16vector
+=== blob->u32vector
+=== blob->s32vector
+=== blob->f32vector
+=== blob->f64vector
+=== blob->u8vector/shared
+=== blob->s8vector/shared
+=== blob->u16vector/shared
+=== blob->s16vector/shared
+=== blob->u32vector/shared
+=== blob->s32vector/shared
+=== blob->f32vector/shared
+=== blob->f64vector/shared
 
- [procedure] (byte-vector->u8vector BYTE-VECTOR)
- [procedure] (byte-vector->s8vector BYTE-VECTOR)
- [procedure] (byte-vector->u16vector BYTE-VECTOR)
- [procedure] (byte-vector->s16vector BYTE-VECTOR)
- [procedure] (byte-vector->u32vector BYTE-VECTOR)
- [procedure] (byte-vector->s32vector BYTE-VECTOR)
- [procedure] (byte-vector->f32vector BYTE-VECTOR)
- [procedure] (byte-vector->f64vector BYTE-VECTOR)
+ [procedure] (blob->u8vector BLOB)
+ [procedure] (blob->s8vector BLOB)
+ [procedure] (blob->u16vector BLOB)
+ [procedure] (blob->s16vector BLOB)
+ [procedure] (blob->u32vector BLOB)
+ [procedure] (blob->s32vector BLOB)
+ [procedure] (blob->f32vector BLOB)
+ [procedure] (blob->f64vector BLOB)
+ [procedure] (blob->u8vector/shared BLOB)
+ [procedure] (blob->s8vector/shared BLOB)
+ [procedure] (blob->u16vector/shared BLOB)
+ [procedure] (blob->s16vector/shared BLOB)
+ [procedure] (blob->u32vector/shared BLOB)
+ [procedure] (blob->s32vector/shared BLOB)
+ [procedure] (blob->f32vector/shared BLOB)
+ [procedure] (blob->f64vector/shared BLOB)
 
 Each of these procedures return a vector where the argument
-{{BYTE-VECTOR}} is taken as a 'packed' representation of the contents
-of the vector. The argument-byte-vector shares memory with the contents
-of the vector.
+{{BLOB}} is taken as a 'packed' representation of the contents
+of the vector. The {{/shared}} variants return a vector that
+shares memory with the contents of the blob.
 
 
 === subu8vector

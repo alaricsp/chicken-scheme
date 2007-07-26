@@ -145,7 +145,7 @@ is negative or {{0}} if {{N}} is zero. {{signum}} is exactness preserving.
 
  [procedure] (finite? N)
 
-Returns {{#f}} if {{N}} is negative or positive infinity, and {{#f}} otherwise.
+Returns {{#f}} if {{N}} is negative or positive infinity, and {{#t}} otherwise.
 
 
 
@@ -411,7 +411,7 @@ context as the {{condition-case}} form.
 (check (lambda () (signal 99)))            ; -> "something else"
 
 (condition-case some-unbound-variable
-  [(exn file) (print "ignored)] )      ; -> signals error
+  [(exn file) (print "ignored")] )      ; -> signals error
 
 </enscript>
 
@@ -536,6 +536,19 @@ building the executing system, which is one of the following:
  unknown
 
 
+==== build-style
+
+  [procedure] (build-style)
+
+Returns a symbol indicating the build system used to create the CHICKEN
+instance running this program. Possible values are:
+
+  cmake
+  autotools
+  diy
+  custom
+
+
 ==== chicken-version
 
  [procedure] (chicken-version [FULL])
@@ -644,8 +657,9 @@ with the Microsoft C compiler, {{c-runtime}} always returns {{unknown}}.
  [procedure] (system STRING)
 
 Execute shell command. The functionality offered by this procedure
-depends on the capabilities of the host shell.
-
+depends on the capabilities of the host shell. If the forking of a subprocess
+failed, an exception is raised. Otherwise the return status of the
+subprocess is returned unaltered.
 
 
 
@@ -699,7 +713,7 @@ integer.
 Enables or disables warnings, depending on wether {{BOOL}} is true or false.
 If called with no arguments, this procedure returns {{#t}} if warnings are
 currently enabled, or {{#f}} otherwise. Note that this is not a parameter.
-The current state (wether warnings are enabled or disabled) is global and not
+The current state (whether warnings are enabled or disabled) is global and not
 thread-local.
 
 
@@ -813,7 +827,7 @@ because CHICKEN uses a copying semi-space collector.
 Registers a procedure of one argument {{PROC}}, that will be
 called as soon as the non-immediate data object {{X}} is about to
 be garbage-collected (with that object as its argument).  Note that
-the finalizer will '''not''' be called when interrupts are disabled.
+the finalizer will '''not''' be called while interrupts are disabled.
 This procedure returns {{X}}.
 
 
@@ -1104,6 +1118,7 @@ an expression from a given port, then the procedure {{PROC}} will be called with
 that port as its argument. The procedure should return a value that will be returned
 to the reader:
 
+<enscript highlight=scheme>
  ; A simple RGB color syntax:
 
  (set-read-syntax! #\%
@@ -1114,6 +1129,7 @@ to the reader:
 
  (with-input-from-string "(1 2 %f0f0f0 3)" read)
  ; ==> (1 2 #(240 240 240) 3)
+</enscript>
 
 If {{CHAR-OR-SYMBOL}} is a symbol, then a so-called ''read-mark'' handler is defined.
 In that case the handler procedure will be called when a character-sequence of the
@@ -1126,8 +1142,8 @@ is encountered.
 You can undo special handling of read-syntax by passing {{#f}} as the second argument
 (if the syntax was previously defined via {{set-read-syntax!}}).
 
-Note that all of CHICKEN's special non-standard read-syntax is handled directly by the reader
-to disable built-in read-syntax, define a handler that triggers an error (for example).
+Note that all of CHICKEN's special non-standard read-syntax is handled directly by the reader.
+To disable built-in read-syntax, define a handler that triggers an error (for example).
 
 
 ==== set-sharp-read-syntax!

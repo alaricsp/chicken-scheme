@@ -288,7 +288,7 @@ pcresources = pcre/pcre_compile.c pcre/pcre_get.c pcre/pcre_printint.c pcre/pcre
 	pcre/pcre_dfa_exec.c pcre/pcre_info.c pcre/pcre_study.c pcre/pcre_version.c \
 	pcre/pcre_exec.c pcre/pcre_maketables.c pcre/pcre_tables.c pcre/pcre_xclass.c \
 	pcre/pcre_fullinfo.c pcre/pcre_ord2utf8.c pcre/pcre_try_flipped.c pcre/chartables.c
-pcreoptions = -Ipcre
+pcreoptions = -Ipcre -DPCRE_STATIC
 
 libchicken_la_SOURCES = $(commonlibsources) $(chickenlibsources) $(pcresources)
 libchicken_la_CFLAGS  = -DC_BUILDING_LIBCHICKEN $(pcreoptions)
