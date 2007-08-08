@@ -4,7 +4,10 @@
 set -e
 export DYLD_LIBRARY_PATH=`pwd`/..
 export LD_LIBRARY_PATH=`pwd`/..
-compile="../csc -compiler ../chicken -o a.out"
+compile="../csc -compiler ../chicken-static -o a.out"
+
+echo "======================================== runtime tests ..."
+../csi -s apply-test.scm
 
 echo "======================================== library tests ..."
 ../csi -w -s library-tests.scm
@@ -32,7 +35,7 @@ for x in `ls *.scm`; do
 	"plists.scm");;
 	*)
 	    echo $x
-	    ../csc $x -O2 -d0 -prologue plists.scm && ./`basename $x .scm` >/dev/null;;
+	    ../csc $x -compiler ../chicken-static -O2 -d0 -prologue plists.scm && ./`basename $x .scm` >/dev/null;;
     esac
 done
 popd

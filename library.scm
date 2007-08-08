@@ -3117,7 +3117,7 @@ EOF
       (let ((spec (string-append
 		   (if (##sys#fudge 3) " 64bit" "")
 		   (if (##sys#fudge 15) " symbolgc" "")
-		   (if (##sys#fudge 22) " libffi" "")
+		   (if (##sys#fudge 40) " manyargs" "")
 		   (if (##sys#fudge 24) " dload" "") 
 		   (if (##sys#fudge 28) " ptables" "")
 		   (if (##sys#fudge 32) " gchooks" "") 
@@ -3173,7 +3173,7 @@ EOF
   (check (machine-type))
   (check (machine-byte-order)) )
 
-(when (##sys#fudge 22) (set! ##sys#features (cons #:libffi ##sys#features)))
+(when (##sys#fudge 40) (set! ##sys#features (cons #:manyargs ##sys#features)))
 (when (##sys#fudge 24) (set! ##sys#features (cons #:dload ##sys#features)))
 (when (##sys#fudge 28) (set! ##sys#features (cons #:ptables ##sys#features)))
 (when (##sys#fudge 33) (set! ##sys#features (cons #:extraslot ##sys#features)))
@@ -3878,7 +3878,8 @@ EOF
    q					; #9 quantum
    (##core#undefined)			; #10 specific
    #f					; #11 block object (type depends on blocking type)
-   '() ) )				; #12 recipients (currently unused)
+   '()				        ; #12 recipients (currently unused)
+   #f) )				; #13 unblocked by timeout?
 
 (define ##sys#primordial-thread (##sys#make-thread #f 'running 'primordial ##sys#default-thread-quantum))
 (define ##sys#current-thread ##sys#primordial-thread)

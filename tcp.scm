@@ -40,7 +40,8 @@
   (fixnum-arithmetic)
   (no-bound-checks)
   (export tcp-close tcp-listen tcp-connect tcp-accept tcp-accept-ready? ##sys#tcp-port->fileno tcp-listener? tcp-addresses
-	  tcp-abandon-port tcp-listener-port tcp-listener-fileno tcp-port-numbers tcp-buffer-size)
+	  tcp-abandon-port tcp-listener-port tcp-listener-fileno tcp-port-numbers tcp-buffer-size
+	  tcp-read-timeout tcp-write-timeout tcp-accept-timeout tcp-connect-timeout)
   (no-procedure-checks-for-usual-bindings)
   (bound-to-procedure
    ##net#socket ##net#bind ##net#connect ##net#listen ##net#accept make-parameter ##sys#string-append ##sys#tcp-port->fileno
@@ -105,7 +106,7 @@ EOF
     (define-macro (##sys#check-symbol x) '(##core#undefined))
     (define-macro (##sys#check-string x) '(##core#undefined))
     (define-macro (##sys#check-char x) '(##core#undefined))
-    (define-macro (##sys#check-exact x) '(##core#undefined))
+    (define-macro (##sys#check-exact x . _) '(##core#undefined))
     (define-macro (##sys#check-port x . _) '(##core#undefined))
     (define-macro (##sys#check-number x) '(##core#undefined))))
  (else
@@ -321,6 +322,19 @@ EOF
 (define-constant +output-chunk-size+ 8192)
 
 (define tcp-buffer-size (make-parameter #f))
+(define tcp-read-timeout)
+(define tcp-write-timeout)
+(define tcp-connect-timeout)
+(define tcp-accept-timeout)
+
+(let ()
+  (define ((check loc) x)
+    (when x (##sys#check-exact x loc))
+    x)
+  (set! tcp-read-timeout (make-parameter #f (check 'tcp-read-timeout)))
+  (set! tcp-write-timeout (make-parameter #f (check 'tcp-write-timeout))) 
+  (set! tcp-connect-timeout (make-parameter #f (check 'tcp-connect-timeout))) 
+  (set! tcp-accept-timeout (make-parameter #f (check 'tcp-accept-timeout))) )
 
 (define ##net#io-ports
   (let ((make-input-port make-input-port)
@@ -339,14 +353,24 @@ EOF
 	     (oclosed #f)
 	     (outbufsize (tbs))
 	     (outbuf (and outbufsize (fx> outbufsize 0) ""))
+	     (tmr (tcp-read-timeout))
+	     (tmw (tcp-write-timeout))
 	     (read-input
 	      (lambda ()
 		(let loop ()
 		  (let ((n (##net#recv fd buf +input-buffer-size+ 0)))
 		    (cond ((eq? -1 n)
 			   (cond ((eq? errno _ewouldblock) 
+				  (when tmr
+				    (##sys#thread-block-for-timeout! 
+				     ##sys#current-thread
+				     (fx+ (##sys#fudge 16) tmr) ) )
 				  (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
 				  (yield)
+				  (when (##sys#slot ##sys#current-thread 13)
+				    (##sys#signal-hook
+				     #:network-error
+				     "read operation timed out" fd) )
 				  (loop) )
 				 (else
 				  (##sys#update-errno)
@@ -433,15 +457,24 @@ EOF
 		  (let* ((count (fxmin +output-chunk-size+ len))
 			 (n (##net#send fd s count 0)) )
 		    (cond ((eq? -1 n)
-			   (if (eq? errno _ewouldblock)
-			       (begin
-				 (##sys#thread-block-for-i/o! ##sys#current-thread fd #f)
-				 (yield) 
-				 (loop len s) )
-			       (begin
-				 (##sys#update-errno)
-				 (##sys#signal-hook 
-				  #:network-error (##sys#string-append "can not write to socket - " strerror) fd) ) ) )
+			   (cond ((eq? errno _ewouldblock)
+				  (when tmw
+				    (##sys#thread-block-for-timeout! 
+				     ##sys#current-thread
+				     (fx+ (##sys#fudge 16) tmw) ) )
+				  (##sys#thread-block-for-i/o! ##sys#current-thread fd #f)
+				  (yield) 
+				  (when (##sys#slot ##sys#current-thread 13)
+				    (##sys#signal-hook
+				     #:network-error
+				     "write operation timed out" fd) )
+				  (loop len s) )
+				 (else
+				  (##sys#update-errno)
+				  (##sys#signal-hook 
+				   #:network-error
+				   (##sys#string-append "can not write to socket - " strerror) 
+				   fd) ) ) )
 			  ((fx< n len)
 			   (loop (fx- len n) (##sys#substring s n (##sys#size s))) ) ) ) ) ) )
 	     (out
@@ -481,7 +514,8 @@ EOF
 
 (define (tcp-accept tcpl)
   (##sys#check-structure tcpl 'tcp-listener)
-  (let ((fd (##sys#slot tcpl 1)))
+  (let ((fd (##sys#slot tcpl 1))
+	(tma (tcp-accept-timeout)))
     (let loop ()
       (if (eq? 1 (##net#select fd))
 	  (let ((fd (##net#accept fd #f #f)))
@@ -492,8 +526,17 @@ EOF
 	       tcpl) )
 	    (##net#io-ports fd) )
 	  (begin
+	    (when tma
+	      (##sys#thread-block-for-timeout! 
+	       ##sys#current-thread
+	       (fx+ (##sys#fudge 16) tma) ) )
 	    (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
 	    (yield)
+	    (when (##sys#slot ##sys#current-thread 13)
+	      (##sys#signal-hook
+	       #:network-error
+	       'tcp-accept
+	       "accept operation timed out" fd) )
 	    (loop) ) ) ) ) )
 
 (define (tcp-accept-ready? tcpl)
@@ -508,16 +551,17 @@ EOF
 
 (define get-socket-error
   (foreign-lambda* int ((int socket))
-		   "int err, optlen;"
-		   "optlen = sizeof(err);"
-		   "if (typecorrect_getsockopt(socket, SOL_SOCKET, SO_ERROR, &err, (socklen_t *)&optlen) == -1)"
-		   "return(-1);"
-		   "return(err);"))
+    "int err, optlen;"
+    "optlen = sizeof(err);"
+    "if (typecorrect_getsockopt(socket, SOL_SOCKET, SO_ERROR, &err, (socklen_t *)&optlen) == -1)"
+    "return(-1);"
+    "return(err);"))
 
 (define general-strerror (foreign-lambda c-string "strerror" int))
 
 (define (tcp-connect host . more)
-  (let ((port (:optional more #f)))
+  (let ((port (:optional more #f))
+	(tmc (tcp-connect-timeout)))
     (##sys#check-string host)
     (unless port
       (set!-values (host port) (##net#parse-host host "tcp"))
@@ -545,8 +589,17 @@ EOF
 	      (let ((f (##net#select-write s)))
 		(when (eq? f -1) (fail))
 		(unless (eq? f 1)
+		  (when tmc
+		    (##sys#thread-block-for-timeout!
+		     ##sys#current-thread
+		     (fx+ (##sys#fudge 16) tmc) ) )
 		  (##sys#thread-block-for-i/o! ##sys#current-thread s #:all)
 		  (yield)
+		  (when (##sys#slot ##sys#current-thread 13)
+		    (##sys#signal-hook
+		     #:network-error
+		     'tcp-connect
+		     "connect operation timed out" s) )
 		  (loop) ) ) )
 	    (fail) ) )
       (let ((err (get-socket-error s)))

@@ -100,10 +100,6 @@ static C_TLS int timezone;
 
 #endif
 
-#if defined(HAVE_FFI_H)
-# include <ffi.h>
-#endif
-
 #ifndef RTLD_GLOBAL
 # define RTLD_GLOBAL                   0
 #endif
@@ -142,11 +138,13 @@ static C_TLS int timezone;
 # define S_IFMT             _S_IFMT
 # define S_IFDIR            _S_IFDIR
 # define timezone           _timezone
-
-# ifdef _M_IX86
-#  define HACKED_APPLY
+# if defined(_M_IX86)
+#  define C_HACKED_APPLY
 # endif
-
+#else
+# ifdef C_HACKED_APPLY
+extern void C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
+# endif
 #endif
 
 
@@ -165,7 +163,7 @@ static C_TLS int timezone;
 #define DEFAULT_FORWARDING_TABLE_SIZE  32
 #define DEFAULT_LOCATIVE_TABLE_SIZE    32
 #define DEFAULT_COLLECTIBLES_SIZE      1024
-#define DEFAULT_TRACE_BUFFER_SIZE      16
+#define DEFAULT_TRACE_BUFFER_SIZE      8
 
 #define MAX_HASH_PREFIX                64
 
@@ -341,7 +339,7 @@ C_TLS C_word(*C_get_unbound_variable_value_hook)(C_word sym);
 C_TLS void (*C_panic_hook)(C_char *msg);
 
 C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
-C_TLS void (*C_post_gc_hook)(int mode);
+C_TLS void (*C_post_gc_hook)(int mode, long ms);
 
 C_TLS int
   C_abort_on_thread_exceptions,
@@ -720,6 +718,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   current_module_handle = NULL;
   reload_lf = NULL;
   callback_continuation_level = 0;
+  timer_start_gc_ms = 0;
   C_randomize(time(NULL));
   return 1;
 }
@@ -2848,7 +2847,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 
   if(gc_mode == GC_MAJOR) gc_count_1 = 0;
 
-  if(C_post_gc_hook != NULL) C_post_gc_hook(gc_mode);
+  if(C_post_gc_hook != NULL) C_post_gc_hook(gc_mode, tgc);
 
   /* Jump from the Empire State Building... */
   C_longjmp(C_restart, 1);
@@ -4003,12 +4002,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
   case C_fix(21):
     return C_fix(C_MOST_POSITIVE_FIXNUM);
 
-  case C_fix(22):
-#if defined(HAVE_FFI_H)
-    return C_SCHEME_TRUE;
-#else 
-    return C_SCHEME_FALSE;
-#endif
+  /*  case C_fix(22): */
 
   case C_fix(23):
     return C_fix(C_startup_time_seconds);
@@ -4066,7 +4060,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 #endif
 
   case C_fix(34):
-#ifdef HAVE_FFI_H
+#ifdef C_HACKED_APPLY
     return C_fix(1000);
 #else
     return C_fix(126);
@@ -4088,6 +4082,13 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 
   case C_fix(39):
 #if defined(C_CROSS_CHICKEN) && C_CROSS_CHICKEN
+    return C_SCHEME_TRUE;
+#else
+    return C_SCHEME_FALSE;
+#endif
+
+  case C_fix(40):
+#if defined(C_HACKED_APPLY)
     return C_SCHEME_TRUE;
 #else
     return C_SCHEME_FALSE;
@@ -5815,14 +5816,8 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
 {
   va_list v;
   int i, n = c - 3;
-  C_word x, skip;
-#if defined(HAVE_FFI_H)
-  ffi_cif cif;
-  ffi_type **argtypes;
-  void **argvalues;
-  ffi_status status;
-#endif
-#ifdef HACKED_APPLY
+  C_word x, skip, fn2;
+#ifdef C_HACKED_APPLY
   C_word *buf = C_temporary_stack_limit;
   void *proc;
 #endif
@@ -5830,14 +5825,14 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
 #ifndef C_UNSAFE_RUNTIME
   if(c < 4) C_bad_min_argc(c, 4);
 
-  fn = resolve_procedure(fn, "apply");
+  fn2 = resolve_procedure(fn, "apply");
 #endif
 
   va_start(v, fn);
 
   for(i = n; i > 1; --i) {
     x = va_arg(v, C_word);
-#ifdef HACKED_APPLY
+#ifdef C_HACKED_APPLY
     *(buf++) = x;
 #else
     C_save(x);
@@ -5854,7 +5849,7 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
   for(skip = x; !C_immediatep(skip) && C_block_header(skip) == C_PAIR_TAG; skip = C_u_i_cdr(skip)) {
     x = C_u_i_car(skip);
 
-#ifdef HACKED_APPLY
+#ifdef C_HACKED_APPLY
 # ifndef C_UNSAFE_RUNTIME
     if(buf >= C_temporary_stack_bottom) barf(C_TOO_MANY_PARAMETERS_ERROR, "apply");
 # endif
@@ -5867,7 +5862,6 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
     if(C_temporary_stack < C_temporary_stack_limit)
       barf(C_TOO_MANY_PARAMETERS_ERROR, "apply");
 # endif
-
 #endif
     ++n;
   }
@@ -5875,51 +5869,25 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
   va_end(v);
   --n;
 
-#ifdef HAVE_FFI_H
-  if(n >= 120) {
-# ifndef C_UNSAFE_RUNTIME
-    if(debug_mode == 2 && n > 126)
-      fputs(C_text("[debug] `apply' argument list length exceeds default maximum (using libffi)\n"), stderr);
-
-    if(n > 1000) barf(C_TOO_MANY_PARAMETERS_ERROR, "apply"); /* arbitrary */
-# endif
-  
-    argtypes = (ffi_type **)C_alloca(sizeof(ffi_type *) * (n + 3));
-    argvalues = (void **)C_alloca(sizeof(void *) * (n + 3));
-    argtypes[ 0 ] = &ffi_type_pointer;
-    argtypes[ 1 ] = &ffi_type_pointer;
-    argtypes[ 2 ] = &ffi_type_pointer;
-    c = n + 2;
-    argvalues[ 0 ] = &c;
-    argvalues[ 1 ] = &fn;
-    argvalues[ 2 ] = &k;
-
-    for(i = 0; i < n; ++i) {
-      argtypes[ i + 3 ] = &ffi_type_pointer;
-      argvalues[ i + 3 ] = C_temporary_stack_bottom - (i + 1);
-    }
-
-    C_temporary_stack = C_temporary_stack_bottom;
-    status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, n + 3, &ffi_type_void, argtypes);
-    assert(status == FFI_OK);
-    ffi_call(&cif, (void *)C_block_item(fn, 0), NULL, argvalues);
-  }
-
-#elif defined(HACKED_APPLY)
+#ifdef C_HACKED_APPLY
   buf = alloca((n + 3) * sizeof(C_word));
   buf[ 0 ] = n + 2;
-  buf[ 1 ] = fn;
+  buf[ 1 ] = fn2;
   buf[ 2 ] = k;
   C_memcpy(&buf[ 3 ], C_temporary_stack_limit, n * sizeof(C_word));
-  proc = (void *)C_block_item(fn, 0);
+  proc = (void *)C_block_item(fn2, 0);
+# ifdef _MSC_VER
   __asm { 
     mov eax, proc
     mov esp, buf
     call eax
   }
+# elif defined(__GNUC__)
+  C_do_apply_hack(proc, buf, n + 3);
+# endif
 #endif
 
-  C_do_apply(n, fn, k);
+  C_do_apply(n, fn2, k);
 }
 
 
@@ -8036,7 +8004,7 @@ void C_ccall C_software_type(C_word c, C_word closure, C_word k)
 #if defined(__CYGWIN__) || defined(__MINGW32__) || defined(_WIN32) || defined(__WINNT__)
   a = C_alloc(2 + C_bytestowords(7));
   s = C_string2(&a, "windows");
-#elif defined(__unix__) || defined(C_MACOSX)
+#elif defined(__unix__) || defined(C_MACOSX) || defined(C_XXXBSD)
   a = C_alloc(2 + C_bytestowords(4));
   s = C_string2(&a, "unix");
 #elif defined(C_MACOS)

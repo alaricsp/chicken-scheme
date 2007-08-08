@@ -42,6 +42,7 @@
   (foreign-declare #<<EOF
 #include <signal.h>
 #include <errno.h>
+#include <math.h>
 
 static int C_not_implemented(void);
 int C_not_implemented() { return -1; }
@@ -247,6 +248,19 @@ static void C_fcall C_free_arg_string(char **where) {
   while((*where) != NULL) C_free(*(where++));
 }
 
+static void C_set_timeval(C_word num, struct timeval *tm)
+{
+  if((num & C_FIXNUM_BIT) != 0) {
+    tm->tv_sec = C_unfix(num);
+    tm->tv_usec = 0;
+  }
+  else {
+    double i;
+    tm->tv_usec = (int)(modf(C_flonum_magnitude(num), &i) * 1000000);
+    tm->tv_sec = (int)i;
+  }
+}
+
 #define C_set_exec_arg(i, a, len)	C_set_arg_string(C_exec_args, i, a, len)
 #define C_free_exec_args()		C_free_arg_string(C_exec_args)
 #define C_set_exec_env(i, a, len)	C_set_arg_string(C_exec_env, i, a, len)
@@ -309,7 +323,8 @@ static C_TLS sigset_t C_sigset;
 #define C_set_fd_set(i, fd)   FD_SET(fd, &C_fd_sets[ i ])
 #define C_test_fd_set(i, fd)  FD_ISSET(fd, &C_fd_sets[ i ])
 #define C_C_select(m)         C_fix(select(C_unfix(m), &C_fd_sets[ 0 ], &C_fd_sets[ 1 ], NULL, NULL))
-#define C_C_select_t(m, t)    (C_timeval.tv_sec = C_unfix(t), C_timeval.tv_usec = 0, C_fix(select(C_unfix(m), &C_fd_sets[ 0 ], &C_fd_sets[ 1 ], NULL, &C_timeval)))
+#define C_C_select_t(m, t)    (C_set_timeval(t, &C_timeval), \
+			       C_fix(select(C_unfix(m), &C_fd_sets[ 0 ], &C_fd_sets[ 1 ], NULL, &C_timeval)))
 
 #define C_ctime(n)          (C_secs = (n), ctime(&C_secs))
 
@@ -615,7 +630,7 @@ EOF
                   (fd_set 1 fd) )
                 fdsw) ] )
         (let ([n (cond [tm
-                        (##sys#check-exact tm 'file-select)
+                        (##sys#check-number tm 'file-select)
                         (##core#inline "C_C_select_t" (fx+ fdmax 1) tm) ]
                        [else (##core#inline "C_C_select" (fx+ fdmax 1))] ) ] )
           (cond [(fx< n 0)

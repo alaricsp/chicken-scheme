@@ -801,8 +801,6 @@ IF(MSVC)
   IF(USE_DYNAMIC_C_RUNTIME)
     ADD_DEFINITIONS(/MD)
   ENDIF(USE_DYNAMIC_C_RUNTIME)
-ELSE(MSVC)
-  OPTION(WITHOUT_LIBFFI "disable use if libffi, even if installed" FALSE)
 ENDIF(MSVC)
 
 
@@ -914,35 +912,6 @@ IF(HAVE_DL_H)
   SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ldl)
 ENDIF(HAVE_DL_H)
 
-CHECK_INCLUDE_FILE(ffi.h HAVE_FFI_H)
-
-TRY_RUN(LIBFFI_TEST_SUCCEEDED
-  LIBFFI_TEST_COMPILED
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${Chicken_SOURCE_DIR}/libffi-test.c)
-IF(LIBFFI_TEST_COMPILED)
-  IF(LIBFFI_TEST_SUCCEEDED STREQUAL "FAILED_TO_RUN")
-    MESSAGE("libffi test failed")
-    SET(WITHOUT_LIBFFI TRUE)
-  ELSE(LIBFFI_TEST_SUCCEEDED STREQUAL "FAILED_TO_RUN")
-    MESSAGE("libffi seems to work")
-  ENDIF(LIBFFI_TEST_SUCCEEDED STREQUAL "FAILED_TO_RUN")
-ELSE(LIBFFI_TEST_COMPILED)
-  MESSAGE("Unable to compile libffi test - no libffi support available")
-  SET(WITHOUT_LIBFFI TRUE)
-ENDIF(LIBFFI_TEST_COMPILED)
-
-IF(NOT MSVC)
-  IF(WITHOUT_LIBFFI)
-    SET(HAVE_FFI_H FALSE)
-  ELSE(WITHOUT_LIBFFI)
-    IF(HAVE_FFI_H)
-      SET(MORE_LIBS ${MORE_LIBS} ffi)
-      SET(MORE_STATIC_LIBS ${MORE_STATIC_LIBS} ffi)
-    ENDIF(HAVE_FFI_H)
-  ENDIF(WITHOUT_LIBFFI)
-ENDIF(NOT MSVC)
-  
 # check for windows.h
 CHECK_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
 IF(HAVE_WINDOWS_H)
@@ -1079,15 +1048,6 @@ MESSAGE(STATUS "C_STACK_GROWS_DOWNWARD=${C_STACK_GROWS_DOWNWARD}")
 
 
 ####################################################################
-#  CHICKEN_SPEC                                                    #
-####################################################################
-
-# I don't really know what chicken.spec is for.
-CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken.spec.in
-  ${CMAKE_CURRENT_BINARY_DIR}/chicken.spec)
-
-
-####################################################################
 #  CHICKEN_DEFAULTS_H                                              #
 ####################################################################
 
@@ -1137,8 +1097,7 @@ MACRO(GET_LIB_CSOURCE out)
     ${CMAKE_CURRENT_BINARY_DIR}/chicken-config.h
     ${Chicken_SOURCE_DIR}/chicken.h
     ${CMAKE_CURRENT_BINARY_DIR}/chicken-defaults.h
-    ${Chicken_SOURCE_DIR}/runtime.c
-  )
+    ${Chicken_SOURCE_DIR}/runtime.c)
 ENDMACRO(GET_LIB_CSOURCE)
 
 # Library files that are always generated the same way and named the
@@ -1538,7 +1497,7 @@ IF(MSVC)
     RELEASE_POSTFIX "" MINSIZEREL_POSTFIX "" DEBUG_POSTFIX "" RELWITHDEBINFO_POSTFIX "")
   TARGET_LINK_LIBRARIES(libchickengui libpcre-for-shared ${GUI_LIBS} ${MORE_LIBS})
   ADD_DEPENDENCIES(libchickengui libchicken-c)
-
+  
 ELSE(MSVC)
 
   # We want the library to be named 'libchicken' on all platforms.
@@ -1549,7 +1508,7 @@ ELSE(MSVC)
   # Default Unix, Cygwin, and MinGW behavior is to add 'lib' as a 
   # prefix onto every library.  For cross-platform stuff,
   # this often results in the 'liblibfoo" problem.
-    
+
   ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
   SET_TARGET_PROPERTIES(libchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}")

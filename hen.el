@@ -216,7 +216,7 @@ The value returned is the value of the last form in BODY."
               "foreign-lambda" "foreign-safe-lambda" "foreign-code"
               "match" "match-lambda" "match-lambda*" "match-define" "match-let" "match-let*"
 
-              "case" "case-lambda" "cond" "cond-expand" "condition-case" "switch"
+              "case" "case-lambda" "cond" "cond-expand" "condition-case" "select"
 	      "handle-exceptions"
               "cut" "cute" "time" "regex-case"
 

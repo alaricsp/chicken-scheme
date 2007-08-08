@@ -30,8 +30,9 @@ exec csi -s $0 "$@"
 				     (else 
 				      (when (null? next)
 					(error "missing argument for option" (car args)) )
-				      (set! next (cdr next))
-				      (values opt (car next)) ) ) )
+				      (let ((x (car next)))
+					(set! next (cdr next))
+					(values opt x)))))
 			      ((_ (? string?) opt #f #f) (values opt #t))
 			      (_ (values #f #f)) ) ) )
 	       (cond (var 
@@ -45,8 +46,8 @@ exec csi -s $0 "$@"
 
 (define *pdf* #f)
 (define *extension-path* #f)
-(define *pages* (directory "wiki"))
-(define *page* #f)
+(define *pages* (directory "manual"))
+(define *only* #f)
 
 (define (hyphen s)
   (string-substitute " " "-" s #t) )
@@ -132,7 +133,7 @@ in `manual-wiki-files' can be found in `*pages*'."
             *pages*)
   (for-each (lambda (file)
               (when (not (member file *pages*))
-                (error (conc "File \"" file "\" was not found under the wiki directory."))))
+                (error (conc "File \"" file "\" was not found under the manual directory."))))
             manual-wiki-files))
   
 (define (html-files->pdf)
@@ -153,7 +154,7 @@ in `manual-wiki-files' can be found in `*pages*'."
             (if (string=? pagename +index-page+) "index" pagename) "html"))))
 
 (define (wiki-pagename pagename)
-  (make-pathname "wiki" pagename) )
+  (make-pathname "manual" pagename) )
 
 (define *loaded-extensions* (make-hash-table))
 
@@ -185,21 +186,20 @@ in `manual-wiki-files' can be found in `*pages*'."
    (if *only* (list *only*) *pages*) ) )
 
 (define (usage code)
-  (print "makedoc --extension-path=EXTPATH [--pdf] [--page=PAGENAME]") 
+  (print "makedoc --extension-path=EXTPATH [--pdf] [--only=PAGENAME]") 
   (exit code) )
 
-(tool-main
- (command-line-arguments)
- (lambda (args)
-   (unless *extension-path* (usage 1))
-   (system* "mkdir -p html")
-   (for-each
-    (lambda (f)
-      (unless (string-suffix? ".svn" f)
-	(load-extensions-from-file *loaded-extensions* f)))
-    (glob (conc *extension-path* "/*")) )
-   (when *pdf*
-     (chapters-sanity-check))
-   (wiki-files->html)
-   (when *pdf*
-     (html-files->pdf)) ) )
+(simple-args)
+
+(unless *extension-path* (usage 1))
+(system* "mkdir -p html")
+(for-each
+ (lambda (f)
+   (unless (string-suffix? ".svn" f)
+     (load-extensions-from-file *loaded-extensions* f)))
+ (glob (conc *extension-path* "/*")) )
+(when *pdf*
+  (chapters-sanity-check))
+(wiki-files->html)
+(when *pdf*
+  (html-files->pdf))

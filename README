@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.632
+  Version 2.634
 
 
  1. Introduction:
@@ -82,27 +82,6 @@
 	  Entering "make install-strip" instead of "make install"
 	  strips the executables from symbol- information which makes
 	  them much smaller.
-
-	  To make `apply' work, C function calls have to be
-	  constructed at run-time, which can not be portably
-	  implemented, unless using a big `switch' statement for every
-	  possible number of arguments. If the libffi library is
-	  available for this platform and if it is installed, then
-	  CHICKEN can take advantage of this to construct function
-	  calls for an (theoretical) unlimited number of arguments
-	  (currently there is an arbitrary limit of 1000 arguments
-	  maximum). To build CHICKEN with support for libffi, download
-	  and install libffi from http://sources.redhat.com/libffi/
-	  before running "./configure".  libffi is supposed to work on
-	  Mac OS X, many Linux systems (x86, Alpha, ARM, m68k, PPC)
-	  and Solaris.
-
-	  (Note: a more recent development snapshot of libffi is
-	  available at
-	  http://www.call-with-current-continuation.org/tarballs/libffi-3.tgz).
-	  If you experience any problems with your libffi installation,
-	  you can disable support for it by passing "--without-libffi"
-	  to configure.
 
 	  To build and run some benchmarks, enter
 

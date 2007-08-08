@@ -108,6 +108,9 @@ SET(SOURCE_DIR_FILES
   pcre/ucp.h
   pcre/ucptable.c
   pcre/ucp_findchar.c
+  apply-hack.ppc.s
+  apply-hack.x86.s
+  apply-hack.x86-64.s
   static/CMakeLists.txt
   benchmarks/boyer.scm
   benchmarks/browse.scm

@@ -1,5 +1,0 @@
-#!/bin/sh
-export LD_LIBRARY_PATH=`pwd`
-export DYLD_LIBRARY_PATH=`pwd`
-export CSI_OPTIONS=
-./csi

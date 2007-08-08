@@ -1092,10 +1092,9 @@
 		callargs) ) ) ) ) )
 
 (rewrite 'read-char 23 0 '##sys#read-char/port '##sys#standard-input)
-(rewrite 'write-char 23 0 '##sys#write-char/port '##sys#standard-output)
+(rewrite 'write-char 23 1 '##sys#write-char/port '##sys#standard-output)
 (rewrite 'read-string 23 1 '##sys#read-string/port '##sys#standard-input)
-
-(rewrite 'substring=? 24 2 '##sys#substring=? 0 0 #f)
-(rewrite 'substring-ci=? 24 2 '##sys#substring-ci=? 0 0 #f)
-(rewrite 'substring-index 24 2 '##sys#substring-index 0)
-(rewrite 'substring-index-ci 24 2 '##sys#substring-index-ci 0)
+(rewrite 'substring=? 23 2 '##sys#substring=? 0 0 #f)
+(rewrite 'substring-ci=? 23 2 '##sys#substring-ci=? 0 0 #f)
+(rewrite 'substring-index 23 2 '##sys#substring-index 0)
+(rewrite 'substring-index-ci 23 2 '##sys#substring-index-ci 0)

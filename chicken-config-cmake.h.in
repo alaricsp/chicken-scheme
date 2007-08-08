@@ -33,8 +33,6 @@
 
 #cmakedefine HAVE_DL_H @HAVE_DL_H@
 
-#cmakedefine HAVE_FFI_H @HAVE_FFI_H@
-
 #cmakedefine HAVE_WINDOWS_H @HAVE_WINDOWS_H@
 
 #cmakedefine HAVE_LOADLIBRARY @HAVE_LOADLIBRARY@

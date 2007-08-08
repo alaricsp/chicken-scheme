@@ -507,10 +507,11 @@ EOF
 ;;; Print status information:
 
 (define report
-  (let ([printf printf]
+  (let ((printf printf)
 	(chop chop)
-	[with-output-to-port with-output-to-port] 
-	[current-output-port current-output-port] )
+	(sort sort)
+	(with-output-to-port with-output-to-port)
+	(current-output-port current-output-port) )
     (lambda port
       (with-output-to-port (if (pair? port) (car port) (current-output-port))
 	(lambda ()
@@ -521,9 +522,12 @@ EOF
 	    (printf "Features:")
 	    (for-each
 	     (lambda (lst) 
-	       (newline)
-	       (for-each (cut print* #\tab <>) lst) )
-	     (chop (map keyword->string ##sys#features) 8) )
+	       (display "\n  ")
+	       (for-each 
+		(lambda (f)
+		  (printf "~a~a" f (make-string (fxmax 1 (fx- 16 (string-length f))) #\space)) )
+		lst) )
+	     (chop (sort (map keyword->string ##sys#features) string<?) 5))
 	    (printf "~%~
                    Machine type:    \t~A ~A~%~
                    Software type:   \t~A~%~

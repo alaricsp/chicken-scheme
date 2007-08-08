@@ -10,18 +10,13 @@ libtool: $(LIBTOOL_DEPS)
 # -version-info for libtool to use in setting the SONAME of the shared libs.
 lt_version_info = 0:0:0
 
-HAVE_ALLOCA_H=@HAVE_ALLOCA_H@
 STACK_GROWS_DOWNWARD=@STACK_GROWS_DOWNWARD@
 NO_STATIC_EXECUTABLES=@NO_STATIC_EXECUTABLES@
 BINARY_VERSION=@BINARY_VERSION@
+APPLY_HACK_FILE=@APPLY_HACK_FILE@
 
-if IS_MINGW
-MORE_LIBS = @LIBS@ @SHLIBS@ @WINSOCKLIB@
-MORE_STATIC_LIBS = @LIBS@ @WINSOCKLIB@
-else
 MORE_LIBS = @LIBS@ @SHLIBS@ 
 MORE_STATIC_LIBS = @LIBS@ 
-endif
 
 # These C_INSTALL_* variables are necessary so that
 # both ./configure and CMake do the same variable substitutions.
@@ -271,16 +266,13 @@ lib_LTLIBRARIES = libchicken.la libuchicken.la
 
 commonlibsources = match.c profiler.c runtime.c scheduler.c stub.c
 chickenlibsources = eval.c extras.c library.c lolevel.c utils.c tcp.c \
-  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c regex.c
+  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c regex.c posixunix.c
 chickenulibsources = ueval.c uextras.c ulibrary.c ulolevel.c uutils.c utcp.c \
-  usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c uregex.c
+  usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c usrfi-18.c uregex.c uposixunix.c
 
-if IS_MINGW
-chickenlibsources += posixwin.c
-chickenulibsources += uposixwin.c
-else
-chickenlibsources += posixunix.c
-chickenulibsources += uposixunix.c
+if USE_APPLY_HACK
+chickenlibsources += apply-hack.s
+chickenulibsources += apply-hack.s
 endif
 
 pcresources = pcre/pcre_compile.c pcre/pcre_get.c pcre/pcre_printint.c pcre/pcre_ucp_findchar.c \
@@ -326,7 +318,7 @@ clean-local:
 # installed by a binary distribution.  Unfortunately there is no
 # standard place to install these sorts of files so we must leave that
 # to the package builder.
-EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt chicken.spec.in *.1
+EXTRA_DIST = makefile.vc INSTALL win-install.bat INSTALL-CMake.txt *.1
 
 
 ## Rules for the chicken maintainer.

@@ -19,9 +19,6 @@ AC_ARG_WITH(icc, [  --with-icc              build with Intel's C compiler],[CC="
 dnl Use SunPro CC to build?
 AC_ARG_WITH(suncc, [  --with-suncc            build with Sun's C compiler],[CC="suncc"; CFLAGS="-fast -xalias_level=strong -xrestrict -xregs=frameptr"; SUNCC=1])
 
-dnl Disable libffi (if found)?
-AC_ARG_WITH(libffi, [  --without-libffi        do not use libffi, even if available],[USE_LIBFFI=$withval], [USE_LIBFFI=yes])
-
 dnl Enable GC hooks?
 AC_ARG_ENABLE(gc-hooks, [  --enable-gc-hooks       enable various garbage-collector hooks],[AC_DEFINE(C_GC_HOOKS, [], [define if GC hooks should be available])])
 
@@ -43,6 +40,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
+AM_PROG_AS
 
 dnl Check for GNU make.
 AC_CHECK_PROGS(MAKE, [gmake make])
@@ -85,33 +83,10 @@ case "$CC" in
     fi;;
 esac
 
-dnl Check for MinGW
-AC_MSG_CHECKING([whether we are in a MinGW system])
-echo
-AC_CHECK_DECL([__MINGW32__], [mingw_system=1])
-
 dnl Check for Cygwin
 AC_MSG_CHECKING([whether we are running on Cygwin])
 echo
 AC_CHECK_DECL([__CYGWIN__], [cygwin_system=1])
-
-dnl Check for MinGW library path, with the all important drive letter
-if test -n "${mingw_system}"; then
-  mingw_libdir=`mingw32-gcc -print-prog-name=ld | sed 's%/lib/gcc-lib/.*%/lib%'`
-  if test "$cross_compiling" != "yes"; then
-    AC_CHECK_FILE(${mingw_libdir}/libws2_32.a, [mingw_ws2=1])
-  else
-    mingw_ws2=1
-  fi
-fi
-AM_CONDITIONAL(IS_MINGW, [test -n "${mingw_system}"])
-if test -n "${mingw_ws2}"; then
-  WINSOCKLIB="-L${mingw_libdir} -lws2_32"
-  AC_SUBST(WINSOCKLIB)
-  AC_MSG_RESULT([importing Winsock2 library with ${WINSOCKLIB}])
-elif test -n "${mingw_system}"; then
-  AC_MSG_RESULT([unknown MinGW configuration])
-fi
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
@@ -124,15 +99,6 @@ AC_CHECK_HEADER(alloca.h, [HAVE_ALLOCA_H=1])
 AC_CHECK_HEADER(stdint.h, [HAVE_STDINT_H=1])
 AC_CHECK_HEADER(windows.h, [AC_DEFINE(HAVE_WINDOWS_H,1,[Define if windows.h is useable])])
 AC_CHECK_HEADER(grp.h, [AC_DEFINE(HAVE_GRP_H,1,[Define if grp.h is available])])
-
-if test x"${cygwin_system}" = x1; then
-  USE_LIBFFI=no
-fi
-
-if test x"$USE_LIBFFI" = xyes; then
-AC_CHECK_HEADER(ffi.h, [AC_DEFINE(HAVE_FFI_H,1,[Define if ffi.h is available])])
-fi
-
 AC_CHECK_HEADER(crt_externs.h, [AC_DEFINE(HAVE_CRT_EXTERNS_H, 1, [Define if crt_externs.h is available])])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -160,10 +126,6 @@ esac
 AC_SUBST(SHLIBS)
 AC_CHECK_LIB(dl, dlopen, [LIBS="$LIBS -ldl"; SHLIBS="$SHLIBS -ldl"])
 
-if test x"$USE_LIBFFI" = xyes; then
-AC_CHECK_LIB(ffi, ffi_prep_cif, [LIBS="$LIBS -lffi"; SHLIBS="$SHLIBS -lffi"])
-fi
-
 dnl Win32 DLL functions.
 AC_CHECK_DECL(LoadLibrary, [AC_DEFINE(HAVE_LOADLIBRARY,1,[Define if windows.h declares LoadLibrary])],,[#include <windows.h>])
 AC_CHECK_DECL(GetProcAddress, [AC_DEFINE(HAVE_GETPROCADDRESS,1,[Define if windows.h declares GetProcAddress])],,[#include <windows.h>])
@@ -172,9 +134,7 @@ dnl HPUX-specific shl_load interface. Goes with dl.h.
 AC_CHECK_LIB(dld, shl_load, [SHLIBS="$SHLIBS -ldld"])
 
 dnl We need this for HP-UX, it seems:
-if test -z "${mingw_ws2}"; then
-  AC_CHECK_LIB(m, modf, [LIBS="$LIBS -lm"])
-fi
+AC_CHECK_LIB(m, modf, [LIBS="$LIBS -lm"])
 
 dnl Socket stuff for Solaris (stolen from thw SWIG configure.in):
 AC_CHECK_LIB(nsl, t_open, [LIBS="-lnsl $LIBS"])
@@ -210,16 +170,36 @@ if test "x$STACK_GROWS_DOWNWARD" = "x-1"; then
     AC_MSG_RESULT([WARNING: unknown stack growth direction. Assuming stack grows downward.])
 fi
 
+dnl check for apply hack
+AC_MSG_CHECKING([whether apply hack is available for this platform ($host_cpu)])
+APPLY_HACK_FILE=""
+case "$host_cpu" in
+     i*86|powerpc)
+       AC_MSG_RESULT([available.])
+       case "$host_cpu" in
+         i*86) APPLY_HACK_FILE="apply-hack.x86.s";;
+         powerpc) APPLY_HACK_FILE="apply-hack.ppc.s";;
+	 *) 
+	    echo "this shouldn't happen"
+	    exit 1
+       esac
+       AC_DEFINE(C_HACKED_APPLY, [], [define if apply hack is available for this platform]);;
+     *)
+       AC_MSG_RESULT([not available.]);;
+esac
+AM_CONDITIONAL(USE_APPLY_HACK, [test "$APPLY_HACK_FILE" != ""])
+AC_SUBST(APPLY_HACK_FILE)
+if test "$APPLY_HACK_FILE" != ""; then
+   rm -f apply-hack.s
+   ln -s $APPLY_HACK_FILE apply-hack.s
+fi
+
 dnl If we're using gcc, try to find better CFLAGS than the default -g -O2.
 AC_MSG_CHECKING([for better CFLAGS])
 case "$CC" in
   *gcc*)
   if test "-g -O2" = "$CFLAGS"; then
-    if test x${mingw_system} = x1; then
-       CFLAGS="-Os -fno-strict-aliasing $WARNFLAGS"
-    else
-       CFLAGS="-Os -fomit-frame-pointer -fno-strict-aliasing $WARNFLAGS"
-    fi
+    CFLAGS="-Os -fomit-frame-pointer -fno-strict-aliasing $WARNFLAGS"
   fi;;
   *)
 esac
@@ -325,7 +305,6 @@ AM_CONDITIONAL(USE_BOOT_CFILES,[$HAVE_ALL_BOOT_CFILES])
 
 dnl output all configured files
 AC_CONFIG_FILES([
-chicken.spec
 Makefile
 ])
 AC_OUTPUT

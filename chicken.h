@@ -220,7 +220,11 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # include <malloc.h>
 #endif
 
-#if defined(C_MACOSX) || defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+# define C_XXXBSD
+#endif
+
+#if defined(C_MACOSX) || defined(__linux__) | defined(C_XXXBSD)
 # define C_GNU_ENV
 #endif
 
@@ -1071,7 +1075,7 @@ C_varextern C_TLS void *C_restart_address;
 C_varextern C_TLS int C_entry_point_status;
 
 C_varextern C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
-C_varextern C_TLS void (*C_post_gc_hook)(int mode);
+C_varextern C_TLS void (*C_post_gc_hook)(int mode, long ms);
 C_varextern C_TLS void (*C_panic_hook)(C_char *msg);
 
 C_varextern C_TLS int

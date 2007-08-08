@@ -8,7 +8,6 @@ Makefile.am
 NEWS
 README
 StackGrowsDownward.c
-libffi-test.c
 autogen.sh
 banner.scm
 batch-driver.scm
@@ -244,3 +243,6 @@ chicken-build.scm
 chicken-build.c
 chicken-gzip.exe
 chicken-tar.exe
+apply-hack.x86.s
+apply-hack.x86-64.s
+apply-hack.ppc.s

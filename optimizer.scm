@@ -852,6 +852,10 @@
 
 (define (simplify-named-call db params name cont class classargs callargs)
   (define (test sym prop) (get db sym prop))
+  (define (defarg x)
+    (cond ((symbol? x) (varnode x))
+	  ((and (pair? x) (eq? 'quote (car x))) (qnode (cadr x)))
+	  (else (qnode x))))
 
   (case class
 
@@ -1217,28 +1221,11 @@
 			(list (second classargs) w)
 			callargs) ) ) ) ) ) )
 
-    ;; (<op> <arg1> ... <argN> <specialarg>) ->
-    ;;   (<primitiveop> <arg1> ... <argN> <specialarg>)
-    ;; (<op> <arg1> ... <argN>) ->
-    ;;   (<primitiveop> <arg1> ... <argN> <defaultvar>)
-    ((23) ; classargs = (<N> <primitiveop> <defaultvar>)
-     (let ((argc (first classargs))
-	   (rargc (length callargs)))
-       (and inline-substitutions-enabled
-	    (<= argc rargc (add1 argc))
-	    (or (test name 'standard-binding) (test name 'extended-binding))
-	    (make-node
-	     '##core#call '(#t)
-	     (append 
-	      (list (varnode (second classargs)) cont)
-	      callargs
-	      (if (= rargc argc)
-		  (list (varnode (third classargs)))
-		  '() ) ) ) ) ) )
-
     ;; (<op> <arg1> ... <argN>) -> (<primitiveop> ...)
-    ;; (<op> <arg1> ... <argN-I> <literalN-I>) -> (<primitiveop> ...)
-    ((24) ; classargs = (<argc> <primitiveop> <literal1> ...)
+    ;; (<op> <arg1> ... <argN-I> <defargN-I>) -> (<primitiveop> ...)
+    ;; - default args in classargs should be either symbol or (optionally) 
+    ;;   quoted literal
+    ((23) ; classargs = (<minargc> <primitiveop> <literal1>|<varable1> ...)
      (and inline-substitutions-enabled
 	  (or (test name 'standard-binding) (test name 'extended-binding))
 	  (let ([argc (first classargs)])
@@ -1256,7 +1243,7 @@
 			(cond ((null? ca)
 			       (if (null? da)
 				   '()
-				   (cons (qnode (car da)) (loop '() (cdr da))) ) )
+				   (cons (defarg (car da)) (loop '() (cdr da))) ) )
 			      ((null? da) '())
 			      (else (cons (car ca) (loop (cdr ca) (cdr da))))))))))))))
 

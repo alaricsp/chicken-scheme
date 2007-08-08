@@ -616,8 +616,8 @@
 		  (unless target-filename
 		    (set! target-filename
 		      (if shared
-			  (pathname-replace-extension (last scheme-files) shared-library-extension)
-			  (pathname-replace-extension (last scheme-files) executable-extension) ) ) )
+			  (pathname-replace-extension (first scheme-files) shared-library-extension)
+			  (pathname-replace-extension (first scheme-files) executable-extension) ) ) )
 		  (run-translation) ] )
 	   (unless translate-only 
 	     (run-compilation)
@@ -679,7 +679,7 @@
 	       [(-v3)
 		(set! verbose #t)
 		(t-options "-verbose")
-		(set! compile-options (cons "-v" compile-options))
+		(set! compile-options (cons "-v -Q" compile-options))
 		(set! link-options (cons "-v" link-options)) ]
 	       [(|-A| -analyze-only)
 		(set! translate-only #t)

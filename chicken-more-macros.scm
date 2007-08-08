@@ -440,6 +440,27 @@
 			    (else (expand rclauses)) ) ) ) ) ) ) ) ) )
 
 (##sys#register-macro-2
+ 'select
+ (let ((gensym gensym))
+   (lambda (form)
+     (let ((exp (car form))
+	   (body (cdr form)) )
+       (let ((tmp (gensym)))
+	 `(let ((,tmp ,exp))
+	    ,(let expand ((clauses body))
+	       (if (not (pair? clauses))
+		   '(##core#undefined)
+		   (let ((clause (##sys#slot clauses 0))
+			 (rclauses (##sys#slot clauses 1)) )
+		     (##sys#check-syntax 'switch clause '#(_ 1))
+		     (if (eq? 'else (car clause))
+			 `(begin ,@(cdr clause))
+			 `(if (or ,@(map (lambda (x) `(eqv? ,tmp ,x)) 
+					 (car clause) ) )
+			      (begin ,@(cdr clause)) 
+			      ,(expand rclauses) ) ) ) ) ) ) ) ) ) ) )
+
+(##sys#register-macro-2			; DEPRECATED
  'switch
  (let ((gensym gensym))
    (lambda (form)

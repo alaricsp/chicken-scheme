@@ -19,27 +19,56 @@
        (not (equal? (getenv "EMACS") "t"))
        (not (equal? (getenv "TERM") "dumb"))))
 
+(define *tty-width*
+  (or (and *tty* 
+	   (with-input-from-pipe "stty size 2>/dev/null"
+	     (lambda () (read) (read))))
+      72))
+
 (define *info-message-escape* (if *tty* "\x1b[0m\x1b[2m" ""))
 (define *target-message-escape* (if *tty* "\x1b[0m\x1b[32m" ""))
 (define *error-message-escape* (if *tty* "\x1b[0m\x1b[31m" ""))
 (define *command-message-escape* (if *tty* "\x1b[0m\x1b[33m" ""))
 (define *reset-escape* (if *tty* "\x1b[0m" ""))
 
+(define (format-message msg #!optional (nl #t))
+  (if (or *verbose* (not *tty*))
+      ((if nl print print*) msg)
+      (for-each
+       (lambda (ln)
+	 (printf "\r\x1b[K~a~!"
+		 (if (>= (string-length ln) (sub1 *tty-width*))
+		     (string-append
+		      (substring ln 0 (- *tty-width* 5))
+		      "...")
+		     ln) ) )
+       (string-split msg "\n")) ) )
+
 (define (message fstr . args)
-  (printf "~a* ~?~a~%" *info-message-escape* fstr args *reset-escape*) )
+  (when *verbose*
+    (format-message (sprintf "~a* ~?~a " *info-message-escape* fstr args *reset-escape*)) ) )
+
+(define (message* fstr . args)
+  (when *verbose*
+    (format-message (sprintf "~a* ~?~a " *info-message-escape* fstr args *reset-escape*) #f) ) )
 
 (define (target-message fstr . args)
-  (printf "~a~?~a~%" *target-message-escape* fstr args *reset-escape*) )
+  (format-message (sprintf "~a~?~a " *target-message-escape* fstr args *reset-escape*)))
 
 (define (command-message fstr . args)
-  (printf "~a  ~?~a~%" *command-message-escape* fstr args *reset-escape*) )
+  (when *verbose*
+    (format-message (sprintf "~a  ~?~a " *command-message-escape* fstr args *reset-escape*))) )
 
 (define (error-message fstr . args)
-  (sprintf "~a~?~a~%" *error-message-escape* fstr args *reset-escape*) )
+  (sprintf "~%~a~?~a~%" *error-message-escape* fstr args *reset-escape*))
 
 (define (quit fstr . args)
   (display (apply error-message fstr args) (current-error-port))
   (reset) )
+
+(define (cleanup-output)
+  (when (and (not *verbose*) *tty*)
+    (printf "\r\x1b[0m\x1b[K~!") ) )
 
 
 ;;; make-code stolen from PLT
@@ -138,7 +167,7 @@
   (for-each
    (lambda (exp)
      (let ((cmd (string-intersperse (map ->string (flatten exps)))))
-       (when *verbose* (command-message "~A" cmd))
+       (command-message "~A" cmd)
        (let ((s (system cmd)))
 	 (unless (zero? s)
 	   (quit (sprintf "invocation of command failed with non-zero exit-status ~a: ~a~%" s cmd) s) ) ) ) )
@@ -211,7 +240,7 @@
   (handle-exceptions ex
       (begin
 	(when (file-exists? t)
-	  (when *verbose* (message "deleting ~a" t))
+	  (message "deleting ~a" t)
 	  (delete-file t) )
 	(abort ex) )
     (thunk) ) )
@@ -247,7 +276,8 @@
 	 targets)
 	(when continuous
 	  (watch-dependencies wdeps ftable)
-	  (loop))))))
+	  (loop)))
+      (cleanup-output))))
 
 (define (build-dump #!optional (port (current-output-port)))
   (with-output-to-port port
@@ -332,7 +362,7 @@
 			     (ft (file-modification-time dep))
 			     ((> ft (hash-table-ref/default tab dep 0))))
 		    (hash-table-set! tab dep ft)
-		    (when *verbose* (message "~a changed" dep))
+		    (message "~a changed" dep)
 		    #t) )
 		deps))
 	  (f (loop #t))
@@ -357,21 +387,20 @@
 	(dynamic-wind
 	    (lambda () (set! old (current-directory)))
 	    (lambda ()
-	      (when *verbose* (command-message "cd ~a" dir))
+	      (command-message "cd ~a" dir)
 	      (change-directory dir)
 	      (thunk) )
 	    (lambda ()
 	      (change-directory old)
-	      (when *verbose* (command-message "cd ~a" old) ) ) ) ) ) )
+	      (command-message "cd ~a" old) ) ) ) ) )
 
 (define (try-run code #!optional (msg "trying to compile and run some C code") (flags "") (cc "cc"))
   (let ((tmp (create-temporary-file "c")))
     (with-output-to-file tmp (lambda () (display code)))
-    (when *verbose* (printf "~a ... ~!" msg))
+    (message* "~a ..." msg)
     (let ((r (zero? (system (sprintf "~a ~a ~a 2>/dev/null && ./a.out" cc tmp flags)))))
       (delete-file* tmp)
-      (when *verbose*
-	(print (if r "ok" "failed")))
+      (message (if r "ok" "failed"))
       r) ) )
 
 (define (true? x)
@@ -398,8 +427,9 @@
 				     (else 
 				      (when (null? next)
 					(error "missing argument for option" (car args)) )
-				      (set! next (cdr next))
-				      (values opt (car next)) ) ) )
+				      (let ((x (car next)))
+					(set! next (cdr next))
+					(values opt x)))))
 			      ((_ (? string?) opt #f #f) (values opt #t))
 			      (_ (values #f #f)) ) ) )
 	       (cond (var 
