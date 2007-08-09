@@ -159,7 +159,7 @@
 	(printf "(iteration ~s)~%" pass)
 	(display-analysis-database db) ) )
 
-    (define (print mode dbgmode xs)
+    (define (print-expr mode dbgmode xs)
       (when (print-header mode dbgmode)
 	(for-each pretty-print xs) ) )
 
@@ -200,13 +200,15 @@
     (define (read-form in)
       (##sys#read in infohook) )
 
-    (define (analyze pass node)
-      (let ((db (analyze-expression node)))
-	(when upap
-	  (upap pass db node
-		(cut get db <> <>)
-		(cut put! db <> <> <>) ) )
-	db) )
+    (define (analyze pass node . args)
+      (let-optionals args ((no 0) (contf #t))
+        (let ((db (analyze-expression node)))
+	  (when upap
+	    (upap pass db node
+		  (cut get db <> <>)
+		  (cut put! db <> <> <>)
+		  no contf) )
+	  db) ) )
 
     (when uunit
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
@@ -429,7 +431,7 @@
 	       (when verbose (printf "User preprocessing pass...~%~!"))
 	       (set! forms (map proc forms))))
 
-	   (print "source" '|1| forms)
+	   (print-expr "source" '|1| forms)
 	   (begin-time)
 	   (unless (null? uses-units)
 	     (set! ##sys#explicit-library-modules (append ##sys#explicit-library-modules uses-units))
@@ -487,7 +489,7 @@
 	     (set! line-number-database-2 #f)
 
 	     (end-time "canonicalization")
-	     (print "canonicalized" '|2| exps)
+	     (print-expr "canonicalized" '|2| exps)
 
 	     (when (memq 'check-syntax options) (exit))
 
@@ -545,7 +547,7 @@
 		 (let loop ([i 1] [node2 node1] [progress #t])
 
 		   (begin-time)
-		   (let ([db (analyze 'opt node2)])
+		   (let ([db (analyze 'opt node2 i progress)])
 		     (when first-analysis
 		       (when use-import-table (check-global-imports db))
 		       (check-global-exports db)
