@@ -147,6 +147,10 @@ extern void C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # endif
 #endif
 
+#if defined(C_NO_HACKED_APPLY) && !defined(C_HACKED_APPLY)
+# undef C_HACKED_APPLY
+#endif
+
 
 /* Parameters: */
 

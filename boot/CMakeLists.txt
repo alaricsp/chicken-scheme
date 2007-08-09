@@ -43,6 +43,7 @@ CONFIGURE_FILE(${Chicken_SOURCE_DIR}/chicken-defaults.h.in
 # ${CMAKE_CURRENT_BINARY_DIR} first.
 
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
+ADD_DEFINITIONS(-DC_NO_HACKED_APPLY)
 
 # Do not use LIBRARY_SCM_TO_C_EXPORTS to build the bootstrap compiler.
 # We don't need the exports to build the next compiler stage, and

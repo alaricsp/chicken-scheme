@@ -315,13 +315,17 @@ EOF
 	    (cond [matches
 		   (let* ([range (car matches)]
 			  [upto (cadr range)] )
-		     (cond [(or (not (fixnum? which)) (fx= count which))
+		     (cond ((zero? (fx- (cadr range) (car range)))
+			    (##sys#error
+			     'string-substitute "empty substitution match"
+			     regex) )
+			   ((or (not (fixnum? which)) (fx= count which))
 			    (push (substring string index (car range)))
 			    (substitute matches)
-			    (loop upto #f) ]
-			   [else
+			    (loop upto #f) )
+			   (else
 			    (push (substring string index upto))
-			    (loop upto (fx+ count 1)) ] ) ) ]
+			    (loop upto (fx+ count 1)) ) ) ) ]
 		  [else
 		   (push (substring string index (##sys#size string)))
 		   (##sys#fragments->string total (reverse result)) ] ) ) ) ) ) ) )

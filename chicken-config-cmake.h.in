@@ -46,3 +46,5 @@
 #cmakedefine HAVE_MEMMOVE @HAVE_MEMMOVE@
 
 #cmakedefine HAVE_STRERROR @HAVE_STRERROR@
+
+#cmakedefine C_HACKED_APPLY @C_HACKED_APPLY@

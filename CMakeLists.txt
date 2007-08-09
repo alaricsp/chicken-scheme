@@ -999,6 +999,39 @@ LIST2STRING(L_MORE_STATIC_LIBS L_MORE_STATIC_LIBS_STRING)
 SET(C_INSTALL_MORE_LIBS \"${L_MORE_LIBS_STRING}\")
 SET(C_INSTALL_MORE_STATIC_LIBS \"${L_MORE_STATIC_LIBS_STRING}\")
 
+# test for apply hack
+#
+# (does currently not work - cmake apparently ignores the .s file passed
+# to ADD_LIBRARY)
+
+SET(APPLY_HACK_SOURCE )
+
+# IF(UNIX)
+#   IF(CMAKE_SYSTEM_PROCESSOR MATCHES "i.*86")
+#     SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86.s)
+#   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i.*86")
+#   IF(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc") # check this!
+#     SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.ppc.s)
+#   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc")
+#   IF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64") # x86-64 ?
+#     SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86-64.s)
+#   ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64")
+# ENDIF(UNIX)
+
+# IF(MINGW)
+#   SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86.s)
+# ENDIF(MINGW)
+
+# IF(APPLY_HACK_SOURCE)
+#   MESSAGE(STATUS "apply hack is available for this platform (${CMAKE_SYSTEM_PROCESSOR})")
+#   SET(C_HACKED_APPLY TRUE)
+#   # this one was suggested by Bill Hoffmann:
+#   SET_SOURCE_FILES_PROPERTIES(${APPLY_HACK_SOURCE} PROPERTIES LANGUAGE C)
+# ELSE(APPLY_HACK_SOURCE)
+#   MESSAGE(STATUS "apply hack is NOT available for this platform (${CMAKE_SYSTEM_PROCESSOR})")
+# ENDIF(APPLY_HACK_SOURCE)
+
+
 
 ####################################################################
 #  DEFINE C_STACK_GROWS_DOWNWARD                                   #
@@ -1474,7 +1507,7 @@ IF(MSVC)
   # Eventually, we wish to support different postfixes for debug, release builds etc.
   # For now, the user has to install the 1 configuration she actually wants.
 
-  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
+  ADD_LIBRARY(libchicken SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER} ${APPLY_HACK_SOURCE})
   SET_TARGET_PROPERTIES(libchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN ${SHARED_FLAGS}"
     OUTPUT_NAME "chicken" PREFIX "lib" IMPORT_PREFIX "lib"
@@ -1482,7 +1515,7 @@ IF(MSVC)
   TARGET_LINK_LIBRARIES(libchicken libpcre-for-shared ${MORE_LIBS})
   ADD_DEPENDENCIES(libchicken libchicken-c)
 
-  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_HEADER})
+  ADD_LIBRARY(libuchicken SHARED ${CHICKEN_UNSAFE_LIB_SOURCES} ${PCRE_HEADER} ${APPLY_HACK_SOURCE})
   SET_TARGET_PROPERTIES(libuchicken PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME ${SHARED_FLAGS}"
     OUTPUT_NAME "uchicken" PREFIX "lib" IMPORT_PREFIX "lib"
@@ -1490,7 +1523,7 @@ IF(MSVC)
   TARGET_LINK_LIBRARIES(libuchicken libpcre-for-shared ${MORE_LIBS})
   ADD_DEPENDENCIES(libuchicken libuchicken-c)
 
-  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER})
+  ADD_LIBRARY(libchickengui SHARED ${CHICKEN_LIB_SOURCES} ${PCRE_HEADER} ${APPLY_HACK_SOURCE})
   SET_TARGET_PROPERTIES(libchickengui PROPERTIES
     COMPILE_FLAGS "-DC_BUILDING_LIBCHICKEN -DC_WINDOWS_GUI ${SHARED_FLAGS}"
     OUTPUT_NAME "chickengui" PREFIX "lib" IMPORT_PREFIX "lib"
