@@ -1,6 +1,6 @@
 ;;;; c-platform.scm - Platform specific parameters and definitions
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -42,9 +42,9 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home debugging
-  foreign-type-table-size dump-nodes
+  dump-nodes
   unit-name insert-timer-checks used-units inlining
-  foreign-declarations block-compilation analysis-database-size line-number-database-size
+  foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -56,7 +56,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call find-inlining-candidates perform-inlining!
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! decompose-lambda-list rewrite
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -122,18 +122,19 @@
 
 (define valid-compiler-options
   '(-help h help version verbose explicit-use quiet no-trace no-warnings unsafe block
-    check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info profile inline
+    check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
+    profile inline keep-shadowed-macros
     fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
     lambda-lift run-time-macros tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
-    emit-external-prototypes-first track-scheme release
-    analyze-only dynamic ffi ffi-custom ffi-parse ffi-no-include extension) )
+    emit-external-prototypes-first release disable-compiler-macros
+    analyze-only dynamic extension) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
-	  inline-limit profile-name disable-warning emit-exports
-    prelude postlude prologue epilogue nursery extend feature compress-literals split-level
-    heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path split) )
+	  inline-limit profile-name disable-warning emit-exports import
+    prelude postlude prologue epilogue nursery extend feature compress-literals
+    heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 
 ;;; Standard and extended bindings:
@@ -156,19 +157,25 @@
     read-char substring string-fill! vector-fill! make-string make-vector open-input-file
     open-output-file call-with-input-file call-with-output-file close-input-port close-output-port
     values call-with-values vector procedure? memq memv member assq assv assoc list-tail
-    list-ref abs char-ready? peek-char) )
+    list-ref abs char-ready? peek-char list->string string->list) )
 
 (define default-extended-bindings
   '(bitwise-and bitwise-ior bitwise-xor bitwise-not add1 sub1 fx+ fx- fx* fx/ fxmod
     fx= fx> fx< fx>= fx<= fixnum? fxneg fxmax fxmin identity fp+ fp- fp* fp/ fpmin fpmax fpneg
-    fp> fp< fp= fp>= fp<= atom? fxand fxnot fxior fxxor fxshr fxshl
+    fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl bit-set?
     arithmetic-shift void flush-output thread-specific thread-specific-set!
-    not-pair? null-list? print print* error cpu-time proper-list? call/cc
-    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector 
-    u32vector->byte-vector 
-    s32vector->byte-vector byte-vector-length block-ref block-set! number-of-slots
-    f32vector->byte-vector f64vector->byte-vector byte-vector-ref byte-vector-set!
-    hash-table-ref
+    not-pair? atom? null-list? print print* error cpu-time proper-list? call/cc
+    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector ; DEPRECATED
+    u32vector->byte-vector s32vector->byte-vector byte-vector-length ; DEPRECATED
+    f32vector->byte-vector f64vector->byte-vector byte-vector-ref byte-vector-set! ; DEPRECATED
+    blob-size u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared
+    s16vector->blob/shared u32vector->blob/shared s32vector->blob/shared
+    f32vector->blob/shared f64vector->blob/shared
+    blob->u8vector/shared blob->s8vector/shared blob->u16vector/shared
+    blob->s16vector/shared blob->u32vector/shared blob->s32vector/shared
+    blob->f32vector/shared blob->f64vector/shared
+    block-ref block-set! number-of-slots substring-index substring-index-ci
+    hash-table-ref any? read-string substring=? substring-ci=?
     first second third fourth make-record-instance
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length setter
@@ -176,21 +183,21 @@
     f32vector-ref f64vector-ref
     u8vector-set! s8vector-set! u16vector-set! s16vector-set! u32vector-set! s32vector-set!
     locative-ref locative-set! locative->object locative? global-ref
-    null-pointer? pointer->object) )
+    null-pointer? pointer->object flonum? finite?) )
 
 (define internal-bindings
   '(##sys#slot ##sys#setslot ##sys#block-ref ##sys#block-set!
     ##sys#call-with-current-continuation ##sys#size ##sys#byte ##sys#setbyte
     ##sys#pointer? ##sys#generic-structure? ##sys#structure? ##sys#check-structure
     ##sys#check-exact ##sys#check-number ##sys#check-list ##sys#check-pair ##sys#check-string ##sys#check-symbol 
-    ##sys#check-char ##sys#check-vector ##sys#check-byte-vector ##sys#list
+    ##sys#check-char ##sys#check-vector ##sys#check-byte-vector ##sys#list ##sys#cons
     ##sys#call-with-values ##sys#fits-in-int? ##sys#fits-in-unsigned-int? ##sys#flonum-in-fixnum-range? 
-    ##sys#fudge ##sys#immediate? ##sys#direct-return
+    ##sys#fudge ##sys#immediate? ##sys#direct-return ##sys#context-switch
     ##sys#make-structure ##sys#apply ##sys#apply-values ##sys#continuation-graft
     ##sys#bytevector? ##sys#make-vector ##sys#setter
     ##sys#foreign-char-argument ##sys#foreign-fixnum-argument ##sys#foreign-flonum-argument
     ##sys#foreign-block-argument ##sys#foreign-number-vector-argument
-    ##sys#foreign-string-argument ##sys#foreign-pointer-argument 
+    ##sys#foreign-string-argument ##sys#foreign-pointer-argument ##sys#void
     ##sys#foreign-integer-argument ##sys#foreign-unsigned-integer-argument ##sys#double->number
     ##sys#peek-fixnum ##sys#setislot ##sys#poke-integer ##sys#permanent? ##sys#values ##sys#poke-double
     ##sys#intern-symbol ##sys#make-symbol ##sys#null-pointer? ##sys#peek-byte) )
@@ -203,7 +210,8 @@
     call-with-values eval) )
 
 (define non-foldable-standard-bindings
-  '(vector cons list string make-vector make-string string->symbol values current-input-port current-output-port) )
+  '(vector cons list string make-vector make-string string->symbol values current-input-port current-output-port
+	   read-char write-char) )
 
 (define foldable-standard-bindings
   (lset-difference 
@@ -212,12 +220,17 @@
 
 (define non-foldable-extended-bindings
   '(##sys#slot ##sys#setslot ##sys#call-with-current-continuation ##sys#fudge flush-output print void
-    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector u32vector->byte-vector 
-    s32vector->byte-vector ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
-    f32vector->byte-vector f64vector->byte-vector ##sys#byte ##sys#setbyte byte-vector-ref byte-vector-set!
+    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector u32vector->byte-vector ; DEPRECATED
+    f32vector->byte-vector f64vector->byte-vector s32vector->byte-vector ;DEPRECATED
+    u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared s16vector->blob/shared u32vector->blob/shared
+    f32vector->blob/shared f64vector->blob/shared
+    s32vector->blob/shared read-string read-string!
+    ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
+    ##sys#byte ##sys#setbyte 
+    byte-vector-ref byte-vector-set!	; DEPRECATED
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length ##sys#apply-values ##sys#setter setter
-    u8vector-ref s8vector-ref u16vector-ref s16vector-ref
+    u8vector-ref s8vector-ref u16vector-ref s16vector-ref u32vector-ref s32vector-ref
     u8vector-set! s8vector-set! u16vector-set! s16vector-set! u32vector-set! s32vector-set!
     ##sys#intern-symbol ##sys#make-symbol make-record-instance error cpu-time ##sys#block-set!) )
 
@@ -231,7 +244,7 @@
     quotient remainder modulo floor ceiling truncate round exact->inexact inexact->exact exp log sin
     cons tan atan expt sqrt asin acos number->string char-upcase char-downcase string-append string
     string->list list->string vector->list list->vector read-char substring make-string make-vector
-    open-input-file open-output-file vector) )
+    open-input-file open-output-file vector write-char) )
 
 (define side-effect-free-standard-bindings-that-never-return-false
   (lset-difference
@@ -496,21 +509,23 @@
 	       (and-let* ((sym (car (node-parameters arg2)))
 			  (val (get db sym 'value)) )
 		 (and (eq? '##core#lambda (node-class val))
-		      (= 2 (length (third (node-parameters val))))
-		      (let ((tmp (gensym))
-			    (tmpk (gensym 'r)) )
-			(debugging 'x "removing single-valued `call-with-values'" (node-parameters val))
-			(make-node
-			 'let (list tmp)
-			 (list (make-node
-				'##core#lambda
-				(list (gensym 'f_) #f (list tmpk) 0)
-				(list (make-node
-				       '##core#call '(#t)
-				       (list arg2 cont (varnode tmpk)) ) ) ) 
+		      (let ((llist (third (node-parameters val))))
+			(and (proper-list? llist)
+			     (= 2 (length (third (node-parameters val))))
+			     (let ((tmp (gensym))
+				   (tmpk (gensym 'r)) )
+			       (debugging 'o "removing single-valued `call-with-values'" (node-parameters val))
 			       (make-node
-				'##core#call '(#t)
-				(list arg1 (varnode tmp)) ) ) ) ) ) ) ) ) ) )
+				'let (list tmp)
+				(list (make-node
+				       '##core#lambda
+				       (list (gensym 'f_) #f (list tmpk) 0)
+				       (list (make-node
+					      '##core#call '(#t)
+					      (list arg2 cont (varnode tmpk)) ) ) ) 
+				      (make-node
+				       '##core#call '(#t)
+				       (list arg1 (varnode tmp)) ) ) ) ) ) ) ) ) ) ) ) )
   (rewrite 'call-with-values 8 rewrite-c-w-v)
   (rewrite '##sys#call-with-values 8 rewrite-c-w-v) )
 
@@ -571,7 +586,6 @@
 (rewrite 'symbol? 2 1 "C_i_symbolp" #t #f)
 (rewrite 'vector? 2 1 "C_i_vectorp" #t #f)
 (rewrite 'pair? 2 1 "C_i_pairp" #t "C_notvemptyp")
-(rewrite 'atom? 2 1 "C_i_atomp" #t #f)
 (rewrite 'procedure? 2 1 "C_i_closurep" #t #f)
 (rewrite 'port? 2 1 "C_i_portp" #t #f)
 (rewrite 'boolean? 2 1 "C_booleanp" #t #f)
@@ -580,7 +594,9 @@
 (rewrite 'rational? 2 1 "C_i_numberp" #t #f)
 (rewrite 'real? 2 1 "C_i_numberp" #t #f)
 (rewrite 'integer? 2 1 "C_i_integerp" #t #f)
+(rewrite 'flonum? 2 1 "C_i_flonump" #t #f)
 (rewrite 'fixnum? 2 1 "C_fixnump" #t #f)
+(rewrite 'finite? 2 1 "C_i_finitep" #f #f)
 (rewrite '##sys#pointer? 2 1 "C_pointerp" #t #f)
 (rewrite '##sys#generic-structure? 2 1 "C_structurep" #t #f)
 (rewrite 'exact? 2 1 "C_fixnump" #f #f)
@@ -733,6 +749,8 @@
 (rewrite 'make-record-instance 11 #f '##sys#make-structure #f)
 (rewrite 'substring 11 3 '##sys#substring #f)
 (rewrite 'string-append 11 2 '##sys#string-append #f)
+(rewrite 'string->list 11 1 '##sys#string->list #t)
+(rewrite 'list->string 11 1 '##sys#list->string #t)
 
 (rewrite 'vector-set! 11 3 '##sys#setslot #f)
 (rewrite 'vector-set! 2 3 "C_i_vector_set" #t #f)
@@ -894,14 +912,18 @@
 (rewrite '##sys#foreign-unsigned-integer-argument 17 1 "C_i_foreign_unsigned_integer_argumentp")
 (rewrite '##sys#direct-return 17 2 "C_direct_return")
 
-(rewrite 'byte-vector-ref 2 2 "C_subbyte" #f #f)
-(rewrite 'byte-vector-set! 2 3 "C_setbyte" #f #f)
-(rewrite 'byte-vector-length 2 1 "C_block_size" #f #f)
+(rewrite 'byte-vector-ref 2 2 "C_subbyte" #f #f) ; DEPRECATED
+(rewrite 'byte-vector-set! 2 3 "C_setbyte" #f #f) ; DEPRECATED
+(rewrite 'byte-vector-length 2 1 "C_block_size" #f #f) ; DEPRECATED
+(rewrite 'blob-size 2 1 "C_block_size" #f #f) ; DEPRECATED
 
 (rewrite 'u8vector-ref 2 2 "C_u_i_u8vector_ref" #f #f)
 (rewrite 's8vector-ref 2 2 "C_u_i_s8vector_ref" #f #f)
 (rewrite 'u16vector-ref 2 2 "C_u_i_u16vector_ref" #f #f)
 (rewrite 's16vector-ref 2 2 "C_u_i_s16vector_ref" #f #f)
+
+(rewrite 'u32vector-ref 22 2 "C_a_i_u32vector_ref" #f words-per-flonum "C_u_i_u32vector_ref")
+(rewrite 's32vector-ref 22 2 "C_a_i_s32vector_ref" #f words-per-flonum "C_u_i_s32vector_ref")
 
 (rewrite 'u8vector-set! 2 3 "C_u_i_u8vector_set" #f #f)
 (rewrite 's8vector-set! 2 3 "C_u_i_s8vector_set" #f #f)
@@ -920,16 +942,26 @@
 (rewrite 'f64vector-length 2 1 "C_u_i_64vector_length" #f #f)
 
 (rewrite 'not-pair? 17 1 "C_i_not_pair_p")
+(rewrite 'atom? 17 1 "C_i_not_pair_p")
 (rewrite 'null-list? 17 1 "C_i_null_list_p" "C_i_nullp")
 
-(rewrite 'u8vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 's8vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'u16vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 's16vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'u32vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 's32vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'f32vector->byte-vector 7 1 "C_slot" 1 #f)
-(rewrite 'f64vector->byte-vector 7 1 "C_slot" 1 #f)
+(rewrite 'u8vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 's8vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'u16vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 's16vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'u32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 's32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'f32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+(rewrite 'f64vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
+
+(rewrite 'u8vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 's8vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'u16vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 's16vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'u32vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 's32vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'f32vector->blob/shared 7 1 "C_slot" 1 #f)
+(rewrite 'f64vector->blob/shared 7 1 "C_slot" 1 #f)
 
 (let ()
   (define (rewrite-make-vector db classargs cont callargs)
@@ -992,7 +1024,7 @@
     (cdr . set-cdr!)
     (hash-table-ref . hash-table-set!)
     (block-ref . block-set!)
-    (byte-vector-ref . byte-vector-set!)
+    (byte-vector-ref . byte-vector-set!) ; DEPRECATED
     (locative-ref . locative-set!)
     (u8vector-ref . u8vector-set!)
     (s8vector-ref . s8vector-set!)
@@ -1029,3 +1061,40 @@
 			 '##core#call '(#t)
 			 (list cont (varnode (cdr a))) ) ) ) ) ) ) ) ) )
 			       
+(rewrite 'void 3 '##sys#undefined-value)
+(rewrite '##sys#void 3 '##sys#undefined-value)
+
+(rewrite
+ 'any? 8
+ (lambda (db classargs cont callargs) 
+   (and (= 1 (length callargs))
+	(let ((arg (car callargs)))
+	  (make-node
+	   '##core#call '(#t) 
+	   (list cont
+		 (if (and (eq? '##core#variable (node-class arg))
+			  (not (get db (car (node-parameters arg)) 'global)) )
+		     (qnode #t)
+		     (make-node 
+		      '##core#inline '("C_anyp")
+		      (list arg)) ) ) ) ) ) ) )
+
+(rewrite
+ 'bit-set? 8
+ (lambda (db classargs cont callargs)
+   (and (= 2 (length callargs))
+	(make-node
+	 '##core#call '(#t)
+	 (list cont
+	       (make-node
+		'##core#inline 
+		(list (if (eq? number-type 'fixnum) "C_u_i_bit_setp" "C_i_bit_setp"))
+		callargs) ) ) ) ) )
+
+(rewrite 'read-char 23 0 '##sys#read-char/port '##sys#standard-input)
+(rewrite 'write-char 23 1 '##sys#write-char/port '##sys#standard-output)
+(rewrite 'read-string 23 1 '##sys#read-string/port '##sys#standard-input)
+(rewrite 'substring=? 23 2 '##sys#substring=? 0 0 #f)
+(rewrite 'substring-ci=? 23 2 '##sys#substring-ci=? 0 0 #f)
+(rewrite 'substring-index 23 2 '##sys#substring-index 0)
+(rewrite 'substring-index-ci 23 2 '##sys#substring-index-ci 0)

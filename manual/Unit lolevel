@@ -1,0 +1,748 @@
+[[tags: manual]]
+[[toc:]]
+
+
+== Unit lolevel
+
+
+This unit provides a number of handy low-level operations. '''Use
+at your own risk.'''
+
+
+This unit uses the {{srfi-4}} and {{extras}} units.
+
+=== Foreign pointers
+
+
+
+==== address->pointer
+
+ [procedure] (address->pointer ADDRESS)
+
+Creates a new foreign pointer object initialized to point to the address
+given in the integer {{ADDRESS}}.
+
+
+==== allocate
+
+ [procedure] (allocate BYTES)
+
+Returns a pointer to a freshly allocated region of static memory.
+This procedure could be defined as follows:
+
+<enscript highlight=scheme>
+(define allocate (foreign-lambda c-pointer "malloc" integer))
+</enscript>
+
+
+==== free
+
+ [procedure] (free POINTER)
+
+Frees the memory pointed to by {{POINTER}}.  This procedure could
+be defined as follows:
+
+<enscript highlight=scheme>
+(define free (foreign-lambda c-pointer "free" integer))
+</enscript>
+
+
+==== null-pointer
+
+ [procedure] (null-pointer)
+
+Another way to say {{(address->pointer 0)}}.
+
+
+==== null-pointer?
+
+ [procedure] (null-pointer? PTR)
+
+Returns {{#t}} if {{PTR}} contains a {{NULL}} pointer,
+or {{#f}} otherwise.
+
+
+==== object->pointer
+
+ [procedure] (object->pointer X)
+
+Returns a pointer pointing to the Scheme object X, which should be a
+non-immediate object.  Note that data in the garbage collected heap
+moves during garbage collection.
+
+
+==== pointer?
+
+ [procedure] (pointer? X)
+
+Returns {{#t}} if {{X}} is a foreign pointer object, and
+{{#f}} otherwise.
+
+==== pointer=?
+
+ [procedure] (pointer=? PTR1 PTR2)
+
+Returns {{#t}} if the pointer-like objects {{PTR1}} and {{PTR2}} point
+to the same address.
+
+
+
+==== pointer->address
+
+ [procedure] (pointer->address PTR)
+
+Returns the address, to which the pointer {{PTR}} points.
+
+
+==== pointer->object
+
+ [procedure] (pointer->object PTR)
+
+Returns the Scheme object pointed to by the pointer {{PTR}}.
+
+
+==== pointer-offset
+
+ [procedure] (pointer-offset PTR N)
+
+Returns a new pointer representing the pointer {{PTR}} increased
+by {{N}}.
+
+
+==== pointer-u8-ref
+
+ [procedure] (pointer-u8-ref PTR)
+
+Returns the unsigned byte at the address designated by {{PTR}}.
+
+
+==== pointer-s8-ref
+
+ [procedure] (pointer-s8-ref PTR)
+
+Returns the signed byte at the address designated by {{PTR}}.
+
+
+==== pointer-u16-ref
+
+ [procedure] (pointer-u16-ref PTR)
+
+Returns the unsigned 16-bit integer at the address designated by {{PTR}}.
+
+
+==== pointer-s16-ref
+
+ [procedure] (pointer-s16-ref PTR)
+
+Returns the signed 16-bit integer at the address designated by {{PTR}}.
+
+
+==== pointer-u32-ref
+
+ [procedure] (pointer-u32-ref PTR)
+
+Returns the unsigned 32-bit integer at the address designated by {{PTR}}.
+
+
+==== pointer-s32-ref
+
+ [procedure] (pointer-s32-ref PTR)
+
+Returns the signed 32-bit integer at the address designated by {{PTR}}.
+
+
+==== pointer-f32-ref
+
+ [procedure] (pointer-f32-ref PTR)
+
+Returns the 32-bit float at the address designated by {{PTR}}.
+
+
+==== pointer-f64-ref
+
+ [procedure] (pointer-f64-ref PTR)
+
+Returns the 64-bit double at the address designated by {{PTR}}.
+
+
+==== pointer-u8-set!
+
+ [procedure] (pointer-u8-set! PTR N)
+ [procedure] (set! (pointer-u8-ref PTR) N)
+
+Stores the unsigned byte {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-s8-set!
+
+ [procedure] (pointer-s8-set! PTR N)
+ [procedure] (set! (pointer-s8-ref PTR) N)
+
+Stores the signed byte {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-u16-set!
+
+ [procedure] (pointer-u16-set! PTR N)
+ [procedure] (set! (pointer-u16-ref PTR) N)
+
+Stores the unsigned 16-bit integer {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-s16-set!
+
+ [procedure] (pointer-s16-set! PTR N)
+ [procedure] (set! (pointer-s16-ref PTR) N)
+
+Stores the signed 16-bit integer {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-u32-set!
+
+ [procedure] (pointer-u32-set! PTR N)
+ [procedure] (set! (pointer-u32-ref PTR) N)
+
+Stores the unsigned 32-bit integer {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-s32-set!
+
+ [procedure] (pointer-s32-set! PTR N)
+ [procedure] (set! (pointer-s32-ref PTR) N)
+
+Stores the 32-bit integer {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-f32-set!
+
+ [procedure] (pointer-f32-set! PTR N)
+ [procedure] (set! (pointer-f32-ref PTR) N)
+
+Stores the 32-bit floating-point number {{N}} at the address designated by {{PTR}}.
+
+
+==== pointer-f64-set!
+
+ [procedure] (pointer-f64-set! PTR N)
+ [procedure] (set! (pointer-f64-ref PTR) N)
+
+Stores the 64-bit floating-point number {{N}} at the address designated by {{PTR}}.
+
+
+==== align-to-word
+
+ [procedure] (align-to-word PTR-OR-INT)
+
+Accepts either a machine pointer or an integer as argument and returns
+a new pointer or integer aligned to the native word size of the host
+platform.
+
+
+
+
+
+=== Tagged pointers
+
+''Tagged'' pointers are foreign pointer objects with an extra tag object.
+
+
+
+==== tag-pointer
+
+ [procedure] (tag-pointer PTR TAG)
+
+Creates a new tagged pointer object from the foreign pointer {{PTR}} with the
+tag {{TAG}}, which may an arbitrary Scheme object.
+
+
+==== tagged-pointer?
+
+ [procedure] (tagged-pointer? X TAG)
+
+Returns {{#t}}, if {{X}} is a tagged pointer object with the tag {{TAG}}
+(using an {{eq?}} comparison), or {{#f}} otherwise.
+
+
+==== pointer-tag
+
+ [procedure] (pointer-tag PTR)
+
+If {{PTR}} is a tagged pointer object, its tag is returned. If {{PTR}} is a normal,
+untagged foreign pointer object {{#f}} is returned. Otherwise an error is signalled.
+
+
+
+
+
+=== Extending procedures with data
+
+
+
+
+==== extend-procedure
+
+ [procedure] (extend-procedure PROCEDURE X)
+
+Returns a copy of the procedure {{PROCEDURE}} which contains an
+additional data slot initialized to {{X}}. If {{PROCEDURE}}
+is already an extended procedure, then its data slot is changed to
+contain {{X}} and the same procedure is returned.
+
+
+==== extended-procedure?
+
+ [procedure] (extended-procedure? PROCEDURE)
+
+Returns {{#t}} if {{PROCEDURE}} is an extended procedure,
+or {{#f}} otherwise.
+
+
+==== procedure-data
+
+ [procedure] (procedure-data PROCEDURE)
+
+Returns the data object contained in the extended procedure {{PROCEDURE}},
+or {{#f}} if it is not an extended procedure.
+
+
+==== set-procedure-data!
+
+ [procedure] (set-procedure-data! PROCEDURE X)
+
+Changes the data object contained in the extended procedure
+{{PROCEDURE}} to {{X}}.
+
+<enscript highlight=scheme>
+(define foo
+  (letrec ((f (lambda () (procedure-data x)))
+           (x #f) )
+    (set! x (extend-procedure f 123))
+    x) )
+(foo)                                         ==> 123
+(set-procedure-data! foo 'hello)
+(foo)                                         ==> hello
+</enscript>
+
+=== Blobs
+
+"blobs" are collections of unstructured bytes. You can't do much
+with them, but allow conversion to and from SRFI-4 number vectors.
+
+
+==== blob?
+
+ [procedure] (blob? X)
+
+Returns {{#t}} if {{X}} is a blob object, or
+{{#f}} otherwise.
+
+
+==== blob-size
+
+ [procedure] (blob-size BLOB)
+
+Returns the number of bytes in {{BLOB}}.
+
+
+==== blob->string
+
+ [procedure] (blob->string BLOB)
+
+Returns a string with the contents of {{BLOB}}.
+
+
+==== string->blob
+
+ [procedure] (string->blob STRING)
+
+Returns a blob with the contents of {{STRING}}.
+
+
+
+=== Data in unmanaged memory
+
+
+
+
+==== object-evict
+
+ [procedure] (object-evict X [ALLOCATOR])
+
+Copies the object {{X}} recursively into the memory pointed
+to by the foreign pointer object returned by {{ALLOCATOR}},
+which should be a procedure of a single argument (the number of bytes
+to allocate). The freshly copied object is returned.  This facility
+allows moving arbitrary objects into static memory, but care should be
+taken when mutating evicted data: setting slots in evicted vector-like
+objects to non-evicted data is not allowed. It '''is''' possible to
+set characters/bytes in evicted strings or byte-vectors, though.  It is
+advisable '''not''' to evict ports, because they might be mutated by
+certain file-operations.  {{object-evict}} is able to handle circular and
+shared structures, but evicted symbols are no longer unique: a fresh
+copy of the symbol is created, so
+
+<enscript highlight=scheme>
+(define x 'foo)
+(define y (object-evict 'foo))
+y                              ==> foo
+(eq? x y)                      ==> #f
+(define z (object-evict '(bar bar)))
+(eq? (car z) (cadr z))         ==> #t
+</enscript>
+
+The {{ALLOCATOR}} defaults to {{allocate}}.
+
+
+==== object-evict-to-location
+
+ [procedure] (object-evict-to-location X PTR [LIMIT])
+
+As {{object-evict}} but moves the object at the address pointed to by
+the machine pointer {{PTR}}. If the number of copied bytes exceeds
+the optional {{LIMIT}} then an error is signalled (specifically a composite
+condition of types {{exn}} and {{evict}}. The latter provides
+a {{limit}} property which holds the exceeded limit. Two values are
+returned: the evicted object and a new pointer pointing to the first
+free address after the evicted object.
+
+
+==== object-evicted?
+
+ [procedure] (object-evicted? X)
+
+Returns {{#t}} if {{X}} is a non-immediate evicted data object,
+or {{#f}} otherwise.
+
+
+==== object-size
+
+ [procedure] (object-size X)
+
+Returns the number of bytes that would be needed to evict the data
+object {{X}}.
+
+
+==== object-release
+
+ [procedure] (object-release X [RELEASER])
+
+Frees memory occupied by the evicted object {{X}} recursively.
+{{RELEASER}} should be a procedure of a single argument (a foreign
+pointer object to the static memory to be freed) and defaults to
+{{free}}.
+
+
+==== object-unevict
+
+ [procedure] (object-unevict X [FULL])
+
+Copies the object {{X}} and nested objects back into the normal
+Scheme heap.  Symbols are re-interned into the symbol table. Strings
+and byte-vectors are '''not''' copied, unless {{FULL}} is given and
+not {{#f}}.
+
+
+
+
+
+=== Locatives
+
+
+A ''locative'' is an object that points to an element of a containing object,
+much like a ''pointer'' in low-level, imperative programming languages like ''C''. The element can
+be accessed and changed indirectly, by performing access or change operations
+on the locative. The container object can be computed by calling the
+{{location->object}} procedure.
+
+Locatives may be passed to foreign procedures that expect pointer arguments.
+The effect of creating locatives for evicted data (see {{object-evict}}) is undefined.
+
+
+
+==== make-locative
+
+ [procedure] (make-locative EXP [INDEX])
+
+Creates a locative that refers to the element of the non-immediate object {{EXP}}
+at position {{INDEX}}. {{EXP}} may be a vector, pair, string, byte-vector,
+SRFI-4 number-vector, or record. {{INDEX}} should be a fixnum. {{INDEX}} defaults to 0.
+
+
+==== make-weak-locative
+
+ [procedure] (make-weak-locative EXP [INDEX])
+
+Creates a ''weak'' locative. Even though the locative refers to an element of a container object,
+the container object will still be reclaimed by garbage collection if no other references
+to it exist.
+
+
+==== locative?
+
+ [procedure] (locative? X)
+
+Returns {{#t}} if {{X}} is a locative, or {{#f}} otherwise.
+
+
+==== locative-ref
+
+ [procedure] (locative-ref LOC)
+
+Returns the element to which the locative {{LOC}} refers. If the containing
+object has been reclaimed by garbage collection, an error is signalled.
+
+
+==== locative-set!
+
+ [procedure] (locative-set! LOC X)
+ [procedure] (set! (locative-ref LOC) X)
+
+Changes the element to which the locative {{LOC}} refers to {{X}}.
+If the containing
+object has been reclaimed by garbage collection, an error is signalled.
+
+
+==== locative->object
+
+ [procedure] (locative->object LOC)
+
+Returns the object that contains the element referred to by {{LOC}} or
+{{#f}} if the container has been reclaimed by garbage collection.
+
+
+
+
+
+=== Accessing toplevel variables
+
+
+
+
+==== global-bound?
+
+ [procedure] (global-bound? SYMBOL)
+
+Returns {{#t}}, if the global (''toplevel'') variable with the name {{SYMBOL}}
+is bound to a value, or {{#f}} otherwise.
+
+
+==== global-ref
+
+ [procedure] (global-ref SYMBOL)
+
+Returns the value of the global variable {{SYMBOL}}.
+If no variable under that name is bound, an error is signalled.
+
+Note that it is not possible to access a toplevel binding with {{global-ref}} or
+{{global-set!}} if it has been hidden in compiled code via {{(declare (hide ...))}},
+or if the code has been compiled in {{block}} mode.
+
+
+==== global-set!
+
+ [procedure] (global-set! SYMBOL X)
+ [procedure] (set! (global-ref SYMBOL) X)
+
+Sets the global variable named {{SYMBOL}} to the value {{X}}.
+
+
+
+
+
+=== Low-level data access
+
+
+==== block-ref
+
+ [procedure] (block-ref BLOCK INDEX)
+
+Returns the contents of the {{INDEX}}th slot of the object
+{{BLOCK}}.  {{BLOCK}} may be a vector, record structure,
+pair or symbol.
+
+
+==== block-set!
+
+ [procedure] (block-set! BLOCK INDEX X)
+ [procedure] (set! (block-ref BLOCK INDEX) X)
+
+Sets the contents of the {{INDEX}}th slot of the object
+{{BLOCK}} to the value of {{X}}.  {{BLOCK}} may be a
+vector, record structure, pair or symbol.
+
+
+==== object-copy
+
+ [procedure] (object-copy X)
+
+Copies {{X}} recursively and returns the fresh copy. Objects
+allocated in static memory are copied back into garbage collected storage.
+
+
+==== make-record-instance
+
+ [procedure] (make-record-instance SYMBOL ARG1 ...)
+
+Returns a new instance of the record type {{SYMBOL}}, with its
+slots initialized to {{ARG1 ...}}.  To illustrate:
+
+<enscript highlight=scheme>
+(define-record point x y)
+</enscript>
+
+expands into something quite similar to:
+
+<enscript highlight=scheme>
+(begin
+  (define (make-point x y)
+    (make-record-instance 'point x y) )
+  (define (point? x)
+    (and (record-instance? x)
+         (eq? 'point (block-ref x 0)) ) )
+  (define (point-x p) (block-ref p 1))
+  (define (point-x-set! p x) (block-set! p 1 x))
+  (define (point-y p) (block-ref p 2))
+  (define (point-y-set! p y) (block-set! p 1 y)) )
+</enscript>
+
+
+==== move-memory!
+
+ [procedure] (move-memory! FROM TO [BYTES [FROM-OFFSET [TO-OFFSET]])
+
+Copies {{BYTES}} bytes of memory from {{FROM}} to {{TO}}.
+{{FROM}} and {{TO}} may be strings, primitive byte-vectors,
+SRFI-4 byte-vectors (see: @ref{Unit srfi-4}), memory mapped files, foreign
+pointers (as obtained from a call to {{foreign-lambda}}, for
+example) or locatives. if {{BYTES}} is not given and the size of the source
+or destination operand is known then the maximal number of bytes will
+be copied. Moving memory to the storage returned by locatives will cause havoc, 
+if the locative refers to containers of non-immediate data, like vectors
+or pairs.
+
+The additional fourth and fifth argument specify starting offsets 
+(in bytes) for the source and destination arguments.
+
+
+==== number-of-bytes
+
+ [procedure] (number-of-bytes BLOCK)
+
+Returns the number of bytes that the object {{BLOCK}} contains.
+{{BLOCK}} may be any non-immediate value.
+
+
+==== number-of-slots
+
+ [procedure] (number-of-slots BLOCK)
+
+Returns the number of slots that the object {{BLOCK}} contains.
+{{BLOCK}} may be a vector, record structure, pair or symbol.
+
+
+==== record-instance?
+
+ [procedure] (record-instance? X)
+
+Returns {{#t}} if {{X}} is an instance of a record type.
+See also: {{make-record-instance}}.
+
+
+==== record->vector
+
+ [procedure] (record->vector BLOCK)
+
+Returns a new vector with the type and the elements of the record {{BLOCK}}.
+
+
+
+=== Procedure-call- and variable reference hooks
+
+
+==== set-invalid-procedure-call-handler!
+
+ [procedure] (set-invalid-procedure-call-handler! PROC)
+
+Sets an internal hook that is invoked when a call to an object other than a procedure
+is executed at runtime. The procedure {{PROC}} will in that case be called
+with two arguments: the object being called and a list of the passed arguments.
+
+<enscript highlight=scheme>
+;;; Access sequence-elements as in ARC:
+
+(set-invalid-procedure-call-handler!
+  (lambda (proc args)
+    (cond [(string? proc) (apply string-ref proc args)]
+          [(vector? proc) (apply vector-ref proc args)]
+          [else (error "call of non-procedure" proc)] ) ) )
+
+("hello" 4)    ==>  #\o
+</enscript>
+
+This facility does not work in code compiled with the ''unsafe'' setting.
+
+
+==== unbound-variable-value
+
+ [procedure] (unbound-variable-value [X])
+
+Defines the value that is returned for unbound variables. Normally an error
+is signalled, use this procedure to override the check and return {{X}}
+instead. To set the default behavior (of signalling an error), call
+{{unbound-variable-value}} with no arguments.
+
+This facility does not work in code compiled with the ''unsafe'' setting.
+
+
+
+
+
+=== Magic
+
+
+==== object-become!
+
+ [procedure] (object-become! ALIST)
+
+Changes the identity of the value of the car of each pair in
+{{ALIST}} to the value of the cdr. Both values may not be immediate
+(i.e. exact integers, characters, booleans or the empty list).
+
+<enscript highlight=scheme>
+(define x "i used to be a string")
+(define y '#(and now i am a vector))
+(object-become! (list (cons x y)))
+x                                    ==> #(and now i am a vector)
+y                                    ==> #(and now i am a vector)
+(eq? x y)                            ==> #t
+</enscript>
+
+Note: this operation invokes a major garbage collection.
+
+The effect of using {{object-become!}} on evicted data (see {{object-evict}})
+is undefined.
+
+
+==== mutate-procedure
+
+ [procedure] (mutate-procedure OLD PROC)
+
+Replaces the procedure {{OLD}} with the result of calling the one-argument
+procedure {{PROC}}. {{PROC}} will receive a copy of {{OLD}} that will
+be identical in behaviour to the result of {{PROC}}:
+
+<enscript highlight=scheme>
+;;; Replace arbitrary procedure with tracing one:
+
+(mutate-procedure my-proc 
+  (lambda (new) 
+    (lambda args
+      (printf "~s called with arguments: ~s~%" new args)
+      (apply new args) ) ) )
+</enscript>
+
+
+Previous: [[Unit tcp]]
+
+Next: [[Interface to external functions and variables]]
+

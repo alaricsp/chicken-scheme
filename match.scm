@@ -2203,4 +2203,9 @@
       (##match#set-error-control (car arg))
       ##match#error-control) )
 
+(define (match-error-procedure . proc)
+  (if (pair? proc)
+    (##match#set-error (car proc))
+    ##sys#match-error) )
+
 (register-feature! 'match)

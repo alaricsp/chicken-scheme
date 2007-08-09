@@ -1,6 +1,6 @@
 ;;;; support.scm - Miscellaneous support code for the CHICKEN compiler
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -42,23 +42,23 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
-  foreign-type-table-size file-io-only banner custom-declare-alist parse-easy-ffi disabled-warnings
+  file-io-only banner custom-declare-alist disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
-  foreign-declarations block-compilation analysis-database-size line-number-database-size
+  foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size check-global-exports check-global-imports
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  dependency-list broken-constant-nodes inline-substitutions-enabled no-c-syntax-checks
+  dependency-list broken-constant-nodes inline-substitutions-enabled emit-syntax-trace-info
   always-bound-to-procedure block-variable-literal copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
-  direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string enable-sharp-greater-read-syntax
+  direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string
   expand-profile-lambda profile-lambda-list profile-lambda-index profile-info-vector-name
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call check-c-syntax
+  reorganize-recursive-bindings substitution-table simplify-named-call
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! finish-foreign-result compressable-literal csc-control-file
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
   constant? basic-literal? source-info->string import-table
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
@@ -74,11 +74,11 @@
   default-optimization-iterations chop-separator chop-extension follow-without-loop dump-exported-globals
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  lookup-exports-file
+  lookup-exports-file constant-declarations process-lambda-documentation
+  compiler-macro-table register-compiler-macro export-dump-hook export-import-hook
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
 
 
-(include "parameters")
 (include "tweaks")
 (include "banner")
 
@@ -122,9 +122,15 @@
 (set! ##sys#syntax-error-hook
   (lambda (msg . args)
     (let ([out (current-error-port)])
-      (fprintf out "Syntax error: ~a~%" msg) 
-      (for-each (lambda (x) (write x out) (newline out)) args)
+      (fprintf out "Syntax error: ~a~%~%" msg) 
+      (for-each (cut fprintf out "\t~s~%" <>) args)
+      (print-call-chain out 0 ##sys#current-thread "\n\tExpansion history:\n")
       (exit 70) ) ) )
+
+(set! syntax-error ##sys#syntax-error-hook)
+
+(define (emit-syntax-trace-info info cntr) 
+  (##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) )
 
 (define (map-llist proc llist)
   (let loop ([llist llist])
@@ -161,9 +167,6 @@
   (cond ((symbol? x) x)
 	((string? x) (string->symbol x))
 	(else (string->symbol (sprintf "~a" x))) ) )
-
-(define (flonum? x)
-  (and (number? x) (not (exact? x))) )
 
 (define (build-lambda-list vars argc rest)
   (let loop ((vars vars) (n argc))
@@ -339,6 +342,9 @@
 
 (define decompose-lambda-list ##sys#decompose-lambda-list)
 
+(define (process-lambda-documentation id doc)
+  #f)					; Hook this
+
 
 ;;; Profiling instrumentation:
 
@@ -444,45 +450,53 @@
   (let ((names '((captured . cpt) (assigned . set) (boxed . box) (global . glo) (assigned-locally . stl)
 		 (contractable . con) (standard-binding . stb) (foldable . fld) (simple . sim) (inlinable . inl)
 		 (side-effecting . sef) (collapsable . col) (removable . rem) (constant . con)
-		 (undefined . und) (replacing . rpg) (unused . uud) (extended-binding . xtb)
-		 (customizable . cst) (has-unused-parameters . hup) (boxed-rest . bxr) ) ) )
+		 (undefined . und) (replacing . rpg) (unused . uud) (extended-binding . xtb) (inline-export . ilx)
+		 (customizable . cst) (has-unused-parameters . hup) (boxed-rest . bxr) ) ) 
+	(omit #f))
     (lambda (db)
+      (unless omit
+	(set! omit 
+	  (append default-standard-bindings
+		  default-extended-bindings
+		  internal-bindings) ) )
       (##sys#hash-table-for-each
        (lambda (sym plist)
 	 (let ([val #f]
 	       [pval #f]
 	       [csites '()]
 	       [refs '()] )
-	   (write sym)
-	   (let loop ((es plist))
-	     (if (pair? es)
-		 (begin
-		   (case (caar es)
-		     ((captured assigned boxed global contractable standard-binding foldable assigned-locally
-		       side-effecting collapsable removable undefined replacing unused simple inlinable
-		       has-unused-parameters extended-binding customizable constant boxed-rest)
-		      (printf "\t~a" (cdr (assq (caar es) names))) )
-		     ((unknown)
-		      (set! val 'unknown) )
-		     ((value)
-		      (unless (eq? val 'unknown) (set! val (cdar es))) )
-		     ((potential-value)
-		      (set! pval (cdar es)) )
-		     ((replacable home contains contained-in use-expr closure-size rest-parameter
-		       o-r/access-count captured-variables explicit-rest)
-		      (printf "\t~a=~s" (caar es) (cdar es)) )
-		     ((references)
-		      (set! refs (cdar es)) )
-		     ((call-sites)
-		      (set! csites (cdar es)) )
-		     (else (bomb "Illegal property" (car es))) )
-		   (loop (cdr es)) ) ) )
-	   (cond [(and val (not (eq? val 'unknown)))
-		  (printf "\tval=~s" (cons (node-class val) (node-parameters val))) ]
-		 [pval (printf "\tpval=~s" (cons (node-class val) (node-parameters val)))] )
-	   (when (pair? refs) (printf "\trefs=~s" (length refs)))
-	   (when (pair? csites) (printf "\tcss=~s" (length csites)))
-	   (newline) ) )
+	   (unless (memq sym omit)
+	     (write sym)
+	     (let loop ((es plist))
+	       (if (pair? es)
+		   (begin
+		     (case (caar es)
+		       ((captured assigned boxed global contractable standard-binding foldable assigned-locally
+				  side-effecting collapsable removable undefined replacing unused simple inlinable inline-export
+				  has-unused-parameters extended-binding customizable constant boxed-rest)
+			(printf "\t~a" (cdr (assq (caar es) names))) )
+		       ((unknown)
+			(set! val 'unknown) )
+		       ((value)
+			(unless (eq? val 'unknown) (set! val (cdar es))) )
+		       ((potential-value)
+			(set! pval (cdar es)) )
+		       ((replacable home contains contained-in use-expr closure-size rest-parameter
+				    o-r/access-count captured-variables explicit-rest)
+			(printf "\t~a=~s" (caar es) (cdar es)) )
+		       ((references)
+			(set! refs (cdar es)) )
+		       ((call-sites)
+			(set! csites (cdar es)) )
+		       (else (bomb "Illegal property" (car es))) )
+		     (loop (cdr es)) ) ) )
+	     (cond [(and val (not (eq? val 'unknown)))
+		    (printf "\tval=~s" (cons (node-class val) (node-parameters val))) ]
+		   [(and pval (not (eq? pval 'unknown)))
+		    (printf "\tpval=~s" (cons (node-class pval) (node-parameters pval)))] )
+	     (when (pair? refs) (printf "\trefs=~s" (length refs)))
+	     (when (pair? csites) (printf "\tcss=~s" (length csites)))
+	     (newline) ) ) )
        db) ) ) )       
 
 
@@ -536,11 +550,14 @@
 		   (car x)
 		   (list (if (and (pair? arg) (eq? 'quote (car arg))) (cadr arg) arg))
 		   (map walk (cddr x)) ) ) )
-	       ((set! ##core#inline ##core#callunit) 
+	       ((##core#inline ##core#callunit) 
 		(make-node (car x) (list (cadr x)) (map walk (cddr x))) )
 	       ((##core#proc)
 		(make-node '##core#proc (list (cadr x) #t) '()) )
-	       ((##core#set!) (make-node 'set! (list (cadr x)) (map walk (cddr x))))
+	       ((set! ##core#set!)
+		(make-node
+		 'set! (list (cadr x))
+		 (map walk (cddr x))))
 	       ((##core#foreign-callback-wrapper)
 		(let ([name (cadr (second x))])
 		  (make-node
@@ -553,8 +570,7 @@
 	       ((##core#app)
 		(make-node '##core#call '(#t) (map walk (cdr x))) )
 	       (else
-		(receive
-		    (name ln) (get-line-2 x)
+		(receive (name ln) (get-line-2 x)
 		  (make-node
 		   '##core#call
 		   (list (cond [(memq name always-bound-to-procedure)
@@ -752,19 +768,29 @@
 
 ;;; Some safety checks and database dumping:
 
+(define (export-dump-hook db file) (void))
+
 (define (dump-exported-globals db file)
   (unless block-compilation
     (with-output-to-file file
       (lambda ()
-	(##sys#hash-table-for-each
-	 (lambda (sym plist)
-	   (when (and (assq 'global plist) 
-		      (assq 'assigned plist)
-		      (or (and export-list (memq sym export-list))
-			  (not (memq sym block-globals)) ) )
-	     (write sym) 
-	     (newline) ) )
-	 db) ) ) ) )
+	(let ((exports '()))
+	  (##sys#hash-table-for-each
+	   (lambda (sym plist)
+	     (when (and (assq 'global plist) 
+			(assq 'assigned plist)
+			(or (and export-list (memq sym export-list))
+			    (not (memq sym block-globals)) ) )
+	       (set! exports (cons sym exports)) ) )
+	   db)
+	  (for-each 
+	   (lambda (s)
+	     (write s)
+	     (newline) )
+	   (sort exports
+		 (lambda (s1 s2)
+		   (string<? (##sys#slot s1 1) (##sys#slot s2 1)))) )
+	  (export-dump-hook db file) ) ) ) ) )
 
 (define (dump-undefined-globals db)
   (##sys#hash-table-for-each
@@ -800,14 +826,21 @@
 		(compiler-warning 'var "variable `~s' used but not imported" sym) ) ) ) ) )
    db) )
 
+(define (export-import-hook x id) (void))
+
 (define (lookup-exports-file id)
   (and-let* ((xfile (##sys#resolve-include-filename 
 		     (string-append (->string id) ".exports")
 		     #t #t) )
 	     ((file-exists? xfile)) )
     (when verbose-mode 
-      (printf "loading ~a ...~%" xfile) )
-    (for-each (cut ##sys#hash-table-set! import-table <> id) (read-file xfile)) ) )
+      (printf "loading exports file ~a ...~%" xfile) )
+    (for-each
+     (lambda (exp)
+       (if (symbol? exp)
+	   (##sys#hash-table-set! import-table exp id) 
+	   (export-import-hook exp id) ) )
+     (read-file xfile)) ) )
 
 
 ;;; Compute general statistics from analysis database:
@@ -894,7 +927,7 @@
 	     [(int unsigned-int short unsigned-short byte unsigned-byte int32 unsigned-int32)
 	      (if unsafe param `(##sys#foreign-fixnum-argument ,param))]
 	     [(float double number) (if unsafe param `(##sys#foreign-flonum-argument ,param))]
-	     [(pointer byte-vector scheme-pointer) ; pointer is DEPRECATED
+	     [(pointer byte-vector blob scheme-pointer) ; pointer and byte-vector are DEPRECATED
 	      (let ([tmp (gensym)])
 		`(let ([,tmp ,param])
 		   (if ,tmp
@@ -902,7 +935,7 @@
 			    tmp
 			    `(##sys#foreign-block-argument ,tmp) )
 		       '#f) ) ) ]
-	     [(nonnull-pointer nonnull-scheme-pointer nonnull-byte-vector) ; nonnull-pointer is DEPRECATED
+	     [(nonnull-pointer nonnull-scheme-pointer nonnull-blob nonnull-byte-vector) ; nonnull-pointer and nonnull-blob are DEPRECATED
 	      (if unsafe
 		  param
 		  `(##sys#foreign-block-argument ,param) ) ]
@@ -926,7 +959,7 @@
 	      (if unsafe
 		  param
 		  `(##sys#foreign-unsigned-integer-argument ,param) ) ]
-	     [(c-pointer)
+	     [(c-pointer c-string-list c-string-list*)
 	      (let ([tmp (gensym)])
 		`(let ([,tmp ,param])
 		   (if ,tmp
@@ -971,6 +1004,8 @@
 		       [('nonnull-instance . _)
 			`(slot-ref ,param 'this) ]
 		       [('const t) (repeat t)]
+		       [('enum _) 
+			(if unsafe param `(##sys#foreign-integer-argument ,param))]
 		       [((or 'nonnull-pointer 'nonnull-c-pointer) . _)
 			`(##sys#foreign-pointer-argument ,param) ]
 		       [_ param] ) ]
@@ -1015,7 +1050,8 @@
        ((char int short bool void unsigned-short scheme-object unsigned-char unsigned-int byte unsigned-byte
 	      int32 unsigned-int32) 
 	0)
-       ((c-string nonnull-c-string c-pointer nonnull-c-pointer symbol c-string* nonnull-c-string*)
+       ((c-string nonnull-c-string c-pointer nonnull-c-pointer symbol c-string* nonnull-c-string*
+		  c-string-list c-string-list*)
 	(words->bytes 3) )
        ((unsigned-integer long integer unsigned-long integer32 unsigned-integer32)
 	(words->bytes 4) )
@@ -1043,7 +1079,7 @@
        ((char int short bool unsigned-short unsigned-char unsigned-int long unsigned-long byte unsigned-byte
 	      c-pointer pointer nonnull-c-pointer unsigned-integer integer float c-string symbol
 	      scheme-pointer nonnull-scheme-pointer int32 unsigned-int32 integer32 unsigned-integer32
-	      nonnull-c-string c-string* nonnull-c-string*) ; pointer and nonnull-pointer are DEPRECATED
+	      nonnull-c-string c-string* nonnull-c-string* c-string-list c-string-list*) ; pointer and nonnull-pointer are DEPRECATED
 	(words->bytes 1) )
        ((double number)
 	(words->bytes 2) )
@@ -1068,10 +1104,12 @@
     [(c-string*) `(##sys#peek-and-free-c-string ,body '0)]
     [(nonnull-c-string*) `(##sys#peek-and-free-nonnull-c-string ,body '0)]
     [(symbol) `(##sys#intern-symbol (##sys#peek-c-string ,body '0))]
+    [(c-string-list) `(##sys#peek-c-string-list ,body '#f)]
+    [(c-string-list*) `(##sys#peek-and-free-c-string-list ,body '#f)]
     [else
      (match type
        [((or 'instance 'instance-ref) cname sname)
-	`(##tinyclos#make-instance-from-pointer ,body ,sname) ]
+	`(##tinyclos#make-instance-from-pointer ,body ,sname) ] ;XXX eggified, needs better treatment...
        [('nonnull-instance cname sname)
 	`(make ,sname 'this ,body) ]
        [_ body] ) ] ) )
@@ -1218,19 +1256,12 @@ Usage: chicken FILENAME OPTION ...
   File and pathname options:
 
     -output-file FILENAME       specifies output-filename, default is 'out.c'
-    -split NUMBER               split the output into smaller files
-    -split-level NUMBER         how hard the compiler should try partitioning the output
     -include-path PATHNAME      specifies alternative path for included files
     -to-stdout                  write compiled file to stdout instead of file
 
   Language options:
 
     -feature SYMBOL             register feature identifier
-    -ffi-define SYMBOL          define preprocessor macro for ``easy'' FFI parser
-    -ffi-include-path PATH      set include path for ``easy'' FFI parser
-    -ffi-no-include             don't parse include files when encountered by the FFI parser
-    -ffi                        parse and compile C/C++ code and generate Scheme bindings
-    -ffi-parse                  parse C/C++ code without including it
 
   Syntax related options:
 
@@ -1256,6 +1287,7 @@ Usage: chicken FILENAME OPTION ...
     -no-lambda-info             omit additional procedure-information
     -emit-exports FILENAME      write exported toplevel variables to FILENAME
     -check-imports              look for undefined toplevel variables
+    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 
@@ -1295,7 +1327,6 @@ Usage: chicken FILENAME OPTION ...
 
     -debug MODES                display debugging output for the given modes
     -compress-literals NUMBER   compile literals above threshold as strings
-    -disable-c-syntax-checks    disable syntax check of C code fragments
     -unsafe-libraries           marks the generated file as being linked
                                 with the unsafe runtime system
     -raw                        do not generate implicit init- and exit code			       
@@ -1361,7 +1392,7 @@ EOF
 (define (display-real-name-table)
   (##sys#hash-table-for-each
    (lambda (key val)
-     (printf "~S ~S~%" key val) )
+     (printf "~S\t~S~%" key val) )
    real-name-table) )
 
 (define (source-info->string info)
@@ -1401,55 +1432,14 @@ EOF
 
 ;;; "#> ... <#" syntax:
 
-(define (enable-sharp-greater-read-syntax)
-  (set! ##sys#user-read-hook
-    (let ([old-hook ##sys#user-read-hook])
-      (lambda (char port)
-	(if (char=? #\> char)	       
-	    (let ([_ (read-char port)]		; swallow #\>
-		  [decl #f]
-		  [parse #f]
-		  [exec #f] )
-	      (case (peek-char port)
-		[(#\!)
-		 (read-char port)
-		 (set! parse #t)
-		 (set! decl #t) ]
-		[(#\?)
-		 (read-char port)
-		 (set! parse #t) ]
-		[(#\:)
-		 (read-char port)
-		 (set! exec #t) ]
-		[(#\()
-		 (let ([head (read port)])
-		   (match head
-		     [_ (for-each
-			 (lambda (t)
-			   (case t
-			     [(declare) (set! decl #t)]
-			     [(parse) (set! parse #t)]
-			     [(execute) (set! exec #t)]
-			     [else (quit "invalid tag in `#>(...) ...<#' form" t)] ) )
-			 head) ] ) ) ]
-		[else (set! decl #t)] )
-	      (let ([text (scan-sharp-greater-string port)])
-		(check-c-syntax text)
-		`(begin
-		   ,@(if decl
-			 `((declare (foreign-declare ,text)))
-			 '() )
-		   ,@(if parse
-			 `((declare (foreign-parse ,text)))
-			 '() )
-		   ,@(if exec
-			 (let ([tmp (gensym 'code_)])
-			   `((declare 
-			       (foreign-declare
-				,(sprintf "static C_word ~A() { ~A; return C_SCHEME_UNDEFINED; }\n" tmp text) ) )
-			     (##core#inline ,(symbol->string tmp)) ) )
-			 '() ) ) ) )
-	    (old-hook char port) ) ) ) ) )
+(set! ##sys#user-read-hook
+  (let ([old-hook ##sys#user-read-hook])
+    (lambda (char port)
+      (if (char=? #\> char)	       
+	  (let* ((_ (read-char port))		; swallow #\>
+		 (text (scan-sharp-greater-string port)))
+	    `(declare (foreign-declare ,text)) )
+	  (old-hook char port) ) ) ) )
 
 (define (scan-sharp-greater-string port)
   (let ([out (open-output-string)])
@@ -1470,8 +1460,6 @@ EOF
 	      [else
 	       (write-char c out)
 	       (loop) ] ) ) ) ) )
-
-(enable-sharp-greater-read-syntax)
 
 
 ;;; Custom declarations:
@@ -1505,3 +1493,27 @@ EOF
 	  (close-output-port csc-control-file)
 	  (old) ) ) ) )
   (fprintf csc-control-file "~S~%" item) )
+
+
+;;; Compiler macro registration
+
+(define (register-compiler-macro name llist body)
+  (unless compiler-macro-table
+    (set! compiler-macro-table (make-vector 301 '())) )
+  (call/cc
+   (lambda (return)
+     (let* ((wvar (gensym))
+	    (llist
+	     (let loop ((llist llist))
+	       (cond ((not (pair? llist)) llist)
+		     ((eq? #:whole (car llist))
+		      (unless (pair? (cdr llist))
+			(return #f) )
+		      (set! wvar (cadr llist))
+		      (cddr llist) )
+		     (else (cons (car llist) (loop (cdr llist)))) ) ) ) )
+       (##sys#hash-table-set!
+	compiler-macro-table
+	name
+	(eval `(lambda (,wvar) (apply (lambda ,llist ,@body) (cdr ,wvar))) ) )
+       #t) ) ) )

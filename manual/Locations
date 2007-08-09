@@ -1,0 +1,79 @@
+[[tags: manual]]
+
+[[toc:]]
+
+
+== Locations
+
+It is also possible to define variables containing unboxed C data,
+so called ''locations''. It should be noted that locations may
+only contain simple data, that is: everything that fits into a
+machine word, and double-precision floating point values. 
+
+
+
+=== define-location
+
+ [syntax] (define-location NAME TYPE [INIT])
+
+Identical to {{(define-external NAME TYPE [INIT])}}, but the variable
+is not accessible from outside of the current compilation unit (it is 
+declared {{static}}).
+
+=== let-location
+
+ [syntax] (let-location ((NAME TYPE [INIT]) ...) BODY ...)
+
+Defines a lexically bound location.
+
+=== location
+
+ [syntax] (location NAME)
+ [syntax] (location X)
+
+This form returns a pointer object
+that contains the address of the variable {{NAME}}. 
+If the argument to {{location}} is not a location defined by {{define-location}},
+{{define-external}} or {{let-location}}, then
+
+ (location X)
+
+is essentially equivalent to 
+
+ (make-locative X)
+
+(See the manual chapter or {{locatives}} for more information about
+locatives.
+
+Note that {{(location X)}} may be abbreviated as {{#$X}}.
+
+<enscript highlight=scheme>
+(define-external foo int)
+((foreign-lambda* void (((pointer int) ip)) "*ip = 123;") 
+  (location foo))
+foo                                                                               ==> 123
+</enscript>
+
+This facility is especially useful in situations, where a C function
+returns more than one result value:
+
+<enscript highlight=scheme>
+#>
+#include <math.h>
+<#
+
+(define modf
+  (foreign-lambda double "modf" double (pointer double)) )
+
+(let-location ([i double])
+  (let ([f (modf 1.99 (location i))])
+    (print "i=" i ", f=" f) ) )
+</enscript>
+
+
+{{location}} returns a value of type {{c-pointer}}, when given
+the name of a callback-procedure defined with {{define-external}}.
+
+Previous: [[Callbacks]]
+
+Next: [[Other support procedures]]

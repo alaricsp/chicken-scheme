@@ -1,6 +1,6 @@
 ;;;; optimizer.scm - The CHICKEN Scheme compiler (optimizations)
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -41,12 +41,12 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home decompose-lambda-list external-to-pointer
-  foreign-type-table-size copy-node! export-list inline-list not-inline-list
+  copy-node! export-list inline-list not-inline-list
   unit-name insert-timer-checks used-units external-variables
   debug-info-index debug-info-vector-name profile-info-vector-name
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size 
+  target-heap-size target-stack-size constant-declarations
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
@@ -58,7 +58,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call compiler-warning
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! expand-foreign-callback-lambda* debug-lambda-list debug-variable-list debugging
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -79,7 +79,8 @@
   (match-error-control #:fail) )
 
 (include "tweaks")
-(include "parameters")
+
+(define-constant maximal-number-of-free-variables-for-liftable 16)
 
 
 ;;; Scan toplevel expressions for assignments:
@@ -304,6 +305,22 @@
 			   (debugging 'o "contracted procedure" var)
 			   (touch)
 			   (walk (inline-lambda-bindings llist args (first (node-subexpressions lval)) #f)) ) ]
+			[(memq var constant-declarations)
+			 (or (and-let* ((k (car args))
+					((eq? '##core#variable (node-class k)))
+					(kvar (first (node-parameters k)))
+					(lval (and (not (test kvar 'unknown)) (test kvar 'value))) 
+					(eq? '##core#lambda (node-class lval))
+					(llist (third (node-parameters lval)))
+					((or (test (car llist) 'unused)
+					     (and (not (test (car llist) 'references))
+						  (not (test (car llist) 'assigned)))))
+					((not (any (cut expression-has-side-effects? <> db) (cdr args) ))))
+			       (debugging 'x "removed call to constant procedure with unused result" var)
+			       (make-node
+				'##core#call '(#t)
+				(list k (make-node '##core#undefined '() '())) ) ) 
+			     (walk-generic n class params subs)) ]
 			[(and lval (eq? '##core#lambda (node-class lval)))
 			 (let* ([lparams (node-parameters lval)]
 				[llist (third lparams)] )
@@ -835,6 +852,10 @@
 
 (define (simplify-named-call db params name cont class classargs callargs)
   (define (test sym prop) (get db sym prop))
+  (define (defarg x)
+    (cond ((symbol? x) (varnode x))
+	  ((and (pair? x) (eq? 'quote (car x))) (qnode (cadr x)))
+	  (else (qnode x))))
 
   (case class
 
@@ -877,7 +898,7 @@
     ((3) ; classargs = (<var>)
      (and inline-substitutions-enabled
 	  (null? callargs)
-	  (test name 'standard-binding)
+	  (or (test name 'standard-binding) (test name 'extended-binding))
 	  (make-node '##core#call '(#t) (list cont (varnode (first classargs)))) ) )
 
     ;; (<op> a b) -> (<primitiveop> a (quote <i>) b)
@@ -1199,6 +1220,32 @@
 			'##core#inline_allocate
 			(list (second classargs) w)
 			callargs) ) ) ) ) ) )
+
+    ;; (<op> <arg1> ... <argN>) -> (<primitiveop> ...)
+    ;; (<op> <arg1> ... <argN-I> <defargN-I>) -> (<primitiveop> ...)
+    ;; - default args in classargs should be either symbol or (optionally) 
+    ;;   quoted literal
+    ((23) ; classargs = (<minargc> <primitiveop> <literal1>|<varable1> ...)
+     (and inline-substitutions-enabled
+	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (let ([argc (first classargs)])
+	    (and (>= (length callargs) (first classargs))
+		 (make-node 
+		  '##core#call (list #t (second classargs))
+		  (cons*
+		   (varnode (second classargs))
+		   cont
+		   (let-values (((req opt) (split-at callargs argc)))
+		     (append
+		      req
+		      (let loop ((ca opt) 
+				 (da (cddr classargs)) )
+			(cond ((null? ca)
+			       (if (null? da)
+				   '()
+				   (cons (defarg (car da)) (loop '() (cdr da))) ) )
+			      ((null? da) '())
+			      (else (cons (car ca) (loop (cdr ca) (cdr da))))))))))))))
 
     (else (bomb "bad type (optimize)")) ) )
 

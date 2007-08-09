@@ -1,0 +1,232 @@
+Copyright (c) 2006 by Brandon J. Van Every under MIT-style license.
+See LICENSE section at end of file for full license text.
+
+
+How to build Chicken Scheme using CMake
+---------------------------------------
+
+last updated November 21, 2006
+
+If in trouble, please contact me through the Chicken mailing list.  You can subscribe to the list from the Chicken homepage, http://call-with-current-continuation.org.
+
+
+
+GENERAL INSTRUCTIONS SUMMARY
+---------------------------- 
+
+If you are building from a distribution archive, i.e. you downloaded chicken-X.YY.tar.gz or chicken-X.YY.zip, then you need to:
+
+- install a C compiler
+- install CMake
+- run CMakeSetup on Windows, or run CCMake on Unix, Cygwin, and MacOS
+- build Chicken using the native build system that CMake generated
+  for your platform, i.e. a Makefile or .sln file or whatever.
+- test your new Chicken installation
+- Enjoy!
+
+That's it.  No Chicken required to make a Chicken!  For an experienced CMake user, installing Chicken from a distribution archive is trivial.  If it's anything less than trivial, please report bugs on the Chicken mailing list.  It's supposed to be the most pain free build you can imagine.
+
+If you want to build straight from the Darcs repository at at http://galinha.ucpel.tche.br/chicken , you need a few more steps:
+
+- install a C compiler
+- install Chicken 2.3 or better
+- install Darcs
+- install CMake
+- run CMakeSetup on Windows, or run CCMake on Unix, Cygwin, and MacOS
+- build Chicken using the native build system that CMake generated
+  for your platform, i.e. a Makefile or .sln file or whatever.
+- test your new Chicken installation
+- Enjoy!
+
+
+
+BENEFITS OF CMake
+-----------------
+
+A CMake build is no more difficult than running a GNU Autoconf ./configure script.  CMake is designed to replace Autoconf.  It provides the same functionality of querying the system and available libraries.  It can generate Unix makefiles, and unlike Autoconf, it can also generate Visual C++ project files, Windows nmake files, Borland makefiles, and Watcom makefiles.  CMake is a true cross-platform build tool, not just a Unix build tool.  For full details on CMake and supported platforms, look at http://www.cmake.org .
+
+These instructions can, in principle, be used to build Chicken with any compiler on any platform that CMake supports.  In practice, the build is known to work on: MinGW using MSYS generation, Visual Studio .NET 2003, Cygwin, Linux, and Mac OS X.  The build is aggressive about testing for system-specific .h files and libraries, so untried platforms may build just fine.  If they don't, the changes are likely to be trivial.  Please report any problems to the Chicken mailing list, so they can be fixed and incorporated.
+
+
+
+INSTALL a C compiler
+--------------------
+
+Any reasonable, recent C compiler should work.  GCC, VC++, MinGW, and Cygwin get regular testing and are all known to work.
+
+
+
+INSTALL Chicken 2.3 or better
+-----------------------------
+
+You do not need to install a Chicken to build from a distribution archive, i.e. a Chicken-X.YY.tar.gz or Chicken-X.YY.zip file.  The distribution archives already contain .c files necessary to boot Chicken on any C compiler or operating system.  
+
+If you want to build from the Darcs repository, you need to install a Chicken first.  You can use an older Chicken archive distribution or binary for this purpose.  Chicken 2.3 or later is required.  If you try to use an earlier Chicken, CMake will complain and the build will not proceed.
+
+The build is two-stage, so a sub-optimal Chicken is fine.  First the old Chicken is used to build a static boot compiler, called chicken-boot.  Then chicken-boot is used to build the final compiler.  That way, the final compiler uses the most current code.
+
+The Chicken compiler you use for bootstrapping does not need to use the same C compiler or runtime as the final Chicken compiler you're building.  For instance, I canonically use the MSVC Chicken 2.3 binary to build all my MinGW Chicken compilers.
+
+However, the Chicken bootstrap compiler must understand the pathnames of your build environment.  In particular, legacy MSVC Chicken compiler binaries do not understand Cygwin's Unix-style pathnames, and consequently can't be used to build Cygwin Chicken compilers.  MinGW and Cygwin compilers both understand Unix pathnames, and in principle could be used to build each other.  In practice, the MSYS shell and the Cygwin shell have different conventions for Windows drive letters, and totally different installations to simulate the /usr directory, so it's not gonna work.  The bottom line is, you'll need a Cygwin Chicken compiler to build a Cygwin Chicken compiler.
+
+MinGW and MSVC Chicken compilers can build each other because they both understand native Windows paths.  YMMV for other OS and compiler permutations.  Remember in general:
+
+  - the C compilers need not be the same
+  - the path conventions must be the same
+
+If your OS has Chicken 2.3 available as a package in a distribution, use that.  That saves you the bother of compiling anything.  As of this writing, Debian is known to have Chicken 2.3 in the "testing" distribution, but not the "stable" distribution.  YMMV with other distributions and OSes.
+
+If you're on Windows, grab the Windows binary from the Chicken homepage and use that.  After unpacking, type "win-install" on the command line.  It'll bug you about how to install it.
+
+Otherwise, grab a so-called "tarball" from the Chicken homepage and build it.  "tarballs" are released with a bunch of pre-generated .c files, so that you don't need Chicken to build it.  You just need a C compiler and the ability to run ./configure.  Or for VC++ you can type "vcbuild" on a command line, but you shouldn't need to that because you can just grab a Windows binary as above.  If a Chicken tarball won't build from sources, you have a problem.  Post to the Chicken list about it.
+
+After you have installed your old Chicken, go to some directory other than where you unpacked or built the thing, to make sure your PATHs are set up properly.  Type "chicken -version".  You should get something like:
+
+ )   ___
+(__/_____) /)   ,    /)
+  /       (/      _ (/_   _ __
+ /        / )__(_(__/(___(/_/ (_
+(______)
+Version 2, Build 3 - windows-msvc-x86 - [ dload ptables ]
+(c)2000-2005 Felix L. Winkelmann
+
+
+
+INSTALL Darcs
+-------------
+
+You do not need Darcs to build from a distribution archive, i.e. a Chicken-X.YY.tar.gz or Chicken-X.YY.zip file.  The distribution archives already contains all the Scheme and .c source files you need to build Chicken on any C compiler or operating system.  Darcs is for people who want the absolute bleeding edge of Chicken development, or who are actively developing Chicken themselves.
+
+Goto http://www.darcs.net/ and grab a precompiled binary for your platform.  Again, if you've got packages and distribution, use 'em.  Darcs has its own learning curve, but obtaining a Chicken repository is easy.  Goto your favorite command line and type:
+
+  mkdir chicken
+  cd chicken
+  darcs get http://galinha.ucpel.tche.br/chicken
+
+This will populate your directory with a full working repository.
+
+
+
+INSTALL CMake
+-------------
+
+Goto http://www.cmake.org download section, grab CMake for your platform, and install it.  Alternately, if your OS has a packaging and distribution system (i.e. RedHat, Debian, Cygwin, etc.) you can probably obtain it that way.  Note that sometimes the packaged distributions aren't as current as what's available on the CMake website.  If your CMake isn't recent enough, the build will complain and notify you.
+
+
+
+BUILDING with CMakeSetup on Windows
+-----------------------------------
+
+CMakeSetup is the GUI front-end for CMake on Windows.  It is appropriate for VC++ and MinGW builds.  If you're doing a Cygwin build, use CCMake instead.  Cygwin has a CCMake built specifically for it.
+
+It is best to use the GUI for your build.  Straight usage of CMake from the command line is possible, but it is not the expected case use.  The command line options are somewhat lacking compared to what's available from the GUI.
+
+It is adviseable to perform so-called "out of directory" builds.  The source files live in a source directory, and the build happens in a separate destination directory.  That way, if your build dies and you need to start over, your source tree won't be contaminated.
+
+Open CMakeSetup from the "Start.. Programs.. CMake" menu.  You don't have to be in any particular directory or shell.  A window pops up.  Fill out the fields:
+
+  "Where is the source code:" C:\src\chicken
+  "Where to build the binaries:" C:\dest\chicken
+
+Now hit "Configure".  A dialog box will ask you to Select the Generator.  Choose any generator you wish and hit OK.
+
+Note that if you're building with Microsoft's free downloadable compilers, they don't have Visual Studio development environments, so you can't use .sln files with them.  Consequently, you're going to want "NMake makefiles" generation.  Can't remember if the free MS compilers typically have nmake.  The Platform SDK definitely does, and perhaps you can obtain nmake separately.  I don't test on nmake but it should work fine, since I do test on Visual Studio .NET 2003.
+
+Note that MinGW makefiles, MSYS makefiles, and Unix makefiles are all distinct.  If you typically use MinGW under a MSYS shell, then use "MSYS makefiles".  If you typically use MinGW with no shell, but from a plain jane Windows command prompt, then use "MinGW makefiles".  "Unix makefiles" won't detect your installed MSYS environment.  It is intended for actual Unix systems or workalikes, such as Cygwin.
+
+  You now have the opportunity to change various settings if you wish, such as the CMAKE_INSTALL_PREFIX.  This is the directory that Chicken will eventually be installed in after it is built.  The default is X:\Program Files\Chicken, where "X" is the drive your OS is installed on.  Uncommitted settings appear in red.  Once you've changed what you like, hit "Configure" again.  Now the settings will change to grey and the message "Configuring done" will appear in the status bar.  Hit "OK" to exit CMakeSetup.
+
+You should now have a bunch of files in your C:\dest\chicken directory.  If you built .sln files for Visual Studio, click on it and do the rest of your build from within VS.  You'll have projects for everything and it should be straightforward.  If you built nmake files, drop to a command prompt and type "nmake".  If you built MSYS makefiles, open a MSYS shell and type "make".
+
+If everything builds, then install your results.  Under VS, run the "INSTALL" project.  For nmake, type "nmake install".  For MSYS, type "make install".
+
+Now put Chicken in your PATH.  Right click on "My Computer."  Select "Properties... Advanced... Environment Variables...."  Under "System Variables," select "Path" and click "Edit...."  Add the following to the end of your path:
+
+  ;C:\Program Files\Chicken\bin
+
+Note the ; separator.
+
+
+
+BUILDING with CCMake on Unix, Cygwin, and MacOS
+-----------------------------------------------
+
+CCMake is the GUI front-end for CMake on Unix-like systems.  It stands for "Curses CMake."  That's how you remember that there are 2 C's.
+
+It is best to use the GUI for your build.  Straight usage of CMake from the command line is possible, but it is not the expected case use.  The command line options are somewhat lacking compared to what's available from the GUI.
+
+It is adviseable to perform so-called "out of directory" builds.  The source files live in a source directory, and the build happens in a separate destination directory.  That way, if your build dies and you need to start over, your source tree won't be contaminated.
+
+You have to start in your destination directory, and provide the path to your source directory.  At a shell prompt, type:
+
+  mkdir -p dest/chicken
+  cd dest/chicken
+  ccmake /path/to/src/chicken
+
+CCMake will start up and assume a "Unix makefile" generator.  It is technically possible to specify other generators on the command line with the -G option, but I've never tried this, nor seen a need.
+
+You now have the opportunity to change various settings if you wish, such as the CMAKE_INSTALL_PREFIX.  This is the directory that Chicken will eventually be installed in after it is built.  The default is /usr/local.  Once you've changed what you like, press [c] to Configure.  If configuration goes ok, you'll be given a new option, press [g] to Generate.  If Generation is successful, CCMake exits and you're done.
+
+You should now have a bunch of files in your current directory, dest/chicken.  Type "make".  If it goes well, type "make install".
+
+Now put Chicken in your PATH.  This is done in various ways on various Unixes.  If you took the default install prefix of /usr/local, then Chicken will already be in your PATH.
+
+
+
+Building with wxWindows version of CMakeSetup
+---------------------------------------------
+
+There's an experimental version of CMakeSetup using wxWindows widgets available on Linux and MacOS.  I'm not sure how it is obtained, or if it works.  Caveat Emptor.
+
+
+
+TEST YOUR Chicken INSTALLATION
+------------------------------
+
+Open a new shell or command prompt.  Change to any directory other than where you built or installed Chicken, to make sure that your PATH is set up correctly.  Type:
+
+  chicken -version
+
+You should see a banner like:
+
+  ___| |    _)      |
+ |     __ \  |  __| |  /  _ \ __ \
+ |     | | | | (      <   __/ |   |
+\____|_| |_|_|\___|_|\_\\___|_|  _|
+
+Version 2, Build 424 - windows-mingw32-x86 - [ dload ptables applyhook ]
+(c)2000-2006 Felix L. Winkelmann
+
+
+[TODO: HOW ABOUT SOME MORE STRINGENT TESTS?]
+
+
+ENJOY!
+------
+
+How to enjoy?  Well, myself, I'm moving on to OpenGL support after this.  This is all part of my master plan to conquer the game industry.  If you're interested in that, send e-mail to the Chicken list.  Wouldn't a fullblown 3D demo instead of a mere ASCII banner be cool?
+
+
+####################################################################
+#   LICENSE                                                        #
+####################################################################
+
+Copyright (c) 2006 by Brandon J. Van Every
+ 
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+ 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.

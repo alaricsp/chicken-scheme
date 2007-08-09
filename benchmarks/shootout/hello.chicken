@@ -1,3 +1,0 @@
-(declare (fixnum) (disable-interrupts))
-
-(display "hello world\n")

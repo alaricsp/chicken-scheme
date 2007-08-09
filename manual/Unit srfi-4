@@ -1,0 +1,162 @@
+[[tags: manual]]
+[[toc:]]
+
+== Unit srfi-4
+
+Homogeneous numeric vectors, see the documentation for [[http://srfi.schemers.org/srfi-4/srfi-4.html|SRFI-4]]
+64-bit integer vectors ({{u64vector}} and {{s64vector}} are not supported.
+
+The basic constructor procedures for number vectors are extended to allow allocating the storage in non garbage
+collected memory:
+
+=== make-XXXvector
+
+ [procedure] (make-XXXvector SIZE [INIT NONGC FINALIZE])
+
+Creates a SRFI-4 homogenous number vector of length {{SIZE}}. If {{INIT}} is given, it specifies the initial
+value for each slot in the vector. The optional arguments {{NONGC}} and {{FINALIZE}} define whether the
+vector should be allocated in a memory area not subject to garbage collection and whether the associated storage
+should be automatically freed (using finalization) when there are no references from Scheme variables and data.
+{{NONGC}} defaults to {{#f}} (the vector will be located in normal garbage collected memory) and
+{{FINALIZE}} defaults to  {{#t}}. Note that the {{FINALIZE}} argument is only used when {{NONGC}}
+is true.
+
+
+Additionally, the following procedures are provided:
+
+=== u8vector->blob
+=== s8vector->blob
+=== u16vector->blob
+=== s16vector->blob
+=== u32vector->blob
+=== s32vector->blob
+=== f32vector->blob
+=== f64vector->blob
+=== u8vector->blob/shared
+=== s8vector->blob/shared
+=== u16vector->blob/shared
+=== s16vector->blob/shared
+=== u32vector->blob/shared
+=== s32vector->blob/shared
+=== f32vector->blob/shared
+=== f64vector->blob/shared
+
+ [procedure] (u8vector->blob U8VECTOR)
+ [procedure] (s8vector->blob S8VECTOR)
+ [procedure] (u16vector->blob U16VECTOR)
+ [procedure] (s16vector->blob S16VECTOR)
+ [procedure] (u32vector->blob U32VECTOR)
+ [procedure] (s32vector->blob S32VECTOR)
+ [procedure] (f32vector->blob F32VECTOR)
+ [procedure] (f64vector->blob F64VECTOR)
+ [procedure] (u8vector->blob/shared U8VECTOR)
+ [procedure] (s8vector->blob/shared S8VECTOR)
+ [procedure] (u16vector->blob/shared U16VECTOR)
+ [procedure] (s16vector->blob/shared S16VECTOR)
+ [procedure] (u32vector->blob/shared U32VECTOR)
+ [procedure] (s32vector->blob/shared S32VECTOR)
+ [procedure] (f32vector->blob/shared F32VECTOR)
+ [procedure] (f64vector->blob/shared F64VECTOR)
+
+Each of these procedures return the contents of the given vector as a
+'packed' blob. The byte order in that vector is platform-dependent
+(for example little-endian on an '''Intel''' processor). The {{/shared}}
+variants return a blob that shares memory with the contents of the vector.
+
+
+=== blob->u8vector
+=== blob->s8vector
+=== blob->u16vector
+=== blob->s16vector
+=== blob->u32vector
+=== blob->s32vector
+=== blob->f32vector
+=== blob->f64vector
+=== blob->u8vector/shared
+=== blob->s8vector/shared
+=== blob->u16vector/shared
+=== blob->s16vector/shared
+=== blob->u32vector/shared
+=== blob->s32vector/shared
+=== blob->f32vector/shared
+=== blob->f64vector/shared
+
+ [procedure] (blob->u8vector BLOB)
+ [procedure] (blob->s8vector BLOB)
+ [procedure] (blob->u16vector BLOB)
+ [procedure] (blob->s16vector BLOB)
+ [procedure] (blob->u32vector BLOB)
+ [procedure] (blob->s32vector BLOB)
+ [procedure] (blob->f32vector BLOB)
+ [procedure] (blob->f64vector BLOB)
+ [procedure] (blob->u8vector/shared BLOB)
+ [procedure] (blob->s8vector/shared BLOB)
+ [procedure] (blob->u16vector/shared BLOB)
+ [procedure] (blob->s16vector/shared BLOB)
+ [procedure] (blob->u32vector/shared BLOB)
+ [procedure] (blob->s32vector/shared BLOB)
+ [procedure] (blob->f32vector/shared BLOB)
+ [procedure] (blob->f64vector/shared BLOB)
+
+Each of these procedures return a vector where the argument
+{{BLOB}} is taken as a 'packed' representation of the contents
+of the vector. The {{/shared}} variants return a vector that
+shares memory with the contents of the blob.
+
+
+=== subu8vector
+=== subu16vector
+=== subu32vector
+=== subs8vector
+=== subs16vector
+=== subs32vector
+=== subf32vector
+=== subf64vector
+
+ [procedure] (subu8vector U8VECTOR FROM TO)
+ [procedure] (subu16vector U16VECTOR FROM TO)
+ [procedure] (subu32vector U32VECTOR FROM TO)
+ [procedure] (subs8vector S8VECTOR FROM TO)
+ [procedure] (subs16vector S16VECTOR FROM TO)
+ [procedure] (subs32vector S32VECTOR FROM TO)
+ [procedure] (subf32vector F32VECTOR FROM TO)
+ [procedure] (subf64vector F64VECTOR FROM TO)
+
+Creates a number vector of the same type as the argument vector with the elements at the positions {{FROM}} up to but
+not including {{TO}}.
+
+SRFI-17 Setters for {{XXXvector-ref}} are defined.
+
+
+=== read-u8vector
+
+ [procedure] (read-u8vector LENGTH [PORT])
+
+Reads {{LENGTH}} bytes from the {{PORT}} and returns a fresh
+{{u8vector}} or less of end-of-file is encountered. {{PORT}} defaults to the
+value of {{(current-input-port)}}.
+If {{LENGTH}} is {{#f}}, the vector will be filled completely until end-of-file is reached.
+
+
+=== read-u8vector!
+
+ [procedure] (read-u8vector! LENGTH U8VECTOR [PORT [START]])
+
+Reads {{LENGTH}} bytes from the {{PORT}} writing the read input into
+{{U8VECTOR}} beginning at {{START}} (or 0 if not given). {{PORT}} defaults
+to the value of {{(current-input-port)}}.
+If {{LENGTH}} is {{#f}}, the vector will be filled completely until end-of-file is reached.
+This procedure returns the number of bytes read.
+
+
+=== write-u8vector
+
+ [procedure] (write-u8vector U8VECTOR [PORT [START [END]]])
+
+Writes the bytes {{U8VECTOR}} between the indices {{START}} (inclusive) and {{END}} (exclusive) to {{PORT}}.
+{{PORT}} defaults to the value of {{(current-output-port)}}.
+
+
+Previous: [[Unit srfi-1]]
+
+Next: [[Unit srfi-13]]

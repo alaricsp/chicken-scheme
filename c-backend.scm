@@ -1,6 +1,6 @@
 ;;; c-backend.scm - C-generating backend for the CHICKEN compiler
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -36,8 +36,6 @@
 (declare (unit backend))
 
 
-;; The unspeakable namespace hack
-
 #{compiler
   compiler-arguments process-command-line find-early-refs
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
@@ -45,15 +43,15 @@
   foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations debugging cleanup
-  foreign-type-table-size file-io-only namespace-table
+  file-io-only namespace-table
   unit-name insert-timer-checks used-units inlining external-variables
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   target-initial-heap-size disable-stack-overflow-checking
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  mutable-constants emit-line-info
+  mutable-constants
   broken-constant-nodes inline-substitutions-enabled
   direct-call-ids foreign-type-table first-analysis block-variable-literal?
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database 
@@ -64,7 +62,7 @@
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
   expand-foreign-lambda*
   transform-direct-lambdas! target-include-file emit-unsafe-marker
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -138,7 +136,7 @@
 
 ;;; Generate target code:
 
-(define (generate-code literals lambdas out source-file dynamic db file-partition)
+(define (generate-code literals lambdas out source-file dynamic db)
   (let ()
 
     ;; Some helper procedures
@@ -150,9 +148,6 @@
     (define (slashify s) (string-translate (->string s) "\\" "/"))
     (define (uncommentify s) (string-translate* (->string s) '(("*/" . "* /"))))
   
-    (define (prefix-id)
-      (if file-partition unique-id "") )	
-
     ;; Compile a single expression
     (define (expression node temps ll)
 
@@ -170,7 +165,7 @@
 	       ((eof) (gen "C_SCHEME_END_OF_FILE"))
 	       (else (bomb "bad immediate")) ) )
 
-	    ((##core#literal) (gen (prefix-id) "lf[" (first params) #\]))
+	    ((##core#literal) (gen "lf[" (first params) #\]))
 
 	    ((if)
 	     (gen #t "if(C_truep(")
@@ -182,9 +177,7 @@
 	     (gen #\}) )
 
 	    ((##core#proc)
-	     (gen "(C_word)"
-		  (if (and (pair? (cdr params)) (cadr params)) "" (prefix-id))
-		  (first params)) )
+	     (gen "(C_word)" (first params)) )
 
 	    ((##core#bind) 
 	     (let loop ((bs subs) (i i) (count (first params)))
@@ -261,17 +254,17 @@
 		   [block (third params)] )
 	       (cond [block
 		      (if safe
-			  (gen (prefix-id) "lf[" index "]")
-			  (gen "C_retrieve2(" (prefix-id) "lf[" index "]," (c-ify-string (symbol->string (fourth params))) #\)) ) ]
-		     [safe (gen "*((C_word*)" (prefix-id) "lf[" index "]+1)")]
-		     [else (gen "C_retrieve(" (prefix-id) "lf[" index "])")] ) ) )
+			  (gen "lf[" index "]")
+			  (gen "C_retrieve2(lf[" index "]," (c-ify-string (symbol->string (fourth params))) #\)) ) ]
+		     [safe (gen "*((C_word*)lf[" index "]+1)")]
+		     [else (gen "C_retrieve(lf[" index "])")] ) ) )
 
 	    ((##core#setglobal)
 	     (let ([index (first params)]
 		   [block (second params)] )
 	       (if block
-		   (gen "C_mutate(&" (prefix-id) "lf[" index "],")
-		   (gen "C_mutate((C_word*)" (prefix-id) "lf[" index "]+1,") )
+		   (gen "C_mutate(&lf[" index "],")
+		   (gen "C_mutate((C_word*)lf[" index "]+1,") )
 	       (expr (car subs) i)
 	       (gen #\)) ) )
 
@@ -279,11 +272,11 @@
 	     (let ([index (first params)]
 		   [block (second params)] )
 	       (cond [block
-		      (gen (prefix-id) "lf[" index "]=")
+		      (gen "lf[" index "]=")
 		      (expr (car subs) i)
 		      (gen #\;) ]
 		     [else
-		      (gen "C_set_block_item(" (prefix-id) "lf[" index "],0,")
+		      (gen "C_set_block_item(lf[" index "],0,")
 		      (expr (car subs) i)
 		      (gen #\)) ] ) ) )
 
@@ -302,22 +295,12 @@
 		    (empty-closure (and customizable (zero? (lambda-literal-closure-size (find-lambda call-id)))))
 		    (fn (car subs)) )
 	       (when name
-		 (when emit-line-info
-		   (match name
-		     ((file (? number? ln) _)
-		      (gen #t "#line " ln " \"" (slashify file) "\"") )
-		     (_ #f) ) )
 		 (if emit-trace-info
 		     (gen #t "C_trace(\"" (slashify name-str) "\");")
 		     (gen #t "/* " (uncommentify name-str) " */") ) )
 	       (cond ((eq? '##core#proc (node-class fn))
 		      (let ([fpars (node-parameters fn)])
-			(gen #t 
-			     (if (and (pair? (cdr fpars)) (cadr fpars))
-				 ""
-				 (prefix-id) )
-			     (first fpars)
-			     #\( nf ",0,") )
+			(gen #t (first fpars) #\( nf ",0,") )
 		      (expr-args args i)
 		      (gen ");") )
 		     (call-id
@@ -341,7 +324,7 @@
 			       (gen #t #\t nc #\=)
 			       (expr fn i)
 			       (gen #\;) )
-			     (gen #t (prefix-id) call-id #\()
+			     (gen #t call-id #\()
 			     (unless customizable (gen nf #\,))
 			     (unless empty-closure (gen #\t nc #\,))
 			     (expr-args args i)
@@ -378,7 +361,7 @@
 			 ts (iota n 1 1) )
 			(gen #t "goto loop;") ) )
 		     (else
-		      (gen (prefix-id) call-id #\()
+		      (gen call-id #\()
 		      (unless empty-closure (gen "t0,"))
 		      (expr-args subs i)
 		      (gen #\)) ) ) ) )
@@ -393,7 +376,7 @@
 		    (allocating (not (zero? demand)))
 		    (empty-closure (zero? (lambda-literal-closure-size (find-lambda call-id))))
 		    (fn (car subs)) )
-	       (gen (prefix-id) call-id #\()
+	       (gen call-id #\()
 	       (when allocating 
 		 (gen "C_a_i(&a," demand #\))
 		 (when (or (not empty-closure) (pair? args)) (gen #\,)) )
@@ -495,7 +478,8 @@
 	    n) )
       (match (##sys#decode-seconds (current-seconds) #f)
 	[#(_ min hour mday mon year _ _ _ _)
-	  (gen "/* Generated from " source-file " by the Chicken compiler" #t
+	  (gen "/* Generated from " source-file " by the CHICKEN compiler" #t
+	       "   http://www.call-with-current-continuation.org" #t
 	       "   " (+ 1900 year) #\- (pad0 (add1 mon)) #\- (pad0 mday) #\space (pad0 hour) #\: (pad0 min) #t
 	       "   " (chicken-version #t) #t
 	       "   command line: ")
@@ -505,9 +489,6 @@
 		[else 
 		 (gen "   used units: ")
 		 (gen-list used-units) ] )
-	  (unless unit-name
-	    (gen #t "   default heap size: " default-default-target-heap-size #t)
-	    (gen "   default nursery (stack) size: " default-default-target-stack-size) )
 	  (gen #t "*/" #t #t "#include \"" target-include-file "\"")
 	  (when external-protos-first
 	    (generate-foreign-callback-stub-prototypes foreign-callback-stubs) )
@@ -522,24 +503,14 @@
   
     (define (declarations)
       (let ((n (length literals)))
-	(cond [(not file-partition)
-	       (gen #t #t "static C_PTABLE_ENTRY *create_ptable(void);") ]
-	      [(zero? file-partition)
-	       (gen #t #t "C_externexport C_PTABLE_ENTRY *" (prefix-id) "create_ptable(void);") ]
-	      [else
-	       (gen #t #t "C_externimport C_PTABLE_ENTRY *" (prefix-id) "create_ptable(void);") ] )
+	(gen #t #t "static C_PTABLE_ENTRY *create_ptable(void);")
 	(for-each 
 	 (lambda (uu) 
 	   (gen #t "C_noret_decl(C_" uu "_toplevel)"
 		#t "C_externimport void C_ccall C_" uu "_toplevel(C_word c,C_word d,C_word k) C_noret;"))
 	 used-units)
 	(unless (zero? n)
-	  (cond [(not file-partition)
-		 (gen #t #t "static C_TLS C_word lf[" n"];")]
-		[(zero? file-partition)
-		 (gen #t #t "C_TLS C_word " (prefix-id) "lf[" n"];")]
-		[else
-		 (gen #t #t "C_externimport C_TLS C_word " (prefix-id) "lf[" n"];")]))))
+	  (gen #t #t "static C_TLS C_word lf[" n"];") ) ) )
   
     (define (prototypes)
       (let ([large-signatures '()])
@@ -551,10 +522,6 @@
 		  [empty-closure (and customizable (zero? (lambda-literal-closure-size ll)))]
 		  [varlist (intersperse (make-variable-list (if empty-closure (sub1 n) n) "t") #\,)]
 		  [id (lambda-literal-id ll)]
-		  [partition (lambda-literal-partition ll)]
-		  [in-partition (or (not file-partition) (= file-partition partition))]
-		  [in-partition* (and in-partition file-partition)]
-		  [out-partition (and file-partition (not (= file-partition partition)))]
 		  [rest (lambda-literal-rest-argument ll)]
 		  [rest-mode (lambda-literal-rest-argument-mode ll)]
 		  [direct (lambda-literal-direct ll)] 
@@ -568,22 +535,19 @@
 		  (set! large-signatures (lset-adjoin = large-signatures (add1 s))) ) )
 	      (lambda-literal-callee-signatures ll) )
 	     (cond [(not (eq? 'toplevel id))
-		    (gen "C_noret_decl(" (prefix-id) id ")" #t)
-		    (cond [in-partition* (gen "C_externexport ")]
-			  [in-partition (gen "static ")]                        
-			  [else (gen "C_externimport ")])
+		    (gen "C_noret_decl(" id ")" #t)
+		    (gen "static ")
 		    (gen (if direct "C_word " "void "))
 		    (if customizable
 			(gen "C_fcall ")
 			(gen "C_ccall ") )
-		    (gen (prefix-id) id) ]
+		    (gen id) ]
 		   [else
 		    (let ((uname (if unit-name (string-append unit-name "_toplevel") "toplevel")))
 		      (gen "C_noret_decl(C_" uname ")" #t)
-		      (when (and emit-unsafe-marker (or (not file-partition) (zero? file-partition)))
+		      (when emit-unsafe-marker
 			(gen "C_externexport void C_dynamic_and_unsafe(void) {}" #t) )
-		      (cond [in-partition (gen "C_externexport void C_ccall ")]
-			    [else (gen "C_externimport void C_ccall ")])
+		      (gen "C_externexport void C_ccall ")
 		      (gen "C_" uname) ) ] )
 	     (gen #\()
 	     (unless customizable (gen "C_word c,"))
@@ -595,13 +559,13 @@
 		    (gen ",...) C_noret;")
 		    (if (not (eq? rest-mode 'none))
 			(begin
-			  (gen #t "C_noret_decl(" (prefix-id) id ")" 
-			       #t "static void C_ccall " (prefix-id) id "r(")
+			  (gen #t "C_noret_decl(" id ")" 
+			       #t "static void C_ccall " id "r(")
 			  (apply gen varlist)
 			  (gen ",C_word t" (+ n 1) ") C_noret;") ) ) ]
 		   [else 
 		    (gen #\))
-					;(when customizable (gen " C_c_regparm"))
+		    ;;(when customizable (gen " C_c_regparm"))
 		    (unless direct (gen " C_noret"))
 		    (gen #\;) ] ) ) )
 	 lambdas) 
@@ -661,7 +625,7 @@
 			   #t "static void C_fcall tr" id "(void *dummy) C_regparm C_noret;")
 		      (gen #t "C_regparm static void C_fcall tr" id "(void *dummy){")
 		      (restore argc)
-		      (gen #t (prefix-id) id #\()
+		      (gen #t id #\()
 		      (let ([al (make-argument-list argc "t")])
 			(apply gen (intersperse al #\,)) )
 		      (gen ");}") ]
@@ -689,7 +653,7 @@
       (do ([i 0 (+ i 1)]
 	   [lits literals (cdr lits)] )
 	  ((null? lits))
-	(gen-lit (car lits) (sprintf "~Alf[~s]" (prefix-id) i) #t) ) )
+	(gen-lit (car lits) (sprintf "lf[~s]" i) #t) ) )
 
     (define (bad-literal lit)
       (bomb "type of literal not supported" lit) )
@@ -833,10 +797,6 @@
        (lambda (ll)
 	 (let* ([n (lambda-literal-argument-count ll)]
 		[id (lambda-literal-id ll)]
-		[partition (lambda-literal-partition ll)]
-		[in-partition (or (not file-partition) (= file-partition partition))]
-		[in-partition* (and in-partition file-partition)]
-		[out-partition (and file-partition (not (= file-partition partition)))]
 		[rname (real-name id db)]
 		[demand (lambda-literal-allocated ll)]
 		[rest (lambda-literal-rest-argument ll)]
@@ -859,14 +819,12 @@
 	   (gen #t #t)
 	   (gen "/* " (cleanup rname) " */" #t)
 	   (cond [(not (eq? 'toplevel id)) 
-		  (cond [in-partition* (gen "C_externexport ")]
-			[in-partition (gen "static ")]                        
-			[else (gen "C_externimport ")])
+		  (gen "static ")
 		  (gen (if direct "C_word " "void "))
 		  (if customizable
 		      (gen "C_fcall ")
 		      (gen "C_ccall ") )
-		  (gen (prefix-id) id) ]
+		  (gen id) ]
 		 [else
 		  (gen "static C_TLS int toplevel_initialized=0;")
 		  (unless unit-name
@@ -932,9 +890,9 @@
 			 #t "t1=C_restore;}")
 		    (gen #t "a=C_alloc(" demand ");")
 		    (when (not (zero? llen))
-		      (gen #t "C_initialize_lf(" (prefix-id) "lf," llen ");")
+		      (gen #t "C_initialize_lf(lf," llen ");")
 		      (literal-frame)
-		      (gen #t "C_register_lf2(" (prefix-id) "lf," llen "," (prefix-id) "create_ptable());") ) ) ]
+		      (gen #t "C_register_lf2(lf," llen ",create_ptable());") ) ) ]
 		 [rest
 		  (gen #t "va_list v;")
 		  (gen #t "C_word *a,c2=c;")
@@ -981,7 +939,7 @@
 	     (cond [rest
 		    (gen #t (if (> nec 0) "C_save_and_reclaim" "C_reclaim") "((void*)tr" n #\r)
 		    (when (eq? rest-mode 'vector) (gen #\v))
-		    (gen ",(void*)" (prefix-id) id "r")
+		    (gen ",(void*)" id "r")
 		    (when (> nec 0)
 		      (gen #\, nec #\,)
 		      (apply gen arglist) )
@@ -991,11 +949,11 @@
 		    (case rest-mode
 		      [(list #f) (gen #t "t" n "=C_restore_rest(a,C_rest_count(0));")]
 		      [(vector) (gen #t "t" n "=C_restore_rest_vector(a,C_rest_count(0));")] )
-		    (gen #t (prefix-id) id "r(")
+		    (gen #t id "r(")
 		    (apply gen (intersperse (make-argument-list n "t") #\,))
 		    (gen ",t" n ");}}")
 		    ;; Create secondary routine (no demand-check or argument-count-parameter):
-		    (gen #t #t "static void C_ccall " (prefix-id) id "r(")
+		    (gen #t #t "static void C_ccall " id "r(")
 		    (apply gen varlist)
 		    (gen ",C_word t" n "){")
 		    (gen #t "C_word tmp;")
@@ -1008,7 +966,7 @@
 		    (gen #t (if (> nec 0) "C_save_and_reclaim" "C_reclaim") "((void*)tr")
 		    (if customizable 
 			(gen id ",NULL")
-			(gen n ",(void*)" (prefix-id) id) )
+			(gen n ",(void*)" id) )
 		    (when (> nec 0)
 		      (gen #\, nec #\,)
 		      (apply gen arglist) )
@@ -1020,12 +978,7 @@
 		n)
 	    ll)
 	   (gen #\}) ) )
-       (filter
-	(lambda (ll)
-	  (let* ([partition (lambda-literal-partition ll)]
-		 [in-partition (or (not file-partition) (= file-partition partition))])
-	    in-partition))
-	lambdas)) )
+       lambdas) )
 
     (debugging 'p "code generation phase...")
     (set! output out)
@@ -1038,30 +991,27 @@
     (trampolines)
     (setup-quick-namespace-list)
     (procedures)
-    (when (or (not file-partition) (zero? file-partition))
-      (emit-procedure-table-info lambdas source-file file-partition (prefix-id)) )
+    (emit-procedure-table-info lambdas source-file)
     (trailer) ) )
 
 
-;;; Emit prrocedure table:
+;;; Emit procedure table:
 
-(define (emit-procedure-table-info lambdas sf file-partition pref)
+(define (emit-procedure-table-info lambdas sf)
   (gen #t #t "#ifdef C_ENABLE_PTABLES"
        #t "static C_PTABLE_ENTRY ptable[" (add1 (length lambdas)) "] = {")
   (do ((ll lambdas (cdr ll)))
       ((null? ll)
        (gen #t "{NULL,NULL}};") )
     (let ((id (lambda-literal-id (car ll))))
-      (gen #t "{\"" pref id sf "\",(void*)")
+      (gen #t "{\"" id sf "\",(void*)")
       (if (eq? 'toplevel id)
 	  (if unit-name
 	      (gen "C_" unit-name "_toplevel},")
 	      (gen "C_toplevel},") )
-	  (gen pref id "},") ) ) )
+	  (gen id "},") ) ) )
   (gen #t "#endif")
-  (if file-partition
-      (gen #t #t "C_PTABLE_ENTRY *" pref "create_ptable(void)") 
-      (gen #t #t "static C_PTABLE_ENTRY *create_ptable(void)") )
+  (gen #t #t "static C_PTABLE_ENTRY *create_ptable(void)")
   (gen "{" #t "#ifdef C_ENABLE_PTABLES"
        #t "return ptable;"
        #t "#else"
@@ -1141,7 +1091,9 @@
        (gen #t)
        (when rname
 	 (gen #t "/* from " (cleanup rname) " */") )
-       (when body (gen #t "#define return(x) C_cblock C_r = (" rconv "(x))); goto C_return; C_cblockend"))
+       (when body
+	 (gen #t "#define return(x) C_cblock C_r = (" rconv 
+	      "(x))); goto C_ret; C_cblockend"))
        (if cps
 	   (gen #t "C_noret_decl(" id ")"
 		#t "static void C_ccall " id "(C_word C_c,C_word C_self,C_word C_k,")
@@ -1162,13 +1114,13 @@
 	       "=(" (foreign-type-declaration type "") #\)
 	       (foreign-argument-conversion type) "C_a" index ");") )
 	types (iota n) names)
-       (when callback (gen #t "int C_dummy=C_save_callback_continuation(&C_a,C_k);"))
+       (when callback (gen #t "int C_level=C_save_callback_continuation(&C_a,C_k);"))
        (cond [body
 	      (gen #t body
-		   #t "C_return:")
+		   #t "C_ret:")
 	      (gen #t "#undef return" #t)
 	      (cond [callback
-		     (gen #t "C_k=C_restore_callback_continuation();"
+		     (gen #t "C_k=C_restore_callback_continuation2(C_level);"
 			  #t "C_kontinue(C_k,C_r);") ]
 		    [cps (gen #t "C_kontinue(C_k,C_r);")]
 		    [else (gen #t "return C_r;")] ) ]
@@ -1181,7 +1133,7 @@
 	      (unless (eq? rtype 'void) (gen #\)))
 	      (gen ");")
 	      (cond [callback
-		     (gen #t "C_k=C_restore_callback_continuation();"
+		     (gen #t "C_k=C_restore_callback_continuation2(C_level);"
 			  #t "C_kontinue(C_k,C_r);") ]
 		    [cps (gen "C_kontinue(C_k,C_r);")]
 		    [else (gen #t "return C_r;")] ) ] )
@@ -1204,11 +1156,11 @@
 		  byte unsigned-byte)
 	    ns]
 	   [(float double c-pointer unsigned-integer unsigned-integer32 long integer integer32 unsigned-long 
-		   nonnull-c-pointer number integer64)
+		   nonnull-c-pointer number integer64 c-string-list c-string-list*)
 	    (string-append ns "+3") ]
-	   [(c-string c-string*)
+	   [(c-string c-string* unsigned-c-string unsigned-c-string unsigned-c-string*)
 	    (string-append ns "+2+(" var "==NULL?1:C_bytestowords(C_strlen(" var ")))") ]
-	   [(nonnull-c-string nonnull-c-string* symbol)
+	   [(nonnull-c-string nonnull-c-string* nonnull-unsigned-c-string nonnull-unsigned-c-string* symbol)
 	    (string-append ns "+2+C_bytestowords(C_strlen(" var "))") ]
 	   [else
 	    (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type)) 
@@ -1216,7 +1168,8 @@
 			(compute-size (if (vector? t) (vector-ref t 0) t) var ns) ) ]
 		  [(pair? type)
 		   (case (car type)
-		     [(ref pointer c-pointer nonnull-pointer nonnull-c-pointer function instance nonnull-instance instance-ref)
+		     [(ref pointer c-pointer nonnull-pointer nonnull-c-pointer function instance 
+			   nonnull-instance instance-ref)
 		      (string-append ns "+3") ]
 		     [(const) (compute-size (cadr type) var ns)]
 		     [else ns] ) ]
@@ -1265,8 +1218,8 @@
 	[str (lambda (ts) (string-append ts " " target))] )
     (case type
       [(scheme-object) (str "C_word")]
-      [(char byte) (str "char")]
-      [(unsigned-char unsigned-byte) (str "unsigned char")]
+      [(char byte) (str "C_char")]
+      [(unsigned-char unsigned-byte) (str "unsigned C_char")]
       [(unsigned-int unsigned-integer) (str "unsigned int")]
       [(unsigned-int32 unsigned-integer32) (str "C_u32")]
       [(int integer bool) (str "int")]
@@ -1279,8 +1232,12 @@
       [(float) (str "float")]
       [(double number) (str "double")]
       ;; pointer and nonnull-pointer are DEPRECATED
-      [(pointer nonnull-pointer c-pointer nonnull-c-pointer scheme-pointer nonnull-scheme-pointer) (str "void *")]
-      [(byte-vector nonnull-byte-vector u8vector nonnull-u8vector) (str "unsigned char *")]
+      [(pointer nonnull-pointer c-pointer nonnull-c-pointer scheme-pointer 
+		nonnull-scheme-pointer)
+       (str "void *")]
+      [(c-string-list c-string-list*) "C_char **"]
+      [(byte-vector) (str "unsigned char *")] ; DEPRECATED
+      [(blob nonnull-byte-vector u8vector nonnull-u8vector) (str "unsigned char *")]
       [(u16vector nonnull-u16vector) (str "unsigned short *")]
       [(s8vector nonnull-s8vector) (str "char *")]
       [(u32vector nonnull-u32vector) (str "unsigned int *")]
@@ -1288,7 +1245,9 @@
       [(s32vector nonnull-s32vector) (str "int *")]
       [(f32vector nonnull-f32vector) (str "float *")]
       [(f64vector nonnull-f64vector) (str "double *")]
-      [(nonnull-c-string c-string nonnull-c-string* c-string* symbol) (str "char *")]
+      [(nonnull-c-string c-string nonnull-c-string* c-string* 
+			 nonnull-unsigned-c-string nonnull-unsigned-c-string*
+			 symbol) (str "char *")]
       [(void) (str "void")]
       [else
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))
@@ -1355,8 +1314,10 @@
       ((nonnull-pointer nonnull-scheme-pointer) "C_data_pointer(") ; nonnull-pointer is DEPRECATED
       ((c-pointer) "C_c_pointer_or_null(")
       ((nonnull-c-pointer) "C_c_pointer_nn(")
-      ((byte-vector) "C_c_bytevector_or_null(")
-      ((nonnull-byte-vector) "C_c_bytevector(")
+      ((blob) "C_c_bytevector_or_null(")
+      ((byte-vector) "C_c_bytevector_or_null(") ; DEPRECATED
+      ((nonnull-blob) "C_c_bytevector(")
+      ((nonnull-byte-vector) "C_c_bytevector(") ; DEPRECATED
       ((u8vector) "C_c_u8vector_or_null(")
       ((nonnull-u8vector) "C_c_u8vector(")
       ((u16vector) "C_c_u16vector_or_null(")
@@ -1373,8 +1334,9 @@
       ((nonnull-f32vector) "C_c_f32vector(")
       ((f64vector) "C_c_f64vector_or_null(")
       ((nonnull-f64vector) "C_c_f64vector(")
-      ((c-string c-string*) "C_string_or_null(")
-      ((nonnull-c-string nonnull-c-string* symbol) "C_c_string(")
+      ((c-string c-string* unsigned-c-string unsigned-c-string*) "C_string_or_null(")
+      ((nonnull-c-string nonnull-c-string* nonnull-unsigned-c-string 
+			 nonnull-unsigned-c-string* symbol) "C_c_string(")
       ((bool) "C_truep(")
       (else
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))
@@ -1409,7 +1371,9 @@
       ((unsigned-byte) "C_fix(0xff&(C_word)")
       ((float double integer64) (sprintf "C_flonum(&~a," dest))	;*** suboptimal for int64
       ((number) (sprintf "C_number(&~a," dest))
-      ((nonnull-c-string c-string nonnull-c-pointer c-string* nonnull-c-string* symbol) 
+      ((nonnull-c-string c-string nonnull-c-pointer c-string* nonnull-c-string* 
+			 unsigned-c-string unsigned-c-string* nonnull-unsigned-c-string
+			 nonnull-unsigned-c-string* symbol c-string-list c-string-list*) 
        (sprintf "C_mpointer(&~a,(void*)" dest) )
       ((c-pointer) (sprintf "C_mpointer_or_false(&~a,(void*)" dest))
       ((integer integer32) (sprintf "C_int_to_num(&~a," dest))

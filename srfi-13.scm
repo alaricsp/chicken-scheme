@@ -36,6 +36,12 @@
  [else
   (declare
     (no-procedure-checks-for-usual-bindings)
+    (bound-to-procedure
+     string-concatenate check-substring-spec ##srfi13#string-fill! string-parse-final-start+end
+     ##sys#substring string-index-right string-skip-right substring/shared
+     string-concatenate/shared make-kmp-restart-vector string-ci= string= char-set?
+     char-set-contains? string-fold char-set string-skip string-index string-downcase! char->int
+     string-parse-start+end substring-spec-ok?)
     (no-bound-checks) ) ] )
 
 (cond-expand
@@ -316,6 +322,8 @@
 ;;; You want compiler support for high-level transforms on fold and unfold ops.
 ;;; You'd at least like a lot of inlining for clients of these procedures.
 ;;; Don't hold your breath.
+;;;
+;;; Shut up, Olin.
 
 (define (string-map proc s . maybe-start+end)
 ;  (check-arg procedure? proc string-map)
@@ -325,10 +333,10 @@
 (define (%string-map proc s start end)	; Internal utility
   (let* ((len (- end start))
 	 (ans (make-string len)))
-    (do ((i (- end 1) (- i 1))
-	 (j (- len 1) (- j 1)))
-	((< j 0))
-      (string-set! ans j (proc (string-ref s i))))
+    (do ((i 0 (+ i 1))
+	 (j start (+ j 1)))
+	((>= i len))
+      (string-set! ans i (proc (string-ref s j))))
     ans))
 
 (define (string-map! proc s . maybe-start+end)
@@ -337,8 +345,8 @@
     (%string-map! proc s start end)))
 
 (define (%string-map! proc s start end)
-  (do ((i (- end 1) (- i 1)))
-      ((< i start))
+  (do ((i start (+ i 1)))
+      ((>= i end) s)
     (string-set! s i (proc (string-ref s i)))))
 
 (define (string-fold kons knil s . maybe-start+end)
@@ -1042,31 +1050,35 @@
 ;  (check-arg (lambda (val) (and (integer? n) (exact? n)
 ;				(<= 0 n (string-length s))))
 ;	     n string-take)
-  (##sys#check-exact n 'string-take)
+  (##sys#check-string s 'string-take)
+  (##sys#check-range n 0 (fx+ 1 (##sys#size s)) 'string-take)
   (%substring/shared s 0 n))
 
 (define (string-take-right s n)
 ;  (check-arg string? s string-take-right)
-  (let ((len (string-length s)))
+  (##sys#check-string s 'string-take-right)
+  (##sys#check-range n 0 (fx+ 1 (##sys#size s)) 'string-take-right)
+  (let ((len (##sys#size s)))
 ;    (check-arg (lambda (val) (and (integer? n) (exact? n) (<= 0 n len)))
 ;	       n string-take-right)
-    (##sys#check-exact n 'string-take-right)
     (%substring/shared s (- len n) len)))
 
 (define (string-drop s n)
 ;  (check-arg string? s string-drop)
-  (let ((len (string-length s)))
+  (##sys#check-string s 'string-drop)
+  (##sys#check-range n 0 (fx+ 1 (##sys#size s)) 'string-drop)
+  (let ((len (##sys#size s)))
 ;    (check-arg (lambda (val) (and (integer? n) (exact? n) (<= 0 n len)))
 ;	       n string-drop)
-    (##sys#check-exact n 'string-drop)
-  (%substring/shared s n len)))
+    (%substring/shared s n len)))
 
 (define (string-drop-right s n)
 ;  (check-arg string? s string-drop-right)
-  (let ((len (string-length s)))
+  (##sys#check-string s 'string-drop-right)
+  (##sys#check-range n 0 (fx+ 1 (##sys#size s)) 'string-drop-right)
+  (let ((len (##sys#size s)))
 ;    (check-arg (lambda (val) (and (integer? n) (exact? n) (<= 0 n len)))
 ;	       n string-drop-right)
-    (##sys#check-exact n 'string-drop-right)
     (%substring/shared s 0 (- len n))))
 
 

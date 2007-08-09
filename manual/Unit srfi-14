@@ -1,0 +1,19 @@
+[[tags: manual]]
+
+== Unit srfi-14
+
+Character set library, see the documentation for
+[[http://srfi.schemers.org/srfi-14/srfi-14.html|SRFI-14]]
+
+On systems that support dynamic loading, the {{srfi-14}} unit can
+be made available in the interpreter ({{csi}}) by entering
+
+<enscript highlight=scheme>
+(require-extension srfi-14)
+</enscript>
+
+This library provides only the Latin-1 character set.
+
+Previous: [[Unit srfi-13]]
+
+Next: [[Unit match]]

@@ -1,10 +1,8 @@
-(define banner #<<EOF
+(define-constant banner #<<EOF
 
-  ___| |    _)      |               
- |     __ \  |  __| |  /  _ \ __ \  
- |     | | | | (      <   __/ |   | 
-\____|_| |_|_|\___|_|\_\\___|_|  _| 
-
+this is CHICKEN
 
 EOF
 )
+
+(define-constant copyright "(c)2000-2007 Felix L. Winkelmann")

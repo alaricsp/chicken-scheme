@@ -34,6 +34,10 @@
  [else
   (declare
     (no-procedure-checks-for-usual-bindings)
+    (bound-to-procedure 
+     every any partition! reduce lset-difference! append! pair-fold lset-diff+intersection! fold
+     lset-difference filter! filter delete span! span find-tail find delete! pair-for-each car+cdr
+     reduce-right last-pair drop)
     (no-bound-checks) ) ] )
 
 (cond-expand

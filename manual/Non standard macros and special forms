@@ -1,0 +1,558 @@
+[[tags: manual]]
+
+[[toc:]]
+
+== Non-standard macros and special forms
+
+=== Making extra libraries and extensions available
+
+==== require-extension
+
+ [syntax] (require-extension ID ...)
+ [syntax] (use ID ...)
+
+This form does all necessary steps to make the libraries or extensions given
+in {{ID ...}} available. It loads syntactic extension, if needed and generates
+code for loading/linking with core library modules or separately installed
+extensions. {{use}} is just a shorter alias for {{require-extension}}.
+This implementation of {{require-extension}} is compliant to [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]]
+(see the [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]] document for more information).
+
+During interpretation/evaluation {{require-extension}} performs one of the
+following:
+
+* If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
+* If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded.
+* {{ID}} names one of the core library units shipped with CHICKEN, then a {{(load-library 'ID)}} will be performed.
+* {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, probably followed by {{(require ...)}} for any run-time requirements.
+* Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
+
+During compilation one of the following happens instead:
+
+* If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
+* If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded at compile-time, making the syntactic extensions available in compiled code.
+* If {{ID}} names one of the core library units shipped with CHICKEN, or if the option {{-uses ID}} has been passed to the compiler then a {{(declare (uses ID))}} is generated.
+* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, and code is emitted to {{(require ...)}} any needed run-time requirements.
+* Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
+
+To make long matters short - just use {{require-extension}} and it will normally figure everything out for dynamically
+loadable extensions and core library units.
+
+{{ID}} should be a pure extension name and should not contain any path prefixes (for example {{dir/lib...}}) is illegal).
+
+{{ID}} may also be a list that designates an extension-specifier. Currently the following extension specifiers are
+defined:
+
+* {{(srfi NUMBER ...)}} is required for SRFI-55 compatibility and is fully implemented
+* {{(version ID NUMBER)}} is equivalent to {{ID}}, but checks at compile-time whether the extension named {{ID}} is installed and whether its version is equal or higher than {{NUMBER}}. {{NUMBER}} may be a string or a number, the comparison is done lexicographically (using {{string>=?}}).
+
+See also: {{set-extension-specifier!}}
+
+When syntax extensions are loaded that redefine the global toplevel macro-expander (for example the
+[[http://www.call-with-current-continuation.org/eggs/syntax-case.html|syntax-case]] extension), then
+all remaining expression ''in the same toplevel form'' are still expanded with the old toplevel
+macro-expander.
+
+==== define-extension
+
+ [syntax] (define-extension NAME CLAUSE ...)
+
+This macro simplifies the task of writing extensions that can be linked both statically and dynamically.
+If encountered in interpreted code or code that is compiled into a shared object (specifically if compiled
+with the feature {{chicken-compile-shared}}, done automatically by {{csc}} when compiling with
+the {{-shared}} or {{-dynamic}} option) then the code given by clauses of the form
+
+<enscript highlight=scheme>
+(dynamic EXPRESSION ...)
+</enscript>
+
+are inserted into the output as a {{begin}} form.
+
+If compiled statically (specifically if the feature {{chicken-compile-shared}} has not been given), then
+this form expands into the following:
+
+<enscript highlight=scheme>
+(declare (unit NAME))
+(provide 'NAME)
+</enscript>
+
+and all clauses of the form
+
+<enscript highlight=scheme>
+(static EXPRESSION ...)
+</enscript>
+
+all additionally inserted into the expansion.
+
+As a convenience, the clause
+
+<enscript highlight=scheme>
+(export IDENTIFIER ...)
+</enscript>
+
+is also allowed and is identical to {{(declare (export IDENTIFIER ...))}} (unless the {{define-extension}} form
+occurs in interpreted code, in with it is simply ignored).
+
+Note that the compiler option {{-extension NAME}} is equivalent to prefixing the
+compiled file with 
+
+<enscript highlight=scheme>
+(define-extension NAME)
+</enscript>
+
+
+=== Binding forms for optional arguments
+
+==== optional
+
+ [syntax] (optional ARGS DEFAULT)
+
+Use this form for procedures that take a single optional argument. If
+{{ARGS}} is the empty list {{DEFAULT}} is evaluated and
+returned, otherwise the first element of the list {{ARGS}}. It is
+an error if {{ARGS}} contains more than one value.
+
+<enscript highlight=scheme>
+(define (incr x . i) (+ x (optional i 1)))
+(incr 10)                                   ==> 11
+(incr 12 5)                                 ==> 17
+</enscript>
+==== case-lambda
+
+ [syntax] (case-lambda (LAMBDA-LIST1 EXP1 ...) ...)
+
+Expands into a lambda that invokes the body following the first
+matching lambda-list.
+
+<enscript highlight=scheme>
+(define plus
+  (case-lambda 
+    (() 0)
+    ((x) x)
+    ((x y) (+ x y))
+    ((x y z) (+ (+ x y) z))
+    (args (apply + args))))
+
+(plus)                      ==> 9
+(plus 1)                    ==> 1
+(plus 1 2 3)                ==> 6
+</enscript>
+
+For more information see the documentation for
+[[http://srfi.schemers.org/srfi-16/srfi-16.html|SRFI-16]]
+
+==== let-optionals
+
+ [syntax]  (let-optionals ARGS ((VAR1 DEFAULT1) ...) BODY ...)
+
+Binding constructs for optional procedure arguments. {{ARGS}} should
+be a rest-parameter taken from a lambda-list. {{let-optionals}}
+binds {{VAR1 ...}} to available arguments in parallel, or
+to {{DEFAULT1 ...}} if not enough arguments were provided.
+{{let-optionals*}} binds {{VAR1 ...}} sequentially, so every
+variable sees the previous ones. it is an error if any excess
+arguments are provided.
+
+<enscript highlight=scheme>
+(let-optionals '(one two) ((a 1) (b 2) (c 3))
+  (list a b c) )                               ==> (one two 3)
+</enscript>
+
+==== let-optionals*
+
+ [syntax]  (let-optionals* ARGS ((VAR1 DEFAULT1) ... [RESTVAR]) BODY ...)
+
+Binding constructs for optional procedure arguments. {{ARGS}} should
+be a rest-parameter taken from a lambda-list. {{let-optionals}}
+binds {{VAR1 ...}} to available arguments in parallel, or
+to {{DEFAULT1 ...}} if not enough arguments were provided.
+{{let-optionals*}} binds {{VAR1 ...}} sequentially, so every
+variable sees the previous ones. If a single variable {{RESTVAR}}
+is given, then it is bound to any remaining arguments, otherwise it is
+an error if any excess arguments are provided.
+
+<enscript highlight=scheme>
+(let-optionals* '(one two) ((a 1) (b 2) (c a))
+  (list a b c) )                               ==> (one two one)
+</enscript>
+
+
+=== Other binding forms
+
+==== and-let*
+
+ [syntax] (and-let* (BINDING ...) EXP1 EXP2 ...)
+
+SRFI-2. Bind sequentially and execute body. {{BINDING}} can
+be a list of a variable and an expression, a list with a single
+expression, or a single variable. If the value of an expression
+bound to a variable is {{#f}}, the {{and-let*}} form
+evaluates to {{#f}} (and the subsequent bindings and the body
+are not executed).  Otherwise the next binding is performed. If
+all bindings/expressions evaluate to a true result, the body is
+executed normally and the result of the last expression is the
+result of the {{and-let*}} form. See also the documentation for
+[[http://srfi.schemers.org/srfi-2/srfi-2.html|SRFI-2]].
+
+==== rec
+
+ [syntax] (rec NAME EXPRESSION)
+ [syntax] (rec (NAME VARIABLE ...) BODY ...)
+
+Allows simple definition of recursive definitions. {{(rec NAME EXPRESSION)}} is
+equivalent to {{(letrec ((NAME EXPRESSION)) NAME)}} and {{(rec (NAME VARIABLE ...) BODY ...)}}
+is the same as {{(letrec ((NAME (lambda (VARIABLE ...) BODY ...))) NAME)}}.
+
+==== cut
+
+ [syntax] (cut SLOT ...)
+ [syntax] (cute SLOT ...)
+
+[[http://srfi.schemers.org/srfi-26/srfi-26.html|Syntactic sugar for specializing parameters]].
+
+==== define-values
+
+ [syntax] (define-values (NAME ...) EXP)
+
+Defines several variables at once, with the result values of expression
+{{EXP}}.
+
+==== fluid-let
+
+ [syntax] (fluid-let ((VAR1 X1) ...) BODY ...)
+
+Binds the variables {{VAR1 ...}} dynamically to the values {{X1 ...}} 
+during execution of {{BODY ...}}.
+
+==== let-values
+
+ [syntax] (let-values (((NAME ...) EXP) ...) BODY ...)
+
+Binds multiple variables to the result values of {{EXP ...}}.
+All variables are bound simultaneously.
+
+==== let*-values
+
+ [syntax] (let*-values (((NAME ...) EXP) ...) BODY ...)
+
+Binds multiple variables to the result values of {{EXP ...}}.
+The variables are bound sequentially.
+
+<enscript highlight=scheme>
+(let*-values (((a b) (values 2 3))
+              ((p) (+ a b)) )
+  p)                               ==> 5
+</enscript>
+
+==== letrec-values
+
+ [syntax] (letrec-values (((NAME ...) EXP) ...) BODY ...)
+
+Binds the result values of {{EXP ...}} to multiple variables at once.
+All variables are mutually recursive.
+
+<enscript highlight=scheme>
+(letrec-values (((odd even)
+                   (values 
+                     (lambda (n) (if (zero? n) #f (even (sub1 n))))
+                     (lambda (n) (if (zero? n) #t (odd (sub1 n)))) ) ) )
+  (odd 17) )                           ==> #t
+</enscript>
+
+==== parameterize
+
+ [syntax] (parameterize ((PARAMETER1 X1) ...) BODY ...)
+
+Binds the parameters {{PARAMETER1 ...}} dynamically to the values
+{{X1 ...}} during execution of {{BODY ...}}.  (see also:
+{{make-parameter}} in [[Parameters]]). Note that {{PARAMETER}} may be any
+expression that evaluates to a parameter procedure.
+
+==== receive
+
+ [syntax] (receive (NAME1 ... [. NAMEn]) VALUEEXP BODY ...)
+ [syntax] (receive VALUEEXP)
+
+SRFI-8. Syntactic sugar for {{call-with-values}}. Binds variables
+to the result values of {{VALUEEXP}} and evaluates {{BODY ...}}.
+
+The syntax 
+
+<enscript highlight=scheme>
+(receive VALUEEXP)
+</enscript>
+
+is equivalent to
+
+<enscript highlight=scheme>
+(receive _ VALUEEXP _)
+</enscript>
+
+==== set!-values
+
+ [syntax] (set!-values (NAME ...) EXP)
+
+Assigns the result values of expression {{EXP}} to multiple
+variables.
+
+
+=== Substitution forms and macros
+
+==== define-constant
+
+ [syntax] (define-constant NAME CONST)
+
+Define a variable with a constant value, evaluated at compile-time. 
+Any reference to such a
+constant should appear textually '''after''' its definition. This
+construct is equivalent to {{define}} when evaluated or interpreted.
+Constant definitions should only appear at toplevel. Note that constants
+are local to the current compilation unit and are not available outside
+of the source file in which they are defined. Names of constants still
+exist in the Scheme namespace and can be lexically shadowed.  If the
+value is mutable, then the compiler is careful to preserve its identity.
+{{CONST}} may be any constant expression, and may also refer to
+constants defined via {{define-constant}} previously.
+This for should only be used at top-level.
+
+==== define-inline
+
+ [syntax] (define-inline (NAME VAR ... [. VAR]) BODY ...)
+ [syntax] (define-inline NAME EXP)
+
+Defines an inline procedure. Any occurrence of {{NAME}} will be
+replaced by {{EXP}} or {{(lambda (VAR ... [. VAR]) BODY ...)}}. 
+This is similar to a macro, but variable-names and -scope will
+be correctly handled.  Inline substitutions take place '''after'''
+macro-expansion.  {{EXP}} should be a lambda-expression. Any
+reference to {{NAME}} should appear textually '''after'''
+its definition. Note that inline procedures are local to the current
+compilation unit and are not available outside of the source file in
+which they are defined. Names of inline procedures still exist in the
+Scheme namespace and can be lexically shadowed.  This construct is
+equivalent to {{define}} when evaluated or interpreted. Inline
+definitions should only appear at toplevel.
+
+==== define-macro
+
+ [syntax] (define-macro (NAME VAR ... [. VAR]) EXP1 ...)
+ [syntax] (define-macro NAME (lambda (VAR ... [. VAR]) EXP1 ...))
+ [syntax] (define-macro NAME1 NAME2)
+
+Define a globally visible macro special form. The macro is available
+as soon as it is defined, i.e. it is registered at compile-time. If
+the file containing this definition invokes {{eval}} and the
+declaration {{run-time-macros}} (or the command line option
+{{-run-time-macros}}) has been used, then the
+macro is visible in evaluated expressions during runtime. The second
+possible syntax for {{define-macro}} is allowed for portability
+purposes only. In this case the second argument '''must''' be a
+lambda-expression or a macro name.  Only global macros can be defined using this form.
+{{(define-macro NAME1 NAME2)}} simply copies the macro definition
+from {{NAME2}} to {{NAME1}}, creating an alias.
+
+Extended lambda list syntax ({{#!optional}}, etc.) can be used but note
+that arguments are source expressions and thus default values for optional
+or keyword arguments should take this into consideration.
+
+==== define-for-syntax
+
+ [syntax] (define-for-syntax (NAME VAR ... [. VAR]) EXP1 ...)
+ [syntax] (define-for-syntax NAME [VALUE])
+
+Defines the toplevel variable {{NAME}} at macro-expansion time. This can
+be helpful when you want to define support procedures for use in macro-transformers,
+for example.
+
+
+=== Conditional forms
+
+==== switch
+
+ [syntax] (switch EXP (KEY EXP1 ...) ... [(else EXPn ...)])
+
+This is similar to {{case}}, but a) only a single key is allowed,
+and b) the key is evaluated.
+
+==== unless
+
+ [syntax] (unless TEST EXP1 EXP2 ...)
+
+Equivalent to:
+
+<enscript highlight=scheme>
+(if (not TEST) (begin EXP1 EXP2 ...))
+</enscript>
+
+==== when
+
+ [syntax] (when TEST EXP1 EXP2 ...)
+
+Equivalent to:
+
+<enscript highlight=scheme>
+(if TEST (begin EXP1 EXP2 ...))
+</enscript>
+
+
+=== Record structures
+
+==== define-record
+
+ [syntax] (define-record NAME SLOTNAME ...)
+
+Defines a record type. Call {{make-NAME}} to create an instance
+of the structure (with one initialization-argument for each slot).
+{{(NAME? STRUCT)}} tests any object for being an instance of this
+structure.  Slots are accessed via {{(NAME-SLOTNAME STRUCT)}}
+and updated using {{(NAME-SLOTNAME-set!}} {{STRUCT}} {{VALUE)}}.
+
+<enscript highlight=scheme>
+(define-record point x y)
+(define p1 (make-point 123 456))
+(point? p1)                      ==> #t
+(point-x p1)                     ==> 123
+(point-y-set! p1 99)
+(point-y p1)                     ==> 99
+</enscript>
+
+==== define-record-printer
+
+ [syntax] (define-record-printer (NAME RECORDVAR PORTVAR) BODY ...)
+ [syntax] (define-record-printer NAME PROCEDURE)
+
+Defines a printing method for record of the type {{NAME}} by
+associating a procedure with the record type. When a record of this
+type is written using {{display, write}} or {{print}}, then
+the procedure is called with two arguments: the record to be printed
+and an output-port.
+
+<enscript highlight=scheme>
+(define-record foo x y z)
+(define f (make-foo 1 2 3))
+(define-record-printer (foo x out)
+  (fprintf out "#,(foo ~S ~S ~S)"
+           (foo-x x) (foo-y x) (foo-z x)) )
+(define-reader-ctor 'foo make-foo)
+(define s (with-output-to-string
+              (lambda () (write f))))
+s                                   ==> "#,(foo 1 2 3)"
+(equal? f (with-input-from-string
+              s read)))             ==> #t
+</enscript>
+
+{{define-record-printer}} works also with SRFI-9 record types.
+
+==== define-record-type
+
+ [syntax] (define-record-type NAME
+                              (CONSTRUCTOR TAG ...)
+                              PREDICATE
+                              (FIELD ACCESSOR [MODIFIER]) ...)
+
+SRFI-9 record types. For more information see the documentation for
+[[http://srfi.schemers.org/srfi-9/srfi-9.html|SRFI-9]].
+
+
+=== Other forms
+
+==== assert
+
+ [syntax] (assert EXP [STRING ARG ...])
+
+Signals an error if {{EXP}} evaluates to false. An optional message
+{{STRING}} and arguments {{ARG ...}} may be supplied to give a
+more informative error-message.  If compiled in ''unsafe'' mode (either
+by specifying the {{-unsafe}} compiler option or by declaring
+{{(unsafe)}}), then this expression expands to an unspecified value.
+The result is the value of {{EXP}}.
+
+==== cond-expand
+
+ [syntax] (cond-expand FEATURE-CLAUSE ...)
+
+Expands by selecting feature clauses. This form is allowed to appear in non-toplevel expressions.
+
+Predefined feature-identifiers are "situation" specific:
+
+; compile : {{eval}}, {{library}}, {{match}}, {{compiling}}, {{srfi-11}}, {{srfi-15}}, {{srfi-31}}, {{srfi-26}}, {{srfi-16}}, {{utils}}, {{regex}}, {{srfi-4}}, {{match}}, {{srfi-1}}, {{srfi-69}}, {{srfi-28}}, {{extras}}, {{srfi-8}}, {{srfi-6}}, {{srfi-2}}, {{srfi-0}}, {{srfi-10}}, {{srfi-9}}, {{srfi-55}}, {{srfi-61}} {{chicken}}, {{srfi-23}}, {{srfi-30}}, {{srfi-39}}, {{srfi-62}}, {{srfi-17}}, {{srfi-12}}.
+
+; load : {{srfi-69}}, {{srfi-28}}, {{extras}}, {{srfi-8}}, {{srfi-6}}, {{srfi-2}}, {{srfi-0}}, {{srfi-10}}, {{srfi-9}}, {{srfi-55}}, {{srfi-61}}, {{chicken}}, {{srfi-23}}, {{srfi-30}}, {{srfi-39}}, {{srfi-62}}, {{srfi-17}}, {{srfi-12}}. {{library}} is implicit.
+
+; eval : {{match}}, {{csi}}, {{srfi-11}}, {{srfi-15}}, {{srfi-31}}, {{srfi-26}}, {{srfi-16}}, {{srfi-69}}, {{srfi-28}}, {{extras}}, {{srfi-8}}, {{srfi-6}}, {{srfi-2}}, {{srfi-0}}, {{srfi-10}}, {{srfi-9}}, {{srfi-55}}, {{srfi-61}}, {{chicken}}, {{srfi-23}}, {{srfi-30}}, {{srfi-39}}, {{srfi-62}}, {{srfi-17}}, {{srfi-12}}. {{library}} is implicit.
+
+The following feature-identifiers are available in all situations: {{(machine-byte-order)}}, {{(machine-type)}}, {{(software-type)}}, {{(software-version)}}, where the actual feature-identifier is platform dependent.
+
+In addition the following feature-identifiers may exist: {{applyhook}}, {{extraslot}}, {{ptables}}, {{dload}}, {{libffi}}.
+
+For further information, see the documentation for [[http://srfi.schemers.org/srfi-0/srfi-0.html|SRFI-0]].
+
+==== ensure
+
+ [syntax] (ensure PREDICATE EXP [ARGUMENTS ...])
+
+Evaluates the expression {{EXP}} and applies the one-argument
+procedure {{PREDICATE}} to the result. If the predicate returns
+{{#f}} an error is signaled, otherwise the result of {{EXP}}
+is returned.  If compiled in ''unsafe'' mode (either by specifying
+the {{-unsafe}} compiler option or by declaring {{(unsafe)}}),
+then this expression expands to an unspecified value.  If specified,
+the optional {{ARGUMENTS}} are used as arguments to the invocation
+of the error-signalling code, as in {{(error ARGUMENTS ...)}}. If
+no {{ARGUMENTS}} are given, a generic error message is displayed
+with the offending value and {{PREDICATE}} expression.
+
+==== eval-when
+
+ [syntax] (eval-when (SITUATION ...) EXP ...)
+
+Controls evaluation/compilation of subforms. {{SITUATION}} should
+be one of the symbols {{eval}}, {{compile}} or {{load}}.
+When encountered in the evaluator, and the situation specifier
+{{eval}} is not given, then this form is not evaluated and an
+unspecified value is returned.  When encountered while compiling code,
+and the situation specifier {{compile}} is given, then this form is
+evaluated at compile-time.  When encountered while compiling code, and the
+situation specifier {{load}} is not given, then this form is ignored
+and an expression resulting into an unspecified value is compiled instead.
+
+The following table should make this clearer:
+
+<table>
+<tr><th></th><th>In compiled code</th><th>In interpreted code</th></tr>
+<tr><td>{{eval}}</td><td>ignore</td><td>evaluate</td></tr>
+<tr><td>{{compile}}</td><td>evaluate at compile time</td><td>ignore</td></tr>
+<tr><td>{{load}}</td><td>compile as normal</td><td>ignore</td></tr>
+</table>
+
+The situation specifiers {{compile-time}} and {{run-time}} are also
+defined and have the same meaning as {{compile}} and {{load}}, respectively.
+
+==== include
+
+ [syntax] (include STRING)
+
+Include toplevel-expressions from the given source file in the currently
+compiled/interpreted program.  If the included file has the extension
+{{.scm}}, then it may be omitted.  The file is searched in the
+current directory and, if not found, in all directories specified in the
+{{-include-path}} option.
+
+==== nth-value
+
+ [syntax] (nth-value N EXP)
+
+Returns the {{N}}th value (counting from zero) of the values returned
+by expression {{EXP}}.
+
+==== time
+
+ [syntax] (time EXP1 ...)
+
+Evaluates {{EXP1 ...}} and prints elapsed time and some
+values about GC use, like time spent in major GCs, number of minor
+and major GCs.
+
+Previous: [[Non standard read syntax]]
+
+Next: [[Pattern matching]]

@@ -27,4 +27,4 @@
 
   (try (dec-to n) '() '()))
 
-(time (do ((i 1000 (- 1 1))) ((zero? i)) (nqueens 8)))
+(time (do ((i 1000 (- 1 1))) ((zero? i)) (nqueens 10)))

@@ -94,6 +94,10 @@ nothing.
 Disable basic syntax checking of embedded C code fragments.
 
 .TP
+.B \-disable\-compiler\-macros
+Disable expansion of compiler macros.
+
+.TP
 .B \-disable\-interrupts
 Equivalent to
 .B \-prelude\ "(declare\ (interrupts-disabled))"
@@ -102,7 +106,8 @@ Equivalent to
 .B \-disable\-stack\-overflow\-checks
 Disables detection of stack-overflows.
 
-.TP \-disable\-warning\ class
+.TP
+.B \-disable\-warning\ class
 Disables specific class of warnings, may be given multiple times.
 
 .TP
@@ -170,30 +175,6 @@ to be a valid feature identifier for
 .B cond\-expand
 
 .TP
-.B \-ffi
-Parse C/C++ code and generate Scheme bindings.
-
-.TP
-.BI \-ffi\-define\ symbol
-Defines a macro that will be accessible in 
-.B foreign\-parse
-declarations.
-
-.TP
-.BI \-ffi\-include\-path\ path
-Set include path for "easy" FFI parser.
-
-.TP
-.B \-ffi\-parse
-Parse C/C++ code and embed as if wrapped inside a 
-.B (declare\ (foreign\-parse\ ...))
-form.
-
-.TP
-.B \-ffi\-no\-include
-Don't parse include files when encountered by the FFI parser.
-
-.TP
 .B \-fixnum\-arithmetic
 Equivalent to
 .B \-prelude\ "(declare\ (fixnum))"
@@ -226,6 +207,11 @@ Sets the heap-shrinkage rate for the compiled program at compile time.
 Print a summary of available options and the format of the command-line parameters and exit the compiler.
 
 .TP
+.BI \-import\ pathname
+Read exports from linked or loaded libraries from given file. Implies
+.B \-check\-imports
+
+.TP
 .BI \-include\-path \ pathname
 Specifies an additional search path for files included via the 
 .I include
@@ -246,6 +232,10 @@ Enables procedure inlining.
 .TP
 .BI \-inline\-limit threshold
 Sets the maximum size of potentially inlinable procedures.
+
+.TP
+.BI \-keep\-shadowed\-macros
+Do not remove macro definitions with the same name as assigned toplevel variables (the default is to remove the macro definition).
 
 .TP
 .BI \-keyword\-style style
@@ -378,19 +368,6 @@ Makes low-level macros (defined with
 also available at run-time. By default
 low-level macros are not available at run-time. Note that highlevel-macros ("syntax-case")
  defined in compiled code are never available at run-time.
-
-.TP
-.BI \-split\ number
-Split output into several C files. So for a source file named
-.I name
-the compiler will generate C files named
-.I name0\,
-.I \.\.\.\,
-.I nameN\-1
-
-.TP
-.BI \-split\-level\ number
-Specifies how hard the partitioning algorithm should work (should be 0, 1 or 2).
 
 .TP
 .B \-to\-stdout

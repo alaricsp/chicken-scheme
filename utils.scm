@@ -1,17 +1,17 @@
 ;;;; utils.scm - Utilities for scripting and file stuff
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -23,7 +23,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-; Send bugs, suggestions and ideas to: 
+; Send bugs, suggestions and ideas to:
 ;
 ; felix@call-with-current-continuation.org
 ;
@@ -47,6 +47,12 @@
  [else
   (declare
     (no-procedure-checks-for-usual-bindings)
+    (bound-to-procedure
+      apropos-list apropos
+      ##sys#string-append reverse port? read-string with-input-from-file command-line-arguments
+      for-each-line ##sys#check-port read-line getenv make-pathname file-exists? call-with-output-file
+      decompose-pathname string-search absolute-pathname? string-append ##sys#substring string-match
+      delete-file system)
     (no-bound-checks))] )
 
 (cond-expand
@@ -61,12 +67,111 @@
     (define-macro (##sys#check-char . _) '(##core#undefined))
     (define-macro (##sys#check-exact . _) '(##core#undefined))
     (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
+    (define-macro (##sys#check-number . _) '(##core#undefined)))]
  [else
   (declare (emit-exports "utils.exports"))] )
 
 (register-feature! 'utils)
+
+
+;;; Environment utilities
+
+#;(define ##sys#apropos-interned #f)
+#;(define ##sys#apropos-macros #f)
+(let ([makpat
+        (lambda (patt)
+          (when (symbol? patt)
+            (set! patt (symbol->string patt)))
+          (when (string? patt)
+            (set! patt (regexp (regexp-escape patt))))
+          patt)])
+  (set! ##sys#apropos-interned
+    (lambda (patt env)
+      (set! patt (makpat patt))
+      (##sys#environment-symbols env
+        (lambda (sym)
+          (and (string-search patt (symbol->string sym))
+	       (##sys#symbol-has-toplevel-binding? sym))))))
+  (set! ##sys#apropos-macros
+    (lambda (patt env) ; env is currently ignored
+      (set! patt (makpat patt))
+      (let ([ms '()])
+        (##sys#hash-table-for-each
+          (lambda (key val)
+            (when (string-search patt (symbol->string key))
+              (set! ms (cons key ms)) ) )
+          ##sys#macro-environment)
+        ms))) )
+
+(define (##sys#apropos patt env #!optional macf)
+  (let ([ts (##sys#apropos-interned patt env)])
+    (if macf
+      (##sys#append ts (##sys#apropos-macros patt env))
+      ts ) ) )
+
+#;(define apropos-list #f)
+#;(define apropos #f)
+(let ([%apropos-list
+        (lambda (loc patt args) ; #!optional (env (interaction-environment)) #!key macros?
+          (let ([env (interaction-environment)]
+                [macros? #f])
+            ; Really wish DSSSL style parser would handle optional & rest w/ keywords
+            ; more intelligently.
+            (let loop ([args args])
+              (when (pair? args)
+                (let ([arg (car args)])
+                  (if (eq? #:macros? arg)
+                    (begin
+                      (set! macros? (cadr args))
+                      (loop (cddr args)) )
+                    (begin
+                      (set! env arg)
+                      (loop (cdr args)) ) ) ) ) )
+	    (##sys#check-structure env 'environment loc)
+            (unless (or (string? patt) (symbol? patt) (regexp? patt))
+              (##sys#signal-hook #:type-error loc "bad argument type - not a string, symbol, or regexp" patt))
+            (##sys#apropos patt env macros?) ) )]
+      [disp-proc
+        (lambda (proc labl)
+          (let ([info (procedure-information proc)])
+            (cond ((pair? info) (display (cons labl (cdr info))))
+		  (info (display labl))
+		  (else (display labl) ) ) ) ) ]
+      [symlen
+        (lambda (sym)
+          (let ([len (##sys#size (##sys#symbol->qualified-string sym))])
+            (if (keyword? sym)
+              (fx- len 2) ; compensate for leading '###' when only a ':' is printed
+              len ) ) )])
+  (set! apropos-list
+    (lambda (patt . rest)
+      (%apropos-list 'apropos-list patt rest)))
+  (set! apropos
+    (lambda (patt . rest)
+      (let ([ss (%apropos-list 'apropos patt rest)]
+            [maxlen 0])
+        (for-each
+          (lambda (sym)
+            (set! maxlen (fxmax maxlen (symlen sym))))
+          ss)
+        (for-each
+          (lambda (sym)
+            (display sym)
+            (do ([i (fx- maxlen (symlen sym)) (fx- i 1)])
+                [(fx<= i 0)]
+              (display #\space))
+            (display #\space) (display #\:) (display #\space)
+            (if (macro? sym)
+              ;FIXME want to display macro lambda arguments
+              (display 'macro)
+              (let ([bnd (##core#inline "C_retrieve" sym)])
+                (cond
+                  [(procedure? bnd)
+                    (disp-proc bnd 'procedure)]
+                  [else
+                    (display 'variable)]) ) )
+            (newline) )
+          ss)))) )
 
 
 ;;; Like `system', but allows format-string and bombs on nonzero return code:
@@ -106,80 +211,91 @@
       (##sys#check-string pn 'absolute-pathname?)
       (pair? (string-match rx pn)) ) ) )
 
-(define (chop-pds str)
+(define (chop-pds str pds)
   (and str
-       (let ([len (##sys#size str)])
-	 (if (and (fx> len 0) 
-		  (eq? ##sys#pathname-directory-separator (##core#inline "C_subchar" str (fx- len 1))) )
-	     (##sys#substring str 0 (fx- len 1))
+       (let ((len (##sys#size str))
+	     (pdslen (##sys#size pds)) )
+	 (if (and (fx>= len pdslen) 
+		  (##core#inline "C_substring_compare" str pds (fx- len pdslen) 0 pdslen) )
+	     (##sys#substring str 0 (fx- len pdslen))
 	     str) ) ) )
 
 (let ([string-append string-append]
       [absolute-pathname? absolute-pathname?]
-      [pds (string ##sys#pathname-directory-separator)] )
-  (define (conc-dirs dirs)
+      [pds0 (string ##sys#pathname-directory-separator)] )
+  (define (conc-dirs dirs pds)
     (##sys#check-list dirs 'make-pathname)
     (let loop ([strs dirs])
-      (if (null? strs) 
+      (if (null? strs)
 	  ""
 	  (let ((s1 (car strs)))
 	    (if (zero? (string-length s1))
 		(loop (cdr strs))
-		(string-append (chop-pds (car strs)) pds (loop (cdr strs))) ) ) ) ) )
-  (define (canonicalize dir)
+		(string-append (chop-pds (car strs) pds) pds (loop (cdr strs))) ) ) ) ) )
+  (define (canonicalize dir pds)
     (cond [(or (not dir) (null? dir)) ""]
-	  [(string? dir) (conc-dirs (list dir))]
-	  [else (conc-dirs dir)] ) )
-  (define (_make-pathname dir file . ext)
-    (let ([dirs (canonicalize dir)]
-	  [file (or file "")]
-	  [ext (if (pair? ext) (or (car ext) "") "")] )
-      (##sys#check-string file 'make-pathname)
-      (##sys#check-string ext 'make-pathname)
+	  [(string? dir) (conc-dirs (list dir) pds)]
+	  [else (conc-dirs dir pds)] ) )
+  (define (_make-pathname loc dir file ext pds)
+    (let ([dirs (canonicalize dir pds)]
+	  (pdslen (##sys#size pds))
+	  (ext (or ext ""))
+	  [file (or file "")] )
+      (##sys#check-string file loc)
+      (##sys#check-string ext loc)
+      (##sys#check-string pds loc)
       (string-append
        dirs
        (if (and dir
-		(fx> (##sys#size file) 0) 
-		(eq? ##sys#pathname-directory-separator (##core#inline "C_subchar" file 0)) )
-	   (##sys#substring file 1 (##sys#size file))
+		(and (fx>= (##sys#size file) pdslen)
+		     (##core#inline "C_substring_compare" pds file 0 0 pdslen) ) )
+	   (##sys#substring file pdslen (##sys#size file))
 	   file)
        (if (and (fx> (##sys#size ext) 0)
 		(not (char=? (##core#inline "C_subchar" ext 0) #\.)) )
 	   "."
 	   "")
        ext) ) )
-  (set! make-pathname _make-pathname)
+  (set! make-pathname
+    (lambda (dir file #!optional ext (pds pds0))
+      (_make-pathname 'make-pathname dir file ext pds)))
   (set! make-absolute-pathname
-    (lambda (dir file . ext)
-      (apply
-       _make-pathname
-       (let* ([dirs (canonicalize dir)]
+    (lambda (dir file #!optional ext (pds pds0))
+      (_make-pathname
+       'make-absolute-pathname
+       (let* ([dirs (canonicalize dir pds)]
 	      [dlen (##sys#size dirs)] )
 	 (if (not (absolute-pathname? dirs))
 	     (##sys#string-append pds dirs)
 	     dirs) )
-       file
-       ext) ) ) )
+       file ext pds) ) ) )
 
 (define decompose-pathname
-  (let* ([set (##sys#string-append "\\/\\" (string ##sys#pathname-directory-separator))]
+  (let* ((pds (string ##sys#pathname-directory-separator))
+	 [set (##sys#string-append "\\/\\" pds)]
 	 [rx1 (string-append "^(.*[" set "])?([^" set "]+)(\\.([^" set ".]+))$")]
-	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")] 
-	 [string-match string-match] )
+	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")]
+	 [string-search string-search]
+	 [strip-pds
+	   (lambda (dir)
+	      (and dir
+		(if (string=? dir pds)
+		    dir
+		    (chop-pds dir pds) ) ) )] )
     (lambda (pn)
       (##sys#check-string pn 'decompose-pathname)
       (if (eq? (##sys#size pn) 0)
-	  (values #f #f #f) 
+	  (values #f #f #f)
 	  (let ([m (string-search rx1 pn)])
 	    (if m
-		(values (chop-pds (cadr m)) (caddr m) (car (cddddr m)))
+		(values (strip-pds (cadr m)) (caddr m) (car (cddddr m)))
 		(let ([m (string-search rx2 pn)])
 		  (if m
-		      (values (chop-pds (cadr m)) (caddr m) #f)
-		      (values pn #f #f) ) ) ) ) ) ) ) )
+		      (values (strip-pds (cadr m)) (caddr m) #f)
+		      (values (strip-pds pn) #f #f) ) ) ) ) ) ) ) )
 
 (let ([decompose-pathname decompose-pathname])
-  (set! pathname-directory 
+  (set! pathname-directory
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	dir) ) )
@@ -187,15 +303,15 @@
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	file) ) )
-  (set! pathname-extension 
+  (set! pathname-extension
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	ext) ) )
-  (set! pathname-strip-directory 
+  (set! pathname-strip-directory
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	(make-pathname #f file ext) ) ) )
-  (set! pathname-strip-extension 
+  (set! pathname-strip-extension
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	(make-pathname dir file) ) ) )
@@ -214,8 +330,8 @@
 
 (define create-temporary-file
   (let ([getenv getenv]
-	[make-pathname make-pathname] 
-	[file-exists? file-exists?] 
+	[make-pathname make-pathname]
+	[file-exists? file-exists?]
 	[call-with-output-file call-with-output-file] )
     (lambda ext
       (let ([dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP"))]
@@ -224,10 +340,23 @@
 	(let loop ()
 	  (let* ([n (##sys#fudge 16)]
 		 [pn (make-pathname dir (##sys#string-append "t" (number->string n 16)) ext)] )
-	    (if (file-exists? pn) 
+	    (if (file-exists? pn)
 		(loop)
 		(call-with-output-file pn (lambda (p) pn)) ) ) ) ) ) ) )
 
+;; Directory string or list only contains path-separators
+;; and/or current-directory names.
+
+(define (directory-null? dir)
+  (let loop ([lst
+              (if (list? dir)
+                  dir ; Don't bother to check for strings here
+                  (begin
+                    (##sys#check-string dir 'directory-null?)
+                    (string-split dir "/\\" #t)))])
+    (or (null? lst)
+        (and (member (car lst) '("" "."))
+             (loop (cdr lst)) ) ) ) )
 
 ;;; Handy I/O procedures:
 
@@ -238,7 +367,7 @@
 	(##sys#check-port port 'for-each-line)
 	(let loop ()
 	  (let ([ln (read-line port)])
-	    (unless (eof-object? ln) 
+	    (unless (eof-object? ln)
 	      (proc ln)
 	      (loop) ) ) ) ) ) ) )
 
@@ -252,7 +381,7 @@
         (with-input-from-file file (cut for-each-line thunk) ) ) )
   (let ((args (command-line-arguments)))
     (if (null? args)
-        ;; If no arguments, take from stdin, 
+        ;; If no arguments, take from stdin,
         (for-each-line thunk)
         ;; otherwise, hit each file named in argv.
         (for-each (lambda (arg) (file-iterator arg thunk)) args))))
@@ -305,3 +434,53 @@
 	  (if (eq? x #!eof)
 	      (reverse xs)
 	      (loop (cons (fn x) xs))))))))
+
+(define (port-fold fn acc thunk)
+  (let loop ([acc acc])
+    (let ([x (thunk)])
+      (if (eq? x #!eof)
+        acc
+        (loop (fn x acc))) ) ) )
+
+;;;; funky-ports
+
+(define (make-broadcast-port . ports)
+  (make-output-port
+   (lambda (s) (for-each (cut write-string s #f <>) ports))
+   noop
+   (lambda () (for-each flush-output ports)) ) )
+
+(define (make-concatenated-port p1 . ports)
+  (let ((ports (cons p1 ports)))
+    (make-input-port
+     (lambda ()
+       (let loop ()
+	 (if (null? ports)
+	     #!eof
+	     (let ((c (read-char (car ports))))
+	       (cond ((eof-object? c)
+		      (set! ports (cdr ports))
+		      (loop) )
+		     (else c) ) ) ) ) )
+     (lambda ()
+       (and (not (null? ports))
+	    (char-ready? (car ports))))
+     noop
+     (lambda ()
+       (let loop ()
+	 (if (null? ports)
+	     #!eof
+	     (let ((c (peek-char (car ports))))
+	       (cond ((eof-object? c)
+		      (set! ports (cdr ports))
+		      (loop) )
+		     (else c))))))
+     (lambda (p n dest start)
+       (let loop ((n n) (c 0))
+	 (cond ((null? ports) c)
+	       ((fx<= n 0) c)
+	       (else
+		(let ((m (read-string! n dest (car ports) (fx+ start c))))
+		  (when (fx< m n)
+		    (set! ports (cdr ports)) )
+		  (loop (fx- n m) (fx+ c m))))))))))

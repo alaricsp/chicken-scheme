@@ -1,6 +1,6 @@
 ;;;; srfi-4.scm - Homogeneous numeric vectors
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -64,8 +64,8 @@
 #define C_s32poke(b, i, x)     ((((C_s32 *)C_data_pointer(b))[ C_unfix(i) ] = C_num_to_int(x)), C_SCHEME_UNDEFINED)
 #define C_f32poke(b, i, x)     ((((float *)C_data_pointer(b))[ C_unfix(i) ] = C_flonum_magnitude(x)), C_SCHEME_UNDEFINED)
 #define C_f64poke(b, i, x)     ((((double *)C_data_pointer(b))[ C_unfix(i) ] = C_flonum_magnitude(x)), C_SCHEME_UNDEFINED)
-#define C_copy_subvector(to, from, start_from, bytes)   \
-  (C_memcpy((C_char *)C_data_pointer(to), (C_char *)C_data_pointer(from) + C_unfix(start_from), C_unfix(bytes)), \
+#define C_copy_subvector(to, from, start_to, start_from, bytes)   \
+  (C_memcpy((C_char *)C_data_pointer(to) + C_unfix(start_to), (C_char *)C_data_pointer(from) + C_unfix(start_from), C_unfix(bytes)), \
     C_SCHEME_UNDEFINED)
 EOF
 ) )
@@ -80,7 +80,8 @@ EOF
      ##sys#check-exact ##sys#u8vector-ref ##sys#u8vector-set! ##sys#s8vector-ref ##sys#s8vector-set! 
      ##sys#u16vector-ref ##sys#u16vector-set!
      ##sys#s16vector-ref ##sys#s16vector-set! ##sys#u32vector-ref ##sys#u32vector-set! ##sys#s32vector-ref 
-     ##sys#s32vector-set!
+     ##sys#s32vector-set! read list->f64vector list->s32vector list->u32vector list->u16vector list-s8vector
+     list->u8vector set-finalizer!
      ##sys#f32vector-ref ##sys#f32vector-set! ##sys#f64vector-ref ##sys#f64vector-set! ##sys#check-exact-interval
      ##sys#check-inexact-interval ##sys#check-number ##sys#check-structure ##sys#cons-flonum ##sys#check-list 
      ##sys#check-range ##sys#error ##sys#signal-hook
@@ -503,33 +504,89 @@ EOF
   (define (pack tag loc)
     (lambda (v)
       (##sys#check-structure v tag loc)
-      (##core#inline "C_slot" v 1) ) )
+      (##sys#slot v 1) ) )
+
+  (define (pack-copy tag loc)
+    (lambda (v)
+      (##sys#check-structure v tag loc)
+      (let* ((old (##sys#slot v 1))
+	     (new (make-string (##sys#size old))))
+	(##core#inline "C_copy_block" old new) ) ) )
 
   (define (unpack tag sz loc)
     (lambda (str)
       (##sys#check-byte-vector str loc)
-      (let ([len (##core#inline "C_block_size" str)])
-	(if (or (eq? #t sz) (##core#inline "C_eqp" 0 (fxmod len sz)))
+      (let ([len (##sys#size str)])
+	(if (or (eq? #t sz) 
+		(eq? 0 (##core#inline "C_fixnum_modulo" len sz)))
 	    (##sys#make-structure tag str) 
-	    (##sys#error loc "bytevector does not have correct size for packing" tag len sz) ) ) ) )
+	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )
 
-  (set! u8vector->byte-vector (pack 'u8vector 'u8vector->byte-vector))
-  (set! s8vector->byte-vector (pack 's8vector 's8vector->byte-vector))
-  (set! u16vector->byte-vector (pack 'u16vector 'u16vector->byte-vector))
-  (set! s16vector->byte-vector (pack 's16vector 's16vector->byte-vector))
-  (set! u32vector->byte-vector (pack 'u32vector 'u32vector->byte-vector))
-  (set! s32vector->byte-vector (pack 's32vector 's32vector->byte-vector))
-  (set! f32vector->byte-vector (pack 'f32vector 'f32vector->byte-vector))
-  (set! f64vector->byte-vector (pack 'f64vector 'f64vector->byte-vector)) 
+  (define (unpack-copy tag sz loc)
+    (lambda (str)
+      (##sys#check-byte-vector str loc)
+      (let* ((len (##sys#size str))
+	    (new (make-string len)))
+	(if (or (eq? #t sz) 
+		(eq? 0 (##core#inline "C_fixnum_modulo" len sz)))
+	    (##sys#make-structure 
+	     tag 
+	     (##core#inline "C_copy_block" str new) )
+	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )    
 
-  (set! byte-vector->u8vector (unpack 'u8vector #t 'byte-vector->u8vector))
-  (set! byte-vector->s8vector (unpack 's8vector #t 'byte-vector->s8vector))
-  (set! byte-vector->u16vector (unpack 'u16vector 2 'byte-vector->u16vector))
-  (set! byte-vector->s16vector (unpack 's16vector 2 'byte-vector->s16vector))
-  (set! byte-vector->u32vector (unpack 'u32vector 4 'byte-vector->u32vector))
-  (set! byte-vector->s32vector (unpack 's32vector 4 'byte-vector->s32vector))
-  (set! byte-vector->f32vector (unpack 'f32vector 4 'byte-vector->f32vector))
-  (set! byte-vector->f64vector (unpack 'f64vector 8 'byte-vector->f64vector)) )
+  (set! u8vector->byte-vector (pack 'u8vector 'u8vector->byte-vector)) ; DEPRECATED
+  (set! s8vector->byte-vector (pack 's8vector 's8vector->byte-vector)) ; DEPRECATED
+  (set! u16vector->byte-vector (pack 'u16vector 'u16vector->byte-vector)) ; DEPRECATED
+  (set! s16vector->byte-vector (pack 's16vector 's16vector->byte-vector)) ; DEPRECATED
+  (set! u32vector->byte-vector (pack 'u32vector 'u32vector->byte-vector)) ; DEPRECATED
+  (set! s32vector->byte-vector (pack 's32vector 's32vector->byte-vector)) ; DEPRECATED
+  (set! f32vector->byte-vector (pack 'f32vector 'f32vector->byte-vector)) ; DEPRECATED
+  (set! f64vector->byte-vector (pack 'f64vector 'f64vector->byte-vector)) ; DEPRECATED
+
+  (set! u8vector->blob/shared (pack 'u8vector 'u8vector->blob/shared))
+  (set! s8vector->blob/shared (pack 's8vector 's8vector->blob/shared))
+  (set! u16vector->blob/shared (pack 'u16vector 'u16vector->blob/shared))
+  (set! s16vector->blob/shared (pack 's16vector 's16vector->blob/shared))
+  (set! u32vector->blob/shared (pack 'u32vector 'u32vector->blob/shared))
+  (set! s32vector->blob/shared (pack 's32vector 's32vector->blob/shared))
+  (set! f32vector->blob/shared (pack 'f32vector 'f32vector->blob/shared))
+  (set! f64vector->blob/shared (pack 'f64vector 'f64vector->blob/shared)) 
+
+  (set! u8vector->blob (pack-copy 'u8vector 'u8vector->blob))
+  (set! s8vector->blob (pack-copy 's8vector 's8vector->blob))
+  (set! u16vector->blob (pack-copy 'u16vector 'u16vector->blob))
+  (set! s16vector->blob (pack-copy 's16vector 's16vector->blob))
+  (set! u32vector->blob (pack-copy 'u32vector 'u32vector->blob))
+  (set! s32vector->blob (pack-copy 's32vector 's32vector->blob))
+  (set! f32vector->blob (pack-copy 'f32vector 'f32vector->blob))
+  (set! f64vector->blob (pack-copy 'f64vector 'f64vector->blob)) 
+
+  (set! byte-vector->u8vector (unpack 'u8vector #t 'byte-vector->u8vector)) ; DEPRECATED
+  (set! byte-vector->s8vector (unpack 's8vector #t 'byte-vector->s8vector)) ; DEPRECATED
+  (set! byte-vector->u16vector (unpack 'u16vector 2 'byte-vector->u16vector)) ; DEPRECATED
+  (set! byte-vector->s16vector (unpack 's16vector 2 'byte-vector->s16vector)) ; DEPRECATED
+  (set! byte-vector->u32vector (unpack 'u32vector 4 'byte-vector->u32vector)) ; DEPRECATED
+  (set! byte-vector->s32vector (unpack 's32vector 4 'byte-vector->s32vector)) ; DEPRECATED
+  (set! byte-vector->f32vector (unpack 'f32vector 4 'byte-vector->f32vector)) ; DEPRECATED
+  (set! byte-vector->f64vector (unpack 'f64vector 8 'byte-vector->f64vector)) ; DEPRECATED
+
+  (set! blob->u8vector/shared (unpack 'u8vector #t 'blob->u8vector/shared))
+  (set! blob->s8vector/shared (unpack 's8vector #t 'blob->s8vector/shared))
+  (set! blob->u16vector/shared (unpack 'u16vector 2 'blob->u16vector/shared))
+  (set! blob->s16vector/shared (unpack 's16vector 2 'blob->s16vector/shared))
+  (set! blob->u32vector/shared (unpack 'u32vector 4 'blob->u32vector/shared))
+  (set! blob->s32vector/shared (unpack 's32vector 4 'blob->s32vector/shared))
+  (set! blob->f32vector/shared (unpack 'f32vector 4 'blob->f32vector/shared))
+  (set! blob->f64vector/shared (unpack 'f64vector 8 'blob->f64vector/shared))
+
+  (set! blob->u8vector (unpack-copy 'u8vector #t 'blob->u8vector))
+  (set! blob->s8vector (unpack-copy 's8vector #t 'blob->s8vector))
+  (set! blob->u16vector (unpack-copy 'u16vector 2 'blob->u16vector))
+  (set! blob->s16vector (unpack-copy 's16vector 2 'blob->s16vector))
+  (set! blob->u32vector (unpack-copy 'u32vector 4 'blob->u32vector))
+  (set! blob->s32vector (unpack-copy 's32vector 4 'blob->s32vector))
+  (set! blob->f32vector (unpack-copy 'f32vector 4 'blob->f32vector))
+  (set! blob->f64vector (unpack-copy 'f64vector 8 'blob->f64vector)) )
 
 
 ;;; Read syntax:
@@ -582,14 +639,14 @@ EOF
   (##sys#check-structure v t loc)
   (let* ([bv (##sys#slot v 1)]
 	 [len (##sys#size bv)]
-	 [ilen (fx/ len es)] )
+	 [ilen (##core#inline "C_fixnum_divide" len es)] )
     (##sys#check-range from 0 (fx+ ilen 1) loc)
     (##sys#check-range to 0 (fx+ ilen 1) loc)
     (let* ([size2 (fx* es (fx- to from))]
 	   [bv2 (##sys#allocate-vector size2 #t #f #t)] )
       (##core#inline "C_string_to_bytevector" bv2)
       (let ([v (##sys#make-structure t bv2)])
-	(##core#inline "C_copy_subvector" bv2 bv (fx* from es) size2)
+	(##core#inline "C_copy_subvector" bv2 bv 0 (fx* from es) size2)
 	v) ) ) )
 
 (define (subu8vector v from to) (subvector v 'u8vector 1 from to 'subu8vector))
@@ -601,5 +658,54 @@ EOF
 (define (subf32vector v from to) (subvector v 'f32vector 4 from to 'subf32vector))
 (define (subf64vector v from to) (subvector v 'f64vector 8 from to 'subf64vector))
 
+(define (write-u8vector v #!optional (port ##sys#standard-output) (from 0) (to (u8vector-length v)))
+  (##sys#check-structure v 'u8vector 'write-u8vector)
+  (##sys#check-port port 'write-u8vector)
+  (let ((buf (##sys#slot v 1)))
+    (do ((i from (fx+ i 1)))
+	((fx>= i to))
+      (##sys#write-char-0 (integer->char (##core#inline "C_u8peek" buf i)) port) ) ) )
+
+(define (read-u8vector! n dest #!optional (port ##sys#standard-input) (start 0))
+  (##sys#check-port port 'read-u8vector!)
+  (##sys#check-exact start 'read-u8vector!)
+  (##sys#check-structure dest 'u8vector 'read-u8vector!)
+  (let ((dest (##sys#slot dest 1)))
+    (when n
+      (##sys#check-exact n 'read-u8vector!)
+      (when (fx> (fx+ start n) (##sys#size dest))
+	(set! n (fx- (##sys#size dest) start))))
+    (##sys#read-string! n dest port start) ) )
+
+(define read-u8vector
+  (let ((open-output-string open-output-string)
+	(get-output-string get-output-string) )
+    (define (wrap str n)
+      (##sys#make-structure
+       'u8vector
+       (let ((str2 (##sys#allocate-vector n #t #f #t)))
+	 (##core#inline "C_string_to_bytevector" str2) 
+	 (##core#inline "C_substring_copy" str str2 0 n 0)
+	 str2) ) )
+    (lambda (#!optional n (p ##sys#standard-input))
+      (##sys#check-port p 'read-u8vector)
+      (cond (n (##sys#check-exact n 'read-u8vector)
+	       (let* ((str (##sys#allocate-vector n #t #f #t))
+		      (n2 (##sys#read-string! n str p 0)) )
+		 (##core#inline "C_string_to_bytevector" str) 
+		 (if (eq? n n2)
+		     (##sys#make-structure 'u8vector str)
+		     (wrap str n2) ) ) )
+	    (else
+	     (let ([str (open-output-string)])
+	       (let loop ()
+		 (let ([c (##sys#read-char-0 p)])
+		   (if (eof-object? c)
+		       (let* ((s (get-output-string str))
+			      (n (##sys#size s)) )
+			 (wrap s n) )
+		       (begin
+			 (##sys#write-char/port c str) 
+			 (loop)))))))))))
 
 (register-feature! 'srfi-4)

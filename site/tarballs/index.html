@@ -1,0 +1,153 @@
+<html>
+<head>
+<title>call-with-current-continuation.org - tarballs</title><style type="text/css"> <!--
+      CODE {
+            color: #666666;
+          }
+
+     DT.definition { 
+                   background: #eee;
+                   color: black;
+                   padding: 0.2em 1em 0.2em 0.7em;
+                   margin-left: 0.2em;
+		   border: 1px solid #bbc;
+                   font-family: "Andale Mono", monospace;
+                 }
+     DD {
+                   margin-top: 0.8em;
+                   margin-bottom: 0.8em;
+     }
+     DIV.subsection {
+                    border-top: 1px solid #448;
+                    padding-left: 1em;
+     }
+	 DIV.section {
+		 margin-bottom: 1.5em;
+	 }
+	 a:link {
+		 color: #336;
+	 }
+	 a:visited { color: #666; }
+	 a:active  { color: #966; }
+	 a:hover   { color: #669; }
+	 body { margin: 0; padding: 0; background: #fff; color: #000; font: 9pt "Lucida Grande", "Verdana", sans-serif; }
+	 H2 {
+		 background: #336;
+		 color: #fff;
+		 padding-top: 0.5em;
+		 padding-bottom: 0.5em;
+		 padding-left: 16px;
+		 margin: 0 0 1em 0;
+	}
+	TT {
+		font-family: "Andale Mono", monospace;
+		/* font-size: 1.2em; */
+	}
+	H3 {
+		color: #113;
+		margin-bottom: 0.5em;
+	}
+     DIV#eggheader {
+         text-align: center;
+		 float: right;
+		 margin-right: 2em;
+     }
+     DIV#header IMG {
+            /* display: block; margin-left: auto; margin-right: auto;  */
+            /* float: right; */
+            border: none;  /* firefox */
+     }
+     DIV#footer {
+                background: #bbd;
+                padding: 0.7em ;
+                border-top: 1px solid #cce;
+     }
+     DIV#footer hr {
+                display: none;
+     }
+     DIV#footer a {
+                float: left;
+     }
+     DIV#revision-history {
+         float: right;
+     }
+     
+     DIV#body {
+		 margin: 1em 1em 1em 16px;
+	 }
+
+     DIV#examples PRE {
+       background: #eef;
+       padding: 0.1em;
+       border: 1px solid #aac;
+     }
+     PRE#license, DIV#examples PRE {
+       padding: 0.5em;
+     }
+     DIV#examples PRE {
+       /* font-size: 85%; */
+     }
+     PRE { font-family: "Andale Mono", monospace; }
+     TABLE {
+       background: #eef;
+       padding: 0.2em;
+       border: 1px solid #aac;
+       width: 100%;
+     }
+     TABLE.symbol-table TD.symbol {
+          width: 15em;
+          font-family: "Andale Mono", monospace;
+          /* font-size: 1.2em; */
+     }
+     P.block { text-align: left; }
+     H3 { margin: 2em; }
+     TH {
+       border-bottom: 1px solid black;
+     } --></style>
+</head>
+<body>
+<h2>call-with-current-continuation.org</h2>
+
+<div style="width: 70%; margin: 3em;">
+
+<p>This is the tarball mirror for the <a href="../index.html">CHICKEN</a> Scheme implementation.
+The following files are currently available:</p>
+
+<p><a href="AquaTerm1.0.1.dmg">AquaTerm1.0.1.dmg</a>
+<p><a href="SDL-1.2.11.tar.gz">SDL-1.2.11.tar.gz</a>
+<p><a href="SDL_gfx-2.0.13.tar.gz">SDL_gfx-2.0.13.tar.gz</a>
+<p><a href="SDL_image-1.2.5.tar.gz">SDL_image-1.2.5.tar.gz</a>
+<p><a href="SDL_net-1.2.6.tar.gz">SDL_net-1.2.6.tar.gz</a>
+<p><a href="SDL_ttf-2.0.8.tar.gz">SDL_ttf-2.0.8.tar.gz</a>
+<p><a href="UnxUtils.zip">UnxUtils.zip</a>: Windows binaries of common UNIX utilities
+<p><a href="cairo-1.2.6.tar.gz">cairo-1.2.6.tar.gz</a>
+<p><a href="cmake-2.4.5.tar.gz">cmake-2.4.5.tar.gz</a>
+<p><a href="cmake-2.4.5-win32-x86.exe">cmake-2.4.5-win32-x86.exe</a>
+<p><a href="darcs-1.0.8-static-linux-i386.gz">darcs-1.0.8-static-linux-i386.gz</a>
+<p><a href="darcsdir-w32-1.0.7.zip">darcsdir-w32-1.0.7.zip</a>
+<p><a href="enscript-1.6.1.tar.gz">enscript-1.6.1.tar.gz</a>
+<p><a href="fcgi-2.4.0.tar.gzf">cgi-2.4.0.tar.gz</a>
+<p><a href="g2-0.72.tar.gz">g2-0.72.tar.gz</a>
+<p><a href="gdbm-1.8.3.tar.gz">gdbm-1.8.3.tar.gz</a>
+<p><a href="gmp-4.2.1.tar.gz">gmp-4.2.1.tar.gz</a>
+<p><a href="htmldoc-1.9.x-r1521.tar.gz">htmldoc-1.9.x-r1521.tar.gz</a>
+<p><a href="hyperestraier-1.4.9.tar.gz">hyperestraier-1.4.9.tar.gz</a>
+<p><a href="imlib2-1.3.0.tar.gz">imlib2-1.3.0.tar.gz</a>
+<p><a href="libffi-3.tgz">libffi-3.tgz</a>
+<p><a href="libpcap-0.9.5.tar.gz">libpcap-0.9.5.tar.gz</a>
+<p><a href="libxmi-1.2.tar.gz">libxmi-1.2.tar.gz</a>
+<p><a href="libsx-2.04.tar.bz2">libsx-2.04.tar.bz2</a>
+<p><a href="mapm-4.9.2.tar.gz">mapm-4.9.2.tar.gz</a>
+<p><a href="metakit-2.4.9.6.tar.gz">metakit-2.4.9.6.tar.gz</a>
+<p><a href="openal-0.0.8.tar.gz">openal-0.0.8.tar.gz</a>
+<p><a href="pcre-6.3.tar.gz">pcre-6.3.tar.gz</a>
+<p><a href="q-7.5.tar.gz">q-7.5.tar.gz</a>
+<p><a href="readline-5.2.tar.gz">readline-5.2.tar.gz</a>
+<p><a href="sqlite-3.3.8.tar.gz">sqlite-3.3.8.tar.gz</a>
+<p><a href="uuid-1.5.1.tar.gz">uuid-1.5.1.tar.gz</a>
+<p><a href="xosd-2.2.12.tar.gz">xosd-2.2.12.tar.gz</a>
+<p><a href="fltk-1.1.7-source.tar.gz">fltk-1.1.7-source.tar.gz</a>
+
+</div>
+</body>
+</html>

@@ -1,6 +1,6 @@
 ;;;; chicken-ffi-macros.scm
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -149,18 +149,16 @@
 
 ;;; Embedding code directly:
 
-(define-macro (foreign-code str)
+(define-macro (foreign-code . strs)
   (let ([tmp (gensym 'code_)])
-    (##compiler#check-c-syntax str 'foreign-code)
     `(begin
        (declare 
 	 (foreign-declare
-	  ,(sprintf "static C_word ~A() { ~A; return C_SCHEME_UNDEFINED; }\n" tmp str) ) )
+	  ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" tmp (string-intersperse strs "\n")) ) )
        (##core#inline ,tmp) ) ) )
 
 (define-macro (foreign-value str type)
   (let ([tmp (gensym 'code_)])
-    (##compiler#check-c-syntax str 'foreign-value)
     `(begin
        (define-foreign-variable ,tmp ,type ,str)
        ,tmp) ) )
@@ -289,12 +287,6 @@
 (define-macro (foreign-declare . strs)
   `(##core#declare '(foreign-declare ,@strs)))
 
-(define-macro (foreign-parse . strs)
-  `(##core#declare '(foreign-parse ,@strs)))
-
-(define-macro (foreign-parse/declare . strs)
-  `(##core#declare '(foreign-declare ,@strs) '(foreign-parse ,@strs)) )
-
 
 ;;; Foreign enumerations (or enum-like constants)
 
@@ -330,65 +322,29 @@
 	 (define-foreign-type ,name ,type ,s->e ,e->s) ) ) ) )
 
 
-;;; The dollar macro
-
-(define-macro ($ func . args)
-  (define (conv arg)
-    (cond ((fixnum? arg) `(int ,arg))
-	  ((number? arg) `(double ,arg))
-	  ((string? arg) `(nonnull-c-string ,arg))
-	  ((char? arg) `(char ,arg))
-	  ((boolean? arg) `(bool ,arg))
-	  (else arg) ) )
-  (let* ((rtype (cond ((and (pair? args) (symbol? (car args)))
-		       (let ((rtype func))
-			 (set! func (car args))
-			 (set! args (cdr args))
-			 rtype) ) 
-		      (else 'void)))
-	 (args (map (lambda (arg)
-		      (cond ((atom? arg) (conv arg))
-			    ((list? arg)
-			     (case (car arg)
-			       ((quote)
-				(if (pair? (cdr arg))
-				    (let ((val (cadr arg)))
-				      (cond ((symbol? val) `(symbol ',val))
-					    ((u8vector? val) `(nonnull-u8vector ',val))
-					    ((s8vector? val) `(nonnull-s8vector ',val))
-					    ((u16vector? val) `(nonnull-u16vector ',val))
-					    ((s16vector? val) `(nonnull-s16vector ',val))
-					    ((u32vector? val) `(nonnull-u32vector ',val))
-					    ((s32vector? val) `(nonnull-s32vector ',val))
-					    ((f32vector? val) `(nonnull-f32vector ',val))
-					    ((f64vector? val) `(nonnull-f64vector ',val))
-					    ((or (pair? val) (vector? val)) `(scheme-object ',val))
-					    (else (conv val)) ) )
-				    arg) )
-			       ((location) `(nonnull-c-pointer ,arg))
-			       (else arg) ) )
-			    (else arg) ) ) 
-		    args) )
-	 (syms (map (lambda (_) (gensym)) args)))
-    (if (null? args)
-	(if (eq? 'void rtype)
-	    `(foreign-code ,(conc func "();"))
-	    `(foreign-value ,(conc func "()") ,rtype) )
-	`((foreign-lambda* ,rtype ,(map (lambda (arg sym) (list (car arg) sym)) args syms)
-	    ,(let ((body (conc func "(" (string-intersperse (map ->string syms) ",") ")")))
-	       (if (eq? rtype 'void) 
-		   (string-append body ";")
-		   (string-append "return(" body ");") ) ) )
-	  ,@(map cadr args) ) ) ) )
-
-
 ;;; Deprecated FFI macros
 
 (define-macro (define-deprecated-macro old new)
   `(define-macro (,old . args)
-     (warning "`~s' is deprecated, use `~s' instead" ',old ',new)
+     (warning (sprintf "`~s' is deprecated, use `~s' instead" ',old ',new))
      (cons ',new args) ) )
 
 (define-deprecated-macro foreign-callback-lambda foreign-safe-lambda)
 (define-deprecated-macro foreign-callback-lambda* foreign-safe-lambda*)
 (define-deprecated-macro foreign-callback-wrapper foreign-safe-wrapper)
+
+
+;;; Not for general use, yet
+
+(define-macro (define-compiler-macro head . body)
+  (define (bad)
+    (syntax-error
+     'define-compiler-macro "invalid compiler macro definition" head) )
+  (if (and (pair? head) (symbol? (car head)))
+      (cond ((memq 'compiling ##sys#features)
+	     (warning "compile macros are not available in interpreted code" 
+		      (car head) ) )
+	    ((not (##compiler#register-compiler-macro (car head) (cdr head) body))
+	     (bad) ) )
+      (bad) )
+  '(void) )

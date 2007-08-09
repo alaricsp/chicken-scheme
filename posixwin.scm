@@ -2,18 +2,18 @@
 ;
 ; By Sergey Khorev
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -25,7 +25,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-; Send bugs, suggestions and ideas to: 
+; Send bugs, suggestions and ideas to:
 ;
 ; felix@call-with-current-continuation.org
 ;
@@ -41,8 +41,7 @@
 ; perm/isvtx  perm/isuid  perm/isgid
 ; file-select
 ; symbolic-link?
-; signal/...
-; set-signal-handler!  set-signal-mask!
+; set-signal-mask!  signal-mask  signal-masked?  signal-mask!  signal-unmask!
 ; user-information  group-information  get-groups  set-groups!  initialize-groups
 ; errno/wouldblock
 ; change-file-owner
@@ -51,7 +50,7 @@
 ; create-session
 ; process-group-id  set-process-group-id!
 ; create-symbolic-link  read-symbolic-link
-; file-truncate 
+; file-truncate
 ; file-lock  file-lock/blocking  file-unlock  file-test-lock
 ; create-fifo  fifo?
 ; prot/...
@@ -60,8 +59,15 @@
 ; set-alarm!
 ; terminal-port?  terminal-name
 ; process-fork  process-wait
-; parent-process-id 
+; parent-process-id
 ; process-signal
+
+
+; Issues
+;
+; - Use of a UTF8 encoded string will not work properly. Windows uses a
+; 16-bit UNICODE character string encoding and specialized system calls
+; and/or structure settings for the use of such strings.
 
 
 (declare
@@ -69,7 +75,8 @@
   (uses scheduler regex extras utils)
   (disable-interrupts)
   (usual-integrations)
-  (hide ##sys#stat yield close-handle)
+  (hide ##sys#stat close-handle posix-error
+        $quote-args-list $exec-setup $exec-teardown)
   (foreign-declare #<<EOF
 #ifndef WIN32_LEAN_AND_MEAN
 # define WIN32_LEAN_AND_MEAN
@@ -88,6 +95,7 @@ However, the _MSC_VER test is still needed for vcbuild.bat.
 #include <winsock.h>
 #endif
 
+#include <signal.h>
 #include <errno.h>
 #include <io.h>
 #include <stdio.h>
@@ -103,25 +111,32 @@ int C_not_implemented() { return -1; }
 
 #include <time.h>
 
-#define ARG_MAX 256
-#define PIPE_BUF 512
+#define ARG_MAX		256
+#define PIPE_BUF	512
+#ifndef ENV_MAX
+# define ENV_MAX        1024
+#endif
 
 static C_TLS char *C_exec_args[ ARG_MAX ];
+static C_TLS char *C_exec_env[ ENV_MAX ];
 static C_TLS struct group *C_group;
 static C_TLS int C_pipefds[ 2 ];
 static C_TLS time_t C_secs;
 static C_TLS struct tm C_tm;
 static C_TLS struct stat C_statbuf;
+
 /* pipe handles */
 static C_TLS HANDLE C_rd0, C_wr0, C_wr0_, C_rd1, C_wr1, C_rd1_;
 static C_TLS HANDLE C_save0, C_save1; /* saved I/O handles */
 static C_TLS char C_rdbuf; /* one-char buffer for read */
 static C_TLS int C_exstatus;
 
-static C_TLS char C_hostname[256];
-static C_TLS char C_osver[16];
-static C_TLS char C_osrel[16];
-static C_TLS char C_processor[16];
+/* platform information; initialized for cached testing */
+static C_TLS char C_hostname[256] = "";
+static C_TLS char C_osver[16] = "";
+static C_TLS char C_osrel[16] = "";
+static C_TLS char C_processor[16] = "";
+static C_TLS char C_shlcmd[256] = "";
 
 #define C_mkdir(str)        C_fix(mkdir(C_c_string(str)))
 #define C_chdir(str)        C_fix(chdir(C_c_string(str)))
@@ -179,6 +194,7 @@ static DIR *opendir(const char *name)
     free(what);
     return dir;
 }
+
 static int closedir(DIR * dir)
 {
     if (dir)
@@ -189,6 +205,7 @@ static int closedir(DIR * dir)
     }
     return -1;
 }
+
 static struct dirent *readdir(DIR * dir)
 {
     if (dir)
@@ -233,7 +250,7 @@ static struct dirent *readdir(DIR * dir)
 #define C_dup2(x, y)        C_fix(dup2(C_unfix(x), C_unfix(y)))
 #define C_setvbuf(p, m, s)  C_fix(setvbuf(C_port_file(p), NULL, C_unfix(m), C_unfix(s)))
 #define C_access(fn, m)     C_fix(access((char *)C_data_pointer(fn), C_unfix(m)))
-#define C_pipe(d)           C_fix(_pipe(C_pipefds, PIPE_BUF, O_BINARY))
+#define C_pipe(d, m)        C_fix(_pipe(C_pipefds, PIPE_BUF, C_unfix(m)))
 #define C_close(fd)         C_fix(close(C_unfix(fd)))
 
 #define C_getenventry(i)   environ[ i ]
@@ -246,7 +263,7 @@ static C_word C_fcall C_setenv(C_word x, C_word y);
 C_word C_fcall C_setenv(C_word x, C_word y) {
   char *sx = C_data_pointer(x),
        *sy = C_data_pointer(y);
-  int n1 = C_strlen(sx), n2 = C_strlen(sy);				       
+  int n1 = C_strlen(sx), n2 = C_strlen(sy);
   char *buf = (char *)C_malloc(n1 + n2 + 2);
   if(buf == NULL) return(C_fix(0));
   else {
@@ -257,8 +274,7 @@ C_word C_fcall C_setenv(C_word x, C_word y) {
   }
 }
 
-static void C_fcall C_set_exec_arg(int i, char *a, int len);
-void C_fcall C_set_exec_arg(int i, char *a, int len) {
+static void C_fcall C_set_arg_string(char **where, int i, char *a, int len) {
   char *ptr;
   if(a != NULL) {
     ptr = (char *)C_malloc(len + 1);
@@ -266,40 +282,51 @@ void C_fcall C_set_exec_arg(int i, char *a, int len) {
     ptr[ len ] = '\0';
   }
   else ptr = NULL;
-  C_exec_args[ i ] = ptr;
+  where[ i ] = ptr;
 }
 
-static void C_fcall C_free_exec_args();
-void C_fcall C_free_exec_args() {
-  char **a = C_exec_args;
-  while((*a) != NULL) C_free(*(a++));
+static void C_fcall C_free_arg_string(char **where) {
+  while((*where) != NULL) C_free(*(where++));
 }
 
-#define C_execvp(f)         C_fix(execvp(C_data_pointer(f), C_exec_args))
+#define C_set_exec_arg(i, a, len)	C_set_arg_string(C_exec_args, i, a, len)
+#define C_free_exec_args()		C_free_arg_string(C_exec_args)
+#define C_set_exec_env(i, a, len)	C_set_arg_string(C_exec_env, i, a, len)
+#define C_free_exec_env()		C_free_arg_string(C_exec_env)
+
+#define C_execvp(f)         C_fix(execvp(C_data_pointer(f), (const char *const *)C_exec_args))
+#define C_execve(f)         C_fix(execve(C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
 
 /* MS replacement for the fork-exec pair */
-#define C_spawnvp(m, f)	    C_fix(spawnvp(C_unfix(m), C_data_pointer(f), C_exec_args))
+#define C_spawnvp(m, f)	    C_fix(spawnvp(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args))
+#define C_spawnvpe(m, f)    C_fix(spawnvpe(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
 
 #define C_open(fn, fl, m)   C_fix(open(C_c_string(fn), C_unfix(fl), C_unfix(m)))
 #define C_read(fd, b, n)    C_fix(read(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
 #define C_write(fd, b, n)   C_fix(write(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
 #define C_mkstemp(t)        C_fix(mktemp(C_c_string(t)))
 
-#define C_ftell(p)            C_fix(ftell(C_port_file(p)))
-#define C_fseek(p, n, w)      C_mk_nbool(fseek(C_port_file(p), C_unfix(n), C_unfix(w)))
-#define C_lseek(fd, o, w)     C_fix(lseek(C_unfix(fd), C_unfix(o), C_unfix(w)))
+#define C_ftell(p)          C_fix(ftell(C_port_file(p)))
+#define C_fseek(p, n, w)    C_mk_nbool(fseek(C_port_file(p), C_unfix(n), C_unfix(w)))
+#define C_lseek(fd, o, w)   C_fix(lseek(C_unfix(fd), C_unfix(o), C_unfix(w)))
+
+#define C_flushall()        C_fix(_flushall())
 
 #define C_ctime(n)          (C_secs = (n), ctime(&C_secs))
 
 #define C_asctime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
-#define C_mktime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
+#define C_mktime(v)         (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
 
-/* mapping from Win32 error codes to errno */
+/*
+  mapping from Win32 error codes to errno
+*/
+
 typedef struct
 {
     DWORD   win32;
     int	    libc;
 } errmap_t;
+
 static errmap_t errmap[] =
 {
     {ERROR_INVALID_FUNCTION,      EINVAL},
@@ -363,6 +390,12 @@ static void set_errno(DWORD w32err)
     }
 }
 
+static int set_last_errno()
+{
+    set_errno(GetLastError());
+    return 0;
+}
+
 /* functions for creating process with redirected I/O */
 static int zero_handles()
 {
@@ -371,6 +404,7 @@ static int zero_handles()
     C_save0 = C_save1 = INVALID_HANDLE_VALUE;
     return 1;
 }
+
 static int close_handles()
 {
     if (C_rd0 != INVALID_HANDLE_VALUE)
@@ -397,6 +431,7 @@ static int close_handles()
     }
     return zero_handles();
 }
+
 static int redir_io()
 {
     SECURITY_ATTRIBUTES sa;
@@ -417,7 +452,7 @@ static int redir_io()
 	    || !DuplicateHandle(GetCurrentProcess(), C_rd1, GetCurrentProcess(),
 		&C_rd1_, 0, FALSE, DUPLICATE_SAME_ACCESS))
     {
-	set_errno(GetLastError());
+	set_last_errno();
 	close_handles();
 	return 0;
     }
@@ -428,6 +463,7 @@ static int redir_io()
     C_rd1 = INVALID_HANDLE_VALUE;
     return 1;
 }
+
 static int run_process(char *cmdline)
 {
     PROCESS_INFORMATION pi;
@@ -440,7 +476,7 @@ static int run_process(char *cmdline)
     C_wr0_ = C_rd1_ = INVALID_HANDLE_VALUE; /* these handles are saved */
 
     if (CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL,
-		NULL, &si, &pi))
+		      NULL, &si, &pi))
     {
 	CloseHandle(pi.hThread);
 
@@ -454,22 +490,18 @@ static int run_process(char *cmdline)
 	return (int)pi.hProcess;
     }
     else
-    {
-	set_errno(GetLastError());
-	return 0;
-    }
+	return set_last_errno();
 }
+
 static int pipe_write(int hpipe, void* buf, int count)
 {
     DWORD done = 0;
     if (WriteFile((HANDLE)hpipe, buf, count, &done, NULL))
 	return 1;
     else
-    {
-	set_errno(GetLastError());
-	return 0;
-    }
+	return set_last_errno();
 }
+
 static int pipe_read(int hpipe)
 {
     DWORD done = 0;
@@ -484,15 +516,15 @@ static int pipe_read(int hpipe)
 	else
 	    return -1;
     }
-    set_errno(GetLastError());
-    return 0;
+    return set_last_errno();
 }
+
 static int pipe_ready(int hpipe)
 {
     DWORD avail = 0;
     if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL) && avail)
 	return 1;
-    else 
+    else
     {
 	Sleep(0); /* give pipe a chance */
 	if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL))
@@ -512,7 +544,7 @@ static int pipe_ready(int hpipe)
 #define close_handle(h) CloseHandle((HANDLE)h)
 
 int process_wait(int h, int t)
-{   
+{
     if (WaitForSingleObject((HANDLE)h, (t ? 0 : INFINITE)) == WAIT_OBJECT_0)
     {
 	DWORD ret;
@@ -523,8 +555,7 @@ int process_wait(int h, int t)
 	    return 1;
 	}
     }
-    set_errno(GetLastError());
-    return 0;
+    return set_last_errno();
 }
 
 #define C_process_wait(p, t) (process_wait(C_unfix(p), C_truep(t)) ? C_SCHEME_TRUE : C_SCHEME_FALSE)
@@ -532,59 +563,248 @@ int process_wait(int h, int t)
 
 int get_hostname()
 {
-    WSADATA wsa;
-    if (WSAStartup(MAKEWORD(1, 1), &wsa) == 0)
+    /* Do we already have hostname? */
+    if (strlen(C_hostname))
     {
-	int nok = gethostname(C_hostname, 256);
-	WSACleanup();
-	return !nok;
+        return 1;
     }
-    return 0;
+    else
+    {
+        WSADATA wsa;
+        if (WSAStartup(MAKEWORD(1, 1), &wsa) == 0)
+        {
+	    int nok = gethostname(C_hostname, sizeof(C_hostname));
+	    WSACleanup();
+	    return !nok;
+        }
+        return 0;
+    }
 }
 
 int sysinfo()
 {
-    OSVERSIONINFO ovf;
-    ZeroMemory(&ovf, sizeof(ovf));
-    ovf.dwOSVersionInfoSize = sizeof(ovf);
-    if (get_hostname() && GetVersionEx(&ovf))
+    /* Do we need to build the sysinfo? */
+    if (!strlen(C_osrel))
     {
-	SYSTEM_INFO si;
-	_snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d", 
-			   ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
-	switch (ovf.dwPlatformId)
-	{
-	case VER_PLATFORM_WIN32s:
-	    strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
-	    break;
-	case VER_PLATFORM_WIN32_WINDOWS:
-	    strncpy(C_osrel, "Win9x", sizeof(C_osrel) - 1);
-	    break;
-	case VER_PLATFORM_WIN32_NT:
-	default:
-	    strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
-	    break;
-	}
-	GetSystemInfo(&si);
-	switch (si.wProcessorArchitecture)
-	{
-    	case PROCESSOR_ARCHITECTURE_INTEL:
-	    strncpy(C_processor, "Intel", sizeof(C_processor) - 1);
-	    break;
-    	case PROCESSOR_ARCHITECTURE_UNKNOWN:
-	default:
-	    strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
-	    break;
-	}
-	return 1;
+        OSVERSIONINFO ovf;
+        ZeroMemory(&ovf, sizeof(ovf));
+        ovf.dwOSVersionInfoSize = sizeof(ovf);
+        if (get_hostname() && GetVersionEx(&ovf))
+        {
+	    SYSTEM_INFO si;
+	    _snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
+	                ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
+	    switch (ovf.dwPlatformId)
+	    {
+	    case VER_PLATFORM_WIN32s:
+	        strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
+	        break;
+	    case VER_PLATFORM_WIN32_WINDOWS:
+	        strncpy(C_osrel, "Win9x", sizeof(C_osrel) - 1);
+	        break;
+	    case VER_PLATFORM_WIN32_NT:
+	    default:
+	        strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
+	        break;
+	    }
+	    GetSystemInfo(&si);
+	    switch (si.wProcessorArchitecture)
+	    {
+    	    case PROCESSOR_ARCHITECTURE_INTEL:
+	        strncpy(C_processor, "x86", sizeof(C_processor) - 1);
+	        break;
+#           ifdef PROCESSOR_ARCHITECTURE_IA64
+    	    case PROCESSOR_ARCHITECTURE_IA64:
+	        strncpy(C_processor, "IA64", sizeof(C_processor) - 1);
+	        break;
+#           endif
+#           ifdef PROCESSOR_ARCHITECTURE_AMD64
+    	    case PROCESSOR_ARCHITECTURE_AMD64:
+	        strncpy(C_processor, "x64", sizeof(C_processor) - 1);
+	        break;
+#           endif
+#           ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
+    	    case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
+	        strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
+	        break;
+#           endif
+    	    case PROCESSOR_ARCHITECTURE_UNKNOWN:
+	    default:
+	        strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
+	        break;
+	    }
+        }
+        else
+            return set_last_errno();
     }
-    set_errno(GetLastError());
-    return 0;
+    return 1;
+}
+
+static int get_shlcmd()
+{
+    /* Do we need to build the shell command pathname? */
+    if (!strlen(C_shlcmd))
+    {
+        if (sysinfo())
+        {
+            char *cmdnam = (0 == strcmp(C_osrel, "WinNT")) ? "\\cmd.exe" : "\\command.com";
+            UINT len = GetSystemDirectory(C_shlcmd, sizeof(C_shlcmd) - strlen(cmdnam));
+            if (0 != len)
+                strcpy(C_shlcmd + len, cmdnam);
+            else
+                return set_last_errno();
+        }
+        else
+            return 0;
+    }
+    return 1;
 }
 
 #define C_get_hostname() (get_hostname() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 #define C_sysinfo() (sysinfo() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
+#define C_get_shlcmd() (get_shlcmd() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 
+/*
+    Spawn a process directly.
+    Params:
+    app         Command to execute.
+    cmdlin      Command line (arguments).
+    env         Environment for the new process (may be NULL).
+    handle, stdin, stdout, stderr
+                Spawned process info are returned in integers.
+                When spawned process shares standard io stream with the parent
+                process the respective value in handle, stdin, stdout, stderr
+                is -1.
+    params      A bitmask controling operation.
+                Bit 1: Child & parent share standard input if this bit is set.
+                Bit 2: Share standard output if bit is set.
+                Bit 3: Share standard error if bit is set.
+
+    Returns: zero return value indicates failure.
+*/
+static int C_process(const char * app, const char * cmdlin, const char ** env,
+                     int * phandle,
+                     int * pstdin_fd, int * pstdout_fd, int * pstderr_fd,
+                     int params)
+{
+    int i;
+    int success = TRUE;
+    const int f_share_io[3] = { params & 1, params & 2, params & 4};
+    int io_fds[3] = { -1, -1, -1 };
+    HANDLE
+        child_io_handles[3] = { NULL, NULL, NULL },
+        standard_io_handles[3] = {
+            GetStdHandle(STD_INPUT_HANDLE),
+            GetStdHandle(STD_OUTPUT_HANDLE),
+            GetStdHandle(STD_ERROR_HANDLE)};
+    const char modes[3] = "rww";
+    HANDLE cur_process = GetCurrentProcess(), child_process = NULL;
+    void* envblk = NULL;
+
+    /****** create io handles & fds ***/
+
+    for (i=0; i<3 && success; ++i)
+    {
+        if (f_share_io[i])
+        {
+            success = DuplicateHandle(
+                cur_process, standard_io_handles[i],
+                cur_process, &child_io_handles[i],
+                0, FALSE, DUPLICATE_SAME_ACCESS);
+        }
+        else
+        {
+            HANDLE a, b;
+            success = CreatePipe(&a,&b,NULL,0);
+            if(success)
+            {
+                HANDLE parent_end;
+                if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
+                else               { parent_end=a; child_io_handles[i]=b; }
+                success = (io_fds[i] = _open_osfhandle((long)parent_end,0)) >= 0;
+            }
+        }
+    }
+
+    /****** make handles inheritable */
+
+    for (i=0; i<3 && success; ++i)
+        success = SetHandleInformation(child_io_handles[i], HANDLE_FLAG_INHERIT, -1);
+
+#if 0 /* Requires a sorted list by key! */
+    /****** create environment block if necessary ****/
+
+    if (env && success)
+    {
+        char** p;
+        int len = 0;
+
+        for (p = env; *p; ++p) len += strlen(*p) + 1;
+
+        if (envblk = C_malloc(len + 1))
+        {
+            char* pb = (char*)envblk;
+            for (p = env; *p; ++p)
+            {
+                strcpy(pb, *p);
+                pb += strlen(*p) + 1;
+            }
+            *pb = '\0';
+        }
+        else
+     	    success = FALSE;
+    }
+#endif
+
+    /****** finally spawn process ****/
+
+    if (success)
+    {
+        PROCESS_INFORMATION pi;
+        STARTUPINFO si;
+
+        ZeroMemory(&pi,sizeof pi);
+        ZeroMemory(&si,sizeof si);
+        si.cb = sizeof si;
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdInput = child_io_handles[0];
+        si.hStdOutput = child_io_handles[1];
+        si.hStdError = child_io_handles[2];
+
+	/* FIXME passing 'app' param causes failure & possible stack corruption */
+        success = CreateProcess(
+            NULL, (char*)cmdlin, NULL, NULL, TRUE, 0, envblk, NULL, &si, &pi);
+
+        if (success)
+        {
+            child_process=pi.hProcess;
+            CloseHandle(pi.hThread);
+        }
+        else
+            set_last_errno();
+    }
+    else
+        set_last_errno();
+
+    /****** cleanup & return *********/
+
+    /* parent must close child end */
+    for (i=0; i<3; ++i) CloseHandle(child_io_handles[i]);
+
+    if (success)
+    {
+        *phandle = (int)child_process;
+        *pstdin_fd = io_fds[0];
+        *pstdout_fd = io_fds[1];
+        *pstderr_fd = io_fds[2];
+    }
+    else
+    {
+        for (i=0; i<3; ++i) _close(io_fds[i]);
+    }
+
+    return success;
+}
 EOF
 ) )
 
@@ -595,8 +815,8 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port 
-     ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer
+     ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port
+     ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer ##sys#process
      ##sys#peek-fixnum ##sys#make-structure ##sys#check-structure ##sys#enable-interrupts) ) ] )
 
 (cond-expand
@@ -614,18 +834,18 @@ EOF
     (define-macro (##sys#check-number . _) '(##core#undefined))
     (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
  [else
-  (declare (emit-exports "posixwin.exports"))] )
+  (declare (emit-exports "posix.exports"))] )
 
 (register-feature! 'posix)
 
-;;; We need this for threading:
+(define posix-error
+  (let ([strerror (foreign-lambda c-string "strerror" int)]
+        [string-append string-append] )
+    (lambda (type loc msg . args)
+      (let ([rn (##sys#update-errno)])
+        (apply ##sys#signal-hook type loc (string-append msg " - " (strerror rn)) args) ) ) ) )
 
-(define (yield)
-  (##sys#call-with-current-continuation
-   (lambda (return)
-     (let ((ct ##sys#current-thread))
-       (##sys#setslot ct 1 (lambda () (return (##core#undefined))))
-       (##sys#schedule) ) ) ) )
+(define ##sys#posix-error posix-error)
 
 
 ;;; Lo-level I/O:
@@ -643,6 +863,7 @@ EOF
 (define-foreign-variable _o_trunc int "O_TRUNC")
 (define-foreign-variable _o_binary int "O_BINARY")
 (define-foreign-variable _o_text int "O_TEXT")
+(define-foreign-variable _o_noinherit int "O_NOINHERIT")
 
 (define open/rdonly _o_rdonly)
 (define open/wronly _o_wronly)
@@ -655,6 +876,7 @@ EOF
 (define open/trunc _o_trunc)
 (define open/binary _o_binary)
 (define open/text _o_text)
+(define open/noinherit _o_noinherit)
 
 (define-foreign-variable _s_irusr int "S_IREAD")
 (define-foreign-variable _s_iwusr int "S_IWRITE")
@@ -692,7 +914,7 @@ EOF
 	(let ([fd (##core#inline "C_open" (##sys#make-c-string (##sys#expand-home-path filename)) flags mode)])
 	  (when (eq? -1 fd)
 	    (##sys#update-errno)
-	    (##sys#signal-hook #:file-error 'file-open "can not open file" filename flags mode) )
+	    (##sys#signal-hook #:file-error 'file-open "cannot open file" filename flags mode) )
 	  fd) ) ) ) )
 
 (define file-close
@@ -700,7 +922,7 @@ EOF
     (##sys#check-exact fd 'file-close)
     (when (fx< (##core#inline "C_close" fd) 0)
       (##sys#update-errno)
-      (##sys#signal-hook #:file-error 'file-close "can not close file" fd) ) ) )
+      (##sys#signal-hook #:file-error 'file-close "cannot close file" fd) ) ) )
 
 (define file-read
   (let ([make-string make-string] )
@@ -709,24 +931,24 @@ EOF
       (##sys#check-exact size 'file-read)
       (let ([buf (if (pair? buffer) (car buffer) (make-string size))])
 	(unless (and (##core#inline "C_blockp" buf) (##core#inline "C_byteblockp" buf))
-	  (##sys#signal-hook #:type-error 'file-read "bad argument type - not a string or byte-vector" buf) )
+	  (##sys#signal-hook #:type-error 'file-read "bad argument type - not a string or blob" buf) )
 	(let ([n (##core#inline "C_read" fd buf size)])
 	  (when (eq? -1 n)
 	    (##sys#update-errno)
-	    (##sys#signal-hook #:file-error 'file-read "can not read from file" fd size) )
+	    (##sys#signal-hook #:file-error 'file-read "cannot read from file" fd size) )
 	  (list buf n) ) ) ) ) )
 
 (define file-write
   (lambda (fd buffer . size)
     (##sys#check-exact fd 'file-write)
     (unless (and (##core#inline "C_blockp" buffer) (##core#inline "C_byteblockp" buffer))
-      (##sys#signal-hook #:type-error 'file-write "bad argument type - not a string or byte-vector" buffer) )
+      (##sys#signal-hook #:type-error 'file-write "bad argument type - not a string or blob" buffer) )
     (let ([size (if (pair? size) (car size) (##sys#size buffer))])
       (##sys#check-exact size 'file-write)
       (let ([n (##core#inline "C_write" fd buffer size)])
 	(when (eq? -1 n)
 	  (##sys#update-errno)
-	  (##sys#signal-hook #:file-error 'file-write "can not write to file" fd size) )
+	  (##sys#signal-hook #:file-error 'file-write "cannot write to file" fd size) )
 	n) ) ) )
 
 (define file-mkstemp
@@ -738,7 +960,7 @@ EOF
              [path-length (string-length buf)])
         (when (eq? -1 fd)
           (##sys#update-errno)
-          (##sys#signal-hook #:file-error 'file-mkstemp "can not create temporary file" template) )
+          (##sys#signal-hook #:file-error 'file-mkstemp "cannot create temporary file" template) )
         (values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) ) )
 
 
@@ -768,13 +990,14 @@ EOF
 		 [else (##sys#signal-hook #:type-error "bad argument type - not a fixnum or string" file)] ) ] )
     (when (fx< r 0)
       (##sys#update-errno)
-      (##sys#signal-hook #:file-error "can not access file" file) ) ) )
+      (##sys#signal-hook #:file-error "cannot access file" file) ) ) )
 
 (define (file-stat f #!optional link)
   (##sys#stat f)
   (vector _stat_st_ino _stat_st_mode _stat_st_nlink
 	  _stat_st_uid _stat_st_gid _stat_st_size
-	  _stat_st_atime _stat_st_ctime _stat_st_mtime) )
+	  _stat_st_atime _stat_st_ctime _stat_st_mtime
+	  0 0 0 0) )
 
 (define (file-size f) (##sys#stat f) _stat_st_size)
 (define (file-modification-time f) (##sys#stat f) _stat_st_mtime)
@@ -794,7 +1017,7 @@ EOF
 
 (define file-position
   (lambda (port)
-    (let ([pos (cond [(port? port) 
+    (let ([pos (cond [(port? port)
 		      (if (eq? (##sys#slot port 7) 'stream)
 			  (##core#inline "C_ftell" port)
 			  -1) ]
@@ -802,7 +1025,7 @@ EOF
 		     [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
       (when (fx< pos 0)
 	(##sys#update-errno)
-	(##sys#signal-hook #:file-error 'file-position "can not retrieve file position of port" port) )
+	(##sys#signal-hook #:file-error 'file-position "cannot retrieve file position of port" port) )
       pos) ) )
 
 (define set-file-position!
@@ -811,38 +1034,38 @@ EOF
       (##sys#check-exact pos 'set-file-position!)
       (##sys#check-exact whence 'set-file-position!)
       (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
-      (unless (cond [(port? port) 
+      (unless (cond [(port? port)
 		     (and (eq? (##sys#slot port 7) 'stream)
 			  (##core#inline "C_fseek" port pos whence) ) ]
 		    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
 		    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
 	(##sys#update-errno)
-	(##sys#signal-hook #:file-error 'set-file-position! "can not set file position" port pos) ) ) ) )
+	(##sys#signal-hook #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) )
 
 
 ;;; Directory stuff:
 
-(define create-directory 
+(define create-directory
   (lambda (name)
     (##sys#check-string name 'create-directory)
     (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
       (##sys#update-errno)
-      (##sys#signal-hook #:file-error 'create-directory "can not create directory" name) ) ) )
+      (##sys#signal-hook #:file-error 'create-directory "cannot create directory" name) ) ) )
 
 (define change-directory
   (lambda (name)
     (##sys#check-string name 'change-directory)
     (unless (zero? (##core#inline "C_chdir" (##sys#make-c-string (##sys#expand-home-path name))))
       (##sys#update-errno)
-      (##sys#signal-hook #:file-error 'change-directory "can not change current directory" name) ) ) )
+      (##sys#signal-hook #:file-error 'change-directory "cannot change current directory" name) ) ) )
 
 (define delete-directory
   (lambda (name)
     (##sys#check-string name 'delete-directory)
     (unless (zero? (##core#inline "C_rmdir" (##sys#make-c-string (##sys#expand-home-path name))))
       (##sys#update-errno)
-      (##sys#signal-hook #:file-error 'delete-directory "can not delete directory" name) ) ) )
-  
+      (##sys#signal-hook #:file-error 'delete-directory "cannot delete directory" name) ) ) )
+
 (define directory
   (let ([string-append string-append]
 	[make-string make-string]
@@ -856,19 +1079,19 @@ EOF
 	(if (##sys#null-pointer? handle)
 	    (begin
 	      (##sys#update-errno)
-	      (##sys#signal-hook #:file-error 'directory "can not open directory" spec) )
+	      (##sys#signal-hook #:file-error 'directory "cannot open directory" spec) )
 	    (let loop ()
 	      (##core#inline "C_readdir" handle entry)
 	      (if (##sys#null-pointer? entry)
 		  (begin
 		    (##core#inline "C_closedir" handle)
-		    '() ) 
+		    '() )
 		  (let* ([flen (##core#inline "C_foundfile" entry buffer)]
 			 [file (##sys#substring buffer 0 flen)]
 			 [char1 (string-ref file 0)]
 			 [char2 (and (> flen 1) (string-ref file 1))] )
-		    (if (and (eq? char1 #\.) 
-			     (or (not char2) 
+		    (if (and (eq? char1 #\.)
+			     (or (not char2)
 				 (and (eq? char2 #\.) (eq? flen 2))
 				 (not show-dotfiles?) ) )
 			(loop)
@@ -876,7 +1099,8 @@ EOF
 
 (define (directory? fname)
   (##sys#check-string fname 'directory?)
-  (let ((info (##sys#file-info (##sys#expand-home-path fname))))
+  (let ((info (##sys#file-info
+  		(##sys#platform-fixup-pathname (##sys#expand-home-path fname)))))
     (and info (fx= 1 (##sys#slot info 4))) ) )
 
 (define current-directory
@@ -889,7 +1113,7 @@ EOF
 	    (##sys#update-errno)
 	    (if len
 		(##sys#substring buffer 0 len)
-		(##sys#signal-hook #:file-error 'current-directory "can not retrieve current directory") ) ) ) ) ) )
+		(##sys#signal-hook #:file-error 'current-directory "cannot retrieve current directory") ) ) ) ) ) )
 
 
 ;;; Pipes:
@@ -900,7 +1124,7 @@ EOF
   (define (check cmd inp r)
     (##sys#update-errno)
     (if (##sys#null-pointer? r)
-	(##sys#signal-hook #:file-error "can not open pipe" cmd) 
+	(##sys#signal-hook #:file-error "cannot open pipe" cmd)
 	(let ([port (##sys#make-port inp ##sys#stream-port-class "(pipe)" 'stream)])
 	  (##core#inline "C_set_file_ptr" port r)
 	  port) ) )
@@ -923,7 +1147,7 @@ EOF
 	 (case m
 	   ((###text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
 	   ((###binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
-	   (else (badmode m)) ) ) ) ) ) 
+	   (else (badmode m)) ) ) ) ) )
   (set! close-input-pipe
     (lambda (port)
       (##sys#check-port port 'close-input-pipe)
@@ -980,11 +1204,74 @@ EOF
 (define-foreign-variable _pipefd1 int "C_pipefds[ 1 ]")
 
 (define create-pipe
-    (lambda ()
-      (when (fx< (##core#inline "C_pipe" #f) 0)
+    (lambda (#!optional (mode (fxior open/binary open/noinherit)))
+      (when (fx< (##core#inline "C_pipe" #f mode) 0)
 	(##sys#update-errno)
-	(##sys#signal-hook #:file-error 'create-pipe "can not create pipe") )
+	(##sys#signal-hook #:file-error 'create-pipe "cannot create pipe") )
       (values _pipefd0 _pipefd1) ) )
+
+;;; Signal processing:
+
+(define-foreign-variable _nsig int "NSIG")
+(define-foreign-variable _sigterm int "SIGTERM")
+(define-foreign-variable _sigint int "SIGINT")
+(define-foreign-variable _sigfpe int "SIGFPE")
+(define-foreign-variable _sigill int "SIGILL")
+(define-foreign-variable _sigsegv int "SIGSEGV")
+(define-foreign-variable _sigabrt int "SIGABRT")
+(define-foreign-variable _sigbreak int "SIGBREAK")
+
+(define signal/term _sigterm)
+(define signal/int _sigint)
+(define signal/fpe _sigfpe)
+(define signal/ill _sigill)
+(define signal/segv _sigsegv)
+(define signal/abrt _sigabrt)
+(define signal/break _sigbreak)
+(define signal/alrm 0)
+(define signal/chld 0)
+(define signal/cont 0)
+(define signal/hup 0)
+(define signal/io 0)
+(define signal/kill 0)
+(define signal/pipe 0)
+(define signal/prof 0)
+(define signal/quit 0)
+(define signal/stop 0)
+(define signal/trap 0)
+(define signal/tstp 0)
+(define signal/urg 0)
+(define signal/usr1 0)
+(define signal/usr2 0)
+(define signal/vtalrm 0)
+(define signal/winch 0)
+(define signal/xcpu 0)
+(define signal/xfsz 0)
+
+(define signals-list
+  (list
+    signal/term signal/int signal/fpe signal/ill
+    signal/segv signal/abrt signal/break))
+
+(let ([oldhook ##sys#interrupt-hook]
+      [sigvector (make-vector 256 #f)] )
+  (set! signal-handler
+    (lambda (sig)
+      (##sys#check-exact sig 'signal-handler)
+      (##sys#slot sigvector sig) ) )
+  (set! set-signal-handler!
+    (lambda (sig proc)
+      (##sys#check-exact sig 'set-signal-handler!)
+      (##core#inline "C_establish_signal_handler" sig (and proc sig))
+      (vector-set! sigvector sig proc) ) )
+  (set! ##sys#interrupt-hook
+    (lambda (reason state)
+      (let ([h (##sys#slot sigvector reason)])
+        (if h
+            (begin
+              (h reason)
+              (##sys#context-switch state) )
+            (oldhook reason state) ) ) ) ) )
 
 ;;; More errno codes:
 
@@ -1076,7 +1363,7 @@ EOF
     (##sys#check-exact m 'change-file-mode)
     (when (fx< (##core#inline "C_chmod" (##sys#make-c-string (##sys#expand-home-path fname)) m) 0)
       (##sys#update-errno)
-      (##sys#signal-hook #:file-error 'change-file-mode "can not change file mode" fname m) ) ) )
+      (##sys#signal-hook #:file-error 'change-file-mode "cannot change file mode" fname m) ) ) )
 
 (define-foreign-variable _r_ok int "2")
 (define-foreign-variable _w_ok int "4")
@@ -1117,7 +1404,7 @@ EOF
   (define (check fd inp r)
     (##sys#update-errno)
     (if (##sys#null-pointer? r)
-	(##sys#signal-hook #:file-error "can not open file" fd) 
+	(##sys#signal-hook #:file-error "cannot open file" fd)
 	(let ([port (##sys#make-port inp ##sys#stream-port-class "(fdport)" 'stream)])
 	  (##core#inline "C_set_file_ptr" port r)
 	  port) ) )
@@ -1137,7 +1424,7 @@ EOF
 	(let ([fd (##core#inline "C_C_fileno" port)])
 	  (when (fx< fd 0)
 	    (##sys#update-errno)
-	    (##sys#signal-hook #:file-error 'port->fileno "can not access file-descriptor of port" port) )
+	    (##sys#signal-hook #:file-error 'port->fileno "cannot access file-descriptor of port" port) )
 	  fd)
 	(##sys#signal-hook #:type-error 'port->fileno "port has no attached file" port) ) ) )
 
@@ -1151,12 +1438,12 @@ EOF
 		    (##core#inline "C_dup2" old n) ) ) ] )
       (when (fx< fd 0)
 	(##sys#update-errno)
-	(##sys#signal-hook #:file-error 'duplicate-fileno "can not duplicate file descriptor" old) )
+	(##sys#signal-hook #:file-error 'duplicate-fileno "cannot duplicate file descriptor" old) )
       fd) ) )
 
 ;;; Environment access:
 
-(define setenv 
+(define setenv
   (lambda (var val)
     (##sys#check-string var 'setenv)
     (##sys#check-string val 'setenv)
@@ -1191,11 +1478,11 @@ EOF
   (##sys#check-number secs 'seconds->utc-time)
   (##sys#decode-seconds secs #t) )
 
-(define seconds->string 
+(define seconds->string
   (let ([ctime (foreign-lambda c-string "C_ctime" integer)])
-    (lambda (secs) 
+    (lambda (secs)
       (let ([str (ctime secs)])
-	(unless str (##sys#error 'seconds->string "can not convert seconds to string" secs))
+	(unless str (##sys#error 'seconds->string "cannot convert seconds to string" secs))
 	str) ) ) )
 
 (define time->string
@@ -1204,7 +1491,7 @@ EOF
       (##sys#check-vector tm 'time->string)
       (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
       (let ([str (asctime tm)])
-	(unless str (##sys#error 'time->string "can not time vector to string" tm))
+	(unless str (##sys#error 'time->string "cannot time vector to string" tm))
 	str) ) ) )
 
 (define (local-time->seconds tm)
@@ -1212,16 +1499,18 @@ EOF
   (when (fx< (##sys#size tm) 10) (##sys#error 'local-time->seconds "time vector too short" tm))
   (if (##core#inline "C_mktime" tm)
       (##sys#cons-flonum)
-      (##sys#error 'local-time->seconds "can not convert time vector to seconds" tm) ) )
+      (##sys#error 'local-time->seconds "cannot convert time vector to seconds" tm) ) )
 
-
+(define local-timezone-abbreviation
+  (foreign-lambda* c-string ()
+   "char *z = (daylight ? _tzname[1] : _tzname[0]);"
+   "return(z);") )
 
 ;;; Other things:
 
 (define _exit
   (let ([ex0 (foreign-lambda void "_exit" int)])
     (lambda code
-      (##sys#cleanup-before-exit)
       (ex0 (if (pair? code) (car code) 0)) ) ) )
 
 (define-foreign-variable _iofbf int "_IOFBF")
@@ -1240,10 +1529,10 @@ EOF
 		    [else (##sys#error 'set-buffering-mode! "invalid buffering-mode" mode port)] ) ] )
 	(##sys#check-exact size 'set-buffering-mode!)
 	(when (fx< (if (eq? 'stream (##sys#slot port 7))
-		       (##core#inline "C_setvbuf" port mode size) 
-		       -1) 
+		       (##core#inline "C_setvbuf" port mode size)
+		       -1)
 		   0)
-	  (##sys#error 'set-buffering-mode! "can not set buffering mode" port mode size) ) ) ) )
+	  (##sys#error 'set-buffering-mode! "cannot set buffering mode" port mode size) ) ) ) )
 
 ;;; Filename globbing:
 
@@ -1261,7 +1550,7 @@ EOF
 		(let ([rx (glob->regexp (make-pathname #f (or file "*") ext))])
 		  (let loop ([f (directory (or dir "."))])
 		    (cond [(null? f) (conc (cdr paths))]
-			  [(string-match rx (car f)) 
+			  [(string-match rx (car f))
 			   => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr f)))) ]
 			  [else (loop (cdr f))] ) ) ) ) ) ) ) ) ) )
 
@@ -1280,81 +1569,105 @@ EOF
 (define spawn/nowaito _p_nowaito)
 (define spawn/detach _p_detach)
 
-(define process-execute
-  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)] 
-	[freeargs (foreign-lambda void "C_free_exec_args")]
-	[pathname-strip-directory pathname-strip-directory] )
-    (lambda (filename #!optional (arglist '()) envlist)
-      (##sys#check-string filename 'process-execute)
-      (let ([arglist (if (pair? arglist) (car arglist) '())])
-	(##sys#check-list arglist 'process-execute)
-	(let ([s (pathname-strip-directory filename)])
-	  (setarg 0 s (##sys#size s)) )
-	(do ([al arglist (cdr al)]
-	     [i 1 (fx+ i 1)] )
-	    ((null? al) 
-	     (setarg i #f 0)
-	     (let ([r (##core#inline "C_execvp" (##sys#make-c-string (##sys#expand-home-path filename)))])
-	       (##sys#update-errno)
-	       (when (fx= r -1)
-		 (freeargs)
-		 (##sys#error 'process-execute "can not execute process" filename) ) ) )
-	  (let ([s (car al)])
-	    (##sys#check-string s 'process-execute)
-	    (setarg i s (##sys#size s)) ) ) ) ) ) )
+; Windows uses a commandline style for process arguments. Thus any
+; arguments with embedded whitespace will parse incorrectly. Must
+; string-quote such arguments.
+(define $quote-args-list
+  (let ([char-whitespace? char-whitespace?]
+        [string-length string-length]
+        [string-ref string-ref]
+        [string-append string-append])
+    (lambda (lst exactf)
+      (if exactf
+        lst
+        (let ([needs-quoting?
+                ; This is essentially (string-any char-whitespace? s) but we don't
+                ; want a SRFI-13 dependency. (Do we?)
+                (lambda (s)
+                  (let ([len (string-length s)])
+                    (let loop ([i 0])
+                      (cond
+                        [(fx= i len) #f]
+                        [(char-whitespace? (string-ref s i)) #t]
+                        [else (loop (fx+ i 1))]))))])
+            (let loop ([ilst lst] [olst '()])
+              (if (null? ilst)
+                (reverse olst)
+                (let ([str (car ilst)])
+                  (loop
+                    (cdr ilst)
+                    (cons
+                      (if (needs-quoting? str) (string-append "\"" str "\"") str)
+                      olst)) ) ) ) ) ) ) ) )
 
-(define process-spawn
-  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)] 
-	[freeargs (foreign-lambda void "C_free_exec_args")]
-	[pathname-strip-directory pathname-strip-directory] )
-    (lambda (mode filename . arglist)
-      (##sys#check-exact mode 'process-spawn)
-      (##sys#check-string filename 'process-spawn)
-      (let ([arglist (if (pair? arglist) (car arglist) '())])
-	(##sys#check-list arglist 'process-spawn)
-	(let ([s (pathname-strip-directory filename)])
-	  (setarg 0 s (##sys#size s)) )
-	(do ([al arglist (cdr al)]
-	     [i 1 (fx+ i 1)] )
-	    ((null? al) 
-	     (setarg i #f 0)
-	     (let ([r (##core#inline "C_spawnvp" mode
-		       (##sys#make-c-string (##sys#expand-home-path filename)))])
-	       (##sys#update-errno)
-	       (when (fx= r -1)
-		 (freeargs)
-		 (##sys#error 'process-spawn "can not execute process" filename) )
-	       r) ) 
-	  (let ([s (car al)])
-	    (##sys#check-string s 'process-spawn)
-	    (setarg i s (##sys#size s)) ) ) ) ) ) )
+(define $exec-setup
+  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
+        [setenv (foreign-lambda void "C_set_exec_env" int scheme-pointer int)]
+        [pathname-strip-directory pathname-strip-directory]
+        [build-exec-arr
+          (lambda (loc lst setarr idx)
+            (if lst
+              (begin
+                (##sys#check-list lst loc)
+                (do ([l lst (cdr l)]
+                     [i idx (fx+ i 1)] )
+                    ((null? l) (setarr i #f 0))
+                  (let ([s (car l)])
+                    (##sys#check-string s loc)
+                    (setarr i s (##sys#size s)) ) ) )
+              (setarr idx #f 0) ) )])
+    (lambda (loc filename arglst envlst exactf)
+      (##sys#check-string filename loc)
+      (let ([s (pathname-strip-directory filename)])
+        (setarg 0 s (##sys#size s)) )
+      (build-exec-arr loc ($quote-args-list arglst exactf) setarg 1)
+      (build-exec-arr loc envlst setenv 0)
+      (##core#inline "C_flushall")
+      (##sys#make-c-string (##sys#expand-home-path filename)) ) ) )
+
+(define $exec-teardown
+  (let ([freeargs (foreign-lambda void "C_free_exec_args")]
+        [freeenv (foreign-lambda void "C_free_exec_env")])
+    (lambda (loc msg filename res)
+      (##sys#update-errno)
+      (freeargs)
+      (freeenv)
+      (when (fx= res -1) (##sys#error loc msg filename) )
+      res ) ) )
+
+(define (process-execute filename #!optional arglst envlst exactf)
+  (let ([prg ($exec-setup 'process-execute filename arglst envlst exactf)])
+    ($exec-teardown 'process-execute "cannot execute process" filename
+      (if envlst (##core#inline "C_execve" prg) (##core#inline "C_execvp" prg))) ) )
+
+(define (process-spawn mode filename #!optional arglst envlst exactf)
+  (let ([prg ($exec-setup 'process-spawn filename arglst envlst exactf)])
+    ($exec-teardown 'process-spawn "cannot spawn process" filename
+      (if envlst (##core#inline "C_spawnvpe" mode prg) (##core#inline "C_spawnvp" mode prg))) ) )
 
 (define current-process-id (foreign-lambda int "C_getpid"))
 
-(define get-shell
-  (foreign-lambda* c-string () #<<EOF
-    char *ret = getenv("COMSPEC");
-    if (ret)
-	return (ret);
-    else
-    {
-	OSVERSIONINFO ovf;
-	ovf.dwOSVersionInfoSize = sizeof(ovf);
-	if (GetVersionEx(&ovf) && (ovf.dwPlatformId == VER_PLATFORM_WIN32_NT))
-	    return ("cmd.exe");
-	else
-	    return ("command.com");
-    }
-EOF
-    ) )
+(define-foreign-variable _shlcmd c-string "C_shlcmd")
+
+(define (##sys#shell-command)
+  (or (getenv "COMSPEC")
+      (if (##core#inline "C_get_shlcmd")
+          _shlcmd
+          (begin
+	    (##sys#update-errno)
+	    (##sys#error '##sys#shell-command "cannot retrieve system directory") ) ) ) )
+
+(define (##sys#shell-command-arguments cmdlin)
+  (list "/c" cmdlin) )
 
 (define process-run
   (let ([process-spawn process-spawn]
 	[getenv getenv] )
     (lambda (f . args)
       (let ([args (if (pair? args) (car args) #f)])
-	(if args (process-spawn spawn/nowait f args)
-	    (process-spawn spawn/nowait (get-shell) (list "/c" f)) ) ) ) ) )
+	(if args
+	    (process-spawn spawn/nowait f args)
+	    (process-spawn spawn/nowait (##sys#shell-command) (##sys#shell-command-arguments f)) ) ) ) ) )
 
 ;;; Run subprocess connected with pipes:
 (define-foreign-variable _rdbuf char "C_rdbuf")
@@ -1364,56 +1677,89 @@ EOF
 (define close-handle
   (foreign-lambda int "close_handle" bool))
 
-(define process
-  (let ([make-input-port make-input-port]
-	[make-output-port make-output-port])
-    (lambda (cmd #!optional args env)
-      (if (##core#inline "C_redir_io")
-	(let* ([h0 _wr0]
-	       [h1 _rd1]
-	       [cmdline (string-append (get-shell) " /c " cmd "\x00")]
-	       [proc (##core#inline "C_run_process" cmdline)])
-	  (if (fx> proc 0)
-	    (values
-	      (make-input-port
-		(lambda () ; read
-		  (case (##core#inline "C_pipe_read" h1)
-		    [(-1) #!eof]
-		    [(0) (##sys#error 'process "could not read from pipe")]
-		    [(1) _rdbuf]) )
-		(lambda () ; ready?
-		  (##core#inline "C_pipe_ready" h1) )
-		(lambda () ; close
-		  (close-handle h1) )
-		;(lambda () ; peek
-		;)
-		)
-	      (make-output-port
-		(lambda (s) ; write
-		  (unless (##core#inline "C_pipe_write" h0 s (string-length s))
-		    (##sys#error 'process "could not write to pipe") ) )
-		(lambda () ; close
-		  (close-handle h0) )
-		)
-	      proc)
-	    (begin
-	      (##sys#update-errno)
-	      (C_close_handle h0)
-	      (C_close_handle h1)
-	      (##sys#error 'process "could not create process")))
-	  )
-	(##sys#error 'process "could not redirect I/O") ) ) ) )
+; from original by Mejedi
+;; ##sys#process
+; loc            caller procedure symbol
+; cmd            pathname or commandline
+; args           string-list or '()
+; env            string-list or #f (currently ignored)
+; stdoutf        #f then share, or #t then create
+; stdinf         #f then share, or #t then create
+; stderrf        #f then share, or #t then create
+;
+; (values stdin-input-port? stdout-output-port? pid stderr-input-port?)
+; where stdin-input-port?, etc. is a port or #f, indicating no port created.
+
+(define ##sys#process
+  (let ([c-process
+          (foreign-lambda bool "C_process" c-string c-string c-pointer
+            (pointer int) (pointer int) (pointer int) (pointer int) int)])
+    ; The environment list must be sorted & include current directory
+    ; information for the system drives. i.e !C:=...
+    ; For now any environment is ignored.
+    (lambda (loc cmd args env stdoutf stdinf stderrf #!optional exactf)
+      (let ([cmdlin (string-intersperse ($quote-args-list (cons cmd args) exactf))])
+        (let-location ([handle int -1]
+                       [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
+          (let ([res
+                  (c-process cmd cmdlin #f
+                    (location handle)
+                    (location stdin_fd) (location stdout_fd) (location stderr_fd)
+                    (+ (if stdinf 0 1) (if stdoutf 0 2) (if stderrf 0 4)))])
+            (if res
+              (values
+                (and stdoutf (open-input-file* stdout_fd)) ;Parent stdin
+                (and stdinf (open-output-file* stdin_fd))  ;Parent stdout
+                handle
+                (and stderrf (open-input-file* stderr_fd)))
+              (begin
+                (##sys#update-errno)
+                (##sys#signal-hook #:process-error loc "cannot execute process" cmdlin))) ) ) ) ) ) )
+
+#;(define process (void))
+#;(define process* (void))
+(let ([%process
+        (lambda (loc err? cmd args env exactf)
+          (let ([chkstrlst
+                 (lambda (lst)
+                   (##sys#check-list lst loc)
+                   (for-each (cut ##sys#check-string <> loc) lst) )])
+            (##sys#check-string cmd loc)
+            (if args
+              (chkstrlst args)
+              (begin
+                (set! exactf #t)
+                (set! args (##sys#shell-command-arguments cmd))
+                (set! cmd (##sys#shell-command)) ) )
+            (when env (chkstrlst env))
+            (receive [in out pid err] (##sys#process loc cmd args env #t #t err? exactf)
+              (if err?
+                (values in out pid err)
+                (values in out pid) ) ) ) )] )
+  (set! process
+    (lambda (cmd #!optional args env exactf)
+      (%process 'process #f cmd args env exactf) ))
+  (set! process*
+    (lambda (cmd #!optional args env exactf)
+      (%process 'process* #t cmd args env exactf) )) )
 
 (define-foreign-variable _exstatus int "C_exstatus")
+
+(define (##sys#process-wait pid nohang)
+  (if (##core#inline "C_process_wait" pid nohang)
+    (values pid #t _exstatus)
+    (values -1 #f #f) ) )
 
 (define process-wait
   (lambda (pid . args)
     (let-optionals* args ([nohang #f])
-      (if (##core#inline "C_process_wait" pid nohang)
-	(values pid #t _exstatus)
-	(begin
+      (##sys#check-exact pid 'process-wait)
+      (receive [epid enorm ecode] (##sys#process-wait pid nohang)
+        (if (fx= epid -1)
+          (begin
 	    (##sys#update-errno)
-	    (values 0 #f 0) ) ) ) ) )
+	    (##sys#signal-hook #:process-error 'process-wait "waiting for child process failed" pid) )
+          (values epid enorm ecode) ) ) ) ) )
 
 (define sleep
   (lambda (t)
@@ -1429,7 +1775,7 @@ EOF
   (lambda ()
     (if (##core#inline "C_get_hostname")
       _hostname
-      (##sys#error 'get-host-name "can not retrieve host-name") ) ) )
+      (##sys#error 'get-host-name "cannot retrieve host-name") ) ) )
 
 (define system-information
   (lambda ()
@@ -1437,28 +1783,28 @@ EOF
       (list "windows" _hostname _osrel _osver _processor)
       (begin
 	(##sys#update-errno)
-	(##sys#error 'system-information "can not retrieve system-information") ) ) ) )
+	(##sys#error 'system-information "cannot retrieve system-information") ) ) ) )
 
 ;;; Find matching files:
 
-(define find-files 
+(define find-files
   (let ([glob glob]
 	[string-match string-match]
 	[make-pathname make-pathname]
 	[directory? directory?] )
     (lambda (dir pred . action-id-limit)
-      (let-optionals action-id-limit 
+      (let-optionals action-id-limit
 	  ([action (lambda (x y) (cons x y))] ; no eta reduction here - we want cons inlined.
-	   [id '()] 
+	   [id '()]
 	   [limit #f] )
 	(##sys#check-string dir 'find-files)
 	(let* ([depth 0]
 	       [lproc
 		(cond [(not limit) (lambda _ #t)]
 		      [(fixnum? limit) (lambda _ (fx< depth limit))]
-		      [else limit] ) ] 
-	       [pproc 
-		(if (string? pred) 
+		      [else limit] ) ]
+	       [pproc
+		(if (string? pred)
 		    (lambda (x) (string-match pred x))
 		    pred) ] )
 	  (let loop ([fs (glob (make-pathname dir "*"))]
@@ -1476,3 +1822,73 @@ EOF
 			       [else (loop rest r)] ) ]
 			[(pproc f) (loop rest (action f r))]
 			[else (loop rest r)] ) ) ) ) ) ) ) ) )
+
+;;; unimplemented stuff:
+
+(define-macro (define-unimplemented name)
+  `(define (,name . _)
+     (error ',name (##core#immutable '"this function is not available on this platform")) ) )
+
+(define-unimplemented change-file-owner)
+(define-unimplemented create-fifo)
+(define-unimplemented create-session)
+(define-unimplemented create-symbolic-link)
+(define-unimplemented current-effective-group-id)
+(define-unimplemented current-effective-user-id)
+(define-unimplemented current-group-id)
+(define-unimplemented current-user-id)
+(define-unimplemented map-file-to-memory)
+(define-unimplemented file-link)
+(define-unimplemented file-lock)
+(define-unimplemented file-lock/blocking)
+(define-unimplemented file-select)
+(define-unimplemented file-test-lock)
+(define-unimplemented file-truncate)
+(define-unimplemented file-unlock)
+(define-unimplemented get-groups)
+(define-unimplemented group-information)
+(define-unimplemented initialize-groups)
+(define-unimplemented memory-mapped-file-pointer)
+(define-unimplemented parent-process-id)
+(define-unimplemented process-fork)
+(define-unimplemented process-group-id)
+(define-unimplemented process-signal)
+(define-unimplemented read-symbolic-link)
+(define-unimplemented set-alarm!)
+(define-unimplemented set-group-id!)
+(define-unimplemented set-groups!)
+(define-unimplemented set-process-group-id!)
+(define-unimplemented set-root-directory!)
+(define-unimplemented set-signal-mask!)
+(define-unimplemented set-user-id!)
+(define-unimplemented signal-mask)
+(define-unimplemented signal-mask!)
+(define-unimplemented signal-masked?)
+(define-unimplemented signal-unmask!)
+(define-unimplemented terminal-name)
+(define-unimplemented terminal-port?)
+(define-unimplemented unmap-file-from-memory)
+(define-unimplemented user-information)
+(define-unimplemented utc-time->seconds)
+
+(define errno/wouldblock 0)
+
+(define (fifo? _) #f)
+(define (memory-mapped-file? _) #f)
+
+(define map/anonymous 0)
+(define map/file 0)
+(define map/fixed 0)
+(define map/private 0)
+(define map/shared 0)
+(define open/fsync 0)
+(define open/noctty 0)
+(define open/nonblock 0)
+(define open/sync 0)
+(define perm/isgid 0)
+(define perm/isuid 0)
+(define perm/isvtx 0)
+(define prot/exec 0)
+(define prot/none 0)
+(define prot/read 0)
+(define prot/write 0)

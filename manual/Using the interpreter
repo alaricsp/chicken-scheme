@@ -1,0 +1,250 @@
+[[tags: manual]]
+[[toc:]]
+
+== Using the interpreter
+
+CHICKEN provides an interpreter named {{csi}} for evaluating Scheme programs
+and expressions interactively.
+
+=== Interpreter command line format
+
+{{csi {FILENAME|OPTION}}}
+
+where {{FILENAME}} specifies a file with Scheme source-code.  If the
+extension of the source file is {{.scm}}, it may be omitted. The
+runtime options described in [[http://galinha.ucpel.tche.br/Using%20the%20compiler#Compiler%20command%20line%20format|Compiler command line format]] are also available
+for the interpreter.  If the environment variable {{CSI_OPTIONS}}
+is set to a list of options, then these options are additionally passed
+to every direct or indirect invocation of {{csi}}. Please note that
+runtime options (like {{-:...}}) can not be passed using this method.
+The options recognized by the interpreter are:
+
+; -- : Ignore everything on the command-line following this marker. Runtime options ({{-:...}}) are still recognized.
+
+; -i  -case-insensitive : Enables the reader to read symbols case insensitive. The default is to read case sensitive (in violation of R5RS).  This option registers the {{case-insensitive}} feature identifier.
+
+; -b  -batch : Quit the interpreter after processing all command line options.
+
+; -e  -eval EXPRESSIONS : Evaluate {{EXPRESSIONS}}. This option implies {{-batch}} and {{-quiet}}, so no startup message will be printed and the interpreter exits after processing all {{-eval}} options and/or loading files given on the command-line.
+
+; -D  -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}}.
+
+; -h  -help : Write a summary of the available command line options to standard output and exit.
+
+; -I  -include-path PATHNAME : Specifies an alternative search-path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}. The environment variable {{CHICKEN_HOME}} is also considered as a search path.
+
+; -k  -keyword-style STYLE : Enables alternative keyword syntax, where {{STYLE}} may be either {{prefix}} (as in Common Lisp) or {{suffix}} (as in DSSSL). Any other value is ignored.
+
+; -n  -no-init : Do not load initialization-file. If this option is not given and the file {{./.csirc}} or {{$HOME/.csirc}} exists, then it is loaded before the read-eval-print loop commences.
+
+; -w  -no-warnings : Disables any warnings that might be issued by the reader or evaluated code.
+
+; -q  -quiet : Do not print a startup message.
+
+; -s  -script PATHNAME : This is equivalent to {{-batch -quiet -no-init PATHNAME}}. Arguments following {{PATHNAME}} are available by using  {{command-line-arguments}} and are not processed as interpreter options. Extra options in the environment variable {{CSI_OPTIONS}} are ignored.
+
+; -ss PATHNAME : The same as {{-s PATHNAME}} but invokes the procedure {{main}} with the value of {{(command-line-arguments)}} as its single argument. If the main procedure returns an integer result, then the interpreter is terminated, returning the integer as the status code back to the invoking process. Any other result terminates the interpreter with a zero exit status.
+
+; -R  -require-extension NAME : Equivalent to evaluating {{(require-extension NAME)}}.
+
+; -v  -version : Write the banner with version information to standard output and exit.
+
+
+=== Writing Scheme scripts
+
+Since UNIX shells use the {{#!}} notation for starting scripts,
+anything following the characters {{#!}} is ignored, with the exception of the special
+symbols {{#!optional, #!key, #!rest}} and {{#!eof}}.
+
+The easiest way is to use the {{-script}} option like this:
+
+ % cat foo
+ #! /usr/local/bin/csi -script
+ (print (eval (with-input-from-string
+                 (car (command-line-arguments))
+                  read)))
+
+ % chmod +x foo
+ % foo "(+ 3 4)"
+ 7
+
+The parameter {{command-line-arguments}} is set to a list of the
+parameters that were passed to the Scheme script.  Scripts can be compiled
+to standalone executables (don't forget to declare used library units).
+
+CHICKEN supports writing shell scripts in Scheme for these platforms as well,
+using a slightly different approach. The first example would look like
+this on Windows:
+
+ C:>type foo.bat
+ @;csibatch %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+ (print (eval (with-input-from-string
+                 (car (command-line-arguments))
+                 read)))
+
+ C:>foo "(+ 3 4)"
+ 7
+
+Like UNIX scripts, batch files can be compiled. Windows batch scripts do not
+accept more than 8 arguments.
+
+Since it is sometimes useful to run a script into the interpreter without actually running it
+(for example to test specific parts of it), the option {{-ss}} can be used as an alternative to {{-script}}.
+{{-ss PATHNAME}} is equivalent to {{-script PATHNAME}} but invokes {{(main (command-line-arguments))}}
+after loading all top-level forms of the script file. The result of {{main}} is returned as the exit status
+to the shell. Any non-numeric result exits with status zero:
+
+ % cat hi.scm
+ (define (main args)
+   (print "Hi, " (car args))
+   0)
+ % csi -ss hi.scm you
+ Hi, you
+ % csi -q
+ #;1> ,l hi.scm
+ #;2> (main (list "ye all"))
+ Hi, ye all
+ 0
+ #;3>
+
+=== Toplevel commands
+
+The toplevel loop understands a number of special commands:
+
+; ,? : Show summary of available toplevel commands.
+
+; ,l FILENAME ... : Load files with given {{FILENAME}}s
+
+; ,ln FILENAME ... : Load files and print result(s) of each top-level expression.
+
+; ,p EXP : Pretty-print evaluated expression {{EXP}}.
+
+; ,d EXP : Describe result of evaluated expression {{EXP}}.
+
+; ,du EXP : Dump contents of the result of evaluated expression {{EXP}}.
+
+; ,dur EXP N : Dump {{N}} bytes of the result of evaluated expression {{EXP}}.
+
+; ,exn : Describes the last exception that occurred and adds it to the result history (it can be accessed using the {{#}} notation).
+
+; ,q : Quit the interpreter.
+
+; ,r : Show system information.
+
+; ,s TEXT ... : Execute shell-command.
+
+; ,t EXP : Evaluate form and print elapsed time.
+
+; ,x EXP : Pretty-print macroexpanded expression {{EXP}} (the expression is not evaluated).
+
+; ,tr SYMBOL ... : Enables tracing of the toplevel procedures with the given names.
+
+<enscript highlight=scheme>
+#;1> (fac 10)                       ==> 3628800
+#;2> ,tr fac
+#;3> (fac 3)
+|(fac 3)
+| (fac 2)
+|  (fac 1)
+|   (fac 0)
+|   fac -> 1 
+|  fac -> 1 
+| fac -> 2 
+|fac -> 6                          ==> 6
+#;4> ,utr fac
+#;5> (fac 3)                        ==> 6
+</enscript>
+
+; ,utr SYMBOL ... : Disables tracing of the given toplevel procedures.
+
+; ,br SYMBOL ... : Sets a breakpoint at the procedures named {{SYMBOL ...}}. Breakpoint can also be trigged using the {{breakpoint}} procedure.
+
+; ,ubr SYMBOL ... : Removes breakpoints.
+
+; ,c : Continues execution from the last invoked breakpoint.
+
+; ,breakall : Enable breakpoints for all threads (this is the default).
+
+; ,breakonly THREAD : Enable breakpoints only for the thread returned by the expression {{THREAD}}.
+
+; ,info : Lists traced procedures and breakpoints.
+
+; ,step EXPR : Evaluates {{EXPR}} in single-stepping mode. On each procedure call you will be presented with a menu that allows stepping to the next call, leaving single-stepping mode or triggering a breakpoint. Note that you will see some internal calls, and unsafe or heavily optimized compiled code might not be stepped at all. Single-stepping mode is also possible by invoking the {{singlestep}} procedure.
+
+You can define your own toplevel commands using the {{toplevel-command}}
+procedure:
+
+=== toplevel-command
+
+ [procedure] (toplevel-command SYMBOL PROC [HELPSTRING])
+
+Defines or redefines a toplevel interpreter command which can be invoked by entering
+{{,SYMBOL}}. {{PROC}} will be invoked when the command is entered and may
+read any required argument via {{read}} (or {{read-line}}). If the optional
+argument {{HELPSTRING}} is given, it will be listed by the {{,?}} command.
+
+=== History access
+
+The interpreter toplevel accepts the special object {{#[INDEX]}} which
+returns the result of entry number {{INDEX}} in the history list. If the expression
+for that entry resulted in multiple values, the first result (or an unspecified value for no values)
+is returned. If no {{INDEX}} is given (and if a whitespace or closing paranthesis character follows
+the {{#}}, then the result of the last expression is returned.
+Note that the value returned is implicitly quoted.
+
+=== set-describer!
+
+ [procedure] (set-describer! TAG PROC)
+
+Sets a custom description handler that invokes {{PROC}} when the {{,d}} command is invoked
+with a record-type object that has the type {{TAG}} (a symbol). {{PROC}} is called with
+two arguments: the object to be described and an output-port. It should write a possibly useful
+textual description of the object to the passed output-port. For example:
+
+ #;1> (define-record point x y)
+ #;2> (set-describer! 'point (lambda (pt o) (print "a point with x=" (point-x pt) " and y=" (point-y pt))))
+ #;3> ,d (make-point 1 2)
+ a point with x=1 and y=2
+
+=== Auto-completion and edition
+
+On platforms that support it, it is possible to get auto-completion of symbols,
+history (over different {{csi}} sessions) and a more feature-full
+editor for the expressions you type
+using the [[readline]] egg by
+Tony Garnock Jones.
+It is very useful for interactive use of csi.
+
+To enable it install the egg and put this in your {{~/.csirc}} file:
+
+ (use readline regex)
+ (current-input-port (make-gnu-readline-port))
+ (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
+
+More details are available in [[readline|the egg's documentation]].
+
+=== Accessing documentation
+
+You can access the manual directly from {{csi}} using the [[man]] extension by [[Mario Domenech Goulart]].
+
+To enable it install the egg and put this in your {{~/.csirc}} file:
+
+ (use man)
+ (man:load)
+
+Then, in {{csi}}, you can search for definitions using {{man:search}} as in:
+
+ (man:search "case")
+
+Note that the search uses regular expressions.
+To view the documentation for one entry from the manual, use {{man:help}} as in:
+
+ (man:help "case-lambda")
+
+Note: Currently the documentation provided by the {{man}} extension corresponds to Chicken's 2.429, one of the last releases whose documentation was in the texinfo format (the format the {{man}} extension parses).
+
+----
+
+Previous: [[Using the compiler]]
+
+Next: [[Supported language]]

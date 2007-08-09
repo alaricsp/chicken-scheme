@@ -1,6 +1,6 @@
 ;;;; batch-driver.scm - Driver procedure for the compiler
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -44,25 +44,24 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   compiler-cleanup-hook check-global-exports disabled-warnings check-global-imports
-  foreign-type-table-size file-io-only parse-easy-ffi
+  file-io-only undefine-shadowed-macros
   unit-name insert-timer-checks used-units inline-max-size
-  debugging perform-lambda-lifting! disable-stack-overflow-checking no-c-syntax-checks
-  register-ffi-macro ffi-include-path-list ffi-dont-include
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  debugging perform-lambda-lifting! disable-stack-overflow-checking
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  target-initial-heap-size split-level postponed-initforms
+  target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  broken-constant-nodes inline-substitutions-enabled enable-sharp-greater-read-syntax
+  broken-constant-nodes inline-substitutions-enabled compiler-macros-enabled
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
-  direct-call-ids foreign-type-table first-analysis emit-closure-info emit-line-info
+  direct-call-ids foreign-type-table first-analysis emit-closure-info
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call emit-unsafe-marker
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas! source-filename compressed-literals literal-compression-threshold
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -72,7 +71,7 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes compressed-literals-initializer
-  inline-max-size file-requirements use-import-table
+  inline-max-size file-requirements use-import-table lookup-exports-file
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
@@ -82,7 +81,10 @@
 
 
 (include "tweaks")
-(include "parameters")
+
+(define-constant default-profile-name "PROFILE")
+(define-constant default-inline-max-size 10)
+(define-constant funny-message-timeout 60000)
 
 
 ;;; Compile a complete source file:
@@ -113,16 +115,6 @@
 				   oname) ) ) ]
 		       [(memq 'to-stdout options) #f]
 		       [else (make-pathname #f (if filename (pathname-file filename) "out") "c")] ) ]
-        [partitions (cond [(memq 'split options)
-                           => (lambda (node)
-                                (let ([oname (option-arg node)])
-                                  (cond
-                                    ((symbol? oname)
-                                     (string->number (symbol->string oname)))
-                                    ((string? oname)
-                                     (string->number oname))
-                                    (else oname))))]
-                          [else 1])]
 	[ipath (map chop-separator (string-split (or (getenv "CHICKEN_INCLUDE_PATH") "") ";"))]
 	[opasses default-optimization-passes]
 	[time0 #f]
@@ -137,25 +129,15 @@
 	[hshrink (memq 'heap-shrinkage options)]
 	[kwstyle (memq 'keyword-style options)]
 	[lcthreshold (memq 'compress-literals options)]
+	[uses-units '()]
 	[uunit (memq 'unit options)]
 	[a-only (memq 'analyze-only options)]
 	[dynamic (memq 'dynamic options)]
 	[dumpnodes #f]
-	[ffi-mode (memq 'ffi options)]
-	[ffi-parse-mode (memq 'ffi-parse options)]
-	[ofilelist #f]
 	[quiet (memq 'quiet options)]
+	[start-time #f]
+	(upap #f)
 	[ssize (or (memq 'nursery options) (memq 'stack-size options))] )
-
-    (define (outfile->list outfile num)
-      (cond
-       [(not outfile) #f]
-       [(= num 1) (list outfile)]
-       [else
-	(let ([file (pathname-file outfile)])
-	  (list-tabulate 
-	   num
-	   (lambda (i) (make-pathname #f (sprintf "~A~A.c" file i))) ) ) ] ) )
 
     (define (cputime) (##sys#fudge 6))
 
@@ -216,21 +198,16 @@
 	(printf "milliseconds needed for ~a: \t~s~%" pass (- (cputime) time0)) ) )
 
     (define (read-form in)
-      (if (or ffi-mode ffi-parse-mode)
-	  (let ([s (read-string #f in)])
-	    (if (string=? s "")
-		#!eof
-		(cond [ffi-mode
-		       `(declare 
-			  (foreign-declare ,s)
-			  (foreign-parse ,s) ) ]
-		      [else
-		       `(declare
-			  (foreign-parse ,s) ) ] ) ) )
-	  (##sys#read in infohook) ) )
+      (##sys#read in infohook) )
 
-    (when (or (< partitions 1) (not outfile))
-        (set! partitions 1))
+    (define (analyze pass node)
+      (let ((db (analyze-expression node)))
+	(when upap
+	  (upap pass db node
+		(cut get db <> <>)
+		(cut put! db <> <> <>) ) )
+	db) )
+
     (when uunit
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
     (set! debugging-chicken 
@@ -241,6 +218,7 @@
        (collect-options 'debug) ) )
     (set! dumpnodes (memq '|D| debugging-chicken))
     (when (memq 'lambda-lift options) (set! do-lambda-lifting #t))
+    (when (memq 'disable-compiler-macros options) (set! compiler-macros-enabled #f))
     (when (memq 't debugging-chicken) (##sys#start-timer))
     (when (memq 'b debugging-chicken) (set! time-breakdown #t))
     (and-let* ((xfile (memq 'emit-exports options)))
@@ -252,6 +230,10 @@
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
     (set! use-import-table (memq 'check-imports options))
+    (let ((imps (collect-options 'import)))
+      (when (pair? imps)
+	(set! use-import-table #t)
+	(for-each lookup-exports-file imps) ) )
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
       (when verbose (printf "Warnings are disabled~%~!"))
@@ -265,10 +247,8 @@
     (when (memq 'disable-interrupts options) (set! insert-timer-checks #f))
     (when (memq 'fixnum-arithmetic options) (set! number-type 'fixnum))
     (when (memq 'block options) (set! block-compilation #t))
-    (when (memq 'disable-c-syntax-checks options) (set! no-c-syntax-checks #t))
     (when (memq 'emit-external-prototypes-first options) (set! external-protos-first #t))
     (when (memq 'inline options) (set! inline-max-size default-inline-max-size))
-    (when (memq 'track-scheme options) (set! emit-line-info #t))
     (and-let* ([inlimit (memq 'inline-limit options)])
       (set! inline-max-size 
 	(let ([arg (option-arg inlimit)])
@@ -278,12 +258,6 @@
       (when verbose (printf "Identifiers and symbols are case insensitive~%~!"))
       (register-feature! 'case-insensitive)
       (case-sensitive #f) )
-    (and-let* ([slevel (memq 'split-level options)])
-      (set! split-level 
-	(let ([n (string->number (option-arg slevel))])
-	  (if (and n (<= 0 n 2))
-	      n
-	      (quit "invalid argument to `-split-level' option") ) ) ) )
     (when kwstyle
       (let ([val (option-arg kwstyle)])
 	(cond [(string=? "prefix" val) (keyword-style #:prefix)]
@@ -301,17 +275,20 @@
       (append (map chop-separator (collect-options 'include-path))
 	      ##sys#include-pathnames
 	      ipath) )
-    (set! ofilelist (outfile->list outfile partitions))
-    (when (and outfile filename (any (cut string=? <> filename) ofilelist))
+    (when (and outfile filename (string=? outfile filename))
       (quit "source- and output-filename are the same") )
+    (set! uses-units
+      (map string->symbol 
+	   (append-map
+	    (cut string-split <> ",")
+	    (collect-options 'uses))))
+    (when (memq 'keep-shadowed-macros options)
+      (set! undefine-shadowed-macros #f) )
 
     ;; Handle feature options:
-    (for-each register-feature! (collect-options 'feature))
-
-    ;; Handle FFI defines and include-paths:
-    (for-each register-ffi-macro (collect-options 'ffi-define))
-    (when (memq 'ffi-no-include options) (set! ffi-dont-include #t))
-    (set! ffi-include-path-list (append (collect-options 'ffi-include-path) ffi-include-path-list))
+    (for-each 
+     register-feature!
+     (append-map (cut string-split <> ",") (collect-options 'feature)))
 
     ;; Load extensions:
     (set! ##sys#features (cons #:compiler-extension ##sys#features))
@@ -325,6 +302,7 @@
     (set! ##sys#features (cons '#:compiling ##sys#features))
     (set! ##sys#features (cons #:match ##sys#features))
     (##sys#provide 'match) 
+    (set! upap (user-post-analysis-pass))
 
     ;; Insert postponed initforms:
     (set! initforms (append initforms postponed-initforms))
@@ -341,13 +319,18 @@
 		     (else (quit "no filename available for `-extension' option")) ) ) ) ) ) ) )
 
     ;; Append required extensions to initforms:
-    (let ([ids (map string->symbol (collect-options 'require-extension))])
+    (let ([ids (lset-difference 
+		eq?
+		(map string->symbol
+		     (append-map
+		      (cut string-split <> ",")
+		      (collect-options 'require-extension)))
+		uses-units)])
       (set! initforms
 	(append initforms (map (lambda (r) `(##core#require-extension ',r)) ids)) ) )
 
     (when (memq 'run-time-macros options)
       (set! ##sys#enable-runtime-macros #t) )
-    (enable-sharp-greater-read-syntax)
     (set! target-heap-size
       (if hsize
 	  (arg-val (option-arg hsize))
@@ -409,6 +392,7 @@
 	   (debugging 'r "debugging options" debugging-chicken)
 	   (debugging 'r "target heap size" target-heap-size)
 	   (debugging 'r "target stack size" target-stack-size)
+	   (set! start-time (cputime))
 
 	   ;; Read toplevel expressions:
 	   (set! ##sys#line-number-database (make-vector line-number-database-size '()))
@@ -430,24 +414,26 @@
 			     (append (map string->expr prelude)
 				     (reverse forms)
 				     (map string->expr postlude) ) ) )
-			(let* ([f (car files)]
-			       [in (check-and-open-input-file f)] )
-			  (do ([x (read-form in) (read-form in)])
-			      ((eof-object? x) 
-			       (close-checked-input-file in f) )
-			    (set! forms (cons x forms)) ) ) ) ] ) ) )
+			(let* ((f (car files))
+			       (in (check-and-open-input-file f)) )
+			  (fluid-let ((##sys#current-source-filename f))
+			    (let ((x1 (read-form in)) )
+			      (do ((x x1 (read-form in)))
+				  ((eof-object? x) 
+				   (close-checked-input-file in f) )
+				(set! forms (cons x forms)) ) ) ) ) ) ] ) ) )
 
 	   ;; Start compilation passes:
 	   (let ([proc (user-preprocessor-pass)])
 	     (when proc
 	       (when verbose (printf "User preprocessing pass...~%~!"))
-	       (set! forms (cons (first forms) (map proc (cdr forms)))) ) )
+	       (set! forms (map proc forms))))
 
 	   (print "source" '|1| forms)
 	   (begin-time)
-	   (let ([us (collect-options 'uses)])
-	     (unless (null? us)
-	       (set! forms (cons `(declare (uses ,@us)) forms)) ) )
+	   (unless (null? uses-units)
+	     (set! ##sys#explicit-library-modules (append ##sys#explicit-library-modules uses-units))
+	     (set! forms (cons `(declare (uses ,@uses-units)) forms)) )
 	   (let* ([exps0 (map canonicalize-expression (append initforms forms))]
 		  [pvec (gensym)]
 		  [plen (length profile-lambda-list)]
@@ -461,10 +447,9 @@
 				  ',(if unit-name #f profile-name))))
 			     '() )
 			 (map (lambda (pl)
-				`(##core#inline 
-				  "C_i_setslot"
+				`(##sys#set-profile-info-vector!
 				  ,profile-info-vector-name
-				  ',(* profile-info-entry-size (car pl)) 
+				  ',(car pl)
 				  ',(cdr pl) ) )
 			      profile-lambda-list)
 			 (let ([is (fold (lambda (clf r)
@@ -524,7 +509,7 @@
 		 (when verbose (printf "Secondary user pass...~%"))
 		 (begin-time)
 		 (set! first-analysis #f)
-		 (let ([db (analyze-expression node0)])
+		 (let ([db (analyze 'user node0)])
 		   (print-db "analysis (u)" '|0| db 0)
 		   (end-time "pre-analysis (u)")
 		   (begin-time)
@@ -536,7 +521,7 @@
 	       (when do-lambda-lifting
 		 (begin-time)
 		 (set! first-analysis #f)
-		 (let ([db (analyze-expression node0)])
+		 (let ([db (analyze 'lift node0)])
 		   (print-db "analysis" '|0| db 0)
 		   (end-time "pre-analysis")
 		   (begin-time)
@@ -560,7 +545,7 @@
 		 (let loop ([i 1] [node2 node1] [progress #t])
 
 		   (begin-time)
-		   (let ([db (analyze-expression node2)])
+		   (let ([db (analyze 'opt node2)])
 		     (when first-analysis
 		       (when use-import-table (check-global-imports db))
 		       (check-global-exports db)
@@ -587,7 +572,7 @@
 				     (loop (add1 i) node2 #t) ]
 				    [optimize-leaf-routines
 				     (begin-time)
-				     (let ([db (analyze-expression node2)])
+				     (let ([db (analyze 'leaf node2)])
 				       (end-time "analysis")
 				       (begin-time)
 				       (let ([progress (transform-direct-lambdas! node2 db)])
@@ -602,38 +587,23 @@
 			    (let ([node3 (perform-closure-conversion node2 db)])
 			      (end-time "closure conversion")
 			      (print-db "final-analysis" '|8| db i)
+			      (when (and ##sys#warnings-enabled (> (- (cputime) start-time) funny-message-timeout))
+				(display "(don't despair - still compiling...)\n") )
 			      (when export-file-name
 				(dump-exported-globals db export-file-name) )
-			      (let ([upap (user-post-analysis-pass)])
-				(when upap 
-				  (upap db
-					(lambda (k p) (cut get db <> <>))
-					(lambda (k p x) (cut put! db <> <>)) ) ) )
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 
-                              (when (and verbose
-					 outfile
-					 (not (> partitions 1)) )
-                                (printf "files to be generated: ~A~%" (string-intersperse ofilelist ", ")) )
-                              
 			      (begin-time)
-			      (receive (node literals lambdas) (prepare-for-code-generation node3 db partitions)
+			      (receive (node literals lambdas) (prepare-for-code-generation node3 db)
 				(end-time "preparation")
 
                                 (begin-time)
-                                (let loopfile [(lof ofilelist)
-                                               (file-partition 0)]
-                                  (let* ([outfile (and lof (car lof))]
-					 [out (if outfile (open-output-file outfile) (current-output-port))] )
-				    (unless quiet
-				      (printf "generating `~A' ...~%" outfile) )
-                                    (generate-code 
-				     literals lambdas out filename dynamic db
-				     (if (= partitions 1) #f file-partition))
-                                    (when outfile (close-output-port out))
-                                    (when (and lof (pair? (cdr lof)))
-                                      (loopfile (cdr lof) (+ file-partition 1)))))
+				(let ((out (if outfile (open-output-file outfile) (current-output-port))) )
+				  (unless quiet
+				    (printf "generating `~A' ...~%" outfile) )
+				  (generate-code literals lambdas out filename dynamic db)
+				  (when outfile (close-output-port out)))
                                 (end-time "code generation")
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
                                 (compiler-cleanup-hook)

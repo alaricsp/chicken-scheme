@@ -1,6 +1,6 @@
 ;;;; eval.scm - Interpreter for CHICKEN
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -36,17 +36,19 @@
 (declare
   (unit eval)
   (disable-warning var)
-  (hide ##sys#unregister-macro ##sys#macroexpand-0 ##sys#split-at-separator
+  (hide ##sys#unregister-macro ##sys#split-at-separator
 	##sys#r4rs-environment ##sys#r5rs-environment 
-	##sys#interaction-environment pds pdss pxss)
-  (foreign-declare #<<EOF
+	##sys#interaction-environment pds pdss pxss) )
 
-#ifndef C_INSTALL_LIB_HOME
-# define C_INSTALL_LIB_HOME    "."
+#>
+#ifndef C_INSTALL_EGG_HOME
+# define C_INSTALL_EGG_HOME    "."
 #endif
 
-EOF
-) )
+#ifndef C_INSTALL_SHARE_HOME
+# define C_INSTALL_SHARE_HOME NULL
+#endif
+<#
 
 (cond-expand
  [paranoia]
@@ -69,8 +71,23 @@ EOF
      ##sys#pointer->address ##sys#compile-to-closure ##sys#make-string ##sys#make-lambda-info
      ##sys#number? ##sys#symbol->qualified-string ##sys#decorate-lambda ##sys#string-append
      ##sys#ensure-heap-reserve ##sys#syntax-error-hook ##sys#read-prompt-hook
-     ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator
-     open-output-string get-output-string
+     ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator ##sys#alias-global-hook
+     open-output-string get-output-string make-parameter software-type software-version machine-type
+     build-platform getenv set-extensions-specifier! ##sys#string->symbol list->vector
+     extension-information syntax-error ->string chicken-home ##sys#expand-curried-define
+     ##sys#match-expression vector->list store-string open-input-string eval ##sys#gc
+     with-exception-handler print-error-message read-char read ##sys#read-error
+     ##sys#reset-handler call-with-current-continuation ##sys#peek-char-0 ##sys#read-char-0
+     ##sys#clear-trace-buffer ##sys#write-char-0 print-call-chain ##sys#with-print-length-limit
+     repl-prompt ##sys#flush-output ##sys#extended-lambda-list? keyword? get-line-number
+     symbol->string string-append display ##sys#repository-path ##sys#file-info make-vector
+     ##sys#make-vector string-copy vector->list ##sys#do-the-right-thing ##sys#->feature-id
+     ##sys#extension-information ##sys#symbol->string ##sys#canonicalize-extension-path
+     file-exists? ##sys#load-extension ##sys#find-extension ##sys#substring reverse
+     dynamic-load-libraries ##sys#string->c-identifier load-verbose ##sys#load ##sys#get-keyword
+     port? ##sys#file-info ##sys#signal-hook ##sys#dload open-input-file close-input-port
+     read write newline ##sys#eval-handler ##sys#set-dlopen-flags! cadadr ##sys#lookup-runtime-requirements
+     map string->keyword ##sys#abort
      ##sys#macroexpand-0 ##sys#macroexpand-1-local) ) ] )
 
 (cond-expand
@@ -91,12 +108,51 @@ EOF
   (declare (emit-exports "eval.exports"))])
 
 
-(include "parameters")
-
-(define-foreign-variable install-lib-home c-string "C_INSTALL_LIB_HOME")
+(define-foreign-variable install-egg-home c-string "C_INSTALL_EGG_HOME")
+(define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
 (define pds ##sys#pathname-directory-separator)
 (define pdss (string ##sys#pathname-directory-separator))
+
+(define ##sys#core-library-modules
+  '(extras lolevel utils tcp regex posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
+
+(define ##sys#explicit-library-modules '())
+
+(define-constant macro-table-size 301)
+(define-constant default-dynamic-load-libraries '("libchicken"))
+(define-constant cygwin-default-dynamic-load-libraries '("cygchicken-0"))
+(define-constant macosx-load-library-extension ".dylib")
+(define-constant windows-load-library-extension ".dll")
+(define-constant hppa-load-library-extension ".sl")
+(define-constant default-load-library-extension ".so")
+(define-constant environment-table-size 301)
+(define-constant source-file-extension ".scm")
+(define-constant setup-file-extension "setup-info")
+(define-constant repository-environment-variable "CHICKEN_REPOSITORY")
+(define-constant special-syntax-files '(chicken-ffi-macros chicken-more-macros))
+
+(define-constant builtin-features
+  '(chicken srfi-23 srfi-30 srfi-39 srfi-6 srfi-10 srfi-2 srfi-31
+	    srfi-69 srfi-28) )		; these are actually in extras, but that is used by default
+
+(define-constant builtin-features/compiled
+  '(srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
+
+
+;;; System settings
+
+(define chicken-home
+  (let ([getenv getenv])
+    (lambda ()
+      (or (getenv "CHICKEN_HOME")
+	  (and-let* ((p (getenv "CHICKEN_PREFIX")))
+	    (##sys#string-append 
+	     p
+	     (if (char=? (string-ref p (fx- (##sys#size p) 1)) ##sys#pathname-directory-separator)
+		 "share"
+		 "/share") ) )
+	  installation-home) ) ) )
 
 
 ;;; Macro handling:
@@ -242,7 +298,7 @@ EOF
 ; 4) an argument marker may not be specified more than once
 ; 5) no special handling of extra keywords (no error)
 ; 6) default value of optional/key args is #f
-; 7) mixing with dotted llist syntax is allowed
+; 7) mixing with dotted list syntax is allowed
 
 (define (##sys#extended-lambda-list? llist)
   (let loop ([llist llist])
@@ -340,73 +396,72 @@ EOF
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body lookup . me)
-      (let ([me (:optional me '())])
-	(define (fini vars vals mvars mvals body)
-	  (if (and (null? vars) (null? mvars))
-	      (let loop ([body2 body] [exps '()])
-		(if (not (pair? body2)) 
-		    `(begin ,@body)	; no more defines, otherwise we would have called `expand'
-		    (let ([x (##sys#slot body2 0)])
-		      (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
-			  `(begin . ,(##sys#append (reverse exps) (list (expand body2))))
-			  (loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
-	      (let ([vars (reverse vars)])
-		`(let ,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
-				  (apply ##sys#append vars mvars) )
-		   ,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
-		   ,@(map (lambda (vs x)
-			    (let ([tmps (##sys#map gensym vs)])
-			      `(##sys#call-with-values
-				(lambda () ,x)
-				(lambda ,tmps 
-				  ,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
-			  (reverse mvars)
-			  (reverse mvals) )
-		   ,@body) ) ) )
-	(define (expand body)
-	  (let loop ([body body] [vars '()] [vals '()] [mvars '()] [mvals '()])
-	    (if (not (pair? body))
-		(fini vars vals mvars mvals body)
-		(let* ([x (##sys#slot body 0)]
-		       [rest (##sys#slot body 1)] 
-		       [head (and (pair? x) (##sys#slot x 0))] )
-		  (cond [(not head) (fini vars vals mvars mvals body)]
-			[(and (symbol? head) (lookup head))
-			 (fini vars vals mvars mvals body) ]
-			[(eq? 'define head)
-			 (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f)
-			 (let loop2 ([x x])
-			   (let ([head (cadr x)])
-			     (cond [(not (pair? head))
-				    (##sys#check-syntax 'define x '(define variable . #(_ 0)) #f)
-				    (loop rest (cons head vars)
-					  (cons (if (pair? (cddr x))
-						    (caddr x)
-						    '(##sys#void) )
-						vals)
-					  mvars mvals) ]
-				   [(pair? (##sys#slot head 0))
-				    (##sys#check-syntax 'define x '(define (_ . lambda-list) . #(_ 1)) #f)
-				    (loop2 (cons 'define (##sys#expand-curried-define head (cddr x)))) ]
-				   [else
-				    (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f)
-				    (loop rest
-					  (cons (##sys#slot head 0) vars)
-					  (cons `(lambda ,(##sys#slot head 1) ,@(cddr x)) vals)
-					  mvars mvals) ] ) ) ) ]
-			[(eq? 'define-values head)
-			 (##sys#check-syntax 'define-values x '(define-values #(_ 0) _) #f)
-			 (loop rest vars vals (cons (cadr x) mvars) (cons (caddr x) mvals)) ]
-			[(eq? 'begin head)
-			 (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
-			 (loop (##sys#append (##sys#slot x 1) rest) vars vals mvars mvals) ]
-			[else
-			 (let ([x2 (##sys#macroexpand-0 x me)])
-			   (if (eq? x x2)
-			       (fini vars vals mvars mvals body)
-			       (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
-	(expand body) ) ) ) )
+    (lambda (body lookup #!optional me container)
+      (define (fini vars vals mvars mvals body)
+	(if (and (null? vars) (null? mvars))
+	    (let loop ([body2 body] [exps '()])
+	      (if (not (pair? body2)) 
+		  `(begin ,@body) ; no more defines, otherwise we would have called `expand'
+		  (let ([x (##sys#slot body2 0)])
+		    (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
+			`(begin . ,(##sys#append (reverse exps) (list (expand body2))))
+			(loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
+	    (let ([vars (reverse vars)])
+	      `(let ,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
+				(apply ##sys#append vars mvars) )
+		 ,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
+		 ,@(map (lambda (vs x)
+			  (let ([tmps (##sys#map gensym vs)])
+			    `(##sys#call-with-values
+			      (lambda () ,x)
+			      (lambda ,tmps 
+				,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
+			(reverse mvars)
+			(reverse mvals) )
+		 ,@body) ) ) )
+      (define (expand body)
+	(let loop ([body body] [vars '()] [vals '()] [mvars '()] [mvals '()])
+	  (if (not (pair? body))
+	      (fini vars vals mvars mvals body)
+	      (let* ([x (##sys#slot body 0)]
+		     [rest (##sys#slot body 1)] 
+		     [head (and (pair? x) (##sys#slot x 0))] )
+		(cond [(not head) (fini vars vals mvars mvals body)]
+		      [(and (symbol? head) (lookup head))
+		       (fini vars vals mvars mvals body) ]
+		      [(eq? 'define head)
+		       (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f)
+		       (let loop2 ([x x])
+			 (let ([head (cadr x)])
+			   (cond [(not (pair? head))
+				  (##sys#check-syntax 'define x '(define variable . #(_ 0)) #f)
+				  (loop rest (cons head vars)
+					(cons (if (pair? (cddr x))
+						  (caddr x)
+						  '(##sys#void) )
+					      vals)
+					mvars mvals) ]
+				 [(pair? (##sys#slot head 0))
+				  (##sys#check-syntax 'define x '(define (_ . lambda-list) . #(_ 1)) #f)
+				  (loop2 (cons 'define (##sys#expand-curried-define head (cddr x)))) ]
+				 [else
+				  (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f)
+				  (loop rest
+					(cons (##sys#slot head 0) vars)
+					(cons `(lambda ,(##sys#slot head 1) ,@(cddr x)) vals)
+					mvars mvals) ] ) ) ) ]
+		      [(eq? 'define-values head)
+		       (##sys#check-syntax 'define-values x '(define-values #(_ 0) _) #f)
+		       (loop rest vars vals (cons (cadr x) mvars) (cons (caddr x) mvals)) ]
+		      [(eq? 'begin head)
+		       (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
+		       (loop (##sys#append (##sys#slot x 1) rest) vars vals mvars mvals) ]
+		      [else
+		       (let ([x2 (##sys#macroexpand-0 x me)])
+			 (if (eq? x x2)
+			     (fini vars vals mvars mvals body)
+			     (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
+      (expand body) ) ) )
 
 
 ;;; A simple expression matcher
@@ -521,6 +576,10 @@ EOF
 	 (get-output-string o))))
      p) ) )
 
+(define ##sys#unbound-in-eval #f)
+(define ##sys#eval-debug-level 1)
+(define (##sys#alias-global-hook s) s)
+
 (define ##sys#compile-to-closure
   (let ([macro? macro?]
 	[write write]
@@ -576,6 +635,14 @@ EOF
 		    x2) )
 	      x2) ) )
 
+      (define (emit-trace-info tf info cntr) 
+	(when tf
+	  (##core#inline "C_emit_eval_trace_info" info cntr ##sys#current-thread) ) )
+
+      (define (emit-syntax-trace-info tf info cntr) 
+	(when tf
+	  (##core#inline "C_emit_syntax_trace_info" info cntr ##sys#current-thread) ) )
+	
       (define (decorate p ll h cntr)
 	(##sys#eval-decorator p ll h cntr) )
 
@@ -583,20 +650,24 @@ EOF
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e)
 		 (cond [(not i)
-			(if ##sys#eval-environment
-			    (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
-			      (unless loc (##sys#syntax-error-hook "reference to undefined identifier" x))
-			      (cond-expand 
-			       [unsafe (lambda v (##sys#slot loc 1))]
+			(let ((x (##sys#alias-global-hook x)))
+			  (if ##sys#eval-environment
+			      (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
+				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" x))
+				(cond-expand 
+				 [unsafe (lambda v (##sys#slot loc 1))]
+				 [else
+				  (lambda v 
+				    (let ([val (##sys#slot loc 1)])
+				      (if (eq? unbound val)
+					  (##sys#error "unbound variable" x)
+					  val) ) ) ] ) )
+			      (cond-expand
+			       [unsafe (lambda v (##core#inline "C_slot" x 0))]
 			       [else
-				(lambda v 
-				  (let ([val (##sys#slot loc 1)])
-				    (if (eq? unbound val)
-					(##sys#error "unbound variable" x)
-					val) ) ) ] ) )
-			    (cond-expand
-			     [unsafe (lambda v (##core#inline "C_slot" x 0))]
-			     [else (lambda v (##core#inline "C_retrieve" x))] ) ) ]
+				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
+				  (set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
+				(lambda v (##core#inline "C_retrieve" x))] ) ) ) ]
 		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
 		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
 	      [(##sys#number? x)
@@ -616,6 +687,7 @@ EOF
 	       (lambda v x) ]
 	      [(not (pair? x)) (##sys#syntax-error-hook "illegal non-atomic object" x)]
 	      [(symbol? (##sys#slot x 0))
+	       (emit-syntax-trace-info tf x cntr)
 	       (let ([head (##sys#slot x 0)])
 		 (if (defined? head e)
 		     (compile-call x e tf cntr)
@@ -653,7 +725,7 @@ EOF
 
 			     [(if)
 			      (##sys#check-syntax 'if x '(if _ _ . #(_)) #f)
-			      (let* ([test (compile (cadr x) e #f #f cntr)]
+			      (let* ([test (compile (cadr x) e #f tf cntr)]
 				     [cns (compile (caddr x) e #f tf cntr)]
 				     [alt (if (pair? (cdddr x))
 					      (compile (cadddr x) e #f tf cntr)
@@ -667,31 +739,33 @@ EOF
 				(case len
 				  [(0) (compile '(##core#undefined) e #f tf cntr)]
 				  [(1) (compile (##sys#slot body 0) e #f tf cntr)]
-				  [(2) (let* ([x1 (compile (##sys#slot body 0) e #f #f cntr)]
+				  [(2) (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr)]
 					      [x2 (compile (cadr body) e #f tf cntr)] )
 					 (lambda (v) (##core#app x1 v) (##core#app x2 v)) ) ]
 				  [else
-				   (let* ([x1 (compile (##sys#slot body 0) e #f #f cntr)]
-					  [x2 (compile (cadr body) e #f #f cntr)] 
+				   (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr)]
+					  [x2 (compile (cadr body) e #f tf cntr)] 
 					  [x3 (compile `(begin ,@(##sys#slot (##sys#slot body 1) 1)) e #f tf cntr)] )
 				     (lambda (v) (##core#app x1 v) (##core#app x2 v) (##core#app x3 v)) ) ] ) ) ]
 
 			     [(set! ##core#set!)
 			      (##sys#check-syntax 'set! x '(_ variable _) #f)
-			      (let ([var (cadr x)])
+			      (let ((var (cadr x)))
 				(receive (i j) (lookup var e)
-				  (let ([val (compile (caddr x) e var #f cntr)])
+				  (let ((val (compile (caddr x) e var tf cntr)))
 				    (cond [(not i)
-					   (if ##sys#eval-environment
-					       (let ([loc (##sys#hash-table-location
-							   ##sys#eval-environment 
-							   var
-							   ##sys#environment-is-mutable) ] )
-						 (unless loc (##sys#error "assignment of undefined identifier" var))
-						 (if (##sys#slot loc 2)
-						     (lambda (v) (##sys#setslot loc 1 (##core#app val v)))
-						     (lambda v (##sys#error "assignment to immutable variable" var)) ) )
-					       (lambda (v) (##sys#setslot j 0 (##core#app val v))) ) ]
+					   (let ([var (##sys#alias-global-hook var)])
+					     (if ##sys#eval-environment
+						 (let ([loc (##sys#hash-table-location
+							     ##sys#eval-environment 
+							     var
+							     ##sys#environment-is-mutable) ] )
+						   (unless loc (##sys#error "assignment of undefined identifier" var))
+						   (if (##sys#slot loc 2)
+						       (lambda (v) (##sys#setslot loc 1 (##core#app val v)))
+						       (lambda v (##sys#error "assignment to immutable variable" var)) ) )
+						 (lambda (v)
+						   (##sys#setslot var 0 (##core#app val v))) ) ) ]
 					  [(zero? i) (lambda (v) (##sys#setslot (##sys#slot v 0) j (##core#app val v)))]
 					  [else
 					   (lambda (v)
@@ -705,31 +779,31 @@ EOF
 				     [vars (map (lambda (x) (car x)) bindings)] 
 				     [e2 (cons vars e)]
 				     [body (##sys#compile-to-closure
-					    (##sys#canonicalize-body (cddr x) (cut defined? <> e2) me)
+					    (##sys#canonicalize-body (cddr x) (cut defined? <> e2) me cntr)
 					    e2
 					    me
 					    cntr) ] )
 				(case n
-				  [(1) (let ([val (compile (cadar bindings) e (car vars) #f cntr)])
+				  [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr)])
 					 (lambda (v)
 					   (##core#app body (cons (vector (##core#app val v)) v)) ) ) ]
-				  [(2) (let ([val1 (compile (cadar bindings) e (car vars) #f cntr)]
-					     [val2 (compile (cadadr bindings) e (cadr vars) #f cntr)] )
+				  [(2) (let ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
+					     [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] )
 					 (lambda (v)
 					   (##core#app body (cons (vector (##core#app val1 v) (##core#app val2 v)) v)) ) ) ]
-				  [(3) (let* ([val1 (compile (cadar bindings) e (car vars) #f cntr)]
-					      [val2 (compile (cadadr bindings) e (cadr vars) #f cntr)] 
+				  [(3) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
+					      [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] 
 					      [t (cddr bindings)]
-					      [val3 (compile (cadar t) e (caddr vars) #f cntr)] )
+					      [val3 (compile (cadar t) e (caddr vars) tf cntr)] )
 					 (lambda (v)
 					   (##core#app 
 					    body
 					    (cons (vector (##core#app val1 v) (##core#app val2 v) (##core#app val3 v)) v)) ) ) ]
-				  [(4) (let* ([val1 (compile (cadar bindings) e (car vars) #f cntr)]
-					      [val2 (compile (cadadr bindings) e (cadr vars) #f cntr)] 
+				  [(4) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
+					      [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] 
 					      [t (cddr bindings)]
-					      [val3 (compile (cadar t) e (caddr vars) #f cntr)] 
-					      [val4 (compile (cadadr t) e (cadddr vars) #f cntr)] )
+					      [val3 (compile (cadar t) e (caddr vars) tf cntr)] 
+					      [val4 (compile (cadadr t) e (cadddr vars) tf cntr)] )
 					 (lambda (v)
 					   (##core#app 
 					    body
@@ -739,7 +813,7 @@ EOF
 							  (##core#app val4 v))
 						  v)) ) ) ]
 				  [else
-				   (let ([vals (map (lambda (x) (compile (cadr x) e (car x) #f cntr)) bindings)])
+				   (let ([vals (map (lambda (x) (compile (cadr x) e (car x) tf cntr)) bindings)])
 				     (lambda (v)
 				       (let ([v2 (##sys#make-vector n)])
 					 (do ([i 0 (fx+ i 1)]
@@ -765,7 +839,7 @@ EOF
 				   (let* ((e2 (cons vars e))
 					  (body 
 					   (##sys#compile-to-closure
-					    (##sys#canonicalize-body body (cut defined? <> e2) me)
+					    (##sys#canonicalize-body body (cut defined? <> e2) me (or h cntr))
 					    e2
 					    me
 					    (or h cntr) ) ) )
@@ -887,7 +961,8 @@ EOF
 			      (compile `(set! ,(cadadr x) ,@(cddr x)) e #f tf cntr) ]
                    
 			     [(##core#primitive ##core#inline ##core#inline_allocate ##core#foreign-lambda 
-						##core#define-foreign-variable ##core#define-external-variable ##core#let-location
+						##core#define-foreign-variable 
+						##core#define-external-variable ##core#let-location
 						##core#foreign-primitive
 						##core#foreign-lambda* ##core#define-foreign-type)
 			      (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
@@ -903,7 +978,9 @@ EOF
 
 			   (compile x2 e h tf cntr) ) ) ) ) ]
 
-	      [else (compile-call x e tf cntr)] ) )
+	      [else
+	       (emit-syntax-trace-info tf x cntr)
+	       (compile-call x e tf cntr)] ) )
 
       (define (fudge-argument-list n alst)
 	(if (null? alst) 
@@ -921,11 +998,8 @@ EOF
 		[(pair? lst) (loop (##sys#slot lst 1) (fx+ n 1))]
 		[else #f] ) ) )
 
-      (define (emit-trace-info tf info cntr) 
-	(##core#inline "C_emit_trace_info" info cntr ##sys#current-thread) )
-
       (define (compile-call x e tf cntr)
-	(let* ([fn (compile (##sys#slot x 0) e #f #f cntr)]
+	(let* ([fn (compile (##sys#slot x 0) e #f tf cntr)]
 	       [args (##sys#slot x 1)]
 	       [argc (checked-length args)]
 	       [info x] )
@@ -934,34 +1008,34 @@ EOF
 	    [(0) (lambda (v)
 		   (emit-trace-info tf info cntr)
 		   ((fn v)))]
-	    [(1) (let ([a1 (compile (##sys#slot args 0) e #f #f cntr)])
+	    [(1) (let ([a1 (compile (##sys#slot args 0) e #f tf cntr)])
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v))) ) ]
-	    [(2) (let* ([a1 (compile (##sys#slot args 0) e #f #f cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f #f cntr)] )
+	    [(2) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v))) ) ]
-	    [(3) (let* ([a1 (compile (##sys#slot args 0) e #f #f cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f #f cntr)]
-			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f #f cntr)] )
+	    [(3) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)]
+			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v) (##core#app a3 v))) ) ]
-	    [(4) (let* ([a1 (compile (##sys#slot args 0) e #f #f cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f #f cntr)]
-			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f #f cntr)] 
-			[a4 (compile (##core#inline "C_u_i_list_ref" args 3) e #f #f cntr)] )
+	    [(4) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)]
+			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr)] 
+			[a4 (compile (##core#inline "C_u_i_list_ref" args 3) e #f tf cntr)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v) (##core#app a3 v) (##core#app a4 v))) ) ]
-	    [else (let ([as (##sys#map (lambda (a) (compile a e #f #f cntr)) args)])
+	    [else (let ([as (##sys#map (lambda (a) (compile a e #f tf cntr)) args)])
 		    (lambda (v)
 		      (emit-trace-info tf info cntr)
 		      (apply (##core#app fn v) (##sys#map (lambda (a) (##core#app a v)) as))) ) ] ) ) )
 
-      (compile exp env #f #t (:optional cntr #f)) ) ) )
+      (compile exp env #f (fx> ##sys#eval-debug-level 0) (:optional cntr #f)) ) ) )
 
 (define ##sys#eval-handler 
   (make-parameter
@@ -1011,7 +1085,7 @@ EOF
 (define load-verbose (make-parameter (##sys#fudge 13)))
 
 (define (##sys#abort-load) #f)
-(define ##sys#current-load-file #f)
+(define ##sys#current-source-filename #f)
 (define ##sys#current-load-path "")
 
 (define-foreign-variable _dlerror c-string "C_dlerror")
@@ -1035,6 +1109,7 @@ EOF
       [write write]
       [display display]
       [newline newline]
+      [eval eval]
       [open-input-file open-input-file]
       [close-input-port close-input-port]
       [string-append string-append] 
@@ -1052,8 +1127,8 @@ EOF
     (lambda (input evaluator pf #!optional timer printer)
       (when (string? input) 
 	(set! input (##sys#expand-home-path input)) )
-      (let ([isdir #f]
-	    [fname 
+      (let* ([isdir #f]
+	     [fname 
 	     (cond [(port? input) #f]
 		   [(not (string? input)) (badfile input)]
 		   [(and-let* ([info (##sys#file-info input)]
@@ -1069,11 +1144,7 @@ EOF
 			    (if (##sys#file-info fname3)
 				fname3
 				(and (not isdir) input) ) ) ) ) ] ) ]
-	    [evproc (or evaluator 
-			(lambda (x . env)
-			  (apply (##sys#eval-handler)
-				 (##sys#interpreter-toplevel-macroexpand-hook x)
-				 env) ) ) ] )
+	    [evproc (or evaluator eval)] )
 	(cond [(and (string? input) (not fname))
 	       (##sys#signal-hook #:file-error 'load "can not open file" input) ]
 	      [(and (load-verbose) fname)
@@ -1087,10 +1158,11 @@ EOF
 	    (call-with-current-continuation
 	     (lambda (abrt)
 	       (fluid-let ([##sys#read-error-with-line-number #t]
-			   [##sys#current-load-file fname]
+			   [##sys#current-source-filename fname]
 			   [##sys#current-load-path
-			    (let ((i (has-sep? fname)))
-			      (if i (##sys#substring fname 0 (fx+ i 1)) "") ) ]
+			    (and fname
+				 (let ((i (has-sep? fname)))
+				   (if i (##sys#substring fname 0 (fx+ i 1)) "") ) ) ]
 			   [##sys#abort-load (lambda () (abrt #f))] )
 		 (let ([in (if fname (open-input-file fname) input)])
 		   (##sys#dynamic-wind
@@ -1099,21 +1171,22 @@ EOF
 		      (let ([c1 (peek-char in)])
 			(when (char=? c1 (integer->char 127))
 			  (##sys#error 'load "unable to load compiled module" fname _dlerror) ) )
-		      (do ((x (read in) (read in)))
-			  ((eof-object? x))
-			(when printer (printer x))
-			(##sys#call-with-values
-			 (lambda () 
-			   (if timer
-			       (time (evproc x)) 
-			       (evproc x) ) )
-			 (lambda results
-			   (when pf
-			     (for-each
-			      (lambda (r) 
-				(write r)
-				(newline) )
-			      results) ) ) ) ) )
+		      (let ((x1 (read in)))
+			(do ((x x1 (read in)))
+			    ((eof-object? x))
+			  (when printer (printer x))
+			  (##sys#call-with-values
+			   (lambda () 
+			     (if timer
+				 (time (evproc x)) 
+				 (evproc x) ) )
+			   (lambda results
+			     (when pf
+			       (for-each
+				(lambda (r) 
+				  (write r)
+				  (newline) )
+				results) ) ) ) ) ) )
 		    (lambda () (close-input-port in)) ) ) ) ) ) )
 	(##core#undefined) ) ) )
   (set! load
@@ -1140,20 +1213,12 @@ EOF
 	      (eq? (machine-type) 'hppa)) hppa-load-library-extension]
 	[else default-load-library-extension] ) )
 
-(define ##sys#load-dynamic-extension	; this also...
-  (cond [(eq? (software-version) 'macosx) default-load-library-extension]
-	[(and (eq? (software-version) 'hpux)
-	      (eq? (machine-type) 'hppa)) default-load-library-extension]
-	[else ##sys#load-library-extension] ) )
+(define ##sys#load-dynamic-extension default-load-library-extension)
 
-(define ##sys#default-dynamic-load-libraries
-  (case (software-type)
-    [(windows)
-     (case (build-platform)
-       [(msvc) msvc-default-dynamic-load-libraries]
-       [(mingw32) mingw-default-dynamic-load-libraries]
-       [else cygwin-default-dynamic-load-libraries] ) ]
-    [else unix-default-dynamic-load-libraries] ) )
+(define ##sys#default-dynamic-load-libraries 
+  (case (build-platform)
+    ((cygwin) cygwin-default-dynamic-load-libraries)
+    (else default-dynamic-load-libraries) ) )
 
 (define dynamic-load-libraries 
   (make-parameter
@@ -1244,8 +1309,8 @@ EOF
 (define ##sys#repository-path
   (make-parameter 
    (or (getenv repository-environment-variable)
-       (getenv home-environment-variable)
-       install-lib-home) ) )
+       (getenv "CHICKEN_HOME")
+       install-egg-home) ) )
 
 (define repository-path ##sys#repository-path)
 
@@ -1274,7 +1339,7 @@ EOF
 	    (else (##sys#check-symbol id loc)) )
       (let ([p (##sys#canonicalize-extension-path id loc)])
 	(cond ((member p ##sys#loaded-extensions))
-	      ((memq id core-library-modules)
+	      ((memq id ##sys#core-library-modules)
 	       (##sys#load-library id #f) )
 	      (else
 	       (let ([id2 (##sys#find-extension p #t)])
@@ -1319,8 +1384,6 @@ EOF
 	     (rpath (string-append (##sys#repository-path) pdss p ".")) )
 	(cond ((file-exists? (string-append rpath setup-file-extension))
 	       => (cut with-input-from-file <> read) )
-	      ((file-exists? (string-append rpath alternative-setup-file-extension))
-	       => (cut with-input-from-file <> read) )
 	      (else #f) ) ) ) ) )
 
 (define (extension-information ext)
@@ -1343,7 +1406,7 @@ EOF
 	     (loop1 (cdr ids)) ) ) ) ) ) )
 
 (define ##sys#do-the-right-thing
-  (let ([vector->list vector->list])
+  (let ((vector->list vector->list))
     (lambda (id comp?)
       (define (add-req id)
 	(when comp?
@@ -1353,52 +1416,68 @@ EOF
 	   (cut lset-adjoin eq? <> id) 
 	   (lambda () (list id)))))
       (define (doit id)
-	(cond [(or (memq id builtin-features)
+	(cond ((or (memq id builtin-features)
 		   (if comp?
 		       (memq id builtin-features/compiled)
 		       (##sys#feature? id) ) )
-	       (values '(##sys#void) #t) ]
-	      [(memq id special-syntax-files)
-	       (let ([fid (##sys#->feature-id id)])
+	       (values '(##sys#void) #t) )
+	      ((memq id special-syntax-files)
+	       (let ((fid (##sys#->feature-id id)))
 		 (unless (memq fid ##sys#features)
 		   (##sys#load (##sys#resolve-include-filename (##sys#symbol->string id) #t) #f #f) 
 		   (set! ##sys#features (cons fid ##sys#features)) )
-		 (values '(##sys#void) #t) ) ]
-	      [(memq id core-library-modules)
+		 (values '(##sys#void) #t) ) )
+	      ((memq id ##sys#core-library-modules)
 	       (values
 		(if comp?
 		    `(##core#declare '(uses ,id))
 		    `(load-library ',id) )
-		#t) ]
-	      [else
-	       (let ([info (##sys#extension-information id 'require-extension)])
-		 (cond [info
-			(values 
-			 (if (or (assq 'syntax info) (assq 'require-at-runtime info))
-			     `(##core#require-for-syntax ',id)
-			     (begin
-			       (add-req id)
-			       `(##sys#require ',id) ) )
-			 #t) ]
-		       [else
+		#t) )
+	      ((memq id ##sys#explicit-library-modules)
+	       (let* ((info (##sys#extension-information id 'require-extension))
+		      (s (assq 'syntax info)))
+		 (values
+		  `(begin
+		     ,@(if s `((##core#require-for-syntax ',id)) '())
+		     ,(if comp?
+			  `(##core#declare '(uses ,id)) 
+			  `(load-library ',id) ) )
+		  #t) ) )
+	      (else
+	       (let ((info (##sys#extension-information id 'require-extension)))
+		 (cond (info
+			(let ((s (assq 'syntax info))
+			      (rr (assq 'require-at-runtime info)) )
+			  (when s (add-req id))
+			  (values 
+			   `(begin
+			      ,@(if s `((##core#require-for-syntax ',id)) '())
+			      ,@(if (and (not rr) s)
+				   '()
+				   `((##sys#require
+				      ,@(map (lambda (id) `',id)
+					     (cond (rr (cdr rr))
+						   (else (list id)) ) ) ) ) ) )
+			   #t) ) )
+		       (else
 			(add-req id)
-			(values `(##sys#require ',id) #f)] ) ) ] ) )
+			(values `(##sys#require ',id) #f)) ) ) ) ) )
       (if (and (pair? id) (symbol? (car id)))
-	  (let ([a (assq (##sys#slot id 0) ##sys#extension-specifiers)])
+	  (let ((a (assq (##sys#slot id 0) ##sys#extension-specifiers)))
 	    (if a
-		(let ([a ((##sys#slot a 1) id)])
-		  (cond [(string? a) (values `(load ,a) #f)]
-			[(vector? a) 
-			 (let loop ([specs (vector->list a)]
-				    [exps '()]
-				    [f #f] )
+		(let ((a ((##sys#slot a 1) id)))
+		  (cond ((string? a) (values `(load ,a) #f))
+			((vector? a) 
+			 (let loop ((specs (vector->list a))
+				    (exps '())
+				    (f #f) )
 			   (if (null? specs)
 			       (values `(begin ,@(reverse exps)) f)
-			       (let-values ([(exp fi) (##sys#do-the-right-thing (car specs) comp?)])
+			       (let-values (((exp fi) (##sys#do-the-right-thing (car specs) comp?)))
 				 (loop (cdr specs)
 				       (cons exp exps)
-				       (or fi f) ) ) ) ) ]
-			[else (##sys#do-the-right-thing a comp?)] ) )
+				       (or fi f) ) ) ) ) )
+			(else (##sys#do-the-right-thing a comp?)) ) )
 		(##sys#error "undefined extension specifier" id) ) )
 	  (if (symbol? id)
 	      (doit id) 
@@ -1438,6 +1517,11 @@ EOF
 (set-extension-specifier!
  'version
  (lambda (spec _)
+   (define (->string x)
+     (cond ((string? x) x)
+	   ((symbol? x) (##sys#slot x 1))
+	   ((number? x) (##sys#number->string x))
+	   (else (error "invalid extension version" x)) ) )
    (match spec
      (('version id v)
       (let* ((info (extension-information id))
@@ -1469,22 +1553,53 @@ EOF
 (define ##sys#interaction-environment (##sys#make-structure 'environment #f #t))
 
 (define ##sys#copy-env-table
-  (lambda (e mff mf)
-    (let* ([s (##sys#size e)]
-	   [e2 (##sys#make-vector s '())] )
-      (do ([i 0 (fx+ i 1)])
-	  ((fx>= i s) e2)
-	(##sys#setslot 
-	 e2 i
-	 (let copy ([b (##sys#slot e i)])
-	   (if (null? b)
-	       '()
-	       (let ([bi (##sys#slot b 0)])
-		 (cons (vector 
-			(##sys#slot bi 0)
-			(##sys#slot bi 1)
-			(if mff mf (##sys#slot bi 2)) )
-		       (copy (##sys#slot b 1)) ) ) ) ) ) ) ) ) )
+  (lambda (e mff mf . args)
+    (let ([syms (and (pair? args) (car args))])
+      (let* ([s (##sys#size e)]
+             [e2 (##sys#make-vector s '())] )
+       (do ([i 0 (fx+ i 1)])
+           ((fx>= i s) e2)
+         (##sys#setslot 
+          e2 i
+          (let copy ([b (##sys#slot e i)])
+            (if (null? b)
+                '()
+                (let ([bi (##sys#slot b 0)])
+                  (let ([sym (##sys#slot bi 0)])
+                    (if (or (not syms) (memq sym syms))
+                      (cons (vector
+                              sym
+                              (##sys#slot bi 1)
+                              (if mff mf (##sys#slot bi 2)))
+                            (copy (##sys#slot b 1)))
+                      (copy (##sys#slot b 1)) ) ) ) ) ) ) ) ) ) ) )
+
+(define ##sys#environment-symbols
+  (lambda (env . args)
+    (##sys#check-structure env 'environment)
+    (let ([pred (and (pair? args) (car args))])
+      (let ([envtbl (##sys#slot env 1)])
+        (if envtbl
+            ;then "real" environment
+          (let ([envtblsiz (vector-length envtbl)])
+            (do ([i 0 (fx+ i 1)]
+                 [syms
+                   '()
+                   (let loop ([bucket (vector-ref envtbl i)] [syms syms])
+                     (if (null? bucket)
+                       syms
+                       (let ([sym (vector-ref (car bucket) 0)])
+                         (if (or (not pred) (pred sym))
+                           (loop (cdr bucket) (cons sym syms))
+                           (loop (cdr bucket) syms) ) ) ) )])
+	        ((fx>= i envtblsiz) syms) ) )
+	    ;else interaction-environment
+	  (let ([syms '()])
+	    (##sys#walk-namespace
+	      (lambda (sym)
+	        (when (or (not pred) (pred sym))
+	          (set! syms (cons sym syms)) ) ) )
+	    syms ) ) ) ) ) )
 
 (define (interaction-environment) ##sys#interaction-environment)
 
@@ -1512,7 +1627,7 @@ EOF
   (define (initb ht) 
     (lambda (b)
       (let ([loc (##sys#hash-table-location ht b #t)])
-	(##sys#setslot loc 1 (##sys#slot b 0)) ) ) )
+        (##sys#setslot loc 1 (##sys#slot b 0)) ) ) )
   (for-each 
    (initb ##sys#r4rs-environment)
    '(not boolean? eq? eqv? equal? pair? cons car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar
@@ -1927,6 +2042,10 @@ EOF
 (define ##sys#repl-print-length-limit #f)
 (define ##sys#repl-read-hook #f)
 
+(define (##sys#repl-print-hook x port)
+  (##sys#with-print-length-limit ##sys#repl-print-length-limit (cut ##sys#print x #t port))
+  (##sys#write-char-0 #\newline port) )
+
 (define repl-prompt (make-parameter (lambda () "#;> ")))
 
 (define ##sys#read-prompt-hook
@@ -1938,29 +2057,29 @@ EOF
 (define ##sys#clear-trace-buffer (foreign-lambda void "C_clear_trace_buffer"))
 
 (define repl
-  (let ([eval eval]
-	[read read]
-	[call-with-current-continuation call-with-current-continuation]
-	[print-call-chain print-call-chain]
-	[reset reset] )
+  (let ((eval eval)
+	(read read)
+	(call-with-current-continuation call-with-current-continuation)
+	(print-call-chain print-call-chain)
+	(flush-output flush-output)
+	(load-verbose load-verbose)
+	(reset reset) )
     (lambda ()
 
-      (define (write-one x port)
-	(##sys#with-print-length-limit ##sys#repl-print-length-limit (cut ##sys#print x #t port))
-	(##sys#write-char-0 #\newline port) )
-
       (define (write-err xs)
-	(for-each (cut write-one <> ##sys#standard-error) xs) )
+	(for-each (cut ##sys#repl-print-hook <> ##sys#standard-error) xs) )
 
       (define (write-results xs)
 	(unless (or (null? xs) (eq? (##core#undefined) (car xs)))
-	  (for-each (cut write-one <> ##sys#standard-output) xs) ) )
+	  (for-each (cut ##sys#repl-print-hook <> ##sys#standard-output) xs) ) )
 
-      (let ([stdin ##sys#standard-input]
-	    [stdout ##sys#standard-output]
-	    [stderr ##sys#standard-error] 
-	    [ehandler (##sys#error-handler)] 
-	    [rhandler (##sys#reset-handler)] )
+      (let ((stdin ##sys#standard-input)
+	    (stdout ##sys#standard-output)
+	    (stderr ##sys#standard-error)
+	    (ehandler (##sys#error-handler))
+	    (rhandler (##sys#reset-handler)) 
+	    (lv #f)
+	    (uie ##sys#unbound-in-eval) )
 
 	(define (saveports)
 	  (set! stdin ##sys#standard-input)
@@ -1974,11 +2093,15 @@ EOF
 
 	(##sys#dynamic-wind
 	 (lambda ()
+	   (set! lv (load-verbose))
+	   (load-verbose #t)
 	   (##sys#error-handler
 	    (lambda (msg . args)
 	      (resetports)
-	      (##sys#print "Error: " #f ##sys#standard-error)
-	      (##sys#print msg #f ##sys#standard-error)
+	      (##sys#print "Error" #f ##sys#standard-error)
+	      (when msg
+		(##sys#print ": " #f ##sys#standard-error)
+		(##sys#print msg #f ##sys#standard-error) )
 	      (if (and (pair? args) (null? (cdr args)))
 		  (begin
 		    (##sys#print ": " #f ##sys#standard-error)
@@ -1986,7 +2109,8 @@ EOF
 		  (begin
 		    (##sys#write-char-0 #\newline ##sys#standard-error)
 		    (write-err args) ) )
-	      (print-call-chain ##sys#standard-error) ) ) )
+	      (print-call-chain ##sys#standard-error)
+	      (flush-output ##sys#standard-error) ) ) )
 	 (lambda ()
 	   (let loop ()
 	     (saveports)
@@ -2006,10 +2130,34 @@ EOF
 		 (when (char=? #\newline (##sys#peek-char-0 ##sys#standard-input))
 		   (##sys#read-char-0 ##sys#standard-input) )
 		 (##sys#clear-trace-buffer)
+		 (set! ##sys#unbound-in-eval '())
 		 (receive result ((or ##sys#repl-eval-hook eval) exp)
+		   (when (and ##sys#warnings-enabled (pair? ##sys#unbound-in-eval))
+		     (let loop ((vars ##sys#unbound-in-eval) (u '()))
+		       (cond ((null? vars)
+			      (when (pair? u)
+				(##sys#print 
+				 "Warning: the following toplevel variables are referenced but unbound:\n" 
+				 #f ##sys#standard-error)
+				(for-each 
+				 (lambda (v)
+				   (##sys#print "  " #f ##sys#standard-error)
+				   (##sys#print (car v) #t ##sys#standard-error)
+				   (when (cdr v)
+				     (##sys#print " (in " #f ##sys#standard-error)
+				     (##sys#print (cdr v) #t ##sys#standard-error) 
+				     (##sys#write-char-0 #\) ##sys#standard-error) )
+				   (##sys#write-char-0 #\newline ##sys#standard-error) )
+				 u) ) )
+			     ((or (memq (caar vars) u) 
+				  (##sys#symbol-has-toplevel-binding? (caar vars)) )
+			      (loop (cdr vars) u) )
+			     (else (loop (cdr vars) (cons (car vars) u))) ) 9 ) )
 		   (write-results result) 
 		   (loop) ) ) ) ) )
 	 (lambda ()
+	   (load-verbose lv)
+	   (set! ##sys#unbound-in-eval uie)
 	   (##sys#error-handler ehandler)
 	   (##sys#reset-handler rhandler) ) ) ) ) ) )
 
@@ -2087,7 +2235,7 @@ EOF
 
 (declare
   (hide last-error run-safe store-result store-string
-	CHICKEN_yield 
+	CHICKEN_yield CHICKEN_apply_to_string
 	CHICKEN_eval CHICKEN_eval_string CHICKEN_eval_to_string CHICKEN_eval_string_to_string
 	CHICKEN_apply CHICKEN_eval_apply CHICKEN_eval_to_string
 	CHICKEN_read CHICKEN_load CHICKEN_get_error_message) )

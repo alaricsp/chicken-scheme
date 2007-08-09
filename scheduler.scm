@@ -1,6 +1,6 @@
 ; scheduler.scm - Basic scheduler for multithreading
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -114,6 +114,7 @@ EOF
     (##sys#update-thread-state-buffer ct)
     ;; Put current thread on ready-queue:
     (when (or (eq? cts 'running) (eq? cts 'ready)) ; should ct really be 'ready? - normally not.
+      (##sys#setislot ct 13 #f)			   ; clear timeout-unblock flag
       (##sys#add-to-ready-queue ct) )
     (let loop1 ()
       ;; Unblock threads waiting for timeout:
@@ -130,6 +131,7 @@ EOF
 		  (if (eq? tmo1 tmo2)
 		      (if (>= now tmo1)
 			  (begin
+			    (##sys#setislot tto 13 #t) ; mark as being unblocked by timeout
 			    (##sys#thread-basic-unblock! tto)
 			    (loop (cdr lst)) )
 			  (begin
@@ -225,6 +227,7 @@ EOF
 	    (set! ##sys#timeout-list (cons (cons tm t) tl)) )
 	(loop (cdr tl) tl) ) ) 
   (##sys#setslot t 3 'blocked)
+  (##sys#setislot t 13 #f)
   (##sys#setislot t 4 tm) )
 
 (define (##sys#thread-block-for-termination! t t2)
@@ -233,6 +236,7 @@ EOF
     (unless (or (eq? state 'dead) (eq? state 'terminated))
       (##sys#setslot t2 12 (cons t (##sys#slot t2 12)))
       (##sys#setslot t 3 'blocked) 
+      (##sys#setislot t 13 #f)
       (##sys#setslot t 11 t2) ) ) )
 
 (define (##sys#thread-kill! t s)
@@ -296,7 +300,7 @@ EOF
   (foreign-lambda* int ([bool to] [unsigned-long tm])
     "struct timeval timeout;"
     "timeout.tv_sec = tm / 1000;"
-    "timeout.tv_usec = tm % 1000;"
+    "timeout.tv_usec = (tm % 1000) * 1000;"
     "C_fdset_input_2 = C_fdset_input;"
     "C_fdset_output_2 = C_fdset_output;"
     "return(select(FD_SETSIZE, &C_fdset_input, &C_fdset_output, NULL, to ? &timeout : NULL));") )
@@ -332,10 +336,14 @@ EOF
 	  (if (fx= fd (car a)) 
 	      (##sys#setslot a 1 (cons t (cdr a)))
 	      (loop (cdr lst)) ) ) ) )
-  (if i/o
-      (##sys#fdset-input-set fd)
-      (##sys#fdset-output-set fd) )
+  (case i/o
+    ((#t #:input) (##sys#fdset-input-set fd))
+    ((#f #:output) (##sys#fdset-output-set fd))
+    ((#:all)
+     (##sys#fdset-input-set fd)
+     (##sys#fdset-output-set fd) ) )
   (##sys#setslot t 3 'blocked)
+  (##sys#setislot t 13 #f)
   (##sys#setslot t 11 (cons fd i/o)) )
 
 (define (##sys#unblock-threads-for-i/o)
@@ -344,7 +352,7 @@ EOF
 	 [rq? (pair? ##sys#ready-queue-head)]
 	 [n (##sys#fdset-select-timeout	; we use FD_SETSIZE, but really should use max fd
 	     (or rq? to?)
-	     (if (and to? (not rq?))
+	     (if (and to? (not rq?))	; no thread was unblocked by timeout, so wait
 		 (let* ([tmo1 (caar ##sys#timeout-list)]
 			[now (##sys#fudge 16)])
 		   (fxmax 0 (- tmo1 now)) )
@@ -369,7 +377,9 @@ EOF
 				 (loop (sub1 n) (cdr lst)) )
 			       (let* ([t (car threads)]
 				      [p (##sys#slot t 11)] )
-				 (when (and (pair? p) (eq? fd (car p)))
+				 (when (and (pair? p)
+					    (eq? fd (car p))
+					    (not (##sys#slot t 13) ) ) ; not unblocked by timeout
 				   (##sys#thread-basic-unblock! t) )
 				 (loop2 (cdr threads)) ) ) )
 			 (cons a (loop n (cdr lst))) ) ) ) ) ) ] )

@@ -34,7 +34,6 @@
 ;; This mode assumes:
 ;;     - the user has chicken.info install
 ;;     - the csi executable can be launch as "csi"
-;;     - the #csi##oblist and co are available from oblist library
 
 ;;
 ;; Changes by Micky Latowicki:
@@ -56,19 +55,85 @@
 ;; libraries into csi, because the way it works now the user cannot choose
 ;; to keep srfi-1 and regex out of her csi environment.
 
+;; Changes by felix:
+;;
+;; * removed hen-describe-symbol
+;; * various cleaning up
+;; * still pretty bad...
+
+;; Changes by Adhi Hargo:
+;; 
+;; * automatically raise *csi* buffer on any relevant operations, and
+;;   made it a read-only buffer.
+;; * changes definition-at-point evaluation command.
+;; * s-exp evaluation no longer shown in minibuffer.
+;; * added : + Hen-mode customization group.
+;;           + Buffer evaluation command.
+;;           + csi process-terminating command, partly so I can erase
+;;             previous definitions and start anew.
+;;           + close-parens-at-point command, from SLIME.
+;;           + modification-check before compilation.
 
 ;;; Code:
 
 (defconst hen-version (substring "$Revision: 1.13 $" 11 -2)
  "$Id: hen.el,v 1.13 2004/11/22 22:36:11 flw Exp $
 
-Report bugs to: Linh Dang <linhd@>")
-(defvar hen-load-hook nil
- "*Hooks run after loading hen.")
+Report bugs to: Felix Winkelmann <bunny351@gmail.com>")
 
 (require 'scheme)
-(require 'info-look)
 (require 'compile)
+
+;;; GROUP DECLARATION ================================================
+
+(defgroup hen nil
+  "Major mode for editing Scheme programs using Chicken."
+  :version "21.3"
+  :group 'scheme
+  :prefix "hen-")
+(defgroup hen-font-face nil
+  "Various font face configurations."
+  :group 'hen)
+
+(defun hen-version ()
+  "Outputs Hen's current version to the minibuffer."
+  (interactive)
+  (message "Hen %s" hen-version))
+
+;;; USER-CONFIGURABLE COMMANDS =======================================
+
+(defcustom hen-csc-program "csc"
+  "*Chicken compiler executable's filename."
+  :group 'hen
+  :type 'string)
+(defcustom hen-csi-program "csi"
+  "*Chicken interpreter executable's filename."
+  :group 'hen
+  :type 'string)
+(defcustom hen-build-exec-arg ""
+  "*Compiler-argument when building an executable file."
+  :group 'hen
+  :type 'string)
+(defcustom hen-build-obj-arg ""
+  "*Compiler-argument when building an object file."
+  :group 'hen
+  :type 'string)
+(defcustom hen-eval-init-arg ""
+  "*Additional interpreter argument."
+  :group 'hen
+  :type 'string)
+
+(defcustom hen-autosave-buffer-before-compile nil
+  "*Save modified file automatically before compilation.
+The default behavior is to ask the user whether to save or not."
+  :group 'hen
+  :type 'boolean)
+
+(defcustom hen-load-hook nil
+  "Hook run after entering Hen mode."
+  :group 'hen
+  :type 'hook)
+
 
 ;; with-temp-message pasted from a mailing list. It's not available in my xemacs 21.4
 (unless (functionp 'with-temp-message)
@@ -113,28 +178,21 @@ The value returned is the value of the last form in BODY."
                            "define-external"
                            "define-constant"
                            "define-datatype"
-                           "define-external-variable"
                            "define-foreign-type"
                            "define-foreign-variable"
                            "define-foreign-record"
-                           "define-functor"
                            "define-generic"
-                           "define-handy-method"
                            "define-inline"
-                           "define-internal-meroon-macro"
                            "define-macro"
                            "define-method"
-                           "define-optionals"
                            "define-reader-ctor"
                            "define-record"
+                           "defstruct"
                            "define-record-printer"
                            "define-record-type"
-                           "define-record-scheme"
-                           "define-signature"
-                           "define-structure"
+			   "define-compiler-macro"
                            "define-syntax"
-                           "define-syntax-form"
-                           "define-optimizer"
+                           "define-for-syntax"
                            "define-values") 1) "\\)"
                            "\\s-+(?\\(\\(\\sw\\|\\s_\\)+\\)")
 
@@ -151,42 +209,35 @@ The value returned is the value of the last form in BODY."
      (cons
       (concat
        "\\<" (regexp-opt
-            '("begin" "begin0" "begin-form" "else"
-              "call-with-current-continuation" "call/cc"
-              "call-with-input-pipe" "call-with-output-pipe"
-              "call-with-input-file" "call-with-output-file"
-              "call-with-input-string" "call-with-output-string"
-              "call-with-values"
+            '("begin" "begin0" "else"
               "else"
               "foreign-lambda*" "foreign-safe-lambda*" "foreign-primitive"
-              "foreign-lambda" "foreign-safe-lambda" "foreign-code" "foreign-safe-wrapper"
-              "match" "match-lambda" "match-define" "match-let" "match-let*"
+	      "foreign-declare" "foreign-parse" "foreign-parse/declare"
+              "foreign-lambda" "foreign-safe-lambda" "foreign-code"
+              "match" "match-lambda" "match-lambda*" "match-define" "match-let" "match-let*"
 
-              "case" "case-lambda" "cond" "cond-expand" "condition-case" "switch"
+              "case" "case-lambda" "cond" "cond-expand" "condition-case" "select"
 	      "handle-exceptions"
-	      "record-compose"
               "cut" "cute" "time" "regex-case"
 
-              "do" "else" "for-each" "if" "lambda" "when" "while" "if*" "unless"
+              "do" "else" "if" "lambda" "when" "while" "if*" "unless"
 
 	      "let-location" "location" "rec"
               "let" "let*" "let-syntax" "letrec" "letrec-syntax" "set!-values"
-              "and-let*" "let-optionals" "let-optionals*" "let-macro"
+              "and-let*" "let-optionals" "let-optionals*" "optional"
               "fluid-let" "let-values" "let*-values" "letrec-values"
               "parameterize"
-              "module" "import-only" "import"
+              "module" "import-only" "import" "import*"
 
-              "and" "or" "delay" "andmap" "ormap" "receive"
+              "and" "or" "delay" "receive"
 
-              "assert" "ignore-errors" "critical-section" "ensure" "eval-when"
+              "assert" "ignore-errors" "ensure" "eval-when"
 
-              "with-input-from-file" "with-output-to-file"
-              "with-input-from-pipe" "with-output-to-pipe"
-              "with-input-from-string" "with-output-to-string"
+	      "loop" "sc-macro-transformer"
 
               "declare" "include" "require-extension" "require" "require-for-syntax" "use" "quasiquote"
 
-              "map" "syntax" "with-syntax" "syntax-case" "identifier-syntax" "syntax-rules") t)
+              "syntax" "with-syntax" "syntax-case" "identifier-syntax" "syntax-rules") t)
        "\\>") 'font-lock-keyword-face)
      '("\\<set!" . font-lock-keyword-face)
      ;;
@@ -204,7 +255,7 @@ The value returned is the value of the last form in BODY."
 
 (mapc (lambda (cell)
        (put (car cell) 'scheme-indent-function (cdr cell)))
-     '((begin0 . 0) (begin-form . 0)
+     '((begin0 . 0)
 
        (when . 1) (while . 1) (unless . 1)
        (and-let* . 1) (fluid-let . 1)
@@ -243,70 +294,107 @@ The value returned is the value of the last form in BODY."
            (t nil))))))
 
 (defun hen-build (cmd args)
+  (when (and (buffer-modified-p)
+	     (or hen-autosave-buffer-before-compile
+		 (progn (beep)
+			(y-or-n-p "File modified. Save it? "))))
+    (save-buffer))
  (compile-internal (mapconcat 'identity (cons cmd args) " ")
                    "No more errors" "csc" nil
                    `(("Error:.+in line \\([0-9]+\\):" 0 1 nil ,(buffer-file-name)))
                    (lambda (ignored) "*csc*")))
 
-(defun hen-build-unit ()
- (interactive)
- (let* ((file-name (file-name-nondirectory
-                     (buffer-file-name)))
-        (base-name (file-name-sans-extension file-name)))
-   (hen-build "csc" (list "-s" file-name "-o" (concat base-name ".so")) )))
+(defun hen-build-extension ()
+  (interactive)
+  (let* ((file-name (file-name-nondirectory
+		     (buffer-file-name))))
+    (hen-build hen-csc-program (list "-s" file-name hen-build-obj-arg))))
 
 (defun hen-build-program ()
  (interactive)
  (let* ((file-name (file-name-nondirectory
-                     (buffer-file-name)))
-        (base-name (file-name-sans-extension file-name)))
-   (hen-build "csc" (list file-name) )))
+                     (buffer-file-name))))
+    (hen-build hen-csc-program (list file-name hen-build-exec-arg))))
 
 (define-derived-mode hen-mode scheme-mode "Hen"
  "Mode for editing chicken Scheme code.
 \\[hen-complete-symbol] completes symbol base on the text at point.
 \\[hen-csi-eval-last-sexp] evaluates the sexp at/preceding point in csi.
 \\[hen-csi-eval-region] evaluates the region in csi.
+\\[hen-csi-eval-buffer] evaluates current buffer in csi.
+\\[hen-csi-eval-definition] evaluates the toplevel definition at point in csi.
 \\[hen-csi-apropos] lists the csi's symbols matching a regex.
-\\[hen-csi-send] reads a s-exp from the user and evaluates it csi.
-\\[hen-describe-symbol] looks up info documentation for a symbol from.
-the R5RS and Chicken info files.
-\\[hen-build-unit] compiles the current file as a shared object
-\\[hen-describe-symbol] compiles the current file as a program
+\\[hen-csi-send] reads a sexp from the user and evaluates it csi.
+\\[hen-csi-proc-delete] terminates csi subprocess.
+\\[hen-close-parens-at-point] closes parentheses for top-level sexp at point.
+\\[hen-build-extension] compiles the current file as a shared object
+\\[hen-build-program] compiles the current file as a program
 "
 
  (set-syntax-table hen-syntax-table)
  (setq local-abbrev-table scheme-mode-abbrev-table)
 
- (define-key hen-mode-map (kbd "M-TAB")   'hen-complete-symbol)
- (define-key hen-mode-map (kbd "C-c C-e") 'hen-csi-eval-last-sexp)
- (define-key hen-mode-map (kbd "C-c C-r") 'hen-csi-eval-region)
- (define-key hen-mode-map (kbd "C-c C-a") 'hen-csi-apropos)
- (define-key hen-mode-map (kbd "C-c C-h") 'hen-describe-symbol)
- (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-unit)
- (define-key hen-mode-map (kbd "C-c C-x") 'hen-csi-send)
- (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-unit)
- (define-key hen-mode-map (kbd "C-c C-c") 'hen-build-program)
+  (define-key hen-mode-map (kbd "M-TAB")   'hen-complete-symbol)
+  (define-key hen-mode-map (kbd "C-c C-e") 'hen-csi-eval-last-sexp)
+  (define-key hen-mode-map (kbd "C-c C-r") 'hen-csi-eval-region)
+  (define-key hen-mode-map (kbd "C-c C-b") 'hen-csi-eval-buffer)
+  (define-key hen-mode-map (kbd "C-c C-d") 'hen-csi-eval-definition)
+  (define-key hen-mode-map (kbd "C-c C-a") 'hen-csi-apropos)
+  (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-unit)
+  (define-key hen-mode-map (kbd "C-c C-x") 'hen-csi-send)
+  (define-key hen-mode-map (kbd "C-c C-q") 'hen-csi-proc-delete)
+  (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-extension)
+  (define-key hen-mode-map (kbd "C-c C-c") 'hen-build-program)
+  (define-key hen-mode-map (kbd "C-c C-]") 'hen-close-parens-at-point)
 
- (define-key hen-mode-map [menu-bar scheme run-scheme] nil)
- (define-key hen-mode-map [menu-bar shared build-prog] '("Compile File" hen-build-program))
- (define-key hen-mode-map [menu-bar shared send-to-csi] '("Evaluate" . hen-csi-send))
- (define-key hen-mode-map [menu-bar scheme build-as-unit] '("Compile File as Unit" . hen-build-unit))
- (define-key hen-mode-map [menu-bar scheme describe-sym] '("Lookup Documentation for Symbol" . hen-describe-symbol))
- (define-key hen-mode-map [menu-bar scheme apropos] '("Symbol Apropos" . hen-csi-apropos))
- (define-key hen-mode-map [menu-bar scheme eval-region] '("Eval Region" . hen-csi-eval-region))
- (define-key hen-mode-map [menu-bar scheme eval-last-sexp] '("Eval Last S-Expression" . hen-csi-eval-last-sexp))
+  (define-key hen-mode-map [menu-bar scheme run-scheme] nil)
+  (define-key hen-mode-map [menu-bar shared build-prog] '("Compile File" hen-build-program))
+  (define-key hen-mode-map [menu-bar shared send-to-csi] '("Evaluate" . hen-csi-send))
+  (define-key hen-mode-map [menu-bar scheme build-as-extension]
+    '("Compile File as Extension" . hen-build-extension))
+  (define-key hen-mode-map [menu-bar scheme apropos] '("Symbol Apropos" . hen-csi-apropos))
+  (define-key hen-mode-map [menu-bar scheme eval-buffer] '("Eval Buffer" . hen-csi-eval-buffer))
+  (define-key hen-mode-map [menu-bar scheme eval-region] '("Eval Region" . hen-csi-eval-region))
+  (define-key hen-mode-map [menu-bar scheme eval-last-sexp]
+    '("Eval Last S-Expression" . hen-csi-eval-last-sexp))
 
- (setq font-lock-defaults
-       '((hen-font-lock-keywords
-          hen-font-lock-keywords-1 hen-font-lock-keywords-2)
-         nil t
-         ((?+ . "w") (?- . "w") (?* . "w") (?/ . "w")
-          (?. . "w") (?< . "w") (?> . "w") (?= . "w")
-          (?? . "w") (?$ . "w") (?% . "w") (?_ . "w")
-          (?& . "w") (?~ . "w") (?^ . "w") (?: . "w"))
-         beginning-of-defun
-         (font-lock-mark-block-function . mark-defun))))
+  (setq font-lock-defaults
+	'((hen-font-lock-keywords
+	   hen-font-lock-keywords-1 hen-font-lock-keywords-2)
+	  nil t
+	  ((?+ . "w") (?- . "w") (?* . "w") (?/ . "w")
+	   (?. . "w") (?< . "w") (?> . "w") (?= . "w")
+	   (?? . "w") (?$ . "w") (?% . "w") (?_ . "w")
+	   (?& . "w") (?~ . "w") (?^ . "w") (?: . "w"))
+	  beginning-of-defun
+	  (font-lock-mark-block-function . mark-defun)))
+  (make-local-variable 'paragraph-start)
+  (setq paragraph-start (concat page-delimiter "\\|$" ))
+
+  (make-local-variable 'paragraph-separate)
+  (setq paragraph-separate paragraph-start)
+
+  (make-local-variable 'paragraph-ignore-fill-prefix)
+  (setq paragraph-ignore-fill-prefix t)
+
+  (make-local-variable 'adaptive-fill-mode)
+  (setq adaptive-fill-mode nil)
+
+  (make-local-variable 'parse-sexp-ignore-comments)
+  (setq parse-sexp-ignore-comments t)
+
+  (make-local-variable 'outline-regexp)
+  (setq outline-regexp ";;;;* \\|(")
+
+  (make-local-variable 'comment-start)
+  (setq comment-start ";")
+
+  (make-local-variable 'comment-column)
+  (setq comment-column 40)
+
+  (make-local-variable 'comment-add)
+  (setf comment-add 1)
+  )
 
 ;;stolen from cxref
 (defun hen-looking-backward-at (regexp)
@@ -321,128 +409,169 @@ data if you want to preserve them."
              (= (point) here))))))
 
 (defun hen-proc-wait-prompt (proc prompt-re &optional timeout msg)
- "Wait for the prompt of interactive process PROC. PROMPT-RE must be
+  "Wait for the prompt of interactive process PROC. PROMPT-RE must be
 a regexp matching the prompt. TIMEOUT is the amount of time to wait in
 secs before giving up. MSG is the message to display while waiting."
- (setq timeout (if (numberp timeout) (* timeout 2) 60))
- (unless (stringp msg)
-   (setq msg (concat "wait for "
-                     (process-name proc)
-                     "'s prompt")))
- (goto-char (process-mark proc))
- (if (hen-looking-backward-at prompt-re)
-     t
-   (while (and (> timeout 0) (not (hen-looking-backward-at prompt-re)))
-     (with-temp-message (setq msg (concat msg "."))
-       (accept-process-output proc 0 timeout))
-     (setq timeout (1- timeout))
-     (goto-char (process-mark proc)))
-   (with-temp-message (concat msg (if (> timeout 0)
-                                      " got it!" " timeout!"))
-     (sit-for 0 100))
-   (> timeout 0)))
+  (setq timeout (if (numberp timeout) (* timeout 2) 60))
+  (unless (stringp msg)
+    (setq msg (concat "wait for " hen-csi-proc-name "'s prompt")))
+  (goto-char (process-mark proc))
+  (if (hen-looking-backward-at prompt-re)
+      t
+    (while (and (> timeout 0) (not (hen-looking-backward-at prompt-re)))
+      (with-temp-message (setq msg (concat msg "."))
+	(accept-process-output proc 0 timeout))
+      (setq timeout (1- timeout))
+      (goto-char (process-mark proc)))
+    (with-temp-message (concat msg (if (> timeout 0)
+				       " got it!" " timeout!"))
+      (sit-for 0 100))
+    (> timeout 0))
+  )
 
 (defun hen-proc-send (question proc prompt-re &optional timeout msg)
  "Send the string QUESTION to interactive process proc. PROMPT-RE is
 the regexp matching PROC's prompt. TIMEOUT is the amount of time to
 wait in secs before giving up. MSG is the message to display while
 waiting."
- (setq timeout (if (numberp timeout) (* timeout 2) 60))
- (save-excursion
-   (set-buffer (process-buffer proc))
-   (widen)
-   (save-match-data
-     (goto-char (process-mark proc))
-     (if (hen-looking-backward-at prompt-re)
-         (let ((start (match-end 0)))
-           (narrow-to-region start (point-max))
-           (process-send-string proc (concat question "\n"))
-           (hen-proc-wait-prompt proc prompt-re timeout msg)
-           (narrow-to-region start (match-beginning 0))
-           (current-buffer))))))
+  (setq timeout (if (numberp timeout) (* timeout 2) 60))
+  (save-excursion
+    (set-buffer (process-buffer proc))
+    (widen)
+    (save-match-data
+      (goto-char (process-mark proc))
+      (if (hen-looking-backward-at prompt-re)
+	  (let ((start (match-end 0)))
+	    (narrow-to-region start (point-max))
+	    (process-send-string proc (concat question "\n"))
+	    (hen-proc-wait-prompt proc prompt-re timeout msg)
+	    (narrow-to-region start (match-beginning 0))
+	    (current-buffer))))))
 
-(defun hen-csi-buffer () (get-buffer-create " *csi*"))
+(defconst hen-csi-prompt-pattern "#;[0-9]*> ")
+(defconst hen-csi-proc-name "csi")
+(defconst hen-csi-buffer-name "*csi*")
 
-(defconst hen-prompt-pattern "#;[0-9]*> ")
+(defun hen-csi-buffer-create ()
+  "Creates a new buffer for csi, make it read-only."
+  (let ((buffer (get-buffer-create hen-csi-buffer-name)))
+    (with-current-buffer buffer
+      (make-local-variable 'buffer-read-only)
+      (setf buffer-read-only t))
+    buffer))
+
+(defun hen-csi-buffer-erase ()
+  "Erases csi buffer's content, used mainly when its process was being
+reset."
+  (let ((buffer (get-buffer hen-csi-buffer-name)))
+    (unless (null buffer) (with-current-buffer buffer
+			    (setf buffer-read-only '())
+			    (erase-buffer)
+			    (setf buffer-read-only t)))))
+
+(defun hen-csi-buffer ()
+  (let ((buffer (or (get-buffer hen-csi-buffer-name) ;check if exists
+		    (hen-csi-buffer-create)))) ;... or create one
+    (display-buffer buffer)
+    buffer))
 
 (defun hen-csi-proc ()
- (let ((proc (get-buffer-process (hen-csi-buffer))))
-   (if (and (processp proc)
-            (eq (process-status proc) 'run))
-       proc
-     (setq proc (start-process "csi" (hen-csi-buffer) "csi" "-no-init" "-quiet"))
-     (with-current-buffer (hen-csi-buffer)
-       (hen-proc-wait-prompt proc hen-prompt-pattern)
-       ;(hen-proc-send "(require 'oblist)" proc hen-prompt-pattern)
-       proc))))
+  (let ((proc (get-process hen-csi-proc-name)))
+    (if (and (processp proc)
+	     (eq (process-status proc) 'run))
+	proc
+      (setq proc
+	    (eval `(start-process hen-csi-proc-name (hen-csi-buffer)
+				  hen-csi-program
+				  "-no-init" "-quiet" "-:c" "-R" "regex" "-R" "utils"
+				  ,@(split-string hen-eval-init-arg))))
+      (with-current-buffer (hen-csi-buffer)
+	(hen-proc-wait-prompt proc hen-csi-prompt-pattern)
+	proc))))
+
+(defun hen-csi-proc-delete ()
+  (interactive)
+  (let ((proc (get-process hen-csi-proc-name)))
+    (when (and (processp proc)
+	       (eq (process-status proc) 'run))
+      (delete-process proc))
+    (hen-csi-buffer-erase)
+    ()))
 
 (defun hen-csi-send (sexp)
- "Evaluate SEXP in CSI"
- (interactive
-  (let ((sexp (read-string "Evaluate S-expression: "))
-        (send-sexp-p nil))
-    (unwind-protect
-        (progn
-          (let ((obarray (make-vector 11 0)))
-            (read sexp)
-            (setq send-sexp-p t)))
-      (unless send-sexp-p
-        (setq send-sexp-p
-              (y-or-n-p (format "`%s' is not a valid sexp! evaluate anyway? " sexp)))))
-    (list (if send-sexp-p sexp nil))))
- (when (stringp sexp)
-   (let* ((proc (hen-csi-proc))
-          (buf (hen-proc-send (concat sexp "\n") proc hen-prompt-pattern))
-          result len)
-     (unless (buffer-live-p buf)
-       (error "Internal hen-mode failure"))
+  "Evaluate SEXP in CSI"
+  (interactive
+   (let ((sexp (read-string "Evaluate S-expression: "))
+	 (send-sexp-p nil))
+     (unwind-protect
+	 (progn
+	   (let ((obarray (make-vector 11 0)))
+	     (read sexp)
+	     (setq send-sexp-p t)))
+       (unless send-sexp-p
+	 (setq send-sexp-p
+	       (y-or-n-p (format "`%s' is not a valid sexp! evaluate anyway? " sexp)))))
+     (list (if send-sexp-p sexp nil))))
+  (when (stringp sexp)
+    (let* ((proc (hen-csi-proc))
+	   (buf (hen-proc-send (concat sexp "\n") proc hen-csi-prompt-pattern))
+	   result len)
+      (unless (buffer-live-p buf)
+	(error "Internal hen-mode failure"))
 
-     (save-excursion
-       (with-current-buffer buf
-         (setq result (buffer-string))
-         (setq len (length result))
-         (if (and (> len 0)
-                  (eq (aref result (1- len)) ?\n))
-             (setq result (substring result 0 -1)))
-         result)))))
+      (save-excursion
+	(with-current-buffer buf
+	  (setq result (buffer-string))
+	  (setq len (length result))
+	  (if (and (> len 0)
+		   (eq (aref result (1- len)) ?\n))
+	      (setq result (substring result 0 -1)))
+	  result)))))
+
+(defun hen-csi-eval-buffer ()
+  "Evaluate the current buffer in CSI"
+  (interactive)
+  (hen-csi-send (buffer-string)))
 
 (defun hen-csi-eval-region (beg end)
- "Evaluate the current region in CSI."
- (interactive "r")
- (message
-  (hen-csi-send (buffer-substring beg end))))
+  "Evaluate the current region in CSI."
+  (interactive "r")
+  (hen-csi-send (buffer-substring beg end)))
 
 (defun hen-csi-eval-last-sexp ()
- "Evaluate the s-expression at point in CSI"
- (interactive)
- (message
+  "Evaluate the s-expression at point in CSI"
+  (interactive)
   (hen-csi-eval-region (save-excursion (backward-sexp) (point))
-                       (point))))
+		       (point)))
 
 (defun hen-csi-eval-definition ()
- "Evaluate the enclosing top-level form in CSI."
- (interactive)
- (save-excursion
-   (message
-    (hen-csi-eval-region (progn (beginning-of-defun) (point))
-                         (progn (forward-sexp 1) (point))))))
+  "Evaluate the enclosing top-level form in CSI."
+  (interactive)
+  (hen-csi-eval-region (save-excursion
+			 (end-of-defun) (beginning-of-defun)
+			 (point))
+		       (save-excursion
+			 (end-of-defun) (point))))
+
+;; from SLIME
+(defun hen-close-parens-at-point ()
+  "Close parenthesis at point to complete the top-level-form.  Simply
+inserts ')' characters at point until `beginning-of-defun' and
+`end-of-defun' execute without errors, or internal variable
+`close-parens-limit' is exceeded."
+  (interactive)
+  (let ((close-parens-limit 16))
+    (loop for i from 1 to close-parens-limit
+	  until (save-excursion
+		  (beginning-of-defun)
+		  (ignore-errors (end-of-defun) t))
+	  do (insert ")"))))
 
 (defun hen-csi-completions-alist (prefix)
  (read (hen-csi-send
-        ;; this used to not work because srfi-1 and regex were needed. I don't want to
-        ;; require them inside this expression because that would pollute the namespace and
-        ;; the user will have no choice but to develop his programs with those libs in the
-        ;; environment.
-        ;; I should check the csi compilation code - why it doesn't statically link in regex
-        ;; and srfi-1, since it seems to rely on them.
-        (concat "(begin (require 'regex) (require 'srfi-1)"
-                ;; TODO: this is an ugly hack that pollutes the namespace. should be done
-                ;; in a seperate process, but process-fork requires posix, which would pollute the namespace too.
-                ;; The solution is to statically link the required routines (either posix or srfi-1+regex) into the csi
-                ;; executable.
-                "(pp (map list (delete-duplicates (##csi#name-of-symbols-starting-with \""
+        (concat "(pp (map list (delete-duplicates (##csi#name-of-symbols-starting-with \""
                 prefix
-                "\")))))"))))
+                "\"))))"))))
 
 (defun hen-complete-symbol (thing)
  "Complete symbol at point in Hen mode. THING is used as the prefix."
@@ -487,11 +616,6 @@ waiting."
  (list (completing-read prompt 'hen-csi-completion-table
                         nil nil nil 'hen-lookup-history (hen-identifier-at-point))))
 
-(defun hen-describe-symbol (name)
- "Lookup documentation for symbol NAME."
- (interactive (hen-csi-symbol-completing-read "Describe symbol: "))
- (info-lookup-symbol name 'hen-mode))
-
 (defun hen-csi-apropos (regex)
  "List the symbols matching REGEX."
  (interactive "sApropos (chicken's global symbols): ")
@@ -504,38 +628,15 @@ waiting."
                          "                 (##sys#slot sym 0) '<unbound> ))))\n"
                          "  (delete-duplicates! (##csi#symbols-matching \"" regex  "\"))))"))
           (results-alist (read (hen-csi-send query))))
-     (if (display-mouse-p)
-         (insert "If moving the mouse over text changes the text's color,\n"
-                 (substitute-command-keys
-                  "you can click \\[apropos-mouse-follow] on that text to get more information.\n")))
-     (insert "In this buffer, go to the name of the command, or function,"
-             " or variable,\n"
-             (substitute-command-keys
-              "and type \\[apropos-follow] to get full documentation.\n\n"))
-
      (dolist (item results-alist)
        (let ((name (car item))
              (obj (cdr item)))
          (insert (car item) " ")
-         (add-text-properties (line-beginning-position) (1- (point))
-                              `(item ,name action hen-describe-symbol
-                                     face bold mouse-face highlight
-                                     help-echo "mouse-2: display help on this item"))
          (indent-to-column 40)
          (insert (cdr item) "\n")))
 
      (apropos-mode)))
  (pop-to-buffer "*Chicken Apropos*" t))
-
-(info-lookup-add-help
-:mode 'hen-mode
-:regexp "[^()'\" \t\n]+"
-:ignore-case t
-;; Aubrey Jaffer's rendition from <URL:ftp://ftp-swiss.ai.mit.edu/pub/scm>
-:doc-spec '(("(chicken)Index" nil
-             "^[ \t]+- [^:\n]+:[ \t]*" "")
-            ("(r5rs)Index" nil
-             "^[ \t]+- [^:\n]+:[ \t]*" "")))
 
 (provide 'hen)
 (run-hooks 'hen-load-hook)

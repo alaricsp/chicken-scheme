@@ -1,6 +1,6 @@
 ;;;; lolevel.scm - Low-level routines for CHICKEN
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -46,17 +46,11 @@
 #ifndef C_NONUNIX
 # include <sys/mman.h>
 #endif
-#if defined(__i386__) && !defined(C_NONUNIX) && !defined(__CYGWIN__)
-# define C_valloc(n)               valloc(n)
-#elif defined(__i386__) || defined(_M_IX86)
-# define C_valloc(n)               malloc(n)
-#else
-# define C_valloc(n)               NULL
-#endif
 
 #define C_pointer_to_object(ptr)   ((C_word*)C_block_item(ptr, 0))
 #define C_w2b(x)                   C_fix(C_wordstobytes(C_unfix(x)))
 #define C_pointer_eqp(x, y)        C_mk_bool(C_c_pointer_nn(x) == C_c_pointer_nn(y))
+#define C_memmove_o(to, from, n, toff, foff) C_memmove((char *)(to) + (toff), (char *)(from) + (foff), (n))
 EOF
 ) )
 
@@ -67,6 +61,12 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+     ##sys#symbol-hash-toplevel-binding? ##sys#make-locative ##sys#become! make-hash-table 
+     hash-table-ref/default ##sys#make-string make-vector hash-table-set! hash-table-set!
+     make-property-condition make-composite-condition signal ##sys#set-pointer-address! ##sys#make-vector
+     ##sys#make-pointer make-string make-byte-vector ##sys#not-a-proper-list-error ##sys#check-pointer
+     ##sys#locative? ##sys#bytevector?
+     extend-procedure ##sys#lambda-decoration ##sys#decorate-lambda ##sys#make-tagged-pointer ##sys#check-special
      ##sys#vector->closure! ##sys#error ##sys#signal-hook ##sys#address->pointer ##sys#pointer->address) ) ] )
 
 (cond-expand
@@ -94,20 +94,20 @@ EOF
 ;;; Move arbitrary blocks of memory around:
 
 (define move-memory!
-  (let ([memmove1 (foreign-lambda void "C_memmove" c-pointer c-pointer int)]
-	[memmove2 (foreign-lambda void "C_memmove" c-pointer scheme-pointer int)]
-	[memmove3 (foreign-lambda void "C_memmove" scheme-pointer c-pointer int)]
-	[memmove4 (foreign-lambda void "C_memmove" scheme-pointer scheme-pointer int)]
+  (let ([memmove1 (foreign-lambda void "C_memmove_o" c-pointer c-pointer int int int)]
+	[memmove2 (foreign-lambda void "C_memmove_o" c-pointer scheme-pointer int int int)]
+	[memmove3 (foreign-lambda void "C_memmove_o" scheme-pointer c-pointer int int int)]
+	[memmove4 (foreign-lambda void "C_memmove_o" scheme-pointer scheme-pointer int int int)]
 	[slot1structs '(mmap u8vector u16vector u32vector s8vector s16vector s32vector f32vector f64vector)] )
-    (lambda (from to . n)
+    (lambda (from to #!optional n (foffset 0) (toffset 0))
       (define (err) (##sys#error 'move-memory! "need number of bytes to move" from to))
       (define (xerr x) (##sys#signal-hook #:type-error 'move-memory! "invalid argument type" x))
-      (define (checkn n nmax)
-	(if (cond-expand [unsafe #t] [else (fx<= n nmax)])
+      (define (checkn n nmax off)
+	(if (cond-expand [unsafe #t] [else (fx<= n (fx- nmax off))])
 	    n
 	    (##sys#error 'move-memory! "number of bytes to move too large" from to n nmax) ) )
-      (define (checkn2 n nmax nmax2)
-	(if (cond-expand [unsafe #t] [else (and (fx<= n nmax) (fx<= n nmax2))])
+      (define (checkn2 n nmax nmax2 off1 off2)
+	(if (cond-expand [unsafe #t] [else (and (fx<= n (fx- nmax off1)) (fx<= n (fx- nmax2 off2)))])
 	    n
 	    (##sys#error 'move-memory! "number of bytes to move too large" from to n nmax nmax2) ) )
       (let move ([from from] [to to])
@@ -120,15 +120,18 @@ EOF
 		   (move from (##sys#slot to 1))
 		   (xerr to) ) ]
 	      [(or (##sys#pointer? from) (##sys#locative? from))
-	       (cond [(or (##sys#pointer? to) (##sys#locative? to)) (memmove1 to from (:optional n (err)))]
+	       (cond [(or (##sys#pointer? to) (##sys#locative? to))
+		      (memmove1 to from (or n (err)) toffset foffset)]
 		     [(or (##sys#bytevector? to) (string? to))
-		      (memmove3 to from (checkn (:optional n (err)) (##sys#size to))) ]
+		      (memmove3 to from (checkn (or n (err)) (##sys#size to) toffset) toffset foffset) ]
 		     [else (xerr to)] ) ]
 	      [(or (##sys#bytevector? from) (string? from))
 	       (let ([nfrom (##sys#size from)])
-		 (cond [(##sys#pointer? to) (memmove2 to from (checkn (:optional n nfrom) nfrom))]
+		 (cond [(or (##sys#pointer? to) (##sys#locative? to))
+			(memmove2 to from (checkn (or n nfrom) nfrom foffset) toffset foffset)]
 		       [(or (##sys#bytevector? to) (string? to))
-			(memmove4 to from (checkn2 (:optional n nfrom) nfrom (##sys#size to))) ]
+			(memmove4 to from (checkn2 (or n nfrom) nfrom (##sys#size to) foffset toffset)
+				  toffset foffset) ]
 		       [else (xerr to)] ) ) ]
 	      [else (xerr from)] ) ) ) ) )
 
@@ -301,11 +304,13 @@ EOF
 
 ;;; Bytevector stuff:
 
-(define (byte-vector? x)
+(define (blob? x)
   (and (##core#inline "C_blockp" x)
        (##core#inline "C_bytevectorp" x) ) )
 
-(define (byte-vector-fill! bv n)
+(define byte-vector? blob?)		; DEPRECATED
+
+(define (byte-vector-fill! bv n)	; DEPRECATED
   (##sys#check-byte-vector bv 'byte-vector-fill!)
   (##sys#check-exact n 'byte-vector-fill!)
   (let ([len (##sys#size bv)])
@@ -313,26 +318,24 @@ EOF
 	((fx>= i len))
       (##sys#setbyte bv i n) ) ) )
 
-(define make-byte-vector
-  (let ([byte-vector-fill! byte-vector-fill!])
+(define make-byte-vector		; DEPRECATED
     (lambda (size . init)
       (##sys#check-exact size 'make-byte-vector)
       (let ([bv (##sys#allocate-vector size #t #f #t)])
 	(##core#inline "C_string_to_bytevector" bv)
 	(when (pair? init) (byte-vector-fill! bv (car init)))
-	bv) ) ) )
+	bv) ) )
 
-(define byte-vector
-  (let ([make-byte-vector make-byte-vector])
+(define byte-vector			; DEPRECATED
     (lambda bytes
       (let* ([n (length bytes)]
 	     [bv (make-byte-vector n)] )
 	(do ([i 0 (fx+ i 1)]
 	     [bytes bytes (##sys#slot bytes 1)] )
 	    ((fx>= i n) bv)
-	  (##sys#setbyte bv i (##sys#slot bytes 0)) ) ) ) ) )
+	  (##sys#setbyte bv i (##sys#slot bytes 0)) ) ) ) )
 
-(define byte-vector-set!
+(define byte-vector-set!		; DEPRECATED
   (lambda (bv i x)
     (##sys#check-byte-vector bv 'byte-vector-set!)
     (##sys#check-exact i 'byte-vector-set!)
@@ -342,7 +345,7 @@ EOF
 	  (##sys#error 'byte-vector-set! "out of range" bv i)
 	  (##sys#setbyte bv i x) ) ) ) )
 
-(define byte-vector-ref
+(define byte-vector-ref			; DEPRECATED
   (getter-with-setter
    (lambda (bv i)
      (##sys#check-byte-vector bv 'byte-vector-ref)
@@ -353,7 +356,7 @@ EOF
 	   (##sys#byte bv i) ) ) )
    byte-vector-set!) )
 
-(define (byte-vector->list bv)
+(define (byte-vector->list bv)		; DEPRECATED
   (##sys#check-byte-vector bv 'byte-vector->list)
   (let ([len (##sys#size bv)])
     (let loop ([i 0])
@@ -362,8 +365,7 @@ EOF
 	  (cons (##sys#byte bv i) 
 		(loop (fx+ i 1)) ) ) ) ) )
 
-(define list->byte-vector
-  (let ([make-byte-vector make-byte-vector])
+(define list->byte-vector		; DEPRECATED
     (lambda (lst)
       (##sys#check-list lst 'list->byte-vector)
       (let* ([n (length lst)]
@@ -375,37 +377,40 @@ EOF
 	      (let ([b (##sys#slot p 0)])
 		(##sys#check-exact b 'list->byte-vector)
 		(##sys#setbyte v i b) )
-	      (##sys#not-a-proper-list-error lst) ) ) ) ) ) )
+	      (##sys#not-a-proper-list-error lst) ) ) ) ) )
 
-(define string->byte-vector
-  (let ([make-byte-vector make-byte-vector])
+(define string->blob
     (lambda (s)
       (##sys#check-string s 'string->byte-vector)
       (let* ([n (##sys#size s)]
 	     [bv (make-byte-vector n)] )
 	(##core#inline "C_copy_memory" bv s n) 
-	bv) ) ) )
+	bv) ) )
 
-(define byte-vector->string
-  (let ([make-string make-string])
+(define string->byte-vector string->blob) ; DEPRECATED
+
+(define blob->string
     (lambda (bv)
-      (##sys#check-byte-vector bv 'byte-vector->string)
+      (##sys#check-byte-vector bv 'blob->string)
       (let* ([n (##sys#size bv)]
 	     [s (make-string n)] )
 	(##core#inline "C_copy_memory" s bv n) 
-	s) ) ) )
+	s) ) )
 
-(define (byte-vector-length bv)
-  (##sys#check-byte-vector bv 'byte-vector-length)
+(define byte-vector->string blob->string) ; DEPRECATED
+
+(define (blob-size bv)
+  (##sys#check-byte-vector bv 'blob-size)
   (##sys#size bv) )
+
+(define byte-vector-length blob-size) ; DEPRECATED
 
 (define-foreign-variable _c_header_size_mask int "C_HEADER_SIZE_MASK")
 
-(let ([byte-vector-fill! byte-vector-fill!]
-      [malloc
+(let ([malloc
        (foreign-lambda* scheme-object ((int size))
 	 "char *bv;
-           if((bv = (char *)malloc(size + 3 + sizeof(C_header))) == NULL) return(C_SCHEME_FALSE);
+           if((bv = (char *)C_malloc(size + 3 + sizeof(C_header))) == NULL) return(C_SCHEME_FALSE);
            bv = (char *)C_align((C_word)bv);
            ((C_SCHEME_BLOCK *)bv)->header = C_BYTEVECTOR_TYPE | size;
            return((C_word)bv);") ] )
@@ -418,16 +423,33 @@ EOF
 		 (when (pair? init) (byte-vector-fill! bv (##sys#slot init 0)))
 		 bv]
 		[else (##sys#signal-hook #:runtime-error "can not allocate statically allocated bytevector" size)] ) ) ) )
-  (set! make-static-byte-vector (lambda (size . init) (make size init malloc 'make-static-byte-vector))))
+  (set! make-static-byte-vector 	; DEPRECATED
+    (lambda (size . init) (make size init malloc 'make-static-byte-vector))))
 
-(define static-byte-vector->pointer 
+(define static-byte-vector->pointer 		; DEPRECATED
   (lambda (bv)
     (##sys#check-byte-vector bv 'static-byte-vector->pointer)
     (if (##core#inline "C_permanentp" bv)
 	(let ([p (##sys#make-pointer)])
 	  (##core#inline "C_pointer_to_block" p bv)
 	  p)
-	(##sys#error 'static-byte-vector->pointer "can not coerce non-static bytevector" bv) ) ) )
+	(##sys#error 'static-blob->pointer "can not coerce non-static blob" bv) ) ) )
+
+(define (byte-vector-move! src src-start src-end dst dst-start) ; DEPRECATED
+  (let ((from (make-locative src src-start))
+        (to   (make-locative dst dst-start)) )
+    (move-memory! from to (- src-end src-start)) ) )
+
+(define (byte-vector-append . vectors)		; DEPRECATED
+  (define (append-rest-at i vectors)
+    (if (pair? vectors)
+        (let* ((src (car vectors))
+               (len (byte-vector-length src))
+               (dst (append-rest-at (+ i len) (cdr vectors))) )
+          (byte-vector-move! src 0 len dst i)
+          dst )
+        (make-byte-vector i) ) )
+  (append-rest-at 0 vectors) )
 
 
 ;;; Accessors for arbitrary block objects:
@@ -481,7 +503,7 @@ EOF
 	      [else
 	       (let* ([n (##sys#size x)]
 		      [words (if (##core#inline "C_byteblockp" x) (##core#inline "C_words" n) n)]
-		      [y (##core#inline "C_copy_block" x (make-vector words))] ) ; shamelessly mutating vector into something else
+		      [y (##core#inline "C_copy_block" x (make-vector words))] )
 		 (unless (or (##core#inline "C_byteblockp" x) (symbol? x))
 		   (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
 		       ((fx>= i n))
@@ -494,9 +516,6 @@ EOF
 (define (object-evicted? x) (##core#inline "C_permanentp" x))
 
 (define object-evict
-  (let ([make-hash-table make-hash-table]
-	[hash-table-ref/default hash-table-ref/default]
-	[hash-table-set! hash-table-set!] )
     (lambda (x . allocator)
       (let ([allocator 
 	     (if (pair? allocator) 
@@ -517,18 +536,21 @@ EOF
 			 ((fx>= i n))
 		       ;; Note the use of `##sys#setislot' to avoid an entry in the mutations-table:
 		       (##sys#setislot y i (evict (##sys#slot x i))) ) )
-		   y) ] ) ) ) ) ) )
+		   y) ] ) ) ) ) )
 
 (define object-release
   (lambda (x . releaser)
-    (let ([free (if (pair? releaser) 
+    (let ((free (if (pair? releaser) 
 		    (car releaser) 
-		    (foreign-lambda void "C_free" c-pointer) ) ] )
+		    (foreign-lambda void "C_free" c-pointer) ) ) 
+	  (released '()))
       (let release ([x x])
 	(cond [(not (##core#inline "C_blockp" x)) x]
 	      [(not (##core#inline "C_permanentp" x)) x]
+	      ((memq x released) x)
 	      [else
 	       (let ([n (##sys#size x)])
+		 (set! released (cons x released))
 		 (unless (##core#inline "C_byteblockp" x)
 		   (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
 		       ((fx>= i n))
@@ -536,10 +558,6 @@ EOF
 		 (free (##sys#address->pointer (##core#inline_allocate ("C_block_address" 4) x))) ) ] ) ) ) ) )
 
 (define object-evict-to-location
-  (let ([make-hash-table make-hash-table]
-	[hash-table-ref/default hash-table-ref/default]
-	[align-to-word align-to-word]
-	[hash-table-set! hash-table-set!] )
     (lambda (x ptr . limit)
       (cond-expand
        [(not unsafe)
@@ -585,13 +603,9 @@ EOF
 				 ((fx>= i n))
 			       (##sys#setislot y i (evict (##sys#slot x i))) ) ) ; see above
 			   y) ) ] ) ) ] )
-	(values x2 ptr2) ) ) ) )
+	(values x2 ptr2) ) ) )
 
 (define object-size
-  (let ([make-hash-table make-hash-table]
-	[hash-table-ref/default hash-table-ref/default]
-	[align-to-word align-to-word]
-	[hash-table-set! hash-table-set!] )
     (lambda (x)
       (let ([tab (make-hash-table eq?)])
 	(let evict ([x x])
@@ -610,13 +624,9 @@ EOF
 			     (fx+ i 1) ] )
 			 ((fx>= i n))
 		       (set! bytes (fx+ (evict (##sys#slot x i)) bytes)) ) )
-		   bytes) ] ) ) ) ) ) )
+		   bytes) ] ) ) ) ) )
 
 (define object-unevict
-  (let ([make-vector make-vector]
-	[make-hash-table make-hash-table]
-	[hash-table-set! hash-table-set!]
-	[hash-table-ref/default hash-table-ref/default] )
     (lambda (x #!optional (full #f))
       (define (err x)
 	(##sys#signal-hook #:type-error 'object-unevict "can not copy object" x) )
@@ -642,7 +652,7 @@ EOF
 		   (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
 		       ((fx>= i words))
 		     (##sys#setslot y i (copy (##sys#slot y i))) )
-		   y) ] ) ) ) ) ) )
+		   y) ] ) ) ) ) )
 
 
 ;;; `become':
@@ -665,6 +675,15 @@ EOF
 		 (loop (##sys#slot lst 1)) ) ]
 	      [else (##sys#signal-hook #:type-error 'object-become! "bad argument type - not an a-list")] ) )
       (##sys#become! lst) ) ] ) )
+
+(define (mutate-procedure old proc)
+  (unless (##core#check (procedure? old))
+    (##sys#signal-hook #:type-error 'mutate-procedure "bad argument type - not a procedure" old))
+  (let* ((n (##sys#size old))
+	 (words (##core#inline "C_words" n))
+	 (y (##core#inline "C_copy_block" old (make-vector words))) )
+    (##sys#become! (list (cons old (proc y))))
+    y) )
 
 
 ;;; locatives:

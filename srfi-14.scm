@@ -17,6 +17,10 @@
  [else
   (declare
     (no-procedure-checks-for-usual-bindings)
+    (bound-to-procedure
+     char-set char-set-complement ucs-range->char-set! ucs-range->char-set char-set-union
+     char-set-adjoin string->char-set list->char-set string-copy make-char-set char-set-copy
+     char-set? char-set-size char-set:s)
     (no-bound-checks) ) ] )
 
 (cond-expand

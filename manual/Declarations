@@ -1,0 +1,318 @@
+[[tags: manual]]
+[[toc:]]
+
+
+== Declarations
+
+
+=== declare
+
+ [syntax] (declare DECLSPEC ...)
+
+Process declaration specifiers. Declarations always override
+any command-line settings.  Declarations are valid for the whole
+compilation-unit (source file), the position of the declaration in
+the source file can be arbitrary. Declarations are ignored in the interpreter
+but not in code evaluated at compile-time (by {{eval-when}} or in
+syntax extensions loaded via {{require-extension}} or {{require-for-syntax}}.
+{{DECLSPEC}} may be any of the following:
+
+
+=== always-bound
+
+ [declaration specifier] (always-bound SYMBOL ...)
+
+Declares that the given variables are always bound and
+accesses to those have not to be checked.
+
+
+=== block
+
+ [declaration specifier] (block)
+
+Assume global variables are never redefined. This is the same as
+specifying the {{-block}} option.
+
+
+=== block-global
+=== hide
+
+ [declaration specifier] (block-global SYMBOL ...)
+ [declaration specifier] (hide SYMBOL ...)
+
+Declares that the toplevel bindings for {{SYMBOL ...}}
+should not be accessible from code in other compilation units or by
+{{eval}}. Access to toplevel bindings declared as block global is
+also more efficient.
+
+
+=== bound-to-procedure
+
+ [declaration specifier] (bound-to-procedure SYMBOL ...)
+
+Declares that the given identifiers are always bound to procedure values.
+
+
+=== c-options
+
+ [declaration specifier] (c-options STRING ...)
+
+Declares additional C/C++ compiler options that are to be passed to the subsequent compilation pass
+that translates C to machine code. This declaration will only work if the source file is compiled
+with the {{csc}} compiler driver.
+
+
+=== check-c-syntax
+
+ [declaration specifier] (check-c-syntax)
+ [declaration specifier] (not check-c-syntax)
+
+Enables or disables syntax-checking of embedded C/C++ code fragments. Checking C syntax is the default.
+
+
+=== compress-literals
+
+ [declaration specifier] (compress-literals [THRESHOLD [INITIALIZER]])
+
+The same as the {{-compress-literals}} compiler option.
+The threshold argument defaults to 50. If the optional argument {{INITIALIZER}}
+is given, then the literals will not be created at module startup,
+but when the procedure with this name will be called.
+
+=== constant
+
+ [declaration specifier] (constant SYMBOL ...)
+
+Declares the procedures with the names {{SYMBOL ...}} as constant, that is, as not having any
+side effects. This can help the compiler to remove non-side-effecting expressions.
+
+
+=== export
+
+ [declaration specifier] (export SYMBOL ...)
+
+The opposite of {{hide}}. All given identifiers will be exported and all toplevel variables
+not listed will be hidden and not be accessible outside of this compilation unit.
+
+
+=== emit-exports
+
+ [declaration specifier] (emit-exports STRING)
+
+Write exported toplevel variables to file with name {{STRING}}.
+
+
+=== emit-external-prototypes-first
+
+ [declaration specifier] (emit-external-prototypes-first)
+
+Emit prototypes for callbacks defined with {{define-external}} before any
+other foreign declarations. Equivalent to giving the {{-emit-external-prototypes-first}}
+option to the compiler.
+
+
+=== disable-interrupts
+
+ [declaration specifier] (disable-interrupts)
+ [declaration specifier] (not interrupts-enabled)
+
+Disable timer-interrupts checks in the compiled program. Threads can
+not be preempted in main- or library-units that contain this declaration.
+
+
+=== disable-warning
+
+ [declaration specifier] (disable-warning CLASS ...)
+
+Disable warnings of type {{CLASS ...}} (equivalent to the {{-disable-warning CLASS}}
+compiler option).
+
+
+=== import
+
+ [declaration specifier] (import SYMBOL-OR-STRING ...)
+
+Adds new imports to the list of externally available toplevel variables. Arguments to this declaration
+may be either strings (designating {{.exports}} files, without the file-extension) or symbols
+which directly designate imported variables.
+
+
+=== inline
+
+ [declaration specifier] (inline)
+ [declaration specifier] (not inline)
+ [declaration specifier] (inline IDENTIFIER ...)
+ [declaration specifier] (not inline IDENTIFIER ...)
+
+If given without an identifier-list, inlining of known procedures is enabled (this is equivalent to the {{-inline}}
+compiler option). When an identifier-list is given, then inlining is enabled only for the specified global procedures.
+The negated forms {{(not inline)}} and {{(not inline IDENTIFIER)}} disable global inlining, or inlining for
+the given global procedures only, respectively.
+
+
+=== inline-limit
+
+ [declaration specifier] (inline-limit THRESHOLD)
+
+Sets the maximum size of procedures which may potentially be inlined. The default threshold is {{10}}.
+
+
+=== interrupts-enabled
+
+ [declaration specifier] (interrupts-enabled)
+
+Enable timer-interrupts checks in the compiled program (the default).
+
+
+=== keep-shadowed-macros
+
+ [declaration specifier] (keep-shadowed-macros)
+
+Normally, when a toplevel variable is assigned or defined that has the same name as a macro, the macro-definition
+will be removed (in addition to showing a warning). This declaration will disable the removal of the macro.
+
+
+=== lambda-lift
+
+ [declaration specifier] (lambda-lift)
+
+Enables lambda-lifting (equivalent to the {{-lambda-lift}} option).
+
+
+=== link-options
+
+ [declaration specifier] (link-options STRING ...)
+
+Declares additional linker compiler options that are to be passed to the subsequent compilation pass
+that links the generated code into an executable or library. 
+This declaration will only work if the source file is compiled
+with the {{csc}} compiler driver.
+
+
+=== no-argc-checks
+
+ [declaration specifier] (no-argc-checks)
+
+Disables argument count checking.
+
+
+=== no-bound-checks
+
+ [declaration specifier] (no-bound-checks)
+
+Disables the bound-checking of toplevel bindings.
+
+
+=== no-procedure-checks
+
+ [declaration specifier] (no-procedure-checks)
+
+Disables checking of values in operator position for being of procedure type.
+
+
+=== post-process
+
+ [declaration specifier] (post-process STRING ...)
+
+Arranges for the shell commands {{STRING ...}} to be invoked after the current
+file has been translated to C. Any occurrences of the substring {{$@@}} in the
+strings given for this declaration will be replaced by the pathname of the currently
+compiled file, without the file-extension.
+This declaration will only work if the source file is compiled
+with the {{csc}} compiler driver.
+
+
+=== number-type
+=== fixnum-arithmetic
+
+ [declaration specifier] ([number-type] TYPE)
+ [declaration specifier] (fixnum-arithmetic)
+
+Declares that only numbers of the given type are used. {{TYPE}}
+may be {{fixnum}} or {{generic}} (which is
+the default).
+
+
+=== run-time-macros
+
+ [declaration specifier] (run-time-macros)
+
+Equivalent to the compiler option of the same name - macros defined in the compiled code are also made available at
+runtime.
+
+
+=== standard-bindings
+
+ [declaration specifier] (standard-bindings SYMBOL ...)
+ [declaration specifier] (not standard-bindings SYMBOL ...)
+
+Declares that all given standard procedures (or all if no symbols are
+specified) are never globally redefined.  If {{not}} is specified,
+then all but the given standard bindings are assumed to be never
+redefined.
+
+
+=== extended-bindings
+
+ [declaration specifier] (extended-bindings SYMBOL ...)
+ [declaration specifier] (not extended-bindings SYMBOL ...)
+
+Declares that all given non-standard and CHICKEN-specific procedures (or all if no symbols are specified) are never globally redefined.
+If {{not}} is specified, then all but the given extended bindings
+are assumed to be never redefined.
+
+
+=== usual-integrations
+
+ [declaration specifier] (usual-integrations SYMBOL ...)
+ [declaration specifier] (not usual-integrations SYMBOL ...)
+
+Declares that all given standard and extended bindings (or all if no
+symbols are specified) are never globally redefined.  If {{not}}
+is specified, then all but the given standard and extended bindings are
+assumed to be never redefined. Note that this is the default behaviour,
+unless the {{-no-usual-integrations}} option has been given.
+
+
+=== unit
+
+ [declaration specifier] (unit SYMBOL)
+
+Specify compilation unit-name (if this is a library)
+
+
+=== unsafe
+
+ [declaration specifier] (unsafe)
+ [declaration specifier] (not safe)
+
+Do not generate safety-checks. This is the same as specifying the
+{{-unsafe}} option.  Also implies
+
+
+ (declare (no-bound-checks) (no-procedure-checks) (no-argc-checks))
+
+
+=== unused
+
+ [declaration specifier] (unused SYMBOL ...)
+
+Disables any warnings when the global variable {{SYMBOL}} is not defined but used, 
+or defined but never used and not exported.
+
+
+=== uses
+
+ [declaration specifier] (uses SYMBOL ...)
+
+Gives a list of used library-units. Before the toplevel-expressions
+of the main-module are executed, all used units evaluate their
+toplevel-expressions in the order in which they appear in this
+declaration. If a library unit A uses another unit B, then B's toplevel
+expressions are evaluated before A's.  Furthermore, the used symbols
+are registered as features during compile-time, so {{cond-expand}}
+knows about them.
+
+Previous: [[Pattern matching]]
+
+Next: [[Parameters]]

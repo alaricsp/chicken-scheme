@@ -5,7 +5,7 @@
 ;
 ;
 ;-----------------------------------------------------------------------------------------------------------
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -75,6 +75,9 @@
 ; (data <tag1> <exp1> ...)
 ; (post-process <string> ...)
 ; (emit-exports <string>)
+; (keep-shadowed-macros)
+; (import <symbol-or-string> ...)
+; (unused <symbol> ...)
 ;
 ;   <type> = fixnum | generic
 ;
@@ -204,7 +207,7 @@
 ;   foldable -> <boolean>                    If true: variable names foldable standard-binding
 ;   boxed -> <boolean>                       If true: variable has to be boxed after closure-conversion
 ;   contractable -> <boolean>                If true: variable names contractable procedure
-;   inlineable -> <boolean>                  If true: variable names potentially inlinable procedure
+;   inlinable -> <boolean>                   If true: variable names potentially inlinable procedure
 ;   collapsable -> <boolean>                 If true: variable refers to collapsable constant
 ;   removable -> <boolean>                   If true: variable is not used
 ;   replacable -> <variable>                 Variable can be replaced by another variable
@@ -231,12 +234,11 @@
 
 (declare
  (unit compiler)
- (disable-warning var)
- (foreign-declare #<<EOF
-#ifdef C_USE_C_DEFAULTS
-# include "chicken-defaults.h"
-#else
-# define C_INSTALL_HOME NULL
+ (disable-warning var) )
+
+#>
+#ifndef C_USE_C_DEFAULTS
+# define C_INSTALL_SHARE_HOME NULL
 #endif
 
 #ifndef C_DEFAULT_TARGET_STACK_SIZE
@@ -246,8 +248,7 @@
 #ifndef C_DEFAULT_TARGET_HEAP_SIZE
 # define C_DEFAULT_TARGET_HEAP_SIZE 0
 #endif
-EOF
-) )
+<#
 
 
 #{compiler
@@ -255,11 +256,11 @@ EOF
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
-  installation-home decompose-lambda-list external-to-pointer defconstant-bindings
-  foreign-type-table-size copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
+  installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
+  copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
   unit-name insert-timer-checks used-units external-variables require-imports-flag custom-declare-alist
   profile-info-vector-name finish-foreign-result pending-canonicalizations
-  foreign-declarations emit-trace-info block-compilation analysis-database-size line-number-database-size
+  foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
   target-heap-size target-stack-size valid-c-identifier?
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
@@ -267,17 +268,17 @@ EOF
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
   broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
-  profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda no-c-syntax-checks
+  profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names namespace-table disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning import-table use-import-table
+  compiler-warning import-table use-import-table compiler-macro-table compiler-macros-enabled
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
   expand-foreign-lambda* data-declarations emit-control-file-item expand-foreign-primitive
-  factor partition-fm process-declaration external-protos-first basic-literal? emit-line-info
+  process-declaration external-protos-first basic-literal?
   transform-direct-lambdas! expand-foreign-callback-lambda* debugging emit-unsafe-marker
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -285,14 +286,14 @@ EOF
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database export-list csc-control-file
-  estimate-foreign-result-location-size compressed-literals-initializer parse-easy-ffi
+  estimate-foreign-result-location-size compressed-literals-initializer unused-variables
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
   units-used-by-default words-per-flonum disable-stack-overflow-checking
-  parameter-limit eq-inline-operator optimizable-rest-argument-operators check-c-syntax postponed-initforms
+  parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-compression-threshold compressed-literals compressable-literal
-  lookup-exports-file
+  lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result}
@@ -300,8 +301,9 @@ EOF
 (eval-when (compile eval)
   (match-error-control #:fail) )
 
+
 (include "tweaks")
-(include "parameters")
+
 
 (define-inline (gensym-f-id) (gensym 'f_))
 
@@ -311,7 +313,7 @@ EOF
   (define default-target-stack-size #f) )
 
 (eval-when (load)
-  (define-foreign-variable installation-home c-string "C_INSTALL_HOME")
+  (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
   (define-foreign-variable default-target-heap-size int "C_DEFAULT_TARGET_HEAP_SIZE")
   (define-foreign-variable default-target-stack-size int "C_DEFAULT_TARGET_STACK_SIZE") )
 
@@ -321,6 +323,16 @@ EOF
 (define user-pass (make-parameter #f))
 (define user-pass-2 (make-parameter #f))
 (define user-post-analysis-pass (make-parameter #f))
+
+(define-constant foreign-type-table-size 301)
+(define-constant analysis-database-size 3001)
+(define-constant default-line-number-database-size 997)
+(define-constant inline-table-size 301)
+(define-constant constant-table-size 301)
+(define-constant real-name-table-size 997)
+(define-constant import-table-size 997)
+(define-constant default-literal-compression-threshold 50)
+(define-constant default-inline-max-size 10)
 
 
 ;;; Global variables containing compilation parameters:
@@ -357,16 +369,16 @@ EOF
 (define disable-stack-overflow-checking #f)
 (define namespace-table '())
 (define require-imports-flag #f)
-(define no-c-syntax-checks #f)
 (define emit-unsafe-marker #f)
 (define external-protos-first #f)
 (define do-lambda-lifting #f)
 (define inline-max-size -1)
 (define emit-closure-info #t)
-(define emit-line-info #f)
 (define export-file-name #f)
 (define import-table #f)
 (define use-import-table #f)
+(define undefine-shadowed-macros #t)
+(define constant-declarations '())
 
 
 ;;; These are here so that the backend can access them:
@@ -417,6 +429,9 @@ EOF
 (define not-inline-list '())
 (define file-requirements #f)
 (define postponed-initforms '())
+(define unused-variables '())
+(define compiler-macro-table #f)
+(define compiler-macros-enabled #t)
 
 
 ;;; Initialize globals:
@@ -463,43 +478,50 @@ EOF
       [('quote x) x]
       [x x] ) )
 
+  (define (resolve-atom x ae me dest)
+    (cond [(and constants-used (##sys#hash-table-ref constant-table x)) 
+	   => (lambda (val) (walk (car val) ae me dest)) ]
+	  [(and inline-table-used (##sys#hash-table-ref inline-table x))
+	   => (lambda (val) (walk val ae me dest)) ]
+	  [(assq x foreign-variables)
+	   => (lambda (fv) 
+		(let* ([t (second fv)]
+		       [ft (final-foreign-type t)] 
+		       [body `(##core#inline_ref (,(third fv) ,t))] )
+		  (foreign-type-convert-result
+		   (finish-foreign-result ft body)
+		   t) ) ) ]
+	  [(assq x location-pointer-map)
+	   => (lambda (a)
+		(let* ([t (third a)]
+		       [ft (final-foreign-type t)] 
+		       [body `(##core#inline_loc_ref (,t) ,(second a))] )
+		  (foreign-type-convert-result
+		   (finish-foreign-result ft body)
+		   t) ) ) ]
+	  [else #f] ) )
+
   (define (walk x ae me dest)
     (cond ((symbol? x)
-	   (cond [(assq x ae) 
-		  => (lambda (n)
-		       (walk (##sys#macroexpand-1-local (cdr n) me) ae me dest) ) ]
-		 [(and constants-used (##sys#hash-table-ref constant-table x)) 
-		  => (lambda (val) (walk (car val) ae me dest)) ]
-		 [(and inline-table-used (##sys#hash-table-ref inline-table x))
-		  => (lambda (val) (walk val ae me dest)) ]
-		 [(assq x foreign-variables)
-		  => (lambda (fv) 
-		       (let* ([t (second fv)]
-			      [ft (final-foreign-type t)] 
-			      [body `(##core#inline_ref (,(third fv) ,t))] )
-			 (foreign-type-convert-result
-			  (finish-foreign-result ft body)
-			  t) ) ) ]
-		 [(assq x location-pointer-map)
-		  => (lambda (a)
-		       (let* ([t (third a)]
-			      [ft (final-foreign-type t)] 
-			      [body `(##core#inline_loc_ref (,t) ,(second a))] )
-			 (foreign-type-convert-result
-			  (finish-foreign-result ft body)
-			  t) ) ) ]
-		 [else x] ) )
+	   (cond ((assq x ae) => 
+		  (lambda (a)
+		    (let ((alias (cdr a)))
+		      (or (resolve-atom alias ae me dest)
+			  alias) ) ) )
+		 ((resolve-atom x ae me dest))
+		 (else (##sys#alias-global-hook x))) )
 	  ((and (not-pair? x) (constant? x)) `(quote ,x))
-	  ((not-pair? x) (quit "syntax error - illegal atomic form `~s'" x))
+	  ((not-pair? x) (syntax-error "illegal atomic form" x))
 	  ((symbol? (car x))
 	   (let* ([head (car x)]
 		  [rest (cdr x)]
 		  [ln (get-line x)]
 		  [name (resolve head ae)] )
+	     (emit-syntax-trace-info x #f)
 	     (unless (proper-list? x)
 	       (if ln
-		   (quit "syntax error in line ~s - malformed expression `~s'" ln x)
-		   (quit "syntax error - malformed expression `~s'" x) ) )
+		   (syntax-error (sprintf "(in line ~s) - malformed expression" ln) x)
+		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
 	     (let* ([x2 (cons name rest)]
 		    [xexpanded (##sys#macroexpand-1-local x2 me)] )
@@ -549,7 +571,8 @@ EOF
 				    (set! block-globals (cons var block-globals))
 				    var) ] ) ) )
 
-			((##core#undefined ##core#callunit ##core#primitive ##core#inline_ref ##core#inline_loc_ref) x)
+			((##core#undefined ##core#callunit ##core#primitive ##core#inline_ref 
+					   ##core#inline_loc_ref) x)
 
 			((##core#require-for-syntax)
 			 (let ([ids (map eval (cdr x))])
@@ -557,15 +580,7 @@ EOF
 			   (hash-table-update! 
 			    file-requirements 'syntax-requirements (cut lset-union eq? <> ids)
 			    (lambda () ids) )
-			   (let ([rs (##sys#lookup-runtime-requirements ids)])
-			     (hash-table-update!
-			      file-requirements 'runtime-requirements (cut lset-union eq? <> rs)
-			      (lambda () rs))
-			     (walk
-			      (if (null? rs)
-				  '(##core#undefined)
-				  `(##sys#require ,@(map (lambda (x) `',x) rs)) )
-			      ae me dest) ) ) )
+			   '(##core#undefined) ) )
 
 			((##core#require-extension)
 			 (walk
@@ -604,7 +619,7 @@ EOF
 			   `(let ,(map (lambda (alias b)
 					 (list alias (walk (cadr b) ae me (car b))) )
 				       aliases bindings)
-			      ,(walk (##sys#canonicalize-body (cddr x) (cut assq <> ae2) me)
+			      ,(walk (##sys#canonicalize-body (cddr x) (cut assq <> ae2) me dest)
 				     ae2
 				     me dest) ) ) )
 
@@ -623,15 +638,17 @@ EOF
 			    (lambda (vars argc rest)
 			      (let* ([aliases (map gensym vars)]
 				     [ae2 (append (map cons vars aliases) ae)]
-				     [body 
-				      (walk 
-				       (##sys#canonicalize-body obody (cut assq <> ae2) me)
-				       ae2
-				       me #f) ]
+				     [body0 (##sys#canonicalize-body obody (cut assq <> ae2) me dest)]
+				     [body (walk body0 ae2 me #f)]
 				     [llist2 
 				      (build-lambda-list
 				       aliases argc
 				       (and rest (list-ref aliases (posq rest vars))) ) ] )
+				(when dest
+				  (match body0
+				    (('begin (or (? string? doc) ('quote doc)) _ . more)
+				     (process-lambda-documentation dest doc) )
+				    (_ #f) ) )
 				(set-real-names! aliases vars)
 				(cond [(and dest emit-profile (eq? 'lambda name))
 				       (expand-profile-lambda dest llist2 body) ]
@@ -647,7 +664,7 @@ EOF
 				(ae2 (append (map cons vars aliases) ae))
 				[body 
 				 (walk 
-				  (##sys#canonicalize-body obody (cut assq <> ae2) me)
+				  (##sys#canonicalize-body obody (cut assq <> ae2) me dest)
 				  ae2
 				  me #f) ] )
 			   (set-real-names! aliases vars)
@@ -659,16 +676,18 @@ EOF
 				[var (resolve var0 ae)]
 				[ln (get-line x)]
 				[val (walk (caddr x) ae me var0)] )
-			   (when (and safe-globals-flag (eq? var var0))
-			     (set! always-bound-to-procedure
-			       (lset-adjoin eq? always-bound-to-procedure var))
-			     (set! always-bound (lset-adjoin eq? always-bound var)) )
-			   (when (eq? var var0)
+			   (when (eq? var var0) ; global?
+			     (set! var (##sys#alias-global-hook var))
+			     (when safe-globals-flag
+			       (set! always-bound-to-procedure
+				 (lset-adjoin eq? always-bound-to-procedure var))
+			       (set! always-bound (lset-adjoin eq? always-bound var)) )
 			     (when (macro? var)
 			       (compiler-warning 
 				'var "assigned global variable `~S' is a macro ~A"
 				var
-				(if ln (sprintf "in line ~S" ln) "") ) ) )
+				(if ln (sprintf "in line ~S" ln) "") )
+			       (when undefine-shadowed-macros (undefine-macro! var) ) ) )
 			   (when (keyword? var)
 			     (compiler-warning 'syntax "assignment to keyword `~S'" var) )
 			   (cond [(assq var foreign-variables)
@@ -749,7 +768,6 @@ EOF
 				[name (if (pair? (cdddr x))
 					  (cadr (fourth x))
 					  (symbol->string var) ) ] )
-			   (check-c-syntax name 'define-foreign-variable)
 			   (set! foreign-variables
 			     (cons (list var type (if (string? name) name (symbol->string name)))
 				   foreign-variables))
@@ -768,7 +786,9 @@ EOF
 				    (walk
 				     `(begin
 					(##core#set! ,arg ,(first conv))
-					(##core#set! ,ret ,(if (pair? (cdr conv)) (second conv) '##sys#values)) ) 
+					(##core#set! 
+					 ,ret 
+					 ,(if (pair? (cdr conv)) (second conv) '##sys#values)) ) 
 				     ae me dest) ) ]
 				 [else
 				  (##sys#hash-table-set! foreign-type-table name type)
@@ -800,7 +820,11 @@ EOF
 			   `(let (,(let ([size (words (estimate-foreign-result-location-size type))])
 				     ;; Add 2 words: 1 for the header, 1 for double-alignment:
 				     ;; Note: C_a_i_bytevector takes number of words, not bytes
-				     (list store `(##core#inline_allocate ("C_a_i_bytevector" ,(+ 2 size)) ',size)) ) )
+				     (list 
+				      store
+				      `(##core#inline_allocate
+					("C_a_i_bytevector" ,(+ 2 size))
+					',size)) ) )
 			      ,(walk
 				`(begin
 				   ,@(if init
@@ -827,7 +851,9 @@ EOF
 			 (let* ([name (cadr (second x))]
 				[valexp (third x)]
 				[val (handle-exceptions ex
-					 (quit "error in constant evaluation of ~S for named constant ~S" valexp name)
+					 ;; could show line number here
+					 (quit "error in constant evaluation of ~S for named constant ~S" 
+					       valexp name)
 				       (if (collapsable-literal? valexp)
 					   valexp
 					   (eval `(let ,defconstant-bindings ,valexp)) ) ) ] )
@@ -866,11 +892,12 @@ EOF
 			     (let ([name (cadr name)])
 			       (if (valid-c-identifier? name)
 				   (set! callback-names (cons name callback-names))
-				   (quit "name `~S' of external definition is not a valid C identifier" name) ) )
+				   (quit "name `~S' of external definition is not a valid C identifier"
+					 name) ) )
 			     (when (or (not (proper-list? vars)) 
 				       (not (proper-list? atypes))
 				       (not (= (length vars) (length atypes))) )
-			       (##sys#syntax-error-hook 
+			       (syntax-error 
 				"non-matching or invalid argument list to foreign callback-wrapper"
 				vars atypes) )
 			     `(##core#foreign-callback-wrapper
@@ -892,13 +919,25 @@ EOF
 					  ,(foreign-type-convert-argument
 					    `(let ()
 					       ,@(match rtype
-						   ((or '(const nonnull-c-string) 'nonnull-c-string)
+						   ((or '(const nonnull-c-string) 
+							'(const nonnull-unsigned-c-string)
+							'nonnull-unsigned-c-string
+							'nonnull-c-string)
 						    `((##sys#make-c-string (let () ,@(cddr lam)))))
-						   ((or '(const c-string*) 'c-string*)
-						    (##sys#syntax-error-hook
-						     "`c-string*' is not a valid resulte type for callback procedures"
+						   ((or '(const c-string*)
+							'(const unsigned-c-string*)
+							'unsigned-c-string*
+							'c-string*
+							'c-string-list
+							'c-string-list*)
+						    (syntax-error
+						     "not a valid result type for callback procedures"
+						     rtype
 						     name) )
-						   ((or 'c-string '(const c-string))
+						   ((or 'c-string
+							'(const unsigned-c-string)
+							'unsigned-c-string
+							'(const c-string))
 						    `((let ((r (let () ,@(cddr lam))))
 							(and r (##sys#make-c-string r)) ) ) )
 						   (_ (cddr lam)) ) )
@@ -935,18 +974,29 @@ EOF
 					       (walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ] )
 					(walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ) ) ]
 				 
+				 ((and compiler-macros-enabled
+				       compiler-macro-table
+				       (##sys#hash-table-ref compiler-macro-table name)) =>
+				  (lambda (cm)
+				    (let ((cx (cm x)))
+				      (if (equal? cx x)
+					  (handle-call)
+					  (walk cx ae me dest)))))
+
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
 
 	  ((not (proper-list? x))
-	   (quit "syntax error - malformed expression `~s'" x) )
+	   (syntax-error "malformed expression" x) )
 
 	  ((constant? (car x))
+	   (emit-syntax-trace-info x #f)
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
 	   (mapwalk x ae me) )
 
 	  ((and (pair? (car x)) (eq? 'lambda (caar x)))
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
+	     (emit-syntax-trace-info x #f)
 	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)))
 	     (let ([llist (cadr lexp)])
 	       (if (and (proper-list? llist) (= (length llist) (length args)))
@@ -957,12 +1007,15 @@ EOF
 			 (,var ,@(cdr x)) )
 		      ae me dest) ) ) ) ) )
 	  
-	  (else (mapwalk x ae me)) ) )
+	  (else
+	   (emit-syntax-trace-info x #f)
+	   (mapwalk x ae me)) ) )
   
   (define (mapwalk xs ae me)
     (map (lambda (x) (walk x ae me #f)) xs) )
 
   (when (memq 'c debugging-chicken) (newline) (pretty-print exp))
+  (##sys#clear-trace-buffer)
   ;; Process visited definitions and main expression:
   (walk 
    `(begin
@@ -979,11 +1032,11 @@ EOF
   (define (check-decl spec minlen . maxlen)
     (let ([n (length (cdr spec))])
       (if (or (< n minlen) (> n (:optional maxlen 99999)))
-	  (quit "syntax error in declaration: `~s'" spec) ) ) )  
+	  (syntax-error "invalid declaration" spec) ) ) )  
   (call-with-current-continuation
    (lambda (return)
      (unless (pair? spec)
-       (quit "invalid specification syntax: ~S" spec) )
+       (syntax-error "invalid declaration specification" spec) )
      (case (car spec)
        ((uses)
 	(let ([us (cdr spec)])
@@ -1047,18 +1100,10 @@ EOF
 	(let ([fds (cdr spec)])
 	  (if (every string? fds)
 	      (set! foreign-declarations (append foreign-declarations fds))
-	      (quit "syntax error in declaration: `~S'" spec) )
-	  (check-c-syntax (apply string-append fds) 'foreign-declare) ) )
-       ((foreign-parse)
-	(let ([fds (cdr spec)])
-	  (if (every string? fds)
-	      (return 
-	       (##sys#compiler-toplevel-macroexpand-hook 
-		`(begin ,@(parse-easy-ffi (string-intersperse fds ""))) ) )
-	      (quit "syntax error in declaration: `~S'" spec) ) ) )
+	      (syntax-error "invalid declaration" spec) ) ) )
        ((custom-declare)
 	(if (or (not (list? spec)) (not (list? (cadr spec))) (< (length (cadr spec)) 3))
-	    (quit "syntax error in declaration: `~S'" spec)
+	    (syntax-error "invalid declaration" spec)
 	    (process-custom-declaration (cadr spec) (cddr spec)) ) )
        ((c-options)
 	(emit-control-file-item `(c-options ,@(cdr spec))) )
@@ -1070,7 +1115,9 @@ EOF
 	   `(post-process ,@(map (cut string-substitute "\\$@" file <>) (cdr spec))) ) ) )
        ((block) (set! block-compilation #t))
        ((separate) (set! block-compilation #f))
-       ((check-c-syntax) (set! no-c-syntax-checks #f))
+       ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
+       ((unused)
+	(set! unused-variables (append (cdr spec) unused-variables)))
        ((not)
 	(check-decl spec 1)
 	(case (second spec)
@@ -1098,7 +1145,6 @@ EOF
 	   (check-decl spec 1 1)
 	   (case (cadr spec)
 	     [(interrupts-enabled) (set! insert-timer-checks #f)]
-	     [(check-c-syntax) (set! no-c-syntax-checks #t)]
 	     [(safe) 
 	      (set! unsafe #t)
 	      (##match#set-error-control #:unspecified) ]
@@ -1120,9 +1166,9 @@ EOF
 	(when (and (list? spec) (= 3 (length spec)))
 	  (set! compressed-literals-initializer (third spec)) ) )
        ((emit-exports)
-	(if (null? (cdr spec))
-	    (quit "invalid `emit-exports' declaration" spec)
-	    (set! export-file-name (cadr spec)) ) )
+	(cond ((null? (cdr spec))
+	       (quit "invalid `emit-exports' declaration" spec) )
+	      ((not export-file-name) (set! export-file-name (cadr spec))) ) )
        ((emit-external-prototypes-first)
 	(set! external-protos-first #t) )
        ((lambda-lift) (set! do-lambda-lifting #t))
@@ -1147,6 +1193,22 @@ EOF
 		(set! namespace-table 
 		  (alist-update! ns (lset-union eq? oldsyms (cdr syms)) namespace-table eq?) ) )
 	      (quit "invalid arguments to `namespace' declaration: ~S" spec) ) ) )
+       ((constant)
+	(let ((syms (cdr spec)))
+	  (if (every symbol? syms)
+	      (set! constant-declarations (append syms constant-declarations))
+	      (quit "invalid arguments to `constant' declaration: ~S" spec)) ) )
+       ((import)
+	(let-values (((syms strs) 
+		      (partition
+		       (lambda (x)
+			 (cond ((symbol? x) #t)
+			       ((string? x) #f)
+			       (else (quit "argument to `import' declaration is not a string or symbol" x)) ) )
+		       (cdr spec) ) ) )
+	  (set! use-import-table #t)
+	  (for-each (cut ##sys#hash-table-set! import-table <> "<here>") syms)
+	  (for-each lookup-exports-file strs) ) )
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 
@@ -1213,7 +1275,6 @@ EOF
 	 [body (apply string-append (map cadr (cdddr exp)))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
-    (check-c-syntax body 'foreign-lambda*)
     (create-foreign-stub rtype #f argtypes argnames body #f #f) ) )
 
 (define (expand-foreign-callback-lambda* exp)
@@ -1222,7 +1283,6 @@ EOF
 	 [body (apply string-append (map cadr (cdddr exp)))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
-    (check-c-syntax body 'foreign-callback-lambda*)
     (create-foreign-stub rtype #f argtypes argnames body #t #t) ) )
 
 (define (expand-foreign-primitive exp)
@@ -1232,21 +1292,18 @@ EOF
 	 [body (apply string-append (map cadr (if hasrtype (cdddr exp) (cddr exp))))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
-    (check-c-syntax body 'foreign-primitive)
     (create-foreign-stub rtype #f argtypes argnames body #f #t) ) )
 
 
 ;;; Traverse expression and update line-number db with all contained calls:
 
 (define (update-line-number-database! exp ln)
-
   (define (mapupdate xs)
     (let loop ((xs xs))
       (if (pair? xs)
 	  (begin
 	    (walk (car xs))
 	    (loop (cdr xs)) ) ) ) )
-
   (define (walk x)
     (cond ((not-pair? x))
 	  ((symbol? (car x))
@@ -1256,7 +1313,6 @@ EOF
 		 (##sys#hash-table-set! ##sys#line-number-database name (alist-cons x ln old)) )
 	     (mapupdate (cdr x)) ) )
 	  (else (mapupdate x)) ) )
-
   (walk exp) )
 
 
@@ -1615,7 +1671,10 @@ EOF
 
 	 ;; If this is the first analysis and the variable is global and has no references and we are
 	 ;;  in block mode, then issue warning:
-	 (when (and first-analysis global (null? references))
+	 (when (and first-analysis 
+		    global
+		    (null? references)
+		    (not (memq sym unused-variables)))
 	   (when assigned-locally
 	     (compiler-warning 'var "local assignment to unused variable `~S' may be unintended" sym) )
 	   (when (and (or block-compilation
@@ -1629,7 +1688,7 @@ EOF
 
 	 ;; Make 'contractable, if it has a procedure as known value, has only one use and one call-site and
 	 ;;  if the lambda has no free non-global variables or is an internal lambda. Make 'inlinable if
-	 ;;  use/call count is 1:
+	 ;;  use/call count is not 1:
 	 (when value
 	   (let ((valparams (node-parameters value)))
 	     (when (and (eq? '##core#lambda (node-class value))
@@ -2027,10 +2086,9 @@ EOF
   customizable				; boolean
   rest-argument-mode			; #f | LIST | VECTOR | UNUSED
   body					; expression
-  direct				; boolean
-  partition)                            ; integer
+  direct)				; boolean
   
-(define (prepare-for-code-generation node db partitions)
+(define (prepare-for-code-generation node db)
   (let ([literals '()]
         [lambdas '()]
         [temporaries 0]
@@ -2167,8 +2225,7 @@ EOF
 			   (or direct (get db id 'customizable))
 			   rest-mode
 			   body
-			   direct
-                           0)
+			   direct)
 			  lambdas) )
 		  (set! looping lping)
 		  (set! temporaries temps)
@@ -2273,286 +2330,10 @@ EOF
 		       ((eof-object? x) '(eof))
 		       (else (bomb "bad immediate (prepare)")) )
 		 '() ) )
-
-    (define (partition-phase! partitions)
-      (define (set-inregion! cells partition)
-        (for-each
-          (lambda (c)
-            (graph-cell-info$$-inregion-set!
-              (graph-cell$$-info c)
-              (eq? (graph*partition c) partition)))
-          cells))
-      (let [(callgraph (make-graph$ eq?))]
-        (debugging 'p "partitioning phase...")
-        ;; init call graph
-        (for-each
-          (lambda (l)
-            (graph$-add-cell! callgraph (make-graph-cell$ (lambda-literal-id l))))
-          lambdas)
-        (##sys#hash-table-for-each
-        (lambda (sym plist)
-          (let loop [(es plist)]
-            (if (and (pair? es)
-                     (eq? (caar es) 'contains))
-                (for-each
-                  (lambda (o)
-                    (let [(symcell (graph$-get callgraph sym))]
-                      (and symcell ;; toplevel et al aren't in lambdas
-                           (graph-cell$-add-undirected-edge!
-                             symcell
-                             (graph$-get callgraph o)))))
-                  (cdar es)))
-            (and (pair? es) (loop (cdr es)))))
-        db)
-        ;; partition recursion.  i threw together something with
-        ;; primes to decompose any partition into bi-partitions.  i am
-        ;; sure there is a better way.
-        (randomize 20040619) ;; make partition repeatable
-	(define partition-level 0)
-	(define partition-index 0)
-	(let pway ([factors (sort (factor partitions) <)]
-		   [cells (graph$->list callgraph)])
-	  (cond-expand [testing 
-			(let loop ([n partition-level]) 
-			  (and (> n 0) (display "  ") (loop (sub1 n)))) ]
-		       [else] )
-	  (set! partition-level (add1 partition-level))
-	  (cond
-	   ;; terminate and update
-	   [(null? factors)
-	    (for-each
-	     (lambda (cell)
-	       (let* [(id (graph*id cell))
-		      (ll (member id lambdas
-				  (lambda (x ei)
-				    (eq? x (lambda-literal-id ei)))))]
-		 (and ll
-		      (lambda-literal-partition-set!
-		       (car ll)
-		       partition-index))))
-	     cells)
-	    (set! partition-index (add1 partition-index))]
-	   ;; just continue if 1
-	   [(= (car factors) 1)
-	    (pway (cdr factors) cells)]
-	   ;; bi-partition, balanced 50/50
-	   [(= (car factors) 2)
-	    (partition-fm cells
-			  graph*id graph*color graph*color-set!
-			  graph*partition graph*partition-move!
-			  graph*neighbours
-			  graph*gain
-			  (lambda () (graph*cost callgraph))
-			  (lambda (w n#f n#t) 
-			    (graph*balance cells
-					   (length cells)
-					   w n#f n#t))
-			  ;; 50/50
-			  '(1 . 1)
-			  10)
-
-	    (let ([bpart#f (map (complement graph*partition) cells)]
-		  [bpart#t (map graph*partition cells)])
-	      ;; descend binary tree
-              
-              (set-inregion! cells #f)
-	      (pway (cdr factors) (compress bpart#f cells))
-              
-              (set-inregion! cells #t)
-	      (pway (cdr factors) (compress bpart#t cells)))
-	    ]
-	   ;; bi-partition, but unbalanced
-	   [else
-	    (partition-fm cells
-			  graph*id graph*color graph*color-set!
-			  graph*partition graph*partition-move!
-			  graph*neighbours
-			  graph*gain
-			  (lambda () (graph*cost callgraph))
-			  (lambda (w n#f n#t) 
-			    (graph*balance cells
-					   (length cells)
-					   w n#f n#t))			  
-			  ;; split into 1:(prime-1) ratio
-			  (cons 1 (sub1 (car factors))) 
-			  10)
-	    (let ([bpart#f (map (complement graph*partition) cells)]
-		  [bpart#t (map graph*partition cells)])
-	      ;;; modify binary tree
-              
-              (set-inregion! cells #f)
-	      (pway (cons 1 (cdr factors)) 
-		    (compress bpart#f cells))
-              
-              (set-inregion! cells #t)
-	      (pway (append (factor (sub1 (car factors))) (cdr factors)) 
-		    (compress bpart#t cells)))
-	    ]
-	   )
-	  (set! partition-level (sub1 partition-level))
-	  )
-	(and #f ;; debugging
-	     (for-each
-	      (lambda (l)
-		(display (lambda-literal-id l))
-		(display " in ")
-		(display (lambda-literal-partition l))
-		(newline))
-	      lambdas))
-        (randomize);; reset random
-        ))
     
     (debugging 'p "preparation phase...")
-    (let* ((node2 (walk node '() #f '()))
-	   (t0 (##sys#fudge 6)) )
-      (partition-phase! partitions)
-      (debugging 'b (sprintf "  time needed for partitioning: ~A ms" (- (##sys#fudge 6) t0)))
+    (let ((node2 (walk node '() #f '())))
       (debugging 'o "fast box initializations" fastinits)
       (debugging 'o "fast global references" fastrefs)
       (debugging 'o "fast global assignments" fastsets)
       (values node2 literals lambdas) ) ) )
-
-
-;; factor - Jonah Beckford - slimmed down from SLIB. -*- Hen -*-
-
-;;;; "factor.scm" factorization, prime test and generation
-;;; Copyright (C) 1991, 1992, 1993, 1998 Aubrey Jaffer
-;
-;Permission to copy this software, to modify it, to redistribute it,
-;to distribute modified versions, and to use it for any purpose is
-;granted, subject to the following restrictions and understandings.
-;
-;1.  Any copy made of this software must include this copyright notice
-;in full.
-;
-;2.  I have made no warranty or representation that the operation of
-;this software will be error-free, and I am under no obligation to
-;provide any services, by way of maintenance, update, or otherwise.
-;
-;3.  In conjunction with products arising from the use of this
-;material, there shall be no use of my name in any advertising,
-;promotional, or sales literature without prior written consent in
-;each case.
-
-;;(declare (unit factor)
-;;	 (uses lolevel)
-;;	 (export factor))
-
-;;; prime:products are products of small primes.
-;;; was (comlist:notevery (lambda (prd) (= 1 (gcd n prd))) comps))
-(declare
-  (hide primes-gcd? prime:prime-sqr prime:products prime:sieve prime:f prime:fo prime:fe) )
-
-(define (primes-gcd? n comps)
-  (not (let mapf ((lst comps))
-	 (or (null? lst) (and (= 1 (gcd n (car lst))) (mapf (cdr lst)))))))
-(define prime:prime-sqr 121)
-(define prime:products '(105))
-(define prime:sieve (vector 0 0 1 1 0 1 0 1 0 0 0))
-(letrec ((lp (lambda (comp comps primes nexp)
-	       (cond ((< comp (quotient (##sys#fudge 21) nexp))
-		      (let ((ncomp (* nexp comp)))
-			(lp ncomp comps
-			    (cons nexp primes)
-			    (next-prime nexp (cons ncomp comps)))))
-		     ((< (quotient comp nexp) (* nexp nexp))
-		      (set! prime:prime-sqr (* nexp nexp))
-		      (set! prime:sieve (make-vector nexp 0))
-		      (for-each (lambda (prime)
-				  (vector-set! prime:sieve prime 1))
-				primes)
-		      (set! prime:products (reverse (cons comp comps))))
-		     (else
-		      (lp nexp (cons comp comps)
-			  (cons nexp primes)
-			  (next-prime nexp (cons comp comps)))))))
-	 (next-prime (lambda (nexp comps)
-		       (set! comps (reverse comps))
-		       (do ((nexp (+ 2 nexp) (+ 2 nexp)))
-			   ((not (primes-gcd? nexp comps)) nexp)))))
-  (lp 3 '() '(2 3) 5))
-;;;;Lankinen's recursive factoring algorithm:
-;From: ld231782@longs.LANCE.ColoState.EDU (L. Detweiler)
-
-;                  |  undefined if n<0,
-;                  |  (u,v) if n=0,
-;Let f(u,v,b,n) := | [otherwise]
-;                  |  f(u+b,v,2b,(n-v)/2) or f(u,v+b,2b,(n-u)/2) if n odd
-;                  |  f(u,v,2b,n/2) or f(u+b,v+b,2b,(n-u-v-b)/2) if n even
-
-;Thm: f(1,1,2,(m-1)/2) = (p,q) iff pq=m for odd m.
-
-;It may be illuminating to consider the relation of the Lankinen function in
-;a `computational hierarchy' of other factoring functions.*  Assumptions are
-;made herein on the basis of conventional digital (binary) computers.  Also,
-;complexity orders are given for the worst case scenarios (when the number to
-;be factored is prime).  However, all algorithms would probably perform to
-;the same constant multiple of the given orders for complete composite
-;factorizations.
-
-;Thm: Eratosthenes' Sieve is very roughtly O(ln(n)/n) in time and
-;     O(n*log2(n)) in space.
-;Pf: It works with all prime factors less than n (about ln(n)/n by the prime
-;    number thm), requiring an array of size proportional to n with log2(n)
-;    space for each entry.
-
-;Thm: `Odd factors' is O((sqrt(n)/2)*log2(n)) in time and O(log2(n)) in
-;     space.
-;Pf: It tests all odd factors less than the square root of n (about
-;    sqrt(n)/2), with log2(n) time for each division.  It requires only
-;    log2(n) space for the number and divisors.
-
-;Thm: Lankinen's algorithm is O(sqrt(n)/2) in time and O((sqrt(n)/2)*log2(n))
-;     in space.
-;Pf: The algorithm is easily modified to seach only for factors p<q for all
-;    pq=m.  Then the recursive call tree forms a geometric progression
-;    starting at one, and doubling until reaching sqrt(n)/2, or a length of
-;    log2(sqrt(n)/2).  From the formula for a geometric progression, there is
-;    a total of about 2^log2(sqrt(n)/2) = sqrt(n)/2 calls.  Assuming that
-;    addition, subtraction, comparison, and multiplication/division by two
-;    occur in constant time, this implies O(sqrt(n)/2) time and a
-;    O((sqrt(n)/2)*log2(n)) requirement of stack space.
-
-(define (prime:f u v b n)
-  (if (<= n 0)
-      (cond ((negative? n) #f)
-	    ((= u 1) #f)
-	    ((= v 1) #f)
-	    ; Do both of these factors need to be factored?
-	    (else (append (or (prime:f 1 1 2 (quotient (- u 1) 2))
-			      (list u))
-			  (or (prime:f 1 1 2 (quotient (- v 1) 2))
-			      (list v)))))
-      (if (even? n)
-	  (or (prime:f u v (+ b b) (quotient n 2))
-	      (prime:f (+ u b) (+ v b) (+ b b) (quotient (- n (+ u v b)) 2)))
-	  (or (prime:f (+ u b) v (+ b b) (quotient (- n v) 2))
-	      (prime:f u (+ v b) (+ b b) (quotient (- n u) 2))))))
-
-(define (prime:fo m)
-  (let* ((s (gcd m (car prime:products)))
-	 (r (quotient m s)))
-    (if (= 1 s)
-	(or (prime:f 1 1 2 (quotient (- m 1) 2)) (list m))
-	(append
-	 (if (= 1 r) '()
-	     (or (prime:f 1 1 2 (quotient (- r 1) 2)) (list r)))
-	 (or (prime:f 1 1 2 (quotient (- s 1) 2)) (list s))))))
-
-(define (prime:fe m)
-  (if (even? m)
-      (cons 2 (prime:fe (quotient m 2)))
-      (if (eqv? 1 m)
-	  '()
-	  (prime:fo m))))
-
-;;@body
-;;Returns a list of the prime factors of @1.  The order of the
-;;factors is unspecified.  In order to obtain a sorted list do
-;;@code{(sort! (factor @var{k}) <)}.
-(define (factor k)
-  (case k
-    ((-1 0 1) (list k))
-    (else (if (negative? k)
-	      (cons -1 (prime:fe (- k)))
-	      (prime:fe k)))))

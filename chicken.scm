@@ -1,6 +1,6 @@
 ;;;; chicken.scm - The CHICKEN Scheme compiler (loader/main-module)
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -34,8 +34,7 @@
 
 
 (declare
-  (uses extras srfi-1 match srfi-4 utils support compiler optimizer driver platform backend 
-	easyffi partition lolevel tinyclos)
+  (uses srfi-1 match srfi-4 utils support compiler optimizer driver platform backend)
   (run-time-macros) )
 
 
@@ -45,9 +44,9 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations process-command-line
-  foreign-type-table-size file-io-only nonwinding-call/cc debugging
+  file-io-only nonwinding-call/cc debugging
   unit-name insert-timer-checks used-units zap-strings-flag
-  foreign-declarations debugging-executable block-compilation analysis-database-size line-number-database-size
+  foreign-declarations debugging-executable block-compilation line-number-database-size
   target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -59,7 +58,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
   transform-direct-lambdas!
-  debugging-chicken bomb check-signature posq stringify symbolify flonum? build-lambda-list
+  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
@@ -80,7 +79,7 @@
   (include "chicken-more-macros")
   (include "chicken-ffi-macros") )
 
-(##sys#provide 'extras 'srfi-1 'srfi-4)
+;;(##sys#provide 'extras 'srfi-1 'srfi-4)
 
 
 ;;; Prefix argument list with default options:

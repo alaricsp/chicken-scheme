@@ -114,6 +114,16 @@ This is equivalent to
 .B \-script
 
 .TP
+.BI \-ss\ pathname
+Similar to
+.B \-script
+but invokes the procedure
+.B main
+after loading the file specified by
+.B pathname
+with a single argument (the list of command line arguments) returning any result as status code.
+
+.TP
 .BI \-R\ \-require\-extension\  name
 Require extension for evaluated code.
 

@@ -1,6 +1,6 @@
 ;;;; profiler.scm - Support code for profiling applications
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -44,10 +44,12 @@
  [paranoia]
  [else
   (declare
+    (bound-to-procedure
+     write-char write make-vector)
     (no-bound-checks) ) ] )
 
 
-(include "parameters.scm")
+(define-constant profile-info-entry-size 5)
 
 
 ;;; Globals:
@@ -79,19 +81,29 @@
 	(set! ##sys#profile-vector-list (cons vec ##sys#profile-vector-list))
 	vec) ) ) )
 
+(define (##sys#set-profile-info-vector! vec i x)
+  (##sys#setslot vec (* i profile-info-entry-size) x) )
+
 
 ;;; Entry and exit into/out of profiled lambda:
 
-(define (##sys#profile-entry index vec)
-  (let* ([i (* index profile-info-entry-size)]
-	 [ic (add1 i)]
-	 [it0 (+ i 2)] 
-	 [ip (+ i 4)] 
-	 [ipc (##sys#slot vec ip)] )
-    (##sys#setislot vec ic (add1 (##sys#slot vec ic)))
-    (when (zero? ipc)
-      (##sys#setislot vec it0 (##sys#fudge 6)) )
-    (##sys#setislot vec ip (add1 ipc)) ) )
+(define ##sys#profile-entry 
+  (let ((maxfix (##sys#fudge 21)))
+    (lambda (index vec)
+      (let* ([i (* index profile-info-entry-size)]
+	     [ic (add1 i)]
+	     [count (##sys#slot vec ic)]
+	     [it0 (+ i 2)] 
+	     [ip (+ i 4)] 
+	     [ipc (##sys#slot vec ip)] )
+	(##sys#setislot 
+	 vec ic
+	 (cond ((not count) #f)
+	       ((eq? maxfix count) #f)
+	       (else (add1 count))))
+	(when (zero? ipc)
+	  (##sys#setislot vec it0 (##sys#fudge 6)) )
+	(##sys#setislot vec ip (add1 ipc)) ) ) ) )
 
 (define (##sys#profile-exit index vec)
   (let* ([i (* index profile-info-entry-size)]
@@ -112,6 +124,8 @@
 	[write-char write-char]
 	[write write] )
     (lambda ()
+      (when (##sys#fudge 13)
+	(##sys#print "[debug] writing profile...\n" #f ##sys#standard-output) )
       (apply
        with-output-to-file ##sys#profile-name
        (lambda () 

@@ -1,0 +1,444 @@
+[[tags: manual]]
+[[toc:]]
+
+== Introduction
+
+The interface to {{chicken}} is intentionally simple.  System
+dependent makefiles, shell-scripts or batch-files should perform
+any necessary steps before and after invocation of {{chicken}}.
+A program named {{csc}} provides a much simpler
+interface to the Scheme- and C-compilers and linker. Enter
+
+ csc -help
+
+on the command line for more information.
+
+== Compiler command line format
+
+ chicken FILENAME {OPTION}
+
+{{FILENAME}} is the complete pathname of the source file that is to
+be translated into C. A filename argument of {{-}} specifies that
+the source text should be read from standard input. Note that the filename
+has to be the first argument to {{chicken}}.
+
+Possible options are:
+
+; -analyze-only : Stop compilation after first analysis pass.
+
+; -benchmark-mode : Equivalent to {{-no-trace -no-lambda-info -optimize-level 3}} {{-fixnum-arithmetic -disable-interrupts -block -lambda-lift}}.
+
+; -block : Enable block-compilation. When this option is specified, the compiler assumes that global variables are not modified outside this compilation-unit.  Specifically, toplevel bindings are not seen by {{eval}} and unused toplevel bindings are removed.
+
+; -case-insensitive : Enables the reader to read symbols case insensitive. The default is to read case sensitive (in violation of R5RS).  This option registers the {{case-insensitive}} feature identifier.
+
+; -check-imports : Search for references to undefined global variables. For each library unit accessed via {{(declare (uses ...))}}, the compiler will search a file named {{UNITNAME.exports}} in the current include path and load its contents into the ''import-table'' (if found). Also, export-information for extensions (accessed through {{(require-extension ...)}}) will be searched and stored in the import-table. If a required extension does not provide explicit export-information a {{.exports}} file is searched (as with used units). After the analysis phase of the compiler, referenced toplevel variables for which no assignment was found will generate a warning. Also, re-assignments of imported variables will trigger a warning.
+
+; -check-syntax : Aborts compilation process after macro-expansion and syntax checks.
+
+; -compress-literals THRESHOLD : Compiles quoted literals that exceed the size {{THRESHOLD}} as strings and parse the strings at run-time. This reduces the size of the code and speeds up compile-times of the host C compiler, but has a small run-time performance penalty. The size of a literal is computed by counting recursively the objects in the literal, so a vector counts as 1 plus the count of the elements, a pair counts as the counts of the car and the cdr, respectively. All other objects count 1.
+
+; -debug MODES : Enables one or more compiler debugging modes. {{MODES}} is a string of characters that select debugging information about the compiler that will be printed to standard output.
+
+     t          show time needed for compilation
+     b          show breakdown of time needed for each compiler pass
+     o          show performed optimizations
+     r          show invocation parameters
+     s          show program-size information and other statistics
+     a          show node-matching during simplification
+     p          show execution of compiler sub-passes
+     l          show lambda-lifting information
+     m          show GC statistics during compilation
+     n          print the line-number database 
+     c          print every expression before macro-expansion
+     u          lists all unassigned global variable references
+     x          display information about experimental features
+     D          when printing nodes, use node-tree output
+     N          show the real-name mapping table
+     U          show expressions after the secondary user pass
+     0          show database before lambda-lifting pass
+     L          show expressions after lambda-lifting
+     M          show unit-information and syntax-/runtime-requirements
+     1          show source expressions
+     2          show canonicalized expressions
+     3          show expressions converted into CPS
+     4          show database after each analysis pass
+     5          show expressions after each optimization pass
+     6          show expressions after each inlining pass
+     7          show expressions after complete optimization
+     8          show database after final analysis
+     9          show expressions after closure conversion
+
+; -debug-level LEVEL : Selects amount of debug-information. {{LEVEL}} should be an integer.
+
+     -debug-level 0             is equivalent to -no-trace -no-lambda-info
+     -debug-level 1             is equivalent to -no-trace
+     -debug-level 2             does nothing (the default)
+
+; -disable-interrupts : Equivalent to the {{(disable-interrupts)}} declaration. No interrupt-checks are generated for compiled programs.
+
+; -disable-compiler-macros : disable expansion of compiler macros.
+
+; -disable-stack-overflow-checks : Disables detection of stack overflows. This is equivalent to running the compiled executable with the {{-:o}} runtime option.
+
+; -disable-warning CLASS : Disables specific class of warnings, may be given multiple times. The following classes are defined:
+
+     usage              warnings related to command-line arguments
+     type               warnings related to type-conversion
+     ext                warnings related to extension libraries
+     var                warnings related to variable- and syntax-definitions and use
+     const              warnings related to constant-definitions
+     syntax             syntax-related warnings
+     redef              warnings about redefinitions of standard- or extended-bindings
+     call               warnings related to known procedure calls
+     ffi                warnings related to the foreign function interface
+
+; -dynamic : This option should be used when compiling files intended to be loaded dynamically into a running Scheme program.
+
+; -epilogue FILENAME : Includes the file named {{FILENAME}} at the end of the compiled source file. The include-path is not searched. This option may be given multiple times.
+
+; -emit-exports FILENAME : Write exported toplevel variables to {{FILENAME}}.
+
+; -emit-external-prototypes-first : Emit prototypes for callbacks defined with {{define-external}} before any other foreign declarations. This is sometimes useful, when C/C++ code embedded into the a Scheme program has to access the callbacks. By default the prototypes are emitted after foreign declarations.
+
+; -explicit-use : Disables automatic use of the units {{library, eval}} and {{extras}}. Use this option if compiling a library unit instead of an application unit.
+
+; -extend FILENAME : Loads a Scheme source file or compiled Scheme program (on systems that support it) before compilation commences. This feature can be used to extend the compiler.  This option may be given multiple times. The file is also searched in the current include path and in the extension-repository.
+
+; -extension : Mostly equivalent to {{-prelude '(define-extension <NAME>)'}}, where {{<NAME>}} is the basename of the currently compiled file. Note that if you want to compile a file as a normal (dynamically loadable) extension library, you should also pass the {{-shared}} option.
+
+; -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}}. Multiple symbols may be given, if comma-separated.
+
+; -fixnum-arithmetic : Equivalent to {{(fixnum-arithmetic)}} declaration. Assume all mathematical operations use small integer arguments.
+
+; -heap-size NUMBER : Sets a fixed heap size of the generated executable to {{NUMBER}} bytes. The parameter may be followed by a  {{M}} ({{m}}) or {{K}} ({{k}}) suffix which stand for mega- and kilobytes, respectively.  The default heap size is 5 kilobytes. Note that only half of it is in use at every given time.
+
+; -heap-initial-size NUMBER : Sets the size that the heap of the compiled application should have at startup time.
+
+; -heap-growth PERCENTAGE : Sets the heap-growth rate for the compiled program at compile time (see: {{-:hg}}).
+
+; -heap-shrinkage PERCENTAGE : Sets the heap-shrinkage rate for the compiled program at compile time (see: {{-:hs}}).
+
+; -help : Print a summary of available options and the format of the command line parameters and exit the compiler.
+
+; -import FILENAME : Read exports from linked or loaded libraries from given file. See also {{-check-imports}}. This is equivalent to declaring {{(declare (import FILENAME))}}. Implies {{-check-imports}}.
+
+; -include-path PATHNAME : Specifies an additional search path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}. The environment variable {{CHICKEN_HOME}} is also considered as a search path.
+
+; -inline : Enable procedure inlining for known procedures of a size below the threshold (which can be set through the {{-inline-limit}} option).
+
+; -inline-limit THRESHOLD : Sets the maximum size of a potentially inlinable procedure. This option is only effective when inlining has been enabled with the {{-inline}} option. The default threshold is {{10}}.
+
+; -keyword-style STYLE : Enables alternative keyword syntax, where {{STYLE}} may be either {{prefix}} (as in Common Lisp), {{suffix}} (as in DSSSL) or {{none}}. Any other value is ignored. The default is {{suffix}}.
+
+; -keep-shadowed-macros : Do not remove macro definitions with the same name as assigned toplevel variables (the default is to remove the macro definition).
+
+; -lambda-lift : Enable the optimization known as lambda-lifting.
+
+; -no-lambda-info : Don't emit additional information for each {{lambda}} expression (currently the argument-list, after alpha-conversion/renaming).
+
+; -no-trace : Disable generation of tracing information. If a compiled executable should halt due to a runtime error, then a list of the name and the line-number (if available) of the last procedure calls is printed, unless {{-no-trace}} is specified. With this option the generated code is slightly faster.
+
+; -no-warnings : Disable generation of compiler warnings.
+
+; -nursery NUMBER :
+; -stack-size NUMBER : Sets the size of the first heap-generation of the generated executable to {{NUMBER}} bytes. The parameter may be followed by a {{M}} ({{m}}) or {{K}} ({{k}}) suffix.  The default stack-size depends on the target platform.
+
+; -optimize-leaf-routines : Enable leaf routine optimization.
+
+; -optimize-level LEVEL : Enables certain sets of optimization options. {{LEVEL}} should be an integer.
+
+     -optimize-level 0          does nothing.
+     -optimize-level 1          is equivalent to -optimize-leaf-routines
+     -optimize-level 2          is currently the same as -optimize-level 1
+     -optimize-level 3          is equivalent to -optimize-leaf-routines -unsafe
+
+; -output-file FILENAME : Specifies the pathname of the generated C file. Default is {{FILENAME.c}}.
+
+; -postlude EXPRESSIONS : Add {{EXPRESSIONS}} after all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place after processing of {{-epilogue}}.
+
+; -prelude EXPRESSIONS : Add {{EXPRESSIONS}} before all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place before processing of {{-prologue}}.
+
+; -profile :
+;-accumulate-profile : Instruments the source code to count procedure calls and execution times. After the program terminates (either via an explicit {{exit}} or implicitly), profiling statistics are written to a file named {{PROFILE}}. Each line of the generated file contains a list with the procedure name, the number of calls and the time spent executing it. Use the {{chicken-profile}} program to display the profiling information in a more user-friendly form. Enter {{chicken-profile}} with no arguments at the command line to get a list of available options. The {{-accumulate-profile}} option is similar to {{-profile}}, but the resulting profile information will be appended to any existing {{PROFILE}} file. {{chicken-profile}} will merge and sum up the accumulated timing information, if several entries for the same procedure calls exist.
+
+; -profile-name FILENAME : Specifies name of the generated profile information (which defaults to {{PROFILE}}. Implies {{-profile}}.
+
+; -prologue FILENAME : Includes the file named {{FILENAME}} at the start of the compiled source file.  The include-path is not searched. This option may be given multiple times.
+
+; -quiet : Disables output of compile information.
+
+; -raw : Disables the generation of any implicit code that uses the Scheme libraries (that is all runtime system files besides {{runtime.c}} and {{chicken.h}}).
+
+; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}. Multiple names may be given and should be separated by {{,}}.
+
+; -run-time-macros : Makes macros also available at run-time. By default macros are not available at run-time.
+
+; -to-stdout : Write compiled code to standard output instead of creating a {{.c}} file.
+
+; -unit NAME : Compile this file as a library unit. Equivalent to {{-prelude "(declare (unit NAME))"}}
+
+; -unsafe : Disable runtime safety checks.
+
+; -unsafe-libraries : Marks the generated file for being linked with the unsafe runtime system. This should be used when generating shared object files that are to be loaded dynamically. If the marker is present, any attempt to load code compiled with this option will signal an error.
+
+; -uses NAME : Use definitions from the library unit {{NAME}}. This is equivalent to {{-prelude "(declare (uses NAME))"}}. Multiple arguments may be given, separated by {{,}}.
+
+; -no-usual-integrations : Specifies that standard procedures and certain internal procedures may be redefined, and can not be inlined. This is equivalent to declaring {{(not usual-integrations)}}.
+
+; -version : Prints the version and some copyright information and exit the compiler.
+
+; -verbose : Prints progress information to standard output during compilation.
+
+The environment variable {{CHICKEN_OPTIONS}} can be set to a string
+with default command-line options for the compiler.
+
+== Runtime options
+
+After successful compilation a C source file is generated and can be
+compiled with a C compiler. Executables generated with CHICKEN (and the
+compiler itself) accept a small set of runtime options:
+
+; {{-:?}} : Shows a list of the available runtime options and exits the program.
+
+; {{-:b}} : Enter a read-eval-print-loop when an error is encountered.
+
+; {{-:c}} : Forces console mode. Currently this is only used in the interpreter ({{csi}}) to force output of the {{#;N>}} prompt even if stdin is not a terminal (for example if running in an {{emacs}} buffer under Windows).
+
+; {{-:d}} : Prints some debug-information at runtime.
+
+; {{-:D}} : Prints some more debug-information at runtime.
+
+; {{-:hNUMBER}} : Specifies fixed heap size
+
+; {{-:hiNUMBER}} : Specifies the initial heap size
+
+; {{-:hgPERCENTAGE}} : Sets the growth rate of the heap in percent. If the heap is exhausted, then it will grow by {{PERCENTAGE}}. The default is 200.
+
+; {{-:hmNUMBER}} : Specifies a maximal heap size. The default is (2GB - 15).
+
+; {{-:hsPERCENTAGE}} : Sets the shrink rate of the heap in percent. If no more than a quarter of {{PERCENTAGE}} of the heap is used, then it will shrink to {{PERCENTAGE}}. The default is 50.  Note: If you want to make sure that the heap never shrinks, specify a value of {{0}}.  (this can be useful in situations where an optimal heap-size is known in advance). 
+
+; {{-:o}} : Disables detection of stack overflows at run-time.
+
+; {{-:sNUMBER}} : Specifies stack size.
+
+; {{-:tNUMBER}} : Specifies symbol table size.
+
+; {{-:fNUMBER}} : Specifies the maximal number of currently pending finalizers before finalization is forced.
+
+; {{-:aNUMBER}} : Specifies the length of the buffer for recording a trace of the last invoked procedures. Defaults to 16.
+
+; {{-:w}} : Enables garbage collection of unused symbols. By default unused and unbound symbols are not garbage collected.
+
+; {{-:r}} : Writes trace output to stderr. This option has no effect with in files compiled with the {{-no-trace}} options.
+
+; {{-:x}} : Raises uncaught exceptions of separately spawned threads in primordial thread. By default uncaught exceptions in separate threads are not handled, unless the primordial one explicitly joins them. When warnings are enabled (the default) and {{-:x}} is not given, a warning will be shown, though.
+
+; {{-:B}} : Sounds a bell (ASCII 7) on every major garbage collection.
+
+The argument values may be given in bytes, in kilobytes (suffixed with
+{{K}} or {{k}}), in megabytes (suffixed with {{M}}
+or {{m}}), or in gigabytes (suffixed with {{G}}
+or {{g}}). Runtime options may be combined, like {{-:dc}},
+but everything following a {{NUMBER}} argument is ignored. So
+{{-:wh64m}} is OK, but {{-:h64mw}} will not enable GC of
+unused symbols.
+== Examples
+
+=== A simple example (with one source file)
+
+To compile a Scheme program (assuming a UNIX-like environment) consisting of a single source file, perform the following steps.
+
+==== Writing your source file
+
+In this example we will assume your source file is called {{foo.scm}}:
+
+<enscript highlight=scheme>
+;;; foo.scm
+
+(define (fac n)
+  (if (zero? n)
+      1
+      (* n (fac (- n 1))) ) )
+
+(write (fac 10))
+(newline)
+</enscript>
+
+==== Compiling your program
+
+Compile the file {{foo.scm}}:
+
+ % csc foo.scm
+
+This will produce the {{foo}} executable:
+
+ % ls
+ foo  foo.scm
+
+==== Running your program
+
+To run your newly compiled executable use:
+
+ % foo
+ 3628800
+
+If you get a {{foo: command not found}} error, you might want to try with {{./foo}} instead
+(or, in Unix machines, modify your {{PATH}} environment variable to include your current directory).
+=== An example with multiple files
+
+If multiple bodies of Scheme code are to be combined into a single
+executable, then we have to compile each file and link the resulting
+object files together with the runtime system.
+
+Let's consider an example where your program consists of multiple source files.
+
+==== Writing your source files
+
+The declarations in these files specify which of the compiled files is the main
+module, and which is the library module. An executable can only have
+one main module, since a program has only a single entry-point. In this
+case {{foo.scm}} is the main module, because it doesn't have a
+{{unit}} declaration:
+
+<enscript highlight=scheme>
+;;; foo.scm
+
+; The declaration marks this source file as dependant on the symbols provided
+; by the bar unit:
+(declare (uses bar))
+
+(write (fac 10)) (newline)
+</enscript>
+
+{{bar.scm}} will be our library:
+
+<enscript highlight=scheme>
+;;; bar.scm
+
+; The declaration marks this source file as the bar unit.  The names of the
+; units and your files don't need to match.
+(declare (unit bar))
+
+(define (fac n)
+  (if (zero? n)
+      1
+      (* n (fac (- n 1))) ) )
+</enscript>
+
+==== Compiling and running your program
+
+You should compile your two files with the following commands:
+
+ % csc -c bar.scm
+ % csc -c foo.scm
+
+That should produce two files, {{bar.o}} and {{foo.o}}.
+They contain the code from your source files in compiled form.
+
+To link your compiled files use the following command:
+
+ % csc foo.o bar.o -o foo
+
+This should produce the {{foo}} executable, which you can run just as in the previous example.
+At this point you can also erase the {{*.o}} files.
+
+You could avoid one step and link the two files just as {{foo.scm}} is compiled:
+
+ % csc -c bar.scm
+ % csc foo.scm bar.o -o foo
+
+Note that if you want to distribute your program, you might want it to follow the GNU Coding Standards.  One relatively easy way to achieve this is to use Autoconf and Automake, two tools made for this specific purpose.  Consult [[autoconf - automake]] for some instructions on how you would do this.
+== Extending the compiler
+
+The compiler supplies a couple of hooks to add user-level passes to the
+compilation process. Before compilation commences any Scheme source files
+or compiled code specified using the {{-extend}} option are loaded
+and evaluated.  The parameters {{user-options-pass, user-read-pass,
+user-preprocessor-pass, user-pass, user-pass-2}} and {{user-post-analysis-pass}} can be set
+to procedures that are called to perform certain compilation passes
+instead of the usual processing (for more information about parameters
+see: [[Supported language]].
+
+; [parameter] user-options-pass : Holds a procedure that will be called with a list of command-line arguments and should return two values: the source filename and the actual list of options, where compiler switches have their leading {{-}} (hyphen) removed and are converted to symbols.  Note that this parameter is invoked '''before''' processing of the {{-extend}} option, and so can only be changed in compiled user passes.
+
+; [parameter] user-read-pass : Holds a procedure of three arguments. The first argument is a list of strings with the code passed to the compiler via {{-prelude}} options. The second argument is a list of source files including any files specified by {{-prologue}} and {{-epilogue}}. The third argument is a list of strings specified using {{-postlude}} options. The procedure should return a list of toplevel Scheme expressions.
+
+; [parameter] user-preprocessor-pass : Holds a procedure of one argument. This procedure is applied to each toplevel expression in the source file '''before''' macro-expansion. The result is macro-expanded and compiled in place of the original expression.
+
+; [parameter] user-pass : Holds a procedure of one argument. This procedure is applied to each toplevel expression '''after''' macro-expansion.  The result of the procedure is then compiled in place of the original expression. 
+
+; [parameter] user-pass-2 : Holds a procedure of three arguments, which is called with the canonicalized node-graph as its sole argument. The result is ignored, so this pass has to mutate the node-structure to cause any effect.
+
+; [parameter] user-post-analysis-pass : Holds a procedure that will be called after every performed program analysis pass. The procedure (when defined) will be called with five arguments: a symbol indicating the analysis pass, the program database, the current node graph, a getter and a setter-procedure which can be used to access and manipulate the program database, which holds various information about the compiled program. The getter procedure should be called with two arguments: a symbol representing the binding for which information should be retrieved, and a symbol that specifies the database-entry. The current value of the database entry will be returned or {{#f}}, if no such entry is available. The setter procedure is called with three arguments: the symbol and key and the new value. For information about the contents of the program database contact the author.
+
+Loaded code (via the {{-extend}} option) has access to the library
+units {{extras, srfi-1, srfi-4, utils, regex}} and the pattern matching macros. 
+Multithreading is not available.
+
+Note that the macroexpansion/canonicalization phase of the compiler adds
+certain forms to the source program.  These extra expressions are not
+seen by {{user-preprocessor-pass}} but by {{user-pass}}.
+
+== Distributing compiled C files
+
+It is relatively easy to create distributions of Scheme projects that
+have been compiled to C.  The runtime system of CHICKEN consists of only
+two handcoded C files ({{runtime.c}} and {{chicken.h}}), plus
+the file {{chicken-config.h}}, which is generated by the build process. All
+other modules of the runtime system and the extension libraries are just
+compiled Scheme code. The following example shows a minimal application, which
+should run without changes on the most frequent operating systems, like Windows,
+Linux or FreeBSD:
+
+Let's take a simple "Hello, world!":
+
+<enscript highlight=scheme>
+; hello.scm
+
+(print "Hello, world!")
+</enscript>
+
+Compiled to C, we get {{hello.c}}. We need the files {{chicken.h}} and
+{{runtime.c}}, which contain the basic runtime system, plus the three basic library
+files {{library.c}}, {{eval.c}} and {{extras.c}} which contain the same functionality as the
+library linked into a plain CHICKEN-compiled application, or which is available by default in the
+interpreter, {{csi}}:
+
+ % csc hello.scm -O2 -d1
+
+A simple makefile is needed as well:
+
+<enscript highlight=makefile>
+# Makefile for UNIX systems
+
+hello: hello.o runtime.o library.o eval.o extras.o
+       $(CC) -o hello hello.o runtime.o library.o eval.o extras.o -lm
+
+hello.o: chicken.h
+runtime.o: chicken.h
+library.o: chicken.h
+eval.o: chicken.h
+extras.o: chicken.h
+</enscript>
+
+Now we have all files together, and can create an tarball containing all the files:
+
+ % tar cf hello.tar Makefile hello.c runtime.c library.c eval.c extras.c chicken.h
+ % gzip hello.tar
+
+This is of naturally rather simplistic. Things like enabling dynamic loading, estimating
+the optimal stack-size and selecting supported features of the host system would need
+more configuration- and build-time support. All this can be addressed using more
+elaborate build-scripts, makefiles or by using [[autoconf - automake]].
+
+Note also that the size of the application can still be reduced by removing {{extras}} and
+{{eval}} and compiling {{hello.scm}} with the {{-explicit-use}} option.
+
+For more information, study the CHICKEN source code
+and/or get in contact with the author.
+
+Previous: [[The User's Manual]]
+
+Next: [[Using the interpreter]]

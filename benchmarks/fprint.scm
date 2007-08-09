@@ -34,7 +34,7 @@
   (do ((a atoms (cdr a))) ((null? (cdr a)) (set-cdr! a atoms)))
   (init-aux m n atoms)))
 
-(define test-pattern (init 6 6 test-atoms))
+(define test-pattern (init 8 8 test-atoms))
 
 (define (fprint)
  (call-with-output-file "fprint.tst"

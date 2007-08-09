@@ -1,6 +1,6 @@
--18.scm - Simple thread unit - felix
+;;;; srfi-18.scm - Simple thread unit - felix
 ;
-; Copyright (c) 2000-2006, Felix L. Winkelmann
+; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -48,6 +48,10 @@
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+     ##sys#thread-yield!
+     condition-property-accessor ##sys#tty-port? ##sys#thread-block-for-i/o thread-yield! ##sys#thread-unblock!
+     ##sys#thread-basic-unblock! gensym ##sys#thread-block-for-timeout! ##sys#thread-kill!
+     ##sys#thread-block-for-termination! make-thread ##sys#exact->inexact ##sys#flonum-fraction truncate
      ##sys#add-to-ready-queue
      ##sys#schedule ##sys#make-thread
      ##sys#check-number ##sys#error ##sys#signal-hook ##sys#signal
@@ -118,12 +122,22 @@ EOF
   (##sys#check-structure tm 'time 'time->seconds)
   (+ (##sys#slot tm 2) (/ (##sys#slot tm 3) 1000)) )
 
+(define (time->milliseconds tm)
+  (##sys#check-structure tm 'time 'time->milliseconds)
+  (+ (inexact->exact (* (- (##sys#slot tm 2) C_startup_time_seconds) 1000))
+     (##sys#slot tm 3) ) )
+
 (define (seconds->time n)
   (##sys#check-number n 'seconds->time)
   (let* ([n2 (max 0 (- n C_startup_time_seconds))] ; seconds since startup
 	 [ms (truncate (* 1000 (##sys#flonum-fraction (##sys#exact->inexact n))))] ; milliseconds
 	 [n3 (inexact->exact (truncate (+ (* n2 1000) ms)))] ) ; milliseconds since startup
     (##sys#make-structure 'time n3 (truncate n) (inexact->exact ms)) ) )
+
+(define (milliseconds->time nms)
+  (##sys#check-exact nms 'milliseconds->time)
+  (let ((s (+ C_startup_time_seconds (/ nms 1000))))
+    (##sys#make-structure 'time nms s 0) ) )
 
 (define (time? x) (##sys#structure? x 'time))
 
@@ -216,12 +230,7 @@ EOF
       (##sys#add-to-ready-queue thread) 
       thread) ) )
 
-(define (thread-yield!)
-  (##sys#call-with-current-continuation
-   (lambda (return)
-     (let ((ct ##sys#current-thread))
-       (##sys#setslot ct 1 (lambda () (return (##core#undefined))))
-       (##sys#schedule) ) ) ) )
+(define thread-yield! ##sys#thread-yield!) ;In library.scm
 
 (define thread-join!
   (lambda (thread . timeout)
@@ -238,7 +247,7 @@ EOF
 	    ct 1
 	    (lambda ()
 	      (case (##sys#slot thread 3)
-		[(dead) (##sys#apply-values (##sys#slot thread 2))]
+		[(dead) (apply return (##sys#slot thread 2))]
 		[(terminated)
 		 (return 
 		  (##sys#signal
@@ -278,16 +287,16 @@ EOF
     (##sys#setslot thread 3 'ready)
     (##sys#add-to-ready-queue thread) ) )
 
-(define thread-sleep!
-  (lambda (tm)
-    (unless tm (##sys#signal-hook #:type-error 'thread-sleep! "invalid timeout argument" tm))
+(define (thread-sleep! tm)
+  (define (sleep limit loc)
     (##sys#call-with-current-continuation
      (lambda (return)
-       (let ([limit (##sys#compute-time-limit tm)]
-	     [ct ##sys#current-thread] )
+       (let ((ct ##sys#current-thread))
 	 (##sys#setslot ct 1 (lambda () (return (##core#undefined))))
 	 (##sys#thread-block-for-timeout! ct limit)
-	 (##sys#schedule) ) ) ) ) )
+	 (##sys#schedule) ) ) ) )
+  (unless tm (##sys#signal-hook #:type-error 'thread-sleep! "invalid timeout argument" tm))
+  (sleep (##sys#compute-time-limit tm) 'thread-sleep!) )
 
 
 ;;; Mutexes:
@@ -401,6 +410,7 @@ EOF
 	     (let* ([wt (##sys#slot waiting 0)]
 		    [wts (##sys#slot wt 3)] )
 	       (##sys#setslot mutex 3 (##sys#slot waiting 1))
+	       (##sys#setislot mutex 5 #t)
 	       (when (or (eq? wts 'blocked) (eq? wts 'sleeping))
 		 (##sys#setslot mutex 2 wt)
 		 (##sys#setslot wt 8 (cons mutex (##sys#slot wt 8)))

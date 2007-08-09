@@ -1,4 +1,97 @@
-2.318
+2.6
+
+- Many bugfixes
+- Better support for Sun's C compiler
+- Input-performance has been improved
+- PCRE (Perl compatible regular expressions) by Philip Hazel is now
+  bundled with CHICKEN
+- Static linking of extensions is now possible (when supported by
+  the egg)
+- The interpreter warns about references to potentially unbound variables
+  in loaded code and expressions entered on the REPL
+- The expansion process is traced during compilation and interpretation
+  to give (slightly) more usable syntactic context in error messages
+- library:
+  * added `any?`, `bit-set?' and `on-exit'
+- eval:
+  * new procedure `set-parameterized-read-syntax!'
+- posix: 
+  * SRFI-17 setters for `file-position`, `current-user-id', 
+    `current-group-id', `process-group-id'; the respective setter-procedures
+    are still available but have been deprecated
+  * `file-stat' returns more information (including device info)
+  * added `process*'
+- extras:
+  * added `read-string!'
+- utils:
+  * `apropos' and `apropos-list' procedures
+- srfi-4:
+  * added `read-u8vector', `read-u8vector!' and `write-u8vector'
+- srfi-18:  
+  * added `time->milliseconds' and `milliseconds->time'
+- csi:
+  * `-ss SCRIPTNAME' option
+- csc:
+  * accepts options given in the environment variable `CSC_OPTIONS'
+  * new options `-static-extensions' and `-host'
+- chicken/csc:
+  * new option `-keep-shadowed-macros'
+- chicken-setup:
+  * accepts options given in the environment variable `CHICKEN_SETUP_OPTIONS'
+  * allows retrieval and installation of eggs from subversion repository
+    and the local filesystem
+  * new options `-tree FILENAME', `-svn', `-local', `-revsion' and 
+    `-destdir PATHNAME'
+  * added helper procedures `required-chicken-version' and
+    `required-extension-version'
+- Lots of improvements in the CMake build
+
+Many thanks to Ingo Bungener, Peter Busser, John Cowan, Marc Feeley,
+Stephen Gilardi, Mario Domenech Goulart, Joshua Griffith, Sven
+Hartrumpf, Daishi Kato, mejedi, Dan Muresan, Deanna
+Phillips, Robin Lee Powell, Ivan Raikov, Danial Sadilek, Alex Shinn,
+Tony Sideaway, Minh Thu for reporting bugs, suggesting improvements
+and contributing fixes.
+
+Thanks again to Brandon Van Every for his extensive work on the CMake
+build process.
+
+Special thanks to Kon Lovett for many improvements made in the posix
+library.
+
+
+2.5
+
+- Bugfixes
+- CHICKEN can now be built using CMake <http://www.cmake.org>, in fact CMake
+  is required to built CHICKEN from sources on Windows with the Microsoft 
+  tools
+- the whole build process has been cleaned up and simplified
+- the "easyffi" and "tinyclos" library units have been removed from the base
+  system and are now available as separate extensions
+- the deprecated "set-dispatch-read-syntax!" has been removed
+- Will Farr cleaned up the behaviour of number-type specific numeric operations
+  ("fx..."/"fp...") with respect to safe/unsafe mode
+- added "(finite? NUMBER)"
+- the "$" macro moved into its own separate extension
+- the values of "software-type", "software-version", "machine-type" and "machine-byte-order"
+  are now registered as features and can be tested using "cond-expand" or "#+"
+- all tools now support the "-release" option
+- chicken-setup: added "-test" option
+
+Special thanks to Brandon Van Every, who put considerable effort into the
+CHICKEN build system and who ported it to CMake completely from scratch.
+The installation instructions and build file are extensively documented and may
+serve as a tutorial for creating non-trivial software projects with CMake.
+Thanks, Brandon! Also thanks to Bill Hoffmann and Brad King from Kitware
+for their support.
+
+Many thanks to Peter Bex, Toby Butzon, Thomans Chust, John Cowan, Alejandro Forero Cuervo, 
+dgym, Alex Drummond, Mario Domenech Goulart, Kon Lovett, Benedikt Rosenau and Zbigniew 
+Szadkowski for reporting bugs, suggesting improvements and contributing fixes.
+
+
+2.41
 
 - Bugfixes galore
 - compiler: 
@@ -6,16 +99,17 @@
   * new option `-check-imports' (csc: `-G') checks for unimported symbols and can be quite
     helpful in finding unbound variable errors (this requires all extensions ("eggs") to be
     adapted to this new feature, a process which isn't complete yet)
-  * new declaration `emit-exports'
+  * new declarations `emit-exports', `constant' and `import'
   * new option `-disable-warning' and declaration `disable-warning'
-  * new option `-release'
+  * new options `-release' and `-import'
 - chicken-setup: 
   * new `exports' extension property
   * option `-check' checks for extension upgrades
   * added `-eval' option
   * added parameters `setup-install-flag' and `setup-verbose-flag'
 - FFI: 
-  * added the handy `$' macro, which lets you do foreign calls directly
+  * added the handy `$' macro, which lets you do foreign calls directly without declaring
+    a placeholder procedure
   * `define-foreign-enum' for treating C enums as symbol-sets
   * `foreign-safe-wrapper' has been deprecated
 - Slight reorganization of TinyCLOS and match macros and support code
@@ -28,23 +122,29 @@
   installations, this requires to either move all installed extensions to the
   new location ("$prefix/lib/chicken/1") or reinstall them
 - Now supports SRFI-61 (extended `cond')
-- Added `load-relative'
+- Added procedures `load-relative', `tcp-buffer-size`, `string-chomp'
 - trivial implementations of `real-part', `imag-part', `angle' and `magnitude' have 
   been added to the library to allow more portable code
 - Breakpoints and single-stepping of compiled code on the function-level, new
   procedures `breakpoint' and `singlestep'
+- csi: new toplevel commands `,info', `,step', `,br', `,ubr', `,breakall', `,breakonly',
+  `,exn' and `,c'
+- csi: `set-describer!' allows definition of custom output for the `,d' command
 - Added `integer64' foreign type specifier
-- Added `tcp-buffer-size'
 - The environment variable "CHICKEN_PREFIX" allows (together with "CHICKEN_REPOSITORY") overriding
   the installation path prefix in case you want to install and run multiple instances/versions 
   of CHICKEN or install on a shared network
 - csc: added `-dry-run' option
+- removed `-split...' options (and the ability to generate multiple C files from a single
+  Scheme file)
+- `crictical-section', `disable-interrupts' and `enable-interrupts' shouldn't be used from
+  now on (deprecated), use SRFI-18 mutexes instead
 
-Many thanks to Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, John Cowan, 
-Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech Goulart, 
-Sven Hartrumpf, Markus Hülsmann, Heath Johns, Daishi Kato, Kon Lovett, Dan Muresan, Burton Samograd, 
-Reed Sheridan, Alex Shinn, Sunnan, Zbigniew Szadkowski and Peter Wright for their helpful contributions,
-suggestions and bug reports!
+Many thanks to Nico Amtsberg, Arto Bendiken, Jean-Francois Bignolles, Peter Busser, Thomas Chust, 
+John Cowan, Alejandro Forero Cuervo, Jaarod Eells, Brandon van Every, Graham Fawcett, Mario Domenech 
+Goulart, Sven Hartrumpf, Markus Hülsmann, Goetz Isenmann, Heath Johns, Daishi Kato, Kon Lovett, Dan 
+Muresan, Ian Oversby, Göran Weinholt, Burton Samograd, Reed Sheridan, Alex Shinn, Sunnan, Zbigniew 
+Szadkowski and Peter Wright for their helpful contributions, suggestions and bug reports!
 
 
 2.3

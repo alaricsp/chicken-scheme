@@ -1,0 +1,95 @@
+[[tags: manual]]
+[[toc:]]
+
+== Callbacks
+
+
+To enable an external C function to call back to Scheme, the form
+{{foreign-safe-lambda}} (or {{foreign-safe-lambda*}})
+has to be used. This generates special code to save and restore important
+state information during execution of C code. There are two ways of
+calling Scheme procedures from C: the first is to invoke the runtime
+function {{C_callback}} with the closure to be called and the number
+of arguments.  The second is to define an externally visible wrapper
+function around a Scheme procedure with the {{define-external}}
+form.
+
+Note: the names of all functions, variables and macros exported by the
+CHICKEN runtime system start with {{C_}}. It is advisable to
+use a different naming scheme for your own code to avoid name clashes.
+Callbacks (defined by {{define-external}})
+do not capture the lexical environment.
+
+Non-local exits leaving the scope of the invocation of a callback from Scheme into C
+will not remove the C call-frame from the stack (and will result in a memory
+leak).
+
+
+
+=== define-external
+
+ [syntax] (define-external [QUALIFIERS] (NAME (ARGUMENTTYPE1 VARIABLE1) ...) RETURNTYPE BODY ...)
+ [syntax] (define-external NAME TYPE [INIT])
+
+The first form defines an externally callable Scheme
+procedure. {{NAME}} should be a symbol, which, when converted to a
+string, represents a legal C identifier. {{ARGUMENTTYPE1 ...}} and
+{{RETURNTYPE}} are foreign type specifiers for the argument variables
+{{VAR1 ...}} and the result, respectively.  {{QUALIFIERS}}
+is an optional qualifier for the foreign procedure definition, like
+{{__stdcall}}.
+
+<enscript highlight=scheme>
+(define-external (foo (c-string x)) int (string-length x))
+</enscript>
+
+The second form of {{define-external}} can be used to define
+variables that are accessible from foreign code. It declares
+a global variable named by the symbol {{NAME}} that
+has the type {{TYPE}}. {{INIT}} can be an arbitrary
+expression that is used to initialize the variable. {{NAME}} is
+accessible from Scheme just like any other foreign variable defined by
+{{define-foreign-variable}}.  
+
+<enscript highlight=scheme>
+(define-external foo int 42)
+((foreign-lambda* int ()
+  "C_return(foo);"))           ==> 42
+</enscript>
+
+'''Note:''' don't be tempted to
+assign strings or bytevectors to external variables. Garbage collection
+moves those objects around, so it is very bad idea to assign pointers
+to heap-data. If you have to do so, then copy the data object into
+statically allocated memory (for example by using {{object-evict}}).
+
+Results of type {{scheme-object}} returned by {{define-external}}
+are always allocated in the secondary heap, that is, not in the stack.
+=== C_callback
+
+ [C function] C_word C_callback (C_word closure, int argc)
+
+This function can be used to invoke the Scheme procedure {{closure}}.
+{{argc}} should contain the number of arguments that are passed to
+the procedure on the temporary stack. Values are put onto the temporary
+stack with the {{C_save}} macro.
+
+=== C_callback_adjust_stack_limits
+
+ [C function] void C_callback_adjust_stack_limits (C_word *ptr)
+
+The runtime-system uses the stack as a special allocation area and
+internally holds pointers to estimated limits to distinguish between Scheme
+data objects inside the stack from objects outside of it.
+If you invoke callbacks at wildly differing stack-levels,
+these limits may shift from invocation to invocation. Callbacks defined
+with {{define-external}} will perform appropriate adjustments automatically,
+but if you invoke {{C_callback}} manually, you should perform a
+{{C_callback_adjust_stack_limits}} to make sure the internal limits are
+set properly. {{ptr}} should point to some data object on the stack. The
+call will make sure the limits are adjusted so that the value pointed to
+by {{ptr}} is located in the stack.
+
+Previous: [[Embedding]]
+
+Next: [[Locations]]

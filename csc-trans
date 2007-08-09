@@ -1,0 +1,64 @@
+#!/bin/sh
+
+INDENT=indent
+INDENT_OPTS="-st"
+ENSCRIPT=enscript
+ENSCRIPT_OPTS="-q -Ec"
+CSC_OPTS="-to-stdout"
+CSC=csc
+
+# check for options
+COLOR="--color"
+MODE=""
+OUTPUT=-
+ALL=0
+while getopts ":a23ufbihprcotlI:" opt; do
+   case $opt in
+      a ) ALL="1";;
+      h ) MODE="--language=html";;
+      p ) MODE="--language=PostScript";;
+      r ) MODE="--language=rtf";;
+      t ) NOENSCRIPT="1";;
+      c ) COLOR="";; # disable color (on by default)
+      o ) OUTPUT=$OPTARG;;
+      u ) CSC_OPTS="$CSC_OPTS -unsafe";;
+      b ) CSC_OPTS="$CSC_OPTS -block";;
+      f ) CSC_OPTS="$CSC_OPTS -fixnum-arithmetic";;
+      i ) CSC_OPTS="$CSC_OPTS -inline";;
+      I ) CSC_OPTS="$CSC_OPTS -disable-interrupts";;
+      2 ) CSC_OPTS="$CSC_OPTS -O2";;
+      3 ) CSC_OPTS="$CSC_OPTS -O3";;
+      l ) CSC="./csc -compiler ./chicken-static";;
+   esac
+done
+shift $(($OPTIND - 1))
+
+# First argument after options is the file
+FILE=$1
+if [ "x$FILE" == "x" ]; then
+    FILE="/dev/stdin"
+fi
+
+# Only prettify output if the appropriate programs are installed
+if type $INDENT >/dev/null 2>&1; then
+  PASS2="$INDENT $INDENT_OPTS"
+else
+  PASS2=cat
+fi
+if type $ENSCRIPT >/dev/null 2>&1; then
+  PASS3="$ENSCRIPT $ENSCRIPT_OPTS $MODE $COLOR -o $OUTPUT"
+else
+  PASS3=cat
+fi
+if [ -n "$NOENSCRIPT" ]; then
+    PASS3=cat
+fi
+
+# Are we filtering out just the user code?
+if [ "x$ALL" == "x1" ]; then
+  $CSC $CSC_OPTS $FILE | $PASS2 2>/dev/null | $PASS3 2>/dev/null
+else
+  $CSC $CSC_OPTS $FILE |\
+  perl -an000e 'print if /C_trace/&&!/##sys#implicit/ || (/\/\* [-!%\w]+ in k\d+ / && ! /\/\* k\d+ /)' |\
+  $PASS2 | $PASS3
+fi
