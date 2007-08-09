@@ -3258,6 +3258,9 @@ EOF
 (define print-call-chain
   (lambda (#!optional (port ##sys#standard-output) (start 0) (thread ##sys#current-thread)
 		      (header "\n\tCall history:\n") )
+    (##sys#check-port port 'print-call-chain)
+    (##sys#check-exact start 'print-call-chain)
+    (##sys#check-string header 'print-call-chain)
     (##sys#really-print-call-chain port (##sys#get-call-chain start thread) header) ) )
 
 (define get-call-chain ##sys#get-call-chain)
