@@ -716,7 +716,7 @@ EOF
 ;;; Documentation
 
 (define (documentation)
-  (actions "ChangeLog" (lambda () (run (hg log >ChangeLog)))) 
+  (actions "ChangeLog" (lambda () (run (svn log >ChangeLog)))) 
   (notfile "manualsync")
   (actions 
    "do" "manualsync" 
