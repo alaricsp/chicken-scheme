@@ -88,6 +88,9 @@ endif
 
 man_MANS = chicken.1 csi.1 csc.1 chicken-profile.1 chicken-setup.1
 
+MAKEINFOFLAGS = --no-split
+info_TEXINFOS = chicken.texi
+
 # Everything relies on chicken.h, and it includes chicken-defaults.h.
 # chicken-defaults.h does not exist at configuration time because
 # Autoconf enforces the GNU Coding Standards.  Installation pathnames
