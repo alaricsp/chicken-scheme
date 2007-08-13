@@ -9,32 +9,26 @@ is compiled with the {{-explicit-use}} option.
 === Arithmetic
 
 
-==== add1
-==== sub1
+==== add1/sub1
 
- [procedure] (add1 N)
- [procedure] (sub1 N)
+; [procedure] (add1 N)
+; [procedure] (sub1 N)
 
 Adds/subtracts 1 from {{N}}.
 
-
-==== bitwise-and
-==== bitwise-ior
-==== bitwise-xor
-==== bitwise-not
-==== arithmetic-shift
-
- [procedure] (bitwise-and N1 ...)
- [procedure] (bitwise-ior N1 ...)
- [procedure] (bitwise-xor N1 ...)
- [procedure] (bitwise-not N)
- [procedure] (arithmetic-shift N1 N2)
+==== Binary integer operations
 
 Binary integer operations. {{arithmetic-shift}} shifts the argument
-{{N1}} by {{N2}} bits to the left. If {{N2}} is negative,
-than {{N1}} is shifted to the right.
-These operations only accept exact integers or inexact integers in word range
-(32 bit signed on 32-bit platforms, or 64 bit signed on 64-bit platforms).
+{{N1}} by {{N2}} bits to the left. If {{N2}} is negative, than {{N1}}
+is shifted to the right.  These operations only accept exact integers
+or inexact integers in word range (32 bit signed on 32-bit platforms,
+or 64 bit signed on 64-bit platforms).
+
+; [procedure] (bitwise-and N1 ...)
+; [procedure] (bitwise-ior N1 ...)
+; [procedure] (bitwise-xor N1 ...)
+; [procedure] (bitwise-not N)
+; [procedure] (arithmetic-shift N1 N2)
 
 ==== bit-set?
 
@@ -50,87 +44,59 @@ or {{#f}} otherwise. The rightmost/least-significant bit is bit 0.
 
 Returns {{#t}} if {{X}} is a fixnum, or {{#f}} otherwise.
 
+==== Arithmetic fixnum operations
 
-==== fx+
-==== fx-
-==== fx*
-==== fx/
-==== fxmod
-==== fxneg
-==== fxmin
-==== fxmax
-==== fx=
-==== fx>
-==== fx<
-==== fx>=
-==== fx<=
-==== fxand
-==== fxior
-==== fxxor
-==== fxnot
-==== fxshl
-==== fxshr
+These procedures do not check their arguments, so non-fixnum
+parameters will result in incorrect results. {{fxneg}} negates its
+argument.
 
- [procedure] (fx+ N1 N2)
- [procedure] (fx- N1 N2)
- [procedure] (fx* N1 N2)
- [procedure] (fx/ N1 N2)
- [procedure] (fxmod N1 N2)
- [procedure] (fxneg N)
- [procedure] (fxmin N1 N2)
- [procedure] (fxmax N1 N2)
- [procedure] (fx= N1 N2)
- [procedure] (fx> N1 N2)
- [procedure] (fx< N1 N2)
- [procedure] (fx>= N1 N2)
- [procedure] (fx<= N1 N2)
- [procedure] (fxand N1 N2)
- [procedure] (fxior N1 N2)
- [procedure] (fxxor N1 N2)
- [procedure] (fxnot N)
- [procedure] (fxshl N1 N2)
- [procedure] (fxshr N1 N2)
-
-Arithmetic fixnum operations. These procedures do not check their
-arguments, so non-fixnum parameters will result in incorrect
-results. {{fxneg}} negates its argument.
-
-On division by zero, {{fx/}} and {{fxmod}} signal a condition of
-kind {{(exn arithmetic)}}.
+On division by zero, {{fx/}} and {{fxmod}} signal a condition of kind
+{{(exn arithmetic)}}.
 
 {{fxshl}} and {{fxshr}} perform arithmetic shift left and right,
 respectively.
 
+; [procedure] (fx+ N1 N2)
+; [procedure] (fx- N1 N2)
+; [procedure] (fx* N1 N2)
+; [procedure] (fx/ N1 N2)
+; [procedure] (fxmod N1 N2)
+; [procedure] (fxneg N)
+; [procedure] (fxmin N1 N2)
+; [procedure] (fxmax N1 N2)
+; [procedure] (fx= N1 N2)
+; [procedure] (fx> N1 N2)
+; [procedure] (fx< N1 N2)
+; [procedure] (fx>= N1 N2)
+; [procedure] (fx<= N1 N2)
+; [procedure] (fxand N1 N2)
+; [procedure] (fxior N1 N2)
+; [procedure] (fxxor N1 N2)
+; [procedure] (fxnot N)
+; [procedure] (fxshl N1 N2)
+; [procedure] (fxshr N1 N2)
 
-==== flonum?
-==== fp+
-==== fp-
-==== fp*
-==== fp/
-==== fpneg
-==== fpmin
-==== fpmax
-==== fp=
-==== fp>
-==== fp<
-==== fp>=
-==== fp<=
 
- [procedure] (flonum? X)
- [procedure] (fp+ X Y)
- [procedure] (fp- X Y)
- [procedure] (fp* X Y)
- [procedure] (fp/ X Y)
- [procedure] (fpneg X)
- [procedure] (fpmin X Y)
- [procedure] (fpmax X Y)
- [procedure] (fp= X Y)
- [procedure] (fp> X Y)
- [procedure] (fp< X Y)
- [procedure] (fp>= X Y)
- [procedure] (fp<= X Y)
+==== Arithmetic floating-point operations
 
-Arithmetic floating-point operations. In safe mode, these procedures throw a type error with non-float arguments (except {{flonum?}}, which returns {{#f}}).  In unsafe mode, these procedures do not check their arguments.  A non-flonum argument in unsafe mode can crash the system.
+In safe mode, these procedures throw a type error with non-float
+arguments (except {{flonum?}}, which returns {{#f}}).  In unsafe mode,
+these procedures do not check their arguments.  A non-flonum argument
+in unsafe mode can crash the system.
+
+; [procedure] (flonum? X)
+; [procedure] (fp+ X Y)
+; [procedure] (fp- X Y)
+; [procedure] (fp* X Y)
+; [procedure] (fp/ X Y)
+; [procedure] (fpneg X)
+; [procedure] (fpmin X Y)
+; [procedure] (fpmax X Y)
+; [procedure] (fp= X Y)
+; [procedure] (fp> X Y)
+; [procedure] (fp< X Y)
+; [procedure] (fp>= X Y)
+; [procedure] (fp<= X Y)
 
 
 ==== signum
@@ -180,20 +146,21 @@ to the value of {{(current-output-port)}}.
 
 ==== port-name
 
- [procedure] (port-name PORT)
+ [procedure] (port-name [PORT])
 
 Fetch filename from {{PORT}}. This returns the filename that was
 used to open this file.  Returns a special tag string, enclosed into
-parentheses for non-file ports.
+parentheses for non-file ports. {{PORT}} defaults to the value of {{(current-input-port)}}.
 
 
 ==== port-position
 
- [procedure] (port-position PORT)
+ [procedure] (port-position [PORT])
 
 Returns the current position of {{PORT}} as two values: row and
 column number.  If the port does not support such an operation an error
 is signaled. This procedure is currently only available for input ports.
+{{PORT}} defaults to the value of {{(current-input-port)}}.
 
 
 ==== set-port-name!
@@ -594,6 +561,7 @@ currently running, which is one of the following:
  ultrasparc
  sparc
  ppc
+ ppc64
  ia64
  x86
  x86-64

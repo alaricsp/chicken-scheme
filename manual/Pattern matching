@@ -1,7 +1,7 @@
 [[tags: manual]]
 [[toc:]]
 
-== Pattern Matching
+== Pattern matching
 
 (This description has been taken mostly from Andrew Wright's postscript
 document)
@@ -403,6 +403,6 @@ Additionally, the code generated to match a structure pattern like
 refers to the name {{Foo?}}.
 This name also should not be shadowed.
 
-Previous: [[Non standard macros and special forms]]
+Previous: [[Non-standard macros and special forms]]
 
 Next: [[Declarations]]

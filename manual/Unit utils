@@ -5,7 +5,7 @@
 == Unit utils
 
 This unit contains file/pathname oriented procedures, apropos, plus acts as a "grab bag" for procedures without a good home,
-and which don't have to be available by default (as compared to the [[Unit extras|extras]] unit.
+and which don't have to be available by default (as compared to the [[Unit extras|extras]] unit).
 
 This unit uses the {{extras}} and {{regex}} units.
 
@@ -16,7 +16,7 @@ This unit uses the {{extras}} and {{regex}} units.
 
  [procedure] (apropos SYMBOL-PATTERN [ENVIRONMENT] [#:MACROS?])
 
-Displays symbols & type matching {{SYMBOL-PATTERN}} in the {{ENVIRONMENT} on the {{(current-output-port)}}.
+Displays symbols & type matching {{SYMBOL-PATTERN}} in the {{ENVIRONMENT}} on the {{(current-output-port)}}.
 
 ; {{SYMBOL-PATTERN}} : A symbol, string, or regex. When symbol or string substring matching is performed.
 ; {{ENVIRONMENT}} : An environment. When missing the {{(interaction-environment)}} is assumed.

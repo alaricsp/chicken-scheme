@@ -158,6 +158,9 @@ be substituted.
 => "99 eggs or chicks (99)"
 </enscript>
 
+Note that a regular expression that matches an empty string will
+signal an error.
+
 
 === string-substitute*
 

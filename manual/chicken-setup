@@ -345,15 +345,12 @@ We need a {{.setup}} script to build and install our nifty extension:
 ;;;; hello.setup
 
 ;; compile the code into a dynamically loadable shared object
-;; (will generate hello.so or hello.dll on Windows)
+;; (will generate hello.so)
 (compile -s hello.scm)
 
 ;; Install as extension library
 (install-extension 'hello "hello.so")
 </enscript>
-
-(Note: {{install-extension}} will recognized the {{.so}} extension and automatically
-do the right thing on Windows)
 
 After entering 
 

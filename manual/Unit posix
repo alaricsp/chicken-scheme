@@ -144,17 +144,17 @@ is restored to its previous value and any result values are returned.
   "gs -dNOPAUSE -sDEVICE=jpeg -dBATCH -sOutputFile=signballs.jpg -g600x600 -q -"
   (lambda ()
     (print #<<EOF
-%!IOPSC-1993 %%Creator: HAYAKAWA Takashi<xxxxxxxx@xx.xxxxxx.xx.xx>
-/C/neg/d/mul/R/rlineto/E/exp/H{{cvx def}repeat}def/T/dup/g/gt/r/roll/J/ifelse 8
-H/A/copy(z&v4QX&93r9AxYQOZomQalxS2w!!O&vMYa43d6r93rMYvx2dca!D&cjSnjSnjjS3o!v&6A
-X&55SAxM1CD7AjYxTTd62rmxCnTdSST0g&12wECST!&!J0g&D1!&xM0!J0g!l&544dC2Ac96ra!m&3A
-F&&vGoGSnCT0g&wDmlvGoS8wpn6wpS2wTCpS1Sd7ov7Uk7o4Qkdw!&Mvlx1S7oZES3w!J!J!Q&7185d
-Z&lx1CS9d9nE4!k&X&MY7!&1!J!x&jdnjdS3odS!N&mmx1C2wEc!G&150Nx4!n&2o!j&43r!U&0777d
-]&2AY2A776ddT4oS3oSnMVC00VV0RRR45E42063rNz&v7UX&UOzF!F!J![&44ETCnVn!a&1CDN!Y&0M
-V1c&j2AYdjmMdjjd!o&1r!M){( )T 0 4 3 r put T(/)g{T(9)g{cvn}{cvi}J}{($)g[]J}J
-cvx}forall/moveto/p/floor/w/div/S/add 29 H[{[{]setgray fill}for Y}for showpage
-EOF
-) ) )
+ %!IOPSC-1993 %%Creator: HAYAKAWA Takashi<xxxxxxxx@xx.xxxxxx.xx.xx>
+ /C/neg/d/mul/R/rlineto/E/exp/H{{cvx def}repeat}def/T/dup/g/gt/r/roll/J/ifelse 8
+ H/A/copy(z&v4QX&93r9AxYQOZomQalxS2w!!O&vMYa43d6r93rMYvx2dca!D&cjSnjSnjjS3o!v&6A
+ X&55SAxM1CD7AjYxTTd62rmxCnTdSST0g&12wECST!&!J0g&D1!&xM0!J0g!l&544dC2Ac96ra!m&3A
+ F&&vGoGSnCT0g&wDmlvGoS8wpn6wpS2wTCpS1Sd7ov7Uk7o4Qkdw!&Mvlx1S7oZES3w!J!J!Q&7185d
+ Z&lx1CS9d9nE4!k&X&MY7!&1!J!x&jdnjdS3odS!N&mmx1C2wEc!G&150Nx4!n&2o!j&43r!U&0777d
+ ]&2AY2A776ddT4oS3oSnMVC00VV0RRR45E42063rNz&v7UX&UOzF!F!J![&44ETCnVn!a&1CDN!Y&0M
+ V1c&j2AYdjmMdjjd!o&1r!M){( )T 0 4 3 r put T(/)g{T(9)g{cvn}{cvi}J}{($)g[]J}J
+ cvx}forall/moveto/p/floor/w/div/S/add 29 H[{[{]setgray fill}for Y}for showpage
+ EOF
+ ) ) )
 </enscript>
 
 
@@ -247,7 +247,8 @@ Waits until any of the file-descriptors given in the lists
 {{READFDLIST}} and {{WRITEFDLIST}} is ready for input or
 output, respectively. If the optional argument {{TIMEOUT}} is
 given and not false, then it should specify the number of seconds after
-which the wait is to be aborted. This procedure returns two values:
+which the wait is to be aborted (the value may be a floating point
+number). This procedure returns two values:
 the lists of file-descriptors ready for input and output, respectively.
 {{READFDLIST}} and '''WRITEFDLIST''' may also by file-descriptors
 instead of lists.  In this case the returned values are booleans

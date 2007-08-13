@@ -212,9 +212,9 @@ and one for the '''cdr'''. Vectors have one slot for each element.
 
  [C macro] C_word C_u_i_car (C_word x)
 
-=== C_u_i_car
+=== C_u_i_cdr
 
- [C macro] C_word C_u_i_car (C_word x)
+ [C macro] C_word C_u_i_cdr (C_word x)
 
 Aliases for {{C_block_item(x, 0)}} and {{C_block_item(x, 1)}}, respectively.
 

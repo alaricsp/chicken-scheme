@@ -71,8 +71,8 @@
 ;(define DEBUG #f)
 (define DEBUG #t)			;* testing
 (define SHARED_LIB_EXTENSION #f)
-(define MANUALDIR (path (current-directory) "../wiki"))
-(define WIKIEXTENSIONS (path (current-directory) "../stream-wiki/tags/1.9/extensions"))
+(define MANUALDIR (path (current-directory) "manual"))
+(define WIKIEXTENSIONS (path (current-directory) "../../stream-wiki/tags/1.9/extensions"))
 (define INCLUDES "-I.")
 (define INSTALL_PROGRAM #f)
 (define INSTALL_EXE_FLAGS #f)
@@ -720,13 +720,15 @@ EOF
   (notfile "manualsync")
   (actions 
    "do" "manualsync" 
-   (lambda () (run (rsync -av --existing ,(conc MANUALDIR "/") manual/))))
+   (lambda () (run (rsync -av --exclude=.svn --existing ,(conc MANUALDIR "/") manual/))))
   (notfile "doc")
   (actions 
    "doc"
    (lambda ()
-     (run (,CSI -s misc/makedoc --pdf --extension-path= ,WIKIEXTENSIONS))
-     (run (cp chicken.pdf site)) ) ) )
+     (run (,CSI -s misc/makedoc.scm --pdf --extension-path= ,WIKIEXTENSIONS))
+     (run (cp chicken.pdf site)) ) )
+  (notfile "texi")
+  (actions "texi" (lambda () (run (,CSI -s misc/maketexi.scm ,MANUALDIR)))))
 
 
 ;;; Installation

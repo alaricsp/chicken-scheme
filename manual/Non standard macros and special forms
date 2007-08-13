@@ -4,7 +4,7 @@
 
 == Non-standard macros and special forms
 
-=== Making extra libraries and extensions available
+=== Making extra libraries and extensions availablee
 
 ==== require-extension
 
@@ -367,12 +367,11 @@ for example.
 
 === Conditional forms
 
-==== switch
+==== select
 
- [syntax] (switch EXP (KEY EXP1 ...) ... [(else EXPn ...)])
+ [syntax] (select EXP ((KEY ...) EXP1 ...) ... [(else EXPn ...)])
 
-This is similar to {{case}}, but a) only a single key is allowed,
-and b) the key is evaluated.
+This is similar to {{case}}, but the keys are evaluated.
 
 ==== unless
 

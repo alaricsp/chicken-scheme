@@ -1,6 +1,6 @@
 [[tags: manual]]
 
-== Data Representation
+== Data representation
 
 ''Note: In all cases below, bits are numbered starting
 at 1 and beginning with the lowest-order bit.''

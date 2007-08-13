@@ -1,7 +1,7 @@
 [[tags: manual]]
 [[toc:]]
 
-== Introduction
+== Using the compiler
 
 The interface to {{chicken}} is intentionally simple.  System
 dependent makefiles, shell-scripts or batch-files should perform
@@ -13,7 +13,7 @@ interface to the Scheme- and C-compilers and linker. Enter
 
 on the command line for more information.
 
-== Compiler command line format
+=== Compiler command line format
 
  chicken FILENAME {OPTION}
 
@@ -193,7 +193,7 @@ Possible options are:
 The environment variable {{CHICKEN_OPTIONS}} can be set to a string
 with default command-line options for the compiler.
 
-== Runtime options
+=== Runtime options
 
 After successful compilation a C source file is generated and can be
 compiled with a C compiler. Executables generated with CHICKEN (and the
@@ -201,7 +201,11 @@ compiler itself) accept a small set of runtime options:
 
 ; {{-:?}} : Shows a list of the available runtime options and exits the program.
 
+; {{-:aNUMBER}} : Specifies the length of the buffer for recording a trace of the last invoked procedures. Defaults to 16.
+
 ; {{-:b}} : Enter a read-eval-print-loop when an error is encountered.
+
+; {{-:B}} : Sounds a bell (ASCII 7) on every major garbage collection.
 
 ; {{-:c}} : Forces console mode. Currently this is only used in the interpreter ({{csi}}) to force output of the {{#;N>}} prompt even if stdin is not a terminal (for example if running in an {{emacs}} buffer under Windows).
 
@@ -209,11 +213,13 @@ compiler itself) accept a small set of runtime options:
 
 ; {{-:D}} : Prints some more debug-information at runtime.
 
+; {{-:fNUMBER}} : Specifies the maximal number of currently pending finalizers before finalization is forced.
+
 ; {{-:hNUMBER}} : Specifies fixed heap size
 
-; {{-:hiNUMBER}} : Specifies the initial heap size
-
 ; {{-:hgPERCENTAGE}} : Sets the growth rate of the heap in percent. If the heap is exhausted, then it will grow by {{PERCENTAGE}}. The default is 200.
+
+; {{-:hiNUMBER}} : Specifies the initial heap size
 
 ; {{-:hmNUMBER}} : Specifies a maximal heap size. The default is (2GB - 15).
 
@@ -221,21 +227,15 @@ compiler itself) accept a small set of runtime options:
 
 ; {{-:o}} : Disables detection of stack overflows at run-time.
 
+; {{-:r}} : Writes trace output to stderr. This option has no effect with in files compiled with the {{-no-trace}} options.
+
 ; {{-:sNUMBER}} : Specifies stack size.
 
 ; {{-:tNUMBER}} : Specifies symbol table size.
 
-; {{-:fNUMBER}} : Specifies the maximal number of currently pending finalizers before finalization is forced.
-
-; {{-:aNUMBER}} : Specifies the length of the buffer for recording a trace of the last invoked procedures. Defaults to 16.
-
 ; {{-:w}} : Enables garbage collection of unused symbols. By default unused and unbound symbols are not garbage collected.
 
-; {{-:r}} : Writes trace output to stderr. This option has no effect with in files compiled with the {{-no-trace}} options.
-
 ; {{-:x}} : Raises uncaught exceptions of separately spawned threads in primordial thread. By default uncaught exceptions in separate threads are not handled, unless the primordial one explicitly joins them. When warnings are enabled (the default) and {{-:x}} is not given, a warning will be shown, though.
-
-; {{-:B}} : Sounds a bell (ASCII 7) on every major garbage collection.
 
 The argument values may be given in bytes, in kilobytes (suffixed with
 {{K}} or {{k}}), in megabytes (suffixed with {{M}}
@@ -244,13 +244,13 @@ or {{g}}). Runtime options may be combined, like {{-:dc}},
 but everything following a {{NUMBER}} argument is ignored. So
 {{-:wh64m}} is OK, but {{-:h64mw}} will not enable GC of
 unused symbols.
-== Examples
+=== Examples
 
-=== A simple example (with one source file)
+==== A simple example (with one source file)
 
 To compile a Scheme program (assuming a UNIX-like environment) consisting of a single source file, perform the following steps.
 
-==== Writing your source file
+===== Writing your source file
 
 In this example we will assume your source file is called {{foo.scm}}:
 
@@ -266,7 +266,7 @@ In this example we will assume your source file is called {{foo.scm}}:
 (newline)
 </enscript>
 
-==== Compiling your program
+===== Compiling your program
 
 Compile the file {{foo.scm}}:
 
@@ -277,7 +277,7 @@ This will produce the {{foo}} executable:
  % ls
  foo  foo.scm
 
-==== Running your program
+===== Running your program
 
 To run your newly compiled executable use:
 
@@ -286,7 +286,7 @@ To run your newly compiled executable use:
 
 If you get a {{foo: command not found}} error, you might want to try with {{./foo}} instead
 (or, in Unix machines, modify your {{PATH}} environment variable to include your current directory).
-=== An example with multiple files
+==== An example with multiple files
 
 If multiple bodies of Scheme code are to be combined into a single
 executable, then we have to compile each file and link the resulting
@@ -294,7 +294,7 @@ object files together with the runtime system.
 
 Let's consider an example where your program consists of multiple source files.
 
-==== Writing your source files
+===== Writing your source files
 
 The declarations in these files specify which of the compiled files is the main
 module, and which is the library module. An executable can only have
@@ -327,7 +327,7 @@ case {{foo.scm}} is the main module, because it doesn't have a
       (* n (fac (- n 1))) ) )
 </enscript>
 
-==== Compiling and running your program
+===== Compiling and running your program
 
 You should compile your two files with the following commands:
 
@@ -349,8 +349,12 @@ You could avoid one step and link the two files just as {{foo.scm}} is compiled:
  % csc -c bar.scm
  % csc foo.scm bar.o -o foo
 
-Note that if you want to distribute your program, you might want it to follow the GNU Coding Standards.  One relatively easy way to achieve this is to use Autoconf and Automake, two tools made for this specific purpose.  Consult [[autoconf - automake]] for some instructions on how you would do this.
-== Extending the compiler
+Note that if you want to distribute your program, you might want it to
+follow the GNU Coding Standards.  One relatively easy way to achieve
+this is to use Autoconf and Automake, two tools made for this specific
+purpose. 
+
+=== Extending the compiler
 
 The compiler supplies a couple of hooks to add user-level passes to the
 compilation process. Before compilation commences any Scheme source files
@@ -371,7 +375,7 @@ see: [[Supported language]].
 
 ; [parameter] user-pass-2 : Holds a procedure of three arguments, which is called with the canonicalized node-graph as its sole argument. The result is ignored, so this pass has to mutate the node-structure to cause any effect.
 
-; [parameter] user-post-analysis-pass : Holds a procedure that will be called after every performed program analysis pass. The procedure (when defined) will be called with five arguments: a symbol indicating the analysis pass, the program database, the current node graph, a getter and a setter-procedure which can be used to access and manipulate the program database, which holds various information about the compiled program. The getter procedure should be called with two arguments: a symbol representing the binding for which information should be retrieved, and a symbol that specifies the database-entry. The current value of the database entry will be returned or {{#f}}, if no such entry is available. The setter procedure is called with three arguments: the symbol and key and the new value. For information about the contents of the program database contact the author.
+; [parameter] user-post-analysis-pass : Holds a procedure that will be called after every performed program analysis pass. The procedure (when defined) will be called with seven arguments: a symbol indicating the analysis pass, the program database, the current node graph, a getter and a setter-procedure which can be used to access and manipulate the program database, which holds various information about the compiled program, a pass iteration count, and an analysis continuation flag. The getter procedure should be called with two arguments: a symbol representing the binding for which information should be retrieved, and a symbol that specifies the database-entry. The current value of the database entry will be returned or {{#f}}, if no such entry is available. The setter procedure is called with three arguments: the symbol and key and the new value. The pass iteration count currently is meaningful only for the 'opt pass. The analysis continuation flag will be {{#f}} for the last 'opt pass. For information about the contents of the program database contact the author.
 
 Loaded code (via the {{-extend}} option) has access to the library
 units {{extras, srfi-1, srfi-4, utils, regex}} and the pattern matching macros. 
@@ -381,7 +385,7 @@ Note that the macroexpansion/canonicalization phase of the compiler adds
 certain forms to the source program.  These extra expressions are not
 seen by {{user-preprocessor-pass}} but by {{user-pass}}.
 
-== Distributing compiled C files
+=== Distributing compiled C files
 
 It is relatively easy to create distributions of Scheme projects that
 have been compiled to C.  The runtime system of CHICKEN consists of only
@@ -431,13 +435,13 @@ Now we have all files together, and can create an tarball containing all the fil
 This is of naturally rather simplistic. Things like enabling dynamic loading, estimating
 the optimal stack-size and selecting supported features of the host system would need
 more configuration- and build-time support. All this can be addressed using more
-elaborate build-scripts, makefiles or by using [[autoconf - automake]].
+elaborate build-scripts, makefiles or by using autoconf/automake.
 
 Note also that the size of the application can still be reduced by removing {{extras}} and
 {{eval}} and compiling {{hello.scm}} with the {{-explicit-use}} option.
 
-For more information, study the CHICKEN source code
-and/or get in contact with the author.
+For more information, study the CHICKEN source code and/or get in
+contact with the author.
 
 Previous: [[The User's Manual]]
 

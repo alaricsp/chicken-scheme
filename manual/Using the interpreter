@@ -211,7 +211,7 @@ textual description of the object to the passed output-port. For example:
 On platforms that support it, it is possible to get auto-completion of symbols,
 history (over different {{csi}} sessions) and a more feature-full
 editor for the expressions you type
-using the [[readline]] egg by
+using the [[http://www.call-with-current-continuation.org/eggs/readline.html]] egg by
 Tony Garnock Jones.
 It is very useful for interactive use of csi.
 
@@ -221,11 +221,11 @@ To enable it install the egg and put this in your {{~/.csirc}} file:
  (current-input-port (make-gnu-readline-port))
  (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
 
-More details are available in [[readline|the egg's documentation]].
+More details are available in [[http://www.call-with-current-continuation.org/eggs/readline.html|the egg's documentation]].
 
 === Accessing documentation
 
-You can access the manual directly from {{csi}} using the [[man]] extension by [[Mario Domenech Goulart]].
+You can access the manual directly from {{csi}} using the [[http://www.call-with-current-continuation.org/eggs/man.html|man]] extension by Mario Domenech Goulart.
 
 To enable it install the egg and put this in your {{~/.csirc}} file:
 

@@ -198,7 +198,7 @@ convention and should be a string. The meaning of this string is entirely
 platform dependent.  The value {{#f}} is also allowed and is passed
 as a {{NULL}} pointer.
 
-== Mappings
+=== Mappings
 
 Foreign types are mapped to C types in the following manner:
 
