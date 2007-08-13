@@ -139,7 +139,9 @@ static C_TLS int timezone;
 # define S_IFDIR            _S_IFDIR
 # define timezone           _timezone
 # if defined(_M_IX86)
-#  define C_HACKED_APPLY
+#  ifndef C_HACKED_APPLY
+#   define C_HACKED_APPLY
+#  endif
 # endif
 #else
 # ifdef C_HACKED_APPLY
@@ -147,7 +149,7 @@ extern void C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # endif
 #endif
 
-#if defined(C_NO_HACKED_APPLY) && !defined(C_HACKED_APPLY)
+#if defined(C_NO_HACKED_APPLY) && defined(C_HACKED_APPLY)
 # undef C_HACKED_APPLY
 #endif
 

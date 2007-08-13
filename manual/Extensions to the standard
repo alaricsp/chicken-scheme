@@ -7,7 +7,7 @@
 
 [2.3] The brackets {{[ ... ]}} are provided as an alternative syntax
 for {{( ... )}}.  A number of reader extensions is provided. See
-[[Non standard read syntax]].
+[[Non-standard read syntax]].
 
 [4] Numerous non-standard macros are provided. See 
 [[Non-standard macros and special forms]] for more information.
@@ -152,4 +152,4 @@ values are the keywords {{#:text}}, {{#:binary}} or
 
 Previous: [[Deviations from the standard]]
 
-Next: [[Non standard read syntax]]
+Next: [[Non-standard read syntax]]

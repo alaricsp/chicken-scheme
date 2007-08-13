@@ -552,6 +552,6 @@ Evaluates {{EXP1 ...}} and prints elapsed time and some
 values about GC use, like time spent in major GCs, number of minor
 and major GCs.
 
-Previous: [[Non standard read syntax]]
+Previous: [[Non-standard read syntax]]
 
 Next: [[Pattern matching]]
