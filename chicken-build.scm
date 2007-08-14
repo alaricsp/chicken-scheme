@@ -420,7 +420,7 @@ EOF
  (lambda ()
    (run (rm -f chicken-defaults.h chicken-config.h
 	    chicken csc csi chicken-static csi-static
-	    chicken-profile chicken-setup
+	    chicken-profile chicken-setup chicken.info
 	    *.o *.exports
 	    ,@*pcre-objects*
 	    ,@*pcre-static-objects*

@@ -246,3 +246,5 @@ chicken-tar.exe
 apply-hack.x86.s
 apply-hack.x86-64.s
 apply-hack.ppc.s
+chicken.texi
+
