@@ -21,6 +21,7 @@
 (define EGGDIR #f)
 (define INCDIR #f)
 (define SHAREDIR #f)
+(define INFODIR #f)
 (define DOCDIR #f)
 (define MANDIR #f)
 (define CC 
@@ -85,6 +86,8 @@
 (define SYMBOLGC #f)
 (define NOAPPLYHOOK #f)
 (define HACKEDAPPLY #f)
+(define MAKEINFO_PROGRAM "makeinfo")
+(define MAKEINFOFLAGS "--no-split")
 
 
 ;;; Helper procedures
@@ -270,6 +273,7 @@
   (set! EGGDIR (or EGGDIR (path DESTDIR (conc "lib/chicken/" BINARYVERSION))))
   (set! INCDIR (or INCDIR (path DESTDIR "include")))
   (set! SHAREDIR (or SHAREDIR (path DESTDIR "share/chicken")))
+  (set! INFODIR (or INFODIR (path SHAREDIR "info")))
   (set! DOCDIR (or DOCDIR (path DESTDIR "share/chicken/doc")))
   (set! MANDIR (or MANDIR (path DESTDIR "man/man1")))
   (set! *libchicken-shared* (path #f "libchicken" SHARED_LIB_EXTENSION))
@@ -722,13 +726,20 @@ EOF
    "do" "manualsync" 
    (lambda () (run (rsync -av --exclude=.svn --existing ,(conc MANUALDIR "/") manual/))))
   (notfile "doc")
+  (depends "doc" "chicken.texi" "ChangeLog" "chicken.pdf")
   (actions 
-   "doc"
+   "chicken.pdf"
    (lambda ()
      (run (,CSI -s misc/makedoc.scm --pdf --extension-path= ,WIKIEXTENSIONS))
      (run (cp chicken.pdf site)) ) )
-  (notfile "texi")
-  (actions "texi" (lambda () (run (,CSI -s misc/maketexi.scm ,MANUALDIR)))))
+  (actions
+   "chicken.texi"
+   (lambda () (run (,CSI -s misc/maketexi.scm ,MANUALDIR))))
+  (depends "chicken.info" "chicken.texi")
+  (actions 
+   "chicken.info"
+   (lambda ()
+     (run (,MAKEINFO_PROGRAM ,MAKEINFOFLAGS chicken.texi)))))
 
 
 ;;; Installation
@@ -738,7 +749,7 @@ EOF
   (depends 
    "install" 
    "ChangeLog" "chicken" "chicken-static" "csi" "csi-static" "chicken-profile"
-   "chicken-setup" 
+   "chicken-setup" "chicken.info"
    *libchicken-shared* *libchicken-static* *libuchicken-shared* *libuchicken-static*
    "chicken-config.h" "chicken-defaults.h")
   (actions
@@ -765,6 +776,7 @@ EOF
        (run (,INSTALL_PROGRAM ,INSTALL_FILE_FLAGS chicken.1 csi.1 csc.1 chicken-profile.1 chicken-setup.1 ,MANDIR))
        (run (,INSTALL_PROGRAM ,INSTALL_FILE_FLAGS chicken.h chicken-defaults.h chicken-config.h ,INCDIR))
        (run (,INSTALL_PROGRAM ,INSTALL_FILE_FLAGS ChangeLog README LICENSE ,DOCDIR))
+       (run (,INSTALL_PROGRAM ,INSTALL_FILE_FLAGS chicken.info ,INFODIR))
        (run (,INSTALL_PROGRAM ,INSTALL_FILE_FLAGS chicken-more-macros.scm chicken-ffi-macros.scm 
 		     ,@(map (cut make-pathname #f <> "exports") 
 			    '("library" "eval" "srfi-1" "srfi-4" "srfi-13" "srfi-14" "srfi-18" "utils" "extras"

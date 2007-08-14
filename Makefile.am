@@ -88,7 +88,7 @@ endif
 
 man_MANS = chicken.1 csi.1 csc.1 chicken-profile.1 chicken-setup.1
 
-MAKEINFOFLAGS = --no-split
+MAKEINFOFLAGS = $(MAKEINFOFLAGS) --no-split
 info_TEXINFOS = chicken.texi
 
 # Everything relies on chicken.h, and it includes chicken-defaults.h.

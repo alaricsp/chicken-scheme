@@ -107,7 +107,6 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)
 
-
 ####################################################################
 #  CHICKEN PROJECT                                                 #
 ####################################################################
@@ -411,7 +410,7 @@ FILE(READ ${Chicken_SOURCE_DIR}/buildversion BUILDVERSION)
 # watch out!
 
 # Chicken has been using single digits for major stable build
-# releases.  However, interim releases in Darcs have triple
+# releases.  However, interim releases in svn have triple
 # digits for the build.  This means that Chicken 2.216 would
 # canonize as greater than 2.3, unless we promote 2.3 to 2.300.
 
@@ -580,7 +579,7 @@ SET(CURRENT_CHICKEN ${VALID_CHICKEN})
 # Chicken compiler, without a valid Chicken compiler being available.
 # A Chicken build tree can come either with or without these files.
 # Typically, when downloaded as a tarball distribution, these files
-# will be present.  But when pulled straight from Darcs, these files
+# will be present.  But when pulled straight from svn, these files
 # will be absent.  If they are present, then we don't use a Chicken
 # compiler to do the build, we just compile the .c sources.
 #
@@ -1006,33 +1005,34 @@ SET(C_INSTALL_MORE_STATIC_LIBS \"${L_MORE_STATIC_LIBS_STRING}\")
 
 SET(APPLY_HACK_SOURCE )
 
-#***
-
-ENABLE_LANGUAGE(ASM-ATT)
-IF(CMAKE_ASM-ATT_COMPILER_WORKS AND NOT MSVC)
-  IF(UNIX)
-    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "i.*86")
+IF(${CMAKE_MINOR_VERSION} GREATER 4)
+  ENABLE_LANGUAGE(ASM-ATT)
+  IF(CMAKE_ASM-ATT_COMPILER_WORKS AND NOT MSVC)
+    IF(UNIX)
+      IF(CMAKE_SYSTEM_PROCESSOR MATCHES "i.*86")
+	SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86.s)
+      ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i.*86")
+      IF(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc") # check this!
+	SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.ppc.s)
+      ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc")
+      IF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64") # x86-64 ?
+	SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86-64.s)
+      ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64")
+    ENDIF(UNIX)
+    IF(MINGW)
       SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86.s)
-    ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "i.*86")
-    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc") # check this!
-      SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.ppc.s)
-    ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "powerpc")
-    IF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64") # x86-64 ?
-      SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86-64.s)
-    ENDIF(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64")
-  ENDIF(UNIX)
-  IF(MINGW)
-    SET(APPLY_HACK_SOURCE ${Chicken_SOURCE_DIR}/apply-hack.x86.s)
-  ENDIF(MINGW)
-  IF(APPLY_HACK_SOURCE)
-    MESSAGE(STATUS "apply hack is available for this platform (${CMAKE_SYSTEM_PROCESSOR})")
-    SET(C_HACKED_APPLY TRUE)
-  ELSE(APPLY_HACK_SOURCE)
-    MESSAGE(STATUS "apply hack is NOT available for this platform (${CMAKE_SYSTEM_PROCESSOR})")
-  ENDIF(APPLY_HACK_SOURCE)
-ENDIF(CMAKE_ASM-ATT_COMPILER_WORKS AND NOT MSVC)
-
-MESSAGE(STATUS "apply hack source is: ${APPLY_HACK_SOURCE}")
+    ENDIF(MINGW)
+    IF(APPLY_HACK_SOURCE)
+      MESSAGE(STATUS "apply hack is available for this platform (${CMAKE_SYSTEM_PROCESSOR})")
+      MESSAGE(STATUS "apply hack source is: ${APPLY_HACK_SOURCE}")
+      SET(C_HACKED_APPLY TRUE)
+    ELSE(APPLY_HACK_SOURCE)
+      MESSAGE(STATUS "apply hack is NOT available for this platform (${CMAKE_SYSTEM_PROCESSOR})")
+    ENDIF(APPLY_HACK_SOURCE)
+  ENDIF(CMAKE_ASM-ATT_COMPILER_WORKS AND NOT MSVC)
+ELSE(${CMAKE_MINOR_VERSION} GREATER 4)
+  ADD_DEFINITIONS(-DC_NO_HACKED_APPLY)
+ENDIF(${CMAKE_MINOR_VERSION} GREATER 4)
 
 
 ####################################################################
@@ -1706,29 +1706,11 @@ ENDIF(NOT MACOSX)
 ####################################################################
 
 # A distribution archive (aka a tarball) will have ChangeLog already.
-# A Darcs repository tree will not, however.  We have to generate it.
-#
-# Note that as of Nov. 22nd, 2006, a Darcs package that understands
-# Cygwin paths is not readily available.  It is possible to compile
-# Darcs from Haskell sources, but that requires GHC, which can be
-# difficult to get working.  The upshot is it's a PITA to access
-# Darcs from Cygwin and hence to create a ChangeLog.  It's possible,
-# but one has to proceed carefully.
-#
-# Different shells can cause Darcs to fail.  For instance, running a
-# Windows native Darcs under a Cygwin shell can fail, because the
-# Windows native Darcs doesn't understand Cygwin paths.  A workaround
-# is to avoid issuing any Cygwin path to Darcs, and instead use a
-# WORKING_DIRECTORY, so that CMake handles some of its own paths and
-# not Darcs.
-#
-# In principle, if we need to use a Darcs command, we should test
-# whether Darcs is available and actually works.  In practice, writing
-# reliable tool tests in CMake 2.4.5 is painful.
+# A svn repository tree will not, however.  We have to generate it.
 #
 # You cannot use EXECUTE_PROCESS to write a tool test.  It executes in
 # CMake's environment, not the actual build environment.  For instance,
-# let's say Darcs is available at the Windows command prompt.
+# let's say svn is available at the Windows command prompt.
 # EXECUTE_PROCESS will say it works.  However, it won't actually work
 # under Visual Studio, because VS doesn't typically receive all the paths
 # that the command prompt does.
@@ -1744,102 +1726,9 @@ ENDIF(NOT MACOSX)
 # considerations.
 
 SET(CHANGELOG_FILE -NOTFOUND)
-IF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-  FIND_PROGRAM(DARCS_EXE darcs)
-  IF(DARCS_EXE)
-    FILE(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/try-darcs)
-
-    # Note the need to escape any quotes that are part of the file output.
-    # I cannot figure out how to get code emitted in a file to quote properly.
-    # Consequently, we use a WORKING_DIRECTORY to duck the issue.
-    #
-    # Note that the \"${DARCS_EXE}\" quotes are necessary here, even though
-    # they are not generally necessary in the toplevel CMakeLists.txt, i.e.
-    # this file you're reading now.  At this level, whitespace is escaped, i.e.
-    #   ${DARCS_EXE} = E:/Program\ Files/darcsdir-w32
-    # But once emitted, the whitespace escapes are lost.  We get
-    #   ${DARCS_EXE} = E:/Program Files/darcsdir-w32
-    # and of course Cygwin dies, as E:/Program isn't a valid command.
-    #
-    # Possibly this emission code should be replaced with a CONFIGURE_FILE
-    # template.  Or else substitutions should be performed with
-    # STRING(CONFIGURE ...).  Anything to get the quote / escape problems
-    # under control.
-
-    FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/try-darcs/CMakeLists.txt "
-      PROJECT(try-darcs)
-      ADD_CUSTOM_TARGET(try
-        WORKING_DIRECTORY \"${Chicken_SOURCE_DIR}\"
-        COMMAND \"${DARCS_EXE}\" changes --last=0
-      )
-    ")
-    TRY_COMPILE(DARCS_WORKS
-       ${CMAKE_CURRENT_BINARY_DIR}/try-darcs
-       ${CMAKE_CURRENT_BINARY_DIR}/try-darcs
-       try-darcs try
-    )
-    IF(DARCS_WORKS)
-      SET(CHANGELOG_FILE ${CMAKE_CURRENT_BINARY_DIR}/ChangeLog)
-
-      # Custom commands have the format:
-      #
-      #   COMMAND command1 [args...]
-      #
-      # command1 has to be a CMake path.  This is not documented in CMake 2.4.5.
-      # Think of command1 as receiving "special interpretation" and not really
-      # being a "custom" command, i.e. you're not free to do what you like.
-      #
-      # Also, if command1 is an absolute pathname, it must have whitespace
-      # handled properly.  The results of CMake Find* commands always have
-      # whitespace handled properly, but if you're homebrewing your own
-      # pathnames, be careful.
-      #
-      # Other path statements in [args...] need to be paths that your
-      # tool understands.  This means you'll need native paths, unless your
-      # tool happens to like CMake paths.
-      #
-      # As of November 22, 2006, there is no Cygwin version of Darcs.
-      # Instead, one typically has a Windows native version of
-      # Darcs running under a Cygwin shell.  This Windows native Darcs
-      # does not understand Cygwin paths, i.e. --repodir=/cygdrive/c/whatever
-      # will fail.
-      #
-      # Ideally, we'd complete the implementation of WINDOWS_PATH and provide
-      # proper paths.  Pragmatically, this is a PITA.  We adopt the expedient
-      # of using a working directory so that we don't have to bother with
-      # --repodir.
-      #
-      # stdout is redirected to the CHANGELOG_FILE.  Redirection is a shell
-      # operation, so we need a path that the shell understands.  Generally,
-      # keeping what a CMake comamnd1 needs, separate from what a tool needs,
-      # separate from what a shell needs, is confusing.  But that's the drill.
-
-      NATIVE_PATH(CHANGELOG_FILE NATIVE_CHANGELOG_FILE)
-
-      # Always build the ChangeLog unconditionally.  It doesn't take long,
-      # and we need to make sure it stays up to date.  There is no easy
-      # way to determine if the Darcs repository has changed since we last
-      # looked at it, so brute force is the workaround.
-
-      ADD_CUSTOM_TARGET(darcs-changelog ALL
-        COMMENT "Generating ${NATIVE_CHANGELOG_FILE} from Darcs repository."
-        WORKING_DIRECTORY ${Chicken_SOURCE_DIR}
-        COMMAND ${DARCS_EXE} changes > ${NATIVE_CHANGELOG_FILE}
-      )
-    ELSE(DARCS_WORKS)
-      ECHO_TARGET(darcs-changelog "Darcs does not work.  Cannot create ChangeLog.")
-    ENDIF(DARCS_WORKS)
-  ELSE(DARCS_EXE)
-    ECHO_TARGET(darcs-changelog "Cannot find Darcs.  Cannot create ChangeLog.")    
-  ENDIF(DARCS_EXE)
-ELSE(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
-  IF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
-    SET(CHANGELOG_FILE ${Chicken_SOURCE_DIR}/ChangeLog)
-    ECHO_TARGET(darcs-changelog "No Darcs repository.  ChangeLog already exists as part of archive distribution.")
-  ELSE(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
-    ECHO_TARGET(darcs-changelog "No Darcs repository.  ChangeLog is missing from archive distribution.")
-  ENDIF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
-ENDIF(EXISTS ${Chicken_SOURCE_DIR}/_darcs)
+IF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
+  SET(CHANGELOG_FILE ${Chicken_SOURCE_DIR}/ChangeLog)
+ENDIF(EXISTS ${Chicken_SOURCE_DIR}/ChangeLog)
 
 
 ####################################################################
@@ -1889,6 +1778,21 @@ IF(EXISTS html/index.html)
     html/chicken-setup.html
     html/faq.html)
 ENDIF(EXISTS html/index.html)
+
+####################################################################
+# INFO FILES                                                       #
+####################################################################
+
+SET(MAKEINFO )
+FIND_PROGRAM(MAKEINFO NAMES makeinfo)
+
+IF(MAKEINFO)
+  MESSAGE(STATUS "Found makeinfo - info documentation will be installed.")
+  ADD_CUSTOM_COMMAND(
+    OUTPUT chicken.info
+    DEPENDS ${Chicken_SOURCE_DIR}/chicken.texi
+    COMMAND ${MAKEINFO} --no-split ${Chicken_SOURCE_DIR}/chicken.texi)
+ENDIF(MAKEINFO)
 
 
 ####################################################################
@@ -1958,6 +1862,10 @@ IF(CHANGELOG_FILE)
     DESTINATION ${DOC_HOME}
   )
 ENDIF(CHANGELOG_FILE)
+
+IF(MAKEINFO)
+  INSTALL(TARGETS chicken.info DESTINATION ${INFO_HOME})
+ENDIF(MAKEINFO)
 
 INSTALL(FILES ${HTMLDOC_FILES} DESTINATION ${DOC_HOME}/html)
 
@@ -2084,7 +1992,7 @@ ADD_CUSTOM_COMMAND(
   COMMAND ${CMAKE_COMMAND} -DChicken_SOURCE_DIR=${Chicken_SOURCE_DIR} -DDIST_DIR=${DIST_DIR} -DCHANGELOG_FILE="${CHANGELOG_FILE}" -DBOOT_CFILES="${BOOT_CFILES}" -P ${Chicken_SOURCE_DIR}/dist.cmake
 )
 ADD_CUSTOM_TARGET(dist DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.tar.gz ${CMAKE_CURRENT_BINARY_DIR}/${DIST_DIR}.zip)
-ADD_DEPENDENCIES(dist boot-c darcs-changelog)
+ADD_DEPENDENCIES(dist boot-c)
 
 
 ####################################################################
