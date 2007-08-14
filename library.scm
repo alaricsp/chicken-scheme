@@ -3123,14 +3123,14 @@ EOF
 		   (if (##sys#fudge 32) " gchooks" "") 
 		   (if (##sys#fudge 33) " extraslot" "")
 		   (if (##sys#fudge 35) " applyhook" "")
-		   (if (##sys#fudge 39) " cross" "") ) ) )
+		   (if (##sys#fudge 39) " cross" "") 
+		   (build-style) ) ) )
 	(string-append 
 	 "Version " +build-version+
 	 " - " (get-config)
 	 (if (eq? 0 (##sys#size spec))
 	     ""
-	     (string-append " - [" spec " ]") )
-	 " - " (symbol->string (build-style)) ) )
+	     (string-append " - [" spec " ]") ) ) )
       +build-version+) )
 
 (define ##sys#pathname-directory-separator
