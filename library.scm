@@ -3112,7 +3112,7 @@ EOF
 	(if (eq? x 'unknown)
 	    ""
 	    (string-append (symbol->string x) "-") ) )
-      (string-append (str sv) (str st) (str bp) (symbol->string mt)) ) )
+      (string-append (str sv) (str st) (str bp) (##sys#symbol->string mt)) ) )
   (if (:optional full #f)
       (let ((spec (string-append
 		   (if (##sys#fudge 3) " 64bit" "")
@@ -3124,7 +3124,7 @@ EOF
 		   (if (##sys#fudge 33) " extraslot" "")
 		   (if (##sys#fudge 35) " applyhook" "")
 		   (if (##sys#fudge 39) " cross" "") 
-		   (build-style) ) ) )
+		   " " (##sys#symbol->string (build-style) ) ) ) )
 	(string-append 
 	 "Version " +build-version+
 	 " - " (get-config)
