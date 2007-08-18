@@ -1246,7 +1246,7 @@
       [(f32vector nonnull-f32vector) (str "float *")]
       [(f64vector nonnull-f64vector) (str "double *")]
       [(nonnull-c-string c-string nonnull-c-string* c-string* 
-			 nonnull-unsigned-c-string nonnull-unsigned-c-string*
+			 nonnull-unsigned-c-string nonnull-unsigned-c-string* unsigned-c-string*
 			 symbol) (str "char *")]
       [(void) (str "void")]
       [else
