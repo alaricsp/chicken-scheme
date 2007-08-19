@@ -35,9 +35,9 @@
 
 	.text
 
-	.globl C_do_apply_hack
+	.globl _C_do_apply_hack
 	
-C_do_apply_hack:
+_C_do_apply_hack:
 	movl 4(%esp), %eax
 	movl 8(%esp), %esp
 	call *%eax

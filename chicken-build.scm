@@ -720,7 +720,7 @@ EOF
 ;;; Documentation
 
 (define (documentation)
-  (actions "ChangeLog" (lambda () (run (svn log >ChangeLog)))) 
+  (actions "ChangeLog" (lambda () (run (svn log >ChangeLog "||" touch ChangeLog)))) 
   (notfile "manualsync")
   (actions 
    "do" "manualsync" 

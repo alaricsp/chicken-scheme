@@ -145,7 +145,12 @@ static C_TLS int timezone;
 # endif
 #else
 # ifdef C_HACKED_APPLY
+#  ifdef __MACH__
 extern void C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
+#  else
+extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
+#   define C_do_apply_hack _C_do_apply_hack
+#  endif
 # endif
 #endif
 

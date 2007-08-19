@@ -35,10 +35,10 @@
 
 	.text
 
-	.globl C_do_apply_hack
-	.type C_do_apply_hack, @function
+	.globl _C_do_apply_hack
+	.type _C_do_apply_hack, @function
 	
-C_do_apply_hack:
+_C_do_apply_hack:
 	movq %rsi, %rax		/* get proc */
 	cmpl $6, %edx		/* clamp at 6 */
 	jae l2
