@@ -253,10 +253,12 @@ EOF
       (##core#inline "C_i_check_structure_2" x y (car z))
       (##core#inline "C_i_check_structure" x y) ) )
 
-(define (##sys#check-byte-vector x . y) 
+(define (##sys#check-blob x . y) 
   (if (pair? y)
       (##core#inline "C_i_check_bytevector_2" x (car y))
       (##core#inline "C_i_check_bytevector" x) ) )
+
+(define ##sys#check-byte-vector ##sys#check-blob)
 
 (define (##sys#check-pair x . y) 
   (if (pair? y)
@@ -329,6 +331,7 @@ EOF
     (define-macro (##sys#check-port-mode . _) '(##core#undefined))
     (define-macro (##sys#check-number . _) '(##core#undefined))
     (define-macro (##sys#check-special . _) '(##core#undefined))
+    (define-macro (##sys#check-blob . _) '(##core#undefined))
     (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
  [else] )
 
@@ -466,25 +469,23 @@ EOF
 (define (string-ref s i) (##core#inline "C_i_string_ref" s i))
 (define (string-set! s i c) (##core#inline "C_i_string_set" s i c))
 
+(define-inline (%make-string size fill)
+  (##sys#allocate-vector size #t fill #f) )
+
 (define (##sys#make-string size . fill)
-  (##sys#allocate-vector
-   size #t
-   (if (null? fill)
-       #\space
-       (car fill))
-   #f) )
+  (%make-string size (optional fill #\space)) )
 
 (define (make-string size . fill)
   (##sys#check-exact size 'make-string)
   #+(not unsafe)
   (when (fx< size 0)
     (##sys#signal-hook #:bounds-error 'make-string "size is negative" size))
-  (##sys#make-string 
-   size 
-   (if (null? fill)
-       #\space
-       (let ((c (car fill)))
-	 (begin (##sys#check-char c 'make-string) c) ) ) ) )
+  (%make-string size
+                (if (null? fill)
+                    #\space
+                    (let ((c (car fill)))
+                      (##sys#check-char c 'make-string)
+                      c ) ) ) )
 
 (define ##sys#string->list 
   (lambda (s)
@@ -1156,6 +1157,40 @@ EOF
 	  (and (pair? default) ((car default))) ) ) ) )
 
 (define get-keyword ##sys#get-keyword)
+
+
+;;; Blob:
+
+(define (##sys#make-blob size)
+  (let ([bv (##sys#allocate-vector size #t #f #t)])
+    (##core#inline "C_string_to_bytevector" bv)
+    bv) )
+
+(define (make-blob size)
+  (##sys#check-exact size 'make-blob)
+  (##sys#make-blob size) )
+
+(define (blob? x)
+  (and (##core#inline "C_blockp" x)
+       (##core#inline "C_bytevectorp" x) ) )
+
+(define (blob-size bv)
+  (##sys#check-blob bv 'blob-size)
+  (##sys#size bv) )
+
+(define (string->blob s)
+  (##sys#check-string s 'string->blob)
+  (let* ([n (##sys#size s)]
+         [bv (##sys#make-blob n)] )
+    (##core#inline "C_copy_memory" bv s n) 
+    bv) )
+
+(define (blob->string bv)
+  (##sys#check-blob bv 'blob->string)
+  (let* ([n (##sys#size bv)]
+         [s (##sys#make-string n)] )
+    (##core#inline "C_copy_memory" s bv n) 
+    s) )
 
 
 ;;; Vectors:

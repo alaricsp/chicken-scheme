@@ -7,11 +7,11 @@
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -23,7 +23,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-; Send bugs, suggestions and ideas to: 
+; Send bugs, suggestions and ideas to:
 ;
 ; felix@call-with-current-continuation.org
 ;
@@ -77,13 +77,13 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     ##sys#check-exact ##sys#u8vector-ref ##sys#u8vector-set! ##sys#s8vector-ref ##sys#s8vector-set! 
+     ##sys#check-exact ##sys#u8vector-ref ##sys#u8vector-set! ##sys#s8vector-ref ##sys#s8vector-set!
      ##sys#u16vector-ref ##sys#u16vector-set!
-     ##sys#s16vector-ref ##sys#s16vector-set! ##sys#u32vector-ref ##sys#u32vector-set! ##sys#s32vector-ref 
+     ##sys#s16vector-ref ##sys#s16vector-set! ##sys#u32vector-ref ##sys#u32vector-set! ##sys#s32vector-ref
      ##sys#s32vector-set! read list->f64vector list->s32vector list->u32vector list->u16vector list-s8vector
      list->u8vector set-finalizer!
      ##sys#f32vector-ref ##sys#f32vector-set! ##sys#f64vector-ref ##sys#f64vector-set! ##sys#check-exact-interval
-     ##sys#check-inexact-interval ##sys#check-number ##sys#check-structure ##sys#cons-flonum ##sys#check-list 
+     ##sys#check-inexact-interval ##sys#check-number ##sys#check-structure ##sys#cons-flonum ##sys#check-list
      ##sys#check-range ##sys#error ##sys#signal-hook
      ##sys#not-a-proper-list-error ##sys#print ##sys#allocate-vector) ) ] )
 
@@ -186,7 +186,7 @@ EOF
 	(##sys#check-exact x loc)
 	(##sys#check-range i 0 len loc)
 	(upd v i x) ) ) )
- 
+
   (define (setu length upd loc)
     (lambda (v i x)
       (let ((len (length v)))
@@ -195,7 +195,7 @@ EOF
 	    (##sys#error loc "argument may not be negative" x) )
 	(##sys#check-range i 0 len loc)
 	(upd v i x) ) ) )
- 
+
   (define (setw length upd loc)
     (lambda (v i x)
       (let ((len (length v)))
@@ -203,7 +203,7 @@ EOF
 	    (##sys#error loc "argument exceeds integer range" x) )
 	(##sys#check-range i 0 len loc)
 	(upd v i x) ) ) )
- 
+
   (define (setuw length upd loc)
     (lambda (v i x)
       (let ((len (length v)))
@@ -213,7 +213,7 @@ EOF
 	       (##sys#error loc "argument exceeds integer range" x) ) )
 	(##sys#check-range i 0 len loc)
 	(upd v i x) ) ) )
- 
+
   (define (setf length upd loc)
     (lambda (v i x)
       (let ((len (length v)))
@@ -222,7 +222,7 @@ EOF
 	(upd v i (if (##core#inline "C_blockp" x)
 		     x
 		     (exact->inexact x) ) ) ) ) )
- 
+
   (set! u8vector-set! (setu u8vector-length ##sys#u8vector-set! 'u8vector-set!))
   (set! s8vector-set! (set s8vector-length ##sys#s8vector-set! 's8vector-set!))
   (set! u16vector-set! (setu u16vector-length ##sys#u16vector-set! 'u16vector-set!))
@@ -249,14 +249,14 @@ EOF
 	 (get u32vector-length ##sys#u32vector-ref 'u32vector-ref)
 	 u32vector-set!) )
   (set! s32vector-ref
-	(getter-with-setter 
+	(getter-with-setter
 	 (get s32vector-length ##sys#s32vector-ref 's32vector-ref)
 	 s32vector-set!) )
   (set! f32vector-ref
-	(getter-with-setter 
+	(getter-with-setter
 	 (get f32vector-length ##sys#f32vector-ref 'f32vector-ref)
 	 f32vector-set!) )
-  (set! f64vector-ref 
+  (set! f64vector-ref
 	(getter-with-setter
 	 (get f64vector-length ##sys#f64vector-ref 'f64vector-ref)
 	 f64vector-set!) ) )
@@ -277,12 +277,12 @@ EOF
        [set-finalizer! set-finalizer!]
        [alloc
 	(lambda (loc len ext?)
-	  (if ext? 
+	  (if ext?
 	      (let ([bv (ext-alloc len)])
 		(or bv
 		    (##sys#error loc "not enough memory - can not allocate external number vector" len)) )
 	      (let ([bv (##sys#allocate-vector len #t #f #t)]) ; this could be made better...
-		(##core#inline "C_string_to_bytevector" bv) 
+		(##core#inline "C_string_to_bytevector" bv)
 		bv) ) ) ] )
 
   (set! release-number-vector
@@ -428,7 +428,7 @@ EOF
 
 
 ;;; More constructors:
-      
+
 (define u8vector
   (let ((list->u8vector list->u8vector))
     (lambda xs (list->u8vector xs)) ) )
@@ -465,14 +465,14 @@ EOF
 ;;; Creating lists from a vector:
 
 (let ()
-  
+
   (define (init tag length ref)
     (lambda (v)
       (let ((len (length v)))
 	(let loop ((i 0))
 	  (if (fx>= i len)
 	      '()
-	      (cons (ref v i) 
+	      (cons (ref v i)
 		    (loop (fx+ i 1)) ) ) ) ) ) )
 
   (set! u8vector->list (init 'u8vector u8vector-length ##sys#u8vector-ref))
@@ -510,29 +510,29 @@ EOF
     (lambda (v)
       (##sys#check-structure v tag loc)
       (let* ((old (##sys#slot v 1))
-	     (new (make-string (##sys#size old))))
+	     (new (##sys#make-blob (##sys#size old))))
 	(##core#inline "C_copy_block" old new) ) ) )
 
   (define (unpack tag sz loc)
     (lambda (str)
       (##sys#check-byte-vector str loc)
       (let ([len (##sys#size str)])
-	(if (or (eq? #t sz) 
+	(if (or (eq? #t sz)
 		(eq? 0 (##core#inline "C_fixnum_modulo" len sz)))
-	    (##sys#make-structure tag str) 
+	    (##sys#make-structure tag str)
 	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )
 
   (define (unpack-copy tag sz loc)
     (lambda (str)
       (##sys#check-byte-vector str loc)
       (let* ((len (##sys#size str))
-	    (new (make-string len)))
-	(if (or (eq? #t sz) 
+	     (new (##sys#make-blob len)))
+	(if (or (eq? #t sz)
 		(eq? 0 (##core#inline "C_fixnum_modulo" len sz)))
-	    (##sys#make-structure 
-	     tag 
+	    (##sys#make-structure
+	     tag
 	     (##core#inline "C_copy_block" str new) )
-	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )    
+	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )
 
   (set! u8vector->byte-vector (pack 'u8vector 'u8vector->byte-vector)) ; DEPRECATED
   (set! s8vector->byte-vector (pack 's8vector 's8vector->byte-vector)) ; DEPRECATED
@@ -550,7 +550,7 @@ EOF
   (set! u32vector->blob/shared (pack 'u32vector 'u32vector->blob/shared))
   (set! s32vector->blob/shared (pack 's32vector 's32vector->blob/shared))
   (set! f32vector->blob/shared (pack 'f32vector 'f32vector->blob/shared))
-  (set! f64vector->blob/shared (pack 'f64vector 'f64vector->blob/shared)) 
+  (set! f64vector->blob/shared (pack 'f64vector 'f64vector->blob/shared))
 
   (set! u8vector->blob (pack-copy 'u8vector 'u8vector->blob))
   (set! s8vector->blob (pack-copy 's8vector 's8vector->blob))
@@ -559,7 +559,7 @@ EOF
   (set! u32vector->blob (pack-copy 'u32vector 'u32vector->blob))
   (set! s32vector->blob (pack-copy 's32vector 's32vector->blob))
   (set! f32vector->blob (pack-copy 'f32vector 'f32vector->blob))
-  (set! f64vector->blob (pack-copy 'f64vector 'f64vector->blob)) 
+  (set! f64vector->blob (pack-copy 'f64vector 'f64vector->blob))
 
   (set! byte-vector->u8vector (unpack 'u8vector #t 'byte-vector->u8vector)) ; DEPRECATED
   (set! byte-vector->s8vector (unpack 's8vector #t 'byte-vector->s8vector)) ; DEPRECATED
@@ -684,7 +684,7 @@ EOF
       (##sys#make-structure
        'u8vector
        (let ((str2 (##sys#allocate-vector n #t #f #t)))
-	 (##core#inline "C_string_to_bytevector" str2) 
+	 (##core#inline "C_string_to_bytevector" str2)
 	 (##core#inline "C_substring_copy" str str2 0 n 0)
 	 str2) ) )
     (lambda (#!optional n (p ##sys#standard-input))
@@ -692,7 +692,7 @@ EOF
       (cond (n (##sys#check-exact n 'read-u8vector)
 	       (let* ((str (##sys#allocate-vector n #t #f #t))
 		      (n2 (##sys#read-string! n str p 0)) )
-		 (##core#inline "C_string_to_bytevector" str) 
+		 (##core#inline "C_string_to_bytevector" str)
 		 (if (eq? n n2)
 		     (##sys#make-structure 'u8vector str)
 		     (wrap str n2) ) ) )
@@ -705,7 +705,7 @@ EOF
 			      (n (##sys#size s)) )
 			 (wrap s n) )
 		       (begin
-			 (##sys#write-char/port c str) 
+			 (##sys#write-char/port c str)
 			 (loop)))))))))))
 
 (register-feature! 'srfi-4)

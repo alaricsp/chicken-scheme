@@ -944,6 +944,48 @@ then the {{write}} will use the character name that was defined last.
 
 
 
+=== Blobs
+
+"blobs" are collections of unstructured bytes. You can't do much
+with them, but allow conversion to and from SRFI-4 number vectors.
+
+==== make-blob
+
+ [procedure] (make-blob SIZE)
+
+Returns a blob object of {{SIZE}} bytes,
+aligned on an 8-byte boundry,
+un-initialized.
+
+==== blob?
+
+ [procedure] (blob? X)
+
+Returns {{#t}} if {{X}} is a blob object, or
+{{#f}} otherwise.
+
+==== blob-size
+
+ [procedure] (blob-size BLOB)
+
+Returns the number of bytes in {{BLOB}}.
+
+==== blob->string
+
+ [procedure] (blob->string BLOB)
+
+Returns a string with the contents of {{BLOB}}.
+
+==== string->blob
+
+ [procedure] (string->blob STRING)
+
+Returns a blob with the contents of {{STRING}}.
+
+
+
+
+
 === Vectors
 
 

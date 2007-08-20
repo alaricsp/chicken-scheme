@@ -304,10 +304,6 @@ EOF
 
 ;;; Bytevector stuff:
 
-(define (blob? x)
-  (and (##core#inline "C_blockp" x)
-       (##core#inline "C_bytevectorp" x) ) )
-
 (define byte-vector? blob?)		; DEPRECATED
 
 (define (byte-vector-fill! bv n)	; DEPRECATED
@@ -320,9 +316,7 @@ EOF
 
 (define make-byte-vector		; DEPRECATED
     (lambda (size . init)
-      (##sys#check-exact size 'make-byte-vector)
-      (let ([bv (##sys#allocate-vector size #t #f #t)])
-	(##core#inline "C_string_to_bytevector" bv)
+      (let ([bv (make-blob size)])
 	(when (pair? init) (byte-vector-fill! bv (car init)))
 	bv) ) )
 
@@ -379,29 +373,9 @@ EOF
 		(##sys#setbyte v i b) )
 	      (##sys#not-a-proper-list-error lst) ) ) ) ) )
 
-(define string->blob
-    (lambda (s)
-      (##sys#check-string s 'string->byte-vector)
-      (let* ([n (##sys#size s)]
-	     [bv (make-byte-vector n)] )
-	(##core#inline "C_copy_memory" bv s n) 
-	bv) ) )
-
 (define string->byte-vector string->blob) ; DEPRECATED
 
-(define blob->string
-    (lambda (bv)
-      (##sys#check-byte-vector bv 'blob->string)
-      (let* ([n (##sys#size bv)]
-	     [s (make-string n)] )
-	(##core#inline "C_copy_memory" s bv n) 
-	s) ) )
-
 (define byte-vector->string blob->string) ; DEPRECATED
-
-(define (blob-size bv)
-  (##sys#check-byte-vector bv 'blob-size)
-  (##sys#size bv) )
 
 (define byte-vector-length blob-size) ; DEPRECATED
 

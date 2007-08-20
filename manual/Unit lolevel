@@ -323,40 +323,6 @@ Changes the data object contained in the extended procedure
 (foo)                                         ==> hello
 </enscript>
 
-=== Blobs
-
-"blobs" are collections of unstructured bytes. You can't do much
-with them, but allow conversion to and from SRFI-4 number vectors.
-
-
-==== blob?
-
- [procedure] (blob? X)
-
-Returns {{#t}} if {{X}} is a blob object, or
-{{#f}} otherwise.
-
-
-==== blob-size
-
- [procedure] (blob-size BLOB)
-
-Returns the number of bytes in {{BLOB}}.
-
-
-==== blob->string
-
- [procedure] (blob->string BLOB)
-
-Returns a string with the contents of {{BLOB}}.
-
-
-==== string->blob
-
- [procedure] (string->blob STRING)
-
-Returns a blob with the contents of {{STRING}}.
-
 
 
 === Data in unmanaged memory
@@ -464,7 +430,7 @@ The effect of creating locatives for evicted data (see {{object-evict}}) is unde
  [procedure] (make-locative EXP [INDEX])
 
 Creates a locative that refers to the element of the non-immediate object {{EXP}}
-at position {{INDEX}}. {{EXP}} may be a vector, pair, string, byte-vector,
+at position {{INDEX}}. {{EXP}} may be a vector, pair, string, blob,
 SRFI-4 number-vector, or record. {{INDEX}} should be a fixnum. {{INDEX}} defaults to 0.
 
 
