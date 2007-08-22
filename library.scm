@@ -90,10 +90,9 @@ static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
   for (i = 0; i < n; i++) {
     c = getc(fp);
     switch (c) {
-    case '\r':
-      if ((c = getc(fp)) != '\n') ungetc(c, fp);
-    case EOF: clearerr(fp);
-    case '\n': return C_fix(i);
+    case '\r':  if ((c = getc(fp)) != '\n') ungetc(c, fp);
+    case EOF:   clearerr(fp);
+    case '\n':  return C_fix(i);
     }
     buf[i] = c;
   }
@@ -523,6 +522,34 @@ EOF
 
 (define list->string ##sys#list->string)
 
+;;; By Sven Hartrumpf:
+
+(define (##sys#reverse-list->string l)
+  (cond-expand
+    [unsafe
+    (let* ((n (length l))
+           (s (##sys#make-string n)))
+      (let iter ((l2 l) (n2 (fx- n 1)))
+        (cond ((fx>= n2 0)
+               (##core#inline "C_setsubchar" s n2 (##sys#slot l2 0))
+               (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
+      s ) ]
+    [else
+    (if (list? l)
+      (let* ((n (length l))
+             (s (##sys#make-string n)))
+        (let iter ((l2 l) (n2 (fx- n 1)))
+          (cond ((fx>= n2 0)
+                 (let ((c (##sys#slot l2 0)))
+                   (##sys#check-char c 'reverse-list->string)
+                   (##core#inline "C_setsubchar" s n2 c) )
+                 (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
+        s )
+      (##sys#not-a-proper-list-error l 'reverse-list->string) ) ]
+    ) )
+
+(define reverse-list->string ##sys#reverse-list->string)
+
 (define (string-fill! s c)
   (##sys#check-string s 'string-fill!)
   (##sys#check-char c 'string-fill!)
@@ -686,21 +713,6 @@ EOF
 		 [flen (##sys#size f)] )
 	    (##core#inline "C_substring_copy" f dest 0 flen pos)
 	    (loop (##sys#slot fs 1) (fx+ pos flen)) ) ) ) ) )
-
-
-;;; By Sven Hartrumpf:
-
-(define (##sys#reverse-list->string l)
-  (let* ((n (length l))
-         (s (##sys#make-string n)))
-    (let iter ((l2 l)
-               (n2 (fx- n 1)))
-      (cond ((fx>= n2 0)
-             (##core#inline "C_setsubchar" s n2 (##sys#slot l2 0))
-             (iter (##sys#slot l2 1) (fx- n2 1)))))
-    s))
-
-(define reverse-list->string ##sys#reverse-list->string)
 
 
 ;;; Numeric routines:
@@ -1237,7 +1249,6 @@ EOF
               (##sys#setslot v i (##sys#slot lst 0))
               (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) ) )]
     ))
-
 
 (define vector->list
   (lambda (v)
@@ -3148,7 +3159,7 @@ EOF
 	    ""
 	    (string-append (symbol->string x) "-") ) )
       (string-append (str sv) (str st) (str bp) (##sys#symbol->string mt)) ) )
-  (if (:optional full #f)
+  (if (optional full #f)
       (let ((spec (string-append
 		   (if (##sys#fudge 3) " 64bit" "")
 		   (if (##sys#fudge 15) " symbolgc" "")
