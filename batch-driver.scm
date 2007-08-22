@@ -485,6 +485,11 @@
 	     (when (and unit-name dynamic)
 	       (compiler-warning 'usage "library unit `~a' compiled in dynamic mode" unit-name) )
 
+	     (when (and unsafe (feature? 'compiling-extension))
+	       (compiler-warning 
+		'style
+		"compiling extensions in unsafe mode is bad practice and should be avoided as it may be surprising to an unsuspecting user") )
+
 	     (set! ##sys#line-number-database line-number-database-2)
 	     (set! line-number-database-2 #f)
 
