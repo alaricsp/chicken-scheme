@@ -292,33 +292,52 @@
 
 (define-macro (define-foreign-enum typename . enums)
   (let ((name typename)
-	(type (->string typename)) )
-    (when (and (list? typename) (= 2 (length typename)))
-      (set! name (car typename))
-      (set! type (cadr typename)) )
-    (let* ((symbols (map (lambda (e) (if (pair? e) (car e) e)) enums))
-	   (aliases (map gensym symbols)) 
-	   (vals (map (lambda (e) (if (pair? e) (cadr e) e)) enums))
-	   (s->e (string->symbol (conc name "->number")))
-	   (e->s (string->symbol (conc "number->" name)) ) )
+	(type (->string typename))
+	(defsymval ''())
+	(symbols (map (lambda (e) (if (pair? e) (car e) e)) enums))
+	(extvals (map (lambda (e)
+	                (if (pair? e)
+                            (if (pair? (cdr e))
+                                (cadr e)
+                                (syntax-error 'define-foreign-enum
+                                              "invalid enum specification" e) )
+                            e ) )
+	              enums))
+	(symvals (map (lambda (e)
+	                (if (pair? e)
+	                    (if (pair? (cddr e))
+	                        (caddr e)
+	                        `(quote ,(car e)))
+	                    `(quote ,e)))
+	              enums)) )
+    (when (list? typename)
+      (let ([len (length typename)])
+        (unless (<= 2 len 3)
+          (syntax-error 'define-foreign-enum "invalid typename specification" typename) )
+        (set! name (car typename))
+        (set! type (cadr typename))
+        (when (= 3 len)
+          (set! defsymval (caddr typename)) ) ) )
+    (let ((aliases (map gensym symbols))
+	  (s->e (string->symbol (conc name "->number")))
+	  (e->s (string->symbol (conc "number->" name)) ) )
       `(begin
-	 ,@(map (lambda (a v) `(define-foreign-variable ,a integer ,(->string v))) aliases vals)
+	 ,@(map (lambda (a v) `(define-foreign-variable ,a integer ,(->string v))) aliases extvals)
 	 (define (,s->e syms)
 	   (let loop ((syms (if (symbol? syms) (list syms) syms)) (sum 0))
 	     (if (null? syms) 
 		 sum
-		 (loop
-		  (cdr syms)
-		  (bitwise-ior
-		   sum
-		   (let ((val (car syms)))
-		     (case val
-		       ,@(map (lambda (a s) `((,s) ,a)) aliases symbols)
-		       (else (error "not a member of enum" val ',name)) ) ) ) ) ) ) )
+		 (loop (cdr syms)
+                       (bitwise-ior
+                        sum
+                        (let ((val (car syms)))
+                          (case val
+                            ,@(map (lambda (a s) `((,s) ,a)) aliases symbols)
+                            (else (error "not a member of enum" val ',name)) ) ) ) ) ) ) )
 	 (define (,e->s val)
 	   (cond 
-	    ,@(map (lambda (a s) `((= val ,a) ',s)) aliases symbols)
-	    (else '()) ) )
+	    ,@(map (lambda (a sv) `((= val ,a) ,sv)) aliases symvals)
+	    (else ,defsymval) ) )
 	 (define-foreign-type ,name ,type ,s->e ,e->s) ) ) ) )
 
 
