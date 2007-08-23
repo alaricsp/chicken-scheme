@@ -2679,16 +2679,18 @@ EOF
   (##sys#check-port* port 'display)
   (##sys#print x #f port) )
 
-(define print
-  (lambda (arg1 . args)
-    (for-each (lambda (x) (##sys#print x #f ##sys#standard-output)) (cons arg1 args))
+(define-inline (*print-each lst)
+  (for-each (cut ##sys#print <> #f ##sys#standard-output) lst) )
+ 
+(define (print . args)
+    (*print-each args)
     (##sys#write-char-0 #\newline ##sys#standard-output) 
-    arg1) )
+    (if (null? args) (void) (car args)) )
 
-(define (print* arg1 . args)
-  (for-each (lambda (x) (##sys#print x #f ##sys#standard-output)) (cons arg1 args))
+(define (print* . args)
+  (*print-each args)
   (##sys#flush-output ##sys#standard-output)
-  arg1)
+  (if (null? args) (void) (car args)) )
 
 (define current-print-length 0)
 (define print-length-limit #f)
