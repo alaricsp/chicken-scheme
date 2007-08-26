@@ -117,7 +117,7 @@ AC_CHECK_FUNCS(strtod strtol strtoul)
 dnl Mac OS X should not use gcvt.
 case "$host_os" in
   *darwin*)
-        ;;
+      ;;
   *)
       AC_CHECK_FUNCS(gcvt)
       ;;
@@ -190,8 +190,8 @@ esac
 AM_CONDITIONAL(USE_APPLY_HACK, [test "$APPLY_HACK_FILE" != ""])
 AC_SUBST(APPLY_HACK_FILE)
 if test "$APPLY_HACK_FILE" != ""; then
-   rm -f apply-hack.s
-   ln -s $APPLY_HACK_FILE apply-hack.s
+   rm -f ${srcdir}/apply-hack.s
+   ln -s ${srcdir}/$APPLY_HACK_FILE ${srcdir}/apply-hack.s
 fi
 
 dnl If we're using gcc, try to find better CFLAGS than the default -g -O2.

@@ -182,7 +182,7 @@ library.c: version.scm
 # force make to recompile all of them.)
 
 chicken.c: chicken.scm chicken-more-macros.scm version.scm chicken-ffi-macros.scm tweaks.scm
-	$(CHICKEN) chicken.scm $(CHICKEN_FLAGS) -output-file chicken.c
+	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
 
 csi.c: csi.scm banner.scm chicken-more-macros.scm
 	$(CHICKEN) $< $(CHICKEN_FLAGS) -output-file $@
@@ -206,33 +206,33 @@ SUFFIXES = .scm
 
 # Specific rules for unsafe library units:
 ueval.c: eval.scm
-	$(CHICKEN) eval.scm $(CHICKEN_UFLAGS) -output-file ueval.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 ulibrary.c: library.scm $(srcdir)/version.scm
-	$(CHICKEN) library.scm $(CHICKEN_UFLAGS) -output-file ulibrary.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 uextras.c: extras.scm
-	$(CHICKEN) extras.scm $(CHICKEN_UFLAGS) -output-file uextras.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 usrfi-4.c: srfi-4.scm
-	$(CHICKEN) srfi-4.scm $(CHICKEN_UFLAGS) -output-file usrfi-4.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 usrfi-1.c: srfi-1.scm
-	$(CHICKEN) srfi-1.scm $(CHICKEN_UFLAGS) -output-file usrfi-1.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 usrfi-13.c: srfi-13.scm
-	$(CHICKEN) srfi-13.scm $(CHICKEN_UFLAGS) -output-file usrfi-13.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 usrfi-14.c: srfi-14.scm
-	$(CHICKEN) srfi-14.scm $(CHICKEN_UFLAGS) -output-file usrfi-14.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 uposixwin.c: posixwin.scm
-	$(CHICKEN) posixwin.scm $(CHICKEN_UFLAGS) -output-file uposixwin.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 uposixunix.c: posixunix.scm
-	$(CHICKEN) posixunix.scm $(CHICKEN_UFLAGS) -output-file uposixunix.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 uutils.c: utils.scm
-	$(CHICKEN) utils.scm $(CHICKEN_UFLAGS) -output-file uutils.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 utcp.c: tcp.scm
-	$(CHICKEN) tcp.scm $(CHICKEN_UFLAGS) -output-file utcp.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 ulolevel.c: lolevel.scm
-	$(CHICKEN) lolevel.scm $(CHICKEN_UFLAGS) -output-file ulolevel.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 uregex.c: regex.scm
-	$(CHICKEN) regex.scm $(CHICKEN_UFLAGS) -output-file uregex.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 usrfi-18.c: srfi-18.scm
-	$(CHICKEN) srfi-18.scm $(CHICKEN_UFLAGS) -output-file usrfi-18.c -explicit-use
+	$(CHICKEN) $< $(CHICKEN_UFLAGS) -output-file $@ -explicit-use
 
 endif !USE_BOOT_CFILES
 ########################################################
