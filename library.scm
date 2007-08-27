@@ -471,8 +471,8 @@ EOF
 (define-inline (%make-string size fill)
   (##sys#allocate-vector size #t fill #f) )
 
-(define (##sys#make-string size . fill)
-  (%make-string size (optional fill #\space)) )
+(define (##sys#make-string size #!optional (fill #\space))
+  (%make-string size fill))
 
 (define (make-string size . fill)
   (##sys#check-exact size 'make-string)
@@ -3150,7 +3150,7 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_build_style")))])
     (lambda () sym) ) )
 
-(define (chicken-version . full)
+(define (chicken-version #!optional full)
   (define (get-config)
     (let ([bp (build-platform)]
 	  [st (software-type)]
@@ -3161,7 +3161,7 @@ EOF
 	    ""
 	    (string-append (symbol->string x) "-") ) )
       (string-append (str sv) (str st) (str bp) (##sys#symbol->string mt)) ) )
-  (if (optional full #f)
+  (if full
       (let ((spec (string-append
 		   (if (##sys#fudge 3) " 64bit" "")
 		   (if (##sys#fudge 15) " symbolgc" "")
