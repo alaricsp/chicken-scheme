@@ -416,7 +416,7 @@
 	 val)))
   (let loop ((args args) (vals '()))
     (cond ((null? args) (reverse vals))
-	  ((string-match "(-{1,2})?([-_A-Za-z0-9]+)(=)?\\s*(.+)?" (car args)) 
+	  ((string-match "(-{1,2})([-_A-Za-z0-9]+)(=)?\\s*(.+)?" (car args)) 
 	   =>
 	   (lambda (m)
 	     (let*-values (((next) (cdr args))

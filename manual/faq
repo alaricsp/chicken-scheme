@@ -486,12 +486,14 @@ which point {{foo.scm}} will no longer be required).
 
 ==== Why does a loop that doesn't {{cons}} still trigger garbage collections?
 
-Under CHICKENs implementation policy, tail recursion is achieved simply by avoiding to
-return from a function call. Since the programs is CPS converted, a continuous 
-sequence of nested procedure calls is performed. At some stage the stack-space
-has to run out and the current procedure and its parameters (including the current continuation) are stored somewhere
-in the runtime system. Now a minor garbage collection occurs and rescues all live
-data from the stack (the first heap generation) and moves it into the the second heap generation. Than the stack is cleared (using
+Under CHICKENs implementation policy, tail recursion is achieved simply by avoiding
+to return from a function call. Since the programs is CPS converted, a continuous 
+sequence of nested procedure calls is performed. At some stage the stack-space has
+to run out and the current procedure and its parameters (including the current
+continuation) are stored somewhere in the runtime system. Now a minor garbage collection
+occurs and rescues all live
+data from the stack (the first heap generation) and moves it into the the second heap
+generation. Then the stack is cleared (using
 a {{longjmp}}) and execution can continue from the saved state.
 With this method arbitrary recursion (in tail- or non-tail position) can happen, 
 provided the application doesn't run out of heap-space.

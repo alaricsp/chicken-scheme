@@ -37,8 +37,6 @@
   (system* "cat version.scm")
   (let ([vstr (sprintf "Version ~A" buildversion)])
     (for-each (cut patch <> "Version [-.0-9a-zA-Z]+" vstr) files) )
-  (patch "configure.in" "AC_INIT\\(chicken,[0-9.]+\\)" (sprintf "AC_INIT(chicken,~A)" buildversion))
-  (patch "configure.in" "BINARY_VERSION=\\([0-9]+\\)" (sprintf "BINARY_VERSION=~a" buildbinaryversion))
   (with-output-to-file "DONE" (cut print "- version is " buildversion))
   0)
 

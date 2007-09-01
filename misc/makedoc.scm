@@ -48,6 +48,8 @@ exec csi -s $0 "$@"
 (define *extension-path* #f)
 (define *pages* (directory "manual"))
 (define *only* #f)
+(define *wikisync* #f)
+(define *wikipath* "~/eggs/wiki")
 
 (define (hyphen s)
   (string-substitute " " "-" s #t) )
@@ -185,8 +187,12 @@ in `manual-wiki-files' can be found in `*pages*'."
 	     (printf "~%</body></html>") ) ) ) ) )
    (if *only* (list *only*) *pages*) ) )
 
+(define (sync-from-wiki)
+  (system* "rsync -av --exclude=.svn --existing ~a manual/"
+	   (conc *wikipath* "/")))
+
 (define (usage code)
-  (print "makedoc --extension-path=EXTPATH [--pdf] [--only=PAGENAME]") 
+  (print "makedoc --extension-path=EXTPATH [--pdf] [--wikisync] [--wikipath=PATH] [--only=PAGENAME]") 
   (exit code) )
 
 (simple-args)
@@ -198,6 +204,7 @@ in `manual-wiki-files' can be found in `*pages*'."
    (unless (string-suffix? ".svn" f)
      (load-extensions-from-file *loaded-extensions* f)))
  (glob (conc *extension-path* "/*")) )
+(when *wikisync* (sync-from-wiki))
 (when *pdf*
   (chapters-sanity-check))
 (wiki-files->html)

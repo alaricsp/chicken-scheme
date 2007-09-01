@@ -82,13 +82,6 @@ a return value, a {{NULL}} pointer will be returned as {{#f}}.
 
 As {{c-pointer}}, but guaranteed not to be {{#f/NULL}}.
 
-=== scheme-or-c-pointer
-
-An untyped pointer. If the argument is a machine-pointer object, the wrapped C pointer
-will be passed. If it is any other object, then this type is treated as {{scheme-pointer}}.
-
-Not allowed as a result type.
-
 === [nonnull-] blob
 
 A blob object, passed as a pointer to its contents. Arguments

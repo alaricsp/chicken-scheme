@@ -100,7 +100,6 @@
 
 ;;; Parameters:
 
-(define win (eq? (build-platform) 'msvc))
 (define mingw (eq? (build-platform) 'mingw32))
 (define osx (eq? (software-version) 'macosx))
 (define hpux-hppa (and (eq? (software-version) 'hpux)
@@ -111,7 +110,6 @@
   (exit 64) )
 
 (define chicken-prefix (getenv "CHICKEN_PREFIX"))
-(define cmake-build (eq? 'cmake (build-style)))
 (define arguments (command-line-arguments))
 (define host-mode (member "-host" arguments))
 
@@ -127,70 +125,38 @@
 
 (define home
   (or (getenv "CHICKEN_HOME") 
-      (if (and win (not cmake-build))
-	  (quit "`CHICKEN_HOME' environment variable not set - please set it to the directory where CHICKEN is installed")
-	  (quotewrap (prefix "" "share" (if host-mode INSTALL_SHARE_HOME TARGET_SHARE_HOME)))
-      )
-  )
-)
-
-(define (homize str) (make-pathname home str))
+      (quotewrap 
+       (prefix "" "share" (if host-mode INSTALL_SHARE_HOME TARGET_SHARE_HOME)))))
 
 (define translator
-  (if (and win (not cmake-build))
-      (quotewrap (homize "chicken"))
-      (quotewrap 
-       (prefix "chicken" "bin"
-	       (make-pathname
-		(if host-mode INSTALL_BIN_HOME TARGET_BIN_HOME)
-		"chicken")))))
+  (quotewrap 
+   (prefix "chicken" "bin"
+	   (make-pathname
+	    (if host-mode INSTALL_BIN_HOME TARGET_BIN_HOME)
+	    "chicken"))))
 
-(if win
-    (begin
-      (define compiler "cl")
-      (define c++-compiler "cl")
-      (define linker "link")
-      (define c++-linker "link")
-      (define object-extension "obj")
-      (define library-extension "lib")
-      (define link-output-flag "/out:")
-      (define compile-output-flag "/Fo")
-      (define executable-extension "exe")
-      (define nonstatic-compilation-options '("/DPIC")) )
-    (begin
-      (define compiler (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
-      (define c++-compiler (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))
-      (define linker (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
-      (define c++-linker (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))
-      (define object-extension "o")
-      (define library-extension "a")
-      (define link-output-flag "-o ")
-      (define executable-extension "")
-      (define compile-output-flag "-o ")
-      (define nonstatic-compilation-options '()) ) )
-
+(define compiler (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
+(define c++-compiler (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))
+(define linker (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
+(define c++-linker (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))
+(define object-extension "o")
+(define library-extension "a")
+(define link-output-flag "-o ")
+(define executable-extension "")
+(define compile-output-flag "-o ")
+(define nonstatic-compilation-options '())
 (define shared-library-extension ##sys#load-dynamic-extension)
 (define default-translation-optimization-options '())
+(define pic-options (if mingw '("-DPIC") '("-fPIC" "-DPIC")))
 
-(if win
-    (begin
-      ; Windows cmd parsing precludes quoting anything but the command!
-      ; This makes driving the various translators with whitespace embedded
-      ; filenames impossible.
-      (define (cleanup-filename s) (string-translate s "/" "\\")) ; we need this to please the MSVC tools
-      (define default-compilation-optimization-options '("/nologo"))
-      (define default-linking-optimization-options '("/nologo"))
-      (define best-linking-optimization-options '("/nologo"))
-      (define best-compilation-optimization-options '("/O2" "/nologo")) )
-    (begin
-      (define cleanup-filename
-        (if (not mingw)
-            (lambda (s) (quotewrap s)) ; allow filenames w/ whitespace
-            (lambda (s) s)))
-      (define default-compilation-optimization-options (string-split (if host-mode INSTALL_CFLAGS TARGET_CFLAGS)))
-      (define best-compilation-optimization-options default-compilation-optimization-options)
-      (define default-linking-optimization-options '())
-      (define best-linking-optimization-options '()) ) )
+(define cleanup-filename
+  (if (not mingw)
+      (lambda (s) (quotewrap s)) ; allow filenames w/ whitespace
+      (lambda (s) s)))
+(define default-compilation-optimization-options (string-split (if host-mode INSTALL_CFLAGS TARGET_CFLAGS)))
+(define best-compilation-optimization-options default-compilation-optimization-options)
+(define default-linking-optimization-options '())
+(define best-linking-optimization-options '())
 
 (define-constant simple-options
   '(-explicit-use -no-trace -no-warnings -no-usual-integrations -optimize-leaf-routines -unsafe
@@ -246,103 +212,32 @@
 (define show-libs #f)
 (define dry-run #f)
 
-(if win
-    (begin
-      (define extra-libraries "")
-      (define extra-shared-libraries "")
-      (if (not cmake-build)
-        (begin				; flat destination directory
-          (define default-library-files
-	    (map homize '("libchicken-static.lib")))
-          (define default-shared-library-files
-	    (map homize '("libchicken.lib")))
-          (define unsafe-library-files
-	    (map homize '("libuchicken-static.lib")))
-          (define unsafe-shared-library-files
-	    (map homize '("libuchicken.lib")))
-          (define gui-library-files
-	    (map homize '("libchickengui-static.lib")))
-          (define gui-shared-library-files
-	    (map homize '("libchickengui.lib")))
-        )
-        (begin
-          (define default-library-files 
-	    (list
-	     (quotewrap 
-	      (prefix "libchicken-s.lib" "lib"
-		      (string-append
-		       (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		       "\\libchicken-s.lib"))))
-	    )
-	  (define default-shared-library-files (list
-            (quotewrap 
-	     (prefix "libchicken.lib" "lib"
-		     (string-append
-		      (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		      "\\libchicken.lib")))
-          ))
-          (define unsafe-library-files (list
-            (quotewrap
-	     (prefix "libuchicken-s.lib" "lib"
-		     (string-append
-		      (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		      "\\libuchicken-s.lib")))
-          ))
-          (define unsafe-shared-library-files (list
-            (quotewrap
-	     (prefix "libuchicken.lib" "lib"
-		     (string-append
-		      (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		      "\\libuchicken.lib")))
-          ))
-          (define gui-library-files (list
-            (quotewrap 
-	     (prefix "libchickengui-s.lib" "lib"
-		     (string-append
-		      (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		      "\\libchickengui-s.lib")))
-          ))
-          (define gui-shared-library-files (list
-            (quotewrap
-	     (prefix "libchickengui.lib" "lib"
-		     (string-append
-		      (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		      "\\libchickengui.lib")))
-          ))
-        )
-      )
-    )
-    (begin
-      ; will more libs ever need quotewrapping?
-      (define extra-libraries
-	(if host-mode
-	    INSTALL_MORE_STATIC_LIBS
-	    TARGET_MORE_STATIC_LIBS))
-      (define extra-shared-libraries 
-	(if host-mode 
-	    INSTALL_MORE_LIBS
-	    TARGET_MORE_LIBS))
-      (define default-library-files (list
-        (quotewrap
-	 (prefix "libchicken.a" "lib"
-		 (string-append
-		  (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		  "/libchicken.a")))
-      ))
-      (define default-shared-library-files '("-lchicken"))
-      (define unsafe-library-files (list
-        (quotewrap 
-	 (prefix "libuchicken.a" "lib"
-		 (string-append 
-		  (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-		  "/libuchicken.a")))
-      ))
-      (define unsafe-shared-library-files '("-luchicken"))
-      (define gui-library-files default-library-files)
-      (define gui-shared-library-files default-shared-library-files)
-    )
-)
-
+(define extra-libraries
+  (if host-mode
+      INSTALL_MORE_STATIC_LIBS
+      TARGET_MORE_STATIC_LIBS))
+(define extra-shared-libraries 
+  (if host-mode 
+      INSTALL_MORE_LIBS
+      TARGET_MORE_LIBS))
+(define default-library-files 
+  (list
+   (quotewrap
+    (prefix "libchicken.a" "lib"
+	    (string-append
+	     (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
+	     "/libchicken.a"))) ))
+(define default-shared-library-files '("-lchicken"))
+(define unsafe-library-files
+  (list
+   (quotewrap 
+    (prefix "libuchicken.a" "lib"
+	    (string-append 
+	     (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
+	     "/libuchicken.a"))) ))
+(define unsafe-shared-library-files '("-luchicken"))
+(define gui-library-files default-library-files)
+(define gui-shared-library-files default-shared-library-files)
 (define library-files default-library-files)
 (define shared-library-files default-shared-library-files)
 
@@ -355,25 +250,15 @@
 	 id) ) )
 
 (define compile-options
-  (if win
-      (if (not cmake-build)
-	  (cons* "/I%CHICKEN_HOME%" (if (eq? (c-runtime) 'dynamic) '("/MD") '()))
-	  (cons* (string-append 
-		  "/I" 
-		  (if host-mode INSTALL_INCLUDE_HOME TARGET_INCLUDE_HOME))
-		 (if (eq? (c-runtime) 'dynamic) '("/MD") '())) )
-      (if include-dir (list "-I" include-dir) '())) )
+  (if include-dir (list "-I" include-dir) '()))
 
-(define compile-only-flag
-  (if win "/c" "-c") )
-
+(define compile-only-flag "-c")
 (define translation-optimization-options default-translation-optimization-options)
 (define compilation-optimization-options default-compilation-optimization-options)
 (define linking-optimization-options default-linking-optimization-options)
 
 (define link-options
-  (cond [win '()]
-	[(or osx hpux-hppa) 
+  (cond [(or osx hpux-hppa mingw)
 	 (list (conc "-L" (quotewrap
 			   (prefix "" "lib"
 				   (if host-mode 
@@ -580,14 +465,9 @@
 
   (define (shared-build lib)
     (set! translate-options (cons* "-feature" "chicken-compile-shared" translate-options))
-    (if win
-	(begin
-	  (set! compile-options (cons* "/DPIC" "/DC_SHARED" compile-options)) 
-	  (set! link-options (cons* "/dll" link-options)))
-	(begin
-	  (set! compile-options (cons* "-fPIC" "-DPIC" "-DC_SHARED" compile-options)) 
-	  (set! link-options
-	    (cons* "-fPIC" (if osx (if lib "-dynamiclib" "-bundle") "-shared") link-options))))
+    (set! compile-options (append pic-options '("-DC_SHARED") compile-options)) 
+    (set! link-options
+      (cons (if osx (if lib "-dynamiclib" "-bundle") "-shared") link-options))
     (set! shared #t) )
 
   (let loop ([args args])
@@ -700,7 +580,7 @@
 		(set! rest (cdr rest)) ]
 	       [(-windows |-W|)
 		(set! gui #t)
-		(when win
+		(when mingw
 		  (set! link-options (cons* "kernel32.lib" "user32.lib" "gdi32.lib" link-options))
 		  (set! compile-options (cons "-DC_WINDOWS_GUI" compile-options))) ]
 	       [(-framework)
@@ -750,7 +630,7 @@
 		(set! compile-options (append compile-options (string-split (car rest))))
 		(set! rest (cdr rest)) ]
 	       [(-strip)
-		(unless win (set! link-options (append link-options (list "-s"))))]
+		(set! link-options (append link-options (list "-s")))]
 	       [(|-L|)
 		(check s rest)
 		(set! link-options (append link-options (string-split (car rest))))
@@ -792,10 +672,7 @@
 		      [(and (> (string-length arg) 1)
 			    (char=? #\- (string-ref arg 0)) )
 		       (cond [(char=? #\l (string-ref arg 1))
-			      (if win
-				  (set! object-files
-				    (append object-files (list (string-append (substring arg 2) ".lib"))) )
-				  (set! link-options (append link-options (list arg))) ) ]
+			      (set! link-options (append link-options (list arg))) ]
  			     [(char=? #\L (string-ref arg 1))
  			      (set! link-options (append link-options (list arg))) ]
  			     [(char=? #\I (string-ref arg 1))
@@ -927,10 +804,7 @@
 (define (run-linking)
   (let ([files (map cleanup-filename
 		    (append object-files
-			    (nth-value 0 (static-extension-info))
-			    (if (or static static-libs)
-				(if gui gui-library-files library-files)
-				(if gui gui-shared-library-files shared-library-files) ) ) ) ] )
+			    (nth-value 0 (static-extension-info)) ) ) ] )
     (unless (zero?
 	     ($system
 	      (string-intersperse 
@@ -942,9 +816,6 @@
 			     (linker-options)
 			     (linker-libraries #f) ) ) ) ) ) )
       (exit last-exit-code) )
-    (when (and win (not static) (not static-libs) (not shared))
-      ($delete-file (pathname-replace-extension target-filename "exp"))
-      ($delete-file (pathname-replace-extension target-filename "lib")) )
     (unless keep-files (for-each $delete-file generated-object-files)) ) )
 
 (define (static-extension-info)
@@ -968,7 +839,7 @@
    (string-intersperse
     (append linking-optimization-options link-options
 	    (nth-value 1 (static-extension-info)) ) )
-   (if (and static (not win) (not osx)) " -static" "") ) )
+   (if (and static (not mingw) (not osx)) " -static" "") ) )
 
 (define (linker-libraries #!optional staticexts)
   (string-intersperse
@@ -1023,9 +894,7 @@
 
 (define ($delete-file str)
   (when verbose 
-    (if win
-	(print "del " str) 
-	(print "rm " str) ) )
+    (print "rm " str) )
   (unless dry-run (delete-file str) ))
 
 

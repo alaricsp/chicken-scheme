@@ -87,4 +87,9 @@ Makefile (use --disable-stack-for-recursion). */
 #define SUPPORT_UTF8
 #define SUPPORT_UCP
 
+#ifndef HAVE_MEMMOVE
+/* hm... there must be a better way */
+# define HAVE_MEMMOVE 1
+#endif
+
 /* End */

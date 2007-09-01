@@ -494,26 +494,10 @@ Returns a symbol specifying the toolset which has been used for
 building the executing system, which is one of the following:
 
  cygwin
- msvc
  mingw32
  gnu
- metrowerks
  intel
- watcom
  unknown
-
-
-==== build-style
-
-  [procedure] (build-style)
-
-Returns a symbol indicating the build system used to create the CHICKEN
-instance running this program. Possible values are:
-
-  cmake
-  autotools
-  diy
-  custom
 
 
 ==== chicken-version
@@ -892,16 +876,17 @@ otherwise.
 
 ==== print
 
- [procedure] (print EXP1 EXP2 ...)
+ [procedure] (print [EXP1 ...])
 
-Outputs the arguments {{EXP1 EXP2 ...}} using {{display}}
-and writes a newline character to the port that is the value of
-{{(current-output-port)}}. Returns its first argument.
+Outputs the optional arguments {{EXP1 ...}} using {{display}} and
+writes a newline character to the port that is the value of
+{{(current-output-port)}}.  Returns its first argument, or
+{{(void)}} when no supplied arguments.
 
 
 ==== print*
 
- [procedure] (print* EXP1 ...)
+ [procedure] (print* [EXP1 ...])
 
 Similar to {{print}}, but does not output a terminating newline
 character and performs a {{flush-outout}} after writing its arguments.

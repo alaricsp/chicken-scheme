@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.636
+  Version 2.701
 
 
  1. Introduction:
@@ -35,104 +35,85 @@
         can subscribe to the list from the Chicken homepage,
         http://www.call-with-current-continuation.org)
 
+
  2. Installation:
 
-	First unzip the package ("unzip chicken-<version>.zip", "tar
-        xvzf chicken-<version>.tar.gz" on UNIX or use your favorite
-        extraction program on Windows), then configure the system and
-        generate the binaries by invoking the "make" program.
+	First unzip the package ("unzip chicken-<version>.zip" or "tar
+        xzf chicken-<version>.tar.gz" on UNIX or use your favorite
+        extraction program on Windows).
 
-	CHICKEN can be built either using the "CMake"
-	<http://www.cmake.org> build system or via the traditional
-	UNIX "configure/make/make install". On Windows it is generally
-	recommended to use CMake. CMake offers more features than the
-	autoconf build and is easier to maintain. See
-	"INSTALL-CMake.txt" for detailed explanations about
-	configuring, building and installing CHICKEN.
+	Building CHICKEN requires GNU Make. Other "make" derivates are
+	not supported. If you are using a Windows system and do not
+	have GNU Make, see below for a link to a precompiled set of
+	UNIX utilities, which among other useful tools contains "make".
 
-	If you prefer to use the autoconf generated build scripts,
-	read on.
+	Configuration and customization of the build process is done by 
+	either setting makefile variables on the "make" command line or 
+	by editing the platform-specific makefile.
 
-	Linux, Mac OS X, UNIX and Cygwin:
+	Invoke "make" like this:
 
-          See INSTALL for generic instructions on how to pass
-	  different options to the configuration process. The default
-	  installation directories are /usr/local/bin, /usr/local/lib,
-	  /usr/local/include and /usr/local/share. Invoke
-	    
-	    ./configure --prefix=<PATHNAME> 
-	  
-	  to change the installation directory prefix.
+	  make PLATFORM=<platform> PREFIX=<destination>
 
-	    ./configure
-  	    gmake
-	    gmake install
+	where "PLATFORM" specifies on what kind of system CHICKEN shall
+	be built and "PREFIX" specifies where the executables and
+   	libraries shall be installed. 
 
+	Enter "make" without any options to see a list of supported 
+	platforms.
 
-  	  IMPORTANT ---> GNU make is required for building the
-  	  system!!!
+	The build may show errors when creating the info(1)
+	documentation, if you do not have GNU texinfo installed.
+	This is not fatal - the build should proceed.
 
-	
-  	  This compiles the runtime-library, the compiler and the
-          interpreter.  To force creation of statically linked
-          libraries and executables, Invoke
+	If CHICKEN is build successfully, you can install it in your
+	system by entering
 
-            ./configure --disable-shared
+	  make PLATFORM=<platform> PREFIX=<destination> install
 
-	  Entering "make install-strip" instead of "make install"
-	  strips the executables from symbol- information which makes
-	  them much smaller.
+	"PREFIX" defaults to "/usr/local". Note that the PREFIX is
+	compiled into several CHICKEN tools and must be the same
+	while building the system and during installation.
 
-	  To build and run some benchmarks, enter
+	To install CHICKEN for a particular PREFIX in a different
+	location, set the "DESTDIR" variable in addition to "PREFIX":
+	It designates the directory where the files are installed
+	into.
 
- 	    gmake bench
+	You can further enable various optional features by adding
+	one or more of the following variables to the "make"
+	invocation:
 
-          It should be possible to build the system with Intel's C
-          compiler (icc). Enter
-	  
-	    ./configure --with-icc --disable-shared
+	SYMBOLGC=1
+	  Always enable garbage collection for unused symbols in the 
+	  symbol table by default. This will result in slightly slower 
+	  garbage collection, but minimizes the amount of garbage 
+	  retained at runtime (which might be important for long 
+	  running server applications). If you don't specify this 
+	  option you can still enable symbol GC at runtime by passing 
+	  the `-:w' runtime option when running the program.
 
-	  to compile all C files with icc. Note that shared libraries
-	  are not yet supported for this configuration.
+	NOAPPLYHOOK=1
+	  For maximum performance this will disable support for 
+	  breakpoints, but speed up procedure invocation in safe 
+	  code. Smaller binaries can be obtained by also giving 
+	  "NOPTABLES=1", but that means serialization (available 
+	  as a separate package) of procedures will not be available.
 
-	  If you always want to enable garbage collection for unused
-          symbols in the symbols table by default, pass the
-          `-enable-symbol-gc' option to `configure'. This will result
-          in slightly slower garbage collection, but minimizes the
-          amount of garbage retained at runtime (which might be
-          important for long running server applications). If you
-          don't specify this option you can still enable symbol GC on
-          a per-program basis by passing the `-:w' runtime option when
-          running the program.
+	To remove CHICKEN from your file-system, enter (probably as
+        root):
 
-	  If you want maximum performance, consider passing
-	  "--disable-apply-hook" to "configure", which will disable
-	  support for breakpoints, but speed up procedure invocation
-	  in safe code. Smaller binaries can be obtained by also
-	  giving "--disable-procedure-tables", but that means
-	  serialization (available separately) of procedures will not
-	  be available.
+	    make PLATFORM=<platform> PREFIX=<destination> uninstall
 
-	  A note for Mac OS X users: if you install the chicken
-          runtime libraries (libchicken.*) into a non-standard
-          directory, the dynamic linker might not be able to find them
-          when executing chicken or programs generated by it. In that
-          case you might want to set the environment variable
-          DYLD_LIBRARY_PATH to the location where the libraries are
-          installed.
+	(If you gave DESTDIR during installation, you have to pass
+	the same setting to "make" when uninstalling)
 
-	  To remove CHICKEN from your file-system, enter (probably as
-	  root):
-
-	    make uninstall
 
  3. Usage:
 
 	Documentation can be found in the directory
-	<prefix>/share/chicken/doc, where <prefix> is the prefix
-	specified in the `--prefix' option to `configure', which
-	defaults to `/usr/local'. The HTML documentation (in
-	"<prefix>/share/chicken/doc/html") is automatically generated
+	PREFIX/share/chicken/doc. The HTML documentation (in
+	"PREFIX/share/chicken/doc/html") is automatically generated
 	from the Wiki pages at <http://chicken.wiki.br/>. Go there to
 	read the most up to date documentation.
 
@@ -142,8 +123,10 @@
 	to the list of paths emacs should search for extensions, add
 	the following line to your `.emacs' file:
 
-	  (setq load-path (cons
-	  "<directory-where-your-emacs-lisp-files-live>" load-path))
+	  (setq load-path 
+	    (cons
+	      "<directory-where-your-emacs-lisp-files-live>" 
+	      load-path))
 
 	Add 
 
@@ -190,11 +173,6 @@
 	  be able to handle this problem, but you have to remember to
 	  compile your translated Scheme files with `kgcc' instead of
 	  `gcc'.
-
-	- There seems to be a problem with the GNU linker on HP/PA
-	  systems. In this case it is recommended to use the HP
-	  linker. If not available, try to add `-ffunction-sections'
-	  to the gcc compiler flags.
 
         - Older versions of Solaris have a bug in ld.so that causes
           trouble with dynamic loading.  Patching Solaris fixes the

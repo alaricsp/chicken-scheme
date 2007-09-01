@@ -46,8 +46,11 @@
 	  cross-chicken ##sys#current-source-filename) )
 
 #>
-#ifndef C_USE_C_DEFAULTS
+#ifndef C_INSTALL_BIN_HOME
 # define C_INSTALL_BIN_HOME   NULL
+#endif
+
+#ifndef C_INSTALL_CC
 # ifdef _MSC_VER
 #  define C_INSTALL_CC                "cl"
 # else
@@ -108,8 +111,7 @@
   (and (eq? (software-type) 'windows) 
        (build-platform) ) )
 
-(define *windows-shell* (memq *windows* '(msvc mingw32)))
-(define *msvc* (eq? *windows* 'msvc))
+(define *windows-shell* (eq? *windows* 'mingw32))
 (define *debug* #f)
 
 (register-feature! 'chicken-setup)
@@ -151,15 +153,8 @@
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
 (define *move-command* (if *windows-shell* 'move 'mv))
 
-(define *gzip-program*
-  (if *windows-shell* 
-      (quotewrap (make-pathname (program-path) "chicken-gzip"))
-      'gzip))
-
-(define *tar-program*
-  (if *windows-shell*
-      (quotewrap (make-pathname (program-path) "chicken-tar"))
-      'tar))
+(define *gzip-program* 'gzip)
+(define *tar-program* 'tar)
 
 (define *fetch-only* #f)
 (define *temporary-directory* #f)
@@ -717,8 +712,7 @@ EOF
 			   (if compile-only
 			       "" 
 			       (conc ldflags " " *target-lflags*) )
-			   " "
-			   (if *msvc* "" ">/dev/null") " "
+			   " >/dev/null "
 			   (if verb "" "2>&1") ) ) )
 		 (when verb (print cmd " ..."))
 		 cmd) ) ) ) )
@@ -760,9 +754,7 @@ EOF
 (define (find-library name proc)
   (test-compile 
    (sprintf "#ifdef __cplusplus~%extern \"C\"~%#endif~%char ~a();~%int main() { ~a(); return 0; }~%" proc proc)
-   ldflags: (if *msvc*
-		(conc name ".lib")
-		(conc "-l" name) ) ) )
+   ldflags: (conc "-l" name) ) )
 
 (define (find-header name)
   (test-compile

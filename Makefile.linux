@@ -1,0 +1,103 @@
+# Makefile.linux - configuration for Linux -*- Makefile -*-
+#
+# Copyright (c) 2007, Felix L. Winkelmann
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
+# conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+#     disclaimer. 
+#   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided with the distribution. 
+#   Neither the name of the author nor the names of its contributors may be used to endorse or promote
+#     products derived from this software without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Send bugs, suggestions and ideas to: 
+#
+# felix@call-with-current-continuation.org
+#
+# Felix L. Winkelmann
+# Unter den Gleichen 1
+# 37130 Gleichen
+# Germany
+
+
+# platform configuration
+
+ARCH = $(shell sh config-arch.sh)
+HACKED_APPLY = 1
+
+# commands
+
+C_COMPILER = gcc
+CXX_COMPILER = g++
+LINKER = gcc
+
+# options
+
+C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
+ifdef DEBUGBUILD
+C_COMPILER_OPTIMIZATION_OPTIONS = -g -Wall -Wno-unused
+else
+C_COMPILER_OPTIMIZATION_OPTIONS = -Os -fomit-frame-pointer
+endif
+LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
+LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(LIBDIR)
+LIBRARIES = -lm -ldl
+
+# special files
+
+CHICKEN_CONFIG_H = chicken-config.h
+APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
+
+# select default and internal settings
+
+include defaults.make
+
+# main target
+
+all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
+	csc$(EXE) csi-static$(EXE) chicken-static$(EXE)	libchicken$(SO) \
+	libuchicken$(SO) chicken-setup$(EXE) chicken.info
+
+chicken-config.h: chicken-defaults.h
+	echo "#define C_STACK_GROWS_DOWNWARD 1" >$@
+	echo "#define HAVE_ALLOCA 1" >>$@
+	echo "#define HAVE_DIRENT_H 1" >>$@
+	echo "#define HAVE_DLFCN_H 1" >>$@
+	echo "#define HAVE_GRP_H 1" >>$@
+	echo "#define HAVE_ALLOCA_H 1" >>$@
+	echo "#define HAVE_STRERROR 1" >>$@
+	echo "#define HAVE_ERRNO_H 1" >>$@
+ifdef GCHOOKS
+	echo "#define C_GC_HOOKS" >>$@
+endif
+ifdef EXTRASLOT
+	echo "#define C_EXTRA_SYMBOL_SLOT" >>$@
+endif
+ifdef SYMBOLGC
+	echo "#define C_COLLECT_ALL_SYMBOLS" >>$@
+endif
+ifdef NOAPPLYHOOK
+	echo "#define C_NO_APPLY_HOOK" >>$@
+endif
+	echo "#define C_HACKED_APPLY" >>$@
+	echo "#define HAVE_GCVT 1" >>$@
+	echo "#define HAVE_INTTYPES_H 1" >>$@
+	echo "#define HAVE_LIMITS_H 1" >>$@
+	echo "#define HAVE_SYSEXITS_H 1" >>$@
+	echo "#define HAVE_MEMMOVE 1" >>$@
+	cat chicken-defaults.h >>$@
+
+include rules.make

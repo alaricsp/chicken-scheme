@@ -133,7 +133,7 @@ SRFI-17 Setters for {{XXXvector-ref}} are defined.
  [procedure] (read-u8vector LENGTH [PORT])
 
 Reads {{LENGTH}} bytes from the {{PORT}} and returns a fresh
-{{u8vector}} or less of end-of-file is encountered. {{PORT}} defaults to the
+{{u8vector}} or less if end-of-file is encountered. {{PORT}} defaults to the
 value of {{(current-input-port)}}.
 If {{LENGTH}} is {{#f}}, the vector will be filled completely until end-of-file is reached.
 

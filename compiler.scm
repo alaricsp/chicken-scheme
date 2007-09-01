@@ -237,7 +237,7 @@
  (disable-warning var) )
 
 #>
-#ifndef C_USE_C_DEFAULTS
+#ifndef C_INSTALL_SHARE_HOME
 # define C_INSTALL_SHARE_HOME NULL
 #endif
 

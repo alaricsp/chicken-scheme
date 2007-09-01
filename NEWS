@@ -1,3 +1,45 @@
+2.701
+
+- countless bugfixes and minor improvements
+- new foreign types:
+  [nonnull-]unsigned-c-string[*]
+  c-string-list[*]
+- added "unused" declaration specifier
+- new GNU Make based build process
+- libffi is not used anymore, handcoded assembler is used for x86, x86-64 
+  and powerpc platforms
+- library unit:
+  blob?
+  make-blob
+  blob-size
+  string->blob
+  blob->string
+- regex unit:
+  glob?
+- utils unit:
+  directory-null?
+  port-fold
+- extras unit:
+  hash-table-remove!
+- lolevel unit:
+  mutate-procedure
+- srfi-4 unit:
+  XXXvector->blob[/shared]
+  blob->XXXvector[/shared]
+- csc options:
+  -cxx-name
+  -disable-compiler-macros
+- byte-vectors have been removed and replaced by new "blob" type,
+  added various blob<->SRFI-4 vector conversion procedures in srfi-4 unit
+- ":optional" has been renamed to "optional" (the old name is still
+  available but deprecated)
+- "switch" has been replaced by "select" ("switch" is still available but
+  deprecated)
+- "tcp-connect" and "tcp-accept" handle time-outs via parameters
+  "tcp-connect-timeout" and "tcp-accept-timeout"
+- tcp unit: support for read/write timeouts
+
+
 2.6
 
 - Many bugfixes

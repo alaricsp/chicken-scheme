@@ -1,0 +1,123 @@
+# Makefile.cross-linux-mingw - configuration for MinGW (crosscompiled from Linux) -*- Makefile -*-
+#
+# Copyright (c) 2007, Felix L. Winkelmann
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
+# conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+#     disclaimer. 
+#   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided with the distribution. 
+#   Neither the name of the author nor the names of its contributors may be used to endorse or promote
+#     products derived from this software without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Send bugs, suggestions and ideas to: 
+#
+# felix@call-with-current-continuation.org
+#
+# Felix L. Winkelmann
+# Unter den Gleichen 1
+# 37130 Gleichen
+# Germany
+
+
+# platform configuration
+
+ARCH = x86
+HACKED_APPLY = 1
+WINDOWS = 1
+
+# file extensions
+
+SO = .dll
+EXE = .exe
+
+# commands
+
+TOOLCHAIN_PREFIX=/opt/mingw32
+C_COMPILER = $(TOOLCHAIN_PREFIX)/bin/mingw32-gcc
+CXX_COMPILER = $(TOOLCHAIN_PREFIX)/bin/mingw32-g++
+LINKER = $(TOOLCHAIN_PREFIX)/bin/mingw32-gcc
+TARGET_C_COMPILER = gcc
+TARGET_CXX_COMPILER = g++
+HOST_C_COMPILER = gcc
+LIBRARIAN = $(TOOLCHAIN_PREFIX)/bin/mingw32-ar
+
+# options
+
+C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
+ifdef DEBUGBUILD
+C_COMPILER_OPTIMIZATION_OPTIONS = -g -Wall -Wno-unused
+else
+C_COMPILER_OPTIMIZATION_OPTIONS = -Os
+endif
+C_COMPILER_SHARED_OPTIONS = -DPIC
+C_COMPILER_GUI_RUNTIME_OPTIONS = -DC_WINDOWS_GUI
+LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
+LIBRARIES = -lm
+LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libchicken.dll.a
+LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libuchicken.dll.a
+LIBCHICKENGUI_SO_LINKER_OPTIONS = -Wl,--out-implib,libchickengui.dll.a
+LIBCHICKEN_SO_LIBRARIES = -lws2_32 
+LIBUCHICKEN_SO_LIBRARIES = -lws2_32 
+LIBCHICKENGUI_SO_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lws2_32 
+LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
+LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
+
+# special files
+
+CHICKEN_CONFIG_H = chicken-config.h
+APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
+POSIXFILE = posixwin
+
+# select default and internal settings
+
+include defaults.make
+
+# main target
+
+all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
+	csc$(EXE) csi-static$(EXE) chicken-static$(EXE)	libchicken$(SO) \
+	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE) \
+	chicken.info
+
+chicken-config.h: chicken-defaults.h
+	echo "#define C_STACK_GROWS_DOWNWARD 1" >$@
+	echo "#define HAVE_DIRECT_H 1" >>$@
+	echo "#define HAVE_ALLOCA_H 1" >>$@
+	echo "#define HAVE_GCVT 1" >>$@
+	echo "#define HAVE_STDINT_H 1" >>$@
+	echo "#define HAVE_WINDOWS_H 1" >>$@
+	echo "#define HAVE_LOADLIBRARY 1" >>$@
+	echo "#define HAVE_GETPROCADDRESS 1" >>$@
+	echo "#define HAVE_WINSOCK2_H 1" >>$@
+	echo "#define HAVE_WS2TCPIP_H 1" >>$@
+ifdef GCHOOKS
+	echo "#define C_GC_HOOKS" >>$@
+endif
+ifdef EXTRASLOT
+	echo "#define C_EXTRA_SYMBOL_SLOT" >>$@
+endif
+ifdef SYMBOLGC
+	echo "#define C_COLLECT_ALL_SYMBOLS" >>$@
+endif
+ifdef NOAPPLYHOOK
+	echo "#define C_NO_APPLY_HOOK" >>$@
+endif
+	echo "#define C_HACKED_APPLY" >>$@
+	echo "#define HAVE_MEMMOVE 1" >>$@
+	cat chicken-defaults.h >>$@
+
+include rules.make

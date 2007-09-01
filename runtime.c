@@ -145,7 +145,7 @@ static C_TLS int timezone;
 # endif
 #else
 # ifdef C_HACKED_APPLY
-#  ifdef __MACH__
+#  if defined(__MACH__) || defined(__MINGW32__)
 extern void C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 #  else
 extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
@@ -4079,13 +4079,6 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 
   case C_fix(35):
 #ifndef C_NO_APPLY_HOOK
-    return C_SCHEME_TRUE;
-#else
-    return C_SCHEME_FALSE;
-#endif
-
-  case C_fix(38):
-#ifdef C_CMAKE_BUILD
     return C_SCHEME_TRUE;
 #else
     return C_SCHEME_FALSE;
@@ -8093,30 +8086,6 @@ void C_ccall C_c_runtime(C_word c, C_word closure, C_word k)
 #endif
 
  C_kontinue(k, s);
-}
-
-
-void C_ccall C_build_style(C_word c, C_word closure, C_word k)
-{
-  C_word *a, s;
-
-  if(c != 2) C_bad_argc(c, 2);
-
-#ifdef C_CMAKE_BUILD
-  a = C_alloc(2 + C_bytestowords(5));
-  s = C_string2(&a, "cmake");
-#elif defined(C_DIY_BUILD)
-  a = C_alloc(2 + C_bytestowords(3));
-  s = C_string2(&a, "diy");
-#elif defined(C_AUTOTOOLS_BUILD)
-  a = C_alloc(2 + C_bytestowords(9));
-  s = C_string2(&a, "autotools");
-#else
-  a = C_alloc(2 + C_bytestowords(7));
-  s = C_string2(&a, "custom");
-#endif
-
- C_kontinue(k, s);  
 }
 
 

@@ -486,7 +486,7 @@ characters per line.
 
 Read {{MAX}} or fewer lines from {{PORT}}. {{PORT}}
 defaults to the value of {{(current-input-port)}}. {{PORT}} may optionally be
-a string naming a file.
+a string naming a file. Returns a list of strings, each string representing a line read, not including any line separation character(s).
 
 
 ==== read-string

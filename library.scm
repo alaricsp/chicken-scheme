@@ -133,7 +133,7 @@ EOF
      ##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer ##sys#user-print-hook 
      ##sys#current-exception-handler ##sys#default-exception-handler ##sys#abandon-mutexes ##sys#make-mutex
      ##sys#port-has-file-pointer? ##sys#infix-list-hook char-name ##sys#open-file-port make-parameter
-     ##sys#intern-symbol ##sys#make-string ##sys#number? software-type build-platform build-style
+     ##sys#intern-symbol ##sys#make-string ##sys#number? software-type build-platform
      open-output-string get-output-string print-call-chain ##sys#symbol-has-toplevel-binding? repl
      argv condition-property-accessor ##sys#decorate-lambda ##sys#become! ##sys#lambda-decoration
      getter-with-setter ##sys#lambda-info ##sys#lambda-info->string open-input-string ##sys#gc
@@ -1739,7 +1739,7 @@ EOF
 
 (define ##sys#platform-fixup-pathname
   (let* ([bp (string->symbol ((##core#primitive "C_build_platform")))]
-	 [fixsuffix (or (eq? bp 'msvc) (eq? bp 'mingw32))])
+	 [fixsuffix (eq? bp 'mingw32)])
     (lambda (name)
       (if fixsuffix
         (let ([end (fx- (##sys#size name) 1)])
@@ -3146,10 +3146,6 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_build_platform")))])
     (lambda () sym) ) )
 
-(define build-style
-  (let ([sym (string->symbol ((##core#primitive "C_build_style")))])
-    (lambda () sym) ) )
-
 (define (chicken-version #!optional full)
   (define (get-config)
     (let ([bp (build-platform)]
@@ -3171,8 +3167,7 @@ EOF
 		   (if (##sys#fudge 32) " gchooks" "") 
 		   (if (##sys#fudge 33) " extraslot" "")
 		   (if (##sys#fudge 35) " applyhook" "")
-		   (if (##sys#fudge 39) " cross" "") 
-		   " " (##sys#symbol->string (build-style) ) ) ) )
+		   (if (##sys#fudge 39) " cross" "") ) ) )
 	(string-append 
 	 "Version " +build-version+
 	 " - " (get-config)
@@ -3216,7 +3211,6 @@ EOF
 		 (set! ##sys#features (cons (##sys#->feature-id f) ##sys#features))))))
   (check (software-type))
   (check (software-version))
-  (check (build-style))
   (check (build-platform))
   (check (machine-type))
   (check (machine-byte-order)) )
