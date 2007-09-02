@@ -135,7 +135,8 @@ POSIXFILE ?= posixunix
 PCRE_OBJECT_FILES ?= pcre/*.o
 
 ifdef ARCH
-APPLY_HACK_OBJECT ?= apply-hack.$(ARCH)$(O)
+HACKED_APPLY = 1
+APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 endif
 
 # bootstrapping compiler

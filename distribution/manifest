@@ -227,7 +227,8 @@ pcre/ucpinternal.h
 pcre/ucptable.c
 apply-hack.x86.s
 apply-hack.x86-64.s
-apply-hack.ppc.s
+apply-hack.ppc.darwin.s
+apply-hack.ppc.sysv.s
 chicken.texi
 Makefile
 Makefile.linux

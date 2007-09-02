@@ -1,6 +1,6 @@
 (use srfi-1)
 
-(define manyargs (feature? manyargs))
+(define manyargs (feature? 'manyargs))
 
 (when manyargs (print "many arguments supported."))
 

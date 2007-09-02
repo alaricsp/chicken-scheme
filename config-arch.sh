@@ -35,7 +35,11 @@
 
 case "`uname -m`" in
     i*86) echo "x86";;
-    "Power Macintosh"|ppc|powerpc) echo "ppc";;
+    "Power Macintosh"|ppc|powerpc)
+	case "`uname -s`" in
+	    Darwin) echo "ppc.darwin";;
+	    *) echo "ppc.sysv";;
+	esac;;
     amd64) echo "x86-64";;
     *) ;;
 esac

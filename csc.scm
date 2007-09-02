@@ -258,21 +258,22 @@
 (define linking-optimization-options default-linking-optimization-options)
 
 (define link-options
-  (cond [(or osx hpux-hppa mingw)
+  (cond ((or osx hpux-hppa mingw)
 	 (list (conc "-L" (quotewrap
 			   (prefix "" "lib"
 				   (if host-mode 
 				       INSTALL_LIB_HOME
-				       TARGET_LIB_HOME)) )))]
-	[else 
-	 (list (conc "-L" (quotewrap (prefix "" "lib"
+				       TARGET_LIB_HOME)) ))))
+	(else 
+	 (list
+	  (conc "-L" (quotewrap (prefix "" "lib"
+					(if host-mode
+					    INSTALL_LIB_HOME
+					    TARGET_LIB_HOME))))
+	  (conc " -Wl,-R" (quotewrap (prefix "" "lib"
 					     (if host-mode
 						 INSTALL_LIB_HOME
-						 TARGET_LIB_HOME))))
-	       (conc " -Wl,-R" (quotewrap (prefix "" "lib"
-						  (if host-mode
-						      INSTALL_LIB_HOME
-						      TARGET_RUN_LIB_HOME))))) ] ) )
+						 TARGET_RUN_LIB_HOME)))) ) ) ) )
 
 (define target-filename #f)
 (define verbose #f)

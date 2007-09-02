@@ -407,7 +407,7 @@ EOF
 	(let ([p (##sys#make-pointer)])
 	  (##core#inline "C_pointer_to_block" p bv)
 	  p)
-	(##sys#error 'static-blob->pointer "can not coerce non-static blob" bv) ) ) )
+	(##sys#error 'static-byte-vector->pointer "can not coerce non-static blob" bv) ) ) )
 
 (define (byte-vector-move! src src-start src-end dst dst-start) ; DEPRECATED
   (let ((from (make-locative src src-start))

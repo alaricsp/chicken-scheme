@@ -1,4 +1,4 @@
-# Makefile.linux - configuration for Linux -*- Makefile -*-
+# Makefile.bsd - configuration for BSD UNIX -*- Makefile -*-
 #
 # Copyright (c) 2007, Felix L. Winkelmann
 # All rights reserved.
@@ -67,7 +67,7 @@ include defaults.make
 
 all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
 	csc$(EXE) csi-static$(EXE) chicken-static$(EXE)	libchicken$(SO) \
-	libuchicken$(SO) chicken-setup$(EXE) chicken.info
+	libuchicken$(SO) chicken-setup$(EXE)
 
 chicken-config.h: chicken-defaults.h
 	echo "#define C_STACK_GROWS_DOWNWARD 1" >$@
@@ -93,7 +93,6 @@ endif
 ifdef HACKED_APPLY
 	echo "#define C_HACKED_APPLY" >>$@
 endif
-	echo "#define HAVE_GCVT 1" >>$@
 	echo "#define HAVE_INTTYPES_H 1" >>$@
 	echo "#define HAVE_LIMITS_H 1" >>$@
 	echo "#define HAVE_SYSEXITS_H 1" >>$@

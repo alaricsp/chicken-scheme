@@ -42,6 +42,7 @@ all clean spotless distclean install uninstall:
 	@echo "please select your target platform by running one of the following commands:"
 	@echo ""
 	@echo "  $(MAKE) PLATFORM=linux"
+	@echo "  $(MAKE) PLATFORM=bsd"
 	@echo "  $(MAKE) PLATFORM=macosx"
 	@echo "  $(MAKE) PLATFORM=mingw"
 	@echo "  $(MAKE) PLATFORM=cross-linux-mingw"

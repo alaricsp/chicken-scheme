@@ -602,7 +602,7 @@ pcre/pcre_xclass-static$(O): pcre/pcre_xclass.c pcre/pcre_internal.h pcre/config
 
 # assembler objects
 
-ifdef APPLY_HACK_OBJECT
+ifdef HACKED_APPLY
 $(APPLY_HACK_OBJECT): apply-hack.$(ARCH).s
 	$(ASSEMBLER) $(ASSEMBLER_OPTIONS) $(ASSEMBLER_COMPILE_OPTION) $< $(ASSEMBLER_OUTPUT_OPTION) $@
 endif
@@ -784,7 +784,7 @@ match.c: match.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 
 ulibrary.c: library.scm version.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_FLAGS) -output-file $@ 
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 ueval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 uextras.c: extras.scm
