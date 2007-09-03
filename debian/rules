@@ -21,7 +21,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 #	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
-	$(MAKE) MAKEINFO_PROGRAM_OPTIONS="" CFLAGS="$(CFLAGS)" PREFIX="$(PREFIX)" MANDIR="$(PREFIX)/share/man" INFODIR="$(PREFIX)/share/info" EGGDIR="/var/lib/chicken/$(BINARYVERSION)"
+	$(MAKE) MAKEINFO_PROGRAM_OPTIONS="" CFLAGS="$(CFLAGS)" PREFIX="$(PREFIX)" MANDIR="$(PREFIX)/share/man" INFODIR="$(PREFIX)/share/info" SHAREDIR="$(PREFIX)/share/chicken" EGGDIR="/var/lib/chicken/$(BINARYVERSION)"
 	touch build-stamp
 
 clean:
@@ -35,6 +35,7 @@ clean:
 	-$(MAKE) clean
 	-$(MAKE) distclean
 	rm -f c_defaults.h
+	rm -f chicken_defaults.h
 	dh_clean
 
 install: build
@@ -42,7 +43,7 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install PREFIX="$(CURDIR)/debian/tmp/usr" MANDIR="$(CURDIR)/debian/tmp/usr/share/man" INFODIR="$(CURDIR)/debian/tmp/usr/share/info" EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)"
+	$(MAKE) install PREFIX="$(CURDIR)/debian/tmp/usr" MANDIR="$(CURDIR)/debian/tmp/usr/share/man" INFODIR="$(CURDIR)/debian/tmp/usr/share/info" SHAREDIR="$(CURDIR)/debian/tmp/usr/share/chicken" EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)"
 
 binary-common:
 	dh_testdir
