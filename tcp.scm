@@ -331,8 +331,9 @@ EOF
   (define ((check loc) x)
     (when x (##sys#check-exact x loc))
     x)
-  (set! tcp-read-timeout (make-parameter #f (check 'tcp-read-timeout)))
-  (set! tcp-write-timeout (make-parameter #f (check 'tcp-write-timeout))) 
+  (define minute (* 60 1000))
+  (set! tcp-read-timeout (make-parameter minute (check 'tcp-read-timeout)))
+  (set! tcp-write-timeout (make-parameter minute (check 'tcp-write-timeout))) 
   (set! tcp-connect-timeout (make-parameter #f (check 'tcp-connect-timeout))) 
   (set! tcp-accept-timeout (make-parameter #f (check 'tcp-accept-timeout))) )
 

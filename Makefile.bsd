@@ -53,7 +53,7 @@ C_COMPILER_OPTIMIZATION_OPTIONS = -Os -fomit-frame-pointer
 endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
 LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(LIBDIR)
-LIBRARIES = -lm -ldl
+LIBRARIES = -lm
 
 # special files
 

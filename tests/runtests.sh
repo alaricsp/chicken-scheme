@@ -2,8 +2,9 @@
 # runtests.sh
 
 set -e
-export DYLD_LIBRARY_PATH=`pwd`/..
-export LD_LIBRARY_PATH=`pwd`/..
+TEST_DIR=`pwd`
+export DYLD_LIBRARY_PATH=${TEST_DIR}/..
+export LD_LIBRARY_PATH=${TEST_DIR}/..
 compile="../csc -compiler ../chicken-static -o a.out"
 
 echo "======================================== runtime tests ..."
@@ -28,7 +29,7 @@ echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
 
 echo "======================================== benchmarks ..."
-pushd ../benchmarks
+cd ../benchmarks
 for x in `ls *.scm`; do
     case $x in
 	"cscbench.scm");;
@@ -38,6 +39,6 @@ for x in `ls *.scm`; do
 	    ../csc $x -compiler ../chicken-static -O2 -d0 -prologue plists.scm && ./`basename $x .scm` >/dev/null;;
     esac
 done
-popd
+cd ${TEST_DIR}
 
 echo "======================================== done."
