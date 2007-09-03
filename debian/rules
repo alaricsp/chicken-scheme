@@ -52,7 +52,7 @@ binary-common:
 	dh_installdocs
 	dh_installman
 	dh_installinfo chicken.info
-#	dh_installchangelogs ChangeLog
+	dh_installchangelogs ChangeLog.20070807
 	dh_link
 ifeq "$(findstring nostrip,$(DEB_BUILD_OPTIONS))" ""
 	dh_strip
