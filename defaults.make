@@ -134,7 +134,7 @@ POSIXFILE ?= posixunix
 # CHICKEN_CONFIG_H = chicken-config.h
 PCRE_OBJECT_FILES ?= pcre/*.o
 
-ifdef ARCH
+ifneq ($(ARCH),)
 HACKED_APPLY = 1
 APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 endif

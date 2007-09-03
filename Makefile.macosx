@@ -36,7 +36,6 @@
 # platform configuration
 
 ARCH = $(shell sh config-arch.sh)
-HACKED_APPLY = 1
 
 # commands
 
