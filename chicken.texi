@@ -1,6 +1,14 @@
 \input texinfo @c -*- texinfo -*-
 @setfilename chicken.info
 @settitle Chicken Scheme Reference Manual
+@ifinfo
+@format
+INFO-DIR-SECTION Programming 
+START-INFO-DIR-ENTRY
+* Chicken: (chicken).           A compiler that translates Scheme source files into C.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
 @setchapternewpage on
 @copying
 Copyright 2007 Felix Winkelmann
