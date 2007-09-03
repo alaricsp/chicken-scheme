@@ -43,12 +43,15 @@
     (display-r fs 3 #\0) ) )
 
 (define (compile-and-run file extras decls options coptions unsafe)
-  (system* "~A ~A -quiet -no-warnings -heap-size 8m -output-file tmpfile.c ~A ~A ~A" chicken file extras decls options)
-  (system* "~a ~a -I.. ~a tmpfile.c -o tmpfile ../.libs/lib~achicken.a -lm ~a"
-	   cc coptions 
-	   (if (eq? (software-version) 'macosx) "" "-static")
-	   (if unsafe "u" "")
-	   (if (test-feature? 'libffi) "-lffi" "") )
+  (system* "~A ~A -quiet -no-warnings -heap-size 8m -output-file tmpfile.c ~A ~A ~A"
+           chicken file extras decls options)
+  ; MacOS X is always "dynamic"
+  (cond [(eq? 'macosx (software-version))
+         (system* "~a ~a -I.. tmpfile.c -o tmpfile ../lib~achicken.dylib -lm"
+	          cc coptions (if unsafe "u" ""))]
+	[else
+         (system* "~a ~a -I.. -static tmpfile.c -o tmpfile ../lib~achicken.a -lm"
+	           cc coptions (if unsafe "u" ""))])
   (let ([time (call-with-current-continuation
 	       (lambda (abort)
 		 (set! abort-run (cut abort #f))
