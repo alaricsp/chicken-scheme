@@ -1,3 +1,10 @@
+chicken (2.703-0.1) unstable; urgency=low
+
+  * Minor updates from upstream.
+  * Changed Debian package version to avoid conflicts with official Debian package. 
+
+ -- Ivan Raikov <raikov@oist.jp>  Tue, 04 Sep 2007 21:22:01 +0900
+
 chicken (2.7-1) unstable; urgency=low
 
   * New upstream version.
