@@ -39,20 +39,21 @@
 	.type _C_do_apply_hack, @function
 	
 _C_do_apply_hack:
-	movq %rsi, %rax		/* get proc */
+	movq %rdi, %rax		/* get proc */
+	movq %rsi, %rdi		/* save buffer address, before we clobber %rsi */
 	cmpl $6, %edx		/* clamp at 6 */
 	jae l2
 	movq $6, %rbx		/* (6 - count) * 4 gives instruction address */
-	subq %rbx, %rdx
-	shlq $2, %rdx
-	lea l2, %rbx
+	subq %rdx, %rbx
+	shlq $2, %rbx
+	lea l2(%rip), %rdx
 	addq %rdx, %rbx
 	jmp *%rbx
-l2:	movq 40(%rsi), %r9      /* fill registers... */
-	movq 32(%rsi), %r8
-	movq 24(%rsi), %rcx
-	movq 16(%rsi), %rdx
-	movq 8(%rsi), %rsi
-	movq (%rsi), %rdi
-	lea 40(%rsi), %rsp	/* adjust stack pointer */
+l2:	movq 40(%rdi), %r9      /* fill registers... */
+	movq 32(%rdi), %r8
+	movq 24(%rdi), %rcx
+	movq 16(%rdi), %rdx
+	movq 8(%rdi), %rsi
+	movq (%rdi), %rdi
+	/* copy stack values here...to be done. */
 	call *%rax

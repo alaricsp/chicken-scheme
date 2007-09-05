@@ -39,7 +39,7 @@ ifndef PLATFORM
 all clean spotless distclean install uninstall:
 	@echo "no PLATFORM given."
 	@echo ""
-	@echo "please select your target platform by running one of the following commands:"
+	@echo "Please select your target platform by running one of the following commands:"
 	@echo ""
 	@echo "  $(MAKE) PLATFORM=linux"
 	@echo "  $(MAKE) PLATFORM=bsd"
@@ -47,6 +47,7 @@ all clean spotless distclean install uninstall:
 	@echo "  $(MAKE) PLATFORM=mingw"
 	@echo "  $(MAKE) PLATFORM=cross-linux-mingw"
 	@echo ""
+	@echo "For more information, consult the README file."
 	@exit 1
 else
 all:

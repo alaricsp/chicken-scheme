@@ -84,7 +84,7 @@ include defaults.make
 # main target
 
 all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
-	csc$(EXE) csi-static$(EXE) chicken-static$(EXE)	libchicken$(SO) \
+	csc$(EXE) libchicken$(SO) \
 	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE) \
 	chicken.info
 

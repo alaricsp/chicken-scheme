@@ -152,9 +152,23 @@ CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 
 # targets
 
-TARGETS ?= libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
-	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
+ifdef STATICBUILD
+CHICKEN_STATIC_EXECUTABLE = chicken$(EXE)
+CSI_STATIC_EXECUTABLE = csi$(EXE)
+CHICKEN_SHARED_EXECUTABLE = chicken-shared$(EXE)
+CSI_SHARED_EXECUTABLE = csi-shared$(EXE)
+TARGETS ?= libchicken$(A) libuchicken$(A) $(CHICKEN_STATIC_EXECUTABLE) \
+	$(CSI_STATIC_EXECUTABLE) chicken-profile$(EXE) csc$(EXE) \
+	chicken.info
+else
+CHICKEN_STATIC_EXECUTABLE = chicken-static$(EXE)
+CSI_STATIC_EXECUTABLE = csi-static$(EXE)
+CHICKEN_SHARED_EXECUTABLE = chicken$(EXE)
+CSI_SHARED_EXECUTABLE = csi$(EXE)
+TARGETS ?= libchicken$(A) libuchicken$(A) $(CHICKEN_SHARED_EXECUTABLE) \
+	$(CSI_SHARED_EXECUTABLE) chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
 	libuchicken$(SO) chicken-setup$(EXE) chicken.info
+endif
 
 # main rule
 
