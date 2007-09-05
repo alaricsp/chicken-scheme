@@ -150,11 +150,17 @@ CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 
-# various settings
+# targets
 
-.PHONY: all everything
+TARGETS ?= libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
+	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
+	libuchicken$(SO) chicken-setup$(EXE) chicken.info
 
-everything: all
+# main rule
+
+.PHONY: all
+
+all: $(TARGETS)
 
 # generic part of chicken-config.h
 

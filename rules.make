@@ -691,9 +691,7 @@ chicken.info: chicken.texi
 
 .PHONY: install uninstall
 
-install: chicken$(EXE) chicken-static$(EXE) csi$(EXE) csi-static$(EXE) csc$(EXE) \
-	chicken-profile$(EXE) chicken-setup$(EXE) chicken.info libchicken$(A) \
-	libuchicken$(A) libchicken$(SO) libuchicken$(SO)
+install: $(TARGETS)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(BINDIR) 
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(LIBDIR) 
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(MANDIR) 
@@ -710,7 +708,7 @@ install: chicken$(EXE) chicken-static$(EXE) csi$(EXE) csi-static$(EXE) csc$(EXE)
 	$(POSTINSTALL_STATIC_LIBRARY) $(POSTINSTALL_STATIC_LIBRARY_FLAGS) \
 	  $(LIBDIR)/libuchicken$(A)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) chicken$(EXE) csi$(EXE) \
-	  chicken-static$(EXE) csi-static$(EXE) chicken-profile$(EXE) csc$(EXE) \
+	  chicken-profile$(EXE) csc$(EXE) \
 	  chicken-setup$(EXE) $(BINDIR)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/chicken
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/csi
@@ -720,11 +718,11 @@ install: chicken$(EXE) chicken-static$(EXE) csi$(EXE) csi-static$(EXE) csc$(EXE)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.1 csi.1 csc.1 chicken-setup.1 \
 	  chicken-profile.1 $(MANDIR)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DOCDIR)/html
-#	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) doc/html/* $(DOCDIR)/html
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) html/* $(DOCDIR)/html
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.h $(CHICKEN_CONFIG_H) $(INCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) README LICENSE $(DOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm chicken-ffi-macros.scm $(SHAREDIR)
-#	  *.exports $(SHAREDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm \
+	  chicken-ffi-macros.scm *.exports $(SHAREDIR)
 
 	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(INFODIR) chicken.info 
 ifdef WINDOWS

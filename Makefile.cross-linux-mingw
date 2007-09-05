@@ -88,10 +88,10 @@ include defaults.make
 
 # main target
 
-all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
-	csc$(EXE) csi-static$(EXE) chicken-static$(EXE)	libchicken$(SO) \
-	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE) \
-	chicken.info
+TARGETS = libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
+	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
+	libuchicken$(SO) chicken-setup$(EXE) chicken.info \
+	libchickengui$(SO)
 
 chicken-config.h: chicken-defaults.h
 	echo "#define C_STACK_GROWS_DOWNWARD 1" >$@

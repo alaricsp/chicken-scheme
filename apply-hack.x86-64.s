@@ -47,7 +47,7 @@ _C_do_apply_hack:
 	shlq $2, %rdx
 	lea l2, %rbx
 	addq %rdx, %rbx
-	jmp *%ebx
+	jmp *%rbx
 l2:	movq 40(%rsi), %r9      /* fill registers... */
 	movq 32(%rsi), %r8
 	movq 24(%rsi), %rcx

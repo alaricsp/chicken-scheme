@@ -69,12 +69,6 @@ APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 
 include defaults.make
 
-# main target
-
-all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
-	csc$(EXE) csi-static$(EXE) chicken-static$(EXE)	libchicken$(SO) \
-	libuchicken$(SO) chicken-setup$(EXE)
-
 chicken-config.h: chicken-defaults.h
 	echo "#define C_STACK_GROWS_DOWNWARD 1" >$@
 	echo "#define HAVE_ALLOCA 1" >>$@
