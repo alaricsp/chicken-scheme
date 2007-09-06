@@ -5874,7 +5874,7 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
   --n;
 
 #ifdef C_HACKED_APPLY
-  buf = alloca((n + 3) * sizeof(C_word));
+  buf = alloca((n + 4) * sizeof(C_word));
   buf[ 0 ] = n + 2;
   buf[ 1 ] = fn2;
   buf[ 2 ] = k;

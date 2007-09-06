@@ -39,7 +39,7 @@
 	.type _C_do_apply_hack, @function
 	
 _C_do_apply_hack:
-	movq %rdi, %rax		/* get proc */
+	movq %rdi, %r11		/* get proc */
 	movq %rsi, %r10		/* save buffer address, before we clobber %rsi */
 	cmpl $6, %edx		/* clamp at 6 */
 	ja l2
@@ -50,11 +50,12 @@ _C_do_apply_hack:
 	lea l3(%rip), %rdx
 	addq %rdx, %rbx
 	jmp *%rbx
-l2:	lea 40(%r10), %rsp
+l2:	lea 48(%r10), %rsp
 l3:	movq 40(%r10), %r9      /* fill registers... */
 	movq 32(%r10), %r8
 	movq 24(%r10), %rcx
 	movq 16(%r10), %rdx
 	movq 8(%r10), %rsi
 	movq (%r10), %rdi
-	call *%rax
+	xorq %rax, %rax
+	call *%r11
