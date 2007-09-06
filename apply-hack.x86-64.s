@@ -40,20 +40,21 @@
 	
 _C_do_apply_hack:
 	movq %rdi, %rax		/* get proc */
-	movq %rsi, %rdi		/* save buffer address, before we clobber %rsi */
+	movq %rsi, %r10		/* save buffer address, before we clobber %rsi */
 	cmpl $6, %edx		/* clamp at 6 */
-	jae l2
+	ja l2
+	je l3
 	movq $6, %rbx		/* (6 - count) * 4 gives instruction address */
 	subq %rdx, %rbx
 	shlq $2, %rbx
-	lea l2(%rip), %rdx
+	lea l3(%rip), %rdx
 	addq %rdx, %rbx
 	jmp *%rbx
-l2:	movq 40(%rdi), %r9      /* fill registers... */
-	movq 32(%rdi), %r8
-	movq 24(%rdi), %rcx
-	movq 16(%rdi), %rdx
-	movq 8(%rdi), %rsi
-	movq (%rdi), %rdi
-	/* copy stack values here...to be done. */
+l2:	lea 40(%r10), %rsp
+l3:	movq 40(%r10), %r9      /* fill registers... */
+	movq 32(%r10), %r8
+	movq 24(%r10), %rcx
+	movq 16(%r10), %rdx
+	movq 8(%r10), %rsi
+	movq (%r10), %rdi
 	call *%rax
