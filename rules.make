@@ -723,6 +723,7 @@ endif
 	  chicken-profile.1 $(MANDIR)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DOCDIR)/html
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) html/* $(DOCDIR)/html
+	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.pdf $(DOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.h $(CHICKEN_CONFIG_H) $(INCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) README LICENSE $(DOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm \
@@ -859,7 +860,7 @@ distfiles: library.c eval.c extras.c lolevel.c utils.c \
 clean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
 	  chicken-setup$(EXE) chicken-profile$(EXE) csi-static$(EXE) \
-	  csc-static$(EXE) chicken-static$(EXE) chicken.info *$(O) *.exports \
+	  csc-static$(EXE) chicken-static$(EXE) chicken.info *$(O) \
 	  libchicken$(SO) libuchicken$(SO) libchicken$(A) libuchicken$(A) \
 	  chicken.info pcre/*$(O)
 
@@ -875,4 +876,4 @@ spotless: distclean
 	  usrfi-18.c uposixunix.c uposixwin.c uregex.c scheduler.c profiler.c \
 	  stub.c match.c chicken-profile.c chicken-setup.c csc.c csi.c \
 	  chicken.c batch-driver.c compiler.c optimizer.c support.c \
-	  c-platform.c c-backend.c
+	  c-platform.c c-backend.c *.exports

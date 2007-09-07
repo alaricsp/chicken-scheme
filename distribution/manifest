@@ -230,6 +230,7 @@ apply-hack.x86-64.s
 apply-hack.ppc.darwin.s
 apply-hack.ppc.sysv.s
 chicken.texi
+chicken.pdf
 Makefile
 Makefile.linux
 Makefile.macosx
