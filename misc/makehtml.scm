@@ -1,5 +1,5 @@
 #!/bin/sh
-#| ;;; makedoc -*- Hen -*-
+#| ;;; makehtml.scm -*- Hen -*-
 exec csi -s $0 "$@"
 |#
 
@@ -50,6 +50,7 @@ exec csi -s $0 "$@"
 (define *only* #f)
 (define *wikisync* #f)
 (define *wikipath* "~/eggs/wiki")
+(define *fetch-manual* #f)
 
 (define (hyphen s)
   (string-substitute " " "-" s #t) )
@@ -192,10 +193,24 @@ in `manual-wiki-files' can be found in `*pages*'."
 	   (conc *wikipath* "/")))
 
 (define (usage code)
+  (print "makedoc --fetch-manual")
   (print "makedoc --extension-path=EXTPATH [--pdf] [--wikisync] [--wikipath=PATH] [--only=PAGENAME]") 
   (exit code) )
 
 (simple-args)
+
+(when *fetch-manual*
+  (for-each 
+   (lambda (f) 
+     (system* "cp ~a manual"
+	      (string-concatenate
+	       (map (lambda (c)
+		      (if (not (memq c '(#\' #\" #\space)))
+			  (string c)
+			  (string #\\ c) ) )
+		    (string->list (make-pathname *wikipath* f)) ))))
+   manual-wiki-files) 
+  (exit) )
 
 (unless *extension-path* (usage 1))
 (system* "mkdir -p html")

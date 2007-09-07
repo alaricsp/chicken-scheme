@@ -47,11 +47,17 @@ DESTDIR = $(PREFIX)
 BINDIR = $(DESTDIR)/bin
 LIBDIR = $(DESTDIR)/lib
 SHAREDIR = $(DESTDIR)/share
+DATADIR = $(SHAREDIR)/chicken
 MANDIR = $(SHAREDIR)/man/man1
 INFODIR = $(SHAREDIR)/info
 INCDIR = $(DESTDIR)/include
-DOCDIR = $(SHAREDIR)/chicken/doc
+DOCDIR = $(DATADIR)/doc
+
+ifdef EXTRASLOT
+EGGDIR = $(DESTDIR)/lib/chicken/$(BINARYVERSION)x
+else
 EGGDIR = $(DESTDIR)/lib/chicken/$(BINARYVERSION)
+endif
 
 # commands
 
@@ -191,7 +197,7 @@ chicken-defaults.h:
 	echo "# define C_INSTALL_CFLAGS \"$(C_COMPILER_OPTIONS) $(C_COMPILER_OPTIMIZATION_OPTIONS)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_SHARE_HOME" >>$@
-	echo "# define C_INSTALL_SHARE_HOME \"$(SHAREDIR)\"" >>$@
+	echo "# define C_INSTALL_SHARE_HOME \"$(DATADIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_BIN_HOME" >>$@
 	echo "# define C_INSTALL_BIN_HOME \"$(BINDIR)\"" >>$@

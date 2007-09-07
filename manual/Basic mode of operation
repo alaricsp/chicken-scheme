@@ -1,0 +1,57 @@
+[[tags: manual]]
+
+== Basic mode of operation
+
+The compiler translates Scheme source code into fairly portable C that
+can be compiled and linked with most available C compilers. CHICKEN supports
+the generation of executables and libraries, linked either statically or
+dynamically. Compiled Scheme code can be loaded dynamically, or can be
+embedded in applications written in other languages. Separate compilation
+of modules is fully supported.
+
+The most portable way of creating separately linkable entities is
+supported by so-called ''unit''s.  A unit is a single
+compiled object module that contains a number of toplevel expressions that
+are executed either when the unit is the ''main'' unit or if the
+unit is ''used''.  To use a unit, the unit has to be ''declare''ed
+as used, like this:
+
+<enscript highlight=scheme>
+(declare (uses UNITNAME))
+</enscript>
+
+The toplevel expressions of used units are executed in the order in
+which the units appear in the {{uses}} declaration. Units
+may be used multiple times and {{uses}} declarations may
+be circular (the unit is initialized at most once).  To compile a file
+as a unit, add a {{unit}} declaration:
+
+<enscript highlight=scheme>
+(declare (unit UNITNAME))
+</enscript>
+
+When compiling different object modules, make sure to have one main
+unit. This unit is called initially and initializes all used units
+before executing its toplevel expressions. The main-unit has no
+{{unit}} declaration.
+
+Another method of using definitions in separate source files is to
+''include'' them. This simply inserts the code in a given file into
+the current file:
+
+<enscript highlight=scheme>
+(include "FILENAME")
+</enscript>
+
+Macro definitions are only available when processed
+by {{include}} or {{require-for-syntax}}. Macro definitions in separate units are not available, since
+they are defined at compile time, i.e the time when that other unit
+was compiled (macros can optionally be
+available at runtime, see {{define-macro}} in [[Non-standard macros and special forms|Substitution forms and macros]]).
+
+On platforms that support dynamic loading of compiled code ( Windows, most ELF based
+systems like Linux or BSD, MacOS X, and others) code can be compiled into a shared object {{.dll}}, {{.so}}, {{.dylib}}) and loaded 
+dynamically into a running application.
+
+Previous: [[The User's Manual]]
+Next: [[Using the compiler]]

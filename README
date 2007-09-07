@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.704
+  Version 2.705
 
 
  1. Introduction:
@@ -169,6 +169,9 @@
 
 	
  5. Platform issues:
+
+    	- *BSD system users *must* use GNU make ("gmake") - the makefiles
+	  can not be processed by BSD make.
 
 	- Some old Linux distributions ship with a buggy version of
 	  the GNU C compiler (2.96). If the system is configured for

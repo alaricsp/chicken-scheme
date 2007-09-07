@@ -1,0 +1,580 @@
+[[toc:]]
+[[tags:faq]]
+
+== FAQ
+
+This is the list of Frequently Asked Questions about Chicken Scheme.
+If you have a question not answered here, feel free to post to the chicken-users mailing list;
+if you consider your question general enough, feel free to add it to this list.
+
+=== General 
+
+==== Why yet another Scheme implementation?
+
+Since Scheme is a relatively simple language, a large number of implementations exist and
+each has its specific advantages and disadvantages. Some are fast, some provide a rich
+programming environment. Some are free, others are tailored to specific domains, and so on. The reasons
+for the existence of CHICKEN are:
+
+* CHICKEN is portable because it generates C code that runs on a large number of platforms.
+
+* CHICKEN is extendable, since its code generation scheme and runtime system/garbage collector fits neatly into a C environment.
+
+* CHICKEN is free and can be freely distributed, including its source code.
+
+* CHICKEN offers better performance than nearly all interpreter based implementations, but still provides full Scheme semantics.
+
+* As far as we know, CHICKEN is the first implementation of Scheme that uses Henry Baker's [[http://home.pipeline.com/~hbaker1/CheneyMTA.html|Cheney on the M.T.A]] concept.
+
+==== What should I do if I find a bug?
+
+Send e-mail to felix@call-with-current-continuation.org
+with some hints about the problem, like
+version/build of the compiler, platform, system configuration, code that
+causes the bug, etc.
+
+==== Why are values defined with {{define-foreign-variable}} or {{define-constant}} or {{define-inline}} not seen outside of the containing source file?
+
+Accesses to foreign variables are translated directly into C constructs that access the variable,
+so the Scheme name given to that variable does only exist during compile-time.
+The same goes for constant- and inline-definitions: The name is only there to tell the compiler
+that this reference is to be replaced with the actual value.
+
+==== How does {{cond-expand}} know which features are registered in used units?
+
+Each unit used via {{(declare (uses ...))}} is registered as a feature and
+so a symbol with the unit-name can be tested by {{cond-expand}} during macro-expansion-time.
+Features registered using the {{register-feature!}} procedure are only
+available during run-time of the compiled file. You can use the {{eval-when}} form
+to register features at compile time.
+
+==== Why are constants defined by {{define-constant}} not honoured in {{case}} constructs?
+
+{{case}} expands into a cascaded {{if}} expression, where the first item in each arm
+is treated as a quoted list. So the {{case}} macro can not infer wether
+a symbol is to be treated as a constant-name (defined via {{define-constant}}) or
+a literal symbol.
+
+
+==== How can I enable case sensitive reading/writing in user code?
+
+To enable the {{read}} procedure to read symbols and identifiers case sensitive, you can set the
+parameter {{case-sensitivity}} to {{#t}}.
+
+
+==== How can I change {{match-error-control}} during compilation?
+
+Use {{eval-when}}, like this:
+
+<enscript highlight=scheme>
+(eval-when (compile)
+(match-error-control #:unspecified) )
+</enscript>
+
+
+==== Why doesn't CHICKEN support the full numeric tower by default?
+
+The short answer:
+
+<enscript highlight=scheme>
+% chicken-setup numbers
+% csi -q
+#;1> (use numbers)
+</enscript>
+
+The long answer:
+
+There are a number of reasons for this:
+
+- For most applications of Scheme fixnums (exact word-sized integers) and flonums (64-bit floating-point
+numbers) are more than sufficient;
+
+- Interfacing to C is simpler;
+
+- Dispatching of arithmetic operations is more efficient.
+
+There is an extension based on the GNU Multiprecision Package that implements most of the full
+numeric tower, see http://www.call-with-current-continuation.org/eggs/numbers.html.
+
+
+==== How can I specialize a generic function method to match instances of every class?
+
+Specializing a method on {{<object>}} doesn't work on primitive data objects like
+numbers, strings, etc. so for example
+
+<enscript highlight=scheme>
+(define-method (foo (x <my-class>)) ...)
+(define-method (foo (x <object>)) ...)
+(foo 123)
+</enscript>
+
+will signal an error, because to applicable method can be found. To specialize a method for primitive
+objects, use {{<top>}}:
+
+<enscript highlight=scheme>
+(define-method (foo (x <top>)) ...)
+</enscript>
+
+
+==== Does CHICKEN support native threads?
+
+Currently native threads are not supported. The runtime system is not reentrant, and the garbage-collection
+algorithm would be made much more complicated, since the location of every object (whether it is allocated
+on the stack or on the heap or completely outside the GC-able data space) has to be checked - this would
+be rather complex and inefficient in a situation where multiple threads are involved.
+
+
+=== Platform specific
+
+==== How do I generate a DLL under MS Windows (tm) ?
+
+Use {{csc}} in combination with the {{-dll}} option:
+
+{{C:\> csc foo.scm -dll}}
+
+==== How do I generate a GUI application under Windows(tm)?
+
+Invoke {{csc}} with the {{-windows}} option. Or pass the {{-DC_WINDOWS_GUI}}
+option to the C compiler and link with the GUI version of the runtime system (that's {{libchicken-gui[-static].lib}}.
+The GUI runtime displays error messages in a message box and does some rudimentary command-line
+parsing.
+
+==== Compiling very large files under Windows with the Microsoft C compiler fails with a message indicating insufficient heap space.
+
+It seems that the Microsoft C compiler can only handle files up to a certain size, and it doesn't utilize virtual memory as
+well as the GNU C compiler, for example. Try closing running applications. If that fails, try to break up the Scheme code
+into several library units.
+
+==== When I run {{csi}} inside an emacs buffer under Windows, nothing happens.
+
+Invoke {{csi}} with the {{-:c}} runtime option. Under Windows the interpreter thinks it
+is not running under control of a terminal and doesn't print the prompt and does not flush the output stream properly.
+
+==== I load compiled code dynamically in a Windows GUI application and it crashes.
+
+Code compiled into a DLL to be loaded dynamically must be linked with the same runtime system as the loading
+application. That means that all dynamically loaded entities (including extensions built and installed with
+{{chicken-setup}}) must be compiled with the {{-windows}} {{csc}} option.
+
+==== On Windows, {{csc.exe}} seems to be doing something wrong.
+
+The Windows development tools include a C# compiler with the same name. Either invoke {{csc.exe}} with a full
+pathname, or put the directory where you installed CHICKEN in front of the MS development tool path in the {{PATH}}
+environment variable.
+
+==== On Windows source and/or output filenames with embedded whitespace are not found.
+
+There is no current workaround. Do not use filenames with embedded whitespace for code. However, command
+names with embedded whitespace will work correctly.
+=== Customization
+
+
+==== How do I run custom startup code before the runtime-system is invoked?
+
+When you invoke the C compiler for your translated Scheme source program, add the C compiler option
+{{-DC_EMBEDDED}}, or pass {{-embedded}} to the {{csc}}
+driver program, so no entry-point function will be generated ({{main()}}).
+When your are finished with your startup processing, invoke:
+
+<enscript highlight=c>
+CHICKEN_main(argc, argv, C_toplevel);
+</enscript>
+
+where {{C_toplevel}} is the entry-point into the compiled Scheme code. You
+should add the following  declarations at the head of your code:
+
+<enscript highlight=c>
+#include "chicken.h"
+extern void C_toplevel(C_word,C_word,C_word) C_noret;
+</enscript>
+
+==== How can I add compiled user passes?
+
+To add a compiled user pass instead of an interpreted one, create a library unit and recompile
+the main unit of the compiler (in the file {{chicken.scm}}) with an additional {{uses}}
+declaration. Then link all compiler modules and your (compiled) extension to create a new version of
+the compiler, like this (assuming all sources are in the
+current directory):
+
+<enscript highlight=scheme>
+% cat userpass.scm
+;;;; userpass.scm - My very own compiler pass
+
+(declare (unit userpass))
+
+;; Perhaps more user passes/extensions are added:
+(let ([old (user-pass)])
+(user-pass
+(lambda (x)
+(let ([x2 (do-something-with x)])
+	  (if old
+	      (old x2)
+	      x2) ) ) ) )
+</enscript>
+
+ % csc -c -x userpass.scm
+ % csc chicken.scm -c -o chicken-extended.o -uses userpass
+ % gcc chicken-extended.o support.o easyffi.o compiler.o optimizer.o batch-driver.o c-platform.o \
+ c-backend.o userpass.o `csc -ldflags -libs` -o chicken-extended
+
+On platforms that support it (Linux ELF, Solaris, Windows + VC++), compiled code can be loaded via {{-extend}}
+just like source files (see {{load}} in the User's Manual).
+
+
+=== Compiled macros
+
+==== Why is {{define-macro}} complaining about unbound variables?
+
+Macro bodies that are defined and used in a compiled source-file are
+evaluated during compilation and so have no access to anything created with {{define}}. Use {{define-for-syntax}} instead.
+
+==== Why isn't {{load}} properly loading my library of macros?
+
+During compile-time, macros are only available in the source file in which they are defined. Files included via {{include}} are considered part of the containing file.
+
+==== Why is {{include}} unable to load my hygienic macros?
+
+It is not sufficient for the included file to require the {{syntax-case}} extension. Call {{(require-extension syntax-case)}} ''before'' calling {{include}}.
+
+==== Why are macros not visible outside of the compilation unit in which they are defined?
+
+Macros are defined during compile time, so when a file has been compiled, the definitions are gone. An exception
+to this rule are macros defined with {{define-macro}}, which are also visible at run-time, i.e.
+in {{eval}}. To use macros defined in other files, use the {{include}} special
+form.
+
+=== Warnings and errors
+
+==== Why does my program crash when I use callback functions (from Scheme to C and back to Scheme again)?
+
+There are two reasons why code involving callbacks can crash out of no apparent reason:
+
+# It is important to use {{foreign-safe-lambda/foreign-safe-lambda*}} for the C code that is to call back into Scheme. If this is not done than sooner or later the available stack space will be exhausted.
+
+# If the C code uses a large amount of stack storage, or if Scheme-to-C-to-Scheme calls are nested deeply, then the available nursery space on the stack will run low. To avoid this it might be advisable to run the compiled code with a larger nursery setting, i.e. run the code with {{-:s...}} and a larger value than the default (for example {{-:s300k}}), or use the {{-nursery}} compiler option.  Note that this can decrease runtime performance on some platforms.
+
+==== Why does the linker complain about a missing function {{_C_..._toplevel}}?
+
+This message indicates that your program uses a library-unit, but that the
+object-file or library was not supplied to the linker. If you have the unit
+{{foo}}, which is contained in {{foo.o}} than you have to supply it to the
+linker like this (assuming a GCC environment):
+
+{{% csc program.scm foo.o -o program}}
+
+==== Why does the linker complain about a missing function {{_C_toplevel}}?
+
+This means you have compiled a library unit as an application. When a unit-declaration (as in {{(declare (unit ...))}})
+is given, then this file has a specially named toplevel entry procedure. Just remove the declaration,
+or compile this file to an object-module and link it to your application code.
+
+==== Why does my program crash when I compile a file with {{-unsafe}} or unsafe declarations?
+
+The compiler option {{-unsafe}} or the declaration {{(declare (unsafe))}} disable
+certain safety-checks to improve performance, so code that would normally
+trigger an error will work unexpectedly or even crash the running application.
+It is advisable to develop and debug a program in safe mode (without unsafe
+declarations) and use this feature only if the application works properly.
+
+==== Why do I get a warning when I define a global variable named {{match}}?
+
+Even when the {{match}} unit is not used, the macros from that package are visible in the compiler.
+The reason for this is that macros can not be accessed from library units (only when explicitly evaluated in running
+code). To speed up macro-expansion time, the compiler and the interpreter both already provide the compiled 
+{{match-...}} macro definitions. Macros shadowed lexically are no problem, but global definitions
+of variables named identically to (global) macros are useless - the macro definition shadows the global
+variable.
+
+This problem can be solved using a different name or undefining the macro, like this:
+
+<enscript highlight=scheme>
+(eval-when (compile eval) (undefine-macro! 'match))
+</enscript>
+==== Why don't toplevel-continuations captured in interpreted code work?
+
+Consider the following piece of code:
+
+<enscript highlight=scheme>  
+(define k (call-with-current-continuation (lambda (k) k)))
+(k k)
+</enscript>
+
+When compiled, this will loop endlessly. But when interpreted, {{(k k)}} will return
+to the read-eval-print loop! This happens because the continuation captured will eventually read the
+next toplevel expression from the standard-input (or an input-file if loading from a file). At the moment
+{{k}} was defined, the next expression was {{(k k)}}. But when {{k}}
+is invoked, the next expression will be whatever follows after {{(k k)}}.
+In other words, invoking a captured continuation will not rewind the file-position of the input source.
+A solution is to wrap the whole code into a {{(begin ...)}} expression, so all toplevel
+expressions will be loaded together.
+
+==== Why does {{define-reader-ctor}} not work in my compiled program?
+
+The following piece of code does not work as expected:
+
+<enscript highlight=scheme>
+(eval-when (compile)
+(define-reader-ctor 'integer->char integer->char) )
+(print #,(integer->char 33))
+</enscript>
+
+The problem is that the compiler reads the complete source-file before doing any processing on it,
+so the sharp-comma form is encountered before the reader-ctor is defined. A possible solution is to include
+the file containing the sharp-comma form, like this:
+
+<enscript highlight=scheme>
+(eval-when (compile)
+(define-reader-ctor 'integer->char integer->char) )
+
+(include "other-file")
+</enscript>
+
+<enscript highlight=scheme>
+;;; other-file.scm:
+(print #,(integer->char 33))
+</enscript>
+
+==== Why do built-in units, such as srfi-1, srfi-18, and posix fail to load?
+
+When you try to {{use}} a built-in unit such as {{srfi-18}}, you may get the following error:
+
+<enscript highlight=scheme>
+#;1> (use srfi-18)
+; loading library srfi-18 ...
+Error: (load-library) unable to load library
+srfi-18
+"dlopen(libchicken.dylib, 9): image not found"                ;; on a Mac
+"libchicken.so: cannot open shared object file: No such file or directory"  ;; Linux
+</enscript>
+
+Another symptom is that {{(require 'srfi-18)}} will silently fail.
+
+This typically happens because the Chicken libraries have been installed in a non-standard location, such as your home directory.  The workaround is to explicitly tell the dynamic linker where to look for your libraries:
+
+ export DYLD_LIBRARY_PATH=~/scheme/chicken/lib:$DYLD_LIBRARY_PATH ;; Mac
+ export LD_LIBRARY_PATH=~/scheme/chicken/lib:$LD_LIBRARY_PATH    ;; Linux
+
+==== How can I increase the size of the trace shown when runtime errors are detected?
+
+When a runtime error is detected, Chicken will print the last entries from the trace of functions called
+(unless your executable was compiled with the {{-no-trace}} option.
+By default, only 16 entries will be shown.
+To increase this number pass the {{-:aN}} parameter to your executable.
+
+=== Optimizations
+
+==== How can I obtain smaller executables?
+
+If you don't need {{eval}} or the stuff in the {{extras}} library unit, 
+you can just use the {{library}} unit:
+
+<enscript highlight=scheme>
+	(declare (uses library))
+	(display "Hello, world!\n")
+</enscript>
+
+(Don't forget to compile with the {{-explicit-use}} option)
+Compiled with Visual C++ this generates an executable of around 240 kilobytes.
+It is theoretically possible to compile something without the library, but
+a program would have to implement quite a lot of support code on its own.
+
+==== How can I obtain faster executables?
+
+There are a number of declaration specifiers that should be used to speed up
+compiled files: declaring {{(standard-bindings)}} is mandatory, since this enables
+most optimizations. Even if some standard procedures should be redefined, you can
+list untouched bindings in the declaration.
+Declaring {{(extended-bindings)}} lets the compiler choose faster versions of certain
+internal library functions. This might give another speedup. You can also use the
+the {{usual-integrations}} declaration, which is identical to declaring
+{{standard-bindings}} and {{extended-bindings}}
+(note that {{usual-integrations}} is set by default).
+Declaring {{(block)}} tells the compiler that global procedures are not changed
+outside the current compilation unit, this gives the compiler some more 
+opportunities for optimization.
+If no floating point arithmetic is required, then declaring {{(number-type fixnum)}}
+can give a big performance improvement, because the compiler can now inline
+most arithmetic operations. 
+Declaring {{(unsafe)}} will switch off most safety checks.
+If threads are not used, you can declare {{(disable-interrupts)}}.
+You should always use maximum optimizations settings for your C compiler.
+Good GCC compiler options on Pentium (and compatible) hardware are:
+{{-Os -fomit-frame-pointer -fno-strict-aliasing}}
+Some programs are very sensitive to the setting of the nursery (the first heap-generation). You
+should experiment with different nursery settings (either by compiling with the {{-nursery}}
+option or by using the {{-:s...}} runtime option).
+
+==== Which non-standard procedures are treated specially when the {{extended-bindings}} or {{usual-integrations}} declaration or compiler option is used?
+
+The following standard bindings are handled specially, depending on optimization options
+and compiler settings:
+
+ {{+}} {{*}} {{-}} {{/}} {{quotient}} {{eq?}} {{eqv?}} {{equal?}} {{apply}} {{c...r}} {{values}} {{call-with-values}}
+ {{list-ref}} {{null?}} {{length}} {{not}} {{char?}} {{string?}} {{symbol?}} {{vector?}} {{pair?}} {{procedure?}}
+ {{boolean?}} {{number?}} {{complex?}} {{rational?}} {{real?}} {{exact?}} {{inexact?}} {{list?}} {{eof-object?}}
+ {{string-ref}} {{string-set!}} {{vector-ref}} {{vector-set!}} {{char=?}} {{char<?}} {{char>?}} {{char<=?}} {{char>=?}}
+ {{char-numeric?}} {{char-alphabetic?}} {{char-whitespace?}} {{char-upper-case?}}
+ {{char-lower-case?}} {{char-upcae}} {{char-downcase}} {{list-tail}} {{assv}} {{memv}} {{memq}} {{assoc}}
+ {{member}} {{set-car!}} {{set-cdr!}} {{abs}} {{exp}} {{sin}} {{cos}} {{tan}} {{log}} {{asin}} {{acos}} {{atan}} {{sqrt}}
+ {{zero?}} {{positive?}} {{negative?}} {{vector-length}} {{string-length}} {{char->integer}}
+ {{integer->char}} {{inexact->exact}} {{=}} {{>}} {{<}} {{>=}} {{<=}} {{for-each}} {{map}} {{substring}}
+ {{string-append}} {{gcd}} {{lcm}} {{list}} {{exact->inexact}} {{string->number}} {{number->string}}
+ {{even?}} {{odd?}} {{remainder}} {{floor}} {{ceiling}} {{truncate}} {{round}} {{cons}} {{vector}} {{string}}
+ {{string=?}} {{string-ci=?}} {{make-vector}} {{call-with-current-continuation}}
+ {{write-char}} {{read-string}} 
+
+The following extended bindings are handled specially: 
+
+{{bitwise-and}} {{bitwise-ior}} {{bitwise-xor}} {{bitwise-not}} 
+{{bit-set?}} {{add1}} {{sub1}}
+{{fx+}}
+{{fx-}} {{fx*}} {{fx/}} {{fxmod}}
+{{fx=}} {{fx>}} {{fx>=}} {{fixnum?}} {{fxneg}} {{fxmax}} {{fxmin}}
+{{fxand}} {{fxior}} {{fxxor}} {{fxnot}} {{fxshl}} {{fxshr}}
+{{flonum?}} {{fp+}}
+{{fp-}} {{fp*}} {{fp/}} {{atom?}}
+{{fp=}} {{fp>}} {{fp>=}} {{fpneg}} {{fpmax}} {{fpmin}}
+{{arithmetic-shift}} {{signum}} {{flush-output}} {{thread-specific}} {{thread-specific-set!}}
+{{not-pair?}} {{null-list?}} {{print}} {{print*}} {{u8vector->blob/shared}}
+{{s8vector->blob/shared}} {{u16vector->blob/shared}} {{s16vector->blob/shared}}
+{{u32vector->blob/shared}}
+{{s32vector->blob/shared}} {{f32vector->blob/shared}} {{f64vector->blob/shared}} {{block-ref}}
+{{blob-size}}
+{{u8vector-length}}
+{{s8vector-length}}
+{{u16vector-length}}
+{{s16vector-length}}
+{{u32vector-length}}
+{{s32vector-length}}
+{{f32vector-length}}
+{{f64vector-length}}
+{{u8vector-ref}}
+{{s8vector-ref}}
+{{u16vector-ref}}
+{{s16vector-ref}}
+{{u32vector-ref}}
+{{s32vector-ref}}
+{{f32vector-ref}}
+{{f64vector-ref}}
+{{u8vector-set!}}
+{{s8vector-set!}}
+{{u16vector-set!}}
+{{s16vector-set!}}
+{{u32vector-set!}}
+{{s32vector-set!}}
+{{hash-table-ref}}
+{{block-set!}} {{number-of-slots}}
+{{first}} {{second}} {{third}} {{fourth}} {{null-pointer?}} {{pointer->object}}
+{{make-record-instance}}
+{{locative-ref}} {{locative-set!}} {{locative?}} {{locative->object}} {{identity}}
+{{cpu-time}} {{error}} {{call/cc}} {{any?}}
+{{substring=?}} {{substring-ci=?}} {{substring-index}} {{substring-index-ci}}
+
+==== Can I load compiled code at runtime?
+
+Yes.
+You can load compiled at code at runtime with {{load}} just as
+well as you can load Scheme source code.
+Compiled code will, of course, run faster.
+
+To do this, pass to {{load}} a path for a shared object.
+Use a form such as {{(load "foo.so")}} and run
+{{csc -shared foo.scm}} to produce {{foo.so}} from {{foo.scm}} (at
+which point {{foo.scm}} will no longer be required).
+
+=== Garbage collection
+
+==== Why does a loop that doesn't {{cons}} still trigger garbage collections?
+
+Under CHICKENs implementation policy, tail recursion is achieved simply by avoiding
+to return from a function call. Since the programs is CPS converted, a continuous 
+sequence of nested procedure calls is performed. At some stage the stack-space has
+to run out and the current procedure and its parameters (including the current
+continuation) are stored somewhere in the runtime system. Now a minor garbage collection
+occurs and rescues all live
+data from the stack (the first heap generation) and moves it into the the second heap
+generation. Then the stack is cleared (using
+a {{longjmp}}) and execution can continue from the saved state.
+With this method arbitrary recursion (in tail- or non-tail position) can happen, 
+provided the application doesn't run out of heap-space.
+(The difference between a tail- and a non-tail call is that the tail-call has no
+live data after it invokes its continuation - and so the amount of heap-space needed stays constant)
+
+==== Why do finalizers not seem to work in simple cases in the interpeter?
+
+Consider the following interaction in CSI:
+
+ #;1> (define x '(1 2 3))
+ #;2> (define (yammer x) (print x " is dead"))
+ #;3> (set-finalizer! x yammer)
+ (1 2 3)
+ #;4> (gc #t)
+ 157812
+ #;5> (define x #f)
+ #;6> (gc #t)
+ 157812
+ #;7>
+
+While you might expect objects to be reclaimed and "''(1 2 3) is dead''" printed, it won't happen:
+the literal list gets held in the interpreter history, because it is the
+result value of the set-finalizer! call.
+Running this in a normal program will work fine.
+
+When testing finalizers from the interpreter, you might want to define a trivial macro such as
+
+ (define-macro (v x) `(begin (print ,x) (void)))
+
+and wrap calls to {{set-finalizer!}} in it.
+
+=== Interpreter
+
+==== Does CSI support history and autocompletion?
+
+CSI doesn't support it natively but it can be activated with the [[http://www.call-with-current-continuation.org/eggs/readline.html]] egg.
+After installing the egg, add the following to your {{~/.csirc}} or equivalent file:
+
+<enscript highlight=scheme>
+; The regex egg is required for ##csi#name-of-symbols-starting-with
+(require 'readline)
+(current-input-port (make-gnu-readline-port))
+(gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
+</enscript>
+
+Users of *nix-like systems (including Cygwin), may also want to check out [[http://utopia.knoware.nl/~hlub/rlwrap/|rlwrap]].  This program lets you "wrap" another process (e.g. {{rlwrap csi}}) with the readline library, giving you history, autocompletion, and the ability to set the keystroke set. Vi fans can get vi keystrokes by adding "set editing-mode vi" to their {{.inputrc}} file.
+
+==== Does code loaded with {{load}} run compiled or interpreted?
+
+If you compile a file with a call to {{load}}, the code will be loaded at
+runtime and, if the file loaded is a Scheme source code file
+(instead of a shared object), it will be
+interpreted (even if the caller program is compiled).
+
+=== Extensions 
+
+==== How can I install Chicken eggs to a non-default location?
+
+You can just set the {{CHICKEN_REPOSITORY}} environment variable.
+It should contain the path where you want eggs to be installed:
+
+ $ export CHICKEN_REPOSITORY=~/chicken/
+ $ chicken-setup extensionname
+
+In order to make programs (including csi) see these eggs, you should set this variable when you run them.
+Alternatively, you can call the {{repository-path}} Scheme procedure before loading the eggs, as in:
+
+<enscript highlight=scheme>
+(repository-path "/home/azul/chicken")
+(use format-modular)
+</enscript>
+
+Note, however, that using {{repository-path}} as above hard-codes the location of your eggs in your source files.  While this might not be an issue in your case, it might be safe to keep this configuration outside of the source code (that is, specifying it as an environment variable) to make it easier to maintain.
+
+==== Can I install chicken eggs as a non-root user?
+
+Yes, just [[FAQ#Extensions#How can I install Chicken eggs to a non-default location?|install them in a directory you can write]].
+
+----
+
+Previous: [[Bugs and limitations]]
+
+Next: [[Acknowledgements]]

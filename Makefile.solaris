@@ -1,4 +1,4 @@
-# Makefile - toplevel makefile
+# Makefile.solaris - configuration for Solaris -*- Makefile -*-
 #
 # Copyright (c) 2007, Felix L. Winkelmann
 # All rights reserved.
@@ -33,34 +33,68 @@
 # Germany
 
 
-.PHONY: all clean distclean spotless install uninstall
+# platform configuration
 
-ifndef PLATFORM
-all clean spotless distclean install uninstall:
-	@echo "no PLATFORM given."
-	@echo ""
-	@echo "Please select your target platform by running one of the following commands:"
-	@echo ""
-	@echo "  $(MAKE) PLATFORM=linux"
-	@echo "  $(MAKE) PLATFORM=bsd"
-	@echo "  $(MAKE) PLATFORM=macosx"
-	@echo "  $(MAKE) PLATFORM=mingw"
-	@echo "  $(MAKE) PLATFORM=solaris"
-	@echo "  $(MAKE) PLATFORM=cross-linux-mingw"
-	@echo ""
-	@echo "For more information, consult the README file."
-	@exit 1
+ARCH = $(shell sh config-arch.sh)
+
+# commands
+
+C_COMPILER = gcc
+CXX_COMPILER = g++
+LINKER = gcc
+
+# options
+
+C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
+ifdef DEBUGBUILD
+C_COMPILER_OPTIMIZATION_OPTIONS = -g -Wall -Wno-unused
 else
-all:
-	$(MAKE) -f Makefile.$(PLATFORM) all
-clean:
-	$(MAKE) -f Makefile.$(PLATFORM) clean
-distclean:
-	$(MAKE) -f Makefile.$(PLATFORM) distclean
-spotless:
-	$(MAKE) -f Makefile.$(PLATFORM) spotless
-install:
-	$(MAKE) -f Makefile.$(PLATFORM) install
-uninstall:
-	$(MAKE) -f Makefile.$(PLATFORM) uninstall
+C_COMPILER_OPTIMIZATION_OPTIONS = -Os -fomit-frame-pointer
 endif
+LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
+LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(LIBDIR)
+LIBRARIES = -lrt -lsocket -lnsl -lm -ldl
+
+# special files
+
+CHICKEN_CONFIG_H = chicken-config.h
+
+# select default and internal settings
+
+include defaults.make
+
+chicken-config.h: chicken-defaults.h
+	echo "#define C_STACK_GROWS_DOWNWARD 1" >$@
+	echo "#define HAVE_ALLOCA 1" >>$@
+	echo "#define HAVE_DIRENT_H 1" >>$@
+	echo "#define HAVE_DLFCN_H 1" >>$@
+	echo "#define HAVE_GRP_H 1" >>$@
+	echo "#define HAVE_ALLOCA_H 1" >>$@
+	echo "#define HAVE_STRERROR 1" >>$@
+	echo "#define HAVE_ERRNO_H 1" >>$@
+ifeq ($(ARCH),x86-64)
+	echo "#define HAVE_STDINT_H 1" >>$@
+endif
+ifdef GCHOOKS
+	echo "#define C_GC_HOOKS" >>$@
+endif
+ifdef EXTRASLOT
+	echo "#define C_EXTRA_SYMBOL_SLOT" >>$@
+endif
+ifdef SYMBOLGC
+	echo "#define C_COLLECT_ALL_SYMBOLS" >>$@
+endif
+ifdef NOAPPLYHOOK
+	echo "#define C_NO_APPLY_HOOK" >>$@
+endif
+ifdef HACKED_APPLY
+	echo "#define C_HACKED_APPLY" >>$@
+endif
+	echo "#define HAVE_GCVT 1" >>$@
+	echo "#define HAVE_INTTYPES_H 1" >>$@
+	echo "#define HAVE_LIMITS_H 1" >>$@
+	echo "#define HAVE_SYSEXITS_H 1" >>$@
+	echo "#define HAVE_MEMMOVE 1" >>$@
+	cat chicken-defaults.h >>$@
+
+include rules.make

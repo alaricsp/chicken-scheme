@@ -1,0 +1,82 @@
+[[tags: manual]]
+
+[[toc:]]
+
+== Unit srfi-18
+
+A simple multithreading package. This threading package follows largely
+the specification of SRFI-18. For more information see the documentation
+for [[http://srfi.schemers.org/srfi-18/srfi-18.html|SRFI-18]].
+
+'''Notes:'''
+
+* {{thread-start!}} accepts a thunk (a zero argument procedure) as argument, which is equivalent to {{(thread-start! (make-thread THUNK))}}.
+
+* {{thread-sleep!}} accepts a seconds real number value in addition to a time object.
+
+* When an uncaught exception (i.e. an error) is signalled in a thread other than the primordial thread and warnings are enabled (see: {{enable-warnings}}, then a warning message is written to the port that is the value of {{(current-error-port)}}.
+
+* Blocking I/O will block all threads, except for some socket operations (see the section about the {{tcp}} unit). An exception is the read-eval-print loop on UNIX platforms: waiting for input will not block other threads, provided the current input port reads input from a console.
+
+* It is generally not a good idea for one thread to call a continuation created by another thread, if {{dynamic-wind}} is involved.
+
+* When more than one thread compete for the current time-slice, the thread that was waiting first will become the next runnable thread.
+
+* The dynamic environment of a thread consists of the following state:
+
+** The current input-, output- and error-port
+
+** The current exception handler
+
+** The values of all current parameters (created by {{make-parameter}})
+
+** Any pending {{dynamic-wind}} thunks.
+
+The following procedures are provided, in addition to the procedures defined in SRFI-18:
+
+
+
+=== thread-signal!
+
+ [procedure] (thread-signal! THREAD X)
+
+This will cause {{THREAD}} to signal the condition {{X}} once it is scheduled
+for execution. After signalling the condition, the thread continues with its normal
+execution.
+
+=== thread-quantum
+
+ [procedure] (thread-quantum THREAD)
+
+Returns the quantum of {{THREAD}}, which is an exact integer
+specifying the approximate time-slice of the thread in milliseconds.
+
+=== thread-quantum-set!
+
+ [procedure] (thread-quantum-set! THREAD QUANTUM)
+
+Sets the quantum of {{THREAD}} to {{QUANTUM}}.
+
+=== thread-suspend!
+
+ [procedure] (thread-suspend! THREAD)
+
+Suspends the execution of {{THREAD}} until resumed.
+
+=== thread-resume!
+
+ [procedure] (thread-resume! THREAD)
+
+Readies the suspended thread {{THREAD}}.
+
+=== time->milliseconds
+
+ [procedure] (time->milliseconds TIME)
+
+Converts a time object (as created via {{current-time}}) into an exact integer representing
+the number of milliseconds since process startup.
+
+
+Previous: [[Unit regex]]
+
+Next: [[Unit posix]]

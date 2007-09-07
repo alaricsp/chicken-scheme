@@ -1,0 +1,1312 @@
+[[tags: manual]]
+[[toc:]]
+
+== Unit posix
+
+This unit provides services as used on many UNIX-like systems.  Note that
+the following definitions are not all available on non-UNIX systems like
+Windows. See below for Windows specific notes.
+
+This unit uses the {{regex}}, {{scheduler}}, {{extras}} and {{utils}} units.
+
+All errors related to failing file-operations will signal a condition
+of kind {{(exn i/o file)}}.
+
+=== Directories
+
+==== change-directory
+
+ [procedure] (change-directory NAME)
+
+Changes the current working directory to {{NAME}}.
+
+==== current-directory
+
+ [procedure] (current-directory [DIR])
+
+Returns the name of the current working directory. If the optional argument {{DIR}} is given,
+then {{(current-directory DIR)}} is equivalent to {{(change-directory DIR)}}.
+
+==== create-directory
+
+ [procedure] (create-directory NAME)
+
+Creates a directory with the pathname {{NAME}}.
+
+==== delete-directory
+
+ [procedure] (delete-directory NAME)
+
+Deletes the directory with the pathname {{NAME}}. The directory has
+to be empty.
+
+==== directory
+
+ [procedure] (directory [PATHNAME [SHOW-DOTFILES?]])
+
+Returns a list with all files that are contained in the directory with the name {{PATHNAME}}
+(which defaults to the value of {{(current-directory)}}).
+Files beginning with {{.}} are included only if {{SHOW-DOTFILES?}} is given and not {{#f}}.
+
+==== directory?
+
+ [procedure] (directory? NAME)
+
+Returns {{#t}} if there exists a file with the name {{NAME}}
+and if that file is a directory, or {{#f}} otherwise.
+
+==== glob
+
+ [procedure] (glob PATTERN1 ...)
+
+Returns a list of the pathnames of all existing files matching
+{{PATTERN1 ...}}, which should be strings containing the usual
+file-patterns (with {{*}} matching zero or more characters and
+{{?}} matching zero or one character).
+
+==== set-root-directory!
+
+ [procedure] (set-root-directory! STRING)
+
+Sets the root directory for the current process to the path given in {{STRING}}
+(using the {{chroot}} function).
+If the current process has no root permissions, the operation will fail.
+
+
+=== Pipes
+
+==== call-with-input-pipe
+==== call-with-output-pipe
+
+ [procedure] (call-with-input-pipe CMDLINE PROC [MODE])
+ [procedure] (call-with-output-pipe CMDLINE PROC [MODE])
+
+Call {{PROC}} with a single argument: a input- or output port
+for a pipe connected to the subprocess named in {{CMDLINE}}. If
+{{PROC}} returns normally, the pipe is closed and any result values
+are returned.
+
+==== close-input-pipe
+==== close-output-pipe
+
+ [procedure] (close-input-pipe PORT)
+ [procedure] (close-output-pipe PORT)
+
+Closes the pipe given in {{PORT}} and waits until the connected
+subprocess finishes. The exit-status code of the invoked process
+is returned.
+
+==== create-pipe
+
+ [procedure] (create-pipe)
+
+The fundamental pipe-creation operator. Calls the C function
+{{pipe()}} and returns 2 values: the file-descriptors of the input-
+and output-ends of the pipe.
+
+==== open-input-pipe
+
+ [procedure] (open-input-pipe CMDLINE [MODE])
+
+Spawns a subprocess with the command-line string {{CMDLINE}} and
+returns a port, from which the output of the process can be read. If
+{{MODE}} is specified, it should be the keyword {{#:text}}
+(the default) or {{#:binary}}.
+
+==== open-output-pipe
+
+ [procedure] (open-output-pipe CMDLINE [MODE])
+
+Spawns a subprocess with the command-line string {{CMDLINE}} and
+returns a port. Anything written to that port is treated as the input
+for the process.  If {{MODE}} is specified, it should be the keyword
+{{#:text}} (the default) or {{#:binary}}.
+
+==== pipe/buf
+This variable contains the maximal number of bytes that can be written
+atomically into a pipe or FIFO.
+
+==== with-input-from-pipe
+==== with-output-to-pipe
+
+ [procedure] (with-input-from-pipe CMDLINE THUNK [MODE])
+ [procedure] (with-output-to-pipe CMDLINE THUNK [MODE])
+
+Temporarily set the value of
+{{current-input-port/current-output-port}} to a port for a
+pipe connected to the subprocess named in {{CMDLINE}} and call
+the procedure {{THUNK}} with no arguments. After {{THUNK}}
+returns normally the pipe is closed and the standard input-/output port
+is restored to its previous value and any result values are returned.
+
+<enscript highlight=scheme>
+(with-output-to-pipe 
+  "gs -dNOPAUSE -sDEVICE=jpeg -dBATCH -sOutputFile=signballs.jpg -g600x600 -q -"
+  (lambda ()
+    (print #<<EOF
+ %!IOPSC-1993 %%Creator: HAYAKAWA Takashi<xxxxxxxx@xx.xxxxxx.xx.xx>
+ /C/neg/d/mul/R/rlineto/E/exp/H{{cvx def}repeat}def/T/dup/g/gt/r/roll/J/ifelse 8
+ H/A/copy(z&v4QX&93r9AxYQOZomQalxS2w!!O&vMYa43d6r93rMYvx2dca!D&cjSnjSnjjS3o!v&6A
+ X&55SAxM1CD7AjYxTTd62rmxCnTdSST0g&12wECST!&!J0g&D1!&xM0!J0g!l&544dC2Ac96ra!m&3A
+ F&&vGoGSnCT0g&wDmlvGoS8wpn6wpS2wTCpS1Sd7ov7Uk7o4Qkdw!&Mvlx1S7oZES3w!J!J!Q&7185d
+ Z&lx1CS9d9nE4!k&X&MY7!&1!J!x&jdnjdS3odS!N&mmx1C2wEc!G&150Nx4!n&2o!j&43r!U&0777d
+ ]&2AY2A776ddT4oS3oSnMVC00VV0RRR45E42063rNz&v7UX&UOzF!F!J![&44ETCnVn!a&1CDN!Y&0M
+ V1c&j2AYdjmMdjjd!o&1r!M){( )T 0 4 3 r put T(/)g{T(9)g{cvn}{cvi}J}{($)g[]J}J
+ cvx}forall/moveto/p/floor/w/div/S/add 29 H[{[{]setgray fill}for Y}for showpage
+ EOF
+ ) ) )
+</enscript>
+
+
+=== Fifos
+
+==== create-fifo
+
+ [procedure] (create-fifo FILENAME [MODE])
+
+Creates a FIFO with the name {{FILENAME}} and the permission bits
+{{MODE}}, which defaults to
+
+<enscript highlight=scheme>
+ [procedure] (+ perm/irwxu perm/irwxg perm/irwxo)
+</enscript>
+
+==== fifo?
+
+ [procedure] (fifo? FILENAME)
+
+Returns {{#t}} if the file with the name {{FILENAME}} names
+a FIFO.
+
+
+=== File descriptors and low-level I/O
+
+==== duplicate-fileno
+
+ [procedure] (duplicate-fileno OLD [NEW])
+
+If {{NEW}} is given, then the file-descriptor {{NEW}} is opened
+to access the file with the file-descriptor {{OLD}}. Otherwise a
+fresh file-descriptor accessing the same file as {{OLD}} is returned.
+
+==== file-close
+
+ [procedure] (file-close FILENO)
+
+Closes the input/output file with the file-descriptor {{FILENO}}.
+
+==== file-open
+
+ [procedure] (file-open FILENAME FLAGS [MODE])
+
+Opens the file specified with the string {{FILENAME}} and open-flags
+{{FLAGS}} using the C function {{open()}}. On success a
+file-descriptor for the opened file is returned.  {{FLAGS}}
+should be a bitmask containing one or more of the {{open/...}}
+values '''or'''ed together using {{bitwise-ior}} (or simply added
+together).  The optional {{MODE}} should be a bitmask composed of one
+or more permission values like {{perm/irusr}} and is only relevant
+when a new file is created. The default mode is 
+{{perm/irwxu | perm/irgrp | perm/iroth}}.
+
+==== file-mkstemp
+
+ [procedure] (file-mkstemp TEMPLATE-FILENAME)
+
+Create a file based on the given {{TEMPLATE-FILENAME}}, in which
+the six last characters must be ''XXXXXX''.  These will be replaced
+with a string that makes the filename unique.  The file descriptor of
+the created file and the generated filename is returned.  See the
+{{mkstemp(3)}} manual page for details on how this function
+works.  The template string given is not modified.
+
+Example usage:
+
+<enscript highlight=scheme>
+ (let-values (((fd temp-path) (file-mkstemp "/tmp/mytemporary.XXXXXX")))
+  (let ((temp-port (open-output-file* fd)))
+    (format temp-port "This file is ~A.~%" temp-path)
+    (close-output-port temp-port)))
+</enscript>
+
+==== file-read
+
+ [procedure] (file-read FILENO SIZE [BUFFER])
+
+Reads {{SIZE}} bytes from the file with the file-descriptor
+{{FILENO}}.  If a string or bytevector is passed in the optional
+argument {{BUFFER}}, then this string will be destructively modified
+to contain the read data. This procedure returns a list with two values:
+the buffer containing the data and the number of bytes read.
+
+==== file-select
+
+ [procedure] (file-select READFDLIST WRITEFDLIST [TIMEOUT])
+
+Waits until any of the file-descriptors given in the lists
+{{READFDLIST}} and {{WRITEFDLIST}} is ready for input or
+output, respectively. If the optional argument {{TIMEOUT}} is
+given and not false, then it should specify the number of seconds after
+which the wait is to be aborted (the value may be a floating point
+number). This procedure returns two values:
+the lists of file-descriptors ready for input and output, respectively.
+{{READFDLIST}} and '''WRITEFDLIST''' may also by file-descriptors
+instead of lists.  In this case the returned values are booleans
+indicating whether input/output is ready by {{#t}} or {{#f}}
+otherwise.  You can also pass {{#f}} as {{READFDLIST}} or
+{{WRITEFDLIST}} argument, which is equivalent to {{()}}.
+
+==== file-write
+
+ [procedure] (file-write FILENO BUFFER [SIZE])
+
+Writes the contents of the string or bytevector {{BUFFER}} into
+the file with the file-descriptor {{FILENO}}. If the optional
+argument {{SIZE}} is given, then only the specified number of bytes
+are written.
+
+==== file-control
+
+ [procedure] (file-control FILENO COMMAND  [ARGUMENT])
+
+Performs the fcntl operation {{COMMAND}} with the given
+{{FILENO}} and optional {{ARGUMENT}}. The return value is
+meaningful depending on the {{COMMAND}}.
+
+==== fcntl/dupfd
+==== fcntl/getfd
+==== fcntl/setfd
+==== fcntl/getfl
+==== fcntl/setfl
+
+These variables contain commands for {{file-control}}.
+
+==== fileno/stdin
+==== fileno/stdout
+==== fileno/stderr
+
+These variables contain file-descriptors for the standard I/O files.
+
+==== open/rdonly
+==== open/wronly
+==== open/rdwr
+==== open/read 
+==== open/write 
+==== open/creat
+==== open/append 
+==== open/excl
+==== open/noctty 
+==== open/nonblock 
+==== open/trunc
+==== open/sync
+==== open/fsync
+==== open/binary
+==== open/text
+
+Flags for use with {{file-open}}.
+
+==== open-input-file*
+==== open-output-file*
+
+ [procedure] (open-input-file* FILENO [OPENMODE])
+ [procedure] (open-output-file* FILENO [OPENMODE])
+
+Opens file for the file-descriptor {{FILENO}} for input or output
+and returns a port.  {{FILENO}} should be a positive exact integer.
+{{OPENMODE}} specifies an additional mode for opening the file
+(currently only the keyword {{#:append}} is supported, which opens
+an output-file for appending).
+
+==== port->fileno
+
+ [procedure] (port->fileno PORT)
+
+If {{PORT}} is a file- or tcp-port, then a file-descriptor is returned for
+this port. Otherwise an error is signaled.
+
+
+=== Retrieving file attributes
+
+==== file-access-time
+==== file-change-time
+==== file-modification-time
+
+ [procedure] (file-access-time FILE)
+ [procedure] (file-change-time FILE)
+ [procedure] (file-modification-time FILE)
+
+Returns time (in seconds) of the last access, modification or change of {{FILE}}. {{FILE}}
+may be a filename or a file-descriptor. If the file does not exist,
+an error is signaled.
+
+==== file-stat
+
+ [procedure] (file-stat FILE [LINK])
+
+Returns a 13-element vector with the following contents: inode-number,
+mode (as with {{file-permissions}}), number of hard links, uid of
+owner (as with {{file-owner}}), gid of owner, size (as with
+{{file-size}}) and access-, change- and modification-time (as with
+{{file-access-time}}, {{file-change-time}} and
+{{file-modification-time}}, device id, device type (for special file
+inode, blocksize and blocks allocated.  On Windows systems the last 4
+values are undefined.  If the optional argument {{LINK}} is given and
+not {{#f}}, then the file-statistics vector will be resolved for
+symbolic links (otherwise symbolic links are not resolved).
+
+==== file-position
+
+ [procedure] (file-position FILE)
+
+Returns the current file position of {{FILE}}, which should be a
+port or a file-descriptor.
+
+==== file-size
+
+ [procedure] (file-size FILENAME)
+
+Returns the size of the file designated by {{FILE}}.  {{FILE}}
+may be a filename or a file-descriptor.  If the file does not exist,
+an error is signaled.
+
+==== regular-file?
+
+ [procedure] (regular-file? FILENAME)
+
+Returns true, if {{FILENAME}} names a regular file (not a directory or symbolic link).
+
+
+=== Changing file attributes
+
+==== file-truncate
+
+ [procedure] (file-truncate FILE OFFSET)
+
+Truncates the file {{FILE}} to the length {{OFFSET}},
+which should be an integer. If the file-size is smaller or equal to
+{{OFFSET}} then nothing is done.  {{FILE}} should be a filename
+or a file-descriptor.
+
+==== set-file-position!
+
+ [procedure] (set-file-position! FILE POSITION [WHENCE])
+ [procedure] (set! (file-position FILE) POSITION)
+
+Sets the current read/write position of {{FILE}} to
+{{POSITION}}, which should be an exact integer. {{FILE}}
+should be a port or a file-descriptor.  {{WHENCE}} specifies
+how the position is to interpreted and should be one of the values
+{{seek/set, seek/cur}} and {{seek/end}}. It defaults to
+{{seek/set}}.
+
+Exceptions: {{(exn bounds)}}, {{(exn i/o file)}}
+
+
+=== Processes
+
+==== current-process-id
+
+ [procedure] (current-process-id)
+
+Returns the process ID of the current process.
+
+==== parent-process-id
+
+ [procedure] (parent-process-id)
+
+Returns the process ID of the parent of the current process.
+
+==== process-execute
+
+ [procedure] (process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST]])
+
+Creates a new child process and replaces the running process with it
+using the C library function {{execvp(3)}}. If the optional argument
+{{ARGUMENT-LIST}} is given, then it should contain a list of strings which
+are passed as arguments to the subprocess. If the optional argument
+{{ENVIRONMENT-LIST}} is supplied, then the library function {{execve(2)}}
+is used, and the environment passed in {{ENVIRONMENT-LIST}} (which should
+be of the form {{("<NAME>=<VALUE>" ...)}} is given
+to the invoked process. Note that {{execvp(3)}} respects the current setting
+of the {{PATH}} environment variable while {{execve(3)}} does not.
+
+==== process-fork
+
+ [procedure] (process-fork [THUNK])
+
+Creates a new child process with the UNIX system call
+{{fork()}}. Returns either the PID of the child process or 0. If
+{{THUNK}} is given, then the child process calls it as a procedure
+with no arguments and terminates.
+
+==== process-run
+
+ [procedure] (process-run COMMANDLINE])
+ [procedure] (process-run COMMAND ARGUMENT-LIST)
+
+Creates a new child process. The PID of the new process is returned.
+
+* The single parameter version passes the {{COMMANDLINE}} to the system shell, so usual
+argument expansion can take place.
+* The multiple parameter version directly invokes the {{COMMAND}} with the {{ARGUMENT-LIST}}.
+
+==== process-signal
+
+ [procedure] (process-signal PID [SIGNAL])
+
+Sends {{SIGNAL}} to the process with the id {{PID}} using the
+UNIX system call {{kill()}}. {{SIGNAL}} defaults to the value
+of the variable {{signal/term}}.
+
+==== process-wait
+
+ [procedure] (process-wait [PID [NOHANG]])
+
+Suspends the current process until the child process with
+the id {{PID}} has terminated using the UNIX system call
+{{waitpid()}}. If {{PID}} is not given, then this procedure
+waits for any child process. If {{NOHANG}} is given and not
+{{#f}} then the current process is not suspended.  This procedure
+returns three values:
+
+* {{PID}} or 0, if {{NOHANG}} is true and the child process has not terminated yet.
+* {{#t}} if the process exited normally or {{#f}} otherwise.
+* either the exit status, if the process terminated normally or the signal number that terminated/stopped the process.
+
+==== process
+
+ [procedure] (process COMMANDLINE)
+ [procedure] (process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])
+
+Creates a subprocess and returns three values: an input port from
+which data written by the sub-process can be read, an output port from
+which any data written to will be received as input in the sub-process
+and the process-id of the started sub-process. Blocking reads and writes
+to or from the ports returned by {{process}} only block the current
+thread, not other threads executing concurrently.
+
+* The single parameter version passes the string {{COMMANDLINE}} to the host-system's shell that
+is invoked as a subprocess.
+* The multiple parameter version directly invokes the {{COMMAND}} as a subprocess. The {{ARGUMENT-LIST}}
+is directly passed, as is {{ENVIRONMENT-LIST}}.
+
+Not using the shell may be preferrable for security reasons.
+
+==== process*
+
+ [procedure] (process* COMMANDLINE)
+ [procedure] (process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])
+
+Like {{process}} but returns 4 values: an input port from
+which data written by the sub-process can be read, an output port from
+which any data written to will be received as input in the sub-process,
+the process-id of the started sub-process, and an input port from
+which data written by the sub-process to {{stderr}} can be read.
+
+==== sleep
+
+ [procedure] (sleep SECONDS)
+
+Puts the process to sleep for {{SECONDS}}. Returns either 0 if
+the time has completely elapsed, or the number of remaining seconds,
+if a signal occurred.
+
+
+=== Hard and symbolic links
+
+==== symbolic-link?
+
+ [procedure] (symbolic-link? FILENAME)
+
+Returns true, if {{FILENAME}} names a symbolic link.
+
+==== create-symbolic-link
+
+ [procedure] (create-symbolic-link OLDNAME NEWNAME)
+
+Creates a symbolic link with the filename {{NEWNAME}} that points
+to the file named {{OLDNAME}}.
+
+==== read-symbolic-link
+
+ [procedure] (read-symbolic-link FILENAME)
+
+Returns the filename to which the symbolic link {{FILENAME}} points.
+
+==== file-link
+
+ [procedure] (file-link OLDNAME NEWNAME)
+
+Creates a hard link from {{OLDNAME}} to {{NEWNAME}} (both strings).
+
+
+=== Permissions
+
+==== file-owner
+
+ [procedure] (file-owner FILE)
+
+Returns the user-id of {{FILE}}.  {{FILE}} may be a filename
+or a file-descriptor.
+
+==== file-permissions
+
+ [procedure] (file-permissions FILE)
+
+Returns the permission bits for {{FILE}}. You can test this value
+by performing bitwise operations on the result and the {{perm/...}}
+values.  {{FILE}} may be a filename or a file-descriptor.
+
+==== file-read-access?
+==== file-write-access?
+==== file-execute-access?
+
+ [procedure] (file-read-access? FILENAME)
+ [procedure] (file-write-access? FILENAME)
+ [procedure] (file-execute-access? FILENAME)
+
+These procedures return {{#t}} if the current user has read,
+write or execute permissions on the file named {{FILENAME}}.
+
+==== change-file-mode
+
+ [procedure] (change-file-mode FILENAME MODE)
+
+Changes the current file mode of the file named {{FILENAME}}
+to {{MODE}} using the {{chmod()}} system call.  The
+{{perm/...}} variables contain the various permission bits and can
+be combinded with the {{bitwise-ior}} procedure.
+
+==== change-file-owner
+
+ [procedure] (change-file-owner FILENAME UID GID)
+
+Changes the owner information of the file named {{FILENAME}} to
+the user- and group-ids {{UID}} and {{GID}} (which should be
+exact integers) using the {{chown()}} system call.
+
+==== current-user-id
+==== current-group-id
+==== current-effective-user-id
+==== current-effective-group-id
+
+ [procedure] (current-user-id)
+ [setter] (set! (current-user-id) UID)
+ [procedure] (current-group-id)
+ [setter] (set! (current-group-id) GID)
+ [procedure] (current-effective-user-id)
+ [setter] (set! (current-effective-user-id) UID)
+ [procedure] (current-effective-group-id)
+ [setter] (set! (current-effective-group-id) GID)
+
+Get or set the real/effective user- and group-ids of the current process.
+
+==== process-group-id
+
+ [procedure] (process-group-id PID)
+
+Returns the process group ID of the process specified by {{PID}}.
+
+==== group-information
+
+ [procedure] (group-information GROUP)
+
+If {{GROUP}} specifies a valid group-name or group-id, then this
+procedure returns a list of four values: the group-name, the encrypted group password,
+the group ID and a list of the names of all group members. If no group with the
+given name or ID exists, then {{#f}} is returned.
+
+==== get-groups
+
+ [procedure] (get-groups)
+
+Returns a list with the supplementary group IDs of the current user.
+
+==== set-groups!
+
+ [procedure] (set-groups! GIDLIST)
+
+Sets the supplementrary group IDs of the current user to the IDs given in the list {{GIDLIST}}.
+
+Only the superuser may invoke this procedure.
+
+==== initialize-groups
+
+ [procedure] (initialize-groups USERNAME BASEGID)
+
+Sets the supplementrary group IDs of the current user to the IDs from the user with name {{USERNAME}} 
+(a string), including {{BASEGID}}.
+
+Only the superuser may invoke this procedure.
+
+==== perm/irusr
+==== perm/iwusr
+==== perm/ixusr
+==== perm/irgrp
+==== perm/iwgrp
+==== perm/ixgrp
+==== perm/iroth
+==== perm/iwoth
+==== perm/ixoth
+==== perm/irwxu
+==== perm/irwxg
+==== perm/irwxo
+==== perm/isvtx
+==== perm/isuid
+==== perm/isgid
+
+These variables contain permission bits as used in {{change-file-mode}}.
+
+==== set-process-group-id!
+
+ [procedure] (set-process-group-id! PID PGID)
+ [setter] (set! (process-group-id PID) PGID)
+
+Sets the process group ID of the process specifed by {{PID}} to {{PGID}}.
+
+==== user-information
+
+ [procedure] (user-information USER)
+
+If {{USER}} specifes a valid username (as a string) or user ID, then
+the user database is consulted and a list of 7 values are returned: the user-name,
+the encrypted password, the user ID, the group ID, a user-specific string,
+the home directory and the default shell. If no user with this name or
+ID can be found, then {{#f}} is returned.
+
+==== create-session
+
+ [procedure] (create-session)
+
+Creates a new session if the calling process is not a process group leader and returns
+the session ID.
+
+
+=== Record locking
+
+==== file-lock
+
+ [procedure] (file-lock PORT [START [LEN]])
+
+Locks the file associated with {{PORT}} for reading or
+writing (according to whether {{PORT}} is an input- or
+output-port). {{START}} specifies the starting position in the
+file to be locked and defaults to 0. {{LEN}} specifies the length
+of the portion to be locked and defaults to {{#t}}, which means
+the complete file. {{file-lock}} returns a ''lock''-object.
+
+==== file-lock/blocking
+
+ [procedure] (file-lock/blocking PORT [START [LEN]])
+
+Similar to {{file-lock}}, but if a lock is held on the file,
+the current process blocks (including all threads) until the lock is released.
+
+==== file-test-lock
+
+ [procedure] (file-test-lock PORT [START [LEN]])
+
+Tests whether the file associated with {{PORT}} is locked for reading
+or writing (according to whether {{PORT}} is an input- or output-port)
+and returns either {{#f}} or the process-id of the locking process.
+
+==== file-unlock
+
+ [procedure] (file-unlock LOCK)
+
+Unlocks the previously locked portion of a file given in {{LOCK}}.
+
+
+=== Signal handling
+
+==== set-alarm!
+
+ [procedure] (set-alarm! SECONDS)
+
+Sets an internal timer to raise the {{signal/alrm}}
+after {{SECONDS}} are elapsed.  You can use the
+{{set-signal-handler!}} procedure to write a handler for this signal.
+
+==== set-signal-handler!
+
+ [procedure] (set-signal-handler! SIGNUM PROC)
+
+Establishes the procedure of one argument {{PROC}} as the handler
+for the signal with the code {{SIGNUM}}. {{PROC}} is called
+with the signal number as its sole argument. If the argument {{PROC}} is {{#f}}
+then any signal handler will be removed.
+
+Note that is is unspecified in which thread of execution the signal handler will be invoked.
+
+==== signal-handler
+
+ [procedure] (signal-handler SIGNUM)
+
+Returns the signal handler for the code {{SIGNUM}} or {{#f}}.
+
+==== set-signal-mask!
+
+ [procedure] (set-signal-mask! SIGLIST)
+
+Sets the signal mask of the current process to block all signals given
+in the list {{SIGLIST}}.  Signals masked in that way will not be
+delivered to the current process.
+
+==== signal-mask
+
+ [procedure] (signal-mask)
+
+Returns the signal mask of the current process.
+
+==== signal-masked?
+
+ [procedure] (signal-masked? SIGNUM)
+
+Returns whether the signal for the code {{SIGNUM}} is currently masked.
+
+==== signal-mask!
+
+ [procedure] (signal-mask! SIGNUM)
+
+Masks (blocks) the signal for the code {{SIGNUM}}.
+
+==== signal-unmask!
+
+ [procedure] (signal-unmask! SIGNUM)
+
+Unmasks (unblocks) the signal for the code {{SIGNUM}}.
+
+==== signal/term
+==== signal/kill
+==== signal/int
+==== signal/hup
+==== signal/fpe
+==== signal/ill
+==== signal/segv
+==== signal/abrt
+==== signal/trap
+==== signal/quit
+==== signal/alrm
+==== signal/vtalrm
+==== signal/prof
+==== signal/io
+==== signal/urg
+==== signal/chld
+==== signal/cont
+==== signal/stop
+==== signal/tstp
+==== signal/pipe
+==== signal/xcpu
+==== signal/xfsz
+==== signal/usr1
+==== signal/usr2
+==== signal/winch
+
+These variables contain signal codes for use with {{process-signal}},  {{set-signal-handler!}},  {{signal-handler}},  {{signal-masked?}},  {{signal-mask!}},  or {{signal-unmask!}}.
+
+
+=== Environment access
+
+==== current-environment
+
+ [procedure] (current-environment)
+
+Returns a association list of the environment variables and their
+current values. 
+
+==== setenv
+
+ [procedure] (setenv VARIABLE VALUE)
+
+Sets the environment variable named {{VARIABLE}} to
+{{VALUE}}. Both arguments should be strings. If the variable is
+not defined in the environment, a new definition is created.
+
+==== unsetenv
+
+ [procedure] (unsetenv VARIABLE)
+
+Removes the definition of the environment variable {{VARIABLE}} from
+the environment of the current process. If the variable is not defined,
+nothing happens.
+
+
+=== Memory mapped I/O
+
+==== memory-mapped-file?
+
+ [pocedure] (memory-mapped-file? X)
+
+Returns {{#t}}, if {{X}} is an object representing a memory
+mapped file, or {{#f}} otherwise.
+
+==== map-file-to-memory
+
+ [procedure] (map-file-to-memory ADDRESS LEN PROTECTION FLAG FILENO [OFFSET])
+
+Maps a section of a file to memory using the C function
+{{mmap()}}.  {{ADDRESS}} should be a foreign pointer object
+or {{#f}}; {{LEN}} specifies the size of the section to
+be mapped; {{PROTECTION}} should be one or more of the flags
+{{prot/read, prot/write, prot/exec}} or {{prot/none}}
+'''bitwise-ior'''ed together; {{FLAG}} should be one or more of
+the flags {{map/fixed, map/shared, map/private, map/anonymous}} or
+{{map/file}}; {{FILENO}} should be the file-descriptor of the
+mapped file. The optional argument {{OFFSET}} gives the offset of
+the section of the file to be mapped and defaults to 0. This procedure
+returns an object representing the mapped file section.  The procedure
+{{move-memory!}} can be used to access the mapped memory.
+
+==== memory-mapped-file-pointer
+
+ [procedure] (memory-mapped-file-pointer MMAP)
+
+Returns a machine pointer to the start of the memory region to which
+the file is mapped.
+
+==== unmap-file-from-memory
+
+ [procedure] (unmap-file-from-memory MMAP [LEN])
+
+Unmaps the section of a file mapped to memory using the C function
+{{munmap()}}.  {{MMAP}} should be a mapped file as returned
+by the procedure {{map-file-to-memory}}.  The optional argument
+{{LEN}} specifies the length of the section to be unmapped and
+defaults to the complete length given when the file was mapped.
+
+
+=== Date and time routines
+
+==== seconds->local-time
+
+ [procedure] (seconds->local-time SECONDS)
+
+Breaks down the time value represented in {{SECONDS}} into a 10
+element vector of the form {{#(seconds minutes hours mday month
+year wday yday dstflag timezone)}}, in the following format:
+
+; seconds (0) : the number of seconds after the minute (0 - 59)
+; minutes (1) : the number of minutes after the hour (0 - 59)
+; hours (2) : the number of hours past midnight (0 - 23)
+; mday (3) : the day of the month (1 - 31)
+; month (4) : the number of months since january (0 - 11)
+; year (5) : the number of years since 1900
+; wday (6) : the number of days since Sunday (0 - 6)
+; yday (7) : the number of days since January 1 (0 - 365)
+; dstflag (8) : a flag that is true if Daylight Saving Time is in effect at the time described.
+; timezone (9) : the difference between UTC and the latest local standard time, in seconds west of UTC.
+
+==== local-time->seconds
+
+ [procedure] (local-time->seconds VECTOR)
+
+Converts the ten-element vector {{VECTOR}} representing the time value relative to
+the current timezone into
+the number of seconds since the first of January, 1970 UTC.
+
+==== local-timezone-abbreviation
+
+ [procedure] (local-timezone-abbreviation)
+
+Returns the abbreviation for the local timezone as a string.
+
+==== seconds->string
+
+ [procedure] (seconds->string SECONDS)
+
+Converts the local time represented in {{SECONDS}} into a string
+of the form {{"Tue May 21 13:46:22 1991\n"}}.
+
+==== seconds->utc-time
+
+ [procedure] (seconds->utc-time SECONDS)
+
+Similar to {{seconds->local-time}}, but interpretes {{SECONDS}}
+as UTC time.
+
+==== utc-time->seconds
+
+ [procedure] (utc-time->seconds VECTOR)
+
+Converts the ten-element vector {{VECTOR}} representing the UTC time value into
+the number of seconds since the first of January, 1970 UTC.
+
+==== time->string
+
+ [procedure] (time->string VECTOR)
+
+Converts the broken down time represented in the 10 element vector
+{{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
+1991\n"}}.
+
+
+=== Raw exit
+
+==== _exit
+
+ [procedure] (_exit [CODE])
+
+Exits the current process without flushing any buffered output (using
+the C function {{_exit}}).  Note that the {{exit-handler}}
+is not called when this procedure is invoked. The optional return-code
+{{CODE}} defaults to {{0}}.
+
+
+=== ERRNO values
+
+==== errno/perm
+==== errno/noent
+==== errno/srch
+==== errno/intr
+==== errno/io
+==== errno/noexec
+==== errno/badf
+==== errno/child
+==== errno/nomem
+==== errno/acces
+==== errno/fault
+==== errno/busy
+==== errno/notdir
+==== errno/isdir
+==== errno/inval
+==== errno/mfile
+==== errno/nospc
+==== errno/spipe
+==== errno/pipe
+==== errno/again
+==== errno/rofs
+==== errno/exist
+==== errno/wouldblock
+These variables contain error codes as returned by {{errno}}.
+
+
+=== Finding files
+
+==== find-files
+
+ [procedure] (find-files DIRECTORY PREDICATE [ACTION [IDENTITY [LIMIT]]])
+
+Recursively traverses the contents of {{DIRECTORY}} (which should
+be a string) and invokes the procedure {{ACTION}} for all files
+for which the procedure {{PREDICATE}} is true.  {{PREDICATE}}
+may me a procedure of one argument or a regular-expression string.
+{{ACTION}} should be a procedure of two arguments: the currently
+encountered file and the result of the previous invocation of
+{{ACTION}}, or, if this is the first invocation, the value
+of {{IDENTITY}}. {{ACTION}} defaults to {{cons}},
+{{IDENTITY}} defaults to {{()}}.  {{LIMIT}} should a
+procedure of one argument that is called for each nested directory
+and which should return true, if that directory is to be traversed
+recursively. {{LIMIT}} may also be an exact integer that
+gives the maximum recursion depth. A depth of {{0}} means the
+files in the specified directory are traversed but not any nested
+directories. {{LIMIT}} may also be {{#f}} (the default),
+which is equivalent to {{(constantly #t)}}.
+
+Note that {{ACTION}} is called with the full pathname of each file,
+including the directory prefix.
+
+
+=== Getting the hostname and system information
+
+==== get-host-name
+
+ [procedure] (get-host-name)
+
+Returns the hostname of the machine that this process is running on.
+
+==== system-information
+
+ [procedure] (system-information)
+
+Invokes the UNIX system call {{uname()}} and returns a list of 5 values:
+system-name, node-name, OS release, OS version and machine.
+
+=== Setting the file buffering mode
+
+==== set-buffering-mode!
+
+ [procedure] (set-buffering-mode! PORT MODE [BUFSIZE])
+
+Sets the buffering-mode for the file associated with {{PORT}} to
+{{MODE}}, which should be one of the keywords {{#:full}},
+{{#:line}} or {{#:none}}. If {{BUFSIZE}} is specified it
+determines the size of the buffer to be used (if any).
+
+
+=== Terminal ports
+
+==== terminal-name
+
+ [procedure] (terminal-name PORT)
+
+Returns the name of the terminal that is connected to {{PORT}}.
+
+==== terminal-port?
+
+ [procedure] (terminal-port? PORT)
+
+Returns {{#t}} if {{PORT}} is connected to a terminal and
+{{#f}} otherwise.
+
+
+=== How Scheme procedures relate to UNIX C functions
+
+<table>
+<tr><td> change-directory
+chdir
+</td></tr><tr><td> change-file-mode
+chmod
+</td></tr><tr><td> change-file-owner
+chown
+</td></tr><tr><td> create-directory
+mkdir
+</td></tr><tr><td> create-fifo
+mkfifo
+</td></tr><tr><td> create-pipe
+pipe
+</td></tr><tr><td> create-session
+setsid
+</td></tr><tr><td> create-symbolic-link
+link
+</td></tr><tr><td> current-directory
+curdir
+</td></tr><tr><td> current-effective-groupd-id
+getegid
+</td></tr><tr><td> current-effective-user-id
+geteuid
+</td></tr><tr><td> current-group-id
+getgid
+</td></tr><tr><td> current-parent-id
+getppid
+</td></tr><tr><td> current-process-id
+getpid
+</td></tr><tr><td> current-user-id
+getuid
+</td></tr><tr><td> delete-directory
+rmdir
+</td></tr><tr><td> duplicate-fileno
+dup/dup2
+</td></tr><tr><td> _exit
+_exit
+</td></tr><tr><td> file-close
+close
+</td></tr><tr><td> file-access-time
+stat
+</td></tr><tr><td> file-change-time
+stat
+</td></tr><tr><td> file-modification-time
+stat
+</td></tr><tr><td> file-execute-access?
+access
+</td></tr><tr><td> file-open
+open
+</td></tr><tr><td> file-lock
+fcntl
+</td></tr><tr><td> file-position
+ftell/lseek
+</td></tr><tr><td> file-read
+read
+</td></tr><tr><td> file-read-access?
+access
+</td></tr><tr><td> file-select
+select
+</td></tr><tr><td> file-control
+fcntl
+</td></tr><tr><td> file-stat
+stat
+</td></tr><tr><td> file-test-lock
+fcntl
+</td></tr><tr><td> file-truncate
+truncate/ftruncate
+</td></tr><tr><td> file-unlock
+fcntl
+</td></tr><tr><td> file-write
+write
+</td></tr><tr><td> file-write-access?
+access
+</td></tr><tr><td> get-groups
+getgroups
+</td></tr><tr><td> get-host-name
+gethostname
+</td></tr><tr><td> initialize-groups
+initgroups
+</td></tr><tr><td> local-time->seconds
+mktime
+</td></tr><tr><td> local-timezone-abbreviation
+localtime
+</td></tr><tr><td> map-file-to-memory
+mmap
+</td></tr><tr><td> open-input-file*
+fdopen
+</td></tr><tr><td> open-output-file*
+fdopen
+</td></tr><tr><td> open-input-pipe
+popen
+</td></tr><tr><td> open-output-pipe
+popen
+</td></tr><tr><td> port->fileno
+fileno
+</td></tr><tr><td> process-execute
+execvp
+</td></tr><tr><td> process-fork
+fork
+</td></tr><tr><td> process-group-id
+getpgid
+</td></tr><tr><td> process-signal
+kill
+</td></tr><tr><td> process-wait
+waitpid
+</td></tr><tr><td> close-input-pipe
+pclose
+</td></tr><tr><td> close-output-pipe
+pclose
+</td></tr><tr><td> read-symbolic-link
+readlink
+</td></tr><tr><td> seconds->local-time
+localtime
+</td></tr><tr><td> seconds->string
+ctime
+</td></tr><tr><td> seconds->utc-time
+gmtime
+</td></tr><tr><td> set-alarm!
+alarm
+</td></tr><tr><td> set-buffering-mode!
+setvbuf
+</td></tr><tr><td> set-file-position!
+fseek/seek
+</td></tr><tr><td> set-groups!
+setgroups
+</td></tr><tr><td> set-signal-mask!
+sigprocmask
+</td></tr><tr><td> set-group-id!
+setgid
+</td></tr><tr><td> set-process-group-id!
+setpgid
+</td></tr><tr><td> set-user-id!
+setuid
+</td></tr><tr><td> set-root-directory!
+chroot
+</td></tr><tr><td> setenv
+setenv/putenv
+</td></tr><tr><td> sleep
+sleep
+</td></tr><tr><td> system-information
+uname
+</td></tr><tr><td> terminal-name
+ttyname
+</td></tr><tr><td> terminal-port?
+isatty
+</td></tr><tr><td> time->string
+asctime
+</td></tr><tr><td> unsetenv
+putenv
+</td></tr><tr><td> unmap-file-from-memory
+munmap
+</td></tr><tr><td> user-information
+getpwnam/getpwuid
+</td></tr><tr><td> utc-time->seconds
+timegm
+</td></tr></table>
+
+
+=== Windows specific notes
+
+Use of UTF8 encoded strings is for pathnames is not supported. Windows uses a
+16-bit UNICODE encoding with special system calls for wide-character support.
+Only single-byte string encoding can be used.
+
+==== Procedure Changes
+
+Exceptions to the above procedure definitions.
+
+ [procedure] (create-pipe [MODE])
+
+The optional parameter {{MODE}}, default {{open/binary | open/noinherit}}. This can be {{open/binary}} or
+{{open/text}}, optionally or'ed with {{open/noinherit}}.
+
+ [procedure] (process-wait [PID [NOHANG]])
+
+{{process-wait}} always returns {{#t}} for a terminated process and only the exit
+status is available. (Windows does not provide signals as an interprocess
+communication method.)
+
+ [procedure] (process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])
+ [procedure] (process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])
+ [procedure] (process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])
+
+The optional parameter {{EXACT-FLAG}}, default {{#f}}. When {{#f}} any argument string with
+embedded whitespace will be wrapped in quotes. When {{#t}} no such wrapping occurs.
+
+==== Unsupported Definitions
+
+The following definitions are not supported for native Windows builds (compiled with the
+Microsoft tools or with MinGW):
+
+ open/noctty  open/nonblock  open/fsync  open/sync
+ perm/isvtx  perm/isuid  perm/isgid
+ file-select file-control
+ signal/... (except signal/term, signal/int, signal/fpe, signal/ill, signal/segv, signal/abrt, signal/break)
+ set-signal-mask!  signal-mask  signal-masked?  signal-mask!  signal-unmask!
+ user-information  group-information  get-groups  set-groups!  initialize-groups
+ errno/wouldblock
+ change-file-owner
+ current-user-id  current-group-id  current-effective-user-id  current-effective-groupd-id
+ set-user-id!  set-group-id!
+ create-session
+ process-group-id  set-process-group-id!
+ create-symbolic-link  read-symbolic-link
+ file-truncate 
+ file-lock  file-lock/blocking  file-unlock  file-test-lock
+ create-fifo  fifo?
+ prot/...
+ map/...
+ map-file-to-memory  unmap-file-from-memory  memory-mapped-file-pointer  memory-mapped-file?
+ set-alarm!
+ terminal-port?  terminal-name
+ process-fork  process-signal
+ parent-process-id 
+ set-root-directory!
+ utc-time->seconds
+
+==== Additional Definitions
+
+Only available for Windows
+
+* open/noinherit
+
+This variable is a mode value for {{create-pipe}}. Useful when spawning a child process.
+
+* spawn/overlay
+* spawn/wait
+* spawn/nowait
+* spawn/nowaito
+* spawn/detach
+
+These variables contains special flags that specify the exact semantics of {{process-spawn}}:
+{{spawn/overlay}} replaces the current process with the new one. 
+{{spawn/wait}} suspends execution of the current process until the spawned process returns. 
+{{spawn/nowait}} does the opposite ({{spawn/nowaito}} is identical, according to the Microsoft
+documentation) and runs the process asynchronously.
+{{spawn/detach}} runs the new process in the background, without being attached to a console.
+
+==== process-spawn
+
+ [procedure] (process-spawn MODE COMMAND [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])
+
+Creates and runs a new process with the given {{COMMAND}} filename and the optional
+{{ARGUMENT-LIST}} and {{ENVIRONMENT-LIST}}. {{MODE}} specifies how exactly the process
+should be executed and must be one or more of the {{spawn/...}} flags defined above.
+
+The {{EXACT-FLAG}}, default {{#f}}, controls quote-wrapping of argument strings. When {{#t}}
+quote-wrapping is not performed.
+
+Returns:
+* the exit status when synchronous
+* the PID when asynchronous
+* -1 when failure
+
+
+Previous: [[Unit srfi-18]]
+
+Next: [[Unit utils]]

@@ -1,0 +1,334 @@
+[[tags: manual]]
+
+[[toc:]]
+
+== Accessing external objects
+
+=== foreign-code
+
+ [syntax] (foreign-code STRING ...)
+
+Executes the embedded C/C++ code {{STRING ...}}, which should
+be a sequence of C statements, which are executed and return an unspecified result.
+
+<enscript highlight=scheme>
+(foreign-code "doSomeInitStuff();")     =>  #<unspecified>
+</enscript>
+
+Code wrapped inside {{foreign-code}} may not invoke callbacks into Scheme.
+
+
+=== foreign-value
+
+ [syntax] (foreign-value STRING TYPE)
+
+Evaluates the embedded C/C++ expression {{STRING}}, returning a value of type given
+in the foreign-type specifier {{TYPE}}.
+
+<enscript highlight=scheme>
+(print (foreign-value "my_version_string" c-string))
+</enscript>
+
+
+=== foreign-declare
+
+ [syntax] (foreign-declare STRING ...)
+
+Include given strings verbatim into header of generated file.
+
+
+=== define-foreign-type
+
+ [syntax] (define-foreign-type NAME TYPE [ARGCONVERT [RETCONVERT]])
+
+Defines an alias for {{TYPE}} with the name {{NAME}} (a symbol).
+{{TYPE}} may be a type-specifier or a string naming a C type. The
+namespace of foreign type specifiers is separate from the normal
+Scheme namespace.  The optional arguments {{ARGCONVERT}} and
+{{RETCONVERT}} should evaluate to procedures that map argument- and
+result-values to a value that can be transformed to {{TYPE}}:
+
+<enscript highlight=scheme>
+(define-foreign-type char-vector 
+  nonnull-c-string
+  (compose list->string vector->list)
+  (compose list->vector string->list) )
+
+(define strlen
+  (foreign-lambda int "strlen" char-vector) )
+
+(strlen '#(#\a #\b #\c))                      ==> 3
+
+(define memset
+  (foreign-lambda char-vector "memset" char-vector char int) )
+
+(memset '#(#_ #_ #_) #\X 3)                ==> #(#\X #\X #\X)
+</enscript>
+
+Foreign type-definitions are only visible in the compilation-unit in which
+they are defined, so use {{include}} to use the same definitions
+in multiple files.
+
+
+=== define-foreign-variable
+
+ [syntax] (define-foreign-variable NAME TYPE [STRING])
+
+Defines a foreign variable of name {{NAME}} (a symbol). {{STRING}}
+should be the real name of a foreign variable or parameterless
+macro. If {{STRING}} is not given, then the variable name {{NAME}}
+will be converted to a string and used instead. All references and
+assignments (via {{set!}}) are modified to correctly convert values
+between Scheme and C representation. This foreign variable can only be
+accessed in the current compilation unit, but the name can be
+lexically shadowed.  Note that {{STRING}} can name an arbitrary C
+expression. If no assignments are performed, then {{STRING}} doesn't
+even have to specify an lvalue.
+
+<enscript highlight=scheme>
+#>
+enum { abc=3, def, ghi };
+<#
+
+(define-macro (define-simple-foreign-enum . items)
+  `(begin
+     ,@(map (match-lambda 
+              [(name realname) `(define-foreign-variable ,name int ,realname)]
+              [name `(define-foreign-variable ,name int)] )
+     items) ) )
+
+(define-simple-foreign-enum abc def ghi)
+
+ghi                               ==> 5
+</enscript>
+
+
+=== define-foreign-record
+
+ [syntax] (define-foreign-record NAME [DECL ...] SLOT ...)
+
+Defines accessor procedures for a C structure definition. {{NAME}} should either be a symbol
+or a list of the form {{(TYPENAME FOREIGNNAME)}}. If {{NAME}} is a symbol, then a C declaration
+will be generated that defines a C struct named {{struct NAME}}. If {{NAME}} is a list, then
+no struct declaration will be generated and {{FOREIGNNAME}} should name an existing C record type.
+A foreign-type specifier named {{NAME}} (or {{TYPENAME}}) will be defined as a pointer to
+the given C structure.
+A {{SLOT}} definition should be a list of one of the following forms:
+
+ (TYPE SLOTNAME)
+
+or
+
+ (TYPE SLOTNAME SIZE)
+
+The latter form defines an array of {{SIZE}} elements of the type {{TYPE}} embedded in the
+structure.
+For every slot, the following accessor procedures will be generated:
+
+
+==== TYPENAME-SLOTNAME
+
+ (TYPENAME-SLOTNAME FOREIGN-RECORD-POINTER [INDEX])
+
+A procedure of one argument (a pointer to a C structure), that returns
+the slot value of the slot {{SLOTNAME}}. If a {{SIZE}} has been given in the slot definition, then
+an additional argument {{INDEX}} is required that specifies the index of an array-element.
+
+
+==== TYPENAME-SLOTNAME-set!
+ 
+ (TYPENAME-SLOTNAME-set! FOREIGN-RECORD-POINTER [INXDEX] VALUE)
+
+A procedure of two arguments (a pointer to a C structure) and a value, that
+sets the slot value of the slot {{SLOTNAME}} in the structure. If a {{SIZE}} has been given in
+the slot definition, then an additional argument {{INDEX}} is required for the array index.
+
+
+If a slot type is of the form {{(const ...)}}, then no setter procedure will be generated.
+Slots of the types {{(struct ...)}} or {{(union ...)}} are accessed as pointers to the embedded
+struct (or union) and no setter will be generated. 
+
+Additionally, special record-declarations ({{DECL ...}}) may be given, where each declaration consists
+of a list of the form {{(KEYWORD ARGUMENT ...)}}. The available declarations are:
+
+==== constructor
+
+ (constructor: NAME)
+
+Generate a constructor-procedure with no arguments that has the name {{NAME}} (a symbol) that returns a pointer to a structure of this
+type. The storage will be allocated with {{malloc(3)}}.
+
+
+==== destructor
+
+ (destructor: NAME)
+
+Generate a destructor function with the name {{NAME}} that takes a pointer to a structure of this
+type as its single argument and releases the storage with {{free(3)}}. If the argument is {{#f}},
+the destructor procedure does nothing.
+
+
+==== rename
+
+ (rename: EXPRESSION)
+
+Evaluates {{EXPRESSION}} at compile-/macro-expansion-time and applies the result, which should be
+a procedure, to the string-representation of the name of each accessor-procedure generated. Another (or the same)
+string should be returned, which in turn is taken as the actual name of the accessor.
+
+
+An example:
+
+<enscript highlight=scheme>
+(require-for-syntax 'srfi-13)
+
+(define-foreign-record Some_Struct
+  (rename: (compose string-downcase (cut string-translate <> "_" "-")))
+  (constructor: make-some-struct)
+  (destructor: free-some-struct)
+  (int xCoord)
+  (int yCoord) )
+</enscript>
+
+will generate the following procedures:
+
+<enscript highlight=scheme>
+(make-some-struct)              --> C-POINTER
+(free-some-struct C-POINTER)
+
+(some-struct-xcoord C-POINTER)  --> NUMBER
+(some-struct-ycoord C-POINTER)  --> NUMBER
+
+(some-struct-xcoord-set! C-POINTER NUMBER)
+(some-struct-ycoord-set! C-POINTER NUMBER)
+</enscript>
+=== define-foreign-enum
+
+ [syntax] (define-foreign-enum TYPENAME ITEM ...)
+
+Defines a foreign type (as with {{define-foreign-type}}) that maps the elements
+of a C/C++ enum (or a enum-like list of constants) to and from a set of
+symbols.
+
+{{TYPENAME}} specifies a foreign type that converts a symbol argument from the
+set {{ITEM ...}} into the appropriate enum value when passed as an argument to
+a foreign function.
+
+A list of symbols passed as an argument will be combined using {{bitwise-ior}}.
+An empty list will be passed as 0 (zero). Results of the enum type are
+automatically converted into a scheme value (note that combinations are not
+supported in this case).
+
+{{TYPENAME}} maybe a symbol or a list of the form {{(SCHEMENAME REALTYPE
+[DEFAULT-SCHEME-VALUE])}}, where {{REALTYPE}} designates the native type used.
+The default native type is {{"TYPENAME"}}. The {{DEFAULT-SCHEME-VALUE}}
+overrides the default result of mapping from the native type; i.e. when no such
+mapping exists. When supplied the form is used unquoted, otherwise the result
+is {{'()}}.
+
+{{ITEM}} is a symbol or a list of the form {{(SCHEMENAME REALTYPE
+[SCHEME-VALUE])}}, where {{REALTYPE}} designates the native type used. The
+default native type is {{"ITEM"}}. The {{SCHEME-VALUE}} overrides the result of
+mapping from the native type. When supplied the form is used unquoted,
+otherwise the {{SCHEMENAME}} symbol is returned.
+
+Additionally two procedures are defined named {{SCHEMENAME->number}} and
+{{number->SCHEMENAME}}. {{SCHEMENAME->number}} takes one argument and converts
+a symbol (or a list of symbols) into its numeric value.  {{number->SCHEMENAME}}
+takes one argument and converts a numeric value into its scheme value.
+
+Note that the specification of a scheme value override means the mapping may
+not be closed! {{(number->SCHEMENAME (SCHEMENAME->number SCHEMENAME))}} may not
+equal {{SCHEMENAME}}.
+
+Here a heavily contrived example:
+
+<enscript highlight=scheme>
+#>
+enum foo { a_foo = 4, b_foo, c_foo };
+enum foo bar(enum foo x) { printf("%d\n", x); return b_foo; }
+<#
+
+(define-foreign-enum (foo (enum "foo")) a_foo b_foo (c c_foo))
+
+(define bar (foreign-lambda foo bar foo))
+
+(pp (bar '()))
+(pp (bar 'a_foo))
+(pp (bar '(b_foo c)))
+</enscript>
+
+
+=== foreign-lambda
+
+ [syntax] (foreign-lambda RETURNTYPE NAME ARGTYPE ...)
+
+Represents a
+binding to an external routine. This form can be used in the position
+of an ordinary {{lambda}} expression. {{NAME}} specifies the
+name of the external procedure and should be a string or a symbol.
+
+
+=== foreign-lambda*
+
+ [syntax] (foreign-lambda* RETURNTYPE ((ARGTYPE VARIABLE) ...) STRING ...)
+
+Similar to {{foreign-lambda}}, but instead of generating code to
+call an external function, the body of the C procedure is directly given
+in {{STRING ...}}:
+
+<enscript highlight=scheme>
+(define my-strlen
+  (foreign-lambda* int ((c-string str))
+    "int n = 0;
+     while(*(str++)) ++n;
+     C_return(n);") )
+
+(my-strlen "one two three")             ==> 13
+</enscript>
+
+For obscure technical reasons you should use the {{C_return}} macro instead of the normal {{return}} statement
+to return a result from the foreign lambda body as some cleanup code has to be run before execution
+commences in the calling code.
+
+=== foreign-safe-lambda
+
+ [syntax] (foreign-safe-lambda RETURNTYPE NAME ARGTYPE ...)
+
+This is similar to {{foreign-lambda}}, but also allows the called
+function to call Scheme functions and allocate Scheme data-objects. See [[Callbacks]].
+
+
+=== foreign-safe-lambda*
+
+ [syntax] (foreign-safe-lambda* RETURNTYPE ((ARGTYPE VARIABLE)...) STRING ...)
+
+This is similar to {{foreign-lambda*}}, but also allows the called
+function to call Scheme functions and allocate Scheme data-objects. See [[Callbacks]].
+
+
+
+=== foreign-primitive
+
+ [syntax] (foreign-primitive [RETURNTYPE] ((ARGTYPE VARIABLE) ...) STRING ...)
+
+This is also similar to {{foreign-lambda*}} but the code will be executed
+in a ''primitive'' CPS context, which means it will not actually return, but
+call it's continuation on exit. This means that code inside this form may
+allocate Scheme data on the C stack (the ''nursery'') with {{C_alloc}}
+(see below). If the {{RETURNTYPE}} is omitted it defaults to {{void}}.
+You can return multiple values inside the body of the {{foreign-primitive}}
+form by calling this C function:
+
+<enscript highlight=scheme>
+C_values(N + 2, C_SCHEME_UNDEFINED, C_k, X1, ...)
+</enscript>
+
+where {{N}} is the number of values to be returned, and {{X1, ...}} are the
+results, which should be Scheme data objects. When returning multiple values, the
+return-type should be omitted.
+
+
+Previous: [[Interface to external functions and variables]]
+
+Next: [[Foreign type specifiers]]

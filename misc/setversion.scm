@@ -1,4 +1,4 @@
-;;;; nextbuild.scm - Bump version-number
+;;;; setversion.scm - Bump version-number
 
 (use utils)
 
