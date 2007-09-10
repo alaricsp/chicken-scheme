@@ -61,6 +61,10 @@
 # define EX_SOFTWARE    70
 #endif
 
+#ifndef C_BUILD_TAG
+# define C_BUILD_TAG    ""
+#endif
+
 #define C_close_file(p)       (C_fclose((C_FILEPTR)(C_port_file(p))), C_SCHEME_UNDEFINED)
 #define C_f64peek(b, i)       (C_temporary_flonum = ((double *)C_data_pointer(b))[ C_unfix(i) ], C_SCHEME_UNDEFINED)
 #define C_fetch_c_strlen(b, i) C_fix(strlen((C_char *)C_block_item(b, C_unfix(i))))
@@ -154,6 +158,7 @@ EOF
 
 
 (include "version.scm")
+(include "banner.scm")
 
 
 (define-constant namespace-size 997)
@@ -162,6 +167,8 @@ EOF
 (define-constant output-string-initial-size 256)
 (define-constant default-parameter-vector-size 16)
 (define-constant maximal-string-length #x00ffffff)
+
+(define-foreign-variable +build-tag+ c-string "C_BUILD_TAG")
 
 
 
@@ -3173,7 +3180,8 @@ EOF
 	 " - " (get-config)
 	 (if (eq? 0 (##sys#size spec))
 	     ""
-	     (string-append " - [" spec " ]") ) ) )
+	     (string-append " - [" spec " ]") )
+	 "\n" +copyright+ " | " +build-tag+) )
       +build-version+) )
 
 (define ##sys#pathname-directory-separator
@@ -3558,6 +3566,7 @@ EOF
 	     [(#:limit-error) '(exn runtime limit)]
 	     [(#:arity-error) '(exn arity)]
 	     [(#:access-error) '(exn access)]
+	     [(#:domain-error) '(exn domain)]
 	     [else '(exn)] )
 	   (list '(exn . message) msg
 		 '(exn . arguments) args

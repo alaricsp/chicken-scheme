@@ -749,7 +749,7 @@ uninstall:
 
 .SUFFIXES: .scm
 
-library.c: library.scm version.scm
+library.c: library.scm version.scm banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 eval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
@@ -786,7 +786,7 @@ stub.c: stub.scm
 match.c: match.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 
-ulibrary.c: library.scm version.scm
+ulibrary.c: library.scm version.scm banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 ueval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 

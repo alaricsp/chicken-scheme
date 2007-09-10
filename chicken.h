@@ -598,9 +598,13 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 /* Macros: */
 
+#define C_align4(n)                (((n) + 3) & ~3)
+#define C_align8(n)                (((n) + 7) & ~7)
+#define C_align16(n)               (((n) + 15) & ~15)
+
 /* This is word-size dependent: */
 #ifdef C_SIXTY_FOUR
-# define C_align(n)                (((n) + 7) & ~7)
+# define C_align(n)                C_align8(n)
 # define C_wordstobytes(n)         ((n) << 3)
 # define C_bytestowords(n)         (((n) + 7) >> 3)
 # define C_wordsperdouble(n)       (n)
@@ -608,7 +612,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 # define C_WORD_MAX                LONG_MAX
 # define C_UWORD_MAX               ULONG_MAX
 #else
-# define C_align(n)                (((n) + 3) & ~3)
+# define C_align(n)                C_align4(n)
 # define C_wordstobytes(n)         ((n) << 2)
 # define C_bytestowords(n)         (((n) + 3) >> 2)
 # define C_wordsperdouble(n)       ((n) << 1)

@@ -127,6 +127,13 @@ LIBCHICKEN_SO_LIBRARIES ?= $(LIBRARIES)
 LIBUCHICKEN_SO_LIBRARIES ?= $(LIBRARIES)
 LIBCHICKENGUI_SO_LIBRARIES ?= $(LIBRARIES)
 
+# other settings
+
+HOSTNAME ?= $(shell hostname)
+BUILD_TIME ?= $(shell date +%Y-%m-%d)
+UNAME_SYS ?= $(shell uname)
+BUILD_TAG ?= compiled $(BUILD_TIME) on $(HOSTNAME) ($(UNAME_SYS))
+
 # file extensions
 
 O ?= .o
@@ -187,6 +194,7 @@ all: $(TARGETS)
 ifndef CUSTOM_CHICKEN_DEFAULTS
 chicken-defaults.h:
 	echo "/* generated */" >$@
+	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
 	echo "#ifndef C_INSTALL_CC" >>$@
 	echo "# define C_INSTALL_CC \"$(C_COMPILER)\"" >>$@
 	echo "#endif" >>$@

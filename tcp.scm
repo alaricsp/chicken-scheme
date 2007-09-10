@@ -273,6 +273,8 @@ EOF
 
 (define (##net#bind-socket port style host)
   (##sys#check-exact port)
+  (when (or (fx< port 0) (fx>= port 65535))
+    (##sys#signal-hook #:domain-error 'tcp-listen "invalid port number" port) )
   (let ((s (##net#socket _af_inet style 0)))
     (when (eq? _invalid_socket s)
       (##sys#update-errno)

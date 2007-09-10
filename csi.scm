@@ -63,7 +63,7 @@ EOF
   trace-indent trace-indent-level traced-procedure-entry traced-procedure-exit}
 
 (declare
-  (hide parse-option-string bytevector-data banner member* canonicalize-args do-trace do-untrace
+  (hide parse-option-string bytevector-data member* canonicalize-args do-trace do-untrace
 	traced-procedures describer-table
 	findall trace-indent command-table do-break do-unbreak broken-procedures) )
 
@@ -107,7 +107,7 @@ EOF
 ") )
 
 (define (print-banner)
-  (print banner (chicken-version #t) "\n" copyright) )
+  (print +banner+ (chicken-version #t) "\n") )
 
 
 ;;; Reader for REPL history:

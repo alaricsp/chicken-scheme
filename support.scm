@@ -1234,9 +1234,9 @@
 
 ;;; Print version/usage information:
 
-(define (print-version . b)
-  (when (:optional b #f) (printf "~A" banner))
-  (printf "~A~%~A" (chicken-version #t) copyright) )
+(define (print-version #!optional b)
+  (when b (print* +banner+))
+  (print (chicken-version #t)) )
 
 (define (print-usage)
   (print-version)

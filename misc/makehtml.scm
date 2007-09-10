@@ -4,6 +4,9 @@ exec csi -s $0 "$@"
 |#
 
 
+;;; this should use build.scm, really...
+
+
 (use syntax-case)
 (use srfi-40)
 (use html-stream stream-ext stream-wiki utils srfi-13 url posix regex)
