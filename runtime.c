@@ -5874,8 +5874,11 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
   --n;
 
 #ifdef C_HACKED_APPLY
-  buf = alloca((n + 5) * sizeof(C_word)); /* 3 additional args + 1 slot for stack-pointer + one for stack-alignment to 16 bytes */
+  /* 3 additional args + 1 slot for stack-pointer + two for stack-alignment to 16 bytes */
+  buf = alloca((n + 6) * sizeof(C_word));
+# ifdef __x86_64__
   buf = (void *)C_align16((C_uword)buf);
+# endif
   buf[ 0 ] = n + 2;
   buf[ 1 ] = fn2;
   buf[ 2 ] = k;

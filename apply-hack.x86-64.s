@@ -39,6 +39,7 @@
 	.type _C_do_apply_hack, @function
 	
 _C_do_apply_hack:
+	subq $8, %rsp		/* force non-16 byte alignment */
 	movq %rdi, %r11		/* get proc */
 	movq %rsi, %r10		/* save buffer address, before we clobber %rsi */
 	cmpl $6, %edx		/* clamp at 6 */
@@ -50,7 +51,7 @@ _C_do_apply_hack:
 	lea l3(%rip), %rdx
 	addq %rdx, %rbx
 	jmp *%rbx
-l2:	lea 48(%r10), %rsp
+l2:	lea 48(%r10), %rsp	/* %r10 must be 16-byte aligned at this point */
 l3:	movq 40(%r10), %r9      /* fill registers... */
 	movq 32(%r10), %r8
 	movq 24(%r10), %rcx
