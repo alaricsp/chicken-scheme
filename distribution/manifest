@@ -235,6 +235,8 @@ Makefile
 Makefile.linux
 Makefile.macosx
 Makefile.mingw
+Makefile.solaris
+Makefile.bsd
 Makefile.cross-linux-mingw
 rules.make
 defaults.make
