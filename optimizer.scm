@@ -1400,9 +1400,9 @@
 			     (set! ksites (alist-cons #f n ksites))
 			     (cond [(eq? kvar (first arg0p))
 				    (unless (= argc (length (cdr subs)))
-				      (compiler-warning
-				       'call
-				       "known procedure called recursively with wrong number of arguments: `~A'" fnvar) )
+				      (quit
+				       "known procedure called recursively with wrong number of arguments: `~A'" 
+				       fnvar) )
 				    (node-class-set! n '##core#recurse)
 				    (node-parameters-set! n (list #t id))
 				    (node-subexpressions-set! n (cddr subs)) ]
@@ -1411,9 +1411,9 @@
 					 (let* ([klam (cdr a)]
 						[kbody (first (node-subexpressions klam))] )
 					   (unless (= argc (length (cdr subs)))
-					     (compiler-warning
-					      'call
-					      "known procedure called recursively with wrong number of arguments: `~A'" fnvar) )
+					     (quit
+					      "known procedure called recursively with wrong number of arguments: `~A'" 
+					      fnvar) )
 					   (node-class-set! n 'let)
 					   (node-parameters-set! n (take (third (node-parameters klam)) 1))
 					   (node-subexpressions-set!
@@ -1443,9 +1443,9 @@
 	      (let* ([n (cdr site)]
 		     [nsubs (node-subexpressions n)] )
 		(unless (= argc (length (cdr nsubs)))
-		  (compiler-warning 
-		   'call 
-		   "known procedure called with wrong number of arguments: `~A'" fnvar) )
+		  (quit
+		   "known procedure called with wrong number of arguments: `~A'"
+		   fnvar) )
 		(node-subexpressions-set!
 		 n
 		 (list (second nsubs)

@@ -1870,8 +1870,7 @@
 						     (= (length refs) (length sites)) 
 						     (proper-list? llist) ) ] )
 					  (when (and name custom (not (= (length llist) (length (cdr subs)))))
-					    (compiler-warning
-					     'call 
+					    (quit
 					     "known procedure called with wrong number of arguments: ~A" 
 					     (source-info->string name) ) )
 					  (register-direct-call! id)
