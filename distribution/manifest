@@ -127,6 +127,7 @@ csibatch.bat
 eval.scm
 extras.scm
 hen.el
+scheme-complete.el
 html/accessing-external-objects.html
 html/acknowledgements.html
 html/basic-mode-of-operation.html

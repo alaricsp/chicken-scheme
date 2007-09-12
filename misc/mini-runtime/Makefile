@@ -2,14 +2,14 @@
 
 CC=gcc
 LD=gcc
-CFLAGS=-g
-LDFLAGS=
+CFLAGS=-Os -fomit-frame-pointer -fno-strict-aliasing
+LDFLAGS=-s
 LIBS=-lm
 
 all: mini
 
 mini: lib.o runtime.o
-	$(LD) $(LDFLLAGS) $^ -o $@ $(LIBS)
+	$(LD) $(LDFLAGS) $^ -o $@ $(LIBS)
 
 runtime.o: ../../runtime.c ../../chicken.h
 	$(CC) -c $< -o $@ $(CFLAGS)

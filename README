@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.707
+  Version 2.708
 
 
  1. Introduction:
@@ -84,6 +84,15 @@
 	one or more of the following variables to the "make"
 	invocation:
 
+	DEBUGBUILD=1
+	  Disable optimizations in compiled C code and enable
+	  debug information.
+
+	STATICBUILD=1
+	  Build only static versions of the runtime library, compiler
+	  and interpreter. `chicken-setup' will not be generated,
+	  as it is mostly unless compiled code can be loaded.
+
 	SYMBOLGC=1
 	  Always enable garbage collection for unused symbols in the 
 	  symbol table by default. This will result in slightly slower 
@@ -99,11 +108,6 @@
 	  code. Smaller binaries can be obtained by also giving 
 	  "NOPTABLES=1", but that means serialization (available 
 	  as a separate package) of procedures will not be available.
-
-	STATICBUILD=1
-	  Build only static versions of the runtime library, compiler
-	  and interpreter. `chicken-setup' will not be generated,
-	  as it is mostly unless compiled code can be loaded.
 
 	To remove CHICKEN from your file-system, enter (probably as
         root):
@@ -121,24 +125,6 @@
 	"PREFIX/share/chicken/doc/html") is automatically generated
 	from the Wiki pages at <http://chicken.wiki.br/>. Go there to
 	read the most up to date documentation.
-
-	An emacs mode is provided in the file `hen.el'. To use it,
-	copy it somewhere into a location you normally use for emacs
-	extensions. If you want to add a specific location permanently
-	to the list of paths emacs should search for extensions, add
-	the following line to your `.emacs' file:
-
-	  (setq load-path 
-	    (cons
-	      "<directory-where-your-emacs-lisp-files-live>" 
-	      load-path))
-
-	Add 
-
- 	  (require 'hen)
-	
-	To make "hen-mode" available, and enter it by issuing the
-	command M-x hen-mode.
 
 
  4. Extension:
@@ -213,7 +199,52 @@
 	  warnings are bogus and can be ignored.
 
 
- 5. What's next?
+ 6. Emacs support:
+
+	An emacs mode is provided in the file `hen.el'. To use it,
+	copy it somewhere into a location you normally use for emacs
+	extensions. If you want to add a specific location permanently
+	to the list of paths emacs should search for extensions, add
+	the following line to your `.emacs' file:
+
+	  (setq load-path 
+	    (cons
+	      "<directory-where-your-emacs-lisp-files-live>" 
+	      load-path))
+
+	Add 
+
+ 	  (require 'hen)
+	
+	To make "hen-mode" available, and enter it by issuing the
+	command M-x hen-mode.
+
+	A copy of Alex Shinn's highly useful tab-completion code is
+	also included in `scheme-complete.el'. Install it like `hen.el'
+	and add this code to your `.emacs':
+
+	  (autoload 'scheme-smart-complete "scheme-complete" nil t)
+	  (eval-after-load 'scheme
+	    '(progn (define-key scheme-mode-map "\e\t" 'scheme-smart-complete)))
+
+	Or:
+
+	  (eval-after-load 'scheme
+	    '(progn (define-key scheme-mode-map "\t" 'scheme-complete-or-indent)))
+
+	If you use eldoc-mode (included in Emacs), you can also get live
+	scheme documentation with:
+
+	(add-hook 'scheme-mode-hook
+	  (lambda ()
+	      (setq eldoc-info-function 'scheme-get-current-symbol-info)
+	          (eldoc-mode)))
+
+	Replace "'scheme" in the elisp expressions above with "'hen", if
+	you want to add tab-completion to CHICKEN's own emacs mode.
+
+
+ 7. What's next?
 
 	If you have any more questions or problems (even the slightest
         problems, or the most stupid questions), then please subscribe
