@@ -483,7 +483,7 @@ reset."
       (setq proc
 	    (eval `(start-process hen-csi-proc-name (hen-csi-buffer)
 				  hen-csi-program
-				  "-no-init" "-quiet" "-:c" "-R" "regex" "-R" "utils"
+				  "-no-init" "-quiet" "-:c" "-R" "srfi-1" "-R" "regex" "-R" "utils"
 				  ,@(split-string hen-eval-init-arg))))
       (with-current-buffer (hen-csi-buffer)
 	(hen-proc-wait-prompt proc hen-csi-prompt-pattern)

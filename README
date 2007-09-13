@@ -190,6 +190,10 @@
 
 	    http://www.opendarwin.org/projects/dlcompat
 
+ 	- On Windows, only mingw32 <http://mingw.sourceforge.net/> is
+	  supported (Microsoft Visual Studio is NOT). You will need
+	  MSYS to compile CHICKEN from sources.
+
 	- gcc 3.4 shows sometimes warnings of the form
 
            easyffi.c: In function `f_11735':
