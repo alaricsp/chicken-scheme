@@ -140,7 +140,8 @@
 	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
 
 (define (quotewrap str)
-  (if (string-any char-whitespace? str)
+  (if (or (string-any char-whitespace? str)
+          (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
       (string-append "\"" str "\"") 
       str) )
 
