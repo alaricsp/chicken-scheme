@@ -846,16 +846,16 @@ csc.c: csc.scm
 distfiles: library.c eval.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
-	scheduler.c profiler.c stub.c match.c ulibrary.c ueval.c uextras.c ulolevel.c \
+	ulibrary.c ueval.c uextras.c ulolevel.c \
 	uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
-	usrfi-18.c uposixunix.c uposixwin.c uregex.c scheduler.c profiler.c \
-	stub.c match.c chicken-profile.c chicken-setup.c csc.c csi.c \
+	usrfi-18.c uposixunix.c uposixwin.c uregex.c \
+	chicken-profile.c chicken-setup.c csc.c csi.c \
 	chicken.c batch-driver.c compiler.c optimizer.c support.c \
 	c-platform.c c-backend.c 
 
 # cleaning up
 
-.PHONY: clean distclean spotless
+.PHONY: clean distclean spotless confclean
 
 clean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
@@ -864,16 +864,18 @@ clean:
 	  libchicken$(SO) libuchicken$(SO) libchicken$(A) libuchicken$(A) \
 	  chicken.info pcre/*$(O)
 
-distclean: clean
+confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h
 
 spotless: distclean
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c extras.c lolevel.c utils.c \
 	  tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
 	  posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
-	  scheduler.c profiler.c stub.c match.c ulibrary.c ueval.c uextras.c ulolevel.c \
+	  ulibrary.c ueval.c uextras.c ulolevel.c \
 	  uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
-	  usrfi-18.c uposixunix.c uposixwin.c uregex.c scheduler.c profiler.c \
-	  stub.c match.c chicken-profile.c chicken-setup.c csc.c csi.c \
+	  usrfi-18.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c \
+	  csc.c csi.c \
 	  chicken.c batch-driver.c compiler.c optimizer.c support.c \
 	  c-platform.c c-backend.c *.exports
+
+distclean: clean confclean

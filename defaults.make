@@ -235,7 +235,7 @@ chicken-defaults.h:
 	echo "# define C_STACK_GROWS_DOWNWARD $(STACKDIRECTION)" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_MORE_LIBS" >>$@
-	echo "# define C_TARGET_MORE_LIBS \"$(TAARGET_LIBRARIES)\"" >>$@
+	echo "# define C_TARGET_MORE_LIBS \"$(TARGET_LIBRARIES)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_MORE_STATIC_LIBS" >>$@
 	echo "# define C_TARGET_MORE_STATIC_LIBS \"$(TARGET_LIBRARIES)\"" >>$@

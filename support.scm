@@ -935,7 +935,7 @@
 			    tmp
 			    `(##sys#foreign-block-argument ,tmp) )
 		       '#f) ) ) ]
-	     [(nonnull-pointer nonnull-scheme-pointer nonnull-blob nonnull-byte-vector) ; nonnull-pointer and nonnull-blob are DEPRECATED
+	     [(nonnull-pointer nonnull-scheme-pointer nonnull-blob nonnull-byte-vector) ; nonnull-pointer and nonnull-byte-vector are DEPRECATED
 	      (if unsafe
 		  param
 		  `(##sys#foreign-block-argument ,param) ) ]

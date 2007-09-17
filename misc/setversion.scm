@@ -10,7 +10,6 @@
 (define (patch which rx subst)
   (match which
     ((from to) 
-     (printf "patching ~a ...~%" from)
      (with-output-to-file to
        (lambda ()
 	 (with-input-from-file from
