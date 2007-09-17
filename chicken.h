@@ -184,7 +184,7 @@ char *alloca ();
 #include <time.h>
 
 #ifdef C_SIXTY_FOUR
-# if defined(HAVE_STDINT_H)
+# if defined(HAVE_STDINT_H) || (defined(__linux__) && (defined(__alpha__) || defined(__x86_64__)))
 #  include <stdint.h>
 # else
 #  include <sys/types.h>
