@@ -109,6 +109,10 @@
 	  "NOPTABLES=1", but that means serialization (available 
 	  as a separate package) of procedures will not be available.
 
+	C_COMPILER_OPTIMIZATION_OPTIONS=...
+	  Override built-in C compiler optimization options. Available
+          for debug or release build.
+
 	To remove CHICKEN from your file-system, enter (probably as
         root):
 

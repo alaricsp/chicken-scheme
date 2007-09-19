@@ -160,14 +160,23 @@ char *alloca ();
 
 #if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__)
 # define C_SIXTY_FOUR
-#endif
-
-#if defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
+#elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
 # define C_SIXTY_FOUR
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 # define C_MACOSX
+#elif defined(__MWERKS__) && !defined(__INTEL__)
+/* This is a rather crude way of assuming this is MacOS 9 or lower! */
+# define C_MACOS
+#endif
+
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+# define C_XXXBSD
+#endif
+
+#if defined(C_MACOSX) || defined(__linux__) | defined(C_XXXBSD)
+# define C_GNU_ENV
 #endif
 
 #if defined(_MSC_VER) || defined(__MWERKS__) || defined(__DJGPP__) || defined(__MINGW32__) || defined(__WATCOMC__)
@@ -195,9 +204,7 @@ char *alloca ();
 # include <unistd.h>
 #endif
 
-#if defined(__MWERKS__) && !defined(__INTEL__)
-/* This is a rather crude way of assuming this is MacOS 9 or lower! */
-# define C_MACOS
+#ifdef C_MACOS
 # include <alloca.h>
 int strncasecmp(const char *one, const char *two, size_t n);
 #endif
@@ -217,14 +224,6 @@ int strncasecmp(const char *one, const char *two, size_t n);
 
 #ifdef __MINGW32__
 # include <malloc.h>
-#endif
-
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-# define C_XXXBSD
-#endif
-
-#if defined(C_MACOSX) || defined(__linux__) | defined(C_XXXBSD)
-# define C_GNU_ENV
 #endif
 
 /* For the easy FFI: */

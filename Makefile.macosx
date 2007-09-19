@@ -49,9 +49,9 @@ POSTINSTALL_PROGRAM = install_name_tool
 
 C_COMPILER_OPTIONS = -no-cpp-precomp -fno-strict-aliasing -fno-common -DHAVE_CHICKEN_CONFIG_H
 ifdef DEBUGBUILD
-C_COMPILER_OPTIMIZATION_OPTIONS = -g -Wall -Wno-unused
+C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
 else
-C_COMPILER_OPTIMIZATION_OPTIONS = -Os -fomit-frame-pointer
+C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
 endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -dynamiclib -compatibility_version 1 -current_version 1.0
 POSTINSTALL_PROGRAM_FLAGS = -change libchicken$(SO) $(LIBDIR)/libchicken$(SO)
