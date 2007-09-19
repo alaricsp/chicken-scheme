@@ -92,7 +92,6 @@ ifdef NOAPPLYHOOK
 	echo "#define C_NO_APPLY_HOOK" >>$@
 endif
 	echo "#define C_HACKED_APPLY" >>$@
-	echo "#define HAVE_INTTYPES_H 1" >>$@
 	echo "#define HAVE_LIMITS_H 1" >>$@
 	echo "#define HAVE_SYSEXITS_H 1" >>$@
 	echo "#define HAVE_MEMMOVE 1" >>$@

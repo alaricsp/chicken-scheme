@@ -91,7 +91,6 @@ ifdef HACKED_APPLY
 	echo "#define C_HACKED_APPLY" >>$@
 endif
 	echo "#define HAVE_GCVT 1" >>$@
-	echo "#define HAVE_INTTYPES_H 1" >>$@
 	echo "#define HAVE_LIMITS_H 1" >>$@
 	echo "#define HAVE_SYSEXITS_H 1" >>$@
 	echo "#define HAVE_MEMMOVE 1" >>$@
