@@ -318,12 +318,10 @@ The value returned is the value of the last form in BODY."
 
 (define-derived-mode hen-mode scheme-mode "Hen"
  "Mode for editing chicken Scheme code.
-\\[hen-complete-symbol] completes symbol base on the text at point.
 \\[hen-csi-eval-last-sexp] evaluates the sexp at/preceding point in csi.
 \\[hen-csi-eval-region] evaluates the region in csi.
 \\[hen-csi-eval-buffer] evaluates current buffer in csi.
 \\[hen-csi-eval-definition] evaluates the toplevel definition at point in csi.
-\\[hen-csi-apropos] lists the csi's symbols matching a regex.
 \\[hen-csi-send] reads a sexp from the user and evaluates it csi.
 \\[hen-csi-proc-delete] terminates csi subprocess.
 \\[hen-close-parens-at-point] closes parentheses for top-level sexp at point.
@@ -334,12 +332,10 @@ The value returned is the value of the last form in BODY."
  (set-syntax-table hen-syntax-table)
  (setq local-abbrev-table scheme-mode-abbrev-table)
 
-  (define-key hen-mode-map (kbd "M-TAB")   'hen-complete-symbol)
   (define-key hen-mode-map (kbd "C-c C-e") 'hen-csi-eval-last-sexp)
   (define-key hen-mode-map (kbd "C-c C-r") 'hen-csi-eval-region)
   (define-key hen-mode-map (kbd "C-c C-b") 'hen-csi-eval-buffer)
   (define-key hen-mode-map (kbd "C-c C-d") 'hen-csi-eval-definition)
-  (define-key hen-mode-map (kbd "C-c C-a") 'hen-csi-apropos)
   (define-key hen-mode-map (kbd "C-c C-l") 'hen-build-unit)
   (define-key hen-mode-map (kbd "C-c C-x") 'hen-csi-send)
   (define-key hen-mode-map (kbd "C-c C-q") 'hen-csi-proc-delete)
@@ -352,7 +348,6 @@ The value returned is the value of the last form in BODY."
   (define-key hen-mode-map [menu-bar shared send-to-csi] '("Evaluate" . hen-csi-send))
   (define-key hen-mode-map [menu-bar scheme build-as-extension]
     '("Compile File as Extension" . hen-build-extension))
-  (define-key hen-mode-map [menu-bar scheme apropos] '("Symbol Apropos" . hen-csi-apropos))
   (define-key hen-mode-map [menu-bar scheme eval-buffer] '("Eval Buffer" . hen-csi-eval-buffer))
   (define-key hen-mode-map [menu-bar scheme eval-region] '("Eval Region" . hen-csi-eval-region))
   (define-key hen-mode-map [menu-bar scheme eval-last-sexp]
@@ -566,77 +561,6 @@ inserts ')' characters at point until `beginning-of-defun' and
 		  (beginning-of-defun)
 		  (ignore-errors (end-of-defun) t))
 	  do (insert ")"))))
-
-(defun hen-csi-completions-alist (prefix)
- (read (hen-csi-send
-        (concat "(pp (map list (delete-duplicates (##csi#name-of-symbols-starting-with \""
-                prefix
-                "\"))))"))))
-
-(defun hen-complete-symbol (thing)
- "Complete symbol at point in Hen mode. THING is used as the prefix."
- (interactive (list (hen-identifier-at-point)))
- (let* ((matching-names-alist (hen-csi-completions-alist thing))
-        (completion (try-completion thing matching-names-alist))
-        (show-box #'(lambda ()
-                      (message "Making completion list...")
-                      (with-output-to-temp-buffer "*Completions*"
-                        (display-completion-list (all-completions thing matching-names-alist))))))
-   (cond ((eq completion t) (message "exact match"))
-         ((null completion)
-          (error "Can't find completion for \"%s\"" thing))
-         ((not (string= thing completion))
-          (delete-region (progn (backward-sexp 1) (point))
-                         (progn (forward-sexp 1) (point)))
-          (insert completion)
-          (if (null (cdr matching-names-alist)) (message "")
-            (funcall show-box)))
-         (t (funcall show-box)))))
-
-;(defun hen-csi-try-complete (string ignore1 &optional ignore2)
-;  (let ((matches (hen-csi-get-completions-alist string)))
-;    (cond ((null matches) nil)
-;          ((and (= (length matches) 1)
-;                (string-equal (caar matches) string))
-;           t)
-;          (t (try-completion string matches)))))
-
-(defun hen-csi-completion-table (str pred opcode)
-
- (let ((coll (if (equal str "") '() ; producing a list of everything would take too long.
-               (hen-csi-completions-alist str))))
-   (case opcode
-     ('nil (try-completion str coll pred))
-     ('t (all-completions str coll pred))
-     ('lambda (and (or (null pred) (funcall pred str)) (assoc str coll)))
-     (t (error "invalid opcode (%S) in read-completion" opcode)))))
-
-(defvar hen-lookup-history nil)
-(defsubst hen-csi-symbol-completing-read (prompt)
- (list (completing-read prompt 'hen-csi-completion-table
-                        nil nil nil 'hen-lookup-history (hen-identifier-at-point))))
-
-(defun hen-csi-apropos (regex)
- "List the symbols matching REGEX."
- (interactive "sApropos (chicken's global symbols): ")
- (with-current-buffer (get-buffer-create "*Chicken Apropos*")
-   (widen)
-   (erase-buffer)
-   (let* ((query (concat "(pp (map\n"
-                         "  (lambda (sym) (cons (->string sym)\n"
-                         "      (->string (if (##sys#symbol-has-toplevel-binding? sym)\n "
-                         "                 (##sys#slot sym 0) '<unbound> ))))\n"
-                         "  (delete-duplicates! (##csi#symbols-matching \"" regex  "\"))))"))
-          (results-alist (read (hen-csi-send query))))
-     (dolist (item results-alist)
-       (let ((name (car item))
-             (obj (cdr item)))
-         (insert (car item) " ")
-         (indent-to-column 40)
-         (insert (cdr item) "\n")))
-
-     (apropos-mode)))
- (pop-to-buffer "*Chicken Apropos*" t))
 
 (provide 'hen)
 (run-hooks 'hen-load-hook)

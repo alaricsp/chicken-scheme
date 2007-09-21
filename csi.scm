@@ -772,53 +772,6 @@ EOF
 	(##sys#write-char-0 #\newline out) ) ) ) )
 
 
-;;; emacs interface (suggested by Linh Dang)
-
-(define ##csi#find-symbol-table (foreign-lambda c-pointer "C_find_symbol_table" c-string))
-(define ##csi#enum-symbols! (foreign-lambda scheme-object "C_enumerate_symbols" c-pointer scheme-object))
-
-(define (##csi#oblist)
-  (let ([it (cons -1 '())]
-	[ns (##csi#find-symbol-table ".")] )
-    (let loop ([lst '()])
-      (let ([s (##csi#enum-symbols! ns it)])
-	(if s
-	    (loop (cons s lst))
-	    lst) ) ) ) )
-
-(define (##csi#oblist->strings)
-  (let ([it (cons -1 '())]
-	[ns (##csi#find-symbol-table ".")] )
-    (let loop ([lst '()])
-      (let ([s (##csi#enum-symbols! ns it)])
-	(if s
-	    (loop (cons (->string s) lst))
-	    lst) ) ) ) )
-
-(define (##csi#name-of-symbols-starting-with prefix)
-  (let ([it (cons -1 '())]
-	[ns (##csi#find-symbol-table ".")]
-	[re (string-append "^" prefix)] )
-    (let loop ([lst '()])
-      (let ([s (##csi#enum-symbols! ns it)])
-	(if s 
-	    (loop (if (string-search re (symbol->string s))
-		      (cons (symbol->string s) lst)
-		      lst))
-	    lst) ) ) ) )
-
-(define (##csi#symbols-matching re-string)
-  (let ([it (cons -1 '())]
-	[ns (##csi#find-symbol-table ".")] )
-    (let loop ([lst '()])
-      (let ([s (##csi#enum-symbols! ns it)])
-	(if s 
-	    (loop (if (string-search re-string (symbol->string s))
-		      (cons s lst)
-		      lst))
-	    lst) ) ) ) )
-
-
 ;;; Start interpreting:
 
 (define (deldups lis . maybe-=)
