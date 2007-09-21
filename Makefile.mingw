@@ -68,6 +68,7 @@ LIBCHICKENGUI_SO_LINKER_OPTIONS = -Wl,--out-implib,libchickengui.dll.a
 LIBCHICKEN_SO_LIBRARIES = -lm -lws2_32 
 LIBUCHICKEN_SO_LIBRARIES = -lm -lws2_32 
 LIBCHICKENGUI_SO_LIBRARIES = -lm -lkernel32 -luser32 -lgdi32 -lws2_32 
+LIBCHICKENGUI_IMPORT_LIBRARY = libchickengui.dll.a
 LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
 LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
 
