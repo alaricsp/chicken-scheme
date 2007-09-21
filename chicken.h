@@ -192,16 +192,42 @@ char *alloca ();
 #include <limits.h>
 #include <time.h>
 
-#ifdef C_SIXTY_FOUR
-# if defined(HAVE_STDINT_H) || (defined(__linux__) && (defined(__alpha__) || defined(__x86_64__)))
-#  include <stdint.h>
-# else
-#  include <sys/types.h>
-# endif
+#if !defined(C_NONUNIX) || defined(__MINGW32__) || defined(__WATCOMC__)
+# include <unistd.h>
+# include <inttypes.h>
+# include <sys/types.h>
 #endif
 
-#ifndef C_NONUNIX
-# include <unistd.h>
+#if defined(C_GNU_ENV)
+# include <machine/endian.h>
+#elif defined(__hpux__)
+# include <arpa/nameser.h>
+#elif defined(_AIX)
+# include <sys/machine.h>
+#elif defined(__sun__)
+# include <sys/isa_defs.h>
+#elif defined(__svr4__)
+# include <sys/byteorder.h>
+#endif
+
+#if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && __BYTE_ORDER == __BIG_ENDIAN
+# define C_BIG_ENDIAN
+#elif defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
+# define C_BIG_ENDIAN
+#elif defined(__BIG_ENDIAN__) || defined(_BIG_ENDIAN)
+# define C_BIG_ENDIAN
+#elif defined(__sparc__) || defined(__POWERPC__) || defined(__MC68K__) || defined(__mips__)
+# define C_BIG_ENDIAN
+#endif
+
+#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && __BYTE_ORDER == __LITTLE_ENDIAN
+# define C_LITTLE_ENDIAN
+#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && BYTE_ORDER == LITTLE_ENDIAN
+# define C_LITTLE_ENDIAN
+#elif defined(__LITTLE_ENDIAN__) || defined(_LITTLE_ENDIAN)
+# define C_LITTLE_ENDIAN
+#elif defined (__alpha__) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
+# define C_LITTLE_ENDIAN
 #endif
 
 #ifdef C_MACOS
@@ -219,6 +245,14 @@ int strncasecmp(const char *one, const char *two, size_t n);
 # define alloca            _alloca
 # define strncasecmp       strnicmp
 # define isatty            _isatty
+typedef __int8             int8_t;
+typedef unsigned __int8    uint8_t;
+typedef __int16            int16_t;
+typedef unsigned  __int16  uint16_t;
+typedef __int32            int32_t;
+typedef unsigned __int32   int32_t;
+typedef __int64            uint64_t;
+typedef unsigned __int64   uint64_t;
 # pragma warning(disable: 4101)
 #endif
 
@@ -1300,6 +1334,7 @@ C_fctexport void C_ccall C_peek_unsigned_integer(C_word c, C_word closure, C_wor
 C_fctexport void C_ccall C_decode_seconds(C_word c, C_word closure, C_word k, C_word secs, C_word mode) C_noret;
 C_fctexport void C_ccall C_software_type(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_machine_type(C_word c, C_word closure, C_word k) C_noret;
+C_fctexport void C_ccall C_machine_byte_order(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_software_version(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_build_platform(C_word c, C_word closure, C_word k) C_noret;
 C_fctexport void C_ccall C_c_runtime(C_word c, C_word closure, C_word k) C_noret;

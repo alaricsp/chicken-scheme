@@ -77,8 +77,6 @@
 #define C_get_current_seconds(dummy)  (C_temporary_flonum = time(NULL), C_SCHEME_UNDEFINED)
 #define C_peek_c_string_at(ptr, i)    ((C_char *)(((C_char **)ptr)[ i ]))
 
-static C_word one_two_three = 123;
-
 static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
   int n = C_unfix(size);
   int i;
@@ -3141,9 +3139,9 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_machine_type")))])
     (lambda () sym) ) )
 
-(define (machine-byte-order)
-  (if (foreign-value "*((C_char *)&one_two_three) != 123" bool)
-      'big-endian 'little-endian) )
+(define machine-byte-order
+  (let ([sym (string->symbol ((##core#primitive "C_machine_byte_order")))])
+    (lambda () sym) ) )
 
 (define software-version
   (let ([sym (string->symbol ((##core#primitive "C_software_version")))])
@@ -3151,6 +3149,10 @@ EOF
 
 (define build-platform
   (let ([sym (string->symbol ((##core#primitive "C_build_platform")))])
+    (lambda () sym) ) )
+
+(define c-runtime
+  (let ([sym (string->symbol ((##core#primitive "C_c_runtime")))])
     (lambda () sym) ) )
 
 (define (chicken-version #!optional full)
@@ -3189,10 +3191,6 @@ EOF
     (if (and (eq? 'windows st) (not (eq? (build-platform) 'cygwin)))
 	#\\
 	#\/) ) )
-
-(define c-runtime
-  (let ([sym (string->symbol ((##core#primitive "C_c_runtime")))])
-    (lambda () sym) ) )
 
 
 ;;; Feature identifiers:

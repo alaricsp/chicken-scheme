@@ -795,6 +795,7 @@ static C_PTABLE_ENTRY *create_initial_ptable()
   C_pte(C_open_file_port);
   C_pte(C_software_type);
   C_pte(C_machine_type);
+  C_pte(C_machine_byte_order);
   C_pte(C_software_version);
   C_pte(C_build_platform);
   C_pte(C_c_runtime);
@@ -7955,6 +7956,35 @@ void C_ccall C_decode_seconds(C_word c, C_word closure, C_word k, C_word secs, C
 #endif
 		  );
   C_kontinue(k, info);
+}
+
+
+void C_ccall C_machine_byte_order(C_word c, C_word closure, C_word k)
+{
+  C_word *a, s;
+
+  if(c != 2) C_bad_argc(c, 2);
+
+#if defined(C_BIG_ENDIAN)
+  a = C_alloc(2 + C_bytestowords(10));
+  s = C_string2(&a, "big-endian");
+#elif defined(C_LITTLE_ENDIAN)
+  a = C_alloc(2 + C_bytestowords(13));
+  s = C_string2(&a, "little-endian");
+#else
+  C_cblock
+    static C_word one_two_three = 123;
+    if(*((C_char *)&one_two_three) != 123) {
+      a = C_alloc(2 + C_bytestowords(10));
+      s = C_string2(&a, "big-endian");
+    } else {
+      a = C_alloc(2 + C_bytestowords(13));
+      s = C_string2(&a, "little-endian");
+    }
+  C_cblockend
+#endif
+
+  C_kontinue(k, s);
 }
 
 

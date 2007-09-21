@@ -1232,12 +1232,12 @@
       [(float) (str "float")]
       [(double number) (str "double")]
       ;; pointer and nonnull-pointer are DEPRECATED
-      [(pointer nonnull-pointer c-pointer nonnull-c-pointer scheme-pointer 
-		nonnull-scheme-pointer)
-       (str "void *")]
+      [(pointer nonnull-pointer) (str "void *")]
+      [(c-pointer nonnull-c-pointer scheme-pointer nonnull-scheme-pointer) (str "void *")]
       [(c-string-list c-string-list*) "C_char **"]
-      [(byte-vector) (str "unsigned char *")] ; DEPRECATED
-      [(blob nonnull-byte-vector u8vector nonnull-u8vector) (str "unsigned char *")]
+      ;; byte-vector and nonnull-byte-vector are DEPRECATED
+      [(byte-vector nonnull-byte-vector) (str "unsigned char *")]
+      [(blob nonnull-blob u8vector nonnull-u8vector) (str "unsigned char *")]
       [(u16vector nonnull-u16vector) (str "unsigned short *")]
       [(s8vector nonnull-s8vector) (str "char *")]
       [(u32vector nonnull-u32vector) (str "unsigned int *")]
@@ -1256,7 +1256,7 @@
 	     [(string? type) (str type)]
 	     [(pair? type)
 	      (match type
-		[((or 'pointer 'c-pointer 'nonnull-pointer 'nonnull-c-pointer) ptype)
+		[((or 'pointer 'nonnull-pointer 'c-pointer 'nonnull-c-pointer) ptype)
 		 (foreign-type-declaration ptype (string-append "*" target)) ]
 		[('ref rtype)
 		 (foreign-type-declaration rtype (string-append "&" target)) ]
@@ -1310,14 +1310,18 @@
       ((integer64) "C_num_to_int64(")
       ((long) "C_num_to_long(")
       ((unsigned-integer unsigned-integer32) "C_num_to_unsigned_int(")
-      ((pointer scheme-pointer) "C_data_pointer_or_null(") ; pointer is DEPRECATED
-      ((nonnull-pointer nonnull-scheme-pointer) "C_data_pointer(") ; nonnull-pointer is DEPRECATED
+      ;; pointer and nonnull-pointer are DEPRECATED
+      ((pointer) "C_data_pointer_or_null(")
+      ((nonnull-pointer) "C_data_pointer(")
+      ((scheme-pointer) "C_data_pointer_or_null(")
+      ((nonnull-scheme-pointer) "C_data_pointer(")
       ((c-pointer) "C_c_pointer_or_null(")
       ((nonnull-c-pointer) "C_c_pointer_nn(")
       ((blob) "C_c_bytevector_or_null(")
-      ((byte-vector) "C_c_bytevector_or_null(") ; DEPRECATED
       ((nonnull-blob) "C_c_bytevector(")
-      ((nonnull-byte-vector) "C_c_bytevector(") ; DEPRECATED
+      ;; byte-vector and nonnull-byte-vector are DEPRECATED
+      ((byte-vector) "C_c_bytevector_or_null(")
+      ((nonnull-byte-vector) "C_c_bytevector(")
       ((u8vector) "C_c_u8vector_or_null(")
       ((nonnull-u8vector) "C_c_u8vector(")
       ((u16vector) "C_c_u16vector_or_null(")
@@ -1344,8 +1348,11 @@
 		   (foreign-argument-conversion (if (vector? t) (vector-ref t 0) t)) ) ]
 	     [(pair? type)
 	      (match type
-		[((or 'pointer 'c-pointer) ptype) "C_c_pointer_or_null("]
-		[((or 'nonnull-pointer 'nonnull-c-pointer) ptype) "C_c_pointer_nn("]
+                ;; pointer and nonnull-pointer are DEPRECATED
+		[('pointer ptype) "C_c_pointer_or_null("]
+		[('nonnull-pointer ptype) "C_c_pointer_nn("]
+		[('c-pointer ptype) "C_c_pointer_or_null("]
+		[('nonnull-c-pointer ptype) "C_c_pointer_nn("]
 		[`(instance ,cname ,sname) "C_c_pointer_or_null("]
 		[`(nonnull-instance ,cname ,sname) "C_c_pointer_nn("]
 		[`(function ,rtype ,@argtypes) "C_c_pointer_or_null("]
