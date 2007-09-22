@@ -7410,6 +7410,10 @@ C_regparm C_word C_fcall convert_string_to_number(C_char *str, int radix, C_word
       *flo = 0.0/0.0;
       return 2;
     }
+    else if(!C_strncmp(str, "-nan.0", len)) {
+      *flo = -0.0/0.0;
+      return 2;
+    }
     else if(!C_strncmp(str, "+inf.0", len)) {
       *flo = 1.0/0.0;
       return 2;
