@@ -175,7 +175,7 @@ char *alloca ();
 # define C_XXXBSD
 #endif
 
-#if defined(C_MACOSX) || defined(__linux__) | defined(C_XXXBSD)
+#if defined(C_MACOSX) || defined(__linux__) || defined(C_XXXBSD)
 # define C_GNU_ENV
 #endif
 
@@ -198,7 +198,9 @@ char *alloca ();
 # include <sys/types.h>
 #endif
 
-#if defined(C_GNU_ENV)
+#if defined(__linux__)
+# include <endian.h>
+#if defined(C_MACOSX) || defined(C_XXXBSD)
 # include <machine/endian.h>
 #elif defined(__hpux__)
 # include <arpa/nameser.h>
