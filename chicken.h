@@ -200,7 +200,7 @@ char *alloca ();
 
 #if defined(__linux__)
 # include <endian.h>
-#if defined(C_MACOSX) || defined(C_XXXBSD)
+#elif defined(C_MACOSX) || defined(C_XXXBSD)
 # include <machine/endian.h>
 #elif defined(__hpux__)
 # include <arpa/nameser.h>
