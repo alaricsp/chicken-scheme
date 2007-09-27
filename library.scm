@@ -3155,6 +3155,11 @@ EOF
   (let ([sym (string->symbol ((##core#primitive "C_c_runtime")))])
     (lambda () sym) ) )
 
+(define ##sys#windows-platform
+  (and (eq? 'windows (software-type))
+       ;; Still windows even if 'Linux-like'
+       (not (eq? 'cygwin (build-platform)))) )
+
 (define (chicken-version #!optional full)
   (define (get-config)
     (let ([bp (build-platform)]
@@ -3162,13 +3167,13 @@ EOF
 	  [sv (software-version)]
 	  [mt (machine-type)] )
       (define (str x)
-	(if (eq? x 'unknown)
+	(if (eq? 'unknown x)
 	    ""
 	    (string-append (symbol->string x) "-") ) )
       (string-append (str sv) (str st) (str bp) (##sys#symbol->string mt)) ) )
   (if full
       (let ((spec (string-append
-		   (if (##sys#fudge 3) " 64bit" "")
+		   (if (##sys#fudge 3)  " 64bit" "")
 		   (if (##sys#fudge 15) " symbolgc" "")
 		   (if (##sys#fudge 40) " manyargs" "")
 		   (if (##sys#fudge 24) " dload" "") 
@@ -3187,10 +3192,7 @@ EOF
       +build-version+) )
 
 (define ##sys#pathname-directory-separator
-  (let ([st (software-type)])
-    (if (and (eq? 'windows st) (not (eq? (build-platform) 'cygwin)))
-	#\\
-	#\/) ) )
+  (if ##sys#windows-platform #\\ #\/) )
 
 
 ;;; Feature identifiers:
@@ -3205,10 +3207,10 @@ EOF
 	  (##sys#string-append s "-")
 	  "") )
     (lambda (x)
-      (cond [(string? x) (string->keyword x)]
+      (cond [(string? x)  (string->keyword x)]
 	    [(keyword? x) x]
-	    [(symbol? x) (string->keyword (##sys#symbol->string x))]
-	    [else (err x)] ) ) ) )
+	    [(symbol? x)  (string->keyword (##sys#symbol->string x))]
+	    [else         (err x)] ) ) ) )
 
 (define ##sys#features '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
 

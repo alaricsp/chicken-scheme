@@ -387,12 +387,13 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+     string-match glob->regexp regexp make-anchored-pattern
      ##sys#thread-yield! ##sys#make-string
      ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port
      ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer make-pathname glob directory?
-     pathname-file string-match process-fork file-close duplicate-fileno process-execute getenv
+     pathname-file process-fork file-close duplicate-fileno process-execute getenv
      make-string make-input-port make-output-port ##sys#thread-block-for-i/o create-pipe
-     process-wait pathname-strip-directory ##sys#expand-home-path glob->regexp directory
+     process-wait pathname-strip-directory ##sys#expand-home-path directory
      decompose-pathname ##sys#cons-flonum ##sys#decode-seconds ##sys#null-pointer ##sys#pointer->address
      ##sys#substring ##sys#context-switch close-input-pipe close-output-pipe change-directory
      current-directory ##sys#make-pointer port? ##sys#schedule ##sys#process
@@ -534,8 +535,8 @@ EOF
       (##sys#check-exact cmd 'file-control)
       (let ([res (fcntl fd cmd arg)])
         (if (fx= res -1)
-          (posix-error #:file-error 'file-control "cannot control file" fd cmd)
-          res ) ) ) ) )
+            (posix-error #:file-error 'file-control "cannot control file" fd cmd)
+            res ) ) ) ) )
 
 (define file-open
   (let ([defmode (bitwise-ior _s_irwxu (bitwise-ior _s_irgrp _s_iroth))] )
@@ -765,7 +766,7 @@ EOF
       (posix-error #:file-error 'delete-directory "cannot delete directory" name) ) ) )
 
 (define directory
-  (let ([string-append string-append]
+  (let ([string-ref string-ref]
         [make-string make-string]
         [string string] )
     (lambda (#!optional (spec (current-directory)) show-dotfiles?)
@@ -1091,10 +1092,10 @@ EOF
 
   (define (group-information group)
     (let ([r (if (fixnum? group)
-               (##core#inline "C_getgrgid" group)
-               (begin
-                 (##sys#check-string group 'group-information)
-                 (##core#inline "C_getgrnam" (##sys#make-c-string group)) ) ) ] )
+                 (##core#inline "C_getgrgid" group)
+                 (begin
+                   (##sys#check-string group 'group-information)
+                   (##core#inline "C_getgrnam" (##sys#make-c-string group)) ) ) ] )
       (and r
          (list _group-name
                  _group-passwd
@@ -1128,8 +1129,8 @@ EOF
         (##sys#error 'get-groups "cannot retrieve supplementary group ids") )
       (let loop ([i 0])
         (if (fx>= i n)
-          '()
-          (cons (##core#inline "C_get_gid" i) (loop (fx+ i 1))) ) ) ) )
+            '()
+            (cons (##core#inline "C_get_gid" i) (loop (fx+ i 1))) ) ) ) )
 
   (define (set-groups! lst0)
     (unless (_ensure-groups (length lst0))
@@ -1437,38 +1438,37 @@ EOF
             [peek
               (lambda ()
                 (if (fx>= bufpos buflen)
-                  #!eof
-                  (##core#inline "C_subchar" buf bufpos)) )]
+                    #!eof
+                    (##core#inline "C_subchar" buf bufpos)) )]
             [fetch
               (lambda ()
                 (when (fx>= bufpos buflen)
                   (let loop ()
                     (let ([cnt (##core#inline "C_read" fd buf bufsiz)])
-                      (cond
-                        [(fx= cnt -1)
-                          (if (fx= _errno _ewouldblock)
-                            (begin
-                              (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
-                              (##sys#thread-yield!)
-                              (loop) )
-                            (posix-error #:file-error loc "cannot read" fd nam) )]
-                        [(and more? (fx= cnt 0))
-                          ; When "more" keep trying, otherwise read once more
-                          ; to guard against race conditions
-                          (if (more?)
-                            (begin
-                              (##sys#thread-yield!)
-                              (loop) )
-                            (let ([cnt (##core#inline "C_read" fd buf bufsiz)])
-                              (when (fx= cnt -1)
-                                (if (fx= _errno _ewouldblock)
-                                  (set! cnt 0)
-                                  (posix-error #:file-error loc "cannot read" fd nam) ) )
+                      (cond [(fx= cnt -1)
+                              (if (fx= _errno _ewouldblock)
+                                  (begin
+                                    (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
+                                    (##sys#thread-yield!)
+                                    (loop) )
+                                  (posix-error #:file-error loc "cannot read" fd nam) )]
+                            [(and more? (fx= cnt 0))
+                              ; When "more" keep trying, otherwise read once more
+                              ; to guard against race conditions
+                              (if (more?)
+                                  (begin
+                                    (##sys#thread-yield!)
+                                    (loop) )
+                                  (let ([cnt (##core#inline "C_read" fd buf bufsiz)])
+                                    (when (fx= cnt -1)
+                                      (if (fx= _errno _ewouldblock)
+                                          (set! cnt 0)
+                                          (posix-error #:file-error loc "cannot read" fd nam) ) )
+                                    (set! buflen cnt)
+                                    (set! bufpos 0) ) )]
+                            [else
                               (set! buflen cnt)
-                              (set! bufpos 0) ) )]
-                        [else
-                          (set! buflen cnt)
-                          (set! bufpos 0)]) ) ) ) )] )
+                              (set! bufpos 0)]) ) ) ) )] )
           (letrec (
               [this-port
                 (make-input-port
@@ -1493,44 +1493,40 @@ EOF
                     (peek) )
                   (lambda (port n dest start)   ; Read-String!
                     (let loop ([n n] [m 0] [start start])
-                      (cond
-                        [(eq? n 0) m]
-                        [(fx< bufpos buflen)
-                          (let* ([rest (fx- buflen bufpos)]
-                                 [n2 (if (fx< n rest) n rest)])
-                            (##core#inline "C_substring_copy"
-                              buf dest bufpos (fx+ bufpos n2) start)
-                            (set! bufpos (fx+ bufpos n2))
-                            (loop (fx- n n2) (fx+ m n2) (fx+ start n2)) ) ]
-                        [else
-                          (fetch)
-                          (if (eq? buflen 0) 
-                            m
-                            (loop n m start) ) ] ) ) )
+                      (cond [(eq? n 0) m]
+                            [(fx< bufpos buflen)
+                              (let* ([rest (fx- buflen bufpos)]
+                                     [n2 (if (fx< n rest) n rest)])
+                                (##core#inline "C_substring_copy" buf dest bufpos (fx+ bufpos n2) start)
+                                (set! bufpos (fx+ bufpos n2))
+                                (loop (fx- n n2) (fx+ m n2) (fx+ start n2)) ) ]
+                            [else
+                              (fetch)
+                              (if (eq? buflen 0) 
+                                  m
+                                  (loop n m start) ) ] ) ) )
                   (lambda (port limit)          ; Read-Line
                     (let loop ([str #f])
-                      (cond
-                        [(fx< bufpos buflen)
-                          (##sys#scan-buffer-line
-                            buf buflen bufpos
-                            (lambda (cur ptr)
-                              (let ([dest (##sys#make-string (fx- cur bufpos))])
-                                (##core#inline "C_substring_copy" buf dest bufpos cur 0)
-                                (set! bufpos ptr)
-                                (cond
-                                  [(eq? cur ptr) ; no line-terminator encountered
-                                    (fetch)
-                                    (if (fx>= bufpos buflen)
-                                      (or str "")
-                                      (loop (if str (##sys#string-append str dest) dest)) ) ]
-                                  [else 
-                                    (##sys#setislot port 4 (fx+ (##sys#slot port 4) 1))
-                                    (if str (##sys#string-append str dest) dest) ] ) ) ) ) ]
-                        [else
-                          (fetch)
-                          (if (fx< bufpos buflen)
-                            (loop str)
-                            #!eof) ] ) ) ) )] )
+                      (cond [(fx< bufpos buflen)
+                              (##sys#scan-buffer-line
+                                buf buflen bufpos
+                                (lambda (cur ptr)
+                                  (let ([dest (##sys#make-string (fx- cur bufpos))])
+                                    (##core#inline "C_substring_copy" buf dest bufpos cur 0)
+                                    (set! bufpos ptr)
+                                    (cond [(eq? cur ptr) ; no line-terminator encountered
+                                            (fetch)
+                                            (if (fx>= bufpos buflen)
+                                                (or str "")
+                                                (loop (if str (##sys#string-append str dest) dest)) ) ]
+                                          [else 
+                                            (##sys#setislot port 4 (fx+ (##sys#slot port 4) 1))
+                                            (if str (##sys#string-append str dest) dest) ] ) ) ) ) ]
+                            [else
+                              (fetch)
+                              (if (fx< bufpos buflen)
+                                 (loop str)
+                                 #!eof) ] ) ) ) )] )
             (set-port-name! this-port nam)
             this-port ) ) ) ) ) )
 
@@ -1545,39 +1541,37 @@ EOF
           [poke
             (lambda (str len)
               (let ([cnt (##core#inline "C_write" fd str len)])
-                (cond
-                  [(fx= -1 cnt)
-                    (if (fx= _errno _ewouldblock)
-                      (begin
-                        (##sys#thread-yield!)
-                        (poke str len) )
-                      (posix-error loc #:file-error "cannot write" fd nam) ) ]
-                  [(fx< cnt len)
-                    (poke (##sys#substring str cnt len) (fx- len cnt)) ] ) ) )]
+                (cond [(fx= -1 cnt)
+                        (if (fx= _errno _ewouldblock)
+                            (begin
+                              (##sys#thread-yield!)
+                              (poke str len) )
+                            (posix-error loc #:file-error "cannot write" fd nam) ) ]
+                      [(fx< cnt len)
+                        (poke (##sys#substring str cnt len) (fx- len cnt)) ] ) ) )]
           [store
             (let ([bufsiz (if (fixnum? bufi) bufi (##sys#size bufi))])
               (if (fx= 0 bufsiz)
-                (lambda (str)
-                  (when str
-                    (poke str (##sys#size str)) ) )
-                (let ([buf (if (fixnum? bufi) (##sys#make-string bufi) bufi)]
-                      [bufpos 0])
                   (lambda (str)
-                    (if str
-                      (let loop ([rem (fx- bufsiz bufpos)] [start 0] [len (##sys#size str)])
-                        (cond
-                          [(fx= 0 rem)
-                            (poke buf bufsiz)
-                            (set! bufpos 0)
-                            (loop bufsiz 0 len)]
-                          [(fx< rem len)
-                            (##core#inline "C_substring_copy" str buf start rem bufpos)
-                            (loop 0 rem (fx- len rem))]
-                          [else
-                            (##core#inline "C_substring_copy" str buf start len bufpos)
-                            (set! bufpos (fx+ bufpos len))] ) )
-                      (when (fx< 0 bufpos)
-                        (poke buf bufpos) ) ) ) ) ) )])
+                    (when str
+                      (poke str (##sys#size str)) ) )
+                  (let ([buf (if (fixnum? bufi) (##sys#make-string bufi) bufi)]
+                        [bufpos 0])
+                    (lambda (str)
+                      (if str
+                          (let loop ([rem (fx- bufsiz bufpos)] [start 0] [len (##sys#size str)])
+                            (cond [(fx= 0 rem)
+                                    (poke buf bufsiz)
+                                    (set! bufpos 0)
+                                    (loop bufsiz 0 len)]
+                                  [(fx< rem len)
+                                    (##core#inline "C_substring_copy" str buf start rem bufpos)
+                                    (loop 0 rem (fx- len rem))]
+                                  [else
+                                    (##core#inline "C_substring_copy" str buf start len bufpos)
+                                    (set! bufpos (fx+ bufpos len))] ) )
+                          (when (fx< 0 bufpos)
+                            (poke buf bufpos) ) ) ) ) ) )])
         (letrec (
             [this-port
               (make-output-port
@@ -1674,8 +1668,8 @@ EOF
       (##sys#check-string filename 'fifo?)
       (let ([v (##sys#file-info (##sys#expand-home-path filename))])
         (if v
-          (fx= 3 (##sys#slot v 4))
-          (posix-error #:file-error 'fifo? "file does not exist" filename) ) ) ) )
+            (fx= 3 (##sys#slot v 4))
+            (posix-error #:file-error 'fifo? "file does not exist" filename) ) ) ) )
 
 ;;; Environment access:
 
@@ -1854,41 +1848,46 @@ EOF
       (lambda (port)
         (##sys#check-port port 'terminal-name)
         (unless (and (eq? 'stream (##sys#slot port 7))
-                   (##core#inline "C_tty_portp" port) )
+                     (##core#inline "C_tty_portp" port) )
         (##sys#error 'terminal-name "port is not connected to a terminal" port) )
         (ttyname (##core#inline "C_C_fileno" port) ) ) ) )
 
   (define get-host-name
     (let ([getit
          (foreign-lambda* c-string ()
-           "if(gethostname(C_hostbuf, 256) == -1) return(NULL);
-              else return(C_hostbuf);") ] )
+           "if(gethostname(C_hostbuf, 256) == -1) return(NULL);"
+           "else return(C_hostbuf);") ] )
       (lambda ()
         (let ([host (getit)])
-        (unless host
-          (posix-error #:error 'get-host-name "cannot retrieve host-name") )
-        host) ) ) ) ] )
+          (unless host
+            (posix-error #:error 'get-host-name "cannot retrieve host-name") )
+          host) ) ) ) ] )
 
 
 ;;; Filename globbing:
 
 (define glob
-  (let ([glob->regexp glob->regexp]
+  (let ([regexp regexp]
+        [make-anchored-pattern make-anchored-pattern]
+        [string-match string-match]
+        [glob->regexp glob->regexp]
         [directory directory]
         [make-pathname make-pathname]
         [decompose-pathname decompose-pathname] )
     (lambda paths
-      (let conc ([paths paths])
+      (let conc-loop ([paths paths])
         (if (null? paths)
             '()
             (let ([path (car paths)])
-              (let-values ([(dir file ext) (decompose-pathname path)])
-                (let ([rx (glob->regexp (make-pathname #f (or file "*") ext))])
-                  (let loop ([f (directory (or dir ".") #t)])
-                    (cond [(null? f) (conc (cdr paths))]
-                          [(string-match rx (car f))
-                           => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr f)))) ]
-                          [else (loop (cdr f))] ) ) ) ) ) ) ) ) ) )
+              (let-values ([(dir fil ext) (decompose-pathname path)])
+                (let* ([fnpatt (glob->regexp (make-pathname #f (or fil "*") ext))]
+                       [patt (make-anchored-pattern fnpatt)]
+                       [rx (regexp patt)])
+                  (let loop ([fns (directory (or dir ".") #t)])
+                    (cond [(null? fns) (conc-loop (cdr paths))]
+                          [(string-match rx (car fns))
+                           => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr fns)))) ]
+                          [else (loop (cdr fns))] ) ) ) ) ) ) ) ) ) )
 
 
 ;;; Process handling:
@@ -1930,8 +1929,8 @@ EOF
                    (setenv i s (##sys#size s)) ) ) )
              (let* ([prg (##sys#make-c-string (##sys#expand-home-path filename))]
                     [r (if envlist
-                         (##core#inline "C_execve" prg)
-                         (##core#inline "C_execvp" prg) )] )
+                           (##core#inline "C_execve" prg)
+                           (##core#inline "C_execvp" prg) )] )
                (when (fx= r -1)
                  (freeargs)
                  (freeenv)
@@ -1990,10 +1989,10 @@ EOF
       (lambda (f . args)
         (let ([args (if (pair? args) (car args) #f)]
               [pid (process-fork)] )
-        (cond [(not (eq? pid 0)) pid]
-              [args (process-execute f args)]
-              [else
-               (process-execute (##sys#shell-command) (##sys#shell-command-arguments f)) ] ) ) ) ) )
+          (cond [(not (eq? pid 0)) pid]
+                [args (process-execute f args)]
+                [else
+                 (process-execute (##sys#shell-command) (##sys#shell-command-arguments f)) ] ) ) ) ) )
 
   ;;; Run subprocess connected with pipes:
 
@@ -2097,8 +2096,8 @@ EOF
 
   ;;; Run subprocess connected with pipes:
 
-  #;(define process (void))
-  #;(define process* (void))
+  (define process)
+  (define process*)
   (let ([%process
           (lambda (loc err? cmd args env)
             (let ([chkstrlst
@@ -2107,15 +2106,15 @@ EOF
                      (for-each (cut ##sys#check-string <> loc) lst) )])
               (##sys#check-string cmd loc)
               (if args
-                (chkstrlst args)
-                (begin
-                  (set! args (##sys#shell-command-arguments cmd))
-                  (set! cmd (##sys#shell-command)) ) )
+                  (chkstrlst args)
+                  (begin
+                    (set! args (##sys#shell-command-arguments cmd))
+                    (set! cmd (##sys#shell-command)) ) )
               (when env (chkstrlst env))
               (receive [in out pid err] (##sys#process loc cmd args env #t #t err?)
                 (if err?
-                  (values in out pid err)
-                  (values in out pid) ) ) ) )] )
+                    (values in out pid err)
+                    (values in out pid) ) ) ) )] )
     (set! process
       (lambda (cmd #!optional args env)
         (%process 'process #f cmd args env) ))
@@ -2142,7 +2141,7 @@ EOF
                       [(fixnum? limit) (lambda _ (fx< depth limit))]
                       [else limit] ) ]
                [pproc
-                (if (string? pred)
+                (if (or (string? pred) (regexp? pred))
                     (lambda (x) (string-match pred x))
                     pred) ] )
           (let loop ([fs (glob (make-pathname dir "*"))]

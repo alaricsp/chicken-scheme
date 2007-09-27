@@ -35,7 +35,7 @@
 
 (declare
   (block)
-  (uses extras srfi-1 srfi-13 regex utils))
+  (uses extras srfi-1 srfi-13 utils))
 
 #>
 #ifndef C_TARGET_CC

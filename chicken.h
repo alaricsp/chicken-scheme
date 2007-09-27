@@ -39,6 +39,9 @@
 #ifndef ___CHICKEN
 #define ___CHICKEN
 
+/*
+ * N.B. This file MUST not rely upon "chicken-config.h"
+ */
 #if defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)
 # include "chicken-config.h"
 #endif
@@ -158,10 +161,12 @@ char *alloca ();
 # define C_resize_stack(n)           C_do_resize_stack(n)
 #endif
 
-#if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__)
-# define C_SIXTY_FOUR
-#elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
-# define C_SIXTY_FOUR
+#ifndef C_SIXTY_FOUR
+# if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__)
+#   define C_SIXTY_FOUR
+# elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
+#   define C_SIXTY_FOUR
+# endif
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
@@ -198,7 +203,9 @@ char *alloca ();
 # include <sys/types.h>
 #endif
 
-#if defined(__linux__)
+#if defined(__MINGW32__)
+# include <sys/param.h>
+#elif defined(__linux__)
 # include <endian.h>
 #elif defined(C_MACOSX) || defined(C_XXXBSD)
 # include <machine/endian.h>
@@ -237,7 +244,7 @@ char *alloca ();
 int strncasecmp(const char *one, const char *two, size_t n);
 #endif
 
-#ifdef __WATCOMC__
+#ifdef __MINGW32__
 # include <malloc.h>
 #endif
 
@@ -258,7 +265,7 @@ typedef unsigned __int64   uint64_t;
 # pragma warning(disable: 4101)
 #endif
 
-#ifdef __MINGW32__
+#ifdef __WATCOMC__
 # include <malloc.h>
 #endif
 

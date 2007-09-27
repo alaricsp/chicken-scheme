@@ -7,11 +7,11 @@
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -23,7 +23,7 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 ;
-; Send bugs, suggestions and ideas to: 
+; Send bugs, suggestions and ideas to:
 ;
 ; felix@call-with-current-continuation.org
 ;
@@ -61,7 +61,7 @@
   `(##core#foreign-callback-lambda* ,@(map (lambda (x) (list 'quote x)) xs)) )
 
 (define-macro (foreign-primitive . xs)
-  (##sys#check-syntax 'foreign-primitive xs '#(_ 1)) 
+  (##sys#check-syntax 'foreign-primitive xs '#(_ 1))
   `(##core#foreign-primitive ,@(map (lambda (x) (list 'quote x)) xs)) )
 
 (define-macro (foreign-safe-wrapper . form) ; DEPRECATED
@@ -121,7 +121,7 @@
        (##core#define-external-variable ',var ',type '#f ',name)
        ,@(if (pair? init)
 	     `((##core#set! ,var ,(car init)))
-	     '() ) ) ) ) 
+	     '() ) ) ) )
 
 (define-macro (let-location bindings . body)
   (let ([aliases (map (lambda (_) (gensym)) bindings)])
@@ -152,7 +152,7 @@
 (define-macro (foreign-code . strs)
   (let ([tmp (gensym 'code_)])
     `(begin
-       (declare 
+       (declare
 	 (foreign-declare
 	  ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" tmp (string-intersperse strs "\n")) ) )
        (##core#inline ,tmp) ) ) )
@@ -168,8 +168,8 @@
 
 (define-macro (define-foreign-record name . slots)
   (let ([fname (if (pair? name) (->string (cadr name)) (sprintf "struct ~A" name))]
-	[tname (if (pair? name) (car name) name)] 
-	[var (gensym)] 
+	[tname (if (pair? name) (car name) name)]
+	[var (gensym)]
 	[renamer identity]
 	[ctor #f]
 	[dtor #f]
@@ -197,16 +197,16 @@
     (##sys#hash-table-set! ##compiler#foreign-type-table tname `(c-pointer ,fname))
     `(begin
        ,@(if (pair? name)
-	     '() 
+	     '()
 	     `((declare
 		 (foreign-declare
 		  ,(string-intersperse
 		    (append
-		     (cons 
+		     (cons
 		      (string-append "struct " (->string name) " { ")
 		      (map (lambda (slot)
 			     (case (length slot)
-			       [(3) 
+			       [(3)
 				(sprintf "~A[~A];"
 					 (##compiler#foreign-type-declaration
 					  (car slot)
@@ -214,7 +214,7 @@
 					 (caddr slot) ) ]
 			       [(2)
 				(sprintf "~A;"
-					 (##compiler#foreign-type-declaration 
+					 (##compiler#foreign-type-declaration
 					  (car slot)
 					  (->string (cadr slot)) ) ) ]
 			       [else (syntax-error 'define-foreign-record "bad slot spec" slot)] ) )
@@ -237,9 +237,9 @@
 			  [type2 (stype type)] )
 		     `(begin
 			(define ,(string->symbol (renamer (sprintf "~A-~A" tname sname)))
-			  (let ([,cvar 
+			  (let ([,cvar
 				 (foreign-lambda* ,type2 ([,tname ,var] [int ,svar])
-				   ,(sprintf "return(~A~A->~A[~A]);" 
+				   ,(sprintf "return(~A~A->~A[~A]);"
 					     (if (not (strtype type)) "" "&")
 					     var sname svar) ) ] )
 			    (lambda (,var ,svar)
@@ -247,7 +247,7 @@
 				  (,cvar ,var ,svar)
 				  ;; this should signal a range exn...
 				  (syntax-error 'define-foreign-record "array access out of range" ',tname ',svar ,size) ) ) ) )
-			,@(if (and (pair? type) (eq? 'const (car type))) 
+			,@(if (and (pair? type) (eq? 'const (car type)))
 			      '()
 			      (if (eq? type type2)
 				  `((define ,(string->symbol (renamer (sprintf "~A-~A-set!" tname sname)))
@@ -257,18 +257,18 @@
 					(lambda (,var ,svar ,xvar)
 					  (if (##core#check (and (fx>= ,svar 0) (fx< ,svar ,size)))
 					      (,cvar ,var ,svar ,xvar)
-					      (syntax-error 
+					      (syntax-error
 					       'define-foreign-record
 					       "array access out of range" ',tname ',svar ,size) ) ) ) ) )
 				  '() ) ) ) ) ]
 		  [(2)
 		   (let* ([type (car slot)]
-			  [sname (cadr slot)] 
+			  [sname (cadr slot)]
 			  [type2 (stype type)] )
 		     `(begin
 			(define ,(string->symbol (renamer (sprintf "~A-~A" tname sname)))
 			  (foreign-lambda* ,type2 ([,tname ,var])
-			    ,(sprintf "return(~A~A->~A);" 
+			    ,(sprintf "return(~A~A->~A);"
 				      (if (not (strtype type)) "" "&")
 				      var sname) ) )
 			,@(if (and (pair? type) (eq? 'const (car type)))
@@ -290,55 +290,67 @@
 
 ;;; Foreign enumerations (or enum-like constants)
 
-(define-macro (define-foreign-enum typename . enums)
-  (let ((name typename)
-	(type (->string typename))
-	(defsymval ''())
-	(symbols (map (lambda (e) (if (pair? e) (car e) e)) enums))
-	(extvals (map (lambda (e)
-	                (if (pair? e)
-                            (if (pair? (cdr e))
-                                (cadr e)
-                                (syntax-error 'define-foreign-enum
-                                              "invalid enum specification" e) )
-                            e ) )
-	              enums))
-	(symvals (map (lambda (e)
-	                (if (pair? e)
-	                    (if (pair? (cddr e))
-	                        (caddr e)
-	                        `(quote ,(car e)))
-	                    `(quote ,e)))
-	              enums)) )
-    (when (list? typename)
-      (let ([len (length typename)])
-        (unless (<= 2 len 3)
-          (syntax-error 'define-foreign-enum "invalid typename specification" typename) )
-        (set! name (car typename))
-        (set! type (cadr typename))
-        (when (= 3 len)
-          (set! defsymval (caddr typename)) ) ) )
-    (let ((aliases (map gensym symbols))
-	  (s->e (string->symbol (conc name "->number")))
-	  (e->s (string->symbol (conc "number->" name)) ) )
-      `(begin
-	 ,@(map (lambda (a v) `(define-foreign-variable ,a integer ,(->string v))) aliases extvals)
-	 (define (,s->e syms)
-	   (let loop ((syms (if (symbol? syms) (list syms) syms)) (sum 0))
-	     (if (null? syms) 
-		 sum
-		 (loop (cdr syms)
-                       (bitwise-ior
-                        sum
-                        (let ((val (car syms)))
-                          (case val
-                            ,@(map (lambda (a s) `((,s) ,a)) aliases symbols)
-                            (else (error "not a member of enum" val ',name)) ) ) ) ) ) ) )
-	 (define (,e->s val)
-	   (cond 
-	    ,@(map (lambda (a sv) `((= val ,a) ,sv)) aliases symvals)
-	    (else ,defsymval) ) )
-	 (define-foreign-type ,name ,type ,s->e ,e->s) ) ) ) )
+;; (define-foreign-enum TYPE [USE-ALIASES] ENUM ...)
+;; TYPE : TYPENAME or (SCHEMENAME REALTYPE [DEFAULT-SCHEME-VALUE])
+;; USE-ALIAES : boolean, default #t
+;; ENUM : TYPENAME or (SCHEMENAME REALTYPE [SCHEME-VALUE])
+
+(define-macro (define-foreign-enum typespec . enums)
+  (let ([use-aliases (if (pair? enums)
+			 (let ([flag (car enums)])
+			   (if (boolean? flag)
+			       (begin (set! enums (cdr enums)) flag)
+			       #t ) )
+			 #t ) ] )
+    (let ((name typespec)
+	  (type (->string typespec))
+	  (defsymval ''())
+
+	  (symbols (map (lambda (e) (if (pair? e) (car e) e)) enums))
+	  (extvals (map (lambda (e)
+			  (if (pair? e)
+			      (if (pair? (cdr e))
+				  (cadr e)
+				  (syntax-error 'define-foreign-enum
+						"invalid enum specification" e) )
+			      e ) )
+			enums))
+	  (symvals (map (lambda (e)
+			  (if (pair? e)
+			      (if (pair? (cddr e))
+				  (caddr e)
+				  `(quote ,(car e)))
+			      `(quote ,e)))
+			enums)) )
+      (when (list? typespec)
+	(let ([len (length typespec)])
+	  (unless (<= 2 len 3)
+	    (syntax-error 'define-foreign-enum "invalid type specification" typespec) )
+	  (set! name (car typespec))
+	  (set! type (cadr typespec))
+	  (when (= 3 len)
+	    (set! defsymval (caddr typespec)) ) ) )
+      (let ((aliases (if use-aliases (map gensym symbols) symbols))
+	    (s->e (string->symbol (conc name "->number")))
+	    (e->s (string->symbol (conc "number->" name)) ) )
+	`(begin
+	   ,@(map (lambda (a v) `(define-foreign-variable ,a ,type ,(->string v))) aliases extvals)
+	   (define (,s->e syms)
+	     (let loop ((syms (if (symbol? syms) (list syms) syms)) (sum 0))
+	       (if (null? syms)
+		   sum
+		   (loop (cdr syms)
+			 (bitwise-ior
+			  sum
+			  (let ((val (car syms)))
+			    (case val
+			      ,@(map (lambda (a s) `((,s) ,a)) aliases symbols)
+			      (else (error "not a member of enum" val ',name)) ) ) ) ) ) ) )
+	   (define (,e->s val)
+	     (cond
+	      ,@(map (lambda (a sv) `((= val ,a) ,sv)) aliases symvals)
+	      (else ,defsymval) ) )
+	   (define-foreign-type ,name ,type ,s->e ,e->s) ) ) ) ) )
 
 
 ;;; Deprecated FFI macros
@@ -361,7 +373,7 @@
      'define-compiler-macro "invalid compiler macro definition" head) )
   (if (and (pair? head) (symbol? (car head)))
       (cond ((memq 'compiling ##sys#features)
-	     (warning "compile macros are not available in interpreted code" 
+	     (warning "compile macros are not available in interpreted code"
 		      (car head) ) )
 	    ((not (##compiler#register-compiler-macro (car head) (cdr head) body))
 	     (bad) ) )

@@ -2,7 +2,7 @@
 ;
 ; - Usage: cscbench [-debug] [-cc=<path>] OPTION ...
 
-(require-extension srfi-1 utils posix)
+(require-extension srfi-1 utils posix regex)
 
 (define plist-files '("boyer" "browse" "dderiv"))
 (define flonum-files '("fft" "maze"))
@@ -12,17 +12,19 @@
 
 (define (abort-run) #f)
 
-(define (run)
-  (system* "./tmpfile >tmpfile.out")
-  (with-input-from-file "tmpfile.out"
+(define run
+  (let ([secrx (regexp "^ *([-.+e0-9]*(\\.[0-9]*)?) seconds elapsed$")])
     (lambda ()
-      (let loop ([line (read-line)])
-	(if (eof-object? line) 
-	    (abort-run)
-	    (let ([m (string-match " *([-.+e0-9]*(\\.[0-9]*)?) seconds elapsed" line)])
-	      (if m
-		  (string->number (second m)) 
-		  (loop (read-line)) ) ) ) ) ) ) )
+      (system* "./tmpfile >tmpfile.out")
+      (with-input-from-file "tmpfile.out"
+        (lambda ()
+          (let loop ([line (read-line)])
+            (if (eof-object? line) 
+                (abort-run)
+                (let ([m (string-match secrx line)])
+                  (if m
+                      (string->number (second m)) 
+                      (loop (read-line)) ) ) ) ) ) ) ) ) )
 
 (define (display-l str len pad)
   (let ([slen (string-length str)])
@@ -34,13 +36,15 @@
     (display (make-string (max 0 (- len slen)) pad))
     (display (substring str 0 (min slen len))) ) )
 
-(define (display-f-4.3 n)
-  (let* ([m (string-match "([-+e0-9]*)(\\.([0-9]*))?" (number->string n))]
-	 [is (second m)]
-	 [fs (fourth m)] )
-    (display-r is 4 #\space)
-    (display #\.)
-    (display-r fs 3 #\0) ) )
+(define display-f-4.3
+  (let ([florx (regexp "^([-+e0-9]*)(\\.([0-9]*))?$")])
+    (lambda (n)
+      (let* ([m (string-match florx (number->string n))]
+	     [is (second m)]
+	     [fs (fourth m)] )
+        (display-r is 4 #\space)
+        (display #\.)
+        (display-r fs 3 #\0) ) ) ) )
 
 (define (compile-and-run file extras decls options coptions unsafe)
   (system* "~A ~A -quiet -no-warnings -heap-size 8m -output-file tmpfile.c ~A ~A ~A"

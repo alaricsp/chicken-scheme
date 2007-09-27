@@ -1537,22 +1537,27 @@ EOF
 ;;; Filename globbing:
 
 (define glob
-  (let ([glob->regexp glob->regexp]
-	[directory directory]
-	[make-pathname make-pathname]
- 	[decompose-pathname decompose-pathname] )
+  (let ([regexp regexp]
+        [make-anchored-pattern make-anchored-pattern]
+        [string-match string-match]
+        [glob->regexp glob->regexp]
+        [directory directory]
+        [make-pathname make-pathname]
+        [decompose-pathname decompose-pathname] )
     (lambda paths
-      (let conc ([paths paths])
-	(if (null? paths)
-	    '()
-	    (let ([path (car paths)])
-	      (let-values ([(dir file ext) (decompose-pathname path)])
-		(let ([rx (glob->regexp (make-pathname #f (or file "*") ext))])
-		  (let loop ([f (directory (or dir "."))])
-		    (cond [(null? f) (conc (cdr paths))]
-			  [(string-match rx (car f))
-			   => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr f)))) ]
-			  [else (loop (cdr f))] ) ) ) ) ) ) ) ) ) )
+      (let conc-loop ([paths paths])
+        (if (null? paths)
+            '()
+            (let ([path (car paths)])
+              (let-values ([(dir fil ext) (decompose-pathname path)])
+                (let* ([fnpatt (glob->regexp (make-pathname #f (or fil "*") ext))]
+                       [patt (make-anchored-pattern fnpatt)]
+                       [rx (regexp patt)])
+                  (let loop ([fns (directory (or dir ".") #t)])
+                    (cond [(null? fns) (conc-loop (cdr paths))]
+                          [(string-match rx (car fns))
+                           => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr fns)))) ]
+                          [else (loop (cdr fns))] ) ) ) ) ) ) ) ) ) )
 
 
 ;;; Process handling:

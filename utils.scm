@@ -41,18 +41,22 @@
   (hide chop-pds)
   (disable-interrupts) )
 
-
 (cond-expand
  [paranoia]
  [else
   (declare
-    (no-procedure-checks-for-usual-bindings)
+    (always-bound
+      ##sys#windows-platform
+      ##sys#pathname-directory-separator)
     (bound-to-procedure
-      apropos-list apropos
+      string-search string-match regexp regexp-escape
+      ##sys#symbol-has-toplevel-binding? ##sys#environment-symbols
+      ##sys#hash-table-for-each ##sys#macro-environment
       ##sys#string-append reverse port? read-string with-input-from-file command-line-arguments
       for-each-line ##sys#check-port read-line getenv make-pathname file-exists? call-with-output-file
-      decompose-pathname string-search absolute-pathname? string-append ##sys#substring string-match
+      decompose-pathname absolute-pathname? string-append ##sys#substring
       delete-file system)
+    (no-procedure-checks-for-usual-bindings)
     (no-bound-checks))] )
 
 (cond-expand
@@ -76,57 +80,61 @@
 
 ;;; Environment utilities
 
-#;(define ##sys#apropos-interned #f)
-#;(define ##sys#apropos-macros #f)
-(let ([makpat
-        (lambda (patt)
-          (when (symbol? patt)
-            (set! patt (symbol->string patt)))
-          (when (string? patt)
-            (set! patt (regexp (regexp-escape patt))))
-          patt)])
-  (set! ##sys#apropos-interned
-    (lambda (patt env)
-      (set! patt (makpat patt))
-      (##sys#environment-symbols env
-        (lambda (sym)
-          (and (string-search patt (symbol->string sym))
-	       (##sys#symbol-has-toplevel-binding? sym))))))
-  (set! ##sys#apropos-macros
-    (lambda (patt env) ; env is currently ignored
-      (set! patt (makpat patt))
-      (let ([ms '()])
-        (##sys#hash-table-for-each
-          (lambda (key val)
-            (when (string-search patt (symbol->string key))
-              (set! ms (cons key ms)) ) )
-          ##sys#macro-environment)
-        ms))) )
+(define ##sys#apropos-interned)
+(define ##sys#apropos-macros)
+(let ([string-search string-search]
+      [regexp regexp]
+      [regexp-escape regexp-escape])
+  (let ([makpat
+         (lambda (patt)
+           (when (symbol? patt)
+             (set! patt (symbol->string patt)))
+           (when (string? patt)
+             (set! patt (regexp (regexp-escape patt))))
+           patt)])
+
+    (set! ##sys#apropos-interned
+      (lambda (patt env)
+        (set! patt (makpat patt))
+        (##sys#environment-symbols env
+          (lambda (sym)
+            (and (string-search patt (symbol->string sym))
+	         (##sys#symbol-has-toplevel-binding? sym) ) ) ) ) )
+
+    (set! ##sys#apropos-macros
+      (lambda (patt env) ; env is currently ignored
+        (set! patt (makpat patt))
+        (let ([ms '()])
+          (##sys#hash-table-for-each
+            (lambda (key val)
+              (when (string-search patt (symbol->string key))
+                (set! ms (cons key ms)) ) )
+            ##sys#macro-environment)
+          ms ) ) ) ) )
 
 (define (##sys#apropos patt env #!optional macf)
   (let ([ts (##sys#apropos-interned patt env)])
     (if macf
-      (##sys#append ts (##sys#apropos-macros patt env))
-      ts ) ) )
+        (##sys#append ts (##sys#apropos-macros patt env))
+        ts ) ) )
 
-#;(define apropos-list #f)
-#;(define apropos #f)
+(define apropos-list)
+(define apropos)
 (let ([%apropos-list
         (lambda (loc patt args) ; #!optional (env (interaction-environment)) #!key macros?
           (let ([env (interaction-environment)]
                 [macros? #f])
-            ; Really wish DSSSL style parser would handle optional & rest w/ keywords
-            ; more intelligently.
+            ; Handle extended lambda list optional & rest w/ keywords
             (let loop ([args args])
               (when (pair? args)
                 (let ([arg (car args)])
                   (if (eq? #:macros? arg)
-                    (begin
-                      (set! macros? (cadr args))
-                      (loop (cddr args)) )
-                    (begin
-                      (set! env arg)
-                      (loop (cdr args)) ) ) ) ) )
+                      (begin
+                        (set! macros? (cadr args))
+                        (loop (cddr args)) )
+                      (begin
+                        (set! env arg)
+                        (loop (cdr args)) ) ) ) ) )
 	    (##sys#check-structure env 'environment loc)
             (unless (or (string? patt) (symbol? patt) (regexp? patt))
               (##sys#signal-hook #:type-error loc "bad argument type - not a string, symbol, or regexp" patt))
@@ -134,18 +142,20 @@
       [disp-proc
         (lambda (proc labl)
           (let ([info (procedure-information proc)])
-            (cond ((pair? info) (display (cons labl (cdr info))))
-		  (info (display labl))
-		  (else (display labl) ) ) ) ) ]
+            (cond [(pair? info) (display (cons labl (cdr info)))]
+		  [info         (display labl)]
+		  [else         (display labl) ] ) ) ) ]
       [symlen
         (lambda (sym)
           (let ([len (##sys#size (##sys#symbol->qualified-string sym))])
             (if (keyword? sym)
-              (fx- len 2) ; compensate for leading '###' when only a ':' is printed
-              len ) ) )])
+                (fx- len 2) ; compensate for leading '###' when only a ':' is printed
+                len ) ) )])
+
   (set! apropos-list
     (lambda (patt . rest)
       (%apropos-list 'apropos-list patt rest)))
+
   (set! apropos
     (lambda (patt . rest)
       (let ([ss (%apropos-list 'apropos patt rest)]
@@ -162,14 +172,13 @@
               (display #\space))
             (display #\space) (display #\:) (display #\space)
             (if (macro? sym)
-              ;FIXME want to display macro lambda arguments
-              (display 'macro)
-              (let ([bnd (##core#inline "C_retrieve" sym)])
-                (cond
-                  [(procedure? bnd)
-                    (disp-proc bnd 'procedure)]
-                  [else
-                    (display 'variable)]) ) )
+                ;FIXME want to display macro lambda arguments
+                (display 'macro)
+                (let ([bnd (##core#inline "C_retrieve" sym)])
+                  (cond [(procedure? bnd)
+                          (disp-proc bnd 'procedure)]
+                        [else
+                          (display 'variable)]) ) )
             (newline) )
           ss)))) )
 
@@ -197,19 +206,19 @@
 
 ;;; Pathname operations:
 
+(define ##sys#pathname-directory-separator-string (string ##sys#pathname-directory-separator))
+
 (define absolute-pathname?
-  (let* ([dr
-	  (let ([st (software-type)])
-	    (if (and (eq? 'windows st)
-		     ;; Still windows even if 'Linux-like'
-		     (not (eq? 'cygwin (build-platform))) )
-		"([A-Za-z]:)?"
-		"") ) ]
-	 [rx (string-append dr "[\\/\\" (string ##sys#pathname-directory-separator) "].*")]
-	 [string-match string-match] )
-    (lambda (pn)
-      (##sys#check-string pn 'absolute-pathname?)
-      (pair? (string-match rx pn)) ) ) )
+  (let ([string-match string-match]
+        [regexp regexp]
+        [string-append string-append])
+    (let* ([drv (if ##sys#windows-platform "([A-Za-z]:)?" "")]
+           [patt (string-append drv
+	                        "^[\\/\\" ##sys#pathname-directory-separator-string "].*$")]
+	   [rx (regexp patt)] )
+      (lambda (pn)
+        (##sys#check-string pn 'absolute-pathname?)
+        (pair? (string-match rx pn)) ) ) ) )
 
 (define (chop-pds str pds)
   (and str
@@ -220,9 +229,12 @@
 	     (##sys#substring str 0 (fx- len pdslen))
 	     str) ) ) )
 
+(define make-pathname)
+(define make-absolute-pathname)
 (let ([string-append string-append]
       [absolute-pathname? absolute-pathname?]
-      [pds0 (string ##sys#pathname-directory-separator)] )
+      [syspds ##sys#pathname-directory-separator-string] )
+
   (define (conc-dirs dirs pds)
     (##sys#check-list dirs 'make-pathname)
     (let loop ([strs dirs])
@@ -232,14 +244,16 @@
 	    (if (zero? (string-length s1))
 		(loop (cdr strs))
 		(string-append (chop-pds (car strs) pds) pds (loop (cdr strs))) ) ) ) ) )
+
   (define (canonicalize dir pds)
     (cond [(or (not dir) (null? dir)) ""]
 	  [(string? dir) (conc-dirs (list dir) pds)]
-	  [else (conc-dirs dir pds)] ) )
+	  [else          (conc-dirs dir pds)] ) )
+
   (define (_make-pathname loc dir file ext pds)
     (let ([dirs (canonicalize dir pds)]
-	  (pdslen (##sys#size pds))
-	  (ext (or ext ""))
+	  [pdslen (##sys#size pds)]
+	  [ext (or ext "")]
 	  [file (or file "")] )
       (##sys#check-string file loc)
       (##sys#check-string ext loc)
@@ -256,11 +270,13 @@
 	   "."
 	   "")
        ext) ) )
+
   (set! make-pathname
-    (lambda (dir file #!optional ext (pds pds0))
+    (lambda (dir file #!optional ext (pds syspds))
       (_make-pathname 'make-pathname dir file ext pds)))
+
   (set! make-absolute-pathname
-    (lambda (dir file #!optional ext (pds pds0))
+    (lambda (dir file #!optional ext (pds syspds))
       (_make-pathname
        'make-absolute-pathname
        (let* ([dirs (canonicalize dir pds)]
@@ -271,58 +287,78 @@
        file ext pds) ) ) )
 
 (define decompose-pathname
-  (let* ((pds (string ##sys#pathname-directory-separator))
-	 [set (##sys#string-append "\\/\\" pds)]
-	 [rx1 (string-append "^(.*[" set "])?([^" set "]+)(\\.([^" set ".]+))$")]
-	 [rx2 (string-append "^(.*[" set "])?((\\.)?[^" set "]+)$")]
-	 [string-search string-search]
-	 [strip-pds
-	   (lambda (dir)
-	      (and dir
-		(if (string=? dir pds)
-		    dir
-		    (chop-pds dir pds) ) ) )] )
-    (lambda (pn)
-      (##sys#check-string pn 'decompose-pathname)
-      (if (eq? (##sys#size pn) 0)
-	  (values #f #f #f)
-	  (let ([m (string-search rx1 pn)])
-	    (if m
-		(values (strip-pds (cadr m)) (caddr m) (car (cddddr m)))
-		(let ([m (string-search rx2 pn)])
-		  (if m
-		      (values (strip-pds (cadr m)) (caddr m) #f)
-		      (values (strip-pds pn) #f #f) ) ) ) ) ) ) ) )
+  (let ([string-match string-match]
+        [regexp regexp]
+        [string-append string-append])
+    (let* ([pds ##sys#pathname-directory-separator-string]
+	   [pdsset (##sys#string-append "\\/\\" pds)]
+           [patt1 (string-append "^(.*[" pdsset "])?([^" pdsset "]+)(\\.([^" pdsset ".]+))$")]
+	   [patt2 (string-append "^(.*[" pdsset "])?((\\.)?[^" pdsset "]+)$")]
+	   [rx1 (regexp patt1)]
+	   [rx2 (regexp patt2)]
+	   [strip-pds
+	     (lambda (dir)
+	        (and dir
+		     (if (string=? dir pds)
+		         dir
+		         (chop-pds dir pds) ) ) )] )
+      (lambda (pn)
+        (##sys#check-string pn 'decompose-pathname)
+        (if (fx= 0 (##sys#size pn))
+	    (values #f #f #f)
+	    (let ([ms (string-match rx1 pn)])
+	      (if ms
+		  (values (strip-pds (cadr ms)) (caddr ms) (car (cddddr ms)))
+		  (let ([ms (string-match rx2 pn)])
+		    (if ms
+		        (values (strip-pds (cadr ms)) (caddr ms) #f)
+		        (values (strip-pds pn) #f #f) ) ) ) ) ) ) ) ) )
 
+(define pathname-directory)
+(define pathname-file)
+(define pathname-extension)
+(define pathname-strip-directory)
+(define pathname-strip-extension)
+(define pathname-replace-directory)
+(define pathname-replace-file)
+(define pathname-replace-extension)
 (let ([decompose-pathname decompose-pathname])
+
   (set! pathname-directory
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	dir) ) )
+
   (set! pathname-file
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	file) ) )
+
   (set! pathname-extension
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	ext) ) )
+
   (set! pathname-strip-directory
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	(make-pathname #f file ext) ) ) )
+
   (set! pathname-strip-extension
     (lambda (pn)
       (let-values ([(dir file ext) (decompose-pathname pn)])
 	(make-pathname dir file) ) ) )
+
   (set! pathname-replace-directory
     (lambda (pn dir)
       (let-values ([(_ file ext) (decompose-pathname pn)])
 	(make-pathname dir file ext) ) ) )
+
   (set! pathname-replace-file
     (lambda (pn file)
       (let-values ([(dir _ ext) (decompose-pathname pn)])
 	(make-pathname dir file ext) ) ) )
+
   (set! pathname-replace-extension
     (lambda (pn ext)
       (let-values ([(dir file _) (decompose-pathname pn)])

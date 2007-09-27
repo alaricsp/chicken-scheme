@@ -63,6 +63,8 @@ EOF
   trace-indent trace-indent-level traced-procedure-entry traced-procedure-exit}
 
 (declare
+  (always-bound
+    ##sys#windows-platform)
   (hide parse-option-string bytevector-data member* canonicalize-args do-trace do-untrace
 	traced-procedures describer-table
 	findall trace-indent command-table do-break do-unbreak broken-procedures) )
@@ -837,7 +839,7 @@ EOF
 	   (command-line-arguments (cddr script))
 	   (register-feature! 'script)
 	   (set-cdr! (cdr script) '()) 
-	   (when (and (eq? (software-type) 'windows) (not (eq? (build-platform) 'cygwin)) )
+	   (when ##sys#windows-platform
 	     (and-let* ((sname (lookup-script-file (cadr script))))
 	       (set-car! (cdr script) sname) ) ) ]
 	  [else

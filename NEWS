@@ -1,3 +1,14 @@
+2.712
+
+- regex unit:
+  Uses PCRE 7.4
+
+- utils unit:
+  Uses compiled regular expressions
+
+- unit posix:
+  Uses compiled regular expressions
+
 2.701
 
 - countless bugfixes and minor improvements

@@ -452,7 +452,7 @@
 		   '(##core#undefined)
 		   (let ((clause (##sys#slot clauses 0))
 			 (rclauses (##sys#slot clauses 1)) )
-		     (##sys#check-syntax 'switch clause '#(_ 1))
+		     (##sys#check-syntax 'select clause '#(_ 1))
 		     (if (eq? 'else (car clause))
 			 `(begin ,@(cdr clause))
 			 `(if (or ,@(map (lambda (x) `(eqv? ,tmp ,x)) 

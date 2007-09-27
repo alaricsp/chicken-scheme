@@ -6045,7 +6045,7 @@ void C_ccall C_values(C_word c, C_word closure, C_word k, ...)
 
   va_start(v, k);
 
-  /* Check continuation wether it receives multiple values: */
+  /* Check continuation whether it receives multiple values: */
   if(C_block_item(k, 0) == (C_word)values_continuation) {
     while(c-- > 2)
       C_save(va_arg(v, C_word));
@@ -7036,7 +7036,7 @@ void C_ccall C_open_file_port(C_word c, C_word closure, C_word k, C_word port, C
 
     if(n >= STRING_BUFFER_SIZE) {
       if((buf = (char *)C_malloc(n + 1)) == NULL)
-	barf(C_OUT_OF_MEMORY_ERROR, "system");
+	barf(C_OUT_OF_MEMORY_ERROR, "open");
     }
 
     C_strncpy(buf, C_c_string(channel), n);

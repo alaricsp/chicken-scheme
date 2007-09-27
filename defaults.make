@@ -59,6 +59,12 @@ else
 EGGDIR = $(DESTDIR)/lib/chicken/$(BINARYVERSION)
 endif
 
+ifdef PCRE7
+PCREDIR = pcre7
+else
+PCREDIR = pcre6
+endif
+
 # commands
 
 C_COMPILER ?= gcc
@@ -92,7 +98,7 @@ ifndef NOPTABLES
 C_COMPILER_PTABLES_OPTIONS = -DC_ENABLE_PTABLES
 endif
 INCLUDES ?= -I.
-PCRE_INCLUDES ?= $(INCLUDES) -Ipcre
+PCRE_INCLUDES ?= $(INCLUDES) -I$(PCREDIR)
 C_COMPILER_COMPILE_OPTION ?= -c
 C_COMPILER_OUTPUT_OPTION ?= -o
 ifdef DEBUGBUILD
@@ -145,7 +151,7 @@ SO ?= .so
 
 POSIXFILE ?= posixunix
 # CHICKEN_CONFIG_H = chicken-config.h
-PCRE_OBJECT_FILES ?= pcre/*.o
+PCRE_OBJECT_FILES ?= $(PCREDIR)/*.o
 
 ifneq ($(ARCH),)
 HACKED_APPLY = 1
