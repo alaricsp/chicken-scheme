@@ -64,47 +64,47 @@ LIBCHICKENGUI_STATIC_OBJECTS = library-static$(O) eval-static$(O) extras-static$
 	profiler-static$(O) stub-static$(O) match-static$(O) gui-runtime-static$(O)
 
 PCRE_SHARED_OBJECTS = \
-  pcre7/pcre_compile$(O) \
-  pcre7/pcre_config$(O) \
-  pcre7/pcre_dfa_exec$(O) \
-  pcre7/pcre_exec$(O) \
-  pcre7/pcre_fullinfo$(O) \
-  pcre7/pcre_get$(O) \
-  pcre7/pcre_globals$(O) \
-  pcre7/pcre_info$(O) \
-  pcre7/pcre_maketables$(O) \
-  pcre7/pcre_newline$(O) \
-  pcre7/pcre_ord2utf8$(O) \
-  pcre7/pcre_refcount$(O) \
-  pcre7/pcre_study$(O) \
-  pcre7/pcre_tables$(O) \
-  pcre7/pcre_try_flipped$(O) \
-  pcre7/pcre_ucp_searchfuncs$(O) \
-  pcre7/pcre_valid_utf8$(O) \
-  pcre7/pcre_version$(O) \
-  pcre7/pcre_xclass$(O) \
-  pcre7/pcre_chartables$(O)
+  pcre/pcre_compile$(O) \
+  pcre/pcre_config$(O) \
+  pcre/pcre_dfa_exec$(O) \
+  pcre/pcre_exec$(O) \
+  pcre/pcre_fullinfo$(O) \
+  pcre/pcre_get$(O) \
+  pcre/pcre_globals$(O) \
+  pcre/pcre_info$(O) \
+  pcre/pcre_maketables$(O) \
+  pcre/pcre_newline$(O) \
+  pcre/pcre_ord2utf8$(O) \
+  pcre/pcre_refcount$(O) \
+  pcre/pcre_study$(O) \
+  pcre/pcre_tables$(O) \
+  pcre/pcre_try_flipped$(O) \
+  pcre/pcre_ucp_searchfuncs$(O) \
+  pcre/pcre_valid_utf8$(O) \
+  pcre/pcre_version$(O) \
+  pcre/pcre_xclass$(O) \
+  pcre/pcre_chartables$(O)
 PCRE_STATIC_OBJECTS = \
-  pcre7/pcre_compile-static$(O) \
-  pcre7/pcre_config-static$(O) \
-  pcre7/pcre_dfa_exec-static$(O) \
-  pcre7/pcre_exec-static$(O) \
-  pcre7/pcre_fullinfo-static$(O) \
-  pcre7/pcre_get-static$(O) \
-  pcre7/pcre_globals-static$(O) \
-  pcre7/pcre_info-static$(O) \
-  pcre7/pcre_maketables-static$(O) \
-  pcre7/pcre_newline-static$(O) \
-  pcre7/pcre_ord2utf8-static$(O) \
-  pcre7/pcre_refcount-static$(O) \
-  pcre7/pcre_study-static$(O) \
-  pcre7/pcre_tables-static$(O) \
-  pcre7/pcre_try_flipped-static$(O) \
-  pcre7/pcre_ucp_searchfuncs-static$(O) \
-  pcre7/pcre_valid_utf8-static$(O) \
-  pcre7/pcre_version-static$(O) \
-  pcre7/pcre_xclass-static$(O) \
-  pcre7/pcre_chartables-static$(O)
+  pcre/pcre_compile-static$(O) \
+  pcre/pcre_config-static$(O) \
+  pcre/pcre_dfa_exec-static$(O) \
+  pcre/pcre_exec-static$(O) \
+  pcre/pcre_fullinfo-static$(O) \
+  pcre/pcre_get-static$(O) \
+  pcre/pcre_globals-static$(O) \
+  pcre/pcre_info-static$(O) \
+  pcre/pcre_maketables-static$(O) \
+  pcre/pcre_newline-static$(O) \
+  pcre/pcre_ord2utf8-static$(O) \
+  pcre/pcre_refcount-static$(O) \
+  pcre/pcre_study-static$(O) \
+  pcre/pcre_tables-static$(O) \
+  pcre/pcre_try_flipped-static$(O) \
+  pcre/pcre_ucp_searchfuncs-static$(O) \
+  pcre/pcre_valid_utf8-static$(O) \
+  pcre/pcre_version-static$(O) \
+  pcre/pcre_xclass-static$(O) \
+  pcre/pcre_chartables-static$(O)
 
 COMPILER_OBJECTS = chicken$(O) batch-driver$(O) compiler$(O) optimizer$(O) support$(O) \
 	c-platform$(O) c-backend$(O) 
@@ -457,166 +457,166 @@ optimizer-static$(O): optimizer.c chicken.h $(CHICKEN_CONFIG_H)
 
 # pcre objects
 
-pcre7/pcre_compile$(O): pcre7/pcre_compile.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_compile$(O): pcre/pcre_compile.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_config$(O): pcre7/pcre_config.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_config$(O): pcre/pcre_config.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_dfa_exec$(O): pcre7/pcre_dfa_exec.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_dfa_exec$(O): pcre/pcre_dfa_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_exec$(O): pcre7/pcre_exec.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_exec$(O): pcre/pcre_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_fullinfo$(O): pcre7/pcre_fullinfo.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_fullinfo$(O): pcre/pcre_fullinfo.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_get$(O): pcre7/pcre_get.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_get$(O): pcre/pcre_get.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_globals$(O): pcre7/pcre_globals.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_globals$(O): pcre/pcre_globals.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_info$(O): pcre7/pcre_info.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_info$(O): pcre/pcre_info.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_maketables$(O): pcre7/pcre_maketables.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_maketables$(O): pcre/pcre_maketables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_newline$(O): pcre7/pcre_newline.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_newline$(O): pcre/pcre_newline.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_ord2utf8$(O): pcre7/pcre_ord2utf8.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_ord2utf8$(O): pcre/pcre_ord2utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_refcount$(O): pcre7/pcre_refcount.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_refcount$(O): pcre/pcre_refcount.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_study$(O): pcre7/pcre_study.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_study$(O): pcre/pcre_study.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_tables$(O): pcre7/pcre_tables.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_tables$(O): pcre/pcre_tables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_try_flipped$(O): pcre7/pcre_try_flipped.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_try_flipped$(O): pcre/pcre_try_flipped.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_ucp_searchfuncs$(O): pcre7/pcre_ucp_searchfuncs.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h pcre7/ucptable.h pcre7/ucpinternal.h
+pcre/pcre_ucp_searchfuncs$(O): pcre/pcre_ucp_searchfuncs.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h pcre/ucptable.h pcre/ucpinternal.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_valid_utf8$(O): pcre7/pcre_valid_utf8.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_valid_utf8$(O): pcre/pcre_valid_utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_version$(O): pcre7/pcre_version.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_version$(O): pcre/pcre_version.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_xclass$(O): pcre7/pcre_xclass.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_xclass$(O): pcre/pcre_xclass.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_chartables$(O): pcre7/pcre_chartables.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H)
+pcre/pcre_chartables$(O): pcre/pcre_chartables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
 
 # static pcre objects
 
-pcre7/pcre_compile-static$(O): pcre7/pcre_compile.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_compile-static$(O): pcre/pcre_compile.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_config-static$(O): pcre7/pcre_config.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_config-static$(O): pcre/pcre_config.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_dfa_exec-static$(O): pcre7/pcre_dfa_exec.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_dfa_exec-static$(O): pcre/pcre_dfa_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_exec-static$(O): pcre7/pcre_exec.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_exec-static$(O): pcre/pcre_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_fullinfo-static$(O): pcre7/pcre_fullinfo.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_fullinfo-static$(O): pcre/pcre_fullinfo.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_get-static$(O): pcre7/pcre_get.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_get-static$(O): pcre/pcre_get.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_globals-static$(O): pcre7/pcre_globals.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_globals-static$(O): pcre/pcre_globals.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_info-static$(O): pcre7/pcre_info.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_info-static$(O): pcre/pcre_info.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_maketables-static$(O): pcre7/pcre_maketables.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_maketables-static$(O): pcre/pcre_maketables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_newline-static$(O): pcre7/pcre_newline.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_newline-static$(O): pcre/pcre_newline.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_ord2utf8-static$(O): pcre7/pcre_ord2utf8.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_ord2utf8-static$(O): pcre/pcre_ord2utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_refcount-static$(O): pcre7/pcre_refcount.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_refcount-static$(O): pcre/pcre_refcount.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_study-static$(O): pcre7/pcre_study.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_study-static$(O): pcre/pcre_study.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_tables-static$(O): pcre7/pcre_tables.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_tables-static$(O): pcre/pcre_tables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_try_flipped-static$(O): pcre7/pcre_try_flipped.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_try_flipped-static$(O): pcre/pcre_try_flipped.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_ucp_searchfuncs-static$(O): pcre7/pcre_ucp_searchfuncs.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h pcre7/ucptable.h pcre7/ucpinternal.h
+pcre/pcre_ucp_searchfuncs-static$(O): pcre/pcre_ucp_searchfuncs.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h pcre/ucptable.h pcre/ucpinternal.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_valid_utf8-static$(O): pcre7/pcre_valid_utf8.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_valid_utf8-static$(O): pcre/pcre_valid_utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_version-static$(O): pcre7/pcre_version.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_version-static$(O): pcre/pcre_version.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_xclass-static$(O): pcre7/pcre_xclass.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H) pcre7/pcre.h pcre7/ucp.h
+pcre/pcre_xclass-static$(O): pcre/pcre_xclass.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
-pcre7/pcre_chartables-static$(O): pcre7/pcre_chartables.c pcre7/pcre_internal.h pcre7/config.h $(CHICKEN_CONFIG_H)
+pcre/pcre_chartables-static$(O): pcre/pcre_chartables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) \
 	  $@ $(C_COMPILER_PCRE_OPTIONS)
