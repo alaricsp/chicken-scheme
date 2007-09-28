@@ -2007,9 +2007,7 @@ C_word add_symbol(C_word **ptr, C_word key, C_word string, C_SYMBOL_TABLE *stabl
   ((C_SCHEME_BLOCK *)sym)->header = C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1);
   C_set_block_item(sym, 0, keyw ? sym : C_SCHEME_UNBOUND); /* keyword? */
   C_set_block_item(sym, 1, string);
-#ifdef C_EXTRA_SYMBOL_SLOT
-  C_set_block_item(sym, 2, C_SCHEME_UNDEFINED);
-#endif
+  C_set_block_item(sym, 2, C_SCHEME_END_OF_LIST);
   *ptr = p;
   b2 = stable->table[ key ];	/* previous bucket */
   bucket = C_pair(ptr, sym, b2); /* create new bucket */
@@ -4065,11 +4063,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 #endif
 
   case C_fix(33):
-#ifdef C_EXTRA_SYMBOL_SLOT
     return C_SCHEME_TRUE;
-#else
-    return C_SCHEME_FALSE;
-#endif
 
   case C_fix(34):
 #ifdef C_HACKED_APPLY
@@ -7682,9 +7676,7 @@ void C_ccall C_make_symbol(C_word c, C_word closure, C_word k, C_word name)
   *(a++) = C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1);
   *(a++) = C_SCHEME_UNBOUND;
   *(a++) = name;
-#ifdef C_EXTRA_SYMBOL_SLOT
-  *a = C_SCHEME_UNDEFINED;
-#endif
+  *a = C_SCHEME_END_OF_LIST;
   C_kontinue(k, s0);
 }
 

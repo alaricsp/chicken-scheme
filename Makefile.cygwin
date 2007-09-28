@@ -1,4 +1,4 @@
-# Makefile.mingw - configuration for MinGW (no MSYS) -*- Makefile -*-
+# Makefile.cygwin - configuration for Linux -*- Makefile -*-
 #
 # Copyright (c) 2007, Felix L. Winkelmann
 # All rights reserved.
@@ -36,19 +36,7 @@
 # platform configuration
 
 ARCH = x86
-HACKED_APPLY = 1
-WINDOWS = 1
-
-# file extensions
-
-SO = .dll
-EXE = .exe
-
-# commands
-
-C_COMPILER = gcc
-CXX_COMPILER = g++
-LINKER = gcc
+HACKED_APPLY=1
 
 # options
 
@@ -56,38 +44,19 @@ C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
 ifdef DEBUGBUILD
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
 else
-C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os
+C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
 endif
 C_COMPILER_SHARED_OPTIONS = -DPIC
-C_COMPILER_GUI_RUNTIME_OPTIONS = -DC_WINDOWS_GUI
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
 LIBRARIES = -lm
-LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libchicken.dll.a
-LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libuchicken.dll.a
-LIBCHICKENGUI_SO_LINKER_OPTIONS = -Wl,--out-implib,libchickengui.dll.a
-LIBCHICKEN_SO_LIBRARIES = -lm -lws2_32 
-LIBUCHICKEN_SO_LIBRARIES = -lm -lws2_32 
-LIBCHICKENGUI_SO_LIBRARIES = -lm -lkernel32 -luser32 -lgdi32 -lws2_32 
-LIBCHICKENGUI_IMPORT_LIBRARY = libchickengui.dll.a
-LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
-LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
 
 # special files
 
 CHICKEN_CONFIG_H = chicken-config.h
-APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
-POSIXFILE = posixwin
 
 # select default and internal settings
 
 include defaults.make
-
-# main target
-
-all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
-	csc$(EXE) libchicken$(SO) \
-	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE) \
-	chicken.info
 
 chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_DIRENT_H 1" >>$@
@@ -103,21 +72,19 @@ chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_STRINGS_H 1" >>$@
 	echo "#define HAVE_STRING_H 1" >>$@
 	echo "#define HAVE_STRTOLL 1" >>$@
+	echo "#define HAVE_STRTOQ 1" >>$@
 	echo "#define HAVE_SYS_STAT_H 1" >>$@
 	echo "#define HAVE_SYS_TYPES_H 1" >>$@
 	echo "#define HAVE_UNISTD_H 1" >>$@
 	echo "#define HAVE_UNSIGNED_LONG_LONG 1" >>$@
-	echo "#define HAVE_WINDOWS_H 1" >>$@
-	echo "#define HAVE__STRTOI64 1" >>$@
 	echo "#define STDC_HEADERS 1" >>$@
+	echo "#define HAVE_ALLOCA 1" >>$@
 	echo "#define HAVE_ALLOCA_H 1" >>$@
-	echo "#define HAVE_DIRECT_H 1" >>$@
+	echo "#define HAVE_GRP_H 1" >>$@
 	echo "#define HAVE_ERRNO_H 1" >>$@
 	echo "#define HAVE_GCVT 1" >>$@
-	echo "#define HAVE_LOADLIBRARY 1" >>$@
-	echo "#define HAVE_GETPROCADDRESS 1" >>$@
-	echo "#define HAVE_WINSOCK2_H 1" >>$@
-	echo "#define HAVE_WS2TCPIP_H 1" >>$@
+	echo "#define HAVE_SYSEXITS_H 1" >>$@
+	echo "#define HAVE_MEMMOVE 1" >>$@
 	echo "#define C_STACK_GROWS_DOWNWARD 1" >>$@
 ifdef GCHOOKS
 	echo "#define C_GC_HOOKS" >>$@
@@ -128,7 +95,9 @@ endif
 ifdef NOAPPLYHOOK
 	echo "#define C_NO_APPLY_HOOK" >>$@
 endif
+ifdef HACKED_APPLY
 	echo "#define C_HACKED_APPLY" >>$@
+endif
 	cat chicken-defaults.h >>$@
 
 include rules.make

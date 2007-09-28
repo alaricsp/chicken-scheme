@@ -3179,7 +3179,6 @@ EOF
 		   (if (##sys#fudge 24) " dload" "") 
 		   (if (##sys#fudge 28) " ptables" "")
 		   (if (##sys#fudge 32) " gchooks" "") 
-		   (if (##sys#fudge 33) " extraslot" "")
 		   (if (##sys#fudge 35) " applyhook" "")
 		   (if (##sys#fudge 39) " cross" "") ) ) )
 	(string-append 
@@ -3226,7 +3225,6 @@ EOF
 (when (##sys#fudge 40) (set! ##sys#features (cons #:manyargs ##sys#features)))
 (when (##sys#fudge 24) (set! ##sys#features (cons #:dload ##sys#features)))
 (when (##sys#fudge 28) (set! ##sys#features (cons #:ptables ##sys#features)))
-(when (##sys#fudge 33) (set! ##sys#features (cons #:extraslot ##sys#features)))
 (when (##sys#fudge 35) (set! ##sys#features (cons #:applyhook ##sys#features)))
 
 (define (register-feature! . fs)
@@ -4601,3 +4599,24 @@ EOF
   (and-let* ((r (##core#inline "C_dunload" (##sys#make-c-string name))))
     (##sys#gc #t) 
     #t) )
+
+
+;;; Property lists
+
+(define (put! sym prop val)
+  (##sys#check-symbol sym 'put!)
+  (let loop ((plist (##sys#slot sym 2)))
+    (cond ((null? plist) (##sys#setslot sym 2 (cons prop (cons val (##sys#slot sym 2)))) )
+	  ((eq? (##sys#slot plist 0) prop) (##sys#setslot (##sys#slot plist 1) 0 val))
+	  (else (loop (##sys#slot (##sys#slot plist 1) 1)))) )
+  val)
+
+(define get
+  (getter-with-setter
+   (lambda (sym prop . default)
+     (##sys#check-symbol sym 'get)
+     (let loop ((plist (##sys#slot sym 2)))
+       (cond ((null? plist) (optional default #f))
+	     ((eq? (##sys#slot plist 0) prop) (##sys#slot (##sys#slot plist 1) 0))
+	     (else (loop (##sys#slot (##sys#slot plist 1) 1))))) )
+   put!) )

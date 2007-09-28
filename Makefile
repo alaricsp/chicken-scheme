@@ -45,6 +45,7 @@ all clean spotless distclean install uninstall:
 	@echo "  $(MAKE) PLATFORM=bsd"
 	@echo "  $(MAKE) PLATFORM=macosx"
 	@echo "  $(MAKE) PLATFORM=mingw"
+	@echo "  $(MAKE) PLATFORM=cygwin"
 	@echo "  $(MAKE) PLATFORM=solaris"
 	@echo "  $(MAKE) PLATFORM=cross-linux-mingw"
 	@echo ""

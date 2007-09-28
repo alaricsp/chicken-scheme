@@ -835,8 +835,8 @@ get_nametable_entry(const pcre_nametable *nt, int idx, int *pcc)
   /* Number of capturing parentheses is MSB */
 # ifdef C_LITTLE_ENDIAN
   uint16_t cc;
-  ((unit8_t *)&cc)[0] = ((unit8_t *)&entry->cc)[1];
-  ((unit8_t *)&cc)[1] = ((unit8_t *)&entry->cc)[0];
+  ((uint8_t *)&cc)[0] = ((uint8_t *)&entry->cc)[1];
+  ((uint8_t *)&cc)[1] = ((uint8_t *)&entry->cc)[0];
   *pcc = cc;
 # else
   *pcc = entry->cc;

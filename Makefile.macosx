@@ -99,9 +99,6 @@ chicken-config.h: chicken-defaults.h
 ifdef GCHOOKS
 	echo "#define C_GC_HOOKS" >>$@
 endif
-ifdef EXTRASLOT
-	echo "#define C_EXTRA_SYMBOL_SLOT" >>$@
-endif
 ifdef SYMBOLGC
 	echo "#define C_COLLECT_ALL_SYMBOLS" >>$@
 endif

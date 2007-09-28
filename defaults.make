@@ -35,7 +35,7 @@
 
 # basic parameters
 
-BINARYVERSION = 2
+BINARYVERSION = 3
 NURSERY = (128*1024)
 STACKDIRECTION = 1
 CROSS_CHICKEN = 0
@@ -52,12 +52,7 @@ MANDIR = $(SHAREDIR)/man/man1
 INFODIR = $(SHAREDIR)/info
 INCDIR = $(DESTDIR)/include
 DOCDIR = $(DATADIR)/doc
-
-ifdef EXTRASLOT
-EGGDIR = $(DESTDIR)/lib/chicken/$(BINARYVERSION)x
-else
 EGGDIR = $(DESTDIR)/lib/chicken/$(BINARYVERSION)
-endif
 
 # commands
 

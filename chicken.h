@@ -405,11 +405,7 @@ typedef unsigned __int64   uint64_t;
 #define C_SIZEOF_LIST(n)          ((n) * 3 + 1)
 #define C_SIZEOF_PAIR             3
 #define C_SIZEOF_STRING(n)        (C_bytestowords(n) + 2)
-#ifdef C_EXTRA_SYMBOL_SLOT
-# define C_SIZEOF_SYMBOL          4
-#else
-# define C_SIZEOF_SYMBOL          3
-#endif
+#define C_SIZEOF_SYMBOL          4
 #define C_SIZEOF_INTERNED_SYMBOL(n) (C_SIZEOF_SYMBOL + C_SIZEOF_BUCKET + C_SIZEOF_STRING(n))
 #ifdef C_DOUBLE_IS_32_BITS
 # define C_SIZEOF_FLONUM           2
