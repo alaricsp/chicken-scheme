@@ -347,7 +347,7 @@ EOF
 ;FIXME nonnull-unsigned-c-string causes problems - converted string is too long!
 
 (define re-compile
-  (foreign-lambda* pcre ((c-string patt) (unsigned-integer options) ((const (c-pointer unsigned-char)) tables))
+  (foreign-lambda* pcre ((nonnull-c-string patt) (unsigned-integer options) ((const (c-pointer unsigned-char)) tables))
     "return(pcre_compile(patt, options, &C_regex_error, &C_regex_error_offset, tables));") )
 
 (define (re-checked-compile pattern options tables loc)
@@ -855,7 +855,7 @@ EOF
   (foreign-lambda nonnull-c-pointer "get_nametable" (const nonnull-pcre) (const pcre_extra)))
 
 (define re-nametable-entry
-  (foreign-lambda c-string "get_nametable_entry" (const pcre_nametable) int (c-pointer int)))
+  (foreign-lambda nonnull-c-string "get_nametable_entry" (const pcre_nametable) int (c-pointer int)))
 
 (define (regexp-info-nametable rx)
   (##sys#check-structure rx 'regexp 'regexp-info-nametable)
@@ -960,7 +960,7 @@ EOF
 
 (define re-match
   (foreign-lambda* int (((const nonnull-pcre) code) ((const pcre_extra) extra)
-                        (c-string str) (int start) (int range)
+                        (nonnull-c-string str) (int start) (int range)
                         (unsigned-integer options))
     "return(pcre_exec(code, extra, str, start + range, start, options, C_regex_ovector, STATIC_OVECTOR_LEN * OVECTOR_LENGTH_MULTIPLE));") )
 
