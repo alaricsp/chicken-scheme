@@ -47,7 +47,7 @@
     regexp-optimization-set! regexp-optimize regexp-extra-info
     regex-chardef-table? regex-chardef-table
     regex-chardef-set! regex-chardefs-update! regex-chardefs
-    set-regexp-options! regexp-options regexp-options-symbols
+    set-regexp-options! regexp-options
     regexp-info regexp-info-nametable
     pcre-config-info
     make-anchored-pattern
@@ -627,7 +627,7 @@ EOF
         extra val)]
     [(callout-data)
       (##sys#check-blob callout-data loc)
-      ((foreign-lambda* void ((nonnull-pcre_extra extra) (nonnull-blob val))
+      ((foreign-lambda* void ((nonnull-pcre_extra extra) (nonnull-byte-vector val))
           "extra->callout_data = val;"
           "extra->flags |= PCRE_EXTRA_CALLOUT_DATA;")
         extra val)]
@@ -693,7 +693,7 @@ EOF
           "return(extra->match_limit_recursion);")
         extra)]
     [(callout-data)
-      ((foreign-lambda* void ((nonnull-pcre_extra extra) (nonnull-blob val))
+      ((foreign-lambda* void ((nonnull-pcre_extra extra) (nonnull-byte-vector val))
           "return(extra->callout_data);")
         extra)]
     [(tables)
@@ -740,14 +740,14 @@ EOF
 ;; Ref the 'exec' options
 
 (define (regexp-options rx)
-  (##sys#check-structure rx 'regexp 'regexp-options-set!)
-  (options->symbols (%regexp-options rx)) )
-
-;;
-
-(define (regexp-options-symbols options)
-  (##sys#check-integer options 'regexp-options-symbol)
-  (options->symbols options) )
+  (options->symbols
+    (cond [(%regexp? obj)   (%regexp-options obj)]
+          [(integer? obj)   obj]
+          [else
+            (##sys#signal-hook #:type-error
+                               'regexp-options
+                     "bad argument type - not an integer or compiled regular expression"
+                     obj)] ) ) )
 
 
 ;;; Regexp 'fullinfo':
