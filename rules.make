@@ -770,7 +770,7 @@ uninstall:
 	  $(BINDIR)/csi$(EXE) $(BINDIR)/chicken-profile$(EXE) \
 	  $(BINDIR)/chicken-setup$(EXE) $(BINDIR)/csc$(EXE)
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(LIBDIR)/libchicken.* $(LIBDIR)/libuchicken.*
-	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(MANDIR)/chicken.1 $(MANDIR)/csi.1 $(MANDIR)/csc.1
+	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(MANDIR)/chicken.1 $(MANDIR)/csi.1 $(MANDIR)/csc.1 \
 	  $(MANDIR)/chicken-profile.1 $(MANDIR)/chicken-setup.1
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(INCDIR)/chicken.h $(INCDIR)/chicken-config.h
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) $(DATADIR)
