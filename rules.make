@@ -648,6 +648,9 @@ csi$(O): csi.c chicken.h $(CHICKEN_CONFIG_H)
 csi-static$(O): csi.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
+chicken-bug$(O): chicken-bug.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 
 # libchicken
 
@@ -699,9 +702,11 @@ csc$(EXE): csc$(O) $(PRIMARY_LIBCHICKEN)
 $(CHICKEN_STATIC_EXECUTABLE): $(COMPILER_STATIC_OBJECTS) libchicken$(A)
 	$(LINKER) $(LINKER_LINK_STATIC_OPTION) $(COMPILER_STATIC_OBJECTS) $(LINKER_OUTPUT_OPTION) $@ \
 	  libchicken$(A) $(LIBRARIES)
-
 $(CSI_STATIC_EXECUTABLE): csi$(O)
 	$(LINKER) $(LINKER_LINK_STATIC_OPTION) $< $(LINKER_OUTPUT_OPTION) $@ libchicken$(A) $(LIBRARIES)
+chicken-bug$(EXE):
+	$(LINKER) $(LINKER_LINK_STATIC_OPTION) $< $(LINKER_OUTPUT_OPTION) $@ libchicken$(A) $(LIBRARIES)
+
 
 # info documentation
 
@@ -741,17 +746,18 @@ endif
 	$(POSTINSTALL_STATIC_LIBRARY) $(POSTINSTALL_STATIC_LIBRARY_FLAGS) \
 	  $(LIBDIR)/libuchicken$(A)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) chicken$(EXE) csi$(EXE) \
-	  chicken-profile$(EXE) csc$(EXE) $(BINDIR)
+	  chicken-profile$(EXE) csc$(EXE) chicken-bug$(EXE) $(BINDIR)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/chicken
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/csi
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/chicken-profile
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/csc
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/chicken-bug
 ifndef STATICBUILD
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) chicken-setup$(EXE) $(BINDIR)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(BINDIR)/chicken-setup
 endif
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.1 csi.1 csc.1 chicken-setup.1 \
-	  chicken-profile.1 $(MANDIR)
+	  chicken-profile.1 chicken-bug.1 $(MANDIR)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DOCDIR)/html
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) html/* $(DOCDIR)/html
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.pdf $(DOCDIR)
@@ -760,7 +766,7 @@ endif
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm \
 	  chicken-ffi-macros.scm $(DATADIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) *.exports $(DATADIR)
-	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(INFODIR) --info-file=chicken.info 
+	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(INFODIR) chicken.info
 ifdef WINDOWS
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) csibatch.bat $(BINDIR)
 endif
@@ -768,10 +774,11 @@ endif
 uninstall:
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(BINDIR)/chicken$(EXE) \
 	  $(BINDIR)/csi$(EXE) $(BINDIR)/chicken-profile$(EXE) \
-	  $(BINDIR)/chicken-setup$(EXE) $(BINDIR)/csc$(EXE)
+	  $(BINDIR)/chicken-setup$(EXE) $(BINDIR)/csc$(EXE) \
+	  $(BINDIR)/chicken-bug$(EXE)
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(LIBDIR)/libchicken.* $(LIBDIR)/libuchicken.*
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(MANDIR)/chicken.1 $(MANDIR)/csi.1 $(MANDIR)/csc.1 \
-	  $(MANDIR)/chicken-profile.1 $(MANDIR)/chicken-setup.1
+	  $(MANDIR)/chicken-profile.1 $(MANDIR)/chicken-setup.1 $(MANDIR)/chicken-bug.1
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(INCDIR)/chicken.h $(INCDIR)/chicken-config.h
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) $(DATADIR)
 	$(UNINSTALLINFO_PROGRAM) $(UNINSTALLINFO_PROGRAM_OPTIONS) chicken.info
@@ -869,6 +876,8 @@ chicken-setup.c: chicken-setup.scm chicken-more-macros.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
 csc.c: csc.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
+chicken-bug.c: chicken-bug.scm
+	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
 
 # distribution files
 
@@ -882,7 +891,7 @@ distfiles: library.c eval.c extras.c lolevel.c utils.c \
 	usrfi-18.c uposixunix.c uposixwin.c uregex.c \
 	chicken-profile.c chicken-setup.c csc.c csi.c \
 	chicken.c batch-driver.c compiler.c optimizer.c support.c \
-	c-platform.c c-backend.c 
+	c-platform.c c-backend.c chicken-bug.c
 
 # cleaning up
 
@@ -891,7 +900,7 @@ distfiles: library.c eval.c extras.c lolevel.c utils.c \
 clean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
 	  chicken-setup$(EXE) chicken-profile$(EXE) csi-static$(EXE) \
-	  csc-static$(EXE) chicken-static$(EXE) chicken.info *$(O) \
+	  csc-static$(EXE) chicken-static$(EXE) chicken-bug$(EXE) chicken.info *$(O) \
 	  libchicken$(SO) libuchicken$(SO) libchicken$(A) libuchicken$(A) \
 	  chicken.info pcre6/*$(O)
 
