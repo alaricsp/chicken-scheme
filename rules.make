@@ -704,9 +704,8 @@ $(CHICKEN_STATIC_EXECUTABLE): $(COMPILER_STATIC_OBJECTS) libchicken$(A)
 	  libchicken$(A) $(LIBRARIES)
 $(CSI_STATIC_EXECUTABLE): csi$(O)
 	$(LINKER) $(LINKER_LINK_STATIC_OPTION) $< $(LINKER_OUTPUT_OPTION) $@ libchicken$(A) $(LIBRARIES)
-chicken-bug$(EXE):
+chicken-bug$(EXE): chicken-bug$(O) $(PRIMARY_LIBCHICKEN)
 	$(LINKER) $(LINKER_LINK_STATIC_OPTION) $< $(LINKER_OUTPUT_OPTION) $@ libchicken$(A) $(LIBRARIES)
-
 
 # info documentation
 

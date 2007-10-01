@@ -167,7 +167,7 @@ CHICKEN_SHARED_EXECUTABLE = chicken-shared$(EXE)
 CSI_SHARED_EXECUTABLE = csi-shared$(EXE)
 TARGETS ?= libchicken$(A) libuchicken$(A) $(CHICKEN_STATIC_EXECUTABLE) \
 	$(CSI_STATIC_EXECUTABLE) chicken-profile$(EXE) csc$(EXE) \
-	chicken.info
+	chicken.info chicken-bug$(EXE)
 else
 CHICKEN_STATIC_EXECUTABLE = chicken-static$(EXE)
 CSI_STATIC_EXECUTABLE = csi-static$(EXE)
@@ -175,7 +175,7 @@ CHICKEN_SHARED_EXECUTABLE = chicken$(EXE)
 CSI_SHARED_EXECUTABLE = csi$(EXE)
 TARGETS ?= libchicken$(A) libuchicken$(A) $(CHICKEN_SHARED_EXECUTABLE) \
 	$(CSI_SHARED_EXECUTABLE) chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
-	libuchicken$(SO) chicken-setup$(EXE) chicken.info
+	libuchicken$(SO) chicken-setup$(EXE) chicken.info chicken-bug$(EXE)
 endif
 
 # main rule
