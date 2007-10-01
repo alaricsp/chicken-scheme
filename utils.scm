@@ -434,7 +434,7 @@
 
 ;;; Handy little things:
 
-(define (shift! lst #!optional default)
+(define (shift! lst #!optional default) ;; DEPRECATED
   (if (null? lst)
       default
       (begin
@@ -446,7 +446,7 @@
 	  (##sys#setslot lst 0 (##sys#slot d 0))
 	  x) ) ) )
 
-(define (unshift! x lst)
+(define (unshift! x lst) ;; DEPRECATED
   (##sys#check-pair lst 'unshift!)
   (##sys#setslot lst 1 (cons (##sys#slot lst 0) (##sys#slot lst 1)))
   (##sys#setslot lst 0 x)
