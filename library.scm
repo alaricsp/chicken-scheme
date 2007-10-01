@@ -2688,14 +2688,14 @@ EOF
   (for-each (cut ##sys#print <> #f ##sys#standard-output) lst) )
  
 (define (print . args)
-    (*print-each args)
-    (##sys#write-char-0 #\newline ##sys#standard-output) 
-    (if (null? args) (void) (car args)) )
+  (*print-each args)
+  (##sys#write-char-0 #\newline ##sys#standard-output) 
+  (void) )
 
 (define (print* . args)
   (*print-each args)
   (##sys#flush-output ##sys#standard-output)
-  (if (null? args) (void) (car args)) )
+  (void) )
 
 (define current-print-length 0)
 (define print-length-limit #f)
@@ -4635,9 +4635,15 @@ EOF
 		      #t ) )
 	       (loop nxt tl) ) ) ) ) )
 
-(define (symbol-plist sym)
-  (##sys#check-symbol sym 'symbol-plist)
-  (##sys#slot sym 2) )
+(define symbol-plist
+  (getter-with-setter
+   (lambda (sym)
+     (##sys#check-symbol sym 'symbol-plist)
+     (##sys#slot sym 2) )
+   (lambda (sym lst)
+     (##sys#check-symbol sym 'symbol-plist)
+     (##sys#check-list lst 'symbol-plist/setter)
+     (##sys#setslot sym 2 lst) ) ) )
 
 (define (get-properties sym props)
   (##sys#check-symbol sym 'get-properties)
