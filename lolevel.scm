@@ -263,7 +263,7 @@ EOF
   (if (and (##core#inline "C_blockp" x) (##core#inline "C_specialp" x))
       (and (##core#inline "C_taggedpointerp" x)
 	   (##sys#slot x 1) )
-      (##sys#signal-hook #:type-error 'tag-pointer "bad argument type - not a pointer" x) ) )
+      (##sys#signal-hook #:type-error 'pointer-tag "bad argument type - not a pointer" x) ) )
 
 
 ;;; Procedures extended with data:

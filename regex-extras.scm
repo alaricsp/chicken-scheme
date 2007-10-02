@@ -38,6 +38,7 @@
  [else (declare (unit regex-extras))] )
 
 (declare
+  (uses regex extras)
   (usual-integrations)
   (disable-interrupts)
   (generic) ; PCRE options use lotsa bits
@@ -45,31 +46,27 @@
   (export
     regex-version
     regex-chardef-table regex-chardef-set! regex-chardefs-update! regex-chardefs
-    regex-build-config-info
     regexp-extra-info-set! regexp-extra-info
-    set-regexp-options! regexp-options
-    regexp-info regexp-info-nametable)
+    regexp-options-set! regexp-options
+    regexp-info regexp-info-nametable
+    regex-build-config-info)
   (bound-to-procedure
     ;; Imports
-    get-output-string open-output-string
-    string->list list->string string-length string-ref substring make-string string-append
-    reverse list-ref
-    char=? char-alphabetic? char-numeric?
+    alist-ref
+    substring substring-index string-append
+    char->integer integer->char
     set-finalizer!
     ##sys#make-tagged-pointer
-    ##sys#slot ##sys#setslot ##sys#size
-    ##sys#make-structure ##sys#structure?
-    ##sys#error ##sys#signal-hook
-    ##sys#substring ##sys#fragments->string ##sys#make-c-string ##sys#string-append
-    ##sys#write-char-0) )
+    ##sys#slot ##sys#setslot
+    ##sys#structure?
+    ##sys#error ##sys#signal-hook) )
 
 (cond-expand
  [paranoia]
  [else
   (declare
     (no-bound-checks)
-    (no-procedure-checks-for-usual-bindings)
-    ) ] )
+    (no-procedure-checks-for-usual-bindings) ) ] )
 
 (cond-expand
  [unsafe
@@ -106,7 +103,7 @@
 static void
 out_of_memory_failure(const char *modnam, const char *prcnam, const char *typnam)
 {
-  fprintf(stderr, "%s@%s: out of memory - cannot allocate %s", modnam, prcnam, typnam);
+  fprintf(stderr, "%s@%s: out of memory - cannot allocate %s\\n", modnam, prcnam, typnam);
   exit(EXIT_FAILURE);
 }
 EOF
@@ -220,22 +217,24 @@ EOF
   (hascrorlf        PCRE_INFO_HASCRORLF) )
 
 (define pcre-info-field-types '(
-  (options          integer)
-  (size             integer)
-  (capturecount     integer)
-  (backrefmax       integer)
-  (firstbyte        integer)
-  (firstchar        integer)
-  (firsttable       pointer)
-  (lastliteral      integer)
-  (nameentrysize    integer)
-  (namecount        integer)
-  (nametable        pointer)
-  (studysize        integer)
-  (default-tables   pointer)
-  (okpartial        boolean)
-  (jchanged         boolean)
-  (hascrorlf        boolean) ) )
+  (options          . long-integer)
+  (size             . long-integer)
+  (capturecount     . integer)
+  (backrefmax       . integer)
+  (firstbyte        . integer)
+  (firstchar        . integer)
+  (firsttable       . pointer)
+  (lastliteral      . integer)
+  (nameentrysize    . integer)
+  (namecount        . integer)
+  (nametable        . pointer)
+  (studysize        . integer)
+  (default-tables   . pointer)
+  (okpartial        . boolean)
+  (jchanged         . boolean)
+  (hascrorlf        . boolean) ) )
+
+(define pcre-info-field-symbols (map car pcre-info-field-types))
 
 (define-foreign-enum (pcre-config-field unsigned-int)
   (utf8                     PCRE_CONFIG_UTF8)
@@ -249,15 +248,17 @@ EOF
   (bsr                      PCRE_CONFIG_BSR) )
 
 (define pcre-config-field-types '(
-  (utf8                     boolean)
-  (newline                  integer)
-  (link-size                integer)
-  (posix-malloc-threshold   integer)
-  (match-limit              integer)
-  (stackrecurse             boolean)
-  (unicode-properties       boolean)
-  (match-limit-recursion    integer)
-  (bsr                      boolean) ) )
+  (utf8                     . boolean)
+  (newline                  . integer)
+  (link-size                . integer)
+  (posix-malloc-threshold   . integer)
+  (match-limit              . integer)
+  (stackrecurse             . boolean)
+  (unicode-properties       . boolean)
+  (match-limit-recursion    . integer)
+  (bsr                      . boolean) ) )
+
+(define pcre-config-field-symbols (map car pcre-config-field-types))
 
 #; ; UNUSED
 (define-foreign-enum (pcre-extra-option unsigned-int)
@@ -276,6 +277,9 @@ EOF
 (define-inline (%regexp? x)
   (##sys#structure? x 'regexp) )
 
+(define-inline (%regexp-code rx)
+  (##sys#slot rx 1) )
+
 (define-inline (%regexp-extra rx)
   (##sys#slot rx 2) )
 
@@ -290,23 +294,6 @@ EOF
   (##sys#setslot rx 3 options) )
 
 
-;;; PCRE errors:
-
-(foreign-declare #<<EOF
-static const char *C_regex_error;
-static int C_regex_error_offset;
-EOF
-)
-
-(define-foreign-variable C_regex_error c-string)
-(define-foreign-variable C_regex_error_offset int)
-
-(define re-error
-  (let ([string-append string-append])
-    (lambda (loc msg . args)
-      (apply ##sys#error loc (string-append msg " - " C_regex_error) args) ) ) )
-
-
 ;;; Character Definition Tables:
 
 (foreign-declare "#include \"pcre/pcre_internal.h\"")
@@ -318,10 +305,11 @@ EOF
 
 ;; Make character definition tables
 
+;FIXME (const (nonnull-c-pointer unsigned-char)) doesn't work
 (define re-maketables
-  (foreign-lambda* (const (nonnull-c-pointer unsigned-char)) ()
+  (foreign-lambda* (nonnull-c-pointer unsigned-char) ()
     "const unsigned char *tables = pcre_maketables();"
-    "if (!tables) out_of_memory_failure(\"regex\", \"re-maketables\", \"tables\");"
+    "if (!tables) out_of_memory_failure(\"regex-extras\", \"re-maketables\", \"tables\");"
     "return(tables);"))
 
 ;; Get a character definitions tables structure for the current locale.
@@ -515,7 +503,7 @@ EOF
   ; When a flag bit is 0 the corresponding field is ignored
   (foreign-lambda* nonnull-pcre_extra ()
     "pcre_extra *extra = (pcre_extra *)(pcre_malloc)(sizeof(pcre_extra));"
-    "if (!extra) out_of_memory_failure(\"regex\", \"re-extra\", \"pcre_extra\");"
+    "if (!extra) out_of_memory_failure(\"regex-extras\", \"re-extra\", \"pcre_extra\");"
     "extra->flags = 0;"
     "extra->study_data = NULL;"
     "extra->match_limit = 0;"
@@ -560,20 +548,20 @@ EOF
 (define (re-extra-field loc extra key)
   (case key
     [(match-limit)
-      ((foreign-lambda* void ((nonnull-pcre_extra extra) (unsigned-long val))
+      ((foreign-lambda* unsigned-int ((nonnull-pcre_extra extra) (unsigned-long val))
           "return(extra->match_limit);")
         extra)]
     [(match-limit-recursion)
-      ((foreign-lambda* void ((nonnull-pcre_extra extra) (unsigned-long val))
+      ((foreign-lambda* unsigned-int ((nonnull-pcre_extra extra) (unsigned-long val))
           "return(extra->match_limit_recursion);")
         extra)]
     [(callout-data)
-      ((foreign-lambda* void ((nonnull-pcre_extra extra) (nonnull-byte-vector val))
+      ((foreign-lambda* c-pointer ((nonnull-pcre_extra extra) (nonnull-byte-vector val))
           "return(extra->callout_data);")
         extra)]
     [(tables)
       (re-chardef-table
-        ((foreign-lambda* void ((nonnull-pcre_extra extra) ((const (c-pointer unsigned-char)) val))
+        ((foreign-lambda* (c-pointer unsigned-char) ((nonnull-pcre_extra extra) ((const (c-pointer unsigned-char)) val))
             "return(extra->tables);")
           extra))]
     [else
@@ -592,17 +580,19 @@ EOF
 ;; Set user override fields
 
 (define (regexp-extra-info-set! rx . args)
-  (##sys#check-structure rx 'regexp 'regexp-extras)
+  (##sys#check-structure rx 'regexp 'regexp-extra-info-set!)
   (apply re-extra-fields-set! 'regexp-extra-info-set!
                               (or (%regexp-extra rx)
-                                  (let ([extra (re-extra)]) (%regexp-extra-set! rx extra) extra))
+                                  (let ([extra (re-extra)])
+                                    (%regexp-extra-set! rx extra)
+                                    extra))
                               args) )
 
 ;; Get user override fields
 
 (define (regexp-extra-info rx . fields)
   (##sys#check-structure rx 'regexp 'regexp-extra-info)
-  (let ([extra (%regexp-extra fx)])
+  (let ([extra (%regexp-extra rx)])
     (if extra
         (map
           (lambda (sym)
@@ -627,7 +617,7 @@ EOF
 
 ;; Set the 'exec' options
 
-(define (set-regexp-options! rx . options)
+(define (regexp-options-set! rx . options)
   (##sys#check-structure rx 'regexp 'regexp-options-set!)
   (%regexp-options-set! rx (pcre-option->number options)) )
 
@@ -646,8 +636,14 @@ EOF
 
 ;;; Regexp 'fullinfo':
 
+(define re-info-long-integer
+  (foreign-lambda* long (((const nonnull-pcre) code) (pcre_extra extra) (int fieldno))
+    "long int val;"
+    "pcre_fullinfo(code, extra, fieldno, &val);"
+    "return(val);") )
+
 (define re-info-integer
-  (foreign-lambda* unsigned-integer (((const nonnull-pcre) code) (pcre_extra extra) (int fieldno))
+  (foreign-lambda* int (((const nonnull-pcre) code) (pcre_extra extra) (int fieldno))
     "int val;"
     "pcre_fullinfo(code, extra, fieldno, &val);"
     "return(val);") )
@@ -668,27 +664,31 @@ EOF
 
 (define (regexp-info rx . fields)
   (##sys#check-structure rx 'regexp 'regexp-info)
-  (let ([code (%regexp->code rx)]
-        [extra (%regexp->extra rx)])
+  (let ([code (%regexp-code rx)]
+        [extra (%regexp-extra rx)])
     (map
       (lambda (sym)
         (##sys#check-symbol sym 'regexp-info)
         (list sym
-              (and-let* ([ent (alist-ref sym pcre-info-field-types)])
+              (and-let* ([typ (alist-ref sym pcre-info-field-types eq?)])
                 (let ([fldno (pcre-info-field->number sym)])
-                  (case (cadr ent)
+                  (case typ
                     [(boolean)
                       (re-info-boolean code extra fldno)]
+                    [(long-integer)
+                      (re-info-long-integer code extra fldno)]
                     [(integer)
                       (re-info-integer code extra fldno)]
                     [(pointer)
-                      (let ([ptr (re-info-pointer code extra fldno)])
+                      (and-let* ([ptr (re-info-pointer code extra fldno)])
                         (case sym
                           [(default-tables firsttable)
                             (re-chardef-table ptr)]
                           [else
-                            ptr] ) ) ] ) ) ) ) )
-      fields) ) )
+                            ptr]))]
+                    [else
+                      (##sys#error 'regexp-info "unknown type" typ) ] ) ) ) ) )
+      (if (null? fields) pcre-info-field-symbols fields)) ) )
 
 ;;
 
@@ -711,7 +711,7 @@ static pcre_nametable *
 get_nametable(const pcre *code, const pcre_extra *extra)
 {
   pcre_nametable *nametable = (pcre_nametable *)(pcre_malloc)(sizeof(pcre_nametable));
-  if (!nametable) out_of_memory_failure("regex", "pcre_nametable", "pcre_nametable");
+  if (!nametable) out_of_memory_failure("regex-extras", "get_nametable", "pcre_nametable");
   pcre_fullinfo(code, extra, PCRE_INFO_NAMETABLE, &nametable->nametable);
   pcre_fullinfo(code, extra, PCRE_INFO_NAMEENTRYSIZE, &nametable->entrysize);
   return nametable;
@@ -753,8 +753,8 @@ EOF
 
 (define (regexp-info-nametable rx)
   (##sys#check-structure rx 'regexp 'regexp-info-nametable)
-  (let ([code (%regexp->code rx)]
-        [extra (%regexp->extra rx)])
+  (let ([code (%regexp-code rx)]
+        [extra (%regexp-extra rx)])
     (let ([cnt (re-nametable-entrycount code extra)])
       (unless (fx= 0 cnt)
         (let ([nt (re-nametable code extra)])
@@ -772,7 +772,7 @@ EOF
 ;;
 
 (define config-info-integer
-  (foreign-lambda* unsigned-integer ((int fieldno))
+  (foreign-lambda* int ((int fieldno))
     "int val;"
     "pcre_config(fieldno, &val);"
     "return(val);") )
@@ -790,14 +790,16 @@ EOF
     (lambda (sym)
       (##sys#check-symbol sym 'regex-build-config-info)
       (list sym
-            (and-let* ([ent (alist-ref sym pcre-config-field-types)])
+            (and-let* ([typ (alist-ref sym pcre-config-field-types eq?)])
               (let ([fldno (pcre-config-field->number sym)])
-                (case (cadr ent)
+                (case typ
                   [(boolean)
                     (config-info-boolean fldno)]
                   [(integer)
                     (let ([int (config-info-integer fldno)])
                       (if (eq? 'newline sym)
                           (integer->char int)
-                          int ) ) ] ) ) ) ) )
-    fields) )
+                          int ) ) ]
+                  [else
+                    (##sys#error 'regex-build-config-info "unknown type" typ) ] ) ) ) ) )
+    (if (null? fields) pcre-config-field-symbols fields)) )

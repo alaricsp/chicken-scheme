@@ -59,9 +59,8 @@
     get-output-string open-output-string
     string->list list->string string-length string-ref substring make-string string-append
     reverse list-ref
-    char=? char-alphabetic? char-numeric?
+    char=? char-alphabetic? char-numeric? char->integer
     set-finalizer!
-    ##sys#make-tagged-pointer
     ##sys#slot ##sys#setslot ##sys#size
     ##sys#make-structure ##sys#structure?
     ##sys#error ##sys#signal-hook
@@ -73,8 +72,7 @@
  [else
   (declare
     (no-bound-checks)
-    (no-procedure-checks-for-usual-bindings)
-    ) ] )
+    (no-procedure-checks-for-usual-bindings) ) ] )
 
 (cond-expand
  [unsafe
@@ -112,7 +110,7 @@
 static void
 out_of_memory_failure(const char *modnam, const char *prcnam, const char *typnam)
 {
-  fprintf(stderr, "%s@%s: out of memory - cannot allocate %s", modnam, prcnam, typnam);
+  fprintf(stderr, "%s@%s: out of memory - cannot allocate %s\\n", modnam, prcnam, typnam);
   exit(EXIT_FAILURE);
 }
 EOF
@@ -131,7 +129,7 @@ EOF
 (define-inline (%tagged-pointer? x tag)
   (and (##core#inline "C_blockp" x)
        (##core#inline "C_taggedpointerp" x)
-       (equal? tag (##sys#slot x 1)) ) )
+       (eq? tag (##sys#slot x 1)) ) )
 
 
 ;;; Character Definition Tables:
