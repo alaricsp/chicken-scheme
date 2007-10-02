@@ -59,42 +59,60 @@
 	(display (read-all)))))
   (newline) )
 
-(define (usage)
+(define (usage code)
   (print #<<EOF
 usage: chicken-bug [FILENAME ...]
 
   -help  -h            show this message
+  -to-stdout           write bug report to standard output
+  -                    read description from standard input
 
 EOF
 ) 
-  (exit 0) )
+  (exit code) )
 
-(define (main args)
-  (let ((msg #f))
-    (cond ((null? args)
-	   (print #<<EOF
+(define (user-input)
+  (unless (##sys#tty-port? (current-input-port))
+    (print #<<EOF
 This is the CHICKEN bug report generator. Please enter a detailed
 description of the problem you have encountered and enter CTRL-D (EOF)
 once you have finished. Presss CTRL-C to abort the program:
 
 EOF
-)
-	   (set! msg (read-all)) )
+) )
+  (read-all) )
+
+(define (main args)
+  (let ((msg #f)
+	(files #f)
+	(stdout #f))
+    (cond ((null? args) 
+	   (unless files (set! msg (user-input))))
 	  (else
 	   (for-each 
-	    (lambda (file)
-	      (when (member file '("--help" "-h" "-help"))
-		(usage) )
-	      (set! msg (string-append "\nFile added: " file "\n\n"
-				       (read-all file))) )
+	    (lambda (arg)
+	      (cond ((string=? "-" arg) 
+		     (set! files #t)
+		     (set! msg (string-append "\nUser input:\n\n" (user-input))) )
+		    ((member arg '("--help" "-h" "-help"))
+		     (usage 0) )
+		    ((string=? "-to-stdout" arg)
+		     (set! stdout #t) )
+		    (else
+		     (set! files #t)
+		     (set! msg (string-append
+				"\nFile added: " arg "\n\n"
+				(read-all arg))) ) ) )
 	    args) ) )
     (match-let ((#(_ _ _ day mon yr _ _ _ _) (seconds->local-time (current-seconds))))
-      (let ((file (sprintf +bug-report-file+ (+ 1900 yr) mon day)))
-	(with-output-to-file file
+      (let* ((file (sprintf +bug-report-file+ (+ 1900 yr) mon day))
+	     (port (if stdout (current-output-port) (open-output-file file))))
+	(with-output-to-port port
 	  (lambda ()
 	    (print msg)
 	    (collect-info) ) )
-	(print "\nA bug report has been written to `" file "'. Please send it to")
-	(print "one of the following addresses:\n\n" +destinations+) ) ) ) )
+	(unless stdout
+	  (print "\nA bug report has been written to `" file "'. Please send it to")
+	  (print "one of the following addresses:\n\n" +destinations+) ) ) ) ) )
 
 (main (command-line-arguments))

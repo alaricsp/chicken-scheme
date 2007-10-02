@@ -1,5 +1,7 @@
-2.714
+2.717
 
+- New binary compatibility version (3) - installed eggs mst be recompiled!
+- deprecated "shift!" and "unshift!"
 - regex unit:
   Uses PCRE 7.4
 - utils unit:

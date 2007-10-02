@@ -41,6 +41,7 @@
   (usual-integrations)
   (disable-interrupts)
   (generic) ; PCRE options use lotsa bits
+  (disable-warning var)
   (export
     pcre-version
     regexp? regexp regexp*

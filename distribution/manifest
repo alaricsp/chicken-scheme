@@ -126,6 +126,9 @@ csi.scm
 csibatch.bat
 eval.scm
 extras.scm
+chicken-bug.1
+chicken-bug.scm
+chicken-bug.c
 hen.el
 scheme-complete.el
 html/accessing-external-objects.html

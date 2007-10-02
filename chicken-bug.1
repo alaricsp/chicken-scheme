@@ -11,15 +11,37 @@ chicken-bug - generates a bug report from user input.
 [
 .I filename
 |
-.I -help ...
+.I OPTION ...
 ]
+
+.SH OPTIONS
+
+.TP
+.B \-help
+Show usage information.
+
+.TP
+.B \-to-stdout
+Write bug report to standard output instead of writing it to a file.
+
+.TP
+.B \-
+Read user input from standard input, even if files are given on the command line.
 
 .SH DESCRIPTION
 
 .I chicken-bug
 generates a bug report file that collects user-input, optional
 files and system information obtained from the installed CHICKEN
-executables and libraries.
+executables and libraries. Non-option arguments given on the command line
+are inserted into the bug report. If no option is given, or if 
+.B \-
+has been passed on the command line, then a description of the problem
+is read from standard input, until EOF (CTRL-D) is read.
+Bug reports should be as detailed as possible. It is also very helpful
+to include code that reproduces the problem. The more detailed the input
+and the more thorough the description is, the easier you make it for
+the CHICKEN developers to help you.
 
 .SH BUGS
 Submit bug reports by e-mail to
