@@ -43,6 +43,7 @@
   (generic) ; PCRE options use lotsa bits
   (disable-warning var)
   (export
+    ##sys#regex-chardef-table?
     regexp? regexp regexp*
     regexp-optimize
     regex-chardef-table?
@@ -135,18 +136,14 @@ EOF
 ;;; Character Definition Tables:
 ;;; See unit regex-extras
 
-;; Is it a character definitions tables structure
-
-(define (regex-chardef-table? x)
+(define (##sys#regex-chardef-table? x)
   (%tagged-pointer? x 'chardef-table) )
-
-;; Valid character definitions tables structure
 
 (cond-expand
  [unsafe]
  [else
   (define (##sys#check-chardef-table x loc)
-    (unless (regex-chardef-table? x)
+    (unless (##sys#regex-chardef-table? x)
       (##sys#error loc "invalid character definition tables structure" x) ) ) ] )
 
 

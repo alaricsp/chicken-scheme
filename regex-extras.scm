@@ -45,7 +45,8 @@
   (disable-warning var)
   (export
     regex-version
-    regex-chardef-table regex-chardef-set! regex-chardefs-update! regex-chardefs
+    regex-chardef-table? regex-chardef-table
+    regex-chardef-set! regex-chardefs-update! regex-chardefs
     regexp-extra-info-set! regexp-extra-info
     regexp-options-set! regexp-options
     regexp-info regexp-info-nametable
@@ -56,6 +57,7 @@
     substring substring-index string-append
     char->integer integer->char
     set-finalizer!
+    ##sys#regex-chardef-table?
     ##sys#make-tagged-pointer
     ##sys#slot ##sys#setslot
     ##sys#structure?
@@ -297,6 +299,10 @@ EOF
 ;;; Character Definition Tables:
 
 (foreign-declare "#include \"pcre/pcre_internal.h\"")
+
+;; Is it a character definitions tables structure
+
+(define regex-chardef-table? ##sys#regex-chardef-table?)
 
 ;;
 
