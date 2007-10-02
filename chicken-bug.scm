@@ -72,7 +72,7 @@ EOF
   (exit code) )
 
 (define (user-input)
-  (unless (##sys#tty-port? (current-input-port))
+  (when (##sys#tty-port? (current-input-port))
     (print #<<EOF
 This is the CHICKEN bug report generator. Please enter a detailed
 description of the problem you have encountered and enter CTRL-D (EOF)
@@ -82,36 +82,44 @@ EOF
 ) )
   (read-all) )
 
+(define (justify n)
+  (let ((s (number->string n)))
+    (if (> (string-length s) 1)
+	s
+	(string-append "0" s))))
+
 (define (main args)
-  (let ((msg #f)
+  (let ((msg "")
 	(files #f)
 	(stdout #f))
-    (cond ((null? args) 
-	   (unless files (set! msg (user-input))))
-	  (else
-	   (for-each 
-	    (lambda (arg)
-	      (cond ((string=? "-" arg) 
-		     (set! files #t)
-		     (set! msg (string-append "\nUser input:\n\n" (user-input))) )
-		    ((member arg '("--help" "-h" "-help"))
-		     (usage 0) )
-		    ((string=? "-to-stdout" arg)
-		     (set! stdout #t) )
-		    (else
-		     (set! files #t)
-		     (set! msg (string-append
-				"\nFile added: " arg "\n\n"
-				(read-all arg))) ) ) )
-	    args) ) )
+    (for-each
+     (lambda (arg)
+       (cond ((string=? "-" arg) 
+	      (set! files #t)
+	      (set! msg (string-append msg "\n\nUser input:\n\n" (user-input))) )
+	     ((member arg '("--help" "-h" "-help"))
+	      (usage 0) )
+	     ((string=? "-to-stdout" arg)
+	      (set! stdout #t) )
+	     (else
+	      (set! files #t)
+	      (set! msg 
+		(string-append
+		 msg
+		 "\n\nFile added: " arg "\n\n"
+		 (read-all arg) ) ) ) ) )
+     args)
+    (unless files
+      (set! msg (string-append msg "\n\n" (user-input))))
     (match-let ((#(_ _ _ day mon yr _ _ _ _) (seconds->local-time (current-seconds))))
-      (let* ((file (sprintf +bug-report-file+ (+ 1900 yr) mon day))
+      (let* ((file (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day)))
 	     (port (if stdout (current-output-port) (open-output-file file))))
 	(with-output-to-port port
 	  (lambda ()
 	    (print msg)
 	    (collect-info) ) )
 	(unless stdout
+	  (close-output-port port)
 	  (print "\nA bug report has been written to `" file "'. Please send it to")
 	  (print "one of the following addresses:\n\n" +destinations+) ) ) ) ) )
 
