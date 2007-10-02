@@ -1,4 +1,4 @@
-;;;; regex-extras.scm - Unit for using the PCRE regex package
+;;;; regex-extras.scm - Unit for using the PCRE regex extras package
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; All rights reserved.
@@ -633,7 +633,7 @@ EOF
 
 ;; Get the 'exec' options
 
-(define (regexp-options rx)
+(define (regexp-options obj)
   (integer-options->symbols
     (cond [(%regexp? obj)   (%regexp-options obj)]
           [(integer? obj)   obj]

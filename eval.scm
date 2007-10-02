@@ -115,7 +115,7 @@
 (define pdss (string ##sys#pathname-directory-separator))
 
 (define ##sys#core-library-modules
-  '(extras lolevel utils tcp regex posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
+  '(extras lolevel utils tcp regex regex-extras posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
 
 (define ##sys#explicit-library-modules '())
 
