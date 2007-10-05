@@ -8005,7 +8005,7 @@ void C_ccall C_machine_type(C_word c, C_word closure, C_word k)
 #elif defined(__sparc__)
   a = C_alloc(2 + C_bytestowords(5));
   s = C_string2(&a, "sparc");
-#elif defined(__ppc__)
+#elif defined(__ppc__) || defined(__powerpc__)
   a = C_alloc(2 + C_bytestowords(3));
   s = C_string2(&a, "ppc");
 #elif defined(_M_IX86) || defined(__i386__)
