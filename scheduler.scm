@@ -44,7 +44,8 @@
 	##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer
 	##sys#remove-from-ready-queue ##sys#unblock-threads-for-i/o ##sys#force-primordial
 	##sys#fdset-input-set ##sys#fdset-output-set ##sys#fdset-clear
-	##sys#fdset-select-timeout ##sys#fdset-restore) 
+	##sys#fdset-select-timeout ##sys#fdset-restore
+	##sys#clear-i/o-state-for-thread!) 
   (foreign-declare #<<EOF
 #ifdef HAVE_ERRNO_H
 # include <errno.h>
@@ -132,6 +133,8 @@ EOF
 		      (if (>= now tmo1)
 			  (begin
 			    (##sys#setislot tto 13 #t) ; mark as being unblocked by timeout
+			    (##sys#clear-i/o-state-for-thread! tto)
+			    ;;(pp `(CLEARED: ,tto ,@##sys#fd-list) ##sys#standard-error) ;***
 			    (##sys#thread-basic-unblock! tto)
 			    (loop (cdr lst)) )
 			  (begin
@@ -358,11 +361,12 @@ EOF
 		   (fxmax 0 (- tmo1 now)) )
 		 0) ) ] )		; otherwise immediate timeout.
     (dbg n " fds ready")
-    (cond [(eq? -1 n) (##sys#force-primordial)]
+    (cond [(eq? -1 n) 
+	   (##sys#force-primordial)]
 	  [(fx> n 0)
 	   (set! ##sys#fd-list
 	     (let loop ([n n] [lst ##sys#fd-list])
-	       (if (zero? n)
+	       (if (or (zero? n) (null? lst))
 		   lst
 		   (let* ([a (car lst)]
 			  [fd (car a)]
@@ -384,6 +388,30 @@ EOF
 				 (loop2 (cdr threads)) ) ) )
 			 (cons a (loop n (cdr lst))) ) ) ) ) ) ] )
     (##sys#fdset-restore) ) )
+
+
+;;; Clear I/O state for unblocked thread
+
+(define (##sys#clear-i/o-state-for-thread! t)
+  (when (pair? (##sys#slot t 11))
+    (let ((fd (##sys#slot (##sys#slot t 11) 0)))
+      (set! ##sys#fd-list
+	(let loop ([lst ##sys#fd-list])
+	  (if (null? lst)
+	      '()
+	      (let* ([a (##sys#slot lst 0)]
+		     [fd2 (##sys#slot a 0)] )
+		(if (eq? fd fd2)
+		    (let ((ts (##sys#delq t (##sys#slot a 1)))) ; remove from fd-list entry
+		      (cond ((null? ts)
+			     ;;(pp `(CLEAR FD: ,fd ,t) ##sys#standard-error)
+			     (##sys#fdset-clear fd) ; no more threads waiting for this fd
+			     (##sys#fdset-restore)
+			     (##sys#slot lst 1) )
+			    (else
+			     (##sys#setslot a 1 ts) ; fd-list entry is list with t removed
+			     lst) ) )
+		    (cons a (loop (##sys#slot lst 1)))))))))))
 
 
 ;;; Get list of all threads that are ready or waiting for timeout or waiting for I/O:
