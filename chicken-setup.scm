@@ -71,11 +71,15 @@
 #endif
 
 #ifndef C_TARGET_CFLAGS
-# define C_TARGET_CFLAGS  ""
+# define C_TARGET_CFLAGS  C_INSTALL_CFLAGS
 #endif
 
-#ifndef C_TARGET_LFLAGS
-# define C_TARGET_LFLAGS  ""
+#ifndef C_TARGET_MORE_LIBS
+# define C_TARGET_MORE_LIBS  C_INSTALL_LIB_HOME
+#endif
+
+#ifndef C_TARGET_LIB_HOME
+# define C_TARGET_LIB_HOME  C_INSTALL_LIB_HOME
 #endif
 <#
 
@@ -105,7 +109,8 @@
 (define *cc* (foreign-value "C_TARGET_CC" c-string))
 (define *cxx* (foreign-value "C_TARGET_CXX" c-string))
 (define *target-cflags* (foreign-value "C_TARGET_CFLAGS" c-string))
-(define *target-lflags* (foreign-value "C_TARGET_LFLAGS" c-string))
+(define *target-libs* (foreign-value "C_TARGET_MORE_LIBS" c-string))
+(define *target-lib-home* (foreign-value "C_TARGET_LIB_HOME" c-string))
 
 (define *windows*
   (and (eq? (software-type) 'windows) 
@@ -712,7 +717,7 @@ EOF
 			   fname " "
 			   (if compile-only
 			       "" 
-			       (conc ldflags " " *target-lflags*) )
+			       (conc "-L" *target-lib-home* " " ldflags " " *target-libs*) )
 			   " >/dev/null "
 			   (if verb "" "2>&1") ) ) )
 		 (when verb (print cmd " ..."))
