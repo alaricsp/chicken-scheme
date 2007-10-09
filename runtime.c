@@ -737,7 +737,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
 
 static C_PTABLE_ENTRY *create_initial_ptable()
 {
-  C_PTABLE_ENTRY *pt = (C_PTABLE_ENTRY *)C_malloc(sizeof(C_PTABLE_ENTRY) * 65);
+  C_PTABLE_ENTRY *pt = (C_PTABLE_ENTRY *)C_malloc(sizeof(C_PTABLE_ENTRY) * 66);
   int i = 0;
 
   if(pt == NULL)

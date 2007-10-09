@@ -662,7 +662,7 @@
       (cond [(immediate? lit) 0]
 	    [(string? lit) 0]
 	    [(number? lit) words-per-flonum]
-	    [(symbol? lit) (fx+ (if (##sys#fudge 33) 1 0) 9)]		; size of symbol, and possibly a bucket
+	    [(symbol? lit) 10]		; size of symbol, and possibly a bucket
 	    [(pair? lit) (+ 3 (literal-size (car lit)) (literal-size (cdr lit)))]
 	    [(vector? lit) (+ 1 (vector-length lit) (reduce + 0 (map literal-size (vector->list lit))))]
 	    [(block-variable-literal? lit) 0]
