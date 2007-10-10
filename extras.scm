@@ -50,6 +50,7 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
+     ##sys#hash
      ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-string ##sys#substring
      ##sys#for-each ##sys#map ##sys#setslot ##sys#allocate-vector ##sys#check-pair ##sys#not-a-proper-list-error 
      ##sys#member ##sys#assoc ##sys#error ##sys#signal-hook ##sys#read-string!
@@ -70,7 +71,7 @@ EOF
   reverse-string-append generic-write hashtab-default-size hashtab-threshold hashtab-rehash hashtab-primes-table}
 
 (declare
-  (hide hashtab-threshold hashtab-rehash generic-write %hash) )
+  (hide hashtab-threshold hashtab-rehash generic-write) )
 
 (cond-expand
  [unsafe
@@ -1535,7 +1536,7 @@ EOF
   (let ([make-vector make-vector])
     (lambda test-and-size
       (let-optionals test-and-size ([test equal?] 
-				    [hashf %hash] 
+				    [hashf ##sys#hash] 
 				    [len hashtab-default-size])
 	(##sys#check-exact len 'make-hash-table)
 	(##sys#make-structure 'hash-table (make-vector len '()) 0 test hashf) ) ) ) )
@@ -1577,7 +1578,7 @@ EOF
 (define-constant hash-depth-limit 4)
 (define-constant default-hash-bound 536870912)
 
-(define %hash
+(define ##sys#hash
   (lambda (x limit)
     (define (hash-with-test x d)
       (if (or (not (##core#inline "C_blockp" x)) (##core#inline "C_byteblockp" x) (symbol? x))
@@ -1615,7 +1616,7 @@ EOF
 
 (define (hash x #!optional (bound default-hash-bound))
   (##sys#check-exact bound 'hash)
-  (%hash x bound) )
+  (##sys#hash x bound) )
 
 (define hash-by-identity hash)
 
