@@ -42,10 +42,11 @@
 ; file-select
 ; symbolic-link?
 ; set-signal-mask!  signal-mask  signal-masked?  signal-mask!  signal-unmask!
-; user-information  group-information  get-groups  set-groups!  initialize-groups
+; user-information group-information  get-groups  set-groups!  initialize-groups
 ; errno/wouldblock
 ; change-file-owner
-; current-user-id  current-group-id  current-effective-user-id  current-effective-groupd-id
+; current-user-id  current-group-id  current-effective-user-id  current-effective-group-id
+; current-effective-user-name
 ; set-user-id!  set-group-id!
 ; create-session
 ; process-group-id  set-process-group-id!
@@ -137,6 +138,10 @@ static C_TLS char C_osver[16] = "";
 static C_TLS char C_osrel[16] = "";
 static C_TLS char C_processor[16] = "";
 static C_TLS char C_shlcmd[256] = "";
+
+static int C_isNT = 0;
+
+static C_TLS TCHAR C_username[255 + 1] = "";
 
 #define C_mkdir(str)        C_fix(mkdir(C_c_string(str)))
 #define C_chdir(str)        C_fix(chdir(C_c_string(str)))
@@ -396,7 +401,8 @@ static int set_last_errno()
     return 0;
 }
 
-/* functions for creating process with redirected I/O */
+/* Functions for creating process with redirected I/O */
+
 static int zero_handles()
 {
     C_rd0 = C_wr0 = C_wr0_ = INVALID_HANDLE_VALUE;
@@ -594,20 +600,42 @@ int sysinfo()
 	    SYSTEM_INFO si;
 	    _snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
 	                ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
+	    strncpy(C_osrel, "Win", sizeof(C_osrel) - 1);
 	    switch (ovf.dwPlatformId)
 	    {
 	    case VER_PLATFORM_WIN32s:
 	        strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
 	        break;
 	    case VER_PLATFORM_WIN32_WINDOWS:
-	        strncpy(C_osrel, "Win9x", sizeof(C_osrel) - 1);
+		if (ovf.dwMajorVersion == 4)
+		{
+		    if (ovf.dwMinorVersion == 0)
+		        strncpy(C_osrel, "Win95", sizeof(C_osrel) - 1);
+		    else if (ovf.dwMinorVersion == 10)
+		        strncpy(C_osrel, "Win98", sizeof(C_osrel) - 1);
+		    else if (ovf.dwMinorVersion == 90)
+		        strncpy(C_osrel, "WinMe", sizeof(C_osrel) - 1);
+		}
 	        break;
 	    case VER_PLATFORM_WIN32_NT:
-	    default:
-	        strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
-	        break;
+	        C_isNT = 1;
+                if (ovf.dwMajorVersion == 6)
+		    strncpy(C_osrel, "WinVista", sizeof(C_osrel) - 1);
+		else if (ovf.dwMajorVersion == 5)
+		{
+		    if (ovf.dwMinorVersion == 2)
+                        strncpy(C_osrel, "WinServer2003", sizeof(C_osrel) - 1);
+		    else if (ovf.dwMinorVersion == 1)
+		        strncpy(C_osrel, "WinXP", sizeof(C_osrel) - 1);
+		    else if ( ovf.dwMinorVersion == 0)
+		        strncpy(C_osrel, "Win2000", sizeof(C_osrel) - 1);
+		}
+		else if (ovf.dwMajorVersion <= 4)
+                   strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
+                break;
 	    }
 	    GetSystemInfo(&si);
+	    strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
 	    switch (si.wProcessorArchitecture)
 	    {
     	    case PROCESSOR_ARCHITECTURE_INTEL:
@@ -628,10 +656,6 @@ int sysinfo()
 	        strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
 	        break;
 #           endif
-    	    case PROCESSOR_ARCHITECTURE_UNKNOWN:
-	    default:
-	        strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
-	        break;
 	    }
         }
         else
@@ -647,9 +671,9 @@ static int get_shlcmd()
     {
         if (sysinfo())
         {
-            char *cmdnam = (0 == strcmp(C_osrel, "WinNT")) ? "\\cmd.exe" : "\\command.com";
+            char *cmdnam = C_isNT ? "\\cmd.exe" : "\\command.com";
             UINT len = GetSystemDirectory(C_shlcmd, sizeof(C_shlcmd) - strlen(cmdnam));
-            if (0 != len)
+            if (len)
                 strcpy(C_shlcmd + len, cmdnam);
             else
                 return set_last_errno();
@@ -663,6 +687,22 @@ static int get_shlcmd()
 #define C_get_hostname() (get_hostname() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 #define C_sysinfo() (sysinfo() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 #define C_get_shlcmd() (get_shlcmd() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
+
+/* GetUserName */
+
+static int
+get_user_name()
+{
+    if (!strlen(C_username))
+    {
+        DWORD bufCharCount = sizeof(C_username)/sizeof(C_username[0]);
+        if (!GetUserName(C_username, &bufCharCount))
+            return set_last_errno();
+    }
+    return 1;
+}
+
+#define C_get_user_name() (get_user_name() ? C_SCHEME_TRUE : C_SCHEME_FALSE)
 
 /*
     Spawn a process directly.
@@ -1782,6 +1822,9 @@ EOF
       _hostname
       (##sys#error 'get-host-name "cannot retrieve host-name") ) ) )
 
+
+;;; Getting system-, group- and user-information:
+
 (define system-information
   (lambda ()
     (if (##core#inline "C_sysinfo")
@@ -1789,6 +1832,16 @@ EOF
       (begin
 	(##sys#update-errno)
 	(##sys#error 'system-information "cannot retrieve system-information") ) ) ) )
+
+(define-foreign-variable _username c-string "C_username")
+
+(define (current-user-name)
+  (if (##core#inline "C_get_user_name")
+      _username
+      (begin
+	(##sys#update-errno)
+	(##sys#error 'current-user-name "cannot retrieve current user-name") ) ) )
+              
 
 ;;; Find matching files:
 
@@ -1840,6 +1893,7 @@ EOF
 (define-unimplemented create-symbolic-link)
 (define-unimplemented current-effective-group-id)
 (define-unimplemented current-effective-user-id)
+(define-unimplemented current-effective-user-name)
 (define-unimplemented current-group-id)
 (define-unimplemented current-user-id)
 (define-unimplemented map-file-to-memory)

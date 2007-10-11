@@ -1059,6 +1059,46 @@ EOF
             _uname-version
             _uname-machine) ) )
 
+  (define set-user-id!                  ; DEPRECATED
+    (lambda (id)
+      (when (fx< (##core#inline "C_setuid" id) 0)
+        (##sys#update-errno)
+        (##sys#error 'set-user-id! "cannot set user ID" id) ) ) )
+
+  (define current-user-id
+    (getter-with-setter
+     (foreign-lambda int "C_getuid")
+     set-user-id!) )
+
+  (define current-effective-user-id
+    (getter-with-setter
+     (foreign-lambda int "C_geteuid")
+     (lambda (id)
+      (when (fx< (##core#inline "C_seteuid" id) 0)
+        (##sys#update-errno)
+        (##sys#error 
+	 'effective-user-id!-setter "cannot set effective user ID" id) ) ) ) )
+
+  (define set-group-id!                 ; DEPRECATED
+    (lambda (id)
+      (when (fx< (##core#inline "C_setgid" id) 0)
+        (##sys#update-errno)
+        (##sys#error 'set-user-id! "cannot set group ID" id) ) ) )
+
+  (define current-group-id
+    (getter-with-setter
+     (foreign-lambda int "C_getgid")
+     set-group-id!) )
+
+  (define current-effective-group-id
+    (getter-with-setter 
+     (foreign-lambda int "C_getegid")
+     (lambda (id)
+      (when (fx< (##core#inline "C_setegid" id) 0)
+        (##sys#update-errno)
+        (##sys#error 
+	 'effective-group-id!-setter "cannot set effective group ID" id) ) ) ) )
+
   (define-foreign-variable _user-name nonnull-c-string "C_user->pw_name")
   (define-foreign-variable _user-passwd nonnull-c-string "C_user->pw_passwd")
   (define-foreign-variable _user-uid int "C_user->pw_uid")
@@ -1067,20 +1107,27 @@ EOF
   (define-foreign-variable _user-dir c-string "C_user->pw_dir")
   (define-foreign-variable _user-shell c-string "C_user->pw_shell")
 
-  (define (user-information user)
+  (define (user-information user #!optional as-vector)
     (let ([r (if (fixnum? user)
-               (##core#inline "C_getpwuid" user)
-               (begin
-                 (##sys#check-string user 'user-information)
-                 (##core#inline "C_getpwnam" (##sys#make-c-string user)) ) ) ] )
+                 (##core#inline "C_getpwuid" user)
+                 (begin
+                   (##sys#check-string user 'user-information)
+                   (##core#inline "C_getpwnam" (##sys#make-c-string user)) ) ) ] )
       (and r
-         (list _user-name
-               _user-passwd
-               _user-uid
-               _user-gid
-               _user-gecos
-               _user-dir
-               _user-shell) ) ) )
+           ((if as-vector vector list)
+            _user-name
+            _user-passwd
+            _user-uid
+            _user-gid
+            _user-gecos
+            _user-dir
+            _user-shell) ) ) )
+
+  (define (current-user-name)
+    (list-ref (user-information (current-user-id)) 0) )
+
+  (define (current-effective-user-name)
+    (list-ref (user-information (current-effective-user-id)) 0) )
 
   (define-foreign-variable _group-name nonnull-c-string "C_group->gr_name")
   (define-foreign-variable _group-passwd nonnull-c-string "C_group->gr_passwd")
@@ -1090,21 +1137,22 @@ EOF
     (foreign-lambda* c-string ([int i])
       "return(C_group->gr_mem[ i ]);") )
 
-  (define (group-information group)
+  (define (group-information group #!optional as-vector)
     (let ([r (if (fixnum? group)
                  (##core#inline "C_getgrgid" group)
                  (begin
                    (##sys#check-string group 'group-information)
                    (##core#inline "C_getgrnam" (##sys#make-c-string group)) ) ) ] )
       (and r
-         (list _group-name
-                 _group-passwd
-                 _group-gid
-                 (let rec ([i 0])
-                   (let ([n (group-member i)])
-                     (if n
-                         (cons n (rec (fx+ i 1)))
-                         '() ) ) ) ) ) ) )
+           ((if as-vector vector list)
+            _group-name
+            _group-passwd
+            _group-gid
+            (let loop ([i 0])
+              (let ([n (group-member i)])
+                (if n
+                    (cons n (loop (fx+ i 1)))
+                    '() ) ) ) ) ) ) )
 
   (define _get-groups
     (foreign-lambda* int ([int n])
@@ -1247,46 +1295,6 @@ EOF
       (##sys#check-exact gid 'change-file-owner)
       (when (fx< (##core#inline "C_chown" (##sys#make-c-string (##sys#expand-home-path fn)) uid gid) 0)
         (posix-error #:file-error 'change-file-owner "cannot change file owner" fn uid gid) ) ) )
-
-  (define current-effective-user-id
-    (getter-with-setter
-     (foreign-lambda int "C_geteuid")
-     (lambda (id)
-      (when (fx< (##core#inline "C_seteuid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 
-	 'effective-user-id!-setter "cannot set effective user ID" id) ) ) ) )
-
-  (define current-effective-group-id
-    (getter-with-setter 
-     (foreign-lambda int "C_getegid")
-     (lambda (id)
-      (when (fx< (##core#inline "C_setegid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 
-	 'effective-group-id!-setter "cannot set effective group ID" id) ) ) ) )
-
-  (define set-user-id!                  ; DEPRECATED
-    (lambda (id)
-      (when (fx< (##core#inline "C_setuid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 'set-user-id! "cannot set user ID" id) ) ) )
-
-  (define current-user-id
-    (getter-with-setter
-     (foreign-lambda int "C_getuid")
-     set-user-id!) )
-
-  (define set-group-id!                 ; DEPRECATED
-    (lambda (id)
-      (when (fx< (##core#inline "C_setgid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 'set-user-id! "cannot set group ID" id) ) ) )
-
-  (define current-group-id
-    (getter-with-setter
-     (foreign-lambda int "C_getgid")
-     set-group-id!) )
 
   (define-foreign-variable _r_ok int "R_OK")
   (define-foreign-variable _w_ok int "W_OK")

@@ -110,6 +110,7 @@ c-backend.scm
 c-platform.scm
 chicken-ffi-macros.scm
 chicken-more-macros.scm
+chicken-sys-macros.scm
 chicken-profile.1
 chicken-profile.scm
 chicken-setup.1
