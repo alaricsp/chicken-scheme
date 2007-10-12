@@ -4110,7 +4110,8 @@ EOF
 
 (define program-name
   (make-parameter
-   (car (argv))
+   (let* ((av (argv)))
+     (if (pair? av) (car av) "<unknown>") )
    (lambda (x)
      (##sys#check-string x 'program-name)
      x) ) )

@@ -930,3 +930,10 @@ spotless: distclean
 	  c-platform.c c-backend.c *.exports
 
 distclean: clean confclean
+
+# run tests
+
+.PHONY: check
+
+check: all
+	cd tests; sh runtests.sh

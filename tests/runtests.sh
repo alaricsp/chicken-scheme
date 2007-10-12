@@ -28,6 +28,9 @@ echo "======================================== r4rstest ..."
 echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
 
+echo "======================================== embedding ..."
+$compile embedded1.c && ./a.out
+
 echo "======================================== benchmarks ..."
 cd ../benchmarks
 for x in `ls *.scm`; do
