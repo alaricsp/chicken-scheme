@@ -6,7 +6,7 @@
 
 ;;; Immediate
 
-(define-inline (%immediate-value? x) (##sys#immediate? x))
+(define-macro (%immediate-value? ?x) (##sys#immediate? ,?x))
 
 ;;; Undefined
 
