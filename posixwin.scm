@@ -41,25 +41,25 @@
 ; perm/isvtx  perm/isuid  perm/isgid
 ; file-select
 ; symbolic-link?
-; set-signal-mask!  signal-mask  signal-masked?  signal-mask!  signal-unmask!
+; set-signal-mask!  signal-mask	 signal-masked?	 signal-mask!  signal-unmask!
 ; user-information group-information  get-groups  set-groups!  initialize-groups
 ; errno/wouldblock
 ; change-file-owner
-; current-user-id  current-group-id  current-effective-user-id  current-effective-group-id
+; current-user-id  current-group-id  current-effective-user-id	current-effective-group-id
 ; current-effective-user-name
-; set-user-id!  set-group-id!
+; set-user-id!	set-group-id!
 ; create-session
 ; process-group-id  set-process-group-id!
-; create-symbolic-link  read-symbolic-link
+; create-symbolic-link	read-symbolic-link
 ; file-truncate
-; file-lock  file-lock/blocking  file-unlock  file-test-lock
+; file-lock  file-lock/blocking	 file-unlock  file-test-lock
 ; create-fifo  fifo?
 ; prot/...
 ; map/...
 ; map-file-to-memory  unmap-file-from-memory  memory-mapped-file-pointer  memory-mapped-file?
 ; set-alarm!
 ; terminal-port?  terminal-name
-; process-fork  process-wait
+; process-fork	process-wait
 ; parent-process-id
 ; process-signal
 
@@ -77,7 +77,7 @@
   (disable-interrupts)
   (usual-integrations)
   (hide ##sys#stat close-handle posix-error
-        $quote-args-list $exec-setup $exec-teardown)
+	$quote-args-list $exec-setup $exec-teardown)
   (foreign-declare #<<EOF
 #ifndef WIN32_LEAN_AND_MEAN
 # define WIN32_LEAN_AND_MEAN
@@ -112,10 +112,10 @@ int C_not_implemented() { return -1; }
 
 #include <time.h>
 
-#define ARG_MAX         256
-#define PIPE_BUF        512
+#define ARG_MAX		256
+#define PIPE_BUF	512
 #ifndef ENV_MAX
-# define ENV_MAX        1024
+# define ENV_MAX	1024
 #endif
 
 static C_TLS char *C_exec_args[ ARG_MAX ];
@@ -147,22 +147,22 @@ static C_TLS TCHAR C_username[255 + 1] = "";
 
 /* Directory Operations */
 
-#define C_mkdir(str)        C_fix(mkdir(C_c_string(str)))
-#define C_chdir(str)        C_fix(chdir(C_c_string(str)))
-#define C_rmdir(str)        C_fix(rmdir(C_c_string(str)))
+#define C_mkdir(str)	    C_fix(mkdir(C_c_string(str)))
+#define C_chdir(str)	    C_fix(chdir(C_c_string(str)))
+#define C_rmdir(str)	    C_fix(rmdir(C_c_string(str)))
 
 #ifndef __WATCOMC__
 /* DIRENT stuff */
 struct dirent
 {
-    char *              d_name;
+    char *		d_name;
 };
 
 typedef struct
 {
-    struct _finddata_t  fdata;
-    int                 handle;
-    struct dirent       current;
+    struct _finddata_t	fdata;
+    int			handle;
+    struct dirent	current;
 } DIR;
 
 static DIR * C_fcall
@@ -173,28 +173,28 @@ opendir(const char *name)
     char *what;
     if (!dir)
     {
-        errno = ENOMEM;
-        return NULL;
+	errno = ENOMEM;
+	return NULL;
     }
     what = (char *)malloc(name_len + 3);
     if (!what)
     {
-        free(dir);
-        errno = ENOMEM;
-        return NULL;
+	free(dir);
+	errno = ENOMEM;
+	return NULL;
     }
     strcpy(what, name);
     if (strchr("\\/", name[name_len - 1]))
-        strcat(what, "*");
+	strcat(what, "*");
     else
-        strcat(what, "\\*");
+	strcat(what, "\\*");
 
     dir->handle = _findfirst(what, &dir->fdata);
     if (dir->handle == -1)
     {
-        free(what);
-        free(dir);
-        return NULL;
+	free(what);
+	free(dir);
+	return NULL;
     }
     dir->current.d_name = NULL; /* as the first-time indicator */
     free(what);
@@ -206,9 +206,9 @@ closedir(DIR * dir)
 {
     if (dir)
     {
-        int res = _findclose(dir->handle);
-        free(dir);
-        return res;
+	int res = _findclose(dir->handle);
+	free(dir);
+	return res;
     }
     return -1;
 }
@@ -218,12 +218,12 @@ readdir(DIR * dir)
 {
     if (dir)
     {
-        if (!dir->current.d_name /* first time after opendir */
-             || _findnext(dir->handle, &dir->fdata) != -1)
-        {
-            dir->current.d_name = dir->fdata.name;
-            return &dir->current;
-        }
+	if (!dir->current.d_name /* first time after opendir */
+	     || _findnext(dir->handle, &dir->fdata) != -1)
+	{
+	    dir->current.d_name = dir->fdata.name;
+	    return &dir->current;
+	}
     }
     return NULL;
 }
@@ -235,54 +235,54 @@ readdir(DIR * dir)
 # define P_DETACH P_NOWAIT
 #endif
 
-#define C_opendir(x,h)          C_set_block_item(h, 0, (C_word) opendir(C_c_string(x)))
-#define C_closedir(h)           (closedir((DIR *)C_block_item(h, 0)), C_SCHEME_UNDEFINED)
-#define C_readdir(h,e)          C_set_block_item(e, 0, (C_word) readdir((DIR *)C_block_item(h, 0)))
-#define C_foundfile(e,b)        (strcpy(C_c_string(b), ((struct dirent *) C_block_item(e, 0))->d_name), C_fix(strlen(((struct dirent *) C_block_item(e, 0))->d_name)))
+#define C_opendir(x,h)		C_set_block_item(h, 0, (C_word) opendir(C_c_string(x)))
+#define C_closedir(h)		(closedir((DIR *)C_block_item(h, 0)), C_SCHEME_UNDEFINED)
+#define C_readdir(h,e)		C_set_block_item(e, 0, (C_word) readdir((DIR *)C_block_item(h, 0)))
+#define C_foundfile(e,b)	(strcpy(C_c_string(b), ((struct dirent *) C_block_item(e, 0))->d_name), C_fix(strlen(((struct dirent *) C_block_item(e, 0))->d_name)))
 
-#define C_curdir(buf)       (getcwd(C_c_string(buf), 256) ? C_fix(strlen(C_c_string(buf))) : C_SCHEME_FALSE)
+#define C_curdir(buf)	    (getcwd(C_c_string(buf), 256) ? C_fix(strlen(C_c_string(buf))) : C_SCHEME_FALSE)
 
 #define open_binary_input_pipe(a, n, name)   C_mpointer(a, _popen(C_c_string(name), "r"))
 #define open_text_input_pipe(a, n, name)     open_binary_input_pipe(a, n, name)
 #define open_binary_output_pipe(a, n, name)  C_mpointer(a, _popen(C_c_string(name), "w"))
 #define open_text_output_pipe(a, n, name)    open_binary_output_pipe(a, n, name)
-#define close_pipe(p)                        C_fix(_pclose(C_port_file(p)))
+#define close_pipe(p)			     C_fix(_pclose(C_port_file(p)))
 
 #define C_set_file_ptr(port, ptr)  (C_set_block_item(port, 0, (C_block_item(ptr, 0))), C_SCHEME_UNDEFINED)
 
-#define C_getpid            getpid
-#define C_chmod(fn, m)      C_fix(chmod(C_data_pointer(fn), C_unfix(m)))
+#define C_getpid	    getpid
+#define C_chmod(fn, m)	    C_fix(chmod(C_data_pointer(fn), C_unfix(m)))
 #define C_fdopen(a, n, fd, m) C_mpointer(a, fdopen(C_unfix(fd), C_c_string(m)))
-#define C_C_fileno(p)       C_fix(fileno(C_port_file(p)))
-#define C_dup(x)            C_fix(dup(C_unfix(x)))
-#define C_dup2(x, y)        C_fix(dup2(C_unfix(x), C_unfix(y)))
+#define C_C_fileno(p)	    C_fix(fileno(C_port_file(p)))
+#define C_dup(x)	    C_fix(dup(C_unfix(x)))
+#define C_dup2(x, y)	    C_fix(dup2(C_unfix(x), C_unfix(y)))
 #define C_setvbuf(p, m, s)  C_fix(setvbuf(C_port_file(p), NULL, C_unfix(m), C_unfix(s)))
-#define C_access(fn, m)     C_fix(access((char *)C_data_pointer(fn), C_unfix(m)))
-#define C_pipe(d, m)        C_fix(_pipe(C_pipefds, PIPE_BUF, C_unfix(m)))
-#define C_close(fd)         C_fix(close(C_unfix(fd)))
+#define C_access(fn, m)	    C_fix(access((char *)C_data_pointer(fn), C_unfix(m)))
+#define C_pipe(d, m)	    C_fix(_pipe(C_pipefds, PIPE_BUF, C_unfix(m)))
+#define C_close(fd)	    C_fix(close(C_unfix(fd)))
 
 #define C_getenventry(i)   environ[ i ]
 
-#define C_putenv(s)         C_fix(putenv((char *)C_data_pointer(s)))
-#define C_stat(fn)          C_fix(stat((char *)C_data_pointer(fn), &C_statbuf))
-#define C_fstat(f)          C_fix(fstat(C_unfix(f), &C_statbuf))
+#define C_putenv(s)	    C_fix(putenv((char *)C_data_pointer(s)))
+#define C_stat(fn)	    C_fix(stat((char *)C_data_pointer(fn), &C_statbuf))
+#define C_fstat(f)	    C_fix(fstat(C_unfix(f), &C_statbuf))
 
 static C_word C_fcall
 C_setenv(C_word x, C_word y)
 {
     char *sx = C_data_pointer(x),
-         *sy = C_data_pointer(y);
+	 *sy = C_data_pointer(y);
     int n1 = C_strlen(sx),
-        n2 = C_strlen(sy);
+	n2 = C_strlen(sy);
     char *buf = (char *)C_malloc(n1 + n2 + 2);
     if (buf == NULL)
-        return(C_fix(0));
+	return(C_fix(0));
     else
     {
-        C_strcpy(buf, sx);
-        buf[ n1 ] = '=';
-        C_strcpy(buf + n1 + 1, sy);
-        return(C_fix(putenv(buf)));
+	C_strcpy(buf, sx);
+	buf[ n1 ] = '=';
+	C_strcpy(buf + n1 + 1, sy);
+	return(C_fix(putenv(buf)));
     }
 }
 
@@ -292,12 +292,12 @@ C_set_arg_string(char **where, int i, char *dat, int len)
     char *ptr;
     if (dat)
     {
-        ptr = (char *)C_malloc(len + 1);
-        C_memcpy(ptr, dat, len);
-        ptr[ len ] = '\0';
+	ptr = (char *)C_malloc(len + 1);
+	C_memcpy(ptr, dat, len);
+	ptr[ len ] = '\0';
     }
     else
-        ptr = NULL;
+	ptr = NULL;
     where[ i ] = ptr;
 }
 
@@ -306,34 +306,34 @@ C_free_arg_string(char **where) {
   while (*where) C_free(*(where++));
 }
 
-#define C_set_exec_arg(i, a, len)       C_set_arg_string(C_exec_args, i, a, len)
-#define C_set_exec_env(i, a, len)       C_set_arg_string(C_exec_env, i, a, len)
+#define C_set_exec_arg(i, a, len)	C_set_arg_string(C_exec_args, i, a, len)
+#define C_set_exec_env(i, a, len)	C_set_arg_string(C_exec_env, i, a, len)
 
-#define C_free_exec_args()              (C_free_arg_string(C_exec_args), C_SCHEME_TRUE)
-#define C_free_exec_env()               (C_free_arg_string(C_exec_env), C_SCHEME_TRUE)
+#define C_free_exec_args()		(C_free_arg_string(C_exec_args), C_SCHEME_TRUE)
+#define C_free_exec_env()		(C_free_arg_string(C_exec_env), C_SCHEME_TRUE)
 
-#define C_execvp(f)         C_fix(execvp(C_data_pointer(f), (const char *const *)C_exec_args))
-#define C_execve(f)         C_fix(execve(C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
+#define C_execvp(f)	    C_fix(execvp(C_data_pointer(f), (const char *const *)C_exec_args))
+#define C_execve(f)	    C_fix(execve(C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
 
 /* MS replacement for the fork-exec pair */
-#define C_spawnvp(m, f)     C_fix(spawnvp(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args))
+#define C_spawnvp(m, f)	    C_fix(spawnvp(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args))
 #define C_spawnvpe(m, f)    C_fix(spawnvpe(C_unfix(m), C_data_pointer(f), (const char *const *)C_exec_args, (const char *const *)C_exec_env))
 
 #define C_open(fn, fl, m)   C_fix(open(C_c_string(fn), C_unfix(fl), C_unfix(m)))
 #define C_read(fd, b, n)    C_fix(read(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
 #define C_write(fd, b, n)   C_fix(write(C_unfix(fd), C_data_pointer(b), C_unfix(n)))
-#define C_mkstemp(t)        C_fix(mktemp(C_c_string(t)))
+#define C_mkstemp(t)	    C_fix(mktemp(C_c_string(t)))
 
-#define C_ftell(p)          C_fix(ftell(C_port_file(p)))
+#define C_ftell(p)	    C_fix(ftell(C_port_file(p)))
 #define C_fseek(p, n, w)    C_mk_nbool(fseek(C_port_file(p), C_unfix(n), C_unfix(w)))
 #define C_lseek(fd, o, w)   C_fix(lseek(C_unfix(fd), C_unfix(o), C_unfix(w)))
 
-#define C_flushall()        C_fix(_flushall())
+#define C_flushall()	    C_fix(_flushall())
 
-#define C_ctime(n)          (C_secs = (n), ctime(&C_secs))
+#define C_ctime(n)	    (C_secs = (n), ctime(&C_secs))
 
-#define C_asctime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
-#define C_mktime(v)         (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
+#define C_asctime(v)	    (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
+#define C_mktime(v)	    (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
 
 /*
   mapping from Win32 error codes to errno
@@ -342,56 +342,56 @@ C_free_arg_string(char **where) {
 typedef struct
 {
     DWORD   win32;
-    int     libc;
+    int	    libc;
 } errmap_t;
 
 static errmap_t errmap[] =
 {
-    {ERROR_INVALID_FUNCTION,      EINVAL},
-    {ERROR_FILE_NOT_FOUND,        ENOENT},
-    {ERROR_PATH_NOT_FOUND,        ENOENT},
-    {ERROR_TOO_MANY_OPEN_FILES,   EMFILE},
-    {ERROR_ACCESS_DENIED,         EACCES},
-    {ERROR_INVALID_HANDLE,        EBADF},
-    {ERROR_ARENA_TRASHED,         ENOMEM},
-    {ERROR_NOT_ENOUGH_MEMORY,     ENOMEM},
-    {ERROR_INVALID_BLOCK,         ENOMEM},
-    {ERROR_BAD_ENVIRONMENT,       E2BIG},
-    {ERROR_BAD_FORMAT,            ENOEXEC},
-    {ERROR_INVALID_ACCESS,        EINVAL},
-    {ERROR_INVALID_DATA,          EINVAL},
-    {ERROR_INVALID_DRIVE,         ENOENT},
-    {ERROR_CURRENT_DIRECTORY,     EACCES},
-    {ERROR_NOT_SAME_DEVICE,       EXDEV},
-    {ERROR_NO_MORE_FILES,         ENOENT},
-    {ERROR_LOCK_VIOLATION,        EACCES},
-    {ERROR_BAD_NETPATH,           ENOENT},
+    {ERROR_INVALID_FUNCTION,	  EINVAL},
+    {ERROR_FILE_NOT_FOUND,	  ENOENT},
+    {ERROR_PATH_NOT_FOUND,	  ENOENT},
+    {ERROR_TOO_MANY_OPEN_FILES,	  EMFILE},
+    {ERROR_ACCESS_DENIED,	  EACCES},
+    {ERROR_INVALID_HANDLE,	  EBADF},
+    {ERROR_ARENA_TRASHED,	  ENOMEM},
+    {ERROR_NOT_ENOUGH_MEMORY,	  ENOMEM},
+    {ERROR_INVALID_BLOCK,	  ENOMEM},
+    {ERROR_BAD_ENVIRONMENT,	  E2BIG},
+    {ERROR_BAD_FORMAT,		  ENOEXEC},
+    {ERROR_INVALID_ACCESS,	  EINVAL},
+    {ERROR_INVALID_DATA,	  EINVAL},
+    {ERROR_INVALID_DRIVE,	  ENOENT},
+    {ERROR_CURRENT_DIRECTORY,	  EACCES},
+    {ERROR_NOT_SAME_DEVICE,	  EXDEV},
+    {ERROR_NO_MORE_FILES,	  ENOENT},
+    {ERROR_LOCK_VIOLATION,	  EACCES},
+    {ERROR_BAD_NETPATH,		  ENOENT},
     {ERROR_NETWORK_ACCESS_DENIED, EACCES},
-    {ERROR_BAD_NET_NAME,          ENOENT},
-    {ERROR_FILE_EXISTS,           EEXIST},
-    {ERROR_CANNOT_MAKE,           EACCES},
-    {ERROR_FAIL_I24,              EACCES},
-    {ERROR_INVALID_PARAMETER,     EINVAL},
-    {ERROR_NO_PROC_SLOTS,         EAGAIN},
-    {ERROR_DRIVE_LOCKED,          EACCES},
-    {ERROR_BROKEN_PIPE,           EPIPE},
-    {ERROR_DISK_FULL,             ENOSPC},
+    {ERROR_BAD_NET_NAME,	  ENOENT},
+    {ERROR_FILE_EXISTS,		  EEXIST},
+    {ERROR_CANNOT_MAKE,		  EACCES},
+    {ERROR_FAIL_I24,		  EACCES},
+    {ERROR_INVALID_PARAMETER,	  EINVAL},
+    {ERROR_NO_PROC_SLOTS,	  EAGAIN},
+    {ERROR_DRIVE_LOCKED,	  EACCES},
+    {ERROR_BROKEN_PIPE,		  EPIPE},
+    {ERROR_DISK_FULL,		  ENOSPC},
     {ERROR_INVALID_TARGET_HANDLE, EBADF},
-    {ERROR_INVALID_HANDLE,        EINVAL},
-    {ERROR_WAIT_NO_CHILDREN,      ECHILD},
-    {ERROR_CHILD_NOT_COMPLETE,    ECHILD},
+    {ERROR_INVALID_HANDLE,	  EINVAL},
+    {ERROR_WAIT_NO_CHILDREN,	  ECHILD},
+    {ERROR_CHILD_NOT_COMPLETE,	  ECHILD},
     {ERROR_DIRECT_ACCESS_HANDLE,  EBADF},
-    {ERROR_NEGATIVE_SEEK,         EINVAL},
-    {ERROR_SEEK_ON_DEVICE,        EACCES},
-    {ERROR_DIR_NOT_EMPTY,         ENOTEMPTY},
-    {ERROR_NOT_LOCKED,            EACCES},
-    {ERROR_BAD_PATHNAME,          ENOENT},
-    {ERROR_MAX_THRDS_REACHED,     EAGAIN},
-    {ERROR_LOCK_FAILED,           EACCES},
-    {ERROR_ALREADY_EXISTS,        EEXIST},
+    {ERROR_NEGATIVE_SEEK,	  EINVAL},
+    {ERROR_SEEK_ON_DEVICE,	  EACCES},
+    {ERROR_DIR_NOT_EMPTY,	  ENOTEMPTY},
+    {ERROR_NOT_LOCKED,		  EACCES},
+    {ERROR_BAD_PATHNAME,	  ENOENT},
+    {ERROR_MAX_THRDS_REACHED,	  EAGAIN},
+    {ERROR_LOCK_FAILED,		  EACCES},
+    {ERROR_ALREADY_EXISTS,	  EEXIST},
     {ERROR_FILENAME_EXCED_RANGE,  ENOENT},
-    {ERROR_NESTING_NOT_ALLOWED,   EAGAIN},
-    {ERROR_NOT_ENOUGH_QUOTA,      ENOMEM},
+    {ERROR_NESTING_NOT_ALLOWED,	  EAGAIN},
+    {ERROR_NOT_ENOUGH_QUOTA,	  ENOMEM},
     {0, 0}
 };
 
@@ -401,11 +401,11 @@ set_errno(DWORD w32err)
     errmap_t *map = errmap;
     for (; errmap->win32; ++map)
     {
-        if (errmap->win32 == w32err)
-        {
-            errno = errmap->libc;
-            return;
-        }
+	if (errmap->win32 == w32err)
+	{
+	    errno = errmap->libc;
+	    return;
+	}
     }
 }
 
@@ -431,26 +431,26 @@ static int C_fcall
 close_handles()
 {
     if (C_rd0 != INVALID_HANDLE_VALUE)
-        CloseHandle(C_rd0);
+	CloseHandle(C_rd0);
     if (C_rd1 != INVALID_HANDLE_VALUE)
-        CloseHandle(C_rd1);
+	CloseHandle(C_rd1);
     if (C_wr0 != INVALID_HANDLE_VALUE)
-        CloseHandle(C_wr0);
+	CloseHandle(C_wr0);
     if (C_wr1 != INVALID_HANDLE_VALUE)
-        CloseHandle(C_wr1);
+	CloseHandle(C_wr1);
     if (C_rd1_ != INVALID_HANDLE_VALUE)
-        CloseHandle(C_rd1_);
+	CloseHandle(C_rd1_);
     if (C_wr0_ != INVALID_HANDLE_VALUE)
-        CloseHandle(C_wr0_);
+	CloseHandle(C_wr0_);
     if (C_save0 != INVALID_HANDLE_VALUE)
     {
-        SetStdHandle(STD_INPUT_HANDLE, C_save0);
-        CloseHandle(C_save0);
+	SetStdHandle(STD_INPUT_HANDLE, C_save0);
+	CloseHandle(C_save0);
     }
     if (C_save1 != INVALID_HANDLE_VALUE)
     {
-        SetStdHandle(STD_OUTPUT_HANDLE, C_save1);
-        CloseHandle(C_save1);
+	SetStdHandle(STD_OUTPUT_HANDLE, C_save1);
+	CloseHandle(C_save1);
     }
     return zero_handles();
 }
@@ -468,17 +468,17 @@ redir_io()
     C_save0 = GetStdHandle(STD_INPUT_HANDLE);
     C_save1 = GetStdHandle(STD_OUTPUT_HANDLE);
     if (!CreatePipe(&C_rd0, &C_wr0, &sa, 0)
-            || !SetStdHandle(STD_INPUT_HANDLE, C_rd0)
-            || !DuplicateHandle(GetCurrentProcess(), C_wr0, GetCurrentProcess(),
-                &C_wr0_, 0, FALSE, DUPLICATE_SAME_ACCESS)
-            || !CreatePipe(&C_rd1, &C_wr1, &sa, 0)
-            || !SetStdHandle(STD_OUTPUT_HANDLE, C_wr1)
-            || !DuplicateHandle(GetCurrentProcess(), C_rd1, GetCurrentProcess(),
-                &C_rd1_, 0, FALSE, DUPLICATE_SAME_ACCESS))
+	    || !SetStdHandle(STD_INPUT_HANDLE, C_rd0)
+	    || !DuplicateHandle(GetCurrentProcess(), C_wr0, GetCurrentProcess(),
+		&C_wr0_, 0, FALSE, DUPLICATE_SAME_ACCESS)
+	    || !CreatePipe(&C_rd1, &C_wr1, &sa, 0)
+	    || !SetStdHandle(STD_OUTPUT_HANDLE, C_wr1)
+	    || !DuplicateHandle(GetCurrentProcess(), C_rd1, GetCurrentProcess(),
+		&C_rd1_, 0, FALSE, DUPLICATE_SAME_ACCESS))
     {
-        set_last_errno();
-        close_handles();
-        return 0;
+	set_last_errno();
+	close_handles();
+	return 0;
     }
 
     CloseHandle(C_wr0);
@@ -501,21 +501,21 @@ run_process(char *cmdline)
     C_wr0_ = C_rd1_ = INVALID_HANDLE_VALUE; /* these handles are saved */
 
     if (CreateProcess(NULL, cmdline, NULL, NULL, TRUE, 0, NULL,
-                      NULL, &si, &pi))
+		      NULL, &si, &pi))
     {
-        CloseHandle(pi.hThread);
+	CloseHandle(pi.hThread);
 
-        SetStdHandle(STD_INPUT_HANDLE, C_save0);
-        SetStdHandle(STD_OUTPUT_HANDLE, C_save1);
-        C_save0 = C_save1 = INVALID_HANDLE_VALUE;
+	SetStdHandle(STD_INPUT_HANDLE, C_save0);
+	SetStdHandle(STD_OUTPUT_HANDLE, C_save1);
+	C_save0 = C_save1 = INVALID_HANDLE_VALUE;
 
-        CloseHandle(C_rd0);
-        CloseHandle(C_wr1);
-        C_rd0 = C_wr1 = INVALID_HANDLE_VALUE;
-        return (int)pi.hProcess;
+	CloseHandle(C_rd0);
+	CloseHandle(C_wr1);
+	C_rd0 = C_wr1 = INVALID_HANDLE_VALUE;
+	return (int)pi.hProcess;
     }
     else
-        return set_last_errno();
+	return set_last_errno();
 }
 
 static int C_fcall
@@ -523,9 +523,9 @@ pipe_write(int hpipe, void* buf, int count)
 {
     DWORD done = 0;
     if (WriteFile((HANDLE)hpipe, buf, count, &done, NULL))
-        return 1;
+	return 1;
     else
-        return set_last_errno();
+	return set_last_errno();
 }
 
 static int C_fcall
@@ -534,14 +534,14 @@ pipe_read(int hpipe)
     DWORD done = 0;
     /* TODO:
     if (!pipe_ready(hpipe))
-        go_to_sleep;
+	go_to_sleep;
     */
     if (ReadFile((HANDLE)hpipe, &C_rdbuf, 1, &done, NULL))
     {
-        if (done > 0) /* not EOF yet */
-            return 1;
-        else
-            return -1;
+	if (done > 0) /* not EOF yet */
+	    return 1;
+	else
+	    return -1;
     }
     return set_last_errno();
 }
@@ -551,14 +551,14 @@ pipe_ready(int hpipe)
 {
     DWORD avail = 0;
     if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL) && avail)
-        return 1;
+	return 1;
     else
     {
-        Sleep(0); /* give pipe a chance */
-        if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL))
-            return (avail > 0);
-        else
-            return 0;
+	Sleep(0); /* give pipe a chance */
+	if (PeekNamedPipe((HANDLE)hpipe, NULL, 0, NULL, &avail, NULL))
+	    return (avail > 0);
+	else
+	    return 0;
     }
 }
 
@@ -576,13 +576,13 @@ process_wait(int h, int t)
 {
     if (WaitForSingleObject((HANDLE)h, (t ? 0 : INFINITE)) == WAIT_OBJECT_0)
     {
-        DWORD ret;
-        if (GetExitCodeProcess((HANDLE)h, &ret))
-        {
-            CloseHandle((HANDLE)h);
-            C_exstatus = ret;
-            return 1;
-        }
+	DWORD ret;
+	if (GetExitCodeProcess((HANDLE)h, &ret))
+	{
+	    CloseHandle((HANDLE)h);
+	    C_exstatus = ret;
+	    return 1;
+	}
     }
     return set_last_errno();
 }
@@ -596,18 +596,18 @@ get_hostname()
     /* Do we already have hostname? */
     if (strlen(C_hostname))
     {
-        return 1;
+	return 1;
     }
     else
     {
-        WSADATA wsa;
-        if (WSAStartup(MAKEWORD(1, 1), &wsa) == 0)
-        {
-            int nok = gethostname(C_hostname, sizeof(C_hostname));
-            WSACleanup();
-            return !nok;
-        }
-        return 0;
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(1, 1), &wsa) == 0)
+	{
+	    int nok = gethostname(C_hostname, sizeof(C_hostname));
+	    WSACleanup();
+	    return !nok;
+	}
+	return 0;
     }
 }
 
@@ -617,74 +617,74 @@ sysinfo()
     /* Do we need to build the sysinfo? */
     if (!strlen(C_osrel))
     {
-        OSVERSIONINFO ovf;
-        ZeroMemory(&ovf, sizeof(ovf));
-        ovf.dwOSVersionInfoSize = sizeof(ovf);
-        if (get_hostname() && GetVersionEx(&ovf))
-        {
-            SYSTEM_INFO si;
-            _snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
-                        ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
-            strncpy(C_osrel, "Win", sizeof(C_osrel) - 1);
-            switch (ovf.dwPlatformId)
-            {
-            case VER_PLATFORM_WIN32s:
-                strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
-                break;
-            case VER_PLATFORM_WIN32_WINDOWS:
-                if (ovf.dwMajorVersion == 4)
-                {
-                    if (ovf.dwMinorVersion == 0)
-                        strncpy(C_osrel, "Win95", sizeof(C_osrel) - 1);
-                    else if (ovf.dwMinorVersion == 10)
-                        strncpy(C_osrel, "Win98", sizeof(C_osrel) - 1);
-                    else if (ovf.dwMinorVersion == 90)
-                        strncpy(C_osrel, "WinMe", sizeof(C_osrel) - 1);
-                }
-                break;
-            case VER_PLATFORM_WIN32_NT:
-                C_isNT = 1;
-                if (ovf.dwMajorVersion == 6)
-                    strncpy(C_osrel, "WinVista", sizeof(C_osrel) - 1);
-                else if (ovf.dwMajorVersion == 5)
-                {
-                    if (ovf.dwMinorVersion == 2)
-                        strncpy(C_osrel, "WinServer2003", sizeof(C_osrel) - 1);
-                    else if (ovf.dwMinorVersion == 1)
-                        strncpy(C_osrel, "WinXP", sizeof(C_osrel) - 1);
-                    else if ( ovf.dwMinorVersion == 0)
-                        strncpy(C_osrel, "Win2000", sizeof(C_osrel) - 1);
-                }
-                else if (ovf.dwMajorVersion <= 4)
-                   strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
-                break;
-            }
-            GetSystemInfo(&si);
-            strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
-            switch (si.wProcessorArchitecture)
-            {
-            case PROCESSOR_ARCHITECTURE_INTEL:
-                strncpy(C_processor, "x86", sizeof(C_processor) - 1);
-                break;
-#           ifdef PROCESSOR_ARCHITECTURE_IA64
-            case PROCESSOR_ARCHITECTURE_IA64:
-                strncpy(C_processor, "IA64", sizeof(C_processor) - 1);
-                break;
-#           endif
-#           ifdef PROCESSOR_ARCHITECTURE_AMD64
-            case PROCESSOR_ARCHITECTURE_AMD64:
-                strncpy(C_processor, "x64", sizeof(C_processor) - 1);
-                break;
-#           endif
-#           ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
-            case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
-                strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
-                break;
-#           endif
-            }
-        }
-        else
-            return set_last_errno();
+	OSVERSIONINFO ovf;
+	ZeroMemory(&ovf, sizeof(ovf));
+	ovf.dwOSVersionInfoSize = sizeof(ovf);
+	if (get_hostname() && GetVersionEx(&ovf))
+	{
+	    SYSTEM_INFO si;
+	    _snprintf(C_osver, sizeof(C_osver) - 1, "%d.%d.%d",
+			ovf.dwMajorVersion, ovf.dwMinorVersion, ovf.dwBuildNumber);
+	    strncpy(C_osrel, "Win", sizeof(C_osrel) - 1);
+	    switch (ovf.dwPlatformId)
+	    {
+	    case VER_PLATFORM_WIN32s:
+		strncpy(C_osrel, "Win32s", sizeof(C_osrel) - 1);
+		break;
+	    case VER_PLATFORM_WIN32_WINDOWS:
+		if (ovf.dwMajorVersion == 4)
+		{
+		    if (ovf.dwMinorVersion == 0)
+			strncpy(C_osrel, "Win95", sizeof(C_osrel) - 1);
+		    else if (ovf.dwMinorVersion == 10)
+			strncpy(C_osrel, "Win98", sizeof(C_osrel) - 1);
+		    else if (ovf.dwMinorVersion == 90)
+			strncpy(C_osrel, "WinMe", sizeof(C_osrel) - 1);
+		}
+		break;
+	    case VER_PLATFORM_WIN32_NT:
+		C_isNT = 1;
+		if (ovf.dwMajorVersion == 6)
+		    strncpy(C_osrel, "WinVista", sizeof(C_osrel) - 1);
+		else if (ovf.dwMajorVersion == 5)
+		{
+		    if (ovf.dwMinorVersion == 2)
+			strncpy(C_osrel, "WinServer2003", sizeof(C_osrel) - 1);
+		    else if (ovf.dwMinorVersion == 1)
+			strncpy(C_osrel, "WinXP", sizeof(C_osrel) - 1);
+		    else if ( ovf.dwMinorVersion == 0)
+			strncpy(C_osrel, "Win2000", sizeof(C_osrel) - 1);
+		}
+		else if (ovf.dwMajorVersion <= 4)
+		   strncpy(C_osrel, "WinNT", sizeof(C_osrel) - 1);
+		break;
+	    }
+	    GetSystemInfo(&si);
+	    strncpy(C_processor, "Unknown", sizeof(C_processor) - 1);
+	    switch (si.wProcessorArchitecture)
+	    {
+	    case PROCESSOR_ARCHITECTURE_INTEL:
+		strncpy(C_processor, "x86", sizeof(C_processor) - 1);
+		break;
+#	    ifdef PROCESSOR_ARCHITECTURE_IA64
+	    case PROCESSOR_ARCHITECTURE_IA64:
+		strncpy(C_processor, "IA64", sizeof(C_processor) - 1);
+		break;
+#	    endif
+#	    ifdef PROCESSOR_ARCHITECTURE_AMD64
+	    case PROCESSOR_ARCHITECTURE_AMD64:
+		strncpy(C_processor, "x64", sizeof(C_processor) - 1);
+		break;
+#	    endif
+#	    ifdef PROCESSOR_ARCHITECTURE_IA32_ON_WIN64
+	    case PROCESSOR_ARCHITECTURE_IA32_ON_WIN64:
+		strncpy(C_processor, "WOW64", sizeof(C_processor) - 1);
+		break;
+#	    endif
+	    }
+	}
+	else
+	    return set_last_errno();
     }
     return 1;
 }
@@ -695,17 +695,17 @@ get_shlcmd()
     /* Do we need to build the shell command pathname? */
     if (!strlen(C_shlcmd))
     {
-        if (sysinfo())
-        {
-            char *cmdnam = C_isNT ? "\\cmd.exe" : "\\command.com";
-            UINT len = GetSystemDirectory(C_shlcmd, sizeof(C_shlcmd) - strlen(cmdnam));
-            if (len)
-                strcpy(C_shlcmd + len, cmdnam);
-            else
-                return set_last_errno();
-        }
-        else
-            return 0;
+	if (sysinfo())
+	{
+	    char *cmdnam = C_isNT ? "\\cmd.exe" : "\\command.com";
+	    UINT len = GetSystemDirectory(C_shlcmd, sizeof(C_shlcmd) - strlen(cmdnam));
+	    if (len)
+		strcpy(C_shlcmd + len, cmdnam);
+	    else
+		return set_last_errno();
+	}
+	else
+	    return 0;
     }
     return 1;
 }
@@ -721,9 +721,9 @@ get_user_name()
 {
     if (!strlen(C_username))
     {
-        DWORD bufCharCount = sizeof(C_username) / sizeof(C_username[0]);
-        if (!GetUserName(C_username, &bufCharCount))
-            return set_last_errno();
+	DWORD bufCharCount = sizeof(C_username) / sizeof(C_username[0]);
+	if (!GetUserName(C_username, &bufCharCount))
+	    return set_last_errno();
     }
     return 1;
 }
@@ -737,19 +737,19 @@ static int C_fcall
 get_netinfo()
 {
     HINSTANCE hNet = 0,
-              hLoc = 0;
+	      hLoc = 0;
 
     if (isNT)
-        hNet = LoadLibrary("netapi32.dll");
+	hNet = LoadLibrary("netapi32.dll");
     else
     {
-        hLoc = LoadLibrary("rlocal32.dll");
-        hNet = LoadLibrary("radmin32.dll");
-        //hNet = LoadLibrary("netapi.dll");
+	hLoc = LoadLibrary("rlocal32.dll");
+	hNet = LoadLibrary("radmin32.dll");
+	//hNet = LoadLibrary("netapi.dll");
     }
 
     if (!hNet)
-        return 0;
+	return 0;
 
     
 }
@@ -758,37 +758,37 @@ get_netinfo()
 /*
     Spawn a process directly.
     Params:
-    app         Command to execute.
-    cmdlin      Command line (arguments).
-    env         Environment for the new process (may be NULL).
+    app		Command to execute.
+    cmdlin	Command line (arguments).
+    env		Environment for the new process (may be NULL).
     handle, stdin, stdout, stderr
-                Spawned process info are returned in integers.
-                When spawned process shares standard io stream with the parent
-                process the respective value in handle, stdin, stdout, stderr
-                is -1.
-    params      A bitmask controling operation.
-                Bit 1: Child & parent share standard input if this bit is set.
-                Bit 2: Share standard output if bit is set.
-                Bit 3: Share standard error if bit is set.
+		Spawned process info are returned in integers.
+		When spawned process shares standard io stream with the parent
+		process the respective value in handle, stdin, stdout, stderr
+		is -1.
+    params	A bitmask controling operation.
+		Bit 1: Child & parent share standard input if this bit is set.
+		Bit 2: Share standard output if bit is set.
+		Bit 3: Share standard error if bit is set.
 
     Returns: zero return value indicates failure.
 */
 static int C_fcall
 C_process(const char * app, const char * cmdlin, const char ** env,
-          int * phandle,
-          int * pstdin_fd, int * pstdout_fd, int * pstderr_fd,
-          int params)
+	  int * phandle,
+	  int * pstdin_fd, int * pstdout_fd, int * pstderr_fd,
+	  int params)
 {
     int i;
     int success = TRUE;
     const int f_share_io[3] = { params & 1, params & 2, params & 4};
     int io_fds[3] = { -1, -1, -1 };
     HANDLE
-        child_io_handles[3] = { NULL, NULL, NULL },
-        standard_io_handles[3] = {
-            GetStdHandle(STD_INPUT_HANDLE),
-            GetStdHandle(STD_OUTPUT_HANDLE),
-            GetStdHandle(STD_ERROR_HANDLE)};
+	child_io_handles[3] = { NULL, NULL, NULL },
+	standard_io_handles[3] = {
+	    GetStdHandle(STD_INPUT_HANDLE),
+	    GetStdHandle(STD_OUTPUT_HANDLE),
+	    GetStdHandle(STD_ERROR_HANDLE)};
     const char modes[3] = "rww";
     HANDLE cur_process = GetCurrentProcess(), child_process = NULL;
     void* envblk = NULL;
@@ -797,54 +797,54 @@ C_process(const char * app, const char * cmdlin, const char ** env,
 
     for (i=0; i<3 && success; ++i)
     {
-        if (f_share_io[i])
-        {
-            success = DuplicateHandle(
-                cur_process, standard_io_handles[i],
-                cur_process, &child_io_handles[i],
-                0, FALSE, DUPLICATE_SAME_ACCESS);
-        }
-        else
-        {
-            HANDLE a, b;
-            success = CreatePipe(&a,&b,NULL,0);
-            if(success)
-            {
-                HANDLE parent_end;
-                if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
-                else               { parent_end=a; child_io_handles[i]=b; }
-                success = (io_fds[i] = _open_osfhandle((long)parent_end,0)) >= 0;
-            }
-        }
+	if (f_share_io[i])
+	{
+	    success = DuplicateHandle(
+		cur_process, standard_io_handles[i],
+		cur_process, &child_io_handles[i],
+		0, FALSE, DUPLICATE_SAME_ACCESS);
+	}
+	else
+	{
+	    HANDLE a, b;
+	    success = CreatePipe(&a,&b,NULL,0);
+	    if(success)
+	    {
+		HANDLE parent_end;
+		if (modes[i]=='r') { child_io_handles[i]=a; parent_end=b; }
+		else		   { parent_end=a; child_io_handles[i]=b; }
+		success = (io_fds[i] = _open_osfhandle((long)parent_end,0)) >= 0;
+	    }
+	}
     }
 
     /****** make handles inheritable */
 
     for (i=0; i<3 && success; ++i)
-        success = SetHandleInformation(child_io_handles[i], HANDLE_FLAG_INHERIT, -1);
+	success = SetHandleInformation(child_io_handles[i], HANDLE_FLAG_INHERIT, -1);
 
 #if 0 /* Requires a sorted list by key! */
     /****** create environment block if necessary ****/
 
     if (env && success)
     {
-        char** p;
-        int len = 0;
+	char** p;
+	int len = 0;
 
-        for (p = env; *p; ++p) len += strlen(*p) + 1;
+	for (p = env; *p; ++p) len += strlen(*p) + 1;
 
-        if (envblk = C_malloc(len + 1))
-        {
-            char* pb = (char*)envblk;
-            for (p = env; *p; ++p)
-            {
-                strcpy(pb, *p);
-                pb += strlen(*p) + 1;
-            }
-            *pb = '\0';
-        }
-        else
-            success = FALSE;
+	if (envblk = C_malloc(len + 1))
+	{
+	    char* pb = (char*)envblk;
+	    for (p = env; *p; ++p)
+	    {
+		strcpy(pb, *p);
+		pb += strlen(*p) + 1;
+	    }
+	    *pb = '\0';
+	}
+	else
+	    success = FALSE;
     }
 #endif
 
@@ -852,31 +852,31 @@ C_process(const char * app, const char * cmdlin, const char ** env,
 
     if (success)
     {
-        PROCESS_INFORMATION pi;
-        STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
 
-        ZeroMemory(&pi,sizeof pi);
-        ZeroMemory(&si,sizeof si);
-        si.cb = sizeof si;
-        si.dwFlags = STARTF_USESTDHANDLES;
-        si.hStdInput = child_io_handles[0];
-        si.hStdOutput = child_io_handles[1];
-        si.hStdError = child_io_handles[2];
+	ZeroMemory(&pi,sizeof pi);
+	ZeroMemory(&si,sizeof si);
+	si.cb = sizeof si;
+	si.dwFlags = STARTF_USESTDHANDLES;
+	si.hStdInput = child_io_handles[0];
+	si.hStdOutput = child_io_handles[1];
+	si.hStdError = child_io_handles[2];
 
-        /* FIXME passing 'app' param causes failure & possible stack corruption */
-        success = CreateProcess(
-            NULL, (char*)cmdlin, NULL, NULL, TRUE, 0, envblk, NULL, &si, &pi);
+	/* FIXME passing 'app' param causes failure & possible stack corruption */
+	success = CreateProcess(
+	    NULL, (char*)cmdlin, NULL, NULL, TRUE, 0, envblk, NULL, &si, &pi);
 
-        if (success)
-        {
-            child_process=pi.hProcess;
-            CloseHandle(pi.hThread);
-        }
-        else
-            set_last_errno();
+	if (success)
+	{
+	    child_process=pi.hProcess;
+	    CloseHandle(pi.hThread);
+	}
+	else
+	    set_last_errno();
     }
     else
-        set_last_errno();
+	set_last_errno();
 
     /****** cleanup & return *********/
 
@@ -885,14 +885,14 @@ C_process(const char * app, const char * cmdlin, const char ** env,
 
     if (success)
     {
-        *phandle = (int)child_process;
-        *pstdin_fd = io_fds[0];
-        *pstdout_fd = io_fds[1];
-        *pstderr_fd = io_fds[2];
+	*phandle = (int)child_process;
+	*pstdin_fd = io_fds[0];
+	*pstdout_fd = io_fds[1];
+	*pstderr_fd = io_fds[2];
     }
     else
     {
-        for (i=0; i<3; ++i) _close(io_fds[i]);
+	for (i=0; i<3; ++i) _close(io_fds[i]);
     }
 
     return success;
@@ -932,10 +932,10 @@ EOF
 
 (define posix-error
   (let ([strerror (foreign-lambda c-string "strerror" int)]
-        [string-append string-append] )
+	[string-append string-append] )
     (lambda (type loc msg . args)
       (let ([rn (##sys#update-errno)])
-        (apply ##sys#signal-hook type loc (string-append msg " - " (strerror rn)) args) ) ) ) )
+	(apply ##sys#signal-hook type loc (string-append msg " - " (strerror rn)) args) ) ) ) )
 
 (define ##sys#posix-error posix-error)
 
@@ -1000,14 +1000,14 @@ EOF
   (let ([defmode (bitwise-ior _s_irwxu (fxior _s_irgrp _s_iroth))] )
     (lambda (filename flags . mode)
       (let ([mode (if (pair? mode) (car mode) defmode)])
-        (##sys#check-string filename 'file-open)
-        (##sys#check-exact flags 'file-open)
-        (##sys#check-exact mode 'file-open)
-        (let ([fd (##core#inline "C_open" (##sys#make-c-string (##sys#expand-home-path filename)) flags mode)])
-          (when (eq? -1 fd)
-            (##sys#update-errno)
-            (##sys#signal-hook #:file-error 'file-open "cannot open file" filename flags mode) )
-          fd) ) ) ) )
+	(##sys#check-string filename 'file-open)
+	(##sys#check-exact flags 'file-open)
+	(##sys#check-exact mode 'file-open)
+	(let ([fd (##core#inline "C_open" (##sys#make-c-string (##sys#expand-home-path filename)) flags mode)])
+	  (when (eq? -1 fd)
+	    (##sys#update-errno)
+	    (##sys#signal-hook #:file-error 'file-open "cannot open file" filename flags mode) )
+	  fd) ) ) ) )
 
 (define file-close
   (lambda (fd)
@@ -1022,13 +1022,13 @@ EOF
       (##sys#check-exact fd 'file-read)
       (##sys#check-exact size 'file-read)
       (let ([buf (if (pair? buffer) (car buffer) (make-string size))])
-        (unless (and (##core#inline "C_blockp" buf) (##core#inline "C_byteblockp" buf))
-          (##sys#signal-hook #:type-error 'file-read "bad argument type - not a string or blob" buf) )
-        (let ([n (##core#inline "C_read" fd buf size)])
-          (when (eq? -1 n)
-            (##sys#update-errno)
-            (##sys#signal-hook #:file-error 'file-read "cannot read from file" fd size) )
-          (list buf n) ) ) ) ) )
+	(unless (and (##core#inline "C_blockp" buf) (##core#inline "C_byteblockp" buf))
+	  (##sys#signal-hook #:type-error 'file-read "bad argument type - not a string or blob" buf) )
+	(let ([n (##core#inline "C_read" fd buf size)])
+	  (when (eq? -1 n)
+	    (##sys#update-errno)
+	    (##sys#signal-hook #:file-error 'file-read "cannot read from file" fd size) )
+	  (list buf n) ) ) ) ) )
 
 (define file-write
   (lambda (fd buffer . size)
@@ -1038,22 +1038,22 @@ EOF
     (let ([size (if (pair? size) (car size) (##sys#size buffer))])
       (##sys#check-exact size 'file-write)
       (let ([n (##core#inline "C_write" fd buffer size)])
-        (when (eq? -1 n)
-          (##sys#update-errno)
-          (##sys#signal-hook #:file-error 'file-write "cannot write to file" fd size) )
-        n) ) ) )
+	(when (eq? -1 n)
+	  (##sys#update-errno)
+	  (##sys#signal-hook #:file-error 'file-write "cannot write to file" fd size) )
+	n) ) ) )
 
 (define file-mkstemp
   (let ([string-length string-length])
     (lambda (template)
       (##sys#check-string template 'file-mkstemp)
       (let* ([buf (##sys#make-c-string template)]
-             [fd (##core#inline "C_mkstemp" buf)]
-             [path-length (string-length buf)])
-        (when (eq? -1 fd)
-          (##sys#update-errno)
-          (##sys#signal-hook #:file-error 'file-mkstemp "cannot create temporary file" template) )
-        (values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) ) )
+	     [fd (##core#inline "C_mkstemp" buf)]
+	     [path-length (string-length buf)])
+	(when (eq? -1 fd)
+	  (##sys#update-errno)
+	  (##sys#signal-hook #:file-error 'file-mkstemp "cannot create temporary file" template) )
+	(values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) ) )
 
 
 ;;; File attribute access:
@@ -1078,8 +1078,8 @@ EOF
 
 (define (##sys#stat file)
   (let ([r (cond [(fixnum? file) (##core#inline "C_fstat" file)]
-                 [(string? file) (##core#inline "C_stat" (##sys#make-c-string (##sys#expand-home-path file)))]
-                 [else (##sys#signal-hook #:type-error "bad argument type - not a fixnum or string" file)] ) ] )
+		 [(string? file) (##core#inline "C_stat" (##sys#make-c-string (##sys#expand-home-path file)))]
+		 [else (##sys#signal-hook #:type-error "bad argument type - not a fixnum or string" file)] ) ] )
     (when (fx< r 0)
       (##sys#update-errno)
       (##sys#signal-hook #:file-error "cannot access file" file) ) ) )
@@ -1087,9 +1087,9 @@ EOF
 (define (file-stat f #!optional link)
   (##sys#stat f)
   (vector _stat_st_ino _stat_st_mode _stat_st_nlink
-          _stat_st_uid _stat_st_gid _stat_st_size
-          _stat_st_atime _stat_st_ctime _stat_st_mtime
-          0 0 0 0) )
+	  _stat_st_uid _stat_st_gid _stat_st_size
+	  _stat_st_atime _stat_st_ctime _stat_st_mtime
+	  0 0 0 0) )
 
 (define (file-size f) (##sys#stat f) _stat_st_size)
 (define (file-modification-time f) (##sys#stat f) _stat_st_mtime)
@@ -1110,14 +1110,14 @@ EOF
 (define file-position
   (lambda (port)
     (let ([pos (cond [(port? port)
-                      (if (eq? (##sys#slot port 7) 'stream)
-                          (##core#inline "C_ftell" port)
-                          -1) ]
-                     [(fixnum? port) (##core#inline "C_lseek" port 0 _seek_cur)]
-                     [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
+		      (if (eq? (##sys#slot port 7) 'stream)
+			  (##core#inline "C_ftell" port)
+			  -1) ]
+		     [(fixnum? port) (##core#inline "C_lseek" port 0 _seek_cur)]
+		     [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
       (when (fx< pos 0)
-        (##sys#update-errno)
-        (##sys#signal-hook #:file-error 'file-position "cannot retrieve file position of port" port) )
+	(##sys#update-errno)
+	(##sys#signal-hook #:file-error 'file-position "cannot retrieve file position of port" port) )
       pos) ) )
 
 (define set-file-position!
@@ -1127,12 +1127,12 @@ EOF
       (##sys#check-exact whence 'set-file-position!)
       (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
       (unless (cond [(port? port)
-                     (and (eq? (##sys#slot port 7) 'stream)
-                          (##core#inline "C_fseek" port pos whence) ) ]
-                    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
-                    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
-        (##sys#update-errno)
-        (##sys#signal-hook #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) )
+		     (and (eq? (##sys#slot port 7) 'stream)
+			  (##core#inline "C_fseek" port pos whence) ) ]
+		    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
+		    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
+	(##sys#update-errno)
+	(##sys#signal-hook #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) )
 
 
 ;;; Directory stuff:
@@ -1160,52 +1160,52 @@ EOF
 
 (define directory
   (let ([string-append string-append]
-        [make-string make-string]
-        [string string])
+	[make-string make-string]
+	[string string])
     (lambda (#!optional (spec (current-directory)) show-dotfiles?)
       (##sys#check-string spec 'directory)
       (let ([buffer (make-string 256)]
-            [handle (##sys#make-pointer)]
-            [entry (##sys#make-pointer)] )
-        (##core#inline "C_opendir" (##sys#make-c-string (##sys#expand-home-path spec)) handle)
-        (if (##sys#null-pointer? handle)
-            (begin
-              (##sys#update-errno)
-              (##sys#signal-hook #:file-error 'directory "cannot open directory" spec) )
-            (let loop ()
-              (##core#inline "C_readdir" handle entry)
-              (if (##sys#null-pointer? entry)
-                  (begin
-                    (##core#inline "C_closedir" handle)
-                    '() )
-                  (let* ([flen (##core#inline "C_foundfile" entry buffer)]
-                         [file (##sys#substring buffer 0 flen)]
-                         [char1 (string-ref file 0)]
-                         [char2 (and (> flen 1) (string-ref file 1))] )
-                    (if (and (eq? char1 #\.)
-                             (or (not char2)
-                                 (and (eq? char2 #\.) (eq? flen 2))
-                                 (not show-dotfiles?) ) )
-                        (loop)
-                        (cons file (loop)) ) ) ) ) ) ) ) ) )
+	    [handle (##sys#make-pointer)]
+	    [entry (##sys#make-pointer)] )
+	(##core#inline "C_opendir" (##sys#make-c-string (##sys#expand-home-path spec)) handle)
+	(if (##sys#null-pointer? handle)
+	    (begin
+	      (##sys#update-errno)
+	      (##sys#signal-hook #:file-error 'directory "cannot open directory" spec) )
+	    (let loop ()
+	      (##core#inline "C_readdir" handle entry)
+	      (if (##sys#null-pointer? entry)
+		  (begin
+		    (##core#inline "C_closedir" handle)
+		    '() )
+		  (let* ([flen (##core#inline "C_foundfile" entry buffer)]
+			 [file (##sys#substring buffer 0 flen)]
+			 [char1 (string-ref file 0)]
+			 [char2 (and (> flen 1) (string-ref file 1))] )
+		    (if (and (eq? char1 #\.)
+			     (or (not char2)
+				 (and (eq? char2 #\.) (eq? flen 2))
+				 (not show-dotfiles?) ) )
+			(loop)
+			(cons file (loop)) ) ) ) ) ) ) ) ) )
 
 (define (directory? fname)
   (##sys#check-string fname 'directory?)
   (let ((info (##sys#file-info
-                (##sys#platform-fixup-pathname (##sys#expand-home-path fname)))))
+		(##sys#platform-fixup-pathname (##sys#expand-home-path fname)))))
     (and info (fx= 1 (##sys#slot info 4))) ) )
 
 (define current-directory
   (let ([make-string make-string])
     (lambda (#!optional dir)
       (if dir
-          (change-directory dir)
-          (let* ([buffer (make-string 256)]
-                 [len (##core#inline "C_curdir" buffer)] )
-            (##sys#update-errno)
-            (if len
-                (##sys#substring buffer 0 len)
-                (##sys#signal-hook #:file-error 'current-directory "cannot retrieve current directory") ) ) ) ) ) )
+	  (change-directory dir)
+	  (let* ([buffer (make-string 256)]
+		 [len (##core#inline "C_curdir" buffer)] )
+	    (##sys#update-errno)
+	    (if len
+		(##sys#substring buffer 0 len)
+		(##sys#signal-hook #:file-error 'current-directory "cannot retrieve current directory") ) ) ) ) ) )
 
 
 ;;; Pipes:
@@ -1216,36 +1216,36 @@ EOF
   (define (check cmd inp r)
     (##sys#update-errno)
     (if (##sys#null-pointer? r)
-        (##sys#signal-hook #:file-error "cannot open pipe" cmd)
-        (let ([port (##sys#make-port inp ##sys#stream-port-class "(pipe)" 'stream)])
-          (##core#inline "C_set_file_ptr" port r)
-          port) ) )
+	(##sys#signal-hook #:file-error "cannot open pipe" cmd)
+	(let ([port (##sys#make-port inp ##sys#stream-port-class "(pipe)" 'stream)])
+	  (##core#inline "C_set_file_ptr" port r)
+	  port) ) )
   (set! open-input-pipe
     (lambda (cmd . m)
       (##sys#check-string cmd 'open-input-pipe)
       (let ([m (mode m)])
-        (check
-         cmd #t
-         (case m
-           ((###text) (##core#inline_allocate ("open_text_input_pipe" 2) (##sys#make-c-string cmd)))
-           ((###binary) (##core#inline_allocate ("open_binary_input_pipe" 2) (##sys#make-c-string cmd)))
-           (else (badmode m)) ) ) ) ) )
+	(check
+	 cmd #t
+	 (case m
+	   ((###text) (##core#inline_allocate ("open_text_input_pipe" 2) (##sys#make-c-string cmd)))
+	   ((###binary) (##core#inline_allocate ("open_binary_input_pipe" 2) (##sys#make-c-string cmd)))
+	   (else (badmode m)) ) ) ) ) )
   (set! open-output-pipe
     (lambda (cmd . m)
       (##sys#check-string cmd 'open-output-pipe)
       (let ((m (mode m)))
-        (check
-         cmd #f
-         (case m
-           ((###text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
-           ((###binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
-           (else (badmode m)) ) ) ) ) )
+	(check
+	 cmd #f
+	 (case m
+	   ((###text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
+	   ((###binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
+	   (else (badmode m)) ) ) ) ) )
   (set! close-input-pipe
     (lambda (port)
       (##sys#check-port port 'close-input-pipe)
       (let ((r (##core#inline "close_pipe" port)))
-        (##sys#update-errno)
-        (when (eq? -1 r) (##sys#signal-hook #:file-error 'close-input-pipe "error while closing pipe" port)) ) ) )
+	(##sys#update-errno)
+	(when (eq? -1 r) (##sys#signal-hook #:file-error 'close-input-pipe "error while closing pipe" port)) ) ) )
   (set! close-output-pipe close-input-pipe) )
 
 (let ([open-input-pipe open-input-pipe]
@@ -1255,39 +1255,39 @@ EOF
   (set! call-with-input-pipe
     (lambda (cmd proc . mode)
       (let ([p (apply open-input-pipe cmd mode)])
-        (##sys#call-with-values
-         (lambda () (proc p))
-         (lambda results
-           (close-input-pipe p)
-           (apply values results) ) ) ) ) )
+	(##sys#call-with-values
+	 (lambda () (proc p))
+	 (lambda results
+	   (close-input-pipe p)
+	   (apply values results) ) ) ) ) )
   (set! call-with-output-pipe
     (lambda (cmd proc . mode)
       (let ([p (apply open-output-pipe cmd mode)])
-        (##sys#call-with-values
-         (lambda () (proc p))
-         (lambda results
-           (close-output-pipe p)
-           (apply values results) ) ) ) ) )
+	(##sys#call-with-values
+	 (lambda () (proc p))
+	 (lambda results
+	   (close-output-pipe p)
+	   (apply values results) ) ) ) ) )
   (set! with-input-from-pipe
     (lambda (cmd thunk . mode)
       (let ([old ##sys#standard-input]
-            [p (apply open-input-pipe cmd mode)] )
-        (set! ##sys#standard-input p)
-        (##sys#call-with-values thunk
-          (lambda results
-            (close-input-pipe p)
-            (set! ##sys#standard-input old)
-            (apply values results) ) ) ) ) )
+	    [p (apply open-input-pipe cmd mode)] )
+	(set! ##sys#standard-input p)
+	(##sys#call-with-values thunk
+	  (lambda results
+	    (close-input-pipe p)
+	    (set! ##sys#standard-input old)
+	    (apply values results) ) ) ) ) )
   (set! with-output-to-pipe
     (lambda (cmd thunk . mode)
       (let ([old ##sys#standard-output]
-            [p (apply open-output-pipe cmd mode)] )
-        (set! ##sys#standard-output p)
-        (##sys#call-with-values thunk
-          (lambda results
-            (close-output-pipe p)
-            (set! ##sys#standard-output old)
-            (apply values results) ) ) ) ) ) )
+	    [p (apply open-output-pipe cmd mode)] )
+	(set! ##sys#standard-output p)
+	(##sys#call-with-values thunk
+	  (lambda results
+	    (close-output-pipe p)
+	    (set! ##sys#standard-output old)
+	    (apply values results) ) ) ) ) ) )
 
 
 ;;; Pipe primitive:
@@ -1298,8 +1298,8 @@ EOF
 (define create-pipe
     (lambda (#!optional (mode (fxior open/binary open/noinherit)))
       (when (fx< (##core#inline "C_pipe" #f mode) 0)
-        (##sys#update-errno)
-        (##sys#signal-hook #:file-error 'create-pipe "cannot create pipe") )
+	(##sys#update-errno)
+	(##sys#signal-hook #:file-error 'create-pipe "cannot create pipe") )
       (values _pipefd0 _pipefd1) ) )
 
 ;;; Signal processing:
@@ -1359,11 +1359,11 @@ EOF
   (set! ##sys#interrupt-hook
     (lambda (reason state)
       (let ([h (##sys#slot sigvector reason)])
-        (if h
-            (begin
-              (h reason)
-              (##sys#context-switch state) )
-            (oldhook reason state) ) ) ) ) )
+	(if h
+	    (begin
+	      (h reason)
+	      (##sys#context-switch state) )
+	    (oldhook reason state) ) ) ) ) )
 
 ;;; More errno codes:
 
@@ -1487,19 +1487,19 @@ EOF
   (define (mode inp m)
     (##sys#make-c-string
      (cond [(pair? m)
-            (let ([m (car m)])
-              (case m
-                [(###append) (if (not inp) "a" (##sys#error "invalid mode for input file" m))]
-                [else (##sys#error "invalid mode argument" m)] ) ) ]
-           [inp "r"]
-           [else "w"] ) ) )
+	    (let ([m (car m)])
+	      (case m
+		[(###append) (if (not inp) "a" (##sys#error "invalid mode for input file" m))]
+		[else (##sys#error "invalid mode argument" m)] ) ) ]
+	   [inp "r"]
+	   [else "w"] ) ) )
   (define (check fd inp r)
     (##sys#update-errno)
     (if (##sys#null-pointer? r)
-        (##sys#signal-hook #:file-error "cannot open file" fd)
-        (let ([port (##sys#make-port inp ##sys#stream-port-class "(fdport)" 'stream)])
-          (##core#inline "C_set_file_ptr" port r)
-          port) ) )
+	(##sys#signal-hook #:file-error "cannot open file" fd)
+	(let ([port (##sys#make-port inp ##sys#stream-port-class "(fdport)" 'stream)])
+	  (##core#inline "C_set_file_ptr" port r)
+	  port) ) )
   (set! open-input-file*
     (lambda (fd . m)
       (##sys#check-exact fd 'open-input-file*)
@@ -1513,24 +1513,24 @@ EOF
   (lambda (port)
     (##sys#check-port port 'port->fileno)
     (if (not (zero? (##sys#peek-unsigned-integer port 0)))
-        (let ([fd (##core#inline "C_C_fileno" port)])
-          (when (fx< fd 0)
-            (##sys#update-errno)
-            (##sys#signal-hook #:file-error 'port->fileno "cannot access file-descriptor of port" port) )
-          fd)
-        (##sys#signal-hook #:type-error 'port->fileno "port has no attached file" port) ) ) )
+	(let ([fd (##core#inline "C_C_fileno" port)])
+	  (when (fx< fd 0)
+	    (##sys#update-errno)
+	    (##sys#signal-hook #:file-error 'port->fileno "cannot access file-descriptor of port" port) )
+	  fd)
+	(##sys#signal-hook #:type-error 'port->fileno "port has no attached file" port) ) ) )
 
 (define duplicate-fileno
   (lambda (old . new)
     (##sys#check-exact old duplicate-fileno)
     (let ([fd (if (null? new)
-                  (##core#inline "C_dup" old)
-                  (let ([n (car new)])
-                    (##sys#check-exact n 'duplicate-fileno)
-                    (##core#inline "C_dup2" old n) ) ) ] )
+		  (##core#inline "C_dup" old)
+		  (let ([n (car new)])
+		    (##sys#check-exact n 'duplicate-fileno)
+		    (##core#inline "C_dup2" old n) ) ) ] )
       (when (fx< fd 0)
-        (##sys#update-errno)
-        (##sys#signal-hook #:file-error 'duplicate-fileno "cannot duplicate file descriptor" old) )
+	(##sys#update-errno)
+	(##sys#signal-hook #:file-error 'duplicate-fileno "cannot duplicate file descriptor" old) )
       fd) ) )
 
 ;;; Environment access:
@@ -1549,16 +1549,16 @@ EOF
 
 (define current-environment
   (let ([get (foreign-lambda c-string "C_getenventry" int)]
-        [substring substring] )
+	[substring substring] )
     (lambda ()
       (let loop ([i 0])
-        (let ([entry (get i)])
-          (if entry
-              (let scan ([j 0])
-                (if (char=? #\= (##core#inline "C_subchar" entry j))
-                    (cons (cons (substring entry 0 j) (substring entry (fx+ j 1) (##sys#size entry))) (loop (fx+ i 1)))
-                    (scan (fx+ j 1)) ) )
-              '() ) ) ) ) ) )
+	(let ([entry (get i)])
+	  (if entry
+	      (let scan ([j 0])
+		(if (char=? #\= (##core#inline "C_subchar" entry j))
+		    (cons (cons (substring entry 0 j) (substring entry (fx+ j 1) (##sys#size entry))) (loop (fx+ i 1)))
+		    (scan (fx+ j 1)) ) )
+	      '() ) ) ) ) ) )
 
 ;;; Time related things:
 
@@ -1574,8 +1574,8 @@ EOF
   (let ([ctime (foreign-lambda c-string "C_ctime" integer)])
     (lambda (secs)
       (let ([str (ctime secs)])
-        (unless str (##sys#error 'seconds->string "cannot convert seconds to string" secs))
-        str) ) ) )
+	(unless str (##sys#error 'seconds->string "cannot convert seconds to string" secs))
+	str) ) ) )
 
 (define time->string
   (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)])
@@ -1583,8 +1583,8 @@ EOF
       (##sys#check-vector tm 'time->string)
       (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
       (let ([str (asctime tm)])
-        (unless str (##sys#error 'time->string "cannot time vector to string" tm))
-        str) ) ) )
+	(unless str (##sys#error 'time->string "cannot time vector to string" tm))
+	str) ) ) )
 
 (define (local-time->seconds tm)
   (##sys#check-vector tm 'local-time->seconds)
@@ -1614,42 +1614,42 @@ EOF
     (lambda (port mode . size)
       (##sys#check-port port 'set-buffering-mode!)
       (let ([size (if (pair? size) (car size) _bufsiz)]
-            [mode (case mode
-                    [(###full) _iofbf]
-                    [(###line) _iolbf]
-                    [(###none) _ionbf]
-                    [else (##sys#error 'set-buffering-mode! "invalid buffering-mode" mode port)] ) ] )
-        (##sys#check-exact size 'set-buffering-mode!)
-        (when (fx< (if (eq? 'stream (##sys#slot port 7))
-                       (##core#inline "C_setvbuf" port mode size)
-                       -1)
-                   0)
-          (##sys#error 'set-buffering-mode! "cannot set buffering mode" port mode size) ) ) ) )
+	    [mode (case mode
+		    [(###full) _iofbf]
+		    [(###line) _iolbf]
+		    [(###none) _ionbf]
+		    [else (##sys#error 'set-buffering-mode! "invalid buffering-mode" mode port)] ) ] )
+	(##sys#check-exact size 'set-buffering-mode!)
+	(when (fx< (if (eq? 'stream (##sys#slot port 7))
+		       (##core#inline "C_setvbuf" port mode size)
+		       -1)
+		   0)
+	  (##sys#error 'set-buffering-mode! "cannot set buffering mode" port mode size) ) ) ) )
 
 ;;; Filename globbing:
 
 (define glob
   (let ([regexp regexp]
-        [make-anchored-pattern make-anchored-pattern]
-        [string-match string-match]
-        [glob->regexp glob->regexp]
-        [directory directory]
-        [make-pathname make-pathname]
-        [decompose-pathname decompose-pathname] )
+	[make-anchored-pattern make-anchored-pattern]
+	[string-match string-match]
+	[glob->regexp glob->regexp]
+	[directory directory]
+	[make-pathname make-pathname]
+	[decompose-pathname decompose-pathname] )
     (lambda paths
       (let conc-loop ([paths paths])
-        (if (null? paths)
-            '()
-            (let ([path (car paths)])
-              (let-values ([(dir fil ext) (decompose-pathname path)])
-                (let* ([fnpatt (glob->regexp (make-pathname #f (or fil "*") ext))]
-                       [patt (make-anchored-pattern fnpatt)]
-                       [rx (regexp patt)])
-                  (let loop ([fns (directory (or dir ".") #t)])
-                    (cond [(null? fns) (conc-loop (cdr paths))]
-                          [(string-match rx (car fns))
-                           => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr fns)))) ]
-                          [else (loop (cdr fns))] ) ) ) ) ) ) ) ) ) )
+	(if (null? paths)
+	    '()
+	    (let ([path (car paths)])
+	      (let-values ([(dir fil ext) (decompose-pathname path)])
+		(let* ([fnpatt (glob->regexp (make-pathname #f (or fil "*") ext))]
+		       [patt (make-anchored-pattern fnpatt)]
+		       [rx (regexp patt)])
+		  (let loop ([fns (directory (or dir ".") #t)])
+		    (cond [(null? fns) (conc-loop (cdr paths))]
+			  [(string-match rx (car fns))
+			   => (lambda (m) (cons (make-pathname dir (car m)) (loop (cdr fns)))) ]
+			  [else (loop (cdr fns))] ) ) ) ) ) ) ) ) ) )
 
 
 ;;; Process handling:
@@ -1671,52 +1671,52 @@ EOF
 ; string-quote such arguments.
 (define $quote-args-list
   (let ([char-whitespace? char-whitespace?]
-        [string-length string-length]
-        [string-ref string-ref]
-        [string-append string-append])
+	[string-length string-length]
+	[string-ref string-ref]
+	[string-append string-append])
     (lambda (lst exactf)
       (if exactf
-        lst
-        (let ([needs-quoting?
-                ; This is essentially (string-any char-whitespace? s) but we don't
-                ; want a SRFI-13 dependency. (Do we?)
-                (lambda (s)
-                  (let ([len (string-length s)])
-                    (let loop ([i 0])
-                      (cond
-                        [(fx= i len) #f]
-                        [(char-whitespace? (string-ref s i)) #t]
-                        [else (loop (fx+ i 1))]))))])
-            (let loop ([ilst lst] [olst '()])
-              (if (null? ilst)
-                (reverse olst)
-                (let ([str (car ilst)])
-                  (loop
-                    (cdr ilst)
-                    (cons
-                      (if (needs-quoting? str) (string-append "\"" str "\"") str)
-                      olst)) ) ) ) ) ) ) ) )
+	lst
+	(let ([needs-quoting?
+		; This is essentially (string-any char-whitespace? s) but we don't
+		; want a SRFI-13 dependency. (Do we?)
+		(lambda (s)
+		  (let ([len (string-length s)])
+		    (let loop ([i 0])
+		      (cond
+			[(fx= i len) #f]
+			[(char-whitespace? (string-ref s i)) #t]
+			[else (loop (fx+ i 1))]))))])
+	    (let loop ([ilst lst] [olst '()])
+	      (if (null? ilst)
+		(reverse olst)
+		(let ([str (car ilst)])
+		  (loop
+		    (cdr ilst)
+		    (cons
+		      (if (needs-quoting? str) (string-append "\"" str "\"") str)
+		      olst)) ) ) ) ) ) ) ) )
 
 (define $exec-setup
   (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
-        [setenv (foreign-lambda void "C_set_exec_env" int scheme-pointer int)]
-        [pathname-strip-directory pathname-strip-directory]
-        [build-exec-argvec
-          (lambda (loc lst argvec-setter idx)
-            (if lst
-              (begin
-                (##sys#check-list lst loc)
-                (do ([l lst (cdr l)]
-                     [i idx (fx+ i 1)] )
-                    ((null? l) (argvec-setter i #f 0))
-                  (let ([s (car l)])
-                    (##sys#check-string s loc)
-                    (argvec-setter i s (##sys#size s)) ) ) )
-              (argvec-setter idx #f 0) ) )])
+	[setenv (foreign-lambda void "C_set_exec_env" int scheme-pointer int)]
+	[pathname-strip-directory pathname-strip-directory]
+	[build-exec-argvec
+	  (lambda (loc lst argvec-setter idx)
+	    (if lst
+	      (begin
+		(##sys#check-list lst loc)
+		(do ([l lst (cdr l)]
+		     [i idx (fx+ i 1)] )
+		    ((null? l) (argvec-setter i #f 0))
+		  (let ([s (car l)])
+		    (##sys#check-string s loc)
+		    (argvec-setter i s (##sys#size s)) ) ) )
+	      (argvec-setter idx #f 0) ) )])
     (lambda (loc filename arglst envlst exactf)
       (##sys#check-string filename loc)
       (let ([s (pathname-strip-directory filename)])
-        (setarg 0 s (##sys#size s)) )
+	(setarg 0 s (##sys#size s)) )
       (build-exec-argvec loc ($quote-args-list arglst exactf) setarg 1)
       (build-exec-argvec loc envlst setenv 0)
       (##core#inline "C_flushall")
@@ -1747,22 +1747,22 @@ EOF
 (define (##sys#shell-command)
   (or (getenv "COMSPEC")
       (if (##core#inline "C_get_shlcmd")
-          _shlcmd
-          (begin
-            (##sys#update-errno)
-            (##sys#error '##sys#shell-command "cannot retrieve system directory") ) ) ) )
+	  _shlcmd
+	  (begin
+	    (##sys#update-errno)
+	    (##sys#error '##sys#shell-command "cannot retrieve system directory") ) ) ) )
 
 (define (##sys#shell-command-arguments cmdlin)
   (list "/c" cmdlin) )
 
 (define process-run
   (let ([process-spawn process-spawn]
-        [getenv getenv] )
+	[getenv getenv] )
     (lambda (f . args)
       (let ([args (if (pair? args) (car args) #f)])
-        (if args
-            (process-spawn spawn/nowait f args)
-            (process-spawn spawn/nowait (##sys#shell-command) (##sys#shell-command-arguments f)) ) ) ) ) )
+	(if args
+	    (process-spawn spawn/nowait f args)
+	    (process-spawn spawn/nowait (##sys#shell-command) (##sys#shell-command-arguments f)) ) ) ) ) )
 
 ;;; Run subprocess connected with pipes:
 (define-foreign-variable _rdbuf char "C_rdbuf")
@@ -1774,63 +1774,63 @@ EOF
 
 ; from original by Mejedi
 ;; ##sys#process
-; loc            caller procedure symbol
-; cmd            pathname or commandline
-; args           string-list or '()
-; env            string-list or #f (currently ignored)
-; stdoutf        #f then share, or #t then create
-; stdinf         #f then share, or #t then create
-; stderrf        #f then share, or #t then create
+; loc		 caller procedure symbol
+; cmd		 pathname or commandline
+; args		 string-list or '()
+; env		 string-list or #f (currently ignored)
+; stdoutf	 #f then share, or #t then create
+; stdinf	 #f then share, or #t then create
+; stderrf	 #f then share, or #t then create
 ;
 ; (values stdin-input-port? stdout-output-port? pid stderr-input-port?)
 ; where stdin-input-port?, etc. is a port or #f, indicating no port created.
 
 (define ##sys#process
   (let ([c-process
-          (foreign-lambda bool "C_process" c-string c-string c-pointer
-            (pointer int) (pointer int) (pointer int) (pointer int) int)])
+	  (foreign-lambda bool "C_process" c-string c-string c-pointer
+	    (pointer int) (pointer int) (pointer int) (pointer int) int)])
     ; The environment list must be sorted & include current directory
     ; information for the system drives. i.e !C:=...
     ; For now any environment is ignored.
     (lambda (loc cmd args env stdoutf stdinf stderrf #!optional exactf)
       (let ([cmdlin (string-intersperse ($quote-args-list (cons cmd args) exactf))])
-        (let-location ([handle int -1]
-                       [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
-          (let ([res
-                  (c-process cmd cmdlin #f
-                    (location handle)
-                    (location stdin_fd) (location stdout_fd) (location stderr_fd)
-                    (+ (if stdinf 0 1) (if stdoutf 0 2) (if stderrf 0 4)))])
-            (if res
-              (values
-                (and stdoutf (open-input-file* stdout_fd)) ;Parent stdin
-                (and stdinf (open-output-file* stdin_fd))  ;Parent stdout
-                handle
-                (and stderrf (open-input-file* stderr_fd)))
-              (begin
-                (##sys#update-errno)
-                (##sys#signal-hook #:process-error loc "cannot execute process" cmdlin))) ) ) ) ) ) )
+	(let-location ([handle int -1]
+		       [stdin_fd int -1] [stdout_fd int -1] [stderr_fd int -1])
+	  (let ([res
+		  (c-process cmd cmdlin #f
+		    (location handle)
+		    (location stdin_fd) (location stdout_fd) (location stderr_fd)
+		    (+ (if stdinf 0 1) (if stdoutf 0 2) (if stderrf 0 4)))])
+	    (if res
+	      (values
+		(and stdoutf (open-input-file* stdout_fd)) ;Parent stdin
+		(and stdinf (open-output-file* stdin_fd))  ;Parent stdout
+		handle
+		(and stderrf (open-input-file* stderr_fd)))
+	      (begin
+		(##sys#update-errno)
+		(##sys#signal-hook #:process-error loc "cannot execute process" cmdlin))) ) ) ) ) ) )
 
 #;(define process (void))
 #;(define process* (void))
 (let ([%process
-        (lambda (loc err? cmd args env exactf)
-          (let ([chkstrlst
-                 (lambda (lst)
-                   (##sys#check-list lst loc)
-                   (for-each (cut ##sys#check-string <> loc) lst) )])
-            (##sys#check-string cmd loc)
-            (if args
-              (chkstrlst args)
-              (begin
-                (set! exactf #t)
-                (set! args (##sys#shell-command-arguments cmd))
-                (set! cmd (##sys#shell-command)) ) )
-            (when env (chkstrlst env))
-            (receive [in out pid err] (##sys#process loc cmd args env #t #t err? exactf)
-              (if err?
-                (values in out pid err)
-                (values in out pid) ) ) ) )] )
+	(lambda (loc err? cmd args env exactf)
+	  (let ([chkstrlst
+		 (lambda (lst)
+		   (##sys#check-list lst loc)
+		   (for-each (cut ##sys#check-string <> loc) lst) )])
+	    (##sys#check-string cmd loc)
+	    (if args
+	      (chkstrlst args)
+	      (begin
+		(set! exactf #t)
+		(set! args (##sys#shell-command-arguments cmd))
+		(set! cmd (##sys#shell-command)) ) )
+	    (when env (chkstrlst env))
+	    (receive [in out pid err] (##sys#process loc cmd args env #t #t err? exactf)
+	      (if err?
+		(values in out pid err)
+		(values in out pid) ) ) ) )] )
   (set! process
     (lambda (cmd #!optional args env exactf)
       (%process 'process #f cmd args env exactf) ))
@@ -1850,11 +1850,11 @@ EOF
     (let-optionals* args ([nohang #f])
       (##sys#check-exact pid 'process-wait)
       (receive [epid enorm ecode] (##sys#process-wait pid nohang)
-        (if (fx= epid -1)
-          (begin
-            (##sys#update-errno)
-            (##sys#signal-hook #:process-error 'process-wait "waiting for child process failed" pid) )
-          (values epid enorm ecode) ) ) ) ) )
+	(if (fx= epid -1)
+	  (begin
+	    (##sys#update-errno)
+	    (##sys#signal-hook #:process-error 'process-wait "waiting for child process failed" pid) )
+	  (values epid enorm ecode) ) ) ) ) )
 
 (define sleep
   (lambda (t)
@@ -1880,8 +1880,8 @@ EOF
     (if (##core#inline "C_sysinfo")
       (list "windows" _hostname _osrel _osver _processor)
       (begin
-        (##sys#update-errno)
-        (##sys#error 'system-information "cannot retrieve system-information") ) ) ) )
+	(##sys#update-errno)
+	(##sys#error 'system-information "cannot retrieve system-information") ) ) ) )
 
 (define-foreign-variable _username c-string "C_username")
 
@@ -1889,47 +1889,47 @@ EOF
   (if (##core#inline "C_get_user_name")
       _username
       (begin
-        (##sys#update-errno)
-        (##sys#error 'current-user-name "cannot retrieve current user-name") ) ) )
+	(##sys#update-errno)
+	(##sys#error 'current-user-name "cannot retrieve current user-name") ) ) )
 
 
 ;;; Find matching files:
 
 (define find-files
   (let ([glob glob]
-        [string-match string-match]
-        [make-pathname make-pathname]
-        [directory? directory?] )
+	[string-match string-match]
+	[make-pathname make-pathname]
+	[directory? directory?] )
     (lambda (dir pred . action-id-limit)
       (let-optionals action-id-limit
-          ([action (lambda (x y) (cons x y))] ; no eta reduction here - we want cons inlined.
-           [id '()]
-           [limit #f] )
-        (##sys#check-string dir 'find-files)
-        (let* ([depth 0]
-               [lproc
-                (cond [(not limit) (lambda _ #t)]
-                      [(fixnum? limit) (lambda _ (fx< depth limit))]
-                      [else limit] ) ]
-               [pproc
-                (if (string? pred)
-                    (lambda (x) (string-match pred x))
-                    pred) ] )
-          (let loop ([fs (glob (make-pathname dir "*"))]
-                     [r id] )
-            (if (null? fs)
-                r
-                (let ([f (##sys#slot fs 0)]
-                      [rest (##sys#slot fs 1)] )
-                  (cond [(directory? f)
-                         (cond [(member (pathname-file f) '("." "..")) (loop rest r)]
-                               [(lproc f)
-                                (loop rest
-                                      (fluid-let ([depth (fx+ depth 1)])
-                                        (loop (glob (make-pathname f "*")) r) ) ) ]
-                               [else (loop rest r)] ) ]
-                        [(pproc f) (loop rest (action f r))]
-                        [else (loop rest r)] ) ) ) ) ) ) ) ) )
+	  ([action (lambda (x y) (cons x y))] ; no eta reduction here - we want cons inlined.
+	   [id '()]
+	   [limit #f] )
+	(##sys#check-string dir 'find-files)
+	(let* ([depth 0]
+	       [lproc
+		(cond [(not limit) (lambda _ #t)]
+		      [(fixnum? limit) (lambda _ (fx< depth limit))]
+		      [else limit] ) ]
+	       [pproc
+		(if (string? pred)
+		    (lambda (x) (string-match pred x))
+		    pred) ] )
+	  (let loop ([fs (glob (make-pathname dir "*"))]
+		     [r id] )
+	    (if (null? fs)
+		r
+		(let ([f (##sys#slot fs 0)]
+		      [rest (##sys#slot fs 1)] )
+		  (cond [(directory? f)
+			 (cond [(member (pathname-file f) '("." "..")) (loop rest r)]
+			       [(lproc f)
+				(loop rest
+				      (fluid-let ([depth (fx+ depth 1)])
+					(loop (glob (make-pathname f "*")) r) ) ) ]
+			       [else (loop rest r)] ) ]
+			[(pproc f) (loop rest (action f r))]
+			[else (loop rest r)] ) ) ) ) ) ) ) ) )
 
 ;;; unimplemented stuff:
 
