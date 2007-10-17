@@ -909,12 +909,20 @@ distfiles: library.c eval.c extras.c lolevel.c utils.c \
 
 .PHONY: clean distclean spotless confclean
 
+ifeq ($(PLATFORM),mingw)
+CLEAN_PCRE = pcre\*$(O)
+CLEAN_MINGW_LIBS = libchicken.dll.a libchickengui.a libchickengui.dll libchickengui.dll.a libuchicken.dll.a
+else
+CLEAN_PCRE = pcre/*$(O)
+CLEAN_MINGW_LIBS =
+endif
+
 clean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
 	  chicken-setup$(EXE) chicken-profile$(EXE) csi-static$(EXE) \
 	  csc-static$(EXE) chicken-static$(EXE) chicken-bug$(EXE) chicken.info *$(O) \
 	  libchicken$(SO) libuchicken$(SO) libchicken$(A) libuchicken$(A) \
-	  chicken.info pcre/*$(O)
+	  chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS)
 
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h
@@ -925,7 +933,7 @@ spotless: distclean
 	  posixunix.c posixwin.c regex.c regex-extras.c scheduler.c profiler.c stub.c match.c \
 	  ulibrary.c ueval.c uextras.c ulolevel.c \
 	  uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
-	  usrfi-18.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c \
+	  usrfi-18.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c chicken-bug.c \
 	  csc.c csi.c \
 	  chicken.c batch-driver.c compiler.c optimizer.c support.c \
 	  c-platform.c c-backend.c *.exports
