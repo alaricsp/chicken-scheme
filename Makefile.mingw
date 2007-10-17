@@ -80,6 +80,8 @@ POSIXFILE = posixwin
 
 # select default and internal settings
 
+CUSTOM_CHICKEN_DEFAULTS=1
+
 include defaults.make
 
 # main target
@@ -205,7 +207,5 @@ chicken-defaults.h:
 	echo #ifndef C_TARGET_STATIC_LIB_HOME >>$@
 	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
 	echo #endif >>$@
-
-CUSTOM_CHICKEN_DEFAULTS=1
 
 include rules.make
