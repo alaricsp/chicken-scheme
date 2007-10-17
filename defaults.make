@@ -42,7 +42,11 @@ CROSS_CHICKEN = 0
 
 # directories
 
+ifeq ($(PLATFORM),mingw)
+PREFIX = c:/devtools
+else
 PREFIX = /usr/local
+endif
 DESTDIR = $(PREFIX)
 BINDIR = $(DESTDIR)/bin
 LIBDIR = $(DESTDIR)/lib
@@ -60,11 +64,15 @@ C_COMPILER ?= gcc
 CXX_COMPILER ?= g++
 LINKER ?= $(C_COMPILER)
 LIBRARIAN ?= ar
+ifeq ($(PLATFORM),mingw)
+REMOVE_COMMAND ?= del
+else
 REMOVE_COMMAND ?= rm
+endif
 ASSEMBLER ?= $(C_COMPILER)
 MAKEINFO_PROGRAM ?= -makeinfo
-INSTALL_PROGRAM ?= install
 MAKEDIR_COMMAND ?= mkdir
+INSTALL_PROGRAM ?= install
 POSTINSTALL_STATIC_LIBRARY ?= true
 POSTINSTALL_PROGRAM ?= true
 INSTALLINFO_PROGRAM ?= -install-info
@@ -104,8 +112,13 @@ LINKER_LIBRARY_OPTION ?= -l
 LINKER_LINK_SHARED_LIBRARY_OPTIONS ?= -shared
 LIBRARIAN_OPTIONS ?= cru
 LIBRARIES ?= -lm
+ifeq ($(PLATFORM),mingw)
+REMOVE_COMMAND_OPTIONS ?= /f /q
+REMOVE_COMMAND_RECURSIVE_OPTIONS ?= /f /s /q
+else
 REMOVE_COMMAND_OPTIONS ?= -f
 REMOVE_COMMAND_RECURSIVE_OPTIONS ?= -fr
+endif
 MAKEINFO_PROGRAM_OPTIONS ?= --no-split 
 INSTALL_PROGRAM_SHARED_LIBRARY_OPTIONS ?= -m755
 INSTALL_PROGRAM_STATIC_LIBRARY_OPTIONS ?= -m644
@@ -125,8 +138,13 @@ LIBCHICKENGUI_SO_LIBRARIES ?= $(LIBRARIES)
 # other settings
 
 HOSTNAME ?= $(shell hostname)
+ifeq ($(PLATFORM),mingw)
+BUILD_TIME ?= $(shell date /t)
+UNAME_SYS ?= MinGW
+else
 BUILD_TIME ?= $(shell date +%Y-%m-%d)
 UNAME_SYS ?= $(shell uname)
+endif
 BUILD_TAG ?= compiled $(BUILD_TIME) on $(HOSTNAME) ($(UNAME_SYS))
 
 # file extensions
@@ -149,7 +167,7 @@ endif
 
 # bootstrapping compiler
 
-CHICKEN = $(PREFIX)/bin/chicken
+CHICKEN = $(PREFIX)/bin/chicken$(EXE)
 
 # Scheme compiler flags
 

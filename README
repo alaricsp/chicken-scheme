@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.724
+  Version 2.725
 
 
  1. Introduction:
@@ -202,11 +202,12 @@
 	    http://www.opendarwin.org/projects/dlcompat
 
  	- On Windows, only mingw32 <http://mingw.sourceforge.net/> is
-	  supported (Microsoft Visual Studio is NOT). You will need
-	  MSYS to compile CHICKEN from sources.
+	  supported (Microsoft Visual Studio is NOT). Makefiles for
+	  mingw under MSYS and Windows shell are provided
+	  (`Makefile.mingw-msys' and `Makefile.mingw').
 	  
-	  Be sure that the Chicken LIBDIR is in the Path. Windows looks for '.dll'
-	  files along the Path.
+	  Be sure that the Chicken LIBDIR is in the Path. Windows
+	  looks for '.dll' files along the Path.
 
 	- gcc 3.4 shows sometimes warnings of the form
 

@@ -913,7 +913,7 @@ clean:
 	  chicken-setup$(EXE) chicken-profile$(EXE) csi-static$(EXE) \
 	  csc-static$(EXE) chicken-static$(EXE) chicken-bug$(EXE) chicken.info *$(O) \
 	  libchicken$(SO) libuchicken$(SO) libchicken$(A) libuchicken$(A) \
-	  chicken.info pcre6/*$(O)
+	  chicken.info pcre/*$(O)
 
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h

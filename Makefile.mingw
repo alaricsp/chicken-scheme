@@ -90,44 +90,122 @@ all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE
 	chicken.info
 
 chicken-config.h: chicken-defaults.h
-	echo "#define HAVE_DIRENT_H 1" >>$@
-	echo "#define HAVE_INTTYPES_H 1" >>$@
-	echo "#define HAVE_LIMITS_H 1" >>$@
-	echo "#define HAVE_LONG_LONG 1" >>$@
-	echo "#define HAVE_MEMMOVE 1" >>$@
-	echo "#define HAVE_MEMORY_H 1" >>$@
-	echo "#define HAVE_STDINT_H 1" >>$@
-	echo "#define HAVE_STDLIB_H 1" >>$@
-	echo "#define HAVE_STRERROR 1" >>$@
-	echo "#define HAVE_STRINGS_H 1" >>$@
-	echo "#define HAVE_STRING_H 1" >>$@
-	echo "#define HAVE_STRTOLL 1" >>$@
-	echo "#define HAVE_SYS_STAT_H 1" >>$@
-	echo "#define HAVE_SYS_TYPES_H 1" >>$@
-	echo "#define HAVE_UNISTD_H 1" >>$@
-	echo "#define HAVE_UNSIGNED_LONG_LONG 1" >>$@
-	echo "#define HAVE_WINDOWS_H 1" >>$@
-	echo "#define HAVE__STRTOI64 1" >>$@
-	echo "#define STDC_HEADERS 1" >>$@
-	echo "#define HAVE_ALLOCA_H 1" >>$@
-	echo "#define HAVE_DIRECT_H 1" >>$@
-	echo "#define HAVE_ERRNO_H 1" >>$@
-	echo "#define HAVE_GCVT 1" >>$@
-	echo "#define HAVE_LOADLIBRARY 1" >>$@
-	echo "#define HAVE_GETPROCADDRESS 1" >>$@
-	echo "#define HAVE_WINSOCK2_H 1" >>$@
-	echo "#define HAVE_WS2TCPIP_H 1" >>$@
-	echo "#define C_STACK_GROWS_DOWNWARD 1" >>$@
+	echo #define HAVE_DIRENT_H 1 >>$@
+	echo #define HAVE_INTTYPES_H 1 >>$@
+	echo #define HAVE_LIMITS_H 1 >>$@
+	echo #define HAVE_LONG_LONG 1 >>$@
+	echo #define HAVE_MEMMOVE 1 >>$@
+	echo #define HAVE_MEMORY_H 1 >>$@
+	echo #define HAVE_STDINT_H 1 >>$@
+	echo #define HAVE_STDLIB_H 1 >>$@
+	echo #define HAVE_STRERROR 1 >>$@
+	echo #define HAVE_STRINGS_H 1 >>$@
+	echo #define HAVE_STRING_H 1 >>$@
+	echo #define HAVE_STRTOLL 1 >>$@
+	echo #define HAVE_SYS_STAT_H 1 >>$@
+	echo #define HAVE_SYS_TYPES_H 1 >>$@
+	echo #define HAVE_UNISTD_H 1 >>$@
+	echo #define HAVE_UNSIGNED_LONG_LONG 1 >>$@
+	echo #define HAVE_WINDOWS_H 1 >>$@
+	echo #define HAVE__STRTOI64 1 >>$@
+	echo #define STDC_HEADERS 1 >>$@
+	echo #define HAVE_ALLOCA_H 1 >>$@
+	echo #define HAVE_DIRECT_H 1 >>$@
+	echo #define HAVE_ERRNO_H 1 >>$@
+	echo #define HAVE_GCVT 1 >>$@
+	echo #define HAVE_LOADLIBRARY 1 >>$@
+	echo #define HAVE_GETPROCADDRESS 1 >>$@
+	echo #define HAVE_WINSOCK2_H 1 >>$@
+	echo #define HAVE_WS2TCPIP_H 1 >>$@
+	echo #define C_STACK_GROWS_DOWNWARD 1 >>$@
 ifdef GCHOOKS
-	echo "#define C_GC_HOOKS" >>$@
+	echo #define C_GC_HOOKS >>$@
 endif
 ifdef SYMBOLGC
-	echo "#define C_COLLECT_ALL_SYMBOLS" >>$@
+	echo #define C_COLLECT_ALL_SYMBOLS >>$@
 endif
 ifdef NOAPPLYHOOK
-	echo "#define C_NO_APPLY_HOOK" >>$@
+	echo #define C_NO_APPLY_HOOK >>$@
 endif
-	echo "#define C_HACKED_APPLY" >>$@
+	echo #define C_HACKED_APPLY >>$@
 	cat chicken-defaults.h >>$@
+
+chicken-defaults.h:
+	echo /* generated */ >$@
+	echo #define C_BUILD_TAG "$(BUILD_TAG)" >>$@
+	echo #ifndef C_INSTALL_CC >>$@
+	echo # define C_INSTALL_CC "$(C_COMPILER)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_CXX >>$@
+	echo # define C_INSTALL_CXX "$(CXX_COMPILER)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_CFLAGS >>$@
+	echo # define C_INSTALL_CFLAGS "$(C_COMPILER_OPTIONS) $(C_COMPILER_OPTIMIZATION_OPTIONS)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_SHARE_HOME >>$@
+	echo # define C_INSTALL_SHARE_HOME "$(DATADIR)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_BIN_HOME >>$@
+	echo # define C_INSTALL_BIN_HOME "$(BINDIR)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_EGG_HOME >>$@
+	echo # define C_INSTALL_EGG_HOME "$(EGGDIR)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_LIB_HOME >>$@
+	echo # define C_INSTALL_LIB_HOME "$(LIBDIR)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_STATIC_LIB_HOME >>$@
+	echo # define C_INSTALL_STATIC_LIB_HOME "$(LIBDIR)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_INCLUDE_HOME >>$@
+	echo # define C_INSTALL_INCLUDE_HOME "$(INCDIR)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_MORE_LIBS >>$@
+	echo # define C_INSTALL_MORE_LIBS "$(LIBRARIES)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_INSTALL_MORE_STATIC_LIBS >>$@
+	echo # define C_INSTALL_MORE_STATIC_LIBS "$(LIBRARIES)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_DEFAULT_TARGET_STACK_SIZE >>$@
+	echo # define C_DEFAULT_TARGET_STACK_SIZE $(NURSERY) >>$@
+	echo #endif >>$@
+	echo #ifndef C_STACK_GROWS_DOWNWARD >>$@
+	echo # define C_STACK_GROWS_DOWNWARD $(STACKDIRECTION) >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_MORE_LIBS >>$@
+	echo # define C_TARGET_MORE_LIBS "$(TARGET_LIBRARIES)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_MORE_STATIC_LIBS >>$@
+	echo # define C_TARGET_MORE_STATIC_LIBS "$(TARGET_LIBRARIES)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_CC >>$@
+	echo # define C_TARGET_CC "$(TARGET_C_COMPILER)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_CXX >>$@
+	echo # define C_TARGET_CXX "$(TARGET_CXX_COMPILER)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_CFLAGS >>$@
+	echo # define C_TARGET_CFLAGS "$(TARGET_C_COMPILER_OPTIONS) $(TARGET_C_COMPILER_OPTIMIZATION_OPTIONS)" >>$@
+	echo #endif >>$@
+	echo #ifndef C_CROSS_CHICKEN >>$@
+	echo # define C_CROSS_CHICKEN $(CROSS_CHICKEN) >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_LIB_HOME >>$@
+	echo # define C_TARGET_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_RUN_LIB_HOME >>$@
+	echo # define C_TARGET_RUN_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_SHARE_HOME >>$@
+	echo # define C_TARGET_SHARE_HOME "$(TARGET_PREFIX)/share" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_INCLUDE_HOME >>$@
+	echo # define C_TARGET_INCLUDE_HOME "$(TARGET_PREFIX)/include" >>$@
+	echo #endif >>$@
+	echo #ifndef C_TARGET_STATIC_LIB_HOME >>$@
+	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
+	echo #endif >>$@
+
+CUSTOM_CHICKEN_DEFAULTS=1
 
 include rules.make
