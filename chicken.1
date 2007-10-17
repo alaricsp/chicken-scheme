@@ -331,11 +331,21 @@ Instruments the source code to count procedure calls and execution times. After 
 (either via an explicit 
 .B exit
 or implicitly), profiling statistics are written to a file named
-.B PROFILE
+.B PROFILE.<PID>
+where <PID> is the process ID of the program being profiled.
 Each line of the generated file contains a list with the procedure name,
-the number of calls and the time spent executing it. Use the script 
-.B formatprofile
-to display the profiling information in a more user-friendly form.
+the number of calls and the time spent executing it. Use the
+.B chicken\-profile
+program to display the profiling information in a more user-friendly form.
+
+.TP
+.B \-profile\-name\ filename
+Specifies the name of the generated profile information file. Only useful
+in combination with the 
+.B \-profile
+or
+.B \-accumulate-profile
+options.
 
 .TP
 .BI \-prologue \ filename

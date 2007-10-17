@@ -48,6 +48,9 @@
      write-char write make-vector)
     (no-bound-checks) ) ] )
 
+(foreign-declare "#include <unistd.h>")
+
+(define-foreign-variable profile-id int "getpid()")
 
 (define-constant profile-info-entry-size 5)
 
@@ -65,7 +68,8 @@
   (let ([make-vector make-vector])
     (lambda (size filename)
       (when filename
-	(set! ##sys#profile-name filename)
+	(set! ##sys#profile-name
+	  (string-append filename "." (number->string profile-id)))
 	(let ([oldeh (##sys#exit-handler)]
 	      [oldieh (##sys#implicit-exit-handler)] )
 	  (##sys#exit-handler
