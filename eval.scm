@@ -115,7 +115,7 @@
 (define pdss (string ##sys#pathname-directory-separator))
 
 (define ##sys#core-library-modules
-  '(extras lolevel utils tcp regex regex-extras posix match srfi-1 srfi-4 srfi-14 srfi-18 srfi-13))
+  '(extras lolevel utils tcp regex regex-extras posix match srfi-1 srfi-4 srfi-13 srfi-14 srfi-18))
 
 (define ##sys#explicit-library-modules '())
 
@@ -132,12 +132,13 @@
 (define-constant repository-environment-variable "CHICKEN_REPOSITORY")
 (define-constant special-syntax-files '(chicken-ffi-macros chicken-more-macros))
 
+; these are actually in unit extras, but that is used by default
+; srfi-12 in unit library
 (define-constant builtin-features
-  '(chicken srfi-23 srfi-30 srfi-39 srfi-6 srfi-10 srfi-2 srfi-31
-	    srfi-69 srfi-28) )		; these are actually in extras, but that is used by default
+  '(chicken srfi-2 srfi-6 srfi-10 srfi-12 srfi-23 srfi-28 srfi-30 srfi-31 srfi-39 srfi-69) )
 
 (define-constant builtin-features/compiled
-  '(srfi-11 srfi-8 srfi-6 srfi-16 srfi-15 srfi-26 srfi-55 srfi-9 srfi-17) )
+  '(srfi-6 srfi-8 srfi-9 srfi-11 srfi-15 srfi-16 srfi-17 srfi-26 srfi-55) )
 
 
 ;;; System settings
