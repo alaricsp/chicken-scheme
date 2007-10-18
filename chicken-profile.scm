@@ -36,7 +36,9 @@
 (declare
   (block)
   (uses srfi-1
-	srfi-13))
+	srfi-13
+	posix
+	utils))
 
 (define sort-by #f)
 (define file #f)
@@ -62,7 +64,8 @@ Usage: chicken-profile [FILENAME | OPTION] ...
  -version                  show version and exit
  -release                  show release number and exit
 
- FILENAME defaults to "PROFILE"
+ FILENAME defaults to the `PROFILE.<number>', selecting the one with
+ the highest modification time, in case multiple profiles exist.
 
 EOF
 )
@@ -72,7 +75,15 @@ EOF
   (let loop ([args args])
     (if (null? args)
 	(begin
-	  (unless file (set! file "PROFILE"))
+	  (unless file 
+	    (set! file
+	      (let ((fs (glob "PROFILE.*")))
+		(if (null? fs)
+		    (error "no PROFILEs found")
+		    (first (sort fs 
+				 (lambda (f1 f2)
+				   (> (file-modification-time f1)
+				      (file-modification-time f2))) ) ) ) ) ) )
 	  (write-profile) )
 	(let ([arg (car args)]
 	      [rest (cdr args)] )
@@ -177,6 +188,7 @@ EOF
       1 (+ d 1)))))
 
 (define (write-profile)
+  (print "reading `" file "' ...\n")
   (let* ([data0 (with-input-from-file file read-profile)]
 	 [max-t (fold (lambda (t result)
 			(max (third t) result))
