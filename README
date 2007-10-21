@@ -62,6 +62,12 @@
 	Enter "make" without any options to see a list of supported 
 	platforms.
 
+	If you build CHICKEN directly from the development sources
+	out of the subversion repository, an installed "chicken"
+	executable is required, which defaults to
+	"$PREFIX/bin/chicken". Pass "CHICKEN=<chicken-exectuable>"
+	to the "make" invocation to override this setting.
+
 	The build may show errors when creating the info(1)
 	documentation, if you do not have GNU texinfo installed.
 	This is not fatal - the build should proceed.
