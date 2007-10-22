@@ -72,7 +72,7 @@
 	documentation, if you do not have GNU texinfo installed.
 	This is not fatal - the build should proceed.
 
-	If CHICKEN is build successfully, you can install it in your
+	If CHICKEN is build successfully, you can install it on your
 	system by entering
 
 	  make PLATFORM=<platform> PREFIX=<destination> install
@@ -81,7 +81,7 @@
 	compiled into several CHICKEN tools and must be the same
 	while building the system and during installation.
 
-	To install CHICKEN for a particular PREFIX in a different
+	To install CHICKEN for a particular PREFIX on a different
 	location, set the "DESTDIR" variable in addition to "PREFIX":
 	It designates the directory where the files are installed
 	into.
