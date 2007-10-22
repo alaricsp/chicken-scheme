@@ -35,7 +35,6 @@ benchmarks/others/except2.scm
 benchmarks/others/exception.cpp
 benchmarks/others/results.txt
 benchmarks/others/setlongjmp.c
-benchmarks/plists.scm
 benchmarks/puzzle.scm
 benchmarks/scheme.scm
 benchmarks/tak.scm
