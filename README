@@ -65,7 +65,7 @@
 	If you build CHICKEN directly from the development sources
 	out of the subversion repository, an installed "chicken"
 	executable is required, which defaults to
-	"$PREFIX/bin/chicken". Pass "CHICKEN=<chicken-exectuable>"
+	"$PREFIX/bin/chicken". Pass "CHICKEN=<chicken-executable>"
 	to the "make" invocation to override this setting.
 
 	The build may show errors when creating the info(1)
