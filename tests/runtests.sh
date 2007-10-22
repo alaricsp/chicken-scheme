@@ -39,7 +39,7 @@ for x in `ls *.scm`; do
 	"plists.scm");;
 	*)
 	    echo $x
-	    ../csc $x -compiler ../chicken -O2 -d0 -prologue plists.scm && ./`basename $x .scm` >/dev/null;;
+	    ../csc $x -compiler ../chicken -O2 -d0 && ./`basename $x .scm` >/dev/null;;
     esac
 done
 cd ${TEST_DIR}
