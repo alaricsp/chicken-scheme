@@ -33,9 +33,9 @@
 
 (define (add-lemma term)
   (cond ((and (pair? term) (eq? (car term) 'equal) (pair? (cadr term)))
-	 (put (car (cadr term))
+	 (put! (car (cadr term))
 	      'lemmas
-	      (cons term (get (car (cadr term)) 'lemmas))))
+	      (cons term (or (get (car (cadr term)) 'lemmas) '()))))
 	(else (display "ADD-LEMMA did not like term: ") ;Qobi
 	      (display term)		;Qobi
 	      (newline))))		;Qobi
@@ -81,8 +81,9 @@
 
 (define (rewrite term)
   (cond ((not (pair? term)) term)
-	(else (rewrite-with-lemmas (cons (car term) (rewrite-args (cdr term)))
-				   (get (car term) 'lemmas)))))
+	(else (rewrite-with-lemmas
+	       (cons (car term) (rewrite-args (cdr term)))
+	       (or (get (car term) 'lemmas) '())))))
 
 (define (rewrite-args lst)
   (cond ((null? lst) '())		;Qobi
@@ -278,7 +279,6 @@
 (define (truep x lst) (or (equal? x '(t)) (member x lst)))
 
 (setup)
-
 
 (if (not (eq? #t (time (test))))
     (error "wrong result") )

@@ -64,13 +64,13 @@
 	 (a '()))
 	((= n 0) a)
       (set! a (cons name a))
-      (do ((i i (- i 1))) ((zero? i)) (put name (gensym) #f))
-      (put name
+      (do ((i i (- i 1))) ((zero? i)) (put! name (gensym) #f))
+      (put! name
 	   'pattern
 	   (do ((i npats (- i 1)) (ipats ipats (cdr ipats)) (a '()))
 	       ((zero? i) a)
 	     (set! a (cons (car ipats) a))))
-      (do ((j (- m i) (- j 1))) ((zero? j)) (put name (gensym) #f)))))
+      (do ((j (- m i) (- j 1))) ((zero? j)) (put! name (gensym) #f)))))
 
 (define (browse-random)
   (set! *rand* (remainder (* *rand* 17) 251))

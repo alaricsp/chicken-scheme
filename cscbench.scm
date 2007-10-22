@@ -4,7 +4,6 @@
 
 (require-extension srfi-1 utils posix regex)
 
-(define plist-files '("boyer" "browse" "dderiv"))
 (define flonum-files '("fft" "maze"))
 
 (define cc "`../csc -cc-name`")
@@ -46,16 +45,11 @@
         (display #\.)
         (display-r fs 3 #\0) ) ) ) )
 
-(define (compile-and-run file extras decls options coptions unsafe)
-  (system* "~A ~A -quiet -no-warnings -heap-size 8m -output-file tmpfile.c ~A ~A ~A"
-           chicken file extras decls options)
-  ; MacOS X is always "dynamic"
-  (cond [(eq? 'macosx (software-version))
-         (system* "~a ~a -I.. tmpfile.c -o tmpfile ../lib~achicken.dylib -lm"
-	          cc coptions (if unsafe "u" ""))]
-	[else
-         (system* "~a ~a -I.. -static tmpfile.c -o tmpfile ../lib~achicken.a -lm"
-	           cc coptions (if unsafe "u" ""))])
+(define (compile-and-run file decls options coptions unsafe)
+  (system* "~A ~A -quiet -no-warnings -heap-size 8m -output-file tmpfile.c ~A ~A"
+           chicken file decls options)
+  (system* "~a ~a -static -I.. tmpfile.c -o tmpfile ../lib~achicken.a -lm"
+	   cc coptions (if unsafe "u" ""))
   (let ([time (call-with-current-continuation
 	       (lambda (abort)
 		 (set! abort-run (cut abort #f))
@@ -100,18 +94,15 @@
   (for-each
    (lambda (file)
      (let* ([name (pathname-file file)]
-	    [extras (if (member name plist-files)
-			"-prologue plists.scm"
-			"") ]
 	    [options (string-intersperse options " ")] )
        (display-l name 16 #\space)
        (flush-output)
-       (set! sum-base (+ sum-base (compile-and-run file extras "-debug-level 0 -optimize-level 1 -lambda-lift" options "" #f)))
+       (set! sum-base (+ sum-base (compile-and-run file "-debug-level 0 -optimize-level 1 -lambda-lift" options "" #f)))
        (dflush "  ")
-       (set! sum-unsafe (+ sum-unsafe (compile-and-run file extras "-debug-level 0 -optimize-level 3 -block -disable-interrupts -lambda-lift" options "" #t)))
+       (set! sum-unsafe (+ sum-unsafe (compile-and-run file "-debug-level 0 -optimize-level 3 -block -disable-interrupts -lambda-lift" options "" #t)))
        (dflush "  ")
        (unless (member name flonum-files)
-         (set! sum-max (+ sum-max (compile-and-run file extras "-benchmark-mode" options "" #t) )))
+         (set! sum-max (+ sum-max (compile-and-run file "-benchmark-mode" options "" #t) )))
        (newline)
        (flush-output) ) )
    (lset-difference string=? (sort (glob "*.scm") string<?) '("plists.scm")))

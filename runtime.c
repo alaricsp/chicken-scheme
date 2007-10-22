@@ -5823,9 +5823,9 @@ void C_ccall C_apply(C_word c, C_word closure, C_word k, C_word fn, ...)
 
 #ifndef C_UNSAFE_RUNTIME
   if(c < 4) C_bad_min_argc(c, 4);
+#endif
 
   fn2 = resolve_procedure(fn, "apply");
-#endif
 
   va_start(v, fn);
 
