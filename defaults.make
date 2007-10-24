@@ -35,17 +35,17 @@
 
 # basic parameters
 
-BINARYVERSION = 3
-NURSERY = (128*1024)
-STACKDIRECTION = 1
-CROSS_CHICKEN = 0
+BINARYVERSION ?= 3
+NURSERY ?= (128*1024)
+STACKDIRECTION ?= 1
+CROSS_CHICKEN ?= 0
 
 # directories
 
 ifeq ($(PLATFORM),mingw)
-PREFIX = c:/devtools
+PREFIX ?= c:/devtools
 else
-PREFIX = /usr/local
+PREFIX ?= /usr/local
 endif
 DESTDIR = $(PREFIX)
 BINDIR = $(DESTDIR)/bin
