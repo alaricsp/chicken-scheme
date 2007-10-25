@@ -130,7 +130,7 @@ ifdef NOAPPLYHOOK
 	echo #define C_NO_APPLY_HOOK >>$@
 endif
 	echo #define C_HACKED_APPLY >>$@
-	cat chicken-defaults.h >>$@
+	type chicken-defaults.h >>$@
 
 chicken-defaults.h:
 	echo /* generated */ >$@
