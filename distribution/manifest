@@ -197,6 +197,10 @@ tests/locative-stress-test.scm
 tests/r4rstest.scm
 tests/runtests.sh
 tests/srfi-18-tests.scm
+tests/apply-test.scm
+tests/embedded1.c
+tests/fixnum-tests.scm
+tests/path-tests.scm
 tweaks.scm
 utils.scm
 pcre/AUTHORS
