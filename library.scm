@@ -3186,8 +3186,8 @@ EOF
 	 " - " (get-config)
 	 (if (eq? 0 (##sys#size spec))
 	     ""
-	     (string-append " - [" spec " ]") )
-	 "\n" +copyright+ " | " +build-tag+) )
+	     (string-append "\t[" spec " ]") )
+	 "\n" +copyright+ "\t" +build-tag+) )
       +build-version+) )
 
 (define ##sys#pathname-directory-separator

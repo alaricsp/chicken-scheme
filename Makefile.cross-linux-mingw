@@ -46,14 +46,7 @@ EXE = .exe
 
 # commands
 
-TOOLCHAIN_PREFIX=/opt/mingw32
-C_COMPILER = $(TOOLCHAIN_PREFIX)/bin/mingw32-gcc
-CXX_COMPILER = $(TOOLCHAIN_PREFIX)/bin/mingw32-g++
-LINKER = $(TOOLCHAIN_PREFIX)/bin/mingw32-gcc
-TARGET_C_COMPILER = gcc
-TARGET_CXX_COMPILER = g++
-HOST_C_COMPILER = gcc
-LIBRARIAN = $(TOOLCHAIN_PREFIX)/bin/mingw32-ar
+HOST=mingw32
 
 # options
 
@@ -78,7 +71,6 @@ LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
 
 # special files
 
-CHICKEN_CONFIG_H = chicken-config.h
 APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 POSIXFILE = posixwin
 

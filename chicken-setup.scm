@@ -81,13 +81,35 @@
 #ifndef C_TARGET_LIB_HOME
 # define C_TARGET_LIB_HOME  C_INSTALL_LIB_HOME
 #endif
+
+#ifndef C_CHICKEN_PROGRAM
+# define C_CHICKEN_PROGRAM   "chicken"
+#endif
+
+#ifndef C_CSC_PROGRAM
+# define C_CSC_PROGRAM   "csc"
+#endif
+
+#ifndef C_CSI_PROGRAM
+# define C_CSI_PROGRAM   "csi"
+#endif
+
+#ifndef C_CHICKEN_PROFILE_PROGRAM
+# define C_CHICKEN_PROFILE_PROGRAM   "chicken-profile"
+#endif
+
+#ifndef C_CHICKEN_SETUP_PROGRAM
+# define C_CHICKEN_SETUP_PROGRAM   "chicken-setup"
+#endif
+
+#ifndef C_CHICKEN_BUG_PROGRAM
+# define C_CHICKEN_BUG_PROGRAM   "chicken-bug"
+#endif
 <#
 
 
 (define-constant setup-file-extension "setup-info")
 (define-constant remote-repository-name "repository")
-(define-constant installed-executables '("chicken" "csc" "csi" "chicken-setup" "chicken-profile"))
-
 
 (include "chicken-more-macros.scm")
 
@@ -99,6 +121,14 @@
 
 (define-constant short-options
   '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
+
+(define *installed-executables* 
+  `(("chicken" . (foreign-value "C_CHICKEN_PROGRAM" c-string))
+    ("csc" . (foreign-value "C_CSC_PROGRAM" c-string))
+    ("csi" . (foreign-value "C_CSI_PROGRAM" c-string))
+    ("chicken-profile" . (foreign-value "C_CHICKEN_PROFILE_PROGRAM" c-string))
+    ("chicken-setup" . (foreign-value "C_CHICKEN_SETUP_PROGRAM" c-string))
+    ("chicken-bug" . (foreign-value "C_CHICKEN_BUG_PROGRAM" c-string))))
 
 (define *install-bin-path* 
   (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
@@ -228,11 +258,15 @@
 (define (fixpath prg)
   (cond ((string=? prg "csc")
 	 (string-intersperse 
-	  (cons* (quotewrap (make-pathname *install-bin-path* prg))
+	  (cons* (quotewrap 
+		  (make-pathname 
+		   *install-bin-path*
+		   (cdr (assoc prg *installed-executables*))))
 		 "-feature" "compiling-extension"
 		 *csc-options*) 
 	  " ") )
-	((member prg installed-executables) (quotewrap (make-pathname *install-bin-path* prg)))
+	((assoc prg *installed-executables*) =>
+	 (lambda (a) (quotewrap (make-pathname *install-bin-path* (cdr a)))))
 	(else prg) ) )
 
 (define (fixmaketarget file)

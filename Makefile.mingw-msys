@@ -44,12 +44,6 @@ WINDOWS = 1
 SO = .dll
 EXE = .exe
 
-# commands
-
-C_COMPILER = gcc
-CXX_COMPILER = g++
-LINKER = gcc
-
 # options
 
 C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H

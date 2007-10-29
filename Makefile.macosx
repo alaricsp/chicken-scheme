@@ -39,9 +39,6 @@ ARCH = $(shell sh config-arch.sh)
 
 # commands
 
-C_COMPILER = gcc
-CXX_COMPILER = g++
-LINKER = gcc
 POSTINSTALL_STATIC_LIBRARY = ranlib
 POSTINSTALL_PROGRAM = install_name_tool
 

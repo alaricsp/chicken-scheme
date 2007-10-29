@@ -73,6 +73,10 @@
 #ifndef C_TARGET_RUN_LIB_HOME
 # define C_TARGET_RUN_LIB_HOME    C_TARGET_LIB_HOME
 #endif
+
+#ifndef C_CHICKEN_PROGRAM
+# define C_CHICKEN_PROGRAM     "chicken"
+#endif
 <#
 
 (define-foreign-variable INSTALL_BIN_HOME c-string "C_INSTALL_BIN_HOME")
@@ -96,6 +100,7 @@
 (define-foreign-variable TARGET_INCLUDE_HOME c-string "C_TARGET_INCLUDE_HOME")
 (define-foreign-variable TARGET_STATIC_LIB_HOME c-string "C_TARGET_STATIC_LIB_HOME")
 (define-foreign-variable TARGET_RUN_LIB_HOME c-string "C_TARGET_RUN_LIB_HOME")
+(define-foreign-variable CHICKEN_PROGRAM c-string "C_CHICKEN_PROGRAM")
 
 
 ;;; Parameters:
@@ -133,7 +138,7 @@
    (prefix "chicken" "bin"
 	   (make-pathname
 	    (if host-mode INSTALL_BIN_HOME TARGET_BIN_HOME)
-	    "chicken"))))
+	    CHICKEN_PROGRAM))))
 
 (define compiler (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
 (define c++-compiler (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))

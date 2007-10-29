@@ -38,7 +38,6 @@
 BINARYVERSION ?= 3
 NURSERY ?= (128*1024)
 STACKDIRECTION ?= 1
-CROSS_CHICKEN ?= 0
 
 # directories
 
@@ -60,10 +59,16 @@ EGGDIR = $(DESTDIR)/lib/chicken/$(BINARYVERSION)
 
 # commands
 
+ifdef HOST
+C_COMPILER ?= $(HOST)-gcc
+CXX_COMPILER ?= $(HOST)-g++
+LIBRARIAN ?= $(HOST)-ar
+else
 C_COMPILER ?= gcc
 CXX_COMPILER ?= g++
-LINKER ?= $(C_COMPILER)
 LIBRARIAN ?= ar
+endif
+LINKER ?= $(C_COMPILER)
 ifeq ($(PLATFORM),mingw)
 REMOVE_COMMAND ?= del
 else
@@ -77,16 +82,27 @@ POSTINSTALL_STATIC_LIBRARY ?= true
 POSTINSTALL_PROGRAM ?= true
 INSTALLINFO_PROGRAM ?= -install-info
 UNINSTALLINFO_PROGRAM ?= -install-info
-HOST_C_COMPILER ?= $(C_COMPILER)
 
 # target variables
 
+ifdef TARGET
+TARGET_C_COMPILER ?= $(TARGET)-$(C_COMPILER)
+TARGET_CXX_COMPILER ?= $(TARGET)-$(CXX_COMPILER)
+else
 TARGET_C_COMPILER ?= $(C_COMPILER)
 TARGET_CXX_COMPILER ?= $(CXX_COMPILER)
+endif
+
 TARGET_C_COMPILER_OPTIONS ?= $(C_COMPILER_OPTIONS)
 TARGET_C_COMPILER_OPTIMIZATION_OPTIONS ?= $(C_COMPILER_OPTIMIZATION_OPTIONS)
 TARGET_PREFIX ?= $(PREFIX)
 TARGET_LIBRARIES ?= $(LIBRARIES)
+
+ifneq ($(TARGET_C_COMPILER),$(HOST_C_COMPILER))
+CROSS_CHICKEN = 1
+else
+CROSS_CHICKEN = 0
+endif
 
 
 # options
@@ -130,7 +146,6 @@ ASSEMBLER_OUTPUT_OPTION ?= -o
 ASSEMBLER_COMPILE_OPTION ?= -c
 PRIMARY_LIBCHICKEN ?= libchicken$(SO)
 UNINSTALLINFO_PROGRAM_OPTIONS ?= --delete
-HOST_C_COMPILER_OUTPUT_OPTION ?= $(C_COMPILER_OUTPUT_OPTION)
 LIBCHICKEN_SO_LIBRARIES ?= $(LIBRARIES)
 LIBUCHICKEN_SO_LIBRARIES ?= $(LIBRARIES)
 LIBCHICKENGUI_SO_LIBRARIES ?= $(LIBRARIES)
@@ -157,7 +172,7 @@ SO ?= .so
 # special files
 
 POSIXFILE ?= posixunix
-# CHICKEN_CONFIG_H = chicken-config.h
+CHICKEN_CONFIG_H = chicken-config.h
 PCRE_OBJECT_FILES ?= pcre/*.o
 
 ifneq ($(ARCH),)
@@ -178,22 +193,32 @@ CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 
 # targets
 
+CHICKEN_PROGRAM = $(PROGRAM_PREFIX)chicken$(PROGRAM_SUFFIX)
+CSC_PROGRAM = $(PROGRAM_PREFIX)csc$(PROGRAM_SUFFIX)
+CSI_PROGRAM = $(PROGRAM_PREFIX)csi$(PROGRAM_SUFFIX)
+CHICKEN_PROFILE_PROGRAM = $(PROGRAM_PREFIX)chicken-profile$(PROGRAM_SUFFIX)
+CHICKEN_SETUP_PROGRAM = $(PROGRAM_PREFIX)chicken-setup$(PROGRAM_SUFFIX)
+CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
+
 ifdef STATICBUILD
-CHICKEN_STATIC_EXECUTABLE = chicken$(EXE)
-CSI_STATIC_EXECUTABLE = csi$(EXE)
-CHICKEN_SHARED_EXECUTABLE = chicken-shared$(EXE)
-CSI_SHARED_EXECUTABLE = csi-shared$(EXE)
+CHICKEN_STATIC_EXECUTABLE = $(CHICKEN_PROGRAM)$(EXE)
+CSI_STATIC_EXECUTABLE = $(CSI_PROGRAM)$(EXE)
+CHICKEN_SHARED_EXECUTABLE = $(CHICKEN_PROGRAM)-shared$(EXE)
+CSI_SHARED_EXECUTABLE = $(CSI_PROGRAM)-shared$(EXE)
 TARGETS ?= libchicken$(A) libuchicken$(A) $(CHICKEN_STATIC_EXECUTABLE) \
-	$(CSI_STATIC_EXECUTABLE) chicken-profile$(EXE) csc$(EXE) \
-	chicken.info chicken-bug$(EXE)
+	$(CSI_STATIC_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
+	$(CSC_PROGRAM)$(EXE) \
+	chicken.info $(CHICKEN_BUG_PROGRAM)$(EXE)
 else
-CHICKEN_STATIC_EXECUTABLE = chicken-static$(EXE)
-CSI_STATIC_EXECUTABLE = csi-static$(EXE)
-CHICKEN_SHARED_EXECUTABLE = chicken$(EXE)
-CSI_SHARED_EXECUTABLE = csi$(EXE)
+CHICKEN_STATIC_EXECUTABLE = $(CHICKEN_PROGRAM)-static$(EXE)
+CSI_STATIC_EXECUTABLE = $(CSI_PROGRAM)-static$(EXE)
+CHICKEN_SHARED_EXECUTABLE = $(CHICKEN_PROGRAM)$(EXE)
+CSI_SHARED_EXECUTABLE = $(CSI_PROGRAM)$(EXE)
 TARGETS ?= libchicken$(A) libuchicken$(A) $(CHICKEN_SHARED_EXECUTABLE) \
-	$(CSI_SHARED_EXECUTABLE) chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
-	libuchicken$(SO) chicken-setup$(EXE) chicken.info chicken-bug$(EXE)
+	$(CSI_SHARED_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
+	$(CSC_PROGRAM)$(EXE) libchicken$(SO) \
+	libuchicken$(SO) $(CHICKEN_SETUP_PROGRAM)$(EXE) chicken.info \
+	$(CHICKEN_BUG_PROGRAM)$(EXE)
 endif
 
 # main rule
@@ -279,5 +304,23 @@ chicken-defaults.h:
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_STATIC_LIB_HOME" >>$@
 	echo "# define C_TARGET_STATIC_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_PROGRAM" >>$@
+	echo "# define C_CHICKEN_PROGRAM \"$(CHICKEN_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CSC_PROGRAM" >>$@
+	echo "# define C_CSC_PROGRAM \"$(CSC_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CSI_PROGRAM" >>$@
+	echo "# define C_CSI_PROGRAM \"$(CSI_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_PROFILE_PROGRAM" >>$@
+	echo "# define C_CHICKEN_PROFILE_PROGRAM \"$(CHICKEN_PROFILE_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_SETUP_PROGRAM" >>$@
+	echo "# define C_CHICKEN_SETUP_PROGRAM \"$(CHICKEN_SETUP_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
+	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
 endif
