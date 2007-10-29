@@ -123,12 +123,12 @@
   '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
 
 (define *installed-executables* 
-  `(("chicken" . (foreign-value "C_CHICKEN_PROGRAM" c-string))
-    ("csc" . (foreign-value "C_CSC_PROGRAM" c-string))
-    ("csi" . (foreign-value "C_CSI_PROGRAM" c-string))
-    ("chicken-profile" . (foreign-value "C_CHICKEN_PROFILE_PROGRAM" c-string))
-    ("chicken-setup" . (foreign-value "C_CHICKEN_SETUP_PROGRAM" c-string))
-    ("chicken-bug" . (foreign-value "C_CHICKEN_BUG_PROGRAM" c-string))))
+  `(("chicken" . ,(foreign-value "C_CHICKEN_PROGRAM" c-string))
+    ("csc" . ,(foreign-value "C_CSC_PROGRAM" c-string))
+    ("csi" . ,(foreign-value "C_CSI_PROGRAM" c-string))
+    ("chicken-profile" . ,(foreign-value "C_CHICKEN_PROFILE_PROGRAM" c-string))
+    ("chicken-setup" . ,(foreign-value "C_CHICKEN_SETUP_PROGRAM" c-string))
+    ("chicken-bug" . ,(foreign-value "C_CHICKEN_BUG_PROGRAM" c-string))))
 
 (define *install-bin-path* 
   (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
