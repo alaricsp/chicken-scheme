@@ -249,6 +249,7 @@ Makefile.mingw
 Makefile.mingw-msys
 Makefile.solaris
 Makefile.bsd
+Makefile.cygwin
 Makefile.cross-linux-mingw
 rules.make
 defaults.make
