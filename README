@@ -119,6 +119,14 @@
 	  Override built-in C compiler optimization options. Available
           for debug or release build.
 
+	PROGRAM_PREFIX= 
+          A prefix to prepend to the names of all generated executables. 
+	  This allows having multiple CHICKEN versions in your PATH 
+	  (but note that they have to be installed at different locations).
+
+	PROGRAM_SUFFIX=
+          A suffix to be appended to the names of all generated executables.
+
 	To remove CHICKEN from your file-system, enter (probably as
         root):
 

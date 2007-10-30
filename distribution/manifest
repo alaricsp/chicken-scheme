@@ -246,6 +246,7 @@ Makefile
 Makefile.linux
 Makefile.macosx
 Makefile.mingw
+Makefile.mingw-msys
 Makefile.solaris
 Makefile.bsd
 Makefile.cross-linux-mingw

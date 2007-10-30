@@ -1,3 +1,9 @@
+2.732
+
+- Better cross-development support for the build system (the
+  Makefile accepts PROGRAM_PREFIX, PROGRAM_SUFFIX, HOST and TARGET
+  settings)
+
 2.717
 
 - New binary compatibility version (3) - installed eggs mst be recompiled!
