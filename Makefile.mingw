@@ -65,6 +65,7 @@ LIBCHICKENGUI_SO_LIBRARIES = -lm -lkernel32 -luser32 -lgdi32 -lws2_32
 LIBCHICKENGUI_IMPORT_LIBRARY = libchickengui.dll.a
 LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
 LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
+MAKEDIR_COMMAND_OPTIONS =
 
 # special files
 
