@@ -1,0 +1,27 @@
+#!/bin/sh
+#| merge-from-trunk                                                   -*- Scheme -*-
+exec csi -s "$0" "$@"
+|#
+
+(load-relative "build.scm")
+
+(define *repourl* "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken")
+(define *dry-run* #f)
+(define *diff* #f)
+(define *commit* #f)
+
+(simple-args)
+
+(run (svn 
+      ,(if *diff* 
+	   `("diff" ,(if (string? *diff*) (conc "-r" *diff*) ""))
+	   "merge")
+      ,(if *dry-run* "--dry-run" "")
+      ,(conc *repourl* "/branches/release")
+      ,(conc *repourl* "/trunk")
+      ,(if (not *diff*) "." "") ) )
+
+(when *commit*
+  (run (svn ci)) )
+
+(exit)

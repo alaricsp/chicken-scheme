@@ -63,7 +63,6 @@
 ; (disable-warning <class> ...)
 ; (always-bound {<name>})
 ; (foreign-declare {<string>})
-; (foreign-parse {<string>})
 ; (block)
 ; (separate)
 ; (run-time-macros)

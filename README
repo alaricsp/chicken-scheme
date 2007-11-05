@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  Version 2.732
+  Version 2.733
 
 
  1. Introduction:
@@ -126,6 +126,22 @@
 
 	PROGRAM_SUFFIX=
           A suffix to be appended to the names of all generated executables.
+
+	HOST=
+	  A "<machine>-<platform>" name prefix to use for the C compiler to to
+	  use to compile the runtime system and executables. Set this variable
+	  if you want to compile CHICKEN for a different architecture than
+	  the one on which you are building it.
+
+	TARGET=
+  	  Similar to "HOST", but specifies the name prefix to use for compiling
+	  code with the "csc" compiler driver. This is required for creating
+	  a "cross chicken", a specially built CHICKEN that invokes a cross
+	  C compiler to build the final binaries. You will need a cross compiled
+	  runtime system by building a version of CHICKEN with the "HOST" option
+	  mentioned above. More information about this process and the variables
+	  that you should set are provided in the CHICKEN wiki at
+   	  <http://chicken.wiki.br/cross-compilation>.
 
 	To remove CHICKEN from your file-system, enter (probably as
         root):
@@ -279,11 +295,14 @@
 
  7. What's next?
 
+    	If you find any bugs, or want to report a problem, please consider
+	using the "chicken-bug" tool to create a detailed bug report.
+
 	If you have any more questions or problems (even the slightest
         problems, or the most stupid questions), then please subscribe
-	to the CHICKEN mailing list or contact me at:
+	to the "chicken-users" mailing list or contact me at:
 
-	<felix@call-with-current-continuation.org>.
+	<felix@call-with-current-continuation.org>
 
 
 	Have fun!

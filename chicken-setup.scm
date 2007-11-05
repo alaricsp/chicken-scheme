@@ -43,7 +43,10 @@
 	  yes-or-no? setup-build-directory setup-root-directory
 	  create-directory test-compile try-compile copy-file run-verbose
 	  required-chicken-version required-extension-version
-	  cross-chicken ##sys#current-source-filename) )
+	  cross-chicken ##sys#current-source-filename host-extension) )
+
+
+;;; Constants, variables and parameters
 
 #>
 #ifndef C_INSTALL_BIN_HOME
@@ -117,10 +120,12 @@
 (define-constant long-options
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir" "-revision") )
+    "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir" "-revision"
+    "-host-extension") )
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
+    #f) )
 
 (define *installed-executables* 
   `(("chicken" . ,(foreign-value "C_CHICKEN_PROGRAM" c-string))
@@ -153,32 +158,7 @@
 
 (define program-path (make-parameter *install-bin-path*))
 (define (cross-chicken) (##sys#fudge 39))
-
-(define create-directory/parents
-  (let ([create-directory create-directory])
-    (lambda (dir)
-      (let loop ([dir dir])
-        (when (and dir (not (directory? dir)))
-          (loop (pathname-directory dir))
-          (create-directory dir))) ) ) )
-
-(define create-directory
-  (let ()
-    (define (verb dir)
-      (when (setup-verbose-flag) (printf "  creating directory `~a'~%~!" dir)) )
-    (if *windows-shell*
-	(lambda (dir)
-	  (verb dir)
-	  (create-directory/parents dir) ) 
-	(lambda (dir)
-	  (verb dir)
-	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
-
-(define (quotewrap str)
-  (if (or (string-any char-whitespace? str)
-          (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
-      (string-append "\"" str "\"") 
-      str) )
+(define host-extension (make-parameter #f))
 
 (define setup-root-directory (make-parameter #f))
 (define setup-build-directory (make-parameter (current-directory)))
@@ -188,10 +168,8 @@
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
 (define *move-command* (if *windows-shell* 'move 'mv))
-
 (define *gzip-program* 'gzip)
 (define *tar-program* 'tar)
-
 (define *fetch-only* #f)
 (define *temporary-directory* #f)
 (define *tmpdir-created* #f)
@@ -215,6 +193,37 @@
 (define *run-tests* #f)
 (define *fetched-eggs* '())
 
+
+;;; File-system routines
+
+(define create-directory/parents
+  (let ([create-directory create-directory])
+    (lambda (dir)
+      (let loop ([dir dir])
+        (when (and dir (not (directory? dir)))
+          (loop (pathname-directory dir))
+          (create-directory dir))) ) ) )
+
+(define create-directory
+  (let ()
+    (define (verb dir)
+      (when (setup-verbose-flag) (printf "  creating directory `~a'~%~!" dir)) )
+    (if *windows-shell*
+	(lambda (dir)
+	  (verb dir)
+	  (create-directory/parents dir) ) 
+	(lambda (dir)
+	  (verb dir)
+	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
+
+
+;;; Helper stuff
+
+(define (quotewrap str)
+  (if (or (string-any char-whitespace? str)
+          (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
+      (string-append "\"" str "\"") 
+      str) )
 
 (define (abort-setup)
   (*abort-hook* #f) )
@@ -290,6 +299,9 @@
 
 (define-macro (compile . explist)
   `(run (csc ,@explist) ) )
+
+
+;;; "make" functionality
 
 (define (make:find-matching-line str spec)
   (let ((match? (lambda (s) (string=? s str))))
@@ -428,6 +440,33 @@
 			     spec))
 		,argv)))
 
+
+;;; Create new repository file
+
+(define (create-repository-file eggdir)
+  (let ((eggs 
+	 (filter-map
+	  (lambda (d)
+	    (and-let* ((mf (or (file-exists? (make-pathname d d "meta"))
+			       (file-exists? (make-pathname (list d "trunk") d "meta")))))
+	      (display mf (current-error-port))
+	      (newline (current-error-port))
+	      (cons d (with-input-from-file mf read)) ) )
+	  (directory eggdir))) )
+    (write-char #\()
+    (for-each
+     (lambda (e)
+       (let ((needs (assq 'needs (cdr e))))
+	 (pp `(,(string->symbol (car e))
+	       ()
+	       ,(conc e ".egg")
+	       ,@(if needs (cdr needs) '())))))
+     *eggs*) 
+    (write-char #\))))
+
+
+;;; Show usage information
+
 (define (usage)
   (display #<<EOF
 usage: chicken-setup [OPTION ...] FILENAME
@@ -452,8 +491,10 @@ usage: chicken-setup [OPTION ...] FILENAME
   -i  -docindex                  display path for documentation index
   -e  -eval EXPRESSION           evaluate expression
   -t  -test                      run test suite, if it exists
+      -host-extension            compile any extensions in "host" mode
       -ls EXTENSION              list installed files for extension
       -fetch-tree                download and show repository catalog
+      -create-tree               create repository catalog from SVN checkout
       -tree FILENAME             use repository catalog from given file
       -svn URL                   fetch extension from subversion repository
       -local PATH                fetch extension from local filesystem
@@ -466,6 +507,9 @@ usage: chicken-setup [OPTION ...] FILENAME
 EOF
   )
   (exit) )
+
+
+;;; Processing setup scripts
 
 (define (make-setup-info-pathname fn #!optional (rpath (repository-path)))
   (make-pathname rpath fn setup-file-extension) )
@@ -620,6 +664,9 @@ EOF
      ("a" (if *windows-shell* "lib" "a"))
      (x x) ) ) )
 
+
+;;; Installation
+
 (define (install-extension id files #!optional (info '()))
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
@@ -718,6 +765,9 @@ EOF
     (when (assq 'documentation info) (set! *rebuild-doc-index* #t))
     (delete-file* (make-setup-info-pathname (->string ext)))))
 
+
+;;; More helper stuff
+
 (define (repo-path #!optional ddir?)
   (let ((p (if (and ddir? *destdir*)
 	       (make-pathname 
@@ -795,6 +845,9 @@ EOF
   (test-compile 
    (sprintf "#ifdef __cplusplus~%extern \"C\"~%#endif~%char ~a();~%int main() { ~a(); return 0; }~%" proc proc)
    ldflags: (conc "-l" name) ) )
+
+
+;;; HTTP repository access
 
 (define (find-header name)
   (test-compile
@@ -912,18 +965,19 @@ EOF
 			(loop) ) ) ) ) ) )
 	   (x (error "(internal) invalid host" x)) ) ) ) )
 
+(define (requirements reqs)
+  (fold 
+   (lambda (r reqs)
+     (cond ((symbol? r)
+	    (let ((node (assq r *repository-tree*)))
+	      (cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
+		    ((memq r ##sys#core-library-modules) reqs)
+		    (else (error "broken dependencies: extension does not exist" r) ) ) ) )
+	   (else (error "invalid requirement spec" r))))
+   '() 
+   reqs) )
+
 (define (fetch-file ext)
-  (define (requirements reqs)
-    (fold 
-     (lambda (r reqs)
-       (cond ((symbol? r)
-	      (let ((node (assq r *repository-tree*)))
-		(cond (node (append (requirements (cdddr node)) (list (car node)) reqs))
-		      ((memq r ##sys#core-library-modules) reqs)
-		      (else (error "Broken dependencies: extension does not exist" r) ) ) ) )
-	     (else (requirements (eval-req r) )) ) ) 
-     '() 
-     reqs) )
   (and (or *dont-ask*
 	   (yes-or-no?
 	    (sprintf "The extension ~A does not exist.~%Do you want to download it ?" ext)
@@ -952,6 +1006,9 @@ EOF
 		      (else
 		       (error "Extension does not exist in the repository" ext)) ) ) ) ) ) )
 
+
+;;; Main entry point
+
 (define (install filename)
   (let ((df (not *fetch-only*)))
     (let loop ((filename filename))
@@ -976,6 +1033,9 @@ EOF
 		(list (make-pathname (current-directory) filename "egg"))))
 	     (when df
 	       (loop (pathname-file filename))))))))
+
+
+;;; Documentation index generation
 
 (define (doc-index #!optional ddir?)
   (make-pathname (repo-path ddir?) "index.html"))
@@ -1106,6 +1166,9 @@ EOF
 		  string<?) ) )
 	  (display "</tbody></table></body></font></html>\n") ) ) ) ) )
 
+
+;;; Output stuff
+
 (define (format-string str cols #!optional right (padc #\space))
   (let* ((len (string-length str))
 	 (pad (make-string (fxmax 0 (fx- cols len)) padc)) )
@@ -1130,6 +1193,9 @@ EOF
    (sort (delete-duplicates
 	  (grep "^[^.].*\\.*$" (map pathname-file (directory (repository-path)))) string=?)
 	 string<?) ) )
+
+
+;;; Command line processing
 
 (define (main args)
   (define (parse-host host eggdir)
@@ -1258,9 +1324,16 @@ EOF
 	 (set! *local-repository* path)
 	 (set! *dont-ask* #t)
 	 (loop more) )
+	(("-create-tree" dir . more)
+	 (create-repository-file dir)
+	 (set! anydone #t)
+	 (loop more) )
 	(("-fetch-tree" . more)
 	 (set! *fetch-tree-only* #t)
 	 (set! anydone #t)
+	 (loop more) )
+	(("-host-extension" . more)
+	 (host-extension #t)
 	 (loop more) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" "-tree" "-local" "-svn" "-eval"))
 	 (error "missing option argument" (car args)) )
@@ -1296,10 +1369,10 @@ EOF
 	   (when (setup-verbose-flag) (printf "Rebuilding documentation index...\n"))
 	   (build-doc-index) )
          (unless *keep-stuff*
-             (for-each 
-              (lambda (f)
-                (run (,*remove-command* ,(quotewrap f))) )
-              *fetched-eggs*))
+	   (for-each 
+	    (lambda (f)
+	      (run (,*remove-command* ,(quotewrap f))) )
+	    *fetched-eggs*))
 	 #f) ) ) ) )
 
 (handle-exceptions ex 

@@ -1,8 +1,9 @@
-2.732
+2.733
 
+- chicken-setup: can create repository catalog file from local 
+  SVN checkout of egg repository
 - Better cross-development support for the build system (the
-  Makefile accepts PROGRAM_PREFIX, PROGRAM_SUFFIX, HOST and TARGET
-  settings)
+  Makefile accepts various variables for customizing the build)
 
 2.717
 

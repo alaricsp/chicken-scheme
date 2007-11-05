@@ -98,6 +98,7 @@ endif
 TARGET_C_COMPILER_OPTIONS ?= $(C_COMPILER_OPTIONS)
 TARGET_C_COMPILER_OPTIMIZATION_OPTIONS ?= $(C_COMPILER_OPTIMIZATION_OPTIONS)
 TARGET_PREFIX ?= $(PREFIX)
+TARGET_RUN_PREFIX ?= $(TARGET_PREFIX)
 TARGET_LIBRARIES ?= $(LIBRARIES)
 
 ifneq ($(TARGET_C_COMPILER),$(HOST_C_COMPILER))
@@ -296,7 +297,7 @@ chicken-defaults.h:
 	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_RUN_LIB_HOME" >>$@
-	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
+	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_RUN_PREFIX)/lib\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_SHARE_HOME" >>$@
 	echo "# define C_TARGET_SHARE_HOME \"$(TARGET_PREFIX)/share\"" >>$@

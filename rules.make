@@ -35,82 +35,56 @@
 
 # object files
 
-LIBCHICKEN_SHARED_OBJECTS = library$(O) eval$(O) extras$(O) lolevel$(O) utils$(O) \
-	tcp$(O) srfi-1$(O) srfi-4$(O) srfi-13$(O) srfi-14$(O) srfi-18$(O) \
-	$(POSIXFILE)$(O) regex$(O) regex-extras$(O) scheduler$(O) profiler$(O) stub$(O) match$(O) \
-	 scheduler$(O) profiler$(O) stub$(O) match$(O) runtime$(O)
-LIBUCHICKEN_SHARED_OBJECTS = ulibrary$(O) ueval$(O) uextras$(O) ulolevel$(O) \
-	uutils$(O) utcp$(O) usrfi-1$(O) usrfi-4$(O) usrfi-13$(O) usrfi-14$(O) \
-	usrfi-18$(O) u$(POSIXFILE)$(O) uregex$(O) scheduler$(O) profiler$(O) \
-	stub$(O) match$(O) uruntime$(O)
-LIBCHICKENGUI_SHARED_OBJECTS = library$(O) eval$(O) extras$(O) lolevel$(O) utils$(O) \
-	tcp$(O) srfi-1$(O) srfi-4$(O) srfi-13$(O) srfi-14$(O) srfi-18$(O) \
-	$(POSIXFILE)$(O) regex$(O) regex-extras$(O) scheduler$(O) profiler$(O) stub$(O) match$(O) \
-	 scheduler$(O) profiler$(O) stub$(O) match$(O) gui-runtime$(O)
-LIBCHICKEN_STATIC_OBJECTS = library-static$(O) eval-static$(O) extras-static$(O) \
-	lolevel-static$(O) utils-static$(O) tcp-static$(O) srfi-1-static$(O) \
-	srfi-4-static$(O) srfi-13-static$(O) srfi-14-static$(O) srfi-18-static$(O) \
-	$(POSIXFILE)-static$(O) regex-static$(O) regex-extras-static$(O) scheduler-static$(O) \
-	profiler-static$(O) stub-static$(O) match-static$(O) runtime-static$(O)
-LIBUCHICKEN_STATIC_OBJECTS = ulibrary-static$(O) ueval-static$(O) uextras-static$(O) \
-	ulolevel-static$(O) uutils-static$(O) utcp-static$(O) usrfi-1-static$(O) \
-	usrfi-4-static$(O) usrfi-13-static$(O) usrfi-14-static$(O) usrfi-18-static$(O) \
-	u$(POSIXFILE)-static$(O) uregex-static$(O) scheduler-static$(O) \
-	profiler-static$(O) stub-static$(O) match-static$(O) uruntime-static$(O)
-LIBCHICKENGUI_STATIC_OBJECTS = library-static$(O) eval-static$(O) extras-static$(O) \
-	lolevel-static$(O) utils-static$(O) tcp-static$(O) srfi-1-static$(O) \
-	srfi-4-static$(O) srfi-13-static$(O) srfi-14-static$(O) srfi-18-static$(O) \
-	$(POSIXFILE)-static$(O) regex-static$(O) regex-extras-static$(O) scheduler-static$(O) \
-	profiler-static$(O) stub-static$(O) match-static$(O) gui-runtime-static$(O)
+LIBCHICKEN_OBJECTS_1 = \
+       library eval extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       srfi-14 srfi-18 $(POSIXFILE) regex regex-extras scheduler \
+       profiler stub match runtime
+LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
+LIBCHICKEN_STATIC_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=-static$(O))
 
-PCRE_SHARED_OBJECTS = \
-  pcre/pcre_compile$(O) \
-  pcre/pcre_config$(O) \
-  pcre/pcre_dfa_exec$(O) \
-  pcre/pcre_exec$(O) \
-  pcre/pcre_fullinfo$(O) \
-  pcre/pcre_get$(O) \
-  pcre/pcre_globals$(O) \
-  pcre/pcre_info$(O) \
-  pcre/pcre_maketables$(O) \
-  pcre/pcre_newline$(O) \
-  pcre/pcre_ord2utf8$(O) \
-  pcre/pcre_refcount$(O) \
-  pcre/pcre_study$(O) \
-  pcre/pcre_tables$(O) \
-  pcre/pcre_try_flipped$(O) \
-  pcre/pcre_ucp_searchfuncs$(O) \
-  pcre/pcre_valid_utf8$(O) \
-  pcre/pcre_version$(O) \
-  pcre/pcre_xclass$(O) \
-  pcre/pcre_chartables$(O)
-PCRE_STATIC_OBJECTS = \
-  pcre/pcre_compile-static$(O) \
-  pcre/pcre_config-static$(O) \
-  pcre/pcre_dfa_exec-static$(O) \
-  pcre/pcre_exec-static$(O) \
-  pcre/pcre_fullinfo-static$(O) \
-  pcre/pcre_get-static$(O) \
-  pcre/pcre_globals-static$(O) \
-  pcre/pcre_info-static$(O) \
-  pcre/pcre_maketables-static$(O) \
-  pcre/pcre_newline-static$(O) \
-  pcre/pcre_ord2utf8-static$(O) \
-  pcre/pcre_refcount-static$(O) \
-  pcre/pcre_study-static$(O) \
-  pcre/pcre_tables-static$(O) \
-  pcre/pcre_try_flipped-static$(O) \
-  pcre/pcre_ucp_searchfuncs-static$(O) \
-  pcre/pcre_valid_utf8-static$(O) \
-  pcre/pcre_version-static$(O) \
-  pcre/pcre_xclass-static$(O) \
-  pcre/pcre_chartables-static$(O)
+LIBUCHICKEN_OBJECTS_1 = \
+       ulibrary ueval uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
+       usrfi-13 usrfi-14 usrfi-18 u$(POSIXFILE) uregex scheduler \
+       profiler stub match uruntime
+LIBUCHICKEN_SHARED_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=$(O))
+LIBUCHICKEN_STATIC_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=-static$(O))
 
-COMPILER_OBJECTS = chicken$(O) batch-driver$(O) compiler$(O) optimizer$(O) support$(O) \
-	c-platform$(O) c-backend$(O) 
-COMPILER_STATIC_OBJECTS = chicken-static$(O) batch-driver-static$(O) \
-	compiler-static$(O) optimizer-static$(O) support-static$(O) \
-	c-platform-static$(O) c-backend-static$(O) 
+LIBCHICKENGUI_OBJECTS_1 = \
+       library eval extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       srfi-14 srfi-18 $(POSIXFILE) regex regex-extras scheduler \
+       profiler stub match gui-runtime
+LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
+LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
+
+PCRE_OBJECTS_1 = \
+       pcre/pcre_compile \
+       pcre/pcre_config \
+       pcre/pcre_dfa_exec \
+       pcre/pcre_exec \
+       pcre/pcre_fullinfo \
+       pcre/pcre_get \
+       pcre/pcre_globals \
+       pcre/pcre_info \
+       pcre/pcre_maketables \
+       pcre/pcre_newline \
+       pcre/pcre_ord2utf8 \
+       pcre/pcre_refcount \
+       pcre/pcre_study \
+       pcre/pcre_tables \
+       pcre/pcre_try_flipped \
+       pcre/pcre_ucp_searchfuncs \
+       pcre/pcre_valid_utf8 \
+       pcre/pcre_version \
+       pcre/pcre_xclass \
+       pcre/pcre_chartables
+PCRE_SHARED_OBJECTS = $(PCRE_OBJECTS_1:=$(O))
+PCRE_STATIC_OBJECTS = $(PCRE_OBJECTS_1:=-static$(O))
+
+COMPILER_OBJECTS_1 = \
+       chicken batch-driver compiler optimizer support \
+       c-platform c-backend
+COMPILER_OBJECTS        = $(COMPILER_OBJECTS_1:=$(O))
+COMPILER_STATIC_OBJECTS = $(COMPILER_OBJECTS_1:=-static$(O))
 
 # library objects
 
