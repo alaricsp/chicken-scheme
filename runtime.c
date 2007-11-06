@@ -386,6 +386,8 @@ static C_TLS TRACE_INFO
   *trace_buffer_top;
 
 static C_TLS C_byte 
+  *heapspace1, 
+  *heapspace2,
   *fromspace_start,
   *tospace_start,
   *tospace_top,
@@ -1047,6 +1049,8 @@ void C_set_or_change_heap_size(C_word heap, int reintern)
      (ptr2 = (C_byte *)C_realloc(tospace_start, size + page_size)) == NULL)
     panic(C_text("out of memory - can not allocate heap"));
 
+  heapspace1 = ptr1;
+  heapspace2 = ptr2;
   ptr1 = align_to_page(ptr1);
   ptr2 = align_to_page(ptr2);
   fromspace_start = ptr1;
@@ -3079,6 +3083,7 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   C_SYMBOL_TABLE *stp;
   FINALIZER_NODE *flist;
   TRACE_INFO *tinfo;
+  void *new_heapspace;
 
   lock_tospace(0);
 
@@ -3105,6 +3110,7 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   if((new_tospace_start = (C_byte *)C_malloc(size + page_size)) == NULL)
     panic(C_text("out of memory - can not allocate heap segment"));
 
+  new_heapspace = new_tospace_start;
   new_tospace_start = align_to_page(new_tospace_start);
   new_tospace_top = new_tospace_start;
   new_tospace_limit = new_tospace_start + size;
@@ -3192,12 +3198,14 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
     heap_scan_top = (C_byte *)bp + C_align(bytes) + sizeof(C_word);
   }
 
-  C_free(tospace_start);
-  C_free(fromspace_start);
+  C_free(heapspace1);
+  C_free(heapspace2);
   
   if((tospace_start = (C_byte *)C_malloc(size + page_size)) == NULL)
     panic(C_text("out ot memory - can not allocate heap segment"));
 
+  heapspace1 = new_heapspace;
+  heapspace2 = tospace_start;
   tospace_start = align_to_page(tospace_start);
   tospace_limit = tospace_start + size;
   tospace_top = tospace_start;
