@@ -80,7 +80,7 @@ destination directory will be created as needed). If {{DEST}} is a relative path
 < it will be copied into the extension repository.
 
 The optional argument {{INFOLIST}} should be an association list that
-maps symbols to values, this list will be stored as {{ID.setup}} at the same
+maps symbols to values, this list will be stored as {{ID.setup-info}} at the same
 location as the extension code. Currently the following properties are used:
 
 ===== syntax
@@ -324,8 +324,20 @@ or is of a version older than the one specified.
 
  [procedure] (cross-chicken)
 
-Retrusn {{#t}} if this system is configured for cross-compilation or {{#f}}
+Returns {{#t}} if this system is configured for cross-compilation or {{#f}}
 otherwise.
+
+
+==== host-extension
+
+ [parameter] host-extension
+
+For a cross-compiling CHICKEN, when compiling an extension, then it
+should be built for the host environment (as opposed to the target
+environment). This parameter is controlled by the {{-host-extension}} command-line
+option. A setup script should perform the proper steps of compiling any
+code by passing {{-host}} when invoking {{csc}} or using the {{compile}}
+macro.
 
 
 === Examples for extensions
@@ -514,23 +526,25 @@ Available options:
 ; {{-l  -list [NAME ...]}} : List all installed extensions or show extension information.
 ; {{-r  -run FILENAME}} : Load and execute given file.
 ; {{-s  -script FILENAME}} :Executes the given Scheme source file with all remaining arguments and exit. The ''she-bang'' shell script header is recognized, so you can write Scheme scripts that use {{chicken-setup}} just as with {{csi}}.
-; {{-e  -eval EXPRESSION}} : Evaluates the given expression(s).
-; {{-v  -verbose}} : Display additional debug information.
-; {{-k  -keep}} : Keep temporary files and directories.
-; {{-c  -csc-option OPTION}} : Passes {{OPTION}} as an extra argument to invocations of the compiler-driver ({{csc}}). This works only if {{csc}} is invoked as {{(run (csc ...))}}.
-; {{-d  -dont-ask}} : Do not ask the user before trying to download required extensions.
-; {{-n  -no-install}} : Do not install generated binaries and/or support files. Any invocations of {{install-program}}, {{install-extension}} or {{install-script}} will be be no-ops. 
-; {{-i  -docindex}} : Displays the path to the index-page of any installed extension-documentation. If the index page does not exist, it is created.
+; {{-e  -eval EXPRESSION}} : Evaluates the given expression(s)
+; {{-v  -verbose}} : Display additional debug information
+; {{-k  -keep}} : Keep temporary files and directories
+; {{-c  -csc-option OPTION}} : Passes {{OPTION}} as an extra argument to invocations of the compiler-driver ({{csc}}); this works only if {{csc}} is invoked as {{(run (csc ...))}}
+; {{-d  -dont-ask}} : Do not ask the user before trying to download required extensions
+; {{-n  -no-install}} : Do not install generated binaries and/or support files; any invocations of {{install-program}}, {{install-extension}} or {{install-script}} will be be no-ops
+; {{-i  -docindex}} : Displays the path to the index-page of any installed extension-documentation; if the index page does not exist, it is created
 ; {{-t  -test EXTENSION ...}} : return success if all given extensions are installed
 ; {{-ls EXTENSION}} : List installed files for extension
 ; {{-fetch-tree}} : Download and print the repository catalog
-; {{-t  -test}} : If the extension sources contain a directory named {{tests}} and this directory includes a file named {{run.scm}} then this file is executed (with {{tests}} being the current working directory).
+; {{-create-tree DIRECTORY}} : Create a fresh, minimal repository catalog and writes it to stdout
+; {{-t  -test}} : If the extension sources contain a directory named {{tests}} and this directory includes a file named {{run.scm}} then this file is executed (with {{tests}} being the current working directory)
 ; {{-tree FILENAME}} : Download and show the repository catalog
 ; {{-svn URL}} : Fetch extension from [[http://subversion.tigris.org|Subversion]] repository
 ; {{-revision REV}} : Specifies SVN revision to check out
 ; {{-local PATHNAME}} : Fetch extension from local file
 ; {{-destdir PATHNAME}} : Specify alternative installation prefix (for packaging)
-; {{--}} : Ignore all following arguments.
+; {{-host-extension}} : Compile extension in "host" mode (sets the parameter {{host-extension}} to {{#f}})
+; {{--}} : Ignore all following arguments
 
 Note that the options are processed exactly in the order in which they appear in the command-line.
 

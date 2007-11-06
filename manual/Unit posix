@@ -12,6 +12,60 @@ This unit uses the {{regex}}, {{scheduler}}, {{extras}} and {{utils}} units.
 All errors related to failing file-operations will signal a condition
 of kind {{(exn i/o file)}}.
 
+
+=== Constants
+
+==== File-control Commands
+
+===== fcntl/dupfd
+===== fcntl/getfd
+===== fcntl/setfd
+===== fcntl/getfl
+===== fcntl/setfl
+
+==== Standard I/O file-descriptors
+
+===== fileno/stdin
+===== fileno/stdout
+===== fileno/stderr
+
+==== Open flags
+
+===== open/rdonly
+===== open/wronly
+===== open/rdwr
+===== open/read
+===== open/write
+===== open/creat
+===== open/append
+===== open/excl
+===== open/noctty
+===== open/nonblock
+===== open/trunc
+===== open/sync
+===== open/fsync
+===== open/binary
+===== open/text
+
+==== Permission bits
+
+===== perm/irusr
+===== perm/iwusr
+===== perm/ixusr
+===== perm/irgrp
+===== perm/iwgrp
+===== perm/ixgrp
+===== perm/iroth
+===== perm/iwoth
+===== perm/ixoth
+===== perm/irwxu
+===== perm/irwxg
+===== perm/irwxo
+===== perm/isvtx
+===== perm/isuid
+===== perm/isgid
+
+
 === Directories
 
 ==== change-directory
@@ -140,7 +194,7 @@ returns normally the pipe is closed and the standard input-/output port
 is restored to its previous value and any result values are returned.
 
 <enscript highlight=scheme>
-(with-output-to-pipe 
+(with-output-to-pipe
   "gs -dNOPAUSE -sDEVICE=jpeg -dBATCH -sOutputFile=signballs.jpg -g600x600 -q -"
   (lambda ()
     (print #<<EOF
@@ -206,7 +260,7 @@ should be a bitmask containing one or more of the {{open/...}}
 values '''or'''ed together using {{bitwise-ior}} (or simply added
 together).  The optional {{MODE}} should be a bitmask composed of one
 or more permission values like {{perm/irusr}} and is only relevant
-when a new file is created. The default mode is 
+when a new file is created. The default mode is
 {{perm/irwxu | perm/irgrp | perm/iroth}}.
 
 ==== file-mkstemp
@@ -267,43 +321,11 @@ are written.
 
 ==== file-control
 
- [procedure] (file-control FILENO COMMAND  [ARGUMENT])
+ [procedure] (file-control FILENO COMMAND [ARGUMENT])
 
 Performs the fcntl operation {{COMMAND}} with the given
 {{FILENO}} and optional {{ARGUMENT}}. The return value is
 meaningful depending on the {{COMMAND}}.
-
-==== fcntl/dupfd
-==== fcntl/getfd
-==== fcntl/setfd
-==== fcntl/getfl
-==== fcntl/setfl
-
-These variables contain commands for {{file-control}}.
-
-==== fileno/stdin
-==== fileno/stdout
-==== fileno/stderr
-
-These variables contain file-descriptors for the standard I/O files.
-
-==== open/rdonly
-==== open/wronly
-==== open/rdwr
-==== open/read 
-==== open/write 
-==== open/creat
-==== open/append 
-==== open/excl
-==== open/noctty 
-==== open/nonblock 
-==== open/trunc
-==== open/sync
-==== open/fsync
-==== open/binary
-==== open/text
-
-Flags for use with {{file-open}}.
 
 ==== open-input-file*
 ==== open-output-file*
@@ -375,6 +397,32 @@ an error is signaled.
 
 Returns true, if {{FILENAME}} names a regular file (not a directory or symbolic link).
 
+==== file-owner
+
+ [procedure] (file-owner FILE)
+
+Returns the user-id of {{FILE}}.  {{FILE}} may be a filename
+or a file-descriptor.
+
+==== file-permissions
+
+ [procedure] (file-permissions FILE)
+
+Returns the permission bits for {{FILE}}. You can test this value
+by performing bitwise operations on the result and the {{perm/...}}
+values.  {{FILE}} may be a filename or a file-descriptor.
+
+==== file-read-access?
+==== file-write-access?
+==== file-execute-access?
+
+ [procedure] (file-read-access? FILENAME)
+ [procedure] (file-write-access? FILENAME)
+ [procedure] (file-execute-access? FILENAME)
+
+These procedures return {{#t}} if the current user has read,
+write or execute permissions on the file named {{FILENAME}}.
+
 
 === Changing file attributes
 
@@ -401,6 +449,23 @@ how the position is to interpreted and should be one of the values
 
 Exceptions: {{(exn bounds)}}, {{(exn i/o file)}}
 
+==== change-file-mode
+
+ [procedure] (change-file-mode FILENAME MODE)
+
+Changes the current file mode of the file named {{FILENAME}}
+to {{MODE}} using the {{chmod()}} system call.  The
+{{perm/...}} variables contain the various permission bits and can
+be combinded with the {{bitwise-ior}} procedure.
+
+==== change-file-owner
+
+ [procedure] (change-file-owner FILENAME UID GID)
+
+Changes the owner information of the file named {{FILENAME}} to
+the user- and group-ids {{UID}} and {{GID}} (which should be
+exact integers) using the {{chown()}} system call.
+
 
 === Processes
 
@@ -415,6 +480,12 @@ Returns the process ID of the current process.
  [procedure] (parent-process-id)
 
 Returns the process ID of the parent of the current process.
+
+==== process-group-id
+
+ [procedure] (process-group-id PID)
+
+Returns the process group ID of the process specified by {{PID}}.
 
 ==== process-execute
 
@@ -511,6 +582,13 @@ Puts the process to sleep for {{SECONDS}}. Returns either 0 if
 the time has completely elapsed, or the number of remaining seconds,
 if a signal occurred.
 
+==== create-session
+
+ [procedure] (create-session)
+
+Creates a new session if the calling process is not a process group leader and returns
+the session ID.
+
 
 === Hard and symbolic links
 
@@ -540,72 +618,47 @@ Returns the filename to which the symbolic link {{FILENAME}} points.
 Creates a hard link from {{OLDNAME}} to {{NEWNAME}} (both strings).
 
 
-=== Permissions
-
-==== file-owner
-
- [procedure] (file-owner FILE)
-
-Returns the user-id of {{FILE}}.  {{FILE}} may be a filename
-or a file-descriptor.
-
-==== file-permissions
-
- [procedure] (file-permissions FILE)
-
-Returns the permission bits for {{FILE}}. You can test this value
-by performing bitwise operations on the result and the {{perm/...}}
-values.  {{FILE}} may be a filename or a file-descriptor.
-
-==== file-read-access?
-==== file-write-access?
-==== file-execute-access?
-
- [procedure] (file-read-access? FILENAME)
- [procedure] (file-write-access? FILENAME)
- [procedure] (file-execute-access? FILENAME)
-
-These procedures return {{#t}} if the current user has read,
-write or execute permissions on the file named {{FILENAME}}.
-
-==== change-file-mode
-
- [procedure] (change-file-mode FILENAME MODE)
-
-Changes the current file mode of the file named {{FILENAME}}
-to {{MODE}} using the {{chmod()}} system call.  The
-{{perm/...}} variables contain the various permission bits and can
-be combinded with the {{bitwise-ior}} procedure.
-
-==== change-file-owner
-
- [procedure] (change-file-owner FILENAME UID GID)
-
-Changes the owner information of the file named {{FILENAME}} to
-the user- and group-ids {{UID}} and {{GID}} (which should be
-exact integers) using the {{chown()}} system call.
+=== Retrieving user & group information
 
 ==== current-user-id
-==== current-group-id
-==== current-effective-user-id
-==== current-effective-group-id
 
  [procedure] (current-user-id)
  [setter] (set! (current-user-id) UID)
- [procedure] (current-group-id)
- [setter] (set! (current-group-id) GID)
+
+Get or set the real user-id of the current process.
+
+==== current-effective-user-id
+
  [procedure] (current-effective-user-id)
  [setter] (set! (current-effective-user-id) UID)
+
+Get or set the effective user-id of the current process.
+
+==== user-information
+
+ [procedure] (user-information USER [AS-VECTOR])
+
+If {{USER}} specifes a valid username (as a string) or user ID, then the user
+database is consulted and a list of 7 values are returned: the user-name, the
+encrypted password, the user ID, the group ID, a user-specific string, the home
+directory and the default shell. When {{AS-VECTOR}} is {{#t}} a vector of 7
+elements is returned instead of a list. If no user with this name or id then
+{{#f}} is returned.
+
+==== current-group-id
+
+ [procedure] (current-group-id)
+ [setter] (set! (current-group-id) GID)
+
+Get or set the real group-id of the current process.
+
+==== current-effective-group-id
+
  [procedure] (current-effective-group-id)
  [setter] (set! (current-effective-group-id) GID)
 
-Get or set the real/effective user- and group-ids of the current process.
-
-==== process-group-id
-
- [procedure] (process-group-id PID)
-
-Returns the process group ID of the process specified by {{PID}}.
+Get or set the effective group-id of the current process.
+ID can be found, then {{#f}} is returned.
 
 ==== group-information
 
@@ -622,6 +675,9 @@ given name or ID exists, then {{#f}} is returned.
 
 Returns a list with the supplementary group IDs of the current user.
 
+
+=== Changing user & group information
+
 ==== set-groups!
 
  [procedure] (set-groups! GIDLIST)
@@ -634,28 +690,10 @@ Only the superuser may invoke this procedure.
 
  [procedure] (initialize-groups USERNAME BASEGID)
 
-Sets the supplementrary group IDs of the current user to the IDs from the user with name {{USERNAME}} 
+Sets the supplementrary group IDs of the current user to the IDs from the user with name {{USERNAME}}
 (a string), including {{BASEGID}}.
 
 Only the superuser may invoke this procedure.
-
-==== perm/irusr
-==== perm/iwusr
-==== perm/ixusr
-==== perm/irgrp
-==== perm/iwgrp
-==== perm/ixgrp
-==== perm/iroth
-==== perm/iwoth
-==== perm/ixoth
-==== perm/irwxu
-==== perm/irwxg
-==== perm/irwxo
-==== perm/isvtx
-==== perm/isuid
-==== perm/isgid
-
-These variables contain permission bits as used in {{change-file-mode}}.
 
 ==== set-process-group-id!
 
@@ -663,23 +701,6 @@ These variables contain permission bits as used in {{change-file-mode}}.
  [setter] (set! (process-group-id PID) PGID)
 
 Sets the process group ID of the process specifed by {{PID}} to {{PGID}}.
-
-==== user-information
-
- [procedure] (user-information USER)
-
-If {{USER}} specifes a valid username (as a string) or user ID, then
-the user database is consulted and a list of 7 values are returned: the user-name,
-the encrypted password, the user ID, the group ID, a user-specific string,
-the home directory and the default shell. If no user with this name or
-ID can be found, then {{#f}} is returned.
-
-==== create-session
-
- [procedure] (create-session)
-
-Creates a new session if the calling process is not a process group leader and returns
-the session ID.
 
 
 === Record locking
@@ -812,7 +833,7 @@ These variables contain signal codes for use with {{process-signal}},  {{set-sig
  [procedure] (current-environment)
 
 Returns a association list of the environment variables and their
-current values. 
+current values.
 
 ==== setenv
 
@@ -988,19 +1009,17 @@ These variables contain error codes as returned by {{errno}}.
 
 Recursively traverses the contents of {{DIRECTORY}} (which should
 be a string) and invokes the procedure {{ACTION}} for all files
-for which the procedure {{PREDICATE}} is true.  {{PREDICATE}}
+in which the procedure {{PREDICATE}} is true.  {{PREDICATE}}
 may me a procedure of one argument or a regular-expression string.
 {{ACTION}} should be a procedure of two arguments: the currently
 encountered file and the result of the previous invocation of
 {{ACTION}}, or, if this is the first invocation, the value
 of {{IDENTITY}}. {{ACTION}} defaults to {{cons}},
-{{IDENTITY}} defaults to {{()}}.  {{LIMIT}} should a
+{{IDENTITY}} defaults to {{()}}.  {{LIMIT}} should be a
 procedure of one argument that is called for each nested directory
 and which should return true, if that directory is to be traversed
 recursively. {{LIMIT}} may also be an exact integer that
-gives the maximum recursion depth. A depth of {{0}} means the
-files in the specified directory are traversed but not any nested
-directories. {{LIMIT}} may also be {{#f}} (the default),
+gives the maximum recursion depth. For example, a depth of {{0}} means that only files in the top-level, specified directory are to be traversed. In this case, all nested directories are ignored.  {{LIMIT}} may also be {{#f}} (the default),
 which is equivalent to {{(constantly #t)}}.
 
 Note that {{ACTION}} is called with the full pathname of each file,
@@ -1256,7 +1275,7 @@ Microsoft tools or with MinGW):
  create-session
  process-group-id  set-process-group-id!
  create-symbolic-link  read-symbolic-link
- file-truncate 
+ file-truncate
  file-lock  file-lock/blocking  file-unlock  file-test-lock
  create-fifo  fifo?
  prot/...
@@ -1265,7 +1284,7 @@ Microsoft tools or with MinGW):
  set-alarm!
  terminal-port?  terminal-name
  process-fork  process-signal
- parent-process-id 
+ parent-process-id
  set-root-directory!
  utc-time->seconds
 
@@ -1284,8 +1303,8 @@ This variable is a mode value for {{create-pipe}}. Useful when spawning a child 
 * spawn/detach
 
 These variables contains special flags that specify the exact semantics of {{process-spawn}}:
-{{spawn/overlay}} replaces the current process with the new one. 
-{{spawn/wait}} suspends execution of the current process until the spawned process returns. 
+{{spawn/overlay}} replaces the current process with the new one.
+{{spawn/wait}} suspends execution of the current process until the spawned process returns.
 {{spawn/nowait}} does the opposite ({{spawn/nowaito}} is identical, according to the Microsoft
 documentation) and runs the process asynchronously.
 {{spawn/detach}} runs the new process in the background, without being attached to a console.

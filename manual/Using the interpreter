@@ -154,6 +154,7 @@ The toplevel loop understands a number of special commands:
 #;4> ,utr fac
 #;5> (fac 3)                        ==> 6
 </enscript>
+k
 
 ; ,utr SYMBOL ... : Disables tracing of the given toplevel procedures.
 
@@ -202,7 +203,9 @@ two arguments: the object to be described and an output-port. It should write a 
 textual description of the object to the passed output-port. For example:
 
  #;1> (define-record point x y)
- #;2> (set-describer! 'point (lambda (pt o) (print "a point with x=" (point-x pt) " and y=" (point-y pt))))
+ #;2> (set-describer! 'point 
+        (lambda (pt o)
+          (print "a point with x=" (point-x pt) " and y=" (point-y pt))))
  #;3> ,d (make-point 1 2)
  a point with x=1 and y=2
 
@@ -219,7 +222,8 @@ To enable it install the egg and put this in your {{~/.csirc}} file:
 
  (use readline regex)
  (current-input-port (make-gnu-readline-port))
- (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
+ (gnu-history-install-file-manager 
+   (string-append (or (getenv "HOME") ".") "/.csi.history"))
 
 More details are available in [[http://www.call-with-current-continuation.org/eggs/readline.html|the egg's documentation]].
 

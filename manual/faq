@@ -94,7 +94,7 @@ numbers) are more than sufficient;
 - Dispatching of arithmetic operations is more efficient.
 
 There is an extension based on the GNU Multiprecision Package that implements most of the full
-numeric tower, see http://www.call-with-current-continuation.org/eggs/numbers.html.
+numeric tower, see [[numbers]].
 
 
 ==== How can I specialize a generic function method to match instances of every class?
@@ -487,7 +487,7 @@ which point {{foo.scm}} will no longer be required).
 ==== Why does a loop that doesn't {{cons}} still trigger garbage collections?
 
 Under CHICKENs implementation policy, tail recursion is achieved simply by avoiding
-to return from a function call. Since the programs is CPS converted, a continuous 
+to return from a function call. Since the programs are CPS converted, a continuous 
 sequence of nested procedure calls is performed. At some stage the stack-space has
 to run out and the current procedure and its parameters (including the current
 continuation) are stored somewhere in the runtime system. Now a minor garbage collection
@@ -534,8 +534,7 @@ CSI doesn't support it natively but it can be activated with the [[http://www.ca
 After installing the egg, add the following to your {{~/.csirc}} or equivalent file:
 
 <enscript highlight=scheme>
-; The regex egg is required for ##csi#name-of-symbols-starting-with
-(require 'readline)
+(require-extension readline)
 (current-input-port (make-gnu-readline-port))
 (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
 </enscript>

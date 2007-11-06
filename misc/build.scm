@@ -4,7 +4,7 @@
 (use (srfi 1) posix utils)
 
 
-(define *verbose* #f)
+(define *verbose* (##sys#fudge 13))
 (define *dependencies* (make-hash-table string=?))
 (define *variables* (make-hash-table string=?))
 (define *actions* (make-hash-table string=?))

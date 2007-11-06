@@ -30,7 +30,7 @@ number for this type of object.  The following constants are
 defined: {{C_SCHEME_END_OF_LIST C_SCHEME_UNDEFINED C_SCHEME_UNBOUND
 C_SCHEME_END_OF_FILE}}
 
-Collectively, bits 1 and 2 are known as the ''immediate mark bits''.  When bit 1 is set, the object is a fixnum, as described above.  When bit 2 is set, it is an immediate object other than a fixnum.  If neither is set, the object is non-immediate, as described below.  (By definition, bits 1 and 2 may not both be set.)
+Collectively, bits 1 and 2 are known as the ''immediate mark bits''.  When bit 1 is set, the object is a fixnum, as described above, and bit 2 is part of its value.  When bit 1 is clear but bit 2 is set, it is an immediate object other than a fixnum.  If neither bit 1 nor bit 2 is set, the object is non-immediate, as described below.
 
 === Non-immediate objects
 

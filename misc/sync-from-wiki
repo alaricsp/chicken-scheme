@@ -1,0 +1,29 @@
+#!/bin/sh
+#| symc-from-wiki                                                   -*- Scheme -*-
+exec csi -s "$0" "$@"
+|#
+
+
+; usage: sync-from-wiki [--wikidir=DIR] [--dry-run]
+
+
+(load-relative "build.scm")
+
+
+(define *wikidir* #f)
+(define *dry-run* #f)
+
+(simple-args)
+
+(unless *wikidir* 
+  (error "usage: sync-from-trunk --wikidir=DIR [--dry-run]"))
+
+(run (rsync -av ,(if *dry-run* "-n" "")
+	    --exclude=.svn --existing 
+	    ,(conc *wikidir* "/")
+	    manual/) )
+
+(exit)
+
+
+

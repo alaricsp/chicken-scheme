@@ -165,6 +165,10 @@ UNAME_SYS ?= $(shell uname)
 endif
 BUILD_TAG ?= compiled $(BUILD_TIME) on $(HOSTNAME) ($(UNAME_SYS))
 
+ifdef LOCKTOSPACE
+C_COMPILER_BUILD_RUNTIME_OPTIONS += -DC_LOCK_TOSPACE
+endif
+
 # file extensions
 
 O ?= .o

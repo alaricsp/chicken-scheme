@@ -49,7 +49,7 @@ Note that {{(location X)}} may be abbreviated as {{#$X}}.
 
 <enscript highlight=scheme>
 (define-external foo int)
-((foreign-lambda* void (((pointer int) ip)) "*ip = 123;") 
+((foreign-lambda* void (((c-pointer int) ip)) "*ip = 123;") 
   (location foo))
 foo                                                                               ==> 123
 </enscript>
@@ -63,7 +63,7 @@ returns more than one result value:
 <#
 
 (define modf
-  (foreign-lambda double "modf" double (pointer double)) )
+  (foreign-lambda double "modf" double (c-pointer double)) )
 
 (let-location ([i double])
   (let ([f (modf 1.99 (location i))])

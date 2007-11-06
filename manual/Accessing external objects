@@ -202,16 +202,18 @@ will generate the following procedures:
 (some-struct-xcoord-set! C-POINTER NUMBER)
 (some-struct-ycoord-set! C-POINTER NUMBER)
 </enscript>
+
+
 === define-foreign-enum
 
- [syntax] (define-foreign-enum TYPENAME ITEM ...)
+ [syntax] (define-foreign-enum TYPESPEC [USE-ALIASES] ENUMSPEC ...)
 
 Defines a foreign type (as with {{define-foreign-type}}) that maps the elements
 of a C/C++ enum (or a enum-like list of constants) to and from a set of
 symbols.
 
-{{TYPENAME}} specifies a foreign type that converts a symbol argument from the
-set {{ITEM ...}} into the appropriate enum value when passed as an argument to
+{{TYPESPEC}} specifies a foreign type that converts a symbol argument from the
+set {{ENUMSPEC ...}} into the appropriate enum value when passed as an argument to
 a foreign function.
 
 A list of symbols passed as an argument will be combined using {{bitwise-ior}}.
@@ -219,27 +221,31 @@ An empty list will be passed as 0 (zero). Results of the enum type are
 automatically converted into a scheme value (note that combinations are not
 supported in this case).
 
-{{TYPENAME}} maybe a symbol or a list of the form {{(SCHEMENAME REALTYPE
-[DEFAULT-SCHEME-VALUE])}}, where {{REALTYPE}} designates the native type used.
-The default native type is {{"TYPENAME"}}. The {{DEFAULT-SCHEME-VALUE}}
-overrides the default result of mapping from the native type; i.e. when no such
-mapping exists. When supplied the form is used unquoted, otherwise the result
-is {{'()}}.
+{{TYPESPEC}} maybe a TYPENAME symbol or a list of the form {{(SCHEMENAME
+REALTYPE [DEFAULT-SCHEME-VALUE])}}, where {{REALTYPE}} designates the native
+type used. The default type specification is {{(TYPENAME TYPENAME)}}. The
+{{DEFAULT-SCHEME-VALUE}} overrides the default result of mapping from the
+native type; i.e. when no such mapping exists. When supplied the form is used
+unquoted, otherwise the result is {{'()}}.
 
-{{ITEM}} is a symbol or a list of the form {{(SCHEMENAME REALTYPE
+{{ENUMSPEC}} is a TYPENAME symbol or a list of the form {{(SCHEMENAME REALTYPE
 [SCHEME-VALUE])}}, where {{REALTYPE}} designates the native type used. The
-default native type is {{"ITEM"}}. The {{SCHEME-VALUE}} overrides the result of
-mapping from the native type. When supplied the form is used unquoted,
-otherwise the {{SCHEMENAME}} symbol is returned.
+default enum specification is {{(TYPENAME TYPENAME)}}. The {{SCHEME-VALUE}}
+overrides the result of mapping from the native type. When supplied the form is
+used unquoted, otherwise the {{SCHEMENAME}} symbol is returned.
+
+{{USE-ALIASES}} is an optional boolean flag that determines whether an alias or
+the {{SCHEMENAME}} is used as the defined foreign variable name. The default
+is {{#t}}.
 
 Additionally two procedures are defined named {{SCHEMENAME->number}} and
 {{number->SCHEMENAME}}. {{SCHEMENAME->number}} takes one argument and converts
 a symbol (or a list of symbols) into its numeric value.  {{number->SCHEMENAME}}
 takes one argument and converts a numeric value into its scheme value.
 
-Note that the specification of a scheme value override means the mapping may
-not be closed! {{(number->SCHEMENAME (SCHEMENAME->number SCHEMENAME))}} may not
-equal {{SCHEMENAME}}.
+Note that the specification of a scheme value override ({{SCHEME-VALUE}}) means
+the mapping may not be closed! {{(number->SCHEMENAME (SCHEMENAME->number
+SCHEMENAME))}} may not equal {{SCHEMENAME}}.
 
 Here a heavily contrived example:
 

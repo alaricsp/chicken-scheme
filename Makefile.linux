@@ -47,11 +47,7 @@ C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
 endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
 LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(LIBDIR)
-ifdef STATICBUILD
-LIBRARIES = -lm
-else
 LIBRARIES = -lm -ldl
-endif
 
 # special files
 

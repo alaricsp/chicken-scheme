@@ -3,8 +3,8 @@
 
 == Unit library
 
-This unit contains basic Scheme definitions. This unit is used by default, unless the program
-is compiled with the {{-explicit-use}} option.
+This unit contains basic Scheme definitions. This unit is used by default,
+unless the program is compiled with the {{-explicit-use}} option.
 
 === Arithmetic
 
@@ -18,11 +18,11 @@ Adds/subtracts 1 from {{N}}.
 
 ==== Binary integer operations
 
-Binary integer operations. {{arithmetic-shift}} shifts the argument
-{{N1}} by {{N2}} bits to the left. If {{N2}} is negative, than {{N1}}
-is shifted to the right.  These operations only accept exact integers
-or inexact integers in word range (32 bit signed on 32-bit platforms,
-or 64 bit signed on 64-bit platforms).
+Binary integer operations. {{arithmetic-shift}} shifts the argument {{N1}} by
+{{N2}} bits to the left. If {{N2}} is negative, than {{N1}} is shifted to the
+right. These operations only accept exact integers or inexact integers in word
+range (32 bit signed on 32-bit platforms, or 64 bit signed on 64-bit
+platforms).
 
 ; [procedure] (bitwise-and N1 ...)
 ; [procedure] (bitwise-ior N1 ...)
@@ -34,8 +34,8 @@ or 64 bit signed on 64-bit platforms).
 
  [procedure] (bit-set? N INDEX)
 
-Returns {{#t}} if the bit at the position {{INDEX}} in the integer {{N}} is set,
-or {{#f}} otherwise. The rightmost/least-significant bit is bit 0.
+Returns {{#t}} if the bit at the position {{INDEX}} in the integer {{N}} is
+set, or {{#f}} otherwise. The rightmost/least-significant bit is bit 0.
 
 
 ==== fixnum?
@@ -46,9 +46,8 @@ Returns {{#t}} if {{X}} is a fixnum, or {{#f}} otherwise.
 
 ==== Arithmetic fixnum operations
 
-These procedures do not check their arguments, so non-fixnum
-parameters will result in incorrect results. {{fxneg}} negates its
-argument.
+These procedures do not check their arguments, so non-fixnum parameters will
+result in incorrect results. {{fxneg}} negates its argument.
 
 On division by zero, {{fx/}} and {{fxmod}} signal a condition of kind
 {{(exn arithmetic)}}.
@@ -80,8 +79,8 @@ respectively.
 ==== Arithmetic floating-point operations
 
 In safe mode, these procedures throw a type error with non-float
-arguments (except {{flonum?}}, which returns {{#f}}).  In unsafe mode,
-these procedures do not check their arguments.  A non-flonum argument
+arguments (except {{flonum?}}, which returns {{#f}}). In unsafe mode,
+these procedures do not check their arguments. A non-flonum argument
 in unsafe mode can crash the system.
 
 ; [procedure] (flonum? X)
@@ -103,7 +102,7 @@ in unsafe mode can crash the system.
 
  [procedure] (signum N)
 
-Returns {{1}} if {{N}} is positive, {{-1}} if {{N}} 
+Returns {{1}} if {{N}} is positive, {{-1}} if {{N}}
 is negative or {{0}} if {{N}} is zero. {{signum}} is exactness preserving.
 
 
@@ -121,20 +120,22 @@ Returns {{#f}} if {{N}} is negative or positive infinity, and {{#t}} otherwise.
 
  [procedure] (current-output-port [PORT])
 
-Returns default output port.  If {{PORT}} is given, then that port is selected as the new current output port.
+Returns default output port. If {{PORT}} is given, then that port is selected
+as the new current output port.
 
-Note that the default output port is not buffered.
-Use [[Unit posix#Setting the file buffering mode|{{set-buffering-mode!}}]] if you need a different behaviour.
+Note that the default output port is not buffered. Use [[Unit posix#Setting the
+file buffering mode|{{set-buffering-mode!}}]] if you need a different behavior.
 
 ==== current-error-port
 
  [procedure] (current-error-port [PORT])
 
-Returns default error output port. If {{PORT}} is given, then that
-port is selected as the new current error output port.
+Returns default error output port. If {{PORT}} is given, then that port is
+selected as the new current error output port.
 
-Note that the default error output port is not buffered.
-Use [[Unit posix#Setting the file buffering mode|{{set-buffering-mode!}}]] if you need a different behaviour.
+Note that the default error output port is not buffered. Use [[Unit
+posix#Setting the file buffering mode|{{set-buffering-mode!}}]] if you need a
+different behavior.
 
 ==== flush-output
 
@@ -148,19 +149,19 @@ to the value of {{(current-output-port)}}.
 
  [procedure] (port-name [PORT])
 
-Fetch filename from {{PORT}}. This returns the filename that was
-used to open this file.  Returns a special tag string, enclosed into
-parentheses for non-file ports. {{PORT}} defaults to the value of {{(current-input-port)}}.
+Fetch filename from {{PORT}}. This returns the filename that was used to open
+this file. Returns a special tag string, enclosed into parentheses for
+non-file ports. {{PORT}} defaults to the value of {{(current-input-port)}}.
 
 
 ==== port-position
 
  [procedure] (port-position [PORT])
 
-Returns the current position of {{PORT}} as two values: row and
-column number.  If the port does not support such an operation an error
-is signaled. This procedure is currently only available for input ports.
-{{PORT}} defaults to the value of {{(current-input-port)}}.
+Returns the current position of {{PORT}} as two values: row and column number. 
+If the port does not support such an operation an error is signaled. This
+procedure is currently only available for input ports. {{PORT}} defaults to the
+value of {{(current-input-port)}}.
 
 
 ==== set-port-name!
@@ -171,12 +172,7 @@ Sets the name of {{PORT}} to {{STRING}}.
 
 
 
-
-
 === Files
-
-
-
 
 ==== delete-file
 
@@ -202,12 +198,7 @@ Renames the file or directory with the pathname {{OLD}} to
 {{NEW}}. If the operation does not succeed, an error is signaled.
 
 
-
-
 === String ports
-
-
-
 
 ==== get-output-string
 
@@ -238,7 +229,7 @@ Returns a port for accumulating output in a string.
 
 
 CHICKEN maintains a global list of ''features'' naming functionality available
-int the current system. Additionally the {{cond-expand}} form accesses this
+in the current system. Additionally the {{cond-expand}} form accesses this
 feature list to infer what features are provided. Predefined features are
 {{chicken}}, and the SRFIs (Scheme Request For Implementation) provided by the
 base system: {{srfi-23, srfi-30, srfi-39}}. If the {{eval}} unit
@@ -287,8 +278,8 @@ may be a keyword, string or symbol.
 === Keywords
 
 Keywords are special symbols prefixed with {{#:}} that evaluate
-to themselves.  Procedures can use keywords to accept optional named
-parameters in addition to normal required parameters.  Assignment to
+to themselves. Procedures can use keywords to accept optional named
+parameters in addition to normal required parameters. Assignment to
 and bindings of keyword symbols is not allowed.
 The parameter {{keyword-style}} and the compiler/interpreter option
 {{-keyword-style}} can be used to allow an additional keyword
@@ -301,7 +292,7 @@ syntax, either compatible to Common LISP, or to DSSSL.
  [procedure] (get-keyword KEYWORD ARGLIST [THUNK])
 
 Returns the argument from {{ARGLIST}} specified under the keyword
-{{KEYWORD}}.  If the keyword is not found, then the zero-argument
+{{KEYWORD}}. If the keyword is not found, then the zero-argument
 procedure {{THUNK}} is invoked and the result value is returned. If
 {{THUNK}} is not given, {{#f}} is returned.
 
@@ -343,9 +334,10 @@ Returns a keyword with the name {{STRING}}.
 === Exceptions
 
 
-CHICKEN implements the (currently withdrawn) [[http://srfi.schemers.org/srfi-12/srfi-12.html|SRFI-12]]
-exception system. For more information, see the [[http://srfi.schemers.org/srfi-12/srfi-12.html|SRFI-12]]
-document.
+CHICKEN implements the (currently withdrawn)
+[[http://srfi.schemers.org/srfi-12/srfi-12.html|SRFI-12]] exception system. For
+more information, see the
+[[http://srfi.schemers.org/srfi-12/srfi-12.html|SRFI-12]] document.
 
 
 
@@ -360,10 +352,10 @@ Evaluates {{EXPRESSION}} and handles any exceptions that are covered by
 CLAUSE = ([VARIABLE] (KIND ...) BODY ...)
 </enscript>
 
-If provided, {{VARIABLE}} will be bound to the signalled exception
+If provided, {{VARIABLE}} will be bound to the signaled exception
 object. {{BODY ...}} is executed when the exception is a property-
 or composite condition with the kinds given {{KIND ...}} (unevaluated).
-If no clause applies, the exception is re-signalled in the same dynamic
+If no clause applies, the exception is re-signaled in the same dynamic
 context as the {{condition-case}} form.
 
 <enscript highlight=scheme>
@@ -387,63 +379,62 @@ context as the {{condition-case}} form.
 
  [procedure] (breakpoint [NAME])
 
-Programmatically triggers a breakpoint (similar to the {{,br}} top-level csi command).
+Programmatically triggers a breakpoint (similar to the {{,br}} top-level csi
+command).
 
-
-
-All error-conditions signalled by the system are of kind {{exn}}.
+All error-conditions signaled by the system are of kind {{exn}}.
 The following composite conditions are additionally defined:
 
 <table>
 
 <tr><td> (exn arity)
 
-Signalled when a procedure is called with the wrong number of arguments.
+Signaled when a procedure is called with the wrong number of arguments.
 
 </td></tr><tr><td> (exn type)
 
-Signalled on type-mismatch errors, for example when an argument of the wrong
-type is passed to a builtin procedure.
+Signaled on type-mismatch errors, for example when an argument of the wrong
+type is passed to a built-in procedure.
 
 </td></tr><tr><td> (exn arithmetic)
 
-Signalled on arithmetic errors, like division by zero.
+Signaled on arithmetic errors, like division by zero.
 
 </td></tr><tr><td> (exn i/o)
 
-Signalled on input/output errors.
+Signaled on input/output errors.
 
 </td></tr><tr><td> (exn i/o file)
 
-Signalled on file-related errors.
+Signaled on file-related errors.
 
 </td></tr><tr><td> (exn i/o net)
 
-Signalled on network errors.
+Signaled on network errors.
 
 </td></tr><tr><td> (exn bounds)
 
-Signalled on errors caused by accessing non-existent elements of a collection.
+Signaled on errors caused by accessing non-existent elements of a collection.
 
 </td></tr><tr><td> (exn runtime)
 
-Signalled on low-level runtime-system error-situations.
+Signaled on low-level runtime-system error-situations.
 
 </td></tr><tr><td> (exn runtime limit)
 
-Signalled when an internal limit is exceeded (like running out of memory).
+Signaled when an internal limit is exceeded (like running out of memory).
 
 </td></tr><tr><td> (exn match)
 
-Signalled on errors raised by failed matches (see the section on {{match}}).
+Signaled on errors raised by failed matches (see the section on {{match}}).
 
 </td></tr><tr><td> (exn syntax)
 
-Signalled on syntax errors.
+Signaled on syntax errors.
 
 </td></tr><tr><td> (exn breakpoint)
 
-Signalled when a breakpoint is reached.
+Signaled when a breakpoint is reached.
 
 </td></tr>
 
@@ -453,13 +444,22 @@ Notes:
 
 * All error-exceptions (of the kind {{exn}}) are non-continuable.
 
-* Error-exceptions of the {{exn}} kind have additional {{arguments}} and {{location}} properties that contain the arguments passed to the exception-handler and the name of the procedure where the error occurred (if available).
+* Error-exceptions of the {{exn}} kind have additional {{arguments}} and
+{{location}} properties that contain the arguments passed to the
+exception-handler and the name of the procedure where the error occurred (if
+available).
 
-* When the {{posix}} unit is available and used, then a user-interrupt ({{signal/int}}) signals an exception of the kind {{user-interrupt}}. 
+* When the {{posix}} unit is available and used, then a user-interrupt
+({{signal/int}}) signals an exception of the kind {{user-interrupt}}.
 
-* the procedure {{condition-property-accessor}} accepts an optional third argument. If the condition does not have a value for the desired property and if the optional argument is given, no error is signalled and the accessor returns the third argument.
+* the procedure {{condition-property-accessor}} accepts an optional third
+argument. If the condition does not have a value for the desired property and
+if the optional argument is given, no error is signaled and the accessor
+returns the third argument.
 
-* In composite conditionss all properties are currently collected in a single property-list, so in the case that to conditions have the same named property, only one will be visible.
+* In composite conditions all properties are currently collected in a single
+property-list, so in the case that to conditions have the same named property,
+only one will be visible.
 
 
 
@@ -474,7 +474,7 @@ Notes:
 Return a list of all supplied command-line arguments. The first item in
 the list is a string containing the name of the executing program. The
 other items are the arguments passed to the application. This list is
-freshly created on every invocation of {{(argv)}}.  It depends on
+freshly created on every invocation of {{(argv)}}. It depends on
 the host-shell whether arguments are expanded ('globbed') or not.
 
 
@@ -485,7 +485,7 @@ the host-shell whether arguments are expanded ('globbed') or not.
 Exit the running process and return exit-code, which defaults to 0
 (Invokes {{exit-handler}}).
 
-
+Note that pending {{dynamic-wind}} thunks are ''not'' invoked when exiting your program in this way.
 ==== build-platform
 
  [procedure] (build-platform)
@@ -529,7 +529,8 @@ Returns the value of the environment variable {{STRING}} or
 
  [procedure] (machine-byte-order)
 
-Returns the symbol {{little-endian}} or {{big-endian}}, depending on the machine's byte-order.
+Returns the symbol {{little-endian}} or {{big-endian}}, depending on the
+machine's byte-order.
 
 
 ==== machine-type
@@ -556,9 +557,9 @@ currently running, which is one of the following:
 
  [procedure] (on-exit THUNK)
 
-Schedules the zero-argument procexdures {{THUNK}} to be executed before
-the process exits, either explicitly via {{exit}} or implicitly after exection
-of the last toplevel form. Note that finalizers for unreferenced finalized
+Schedules the zero-argument procedures {{THUNK}} to be executed before
+the process exits, either explicitly via {{exit}} or implicitly after execution
+of the last top-level form. Note that finalizers for unreferenced finalized
 data are run before exit procedures.
 
 
@@ -599,9 +600,10 @@ process is currently running, which is one of the following:
 
  [procedure] (c-runtime)
 
-Returns a symbol that designates what kind of C runtime library has been linked with this version of the Chicken
-libraries. Possible return values are {{static}}, {{dynamic}} or {{unknown}}. On systems not compiled
-with the Microsoft C compiler, {{c-runtime}} always returns {{unknown}}.
+Returns a symbol that designates what kind of C runtime library has been linked
+with this version of the Chicken libraries. Possible return values are
+{{static}}, {{dynamic}} or {{unknown}}. On systems not compiled with the
+Microsoft C compiler, {{c-runtime}} always returns {{unknown}}.
 
 
 ==== system
@@ -675,7 +677,7 @@ thread-local.
 
 Prints error message, writes all extra arguments to the
 value of {{(current-error-port)}} and invokes the
-current exception-handler.  This conforms to
+current exception-handler. This conforms to
 [[http://srfi.schemers.org/srfi-23/srfi-23.html|SRFI-23]].
 If {{LOCATION}} is given and a symbol, it specifies the ''location'' (the name
 of the procedure) where the error occurred.
@@ -689,7 +691,7 @@ of the procedure) where the error occurred.
 Returns a list with the call history. Backtrace information
 is only generated in code compiled without {{-no-trace}} and evaluated code.
 If the optional argument {{START}} is given, the backtrace starts
-at this offset, i.e. when {{START}} is 1, the next to last trace-entry 
+at this offset, i.e. when {{START}} is 1, the next to last trace-entry
 is printed, and so on. If the optional argument {{THREAD}} is given, then
 the call-chain will only be constructed for calls performed by this thread.
 
@@ -754,15 +756,16 @@ Executes the code in the zero-procedure {{THUNK}} in single-stepping mode.
 
  [procedure] (gc [FLAG])
 
-Invokes a garbage-collection and returns the number of free bytes
-in the heap. The flag specifies whether a minor ({{#f}}) or
-major ({{#t}}) GC is to be triggered. If no argument is given,
-{{#t}} is assumed. An explicit {{#t}} argument will cause all pending finalizers to be executed.
+Invokes a garbage-collection and returns the number of free bytes in the heap.
+The flag specifies whether a minor ({{#f}}) or major ({{#t}}) GC is to be
+triggered. If no argument is given, {{#t}} is assumed. An explicit {{#t}}
+argument will cause all pending finalizers to be executed.
+
 ==== memory-statistics
 
  [procedure] (memory-statistics)
 
-Performs a major garbage collection and returns a three element vector 
+Performs a major garbage collection and returns a three element vector
 containing the total heap size in bytes, the number of bytes currently
 used and the size of the nursery (the first heap generation). Note
 that the actual heap is actually twice the size given in the heap size,
@@ -775,7 +778,7 @@ because CHICKEN uses a copying semi-space collector.
 
 Registers a procedure of one argument {{PROC}}, that will be
 called as soon as the non-immediate data object {{X}} is about to
-be garbage-collected (with that object as its argument).  Note that
+be garbage-collected (with that object as its argument). Note that
 the finalizer will '''not''' be called while interrupts are disabled.
 This procedure returns {{X}}.
 
@@ -801,7 +804,7 @@ switches statistics off.
 
  [procedure] (andmap PROC LIST1 ...)
 
-Repeatedly calls {{PROC}} with arguments taken from {{LIST1 ...}}.  
+Repeatedly calls {{PROC}} with arguments taken from {{LIST1 ...}}.
 If any invocation should return {{#f}}, the result of
 {{andmap}} is {{#f}}. If all invocations return a true result,
 then the result of {{andmap}} is {{#t}}.
@@ -811,7 +814,7 @@ then the result of {{andmap}} is {{#t}}.
 
  [procedure] (ormap PROC LIST1 ...)
 
-Repeatedly calls {{PROC}} with arguments taken from {{LIST1 ...}}.  
+Repeatedly calls {{PROC}} with arguments taken from {{LIST1 ...}}.
 If any invocation should return a value different from
 {{#f}}, then this value is returned as the  result of
 {{ormap}}. If all invocations return '''#f''',
@@ -834,14 +837,12 @@ Returns {{#t}} if {{X}} is a promise returned by {{delay}}, or
 
  [procedure] (reverse-list->string LIST)
 
-Returns a string with the characters in {{LIST}} in reverse order. This is equivalent to
-{{(list->string (reverse LIST))}}, but much more efficient.
+Returns a string with the characters in {{LIST}} in reverse order. This is
+equivalent to {{(list->string (reverse LIST))}}, but much more efficient.
 
 
 
 === Generating uninterned symbols
-
-
 
 ==== gensym
 
@@ -856,8 +857,6 @@ the new symbol is prefixed with that argument.
  [procedure] (string->uninterned-symbol STRING)
 
 Returns a newly created, unique symbol with the name {{STRING}}.
-
-
 
 
 
@@ -877,8 +876,7 @@ otherwise.
 
 Outputs the optional arguments {{EXP1 ...}} using {{display}} and
 writes a newline character to the port that is the value of
-{{(current-output-port)}}.  Returns its first argument, or
-{{(void)}} when no supplied arguments.
+{{(current-output-port)}}. Returns {{(void)}}.
 
 
 ==== print*
@@ -886,14 +884,12 @@ writes a newline character to the port that is the value of
  [procedure] (print* [EXP1 ...])
 
 Similar to {{print}}, but does not output a terminating newline
-character and performs a {{flush-outout}} after writing its arguments.
+character and performs a {{flush-output}} after writing its arguments.
 
 
 
 
 === User-defined named characters
-
-
 
 ==== char-name
 
@@ -903,13 +899,13 @@ This procedure can be used to inquire about character names or to
 define new ones. With a single argument the behavior is as follows:
 If {{SYMBOL-OR-CHAR}} is a symbol, then {{char-name}} returns
 the character with this name, or {{#f}} if no character is defined
-under this name.  If {{SYMBOL-OR-CHAR}} is a character, then the
+under this name. If {{SYMBOL-OR-CHAR}} is a character, then the
 name of the character is returned as a symbol, or {{#f}} if the
 character has no associated name.
 
 If the optional argument {{CHAR}} is provided, then
 {{SYMBOL-OR-CHAR}} should be a symbol that will be the new name of
-the given character.  If multiple names designate the same character,
+the given character. If multiple names designate the same character,
 then the {{write}} will use the character name that was defined last.
 
 <enscript highlight=scheme>
@@ -924,8 +920,6 @@ then the {{write}} will use the character name that was defined last.
 
 
 
-
-
 === Blobs
 
 "blobs" are collections of unstructured bytes. You can't do much
@@ -935,9 +929,8 @@ with them, but allow conversion to and from SRFI-4 number vectors.
 
  [procedure] (make-blob SIZE)
 
-Returns a blob object of {{SIZE}} bytes,
-aligned on an 8-byte boundry,
-un-initialized.
+Returns a blob object of {{SIZE}} bytes, aligned on an 8-byte boundary,
+uninitialized.
 
 ==== blob?
 
@@ -966,11 +959,7 @@ Returns a blob with the contents of {{STRING}}.
 
 
 
-
-
 === Vectors
-
-
 
 ==== vector-copy!
 
@@ -988,18 +977,14 @@ Exceptions: {{(exn bounds)}}
 
  [procedure] (vector-resize VECTOR N [INIT])
 
-Creates and returns a new vector with the contents of {{VECTOR}} and length {{N}}.
-If {{N}} is greater than the original length of {{VECTOR}}, then all additional
-items are initialized to {{INIT}}. If {{INIT}} is not specified, the
+Creates and returns a new vector with the contents of {{VECTOR}} and length
+{{N}}. If {{N}} is greater than the original length of {{VECTOR}}, then all
+additional items are initialized to {{INIT}}. If {{INIT}} is not specified, the
 contents are initialized to some unspecified value.
 
 
 
-
-
 === The unspecified value
-
-
 
 ==== void
 
@@ -1009,11 +994,7 @@ Returns an unspecified value.
 
 
 
-
-
 === Continuations
-
-
 
 ==== call/cc
 
@@ -1026,19 +1007,23 @@ An alias for {{call-with-current-continuation}}.
 
  [procedure] (continuation-capture PROCEDURE)
 
-Creates a continuation object representing the current continuation and tail-calls 
-{{PROCEDURE}} with this continuation as the single argument.
+Creates a continuation object representing the current continuation and
+tail-calls {{PROCEDURE}} with this continuation as the single argument.
 
 More information about this continuation API can be found in the paper
-[[http://repository.readscheme.org/ftp/papers/sw2001/feeley.pdf]] ''A Better API for first class
-Continuations'' by Marc Feeley.
+[[http://repository.readscheme.org/ftp/papers/sw2001/feeley.pdf]] ''A Better
+API for first class Continuations'' by Marc Feeley.
 
 
 ==== continuation?
 
  [procedure] (continuation? X)
 
-Returns {{#t}} if {{X}} is a continuation object, or {{#f}} otherwise.
+Returns {{#t}} if {{X}} is a continuation object, or {{#f}} otherwise. Please
+note that this applies only to continuations created by the Continuation API,
+but not by call/cc, i.e.: {{(call-with-current-continuation continuation?)}}
+returns {{#f}}, whereas {{(continuation-capture continuation?)}} returns
+{{#t}}.
 
 
 ==== continuation-graft
@@ -1067,31 +1052,32 @@ be implemented like this:
 
 === Setters
 
-SRFI-17 is fully implemented. For more information see: [[http://srfi.schemers.org/srfi-17/srfi-17.html|SRFI-17]].
+SRFI-17 is fully implemented. For more information see:
+[[http://srfi.schemers.org/srfi-17/srfi-17.html|SRFI-17]].
 
 ==== setter
 
  [procedure] (setter PROCEDURE)
 
-Returns the setter-procedure of {{PROCEDURE}}, or signals an error if {{PROCEDURE}}
-has no associated setter-procedure.
+Returns the setter-procedure of {{PROCEDURE}}, or signals an error if
+{{PROCEDURE}} has no associated setter-procedure.
 
-Note that {{(set! (setter PROC) ...)}} for a procedure that has no associated setter procedure
-yet is a very slow operation (the old procedure is replaced by a modified copy, which involves a
-garbage collection).
+Note that {{(set! (setter PROC) ...)}} for a procedure that has no associated
+setter procedure yet is a very slow operation (the old procedure is replaced by
+a modified copy, which involves a garbage collection).
 
 
 ==== getter-with-setter
 
  [procedure] (getter-with-setter GETTER SETTER)
 
-Returns a copy of the procedure {{GETTER}} with the associated setter procedure {{SETTER}}.
-Contrary to the SRFI specification, the setter of the returned procedure may be changed.
+Returns a copy of the procedure {{GETTER}} with the associated setter procedure
+{{SETTER}}. Contrary to the SRFI specification, the setter of the returned
+procedure may be changed.
+
 
 
 === Reader extensions
-
-
 
 ==== define-reader-ctor
 
@@ -1105,7 +1091,7 @@ the documentation for [[http://srfi.schemers.org/srfi-10/srfi-10.html|SRFI-10]].
 
  [procedure] (set-read-syntax! CHAR-OR-SYMBOL PROC)
 
-When the reader is encounting the non-whitespace character {{CHAR}} while reading
+When the reader encounters the non-whitespace character {{CHAR}} while reading
 an expression from a given port, then the procedure {{PROC}} will be called with
 that port as its argument. The procedure should return a value that will be returned
 to the reader:
@@ -1164,6 +1150,54 @@ If the first argument is a symbol, then this procedure is equivalent to {{set-re
 Returns a copy of the given read-table. You can access the currently active read-table
 with {{(current-read-table)}}.
 
+
+=== Property lists
+
+As in other Lisp dialects, CHICKEN supports "property lists" associated with symbols.
+Properties are accessible via a key that can be any kind of value but which will
+be compared using {{eq?}}.
+
+==== get
+
+  [procedure] (get SYMBOL PROPERTY [DEFAULT])
+
+Returns the value stored under the key {{PROPERTY}} in the property
+list of {{SYMBOL}}. If no such property is stored, returns
+{{DEFAULT}}. The {{DEFAULT}} is optional and defaults to {{#f}}.
+
+==== put!
+
+  [procedure] (put! SYMBOL PROPERTY VALUE)
+  [setter] (set! (get SYMBOL PROPERTY) VALUE)
+
+Stores {{VALUE}} under the key {{PROPERTY}} in the property list of
+{{SYMBOL}} replacing any previously stored value.
+
+==== remprop!
+
+  [procedure] (remprop! SYMBOL PROPERTY)
+
+Deletes the first property matching the key {{PROPERTY}} in the property list
+of {{SYMBOL}}. Returns {{#t}} when a deletion performed, and {{#f}} otherwise.
+
+==== symbol-plist
+
+  [procedure] (symbol-plist SYMBOL)
+  [setter] (set! (symbol-plist SYMBOL) LST)
+
+Returns the property list of {{SYMBOL}} or sets it.
+
+==== get-properties
+
+  [procedure] (get-properties SYMBOL PROPERTIES)
+
+Searches the property list of {{SYMBOL}} for the first property with a key in
+the list {{PROPERTIES}}. Returns 3 values: the matching property key, value,
+and the tail of property list after the matching property. When no match found
+all values are {{#f}}.
+
+{{PROPERTIES}} may also be an atom, in which case it is treated as a list of
+one element.
 
 
 Previous: [[Parameters]]

@@ -30,14 +30,16 @@ When a procedure is applied to a list of arguments, the parameters and arguments
 
 * Required-parameters are bound to successive arguments starting with the first argument. It shall be an error if there are fewer arguments than required-parameters.
 * Next, the optional-parameters are bound with the remaining arguments. If there are fewer arguments than optional-parameters, then the remaining optional-parameters are bound to the result of the evaluation of their corresponding <initializer>, if one was specified, otherwise {{#f}}. The corresponding <initializer> is evaluated in an environment in which all previous parameters have been bound.
-* If there is a rest-parameter, then it is bound to a list containing all the remaining arguments left over after the argument bindings with required-parameters and optional-parameters have been made. These remaining arguments are also eligible to be bound to keyword-parameters, in which case the argument will be a member of both the rest-parameter list and the keyword-parameter. If there is no rest-parameter and there are no matching keyword-parameters, then it shall be an error for there to be any remaining arguments left unbound.
-* If {{#!key}} was specified in the parameter-list, there shall be an even number of remaining arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the parameter name, and the second member is the corresponding value. It shall be an error if the first member of an argument pair is not a keyword, unless there is a rest-parameter. If the same keyword occurs more than once in the list of arguments, then the corresponding value of the first keyword is the binding value. If there is no argument for a particular keyword-parameter, then the variable is bound to the result of evaluating <initializer>, if one was specified, otherwise {{#f}}. The corresponding <initializer> is evaluated in an environment in which all previous parameters have been bound. 
+* If there is a rest-parameter, then it is bound to a list containing all the remaining arguments left over after the argument bindings with required-parameters and optional-parameters have been made. 
+* If {{#!key}} was specified in the parameter-list, there should be an even number of remaining arguments. These are interpreted as a series of pairs, where the first member of each pair is a keyword specifying the parameter name, and the second member is the corresponding value. If the same keyword occurs more than once in the list of arguments, then the corresponding value of the first keyword is the binding value. If there is no argument for a particular keyword-parameter, then the variable is bound to the result of evaluating <initializer>, if one was specified, otherwise {{#f}}. The corresponding <initializer> is evaluated in an environment in which all previous parameters have been bound. 
+
+Needing a special mention is the close relationship between the rest-parameter and possible keyword-parameters.  Declaring a rest-parameter binds up all remaining arguments in a list, as described above. These same remaining arguments are also used for attempted matches with declared keyword-parameters, as described above, in which case a matching keyword-parameter binds to the corresponding value argument at the same time that both the keyword and value arguments are added to the rest parameter list.
+Note that for efficiency reasons, the keyword-parameter matching does nothing more than simply attempt to match with pairs that may exist in the remaining arguments.  Extra arguments that don't match are simply unused and forgotten if no rest-parameter has been declared.  Because of this, the caller of a procedure containing one or more keyword-parameters cannot rely on any kind of system error to report wrong keywords being passed in.
 
 It shall be an error for an {{<ident>}} to appear more than once in a parameter-list.
 
-Keyword arguments are internally handled as rest-parameters with subsequent processing
-of the argument list. Extra arguments (for example by specifying keyword arguments 
-but no rest argument) are not checked and simply ignored.
+If there is no rest-parameter and no keyword-parameters in the parameter-list, then it shall be an error for any extra arguments to be passed to the procedure.
+
 
 Example:
 
@@ -153,6 +155,8 @@ argument which should be one or more keywords, if supplied. These
 arguments specify the mode in which the file is opened. Possible
 values are the keywords {{#:text}}, {{#:binary}} or
 {{#:append}}.
+
+[6.7] The {{exit}} procedure exits a program right away and does ''not'' invoke pending {{dynamic-wind}} thunks.
 
 Previous: [[Deviations from the standard]]
 

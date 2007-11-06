@@ -127,7 +127,7 @@ Possible options are:
 
 ; -inline : Enable procedure inlining for known procedures of a size below the threshold (which can be set through the {{-inline-limit}} option).
 
-; -inline-limit THRESHOLD : Sets the maximum size of a potentially inlinable procedure. This option is only effective when inlining has been enabled with the {{-inline}} option. The default threshold is {{10}}.
+; -inline-limit THRESHOLD : Sets the maximum size of a potentially inlinable procedure. The default threshold is {{10}}.
 
 ; -keyword-style STYLE : Enables alternative keyword syntax, where {{STYLE}} may be either {{prefix}} (as in Common Lisp), {{suffix}} (as in DSSSL) or {{none}}. Any other value is ignored. The default is {{suffix}}.
 
@@ -396,7 +396,7 @@ compiled Scheme code. The following example shows a minimal application, which
 should run without changes on the most frequent operating systems, like Windows,
 Linux or FreeBSD:
 
-Let's take a simple "Hello, world!":
+Let's take a simple example.
 
 <enscript highlight=scheme>
 ; hello.scm
@@ -404,35 +404,30 @@ Let's take a simple "Hello, world!":
 (print "Hello, world!")
 </enscript>
 
+  % chicken hello.scm -optimize-level 3 -output-file hello.c
+
 Compiled to C, we get {{hello.c}}. We need the files {{chicken.h}} and
-{{runtime.c}}, which contain the basic runtime system, plus the three basic library
-files {{library.c}}, {{eval.c}} and {{extras.c}} which contain the same functionality as the
-library linked into a plain CHICKEN-compiled application, or which is available by default in the
+{{runtime.c}}, which contain the basic runtime system, plus the three
+basic library files {{library.c}}, {{eval.c}} and {{extras.c}} which
+contain the same functionality as the library linked into a plain
+CHICKEN-compiled application, or which is available by default in the
 interpreter, {{csi}}:
 
- % csc hello.scm -O2 -d1
-
-A simple makefile is needed as well:
-
-<enscript highlight=makefile>
-# Makefile for UNIX systems
-
-hello: hello.o runtime.o library.o eval.o extras.o
-       $(CC) -o hello hello.o runtime.o library.o eval.o extras.o -lm
-
-hello.o: chicken.h
-runtime.o: chicken.h
-library.o: chicken.h
-eval.o: chicken.h
-extras.o: chicken.h
-</enscript>
+  % cd /tmp
+  %echo '(print "Hello World.")' > hello.scm
+  % cp $CHICKEN_BUILD/runtime.c .
+  % cp $CHICKEN_BUILD/library.c .
+  % cp $CHICKEN_BUILD/eval.c    .
+  % cp $CHICKEN_BUILD/extras.c  .
+  % gcc -static -O3 -fomit-frame-pointer runtime.c library.c eval.c \
+    extras.c hello.c -o hello -lm
 
 Now we have all files together, and can create an tarball containing all the files:
 
  % tar cf hello.tar Makefile hello.c runtime.c library.c eval.c extras.c chicken.h
  % gzip hello.tar
 
-This is of naturally rather simplistic. Things like enabling dynamic loading, estimating
+This is naturally rather simplistic. Things like enabling dynamic loading, estimating
 the optimal stack-size and selecting supported features of the host system would need
 more configuration- and build-time support. All this can be addressed using more
 elaborate build-scripts, makefiles or by using autoconf/automake.

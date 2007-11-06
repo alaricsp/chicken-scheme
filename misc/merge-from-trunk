@@ -3,9 +3,13 @@
 exec csi -s "$0" "$@"
 |#
 
+
+; usage: merge-from-trunk [--dry-run] [--diff] [--commit] [--repourl=URL]
+
+
 (load-relative "build.scm")
 
-(define *repourl* "https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken")
+(define *repourl* "https://galinha.ucpel.tche.br/svn/chicken-eggs")
 (define *dry-run* #f)
 (define *diff* #f)
 (define *commit* #f)
@@ -17,8 +21,8 @@ exec csi -s "$0" "$@"
 	   `("diff" ,(if (string? *diff*) (conc "-r" *diff*) ""))
 	   "merge")
       ,(if *dry-run* "--dry-run" "")
-      ,(conc *repourl* "/branches/release")
-      ,(conc *repourl* "/trunk")
+      ,(conc *repourl* "/chicken/branches/release")
+      ,(conc *repourl* "/chicken/trunk")
       ,(if (not *diff*) "." "") ) )
 
 (when *commit*

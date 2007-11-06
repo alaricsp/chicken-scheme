@@ -4,18 +4,18 @@
 
 == Non-standard macros and special forms
 
-=== Making extra libraries and extensions availablee
+=== Making extra libraries and extensions available
 
 ==== require-extension
 
  [syntax] (require-extension ID ...)
  [syntax] (use ID ...)
 
-This form does all necessary steps to make the libraries or extensions given
-in {{ID ...}} available. It loads syntactic extension, if needed and generates
+This form does all the necessary steps to make the libraries or extensions given
+in {{ID ...}} available. It loads syntactic extensions, if needed and generates
 code for loading/linking with core library modules or separately installed
 extensions. {{use}} is just a shorter alias for {{require-extension}}.
-This implementation of {{require-extension}} is compliant to [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]]
+This implementation of {{require-extension}} is compliant with [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]]
 (see the [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]] document for more information).
 
 During interpretation/evaluation {{require-extension}} performs one of the
@@ -23,15 +23,15 @@ following:
 
 * If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
 * If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded.
-* {{ID}} names one of the core library units shipped with CHICKEN, then a {{(load-library 'ID)}} will be performed.
-* {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, probably followed by {{(require ...)}} for any run-time requirements.
-* Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
+* If {{ID}} names one of the core library units shipped with CHICKEN, then a {{(load-library 'ID)}} will be performed.
+* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, probably followed by {{(require ...)}} for any run-time requirements.
+* Otherwise, {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
 
-During compilation one of the following happens instead:
+During compilation, one of the following happens instead:
 
 * If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
 * If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded at compile-time, making the syntactic extensions available in compiled code.
-* If {{ID}} names one of the core library units shipped with CHICKEN, or if the option {{-uses ID}} has been passed to the compiler then a {{(declare (uses ID))}} is generated.
+* If {{ID}} names one of the core library units shipped with CHICKEN, or if the option {{-uses ID}} has been passed to the compiler, then a {{(declare (uses ID))}} is generated.
 * If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, and code is emitted to {{(require ...)}} any needed run-time requirements.
 * Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
 
@@ -482,7 +482,7 @@ Predefined feature-identifiers are "situation" specific:
 
 The following feature-identifiers are available in all situations: {{(machine-byte-order)}}, {{(machine-type)}}, {{(software-type)}}, {{(software-version)}}, where the actual feature-identifier is platform dependent.
 
-In addition the following feature-identifiers may exist: {{applyhook}}, {{extraslot}}, {{ptables}}, {{dload}}, {{libffi}}.
+In addition the following feature-identifiers may exist: {{applyhook}}, {{extraslot}}, {{ptables}}, {{dload}}.
 
 For further information, see the documentation for [[http://srfi.schemers.org/srfi-0/srfi-0.html|SRFI-0]].
 

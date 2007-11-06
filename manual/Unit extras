@@ -176,13 +176,13 @@ bound to a string-output-port and return the accumulated output string.
 ==== sprintf
 
  [procedure] (fprintf PORT FORMATSTRING ARG ...)
- [procedure] (printf FORMATSTRING ARG)
+ [procedure] (printf FORMATSTRING ARG ...)
  [procedure] (sprintf FORMATSTRING ARG ...)
 
 Simple formatted output to a given port ({{fprintf}}), the
-value of {{(current-output-port)}} ({{printf}}) or a string
+value of {{(current-output-port)}} ({{printf}}), or a string
 ({{sprintf}}).  The {{FORMATSTRING}} can contain any sequence
-of characters. The character `~' prefixes special formatting directives:
+of characters.  There must be at least as many {{ARG}} arguments given as there are format directives that require an argument in {{FORMATSTRING}}.  Extra {{ARG}} arguments are ignored.  The character `~' prefixes special formatting directives:
 
 <table>
 <tr><td> ~%
@@ -475,9 +475,9 @@ If {{MAXCOUNT}} is given then only up to {{MAXCOUNT}} expressions will be read i
 
 Line-input and -output. {{PORT}} defaults to the value of
 {{(current-input-port)}} and {{(current-output-port)}},
-respectively. if the optional argument {{LIMIT}} is given and
+respectively. If the optional argument {{LIMIT}} is given and
 not {{#f}}, then {{read-line}} reads at most {{LIMIT}}
-characters per line.
+characters per line. {{read-line}} returns a string without the terminating newline and {{write-line}} adds a terminating newline  before outputting.
 
 
 ==== read-lines

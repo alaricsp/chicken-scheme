@@ -429,6 +429,7 @@ static C_TLS int
   trace_buffer_full,
   forwarding_table_size,
   return_to_host,
+  page_size,
   show_trace,
   fake_tty_flag,
   debug_mode,
@@ -637,6 +638,12 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   if((symbol_table = C_new_symbol_table(".", symbols ? symbols : DEFAULT_SYMBOL_TABLE_SIZE)) == NULL)
     return 0;
 
+#ifdef C_LOCK_TOSPACE
+  page_size = sysconf(_SC_PAGESIZE);
+  assert(page_size > -1);
+#else
+  page_size = 0;
+#endif
   stack_size = stack ? stack : DEFAULT_STACK_SIZE;
   C_set_or_change_heap_size(heap ? heap : DEFAULT_HEAP_SIZE, 0);
 
@@ -1007,6 +1014,20 @@ void global_signal_handler(int signum)
 }
 
 
+/* Align memory to page boundary */
+
+static void *align_to_page(void *mem)
+{
+#ifdef C_LOCK_TOSPACE
+  C_uword ptr = (C_word)mem;
+
+  return (void *)(((ptr) + page_size - 1) & ~(page_size - 1));
+#else
+  return (void *)C_align((C_uword)mem);
+#endif
+}
+
+
 /* Modify heap size at runtime: */
 
 void C_set_or_change_heap_size(C_word heap, int reintern)
@@ -1022,17 +1043,20 @@ void C_set_or_change_heap_size(C_word heap, int reintern)
 
   heap_size = heap;
 
-  if((ptr1 = (C_byte *)realloc(fromspace_start, size)) == NULL ||
-     (ptr2 = (C_byte *)realloc(tospace_start, size)) == NULL)
+  if((ptr1 = (C_byte *)C_realloc(fromspace_start, size + page_size)) == NULL ||
+     (ptr2 = (C_byte *)C_realloc(tospace_start, size + page_size)) == NULL)
     panic(C_text("out of memory - can not allocate heap"));
 
-  fromspace_start = (C_byte *)C_align((C_uword)ptr1);
+  ptr1 = align_to_page(ptr1);
+  ptr2 = align_to_page(ptr2);
+  fromspace_start = ptr1;
   C_fromspace_top = fromspace_start;
   C_fromspace_limit = fromspace_start + size;
-  tospace_start = (C_byte *)C_align((C_uword)ptr2);
+  tospace_start = ptr2;
   tospace_top = tospace_start;
   tospace_limit = tospace_start + size;
   mutation_stack_top = mutation_stack_bottom;
+  lock_tospace(1);
 
   if(reintern) initialize_symbol_table();
 }
@@ -2578,14 +2602,12 @@ void C_save_and_reclaim(void *trampoline, void *proc, int n, ...)
 static void lock_tospace(int lock)
 {
 #ifdef C_LOCK_TOSPACE
-  long ps = sysconf(_SC_PAGESIZE);
   int r;
-  void *mem;
 
-  assert(ps > 0);
-  mem = (void *)(((long)tospace_start + ps) & ~(ps - 1));
-  r = mprotect(mem, tospace_limit - mem, lock ? PROT_NONE : (PROT_READ | PROT_WRITE));
-  assert(r == 0);
+  r = mprotect(tospace_start, (heap_size / 2), 
+	       lock ? PROT_NONE : (PROT_READ | PROT_WRITE));
+
+  if(r == -1) panic(strerror(errno));
 #endif
 }
 
@@ -2612,6 +2634,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   if(interrupt_reason && C_interrupts_enabled)
     handle_interrupt(trampoline, proc);
 
+  lock_tospace(0);
   finalizers_checked = 0;
   C_restart_trampoline = (TRAMPOLINE)trampoline;
   C_restart_address = proc;
@@ -2879,6 +2902,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 
   if(C_post_gc_hook != NULL) C_post_gc_hook(gc_mode, tgc);
 
+  lock_tospace(1);
   /* Jump from the Empire State Building... */
   C_longjmp(C_restart, 1);
 }
@@ -3056,6 +3080,8 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   FINALIZER_NODE *flist;
   TRACE_INFO *tinfo;
 
+  lock_tospace(0);
+
   if(double_plus) size = heap_size * 2 + size;
 
   if(size < MINIMAL_HEAP_SIZE) size = MINIMAL_HEAP_SIZE;
@@ -3076,10 +3102,10 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   heap_size = size;
   size /= 2;
 
-  if((new_tospace_start = (C_byte *)C_malloc(size)) == NULL)
+  if((new_tospace_start = (C_byte *)C_malloc(size + page_size)) == NULL)
     panic(C_text("out of memory - can not allocate heap segment"));
 
-  new_tospace_start = (C_byte *)C_align((long)new_tospace_start);
+  new_tospace_start = align_to_page(new_tospace_start);
   new_tospace_top = new_tospace_start;
   new_tospace_limit = new_tospace_start + size;
   heap_scan_top = new_tospace_top;
@@ -3169,15 +3195,16 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   C_free(tospace_start);
   C_free(fromspace_start);
   
-  if((tospace_start = (C_byte *)C_malloc(size)) == NULL)
+  if((tospace_start = (C_byte *)C_malloc(size + page_size)) == NULL)
     panic(C_text("out ot memory - can not allocate heap segment"));
 
-  tospace_start = (C_byte *)C_align((long)tospace_start);
+  tospace_start = align_to_page(tospace_start);
   tospace_limit = tospace_start + size;
   tospace_top = tospace_start;
   fromspace_start = new_tospace_start;
   C_fromspace_top = new_tospace_top;
   C_fromspace_limit = new_tospace_limit;
+  lock_tospace(1);
   
   if(gc_report_flag) {
     C_printf(C_text("[GC] resized heap to %d bytes\n"), heap_size);

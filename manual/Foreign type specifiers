@@ -11,8 +11,8 @@ An arbitrary Scheme data object (immediate or non-immediate).
 === bool
 
 As argument: any value ({{#f}} is false, anything else is true).
-As result: anything different from 0 and the {{NULL}}-pointer
-is {{#t}}.
+
+As result: anything different from 0 and the {{NULL}} pointer is {{#t}}.
 
 === byte unsigned-byte
 
@@ -47,60 +47,71 @@ then it is automatically converted to a float.
 
 === number
 
-A floating-point number. Similar to {{double}}, but when used as a result
-type, then either an exact integer or a floating-point number is returned, depending
+A floating-point number. Similar to {{double}}, but when used as a result type,
+then either an exact integer or a floating-point number is returned, depending
 on whether the result fits into an exact integer or not.
 
 === symbol
 
 A symbol, which will be passed to foreign code as a zero-terminated string.
+
 When declared as the result of foreign code, the result should be a string and
 a symbol with the same name will be interned in the symbol table (and returned
 to the caller).
 
 === scheme-pointer
 
-An untyped pointer to the contents of a non-immediate Scheme object
-(not allowed as return type).  The value {{#f}} is also allowed
-and is passed as a {{NULL}} pointer. 
-Don't confuse this type with {{(pointer ...)}} which means something
+An untyped pointer to the contents of a non-immediate Scheme object (not
+allowed as return type). The value {{#f}} is also allowed and is passed as a
+{{NULL}} pointer.
+
+Don't confuse this type with {{(c-pointer ...)}} which means something
 different (a machine-pointer object).
 
 === nonnull-scheme-pointer
 
-As {{pointer}}, but guaranteed not to be {{#f}}.
-Don't confuse this type with {{(nonnull-pointer ...)}} which means something
+As {{scheme-pointer}}, but guaranteed not to be {{#f}}.
+
+Don't confuse this type with {{(nonnull-c-pointer ...)}} which means something
 different (a machine-pointer object).
 
 === c-pointer
 
-An untyped operating-system pointer or a locative.  The value {{#f}} is also
-allowed and is passed as a {{NULL}} pointer.  If uses as the type of
+An untyped operating-system pointer or a locative. The value {{#f}} is also
+allowed and is passed as a {{NULL}} pointer. If uses as the type of
 a return value, a {{NULL}} pointer will be returned as {{#f}}.
 
 === nonnull-c-pointer
 
 As {{c-pointer}}, but guaranteed not to be {{#f/NULL}}.
 
-=== [nonnull-] blob
+=== blob
 
-A blob object, passed as a pointer to its contents. Arguments
-of type {{blob}} may optionally be {{#f}}, which is
-passed as a NULL pointer.  This is not allowed as a return type.
+A blob object, passed as a pointer to its contents. Arguments of type {{blob}}
+may optionally be {{#f}}, which is passed as a NULL pointer.
 
-=== [nonnull-] u8vector [nonnull-] u16vector [nonnull-] u32vector [nonnull-] s8vector [nonnull-] s16vector [nonnull-] s32vector [nonnull-] f32vector [nonnull-] f64vector
+This is not allowed as a return type.
 
-A SRFI-4 number-vector object, passed as a pointer to its
-contents. These type specifiers are not allowed
-as return types.
+=== nonnull-blob
+
+As {{blob}}, but guaranteed not to be {{#f}}.
+
+=== u8vector u16vector u32vector s8vector s16vector s32vector f32vector f64vector
+
+A SRFI-4 number-vector object, passed as a pointer to its contents.
+
+These type specifiers are not allowed as return types.
+
+=== nonnull-u8vector nonnull-u16vector nonnull-u32vector nonnull-s8vector nonnull-s16vector nonnull-s32vector nonnull-f32vector nonnull-f64vector
+
+As {{u8vector ...}}, but guaranteed not to be {{#f}}.
 
 === c-string
 
-A C string (zero-terminated). The value {{#f}}
-is also allowed and is passed as a {{NULL}} pointer. If uses as
-the type of a return value, a {{NULL}} pointer will be returned as
-{{#f}}. Note that the string is copied (with a zero-byte appended)
-when passed as an argument to a foreign function. Also a return value
+A C string (zero-terminated). The value {{#f}} is also allowed and is passed as
+a {{NULL}} pointer. If uses as the type of a return value, a {{NULL}} pointer
+will be returned as {{#f}}. Note that the string is copied (with a zero-byte
+appended) when passed as an argument to a foreign function. Also a return value
 of this type is copied into garbage collected memory.
 
 === nonnull-c-string
@@ -109,11 +120,10 @@ As {{c-string}}, but guaranteed not to be {{#f/NULL}}.
 
 === [nonnull-] c-string*
 
-Similar to {{[nonnull-]c-string}}, but if used as a result-type,
-the pointer returned by the foreign code will be freed (using the
-C-libraries {{free(1)}})
-after copying. This type specifier is not valid as a result type
-for callbacks defined with {{define-external}}.
+Similar to {{[nonnull-] c-string}}, but if used as a result-type, the pointer
+returned by the foreign code will be freed (using the C-libraries {{free(1)}})
+after copying. This type specifier is not valid as a result type for callbacks
+defined with {{define-external}}.
 
 === [nonnull-] unsigned-c-string[*]
 
@@ -121,9 +131,10 @@ Same as {{c-string}}, but maps to the {{unsigned char *}} C type.
 
 === c-string-list
 
-Expects a pointer to a list of C strings teminated by a {{NULL}} pointer
-and returns a list of strings. Only valid as a result type of non-callback
-functions.
+Expects a pointer to a list of C strings teminated by a {{NULL}} pointer and
+returns a list of strings.
+
+Only valid as a result type of non-callback functions.
 
 === c-string-list*
 
@@ -132,7 +143,9 @@ the pointer array using {{free(1)}}.
 
 === void
 
-Specifies an undefined return value. Not allowed as argument type.
+Specifies an undefined return value.
+
+Not allowed as argument type.
 
 === (const TYPE)
 
@@ -142,13 +155,13 @@ The foreign type {{TYPE}} with an additional {{const}} specifier.
 
 An enumeration type. Handled internally as an {{integer}}.
 
-=== (pointer TYPE) (c-pointer TYPE)
+=== (c-pointer TYPE)
 
 An operating-system pointer or a locative to an object of {{TYPE}}.
 
-=== (nonnull-pointer TYPE) (nonnull-c-pointer TYPE)
+=== (nonnull-c-pointer TYPE)
 
-As {{(pointer TYPE)}}, but guaranteed not to be {{#f/NULL}}.
+As {{(c-pointer TYPE)}}, but guaranteed not to be {{#f/NULL}}.
 
 === (ref TYPE)
 
@@ -157,28 +170,30 @@ inside Scheme code.
 
 === (struct NAME)
 
-A struct of the name {{NAME}}, which should be a string. Structs
-can not be directly passed as arguments to foreign function, neither
+A struct of the name {{NAME}}, which should be a string.
+
+Structs cannot be directly passed as arguments to foreign function, neither
 can they be result values. Pointers to structs are allowed, though.
 
 === (template TYPE ARGTYPE ...)
 
-A C++ template type. For example {{vector<int>}} would be specified
-as {{(template "vector" int)}}. Template types can not be directly passed
-as arguments or returned as results.
+A C++ template type. For example {{vector<int>}} would be specified as
+{{(template "vector" int)}}.
+
+Template types cannot be directly passed as arguments or returned as results.
 
 === (union NAME)
 
-A union of the name {{NAME}}, which should be a string. Unions can
-not be directly passed as arguments to foreign function, neither can
+A union of the name {{NAME}}, which should be a string.
+
+Unions cannot be directly passed as arguments to foreign function, neither can
 they be result values. Pointers to unions are allowed, though.
 
 === (instance CNAME SCHEMECLASS)
 
-A pointer to a C++ class instance. {{CNAME}} should designate
-the name of the C++ class, and {{SCHEMECLASS}} should be the class
-that wraps the instance pointer. Normally {{SCHEMECLASS}}
-should be a subclass of {{<c++-object>}}.
+A pointer to a C++ class instance. {{CNAME}} should designate the name of the
+C++ class, and {{SCHEMECLASS}} should be the class that wraps the instance
+pointer. Normally {{SCHEMECLASS}} should be a subclass of {{<c++-object>}}.
 
 === (instance-ref CNAME SCHEMECLASS)
 
@@ -186,10 +201,9 @@ A reference to a C++ class instance.
 
 === (function RESULTTYPE (ARGUMENTTYPE1 ... [...]) [CALLCONV])
 
-A function pointer. {{CALLCONV}} specifies an optional calling
-convention and should be a string. The meaning of this string is entirely
-platform dependent.  The value {{#f}} is also allowed and is passed
-as a {{NULL}} pointer.
+A function pointer. {{CALLCONV}} specifies an optional calling convention and
+should be a string. The meaning of this string is entirely platform dependent.
+The value {{#f}} is also allowed and is passed as a {{NULL}} pointer.
 
 === Mappings
 
@@ -214,8 +228,6 @@ float
 double
 </td></tr><tr><td>number</td><td>
 double
-</td></tr><tr><td>[nonnull-]pointer</td><td>
-void *
 </td></tr><tr><td>[nonnull-]c-pointer</td><td>
 void *
 </td></tr><tr><td>[nonnull-]blob</td><td>
@@ -246,7 +258,7 @@ unsigned char *
 char *
 </td></tr><tr><td>void</td><td>
 void
-</td></tr><tr><td>([nonnull-]pointer TYPE)</td><td>
+</td></tr><tr><td>([nonnull-]c-pointer TYPE)</td><td>
 TYPE *
 </td></tr><tr><td>(enum NAME)</td><td>
 enum NAME

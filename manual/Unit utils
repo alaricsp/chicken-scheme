@@ -142,7 +142,7 @@ is returned.
  [procedure] (for-each-line PROCEDURE [PORT])
 
 Calls {{PROCEDURE}} for each line read from {{PORT}} (which defaults to the
-value of {{(current-input-port)}}. The argument passed to {{PORCEDURE}}
+value of {{(current-input-port)}}. The argument passed to {{PROCEDURE}}
 is a string with the contents of the line, excluding any line-terminators.
 When all input has been read from the port, {{for-each-line}} returns some unspecified value.
 
@@ -229,7 +229,7 @@ does not close any of the argument ports.
 
 ===  Miscellaneous handy things
 
-==== shift!
+==== shift! DEPRECATED
 
  [procedure] (shift! LIST [DEFAULT])
 
@@ -244,7 +244,7 @@ the list is empty, {{#f}} is returned. An example might be clearer, here:
 
 The list must contain at least 2 elements.
 
-==== unshift!
+==== unshift! DEPRECATED
 
  [procedure] (unshift! X PAIR)
 
