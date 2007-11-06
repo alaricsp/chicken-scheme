@@ -666,7 +666,7 @@ EOF
 (define-foreign-variable _stat_st_ino unsigned-int "C_statbuf.st_ino")
 (define-foreign-variable _stat_st_nlink unsigned-int "C_statbuf.st_nlink")
 (define-foreign-variable _stat_st_gid unsigned-int "C_statbuf.st_gid")
-(define-foreign-variable _stat_st_size unsigned-int "C_statbuf.st_size")
+(define-foreign-variable _stat_st_size integer64 "C_statbuf.st_size")
 (define-foreign-variable _stat_st_mtime double "C_statbuf.st_mtime")
 (define-foreign-variable _stat_st_atime double "C_statbuf.st_atime")
 (define-foreign-variable _stat_st_ctime double "C_statbuf.st_ctime")
@@ -675,7 +675,7 @@ EOF
 (define-foreign-variable _stat_st_dev unsigned-int "C_statbuf.st_dev")
 (define-foreign-variable _stat_st_rdev unsigned-int "C_statbuf.st_rdev")
 (define-foreign-variable _stat_st_blksize unsigned-int "C_statbuf.st_blksize")
-(define-foreign-variable _stat_st_blocks unsigned-int "C_statbuf.st_rdev")
+(define-foreign-variable _stat_st_blocks unsigned-int "C_statbuf.st_blocks")
 
 (define (##sys#stat file link loc)
   (let ([r (cond [(fixnum? file) (##core#inline "C_fstat" file)]

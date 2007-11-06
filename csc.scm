@@ -587,7 +587,9 @@
 	       [(-windows |-W|)
 		(set! gui #t)
 		(when mingw
-		  (set! link-options (cons* "kernel32.lib" "user32.lib" "gdi32.lib" link-options))
+		  (set! link-options
+		    (cons* "-lkernel32" "-luser32.lib" "-lgdi32" "-mwindows"
+			   link-options))
 		  (set! compile-options (cons "-DC_WINDOWS_GUI" compile-options))) ]
 	       [(-framework)
 		(check s rest)

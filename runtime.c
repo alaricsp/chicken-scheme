@@ -158,6 +158,10 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # undef C_HACKED_APPLY
 #endif
 
+#ifdef C_LOCK_TOSPACE
+#include <sys/mman.h>
+#endif
+
 
 /* Parameters: */
 
@@ -504,6 +508,7 @@ static C_word C_fcall intern0(C_char *name) C_regparm;
 static void C_fcall update_locative_table(int mode) C_regparm;
 static C_word get_unbound_variable_value(C_word sym);
 static LF_LIST *find_module_handle(C_char *name);
+static void lock_tospace(int lock);
 
 static C_ccall void call_cc_wrapper(C_word c, C_word closure, C_word k, C_word result) C_noret;
 static C_ccall void call_cc_values_wrapper(C_word c, C_word closure, C_word k, ...) C_noret;
@@ -2567,6 +2572,21 @@ void C_save_and_reclaim(void *trampoline, void *proc, int n, ...)
 
   va_end(v);
   C_reclaim(trampoline, proc);
+}
+
+
+static void lock_tospace(int lock)
+{
+#ifdef C_LOCK_TOSPACE
+  long ps = sysconf(_SC_PAGESIZE);
+  int r;
+  void *mem;
+
+  assert(ps > 0);
+  mem = (void *)(((long)tospace_start + ps) & ~(ps - 1));
+  r = mprotect(mem, tospace_limit - mem, lock ? PROT_NONE : (PROT_READ | PROT_WRITE));
+  assert(r == 0);
+#endif
 }
 
 

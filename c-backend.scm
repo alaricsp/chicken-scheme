@@ -1376,7 +1376,7 @@
       ((unsigned-short) "C_fix(0xffff&(C_word)")
       ((byte) "C_fix((char)")
       ((unsigned-byte) "C_fix(0xff&(C_word)")
-      ((float double integer64) (sprintf "C_flonum(&~a," dest))	;*** suboptimal for int64
+      ((float double) (sprintf "C_flonum(&~a," dest))	;*** suboptimal for int64
       ((number) (sprintf "C_number(&~a," dest))
       ((nonnull-c-string c-string nonnull-c-pointer c-string* nonnull-c-string* 
 			 unsigned-c-string unsigned-c-string* nonnull-unsigned-c-string
@@ -1384,6 +1384,7 @@
        (sprintf "C_mpointer(&~a,(void*)" dest) )
       ((c-pointer) (sprintf "C_mpointer_or_false(&~a,(void*)" dest))
       ((integer integer32) (sprintf "C_int_to_num(&~a," dest))
+      ((integer64) (sprintf "C_a_double_to_num(&~a," dest))
       ((unsigned-integer unsigned-integer32) (sprintf "C_unsigned_int_to_num(&~a," dest))
       ((long) (sprintf "C_long_to_num(&~a," dest))
       ((unsigned-long) (sprintf "C_unsigned_long_to_num(&~a," dest))
