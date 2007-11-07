@@ -4067,7 +4067,12 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
   case C_fix(21):
     return C_fix(C_MOST_POSITIVE_FIXNUM);
 
-  /*  case C_fix(22): */
+  case C_fix(22):
+#ifdef C_LOCK_TOSPACE
+    return C_SCHEME_TRUE;
+#else
+    return C_SCHEME_FALSE;
+#endif
 
   case C_fix(23):
     return C_fix(C_startup_time_seconds);

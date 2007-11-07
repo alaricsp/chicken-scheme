@@ -3180,6 +3180,7 @@ EOF
 		   (if (##sys#fudge 28) " ptables" "")
 		   (if (##sys#fudge 32) " gchooks" "") 
 		   (if (##sys#fudge 35) " applyhook" "")
+		   (if (##sys#fudge 22) " lockts" "")
 		   (if (##sys#fudge 39) " cross" "") ) ) )
 	(string-append 
 	 "Version " +build-version+

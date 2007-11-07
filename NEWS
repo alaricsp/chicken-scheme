@@ -1,10 +1,12 @@
-2.735
+2.736
 
 - chicken-setup: can create repository catalog file from local 
   SVN checkout of egg repository
 - Better cross-development support for the build system (the
   Makefile accepts various variables for customizing the build)
 - "file-size" and "file-stat" handle file-sizes of >4GB now
+- "find-files" collects directories as well, now [Thanks to Ivan Raikov]
+- added "dist" target to toplevel makefile
 
 2.717
 

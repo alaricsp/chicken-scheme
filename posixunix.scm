@@ -59,10 +59,6 @@ static C_TLS int C_wait_status;
 #include <dirent.h>
 #include <pwd.h>
 
-#ifdef ECOS
-#include <cyg/posix/signal.h>
-#endif
-
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
@@ -120,19 +116,9 @@ static C_TLS char *C_exec_env[ ENV_MAX ];
 static C_TLS struct utsname C_utsname;
 static C_TLS struct flock C_flock;
 static C_TLS DIR *temphandle;
-#ifndef ECOS
 static C_TLS struct passwd *C_user;
 #ifdef HAVE_GRP_H
 static C_TLS struct group *C_group;
-#else
-struct C_fake_group {
-  int gr_gid;
-  int gr_mem[ 1 ];
-  char *gr_name;
-  char *gr_passwd;
-};
-static C_TLS struct C_fake_group *C_group;
-#endif
 static C_TLS int C_pipefds[ 2 ];
 #endif
 static C_TLS time_t C_secs;
@@ -161,7 +147,6 @@ static C_TLS struct stat C_statbuf;
 
 #define C_set_file_ptr(port, ptr)  (C_set_block_item(port, 0, (C_block_item(ptr, 0))), C_SCHEME_UNDEFINED)
 
-#ifndef ECOS
 #define C_fork              fork
 #define C_waitpid(id, o)    C_fix(waitpid(C_unfix(id), &C_wait_status, C_unfix(o)))
 #define C_getpid            getpid
@@ -194,7 +179,6 @@ static C_TLS struct stat C_statbuf;
 #define C_pipe(d)           C_fix(pipe(C_pipefds))
 #define C_truncate(f, n)    C_fix(truncate((char *)C_data_pointer(f), C_num_to_int(n)))
 #define C_ftruncate(f, n)   C_fix(ftruncate(C_unfix(f), C_num_to_int(n)))
-#endif
 #define C_uname             C_fix(uname(&C_utsname))
 #define C_fdopen(a, n, fd, m) C_mpointer(a, fdopen(C_unfix(fd), C_c_string(m)))
 #define C_C_fileno(p)       C_fix(fileno(C_port_file(p)))
@@ -370,13 +354,11 @@ time_t timegm(struct tm *t)
 # define C_timegm(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), C_tm.tm_gmtoff = C_unfix(C_block_item(v, 9)), (C_temporary_flonum = timegm(&C_tm)) != -1)
 #endif
 
-#ifndef ECOS
 static gid_t *C_groups = NULL;
 
 #define C_get_gid(n)      C_fix(C_groups[ C_unfix(n) ])
 #define C_set_gid(n, id)  (C_groups[ C_unfix(n) ] = C_unfix(id), C_SCHEME_UNDEFINED)
 #define C_set_groups(n)   C_fix(setgroups(C_unfix(n), C_groups))
-#endif
 EOF
 ) )
 
@@ -507,10 +489,7 @@ EOF
 (define-foreign-variable _s_irwxo int "S_IRWXO")
 (define-foreign-variable _s_isuid int "S_ISUID")
 (define-foreign-variable _s_isgid int "S_ISGID")
-(cond-expand
- [ecos]
- [else
-  (define-foreign-variable _s_isvtx int "S_ISVTX")])
+(define-foreign-variable _s_isvtx int "S_ISVTX")
 
 (define perm/irusr _s_irusr)
 (define perm/iwusr _s_iwusr)
@@ -581,18 +560,15 @@ EOF
           (posix-error #:file-error 'file-write "cannot write to file" fd size) )
         n) ) ) )
 
-(cond-expand
- [ecos]
- [else
-  (define file-mkstemp
-    (lambda (template)
-      (##sys#check-string template 'file-mkstemp)
-      (let* ([buf (##sys#make-c-string template)]
-             [fd (##core#inline "C_mkstemp" buf)]
-             [path-length (##sys#size buf)])
-        (when (eq? -1 fd)
-          (posix-error #:file-error 'file-mkstemp "cannot create temporary file" template) )
-        (values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) ) ] )
+(define file-mkstemp
+  (lambda (template)
+    (##sys#check-string template 'file-mkstemp)
+    (let* ([buf (##sys#make-c-string template)]
+	   [fd (##core#inline "C_mkstemp" buf)]
+	   [path-length (##sys#size buf)])
+      (when (eq? -1 fd)
+	(posix-error #:file-error 'file-mkstemp "cannot create temporary file" template) )
+      (values fd (##sys#substring buf 0 (fx- path-length 1) ) ) ) ) )
 
 
 ;;; I/O multiplexing:
@@ -681,13 +657,9 @@ EOF
   (let ([r (cond [(fixnum? file) (##core#inline "C_fstat" file)]
                  [(string? file)
                   (let ([path (##sys#make-c-string (##sys#expand-home-path file))])
-                    (cond-expand
-                     [ecos
-                      (##core#inline "C_stat" path)]
-                     [else
-                      (if link
-                          (##core#inline "C_lstat" path)
-                          (##core#inline "C_stat" path) ) ] )  ) ]
+		    (if link
+			(##core#inline "C_lstat" path)
+			(##core#inline "C_stat" path) ) ) ]
                  [else (##sys#signal-hook #:type-error "bad argument type - not a fixnum or string" file)] ) ] )
     (when (fx< r 0)
       (posix-error #:file-error loc "cannot access file" file) ) ) )
@@ -813,98 +785,94 @@ EOF
 
 ;;; Pipes:
 
-(cond-expand
- [ecos]
- [else
+(let ()
+  (define (mode arg) (if (pair? arg) (##sys#slot arg 0) '###text))
+  (define (badmode m) (##sys#error "illegal input/output mode specifier" m))
+  (define (check loc cmd inp r)
+    (if (##sys#null-pointer? r)
+	(posix-error #:file-error loc "cannot open pipe" cmd)
+	(let ([port (##sys#make-port inp ##sys#stream-port-class "(pipe)" 'stream)])
+	  (##core#inline "C_set_file_ptr" port r)
+	  port) ) )
+  (set! open-input-pipe
+    (lambda (cmd . m)
+      (##sys#check-string cmd 'open-input-pipe)
+      (let ([m (mode m)])
+	(check
+	 'open-input-pipe
+	 cmd #t
+	 (case m
+	   ((#:text) (##core#inline_allocate ("open_text_input_pipe" 2) (##sys#make-c-string cmd)))
+	   ((#:binary) (##core#inline_allocate ("open_binary_input_pipe" 2) (##sys#make-c-string cmd)))
+	   (else (badmode m)) ) ) ) ) )
+  (set! open-output-pipe
+    (lambda (cmd . m)
+      (##sys#check-string cmd 'open-output-pipe)
+      (let ((m (mode m)))
+	(check
+	 'open-output-pipe
+	 cmd #f
+	 (case m
+	   ((#:text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
+	   ((#:binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
+	   (else (badmode m)) ) ) ) ) )
+  (set! close-input-pipe
+    (lambda (port)
+      (##sys#check-port port 'close-input-pipe)
+      (let ((r (##core#inline "close_pipe" port)))
+	(when (eq? -1 r) (posix-error #:file-error 'close-input/output-pipe "error while closing pipe" port))
+	r) ) )
+  (set! close-output-pipe close-input-pipe) )
 
-  (let ()
-    (define (mode arg) (if (pair? arg) (##sys#slot arg 0) '###text))
-    (define (badmode m) (##sys#error "illegal input/output mode specifier" m))
-    (define (check loc cmd inp r)
-      (if (##sys#null-pointer? r)
-          (posix-error #:file-error loc "cannot open pipe" cmd)
-          (let ([port (##sys#make-port inp ##sys#stream-port-class "(pipe)" 'stream)])
-            (##core#inline "C_set_file_ptr" port r)
-            port) ) )
-    (set! open-input-pipe
-      (lambda (cmd . m)
-        (##sys#check-string cmd 'open-input-pipe)
-        (let ([m (mode m)])
-          (check
-           'open-input-pipe
-           cmd #t
-           (case m
-             ((#:text) (##core#inline_allocate ("open_text_input_pipe" 2) (##sys#make-c-string cmd)))
-             ((#:binary) (##core#inline_allocate ("open_binary_input_pipe" 2) (##sys#make-c-string cmd)))
-             (else (badmode m)) ) ) ) ) )
-    (set! open-output-pipe
-      (lambda (cmd . m)
-        (##sys#check-string cmd 'open-output-pipe)
-        (let ((m (mode m)))
-          (check
-           'open-output-pipe
-           cmd #f
-           (case m
-             ((#:text) (##core#inline_allocate ("open_text_output_pipe" 2) (##sys#make-c-string cmd)))
-             ((#:binary) (##core#inline_allocate ("open_binary_output_pipe" 2) (##sys#make-c-string cmd)))
-             (else (badmode m)) ) ) ) ) )
-    (set! close-input-pipe
-      (lambda (port)
-        (##sys#check-port port 'close-input-pipe)
-        (let ((r (##core#inline "close_pipe" port)))
-          (when (eq? -1 r) (posix-error #:file-error 'close-input/output-pipe "error while closing pipe" port))
-          r) ) )
-    (set! close-output-pipe close-input-pipe) )
+(let ([open-input-pipe open-input-pipe]
+      [open-output-pipe open-output-pipe]
+      [close-input-pipe close-input-pipe]
+      [close-output-pipe close-output-pipe] )
+  (set! call-with-input-pipe
+    (lambda (cmd proc . mode)
+      (let ([p (apply open-input-pipe cmd mode)])
+	(##sys#call-with-values
+	 (lambda () (proc p))
+	 (lambda results
+	   (close-input-pipe p)
+	   (apply values results) ) ) ) ) )
+  (set! call-with-output-pipe
+    (lambda (cmd proc . mode)
+      (let ([p (apply open-output-pipe cmd mode)])
+	(##sys#call-with-values
+	 (lambda () (proc p))
+	 (lambda results
+	   (close-output-pipe p)
+	   (apply values results) ) ) ) ) )
+  (set! with-input-from-pipe
+    (lambda (cmd thunk . mode)
+      (let ([old ##sys#standard-input]
+	    [p (apply open-input-pipe cmd mode)] )
+	(set! ##sys#standard-input p)
+	(##sys#call-with-values thunk
+				(lambda results
+				  (close-input-pipe p)
+				  (set! ##sys#standard-input old)
+				  (apply values results) ) ) ) ) )
+  (set! with-output-to-pipe
+    (lambda (cmd thunk . mode)
+      (let ([old ##sys#standard-output]
+	    [p (apply open-output-pipe cmd mode)] )
+	(set! ##sys#standard-output p)
+	(##sys#call-with-values thunk
+				(lambda results
+				  (close-output-pipe p)
+				  (set! ##sys#standard-output old)
+				  (apply values results) ) ) ) ) ) )
 
-  (let ([open-input-pipe open-input-pipe]
-        [open-output-pipe open-output-pipe]
-        [close-input-pipe close-input-pipe]
-        [close-output-pipe close-output-pipe] )
-    (set! call-with-input-pipe
-      (lambda (cmd proc . mode)
-        (let ([p (apply open-input-pipe cmd mode)])
-          (##sys#call-with-values
-           (lambda () (proc p))
-           (lambda results
-             (close-input-pipe p)
-             (apply values results) ) ) ) ) )
-    (set! call-with-output-pipe
-      (lambda (cmd proc . mode)
-        (let ([p (apply open-output-pipe cmd mode)])
-          (##sys#call-with-values
-           (lambda () (proc p))
-           (lambda results
-             (close-output-pipe p)
-             (apply values results) ) ) ) ) )
-    (set! with-input-from-pipe
-      (lambda (cmd thunk . mode)
-        (let ([old ##sys#standard-input]
-              [p (apply open-input-pipe cmd mode)] )
-          (set! ##sys#standard-input p)
-          (##sys#call-with-values thunk
-                                  (lambda results
-                                    (close-input-pipe p)
-                                    (set! ##sys#standard-input old)
-                                    (apply values results) ) ) ) ) )
-    (set! with-output-to-pipe
-      (lambda (cmd thunk . mode)
-        (let ([old ##sys#standard-output]
-              [p (apply open-output-pipe cmd mode)] )
-          (set! ##sys#standard-output p)
-          (##sys#call-with-values thunk
-                                  (lambda results
-                                    (close-output-pipe p)
-                                    (set! ##sys#standard-output old)
-                                    (apply values results) ) ) ) ) ) )
+(define-foreign-variable _pipefd0 int "C_pipefds[ 0 ]")
+(define-foreign-variable _pipefd1 int "C_pipefds[ 1 ]")
 
-  (define-foreign-variable _pipefd0 int "C_pipefds[ 0 ]")
-  (define-foreign-variable _pipefd1 int "C_pipefds[ 1 ]")
-
-  (define create-pipe
-    (lambda ()
-      (when (fx< (##core#inline "C_pipe" #f) 0)
-        (posix-error #:file-error 'create-pipe "cannot create pipe") )
-      (values _pipefd0 _pipefd1) ) ) ] )
+(define create-pipe
+  (lambda ()
+    (when (fx< (##core#inline "C_pipe" #f) 0)
+      (posix-error #:file-error 'create-pipe "cannot create pipe") )
+    (values _pipefd0 _pipefd1) ) )
 
 
 ;;; Signal processing:
@@ -924,20 +892,17 @@ EOF
 (define-foreign-variable _sigpipe int "SIGPIPE")
 (define-foreign-variable _sigusr1 int "SIGUSR1")
 (define-foreign-variable _sigusr2 int "SIGUSR2")
-(cond-expand
- [ecos]
- [else
-  (define-foreign-variable _sigvtalrm int "SIGVTALRM")
-  (define-foreign-variable _sigprof int "SIGPROF")
-  (define-foreign-variable _sigio int "SIGIO")
-  (define-foreign-variable _sigurg int "SIGURG")
-  (define-foreign-variable _sigchld int "SIGCHLD")
-  (define-foreign-variable _sigcont int "SIGCONT")
-  (define-foreign-variable _sigstop int "SIGSTOP")
-  (define-foreign-variable _sigtstp int "SIGTSTP")
-  (define-foreign-variable _sigxcpu int "SIGXCPU")
-  (define-foreign-variable _sigxfsz int "SIGXFSZ")
-  (define-foreign-variable _sigwinch int "SIGWINCH") ] )
+(define-foreign-variable _sigvtalrm int "SIGVTALRM")
+(define-foreign-variable _sigprof int "SIGPROF")
+(define-foreign-variable _sigio int "SIGIO")
+(define-foreign-variable _sigurg int "SIGURG")
+(define-foreign-variable _sigchld int "SIGCHLD")
+(define-foreign-variable _sigcont int "SIGCONT")
+(define-foreign-variable _sigstop int "SIGSTOP")
+(define-foreign-variable _sigtstp int "SIGTSTP")
+(define-foreign-variable _sigxcpu int "SIGXCPU")
+(define-foreign-variable _sigxfsz int "SIGXFSZ")
+(define-foreign-variable _sigwinch int "SIGWINCH")
 
 (define signal/term _sigterm)
 (define signal/kill _sigkill)
@@ -1037,170 +1002,166 @@ EOF
 
 ;;; Getting system-, group- and user-information:
 
-(cond-expand
- [ecos]
- [else
+(define-foreign-variable _uname int "C_uname")
+(define-foreign-variable _uname-sysname nonnull-c-string "C_utsname.sysname")
+(define-foreign-variable _uname-nodename nonnull-c-string "C_utsname.nodename")
+(define-foreign-variable _uname-release nonnull-c-string "C_utsname.release")
+(define-foreign-variable _uname-version nonnull-c-string "C_utsname.version")
+(define-foreign-variable _uname-machine nonnull-c-string "C_utsname.machine")
 
-  (define-foreign-variable _uname int "C_uname")
-  (define-foreign-variable _uname-sysname nonnull-c-string "C_utsname.sysname")
-  (define-foreign-variable _uname-nodename nonnull-c-string "C_utsname.nodename")
-  (define-foreign-variable _uname-release nonnull-c-string "C_utsname.release")
-  (define-foreign-variable _uname-version nonnull-c-string "C_utsname.version")
-  (define-foreign-variable _uname-machine nonnull-c-string "C_utsname.machine")
+(define system-information
+  (lambda ()
+    (when (fx< _uname 0)
+      (##sys#update-errno)
+      (##sys#error 'system-information "cannot retrieve system information") )
+    (list _uname-sysname
+          _uname-nodename
+          _uname-release
+          _uname-version
+          _uname-machine) ) )
 
-  (define system-information
-    (lambda ()
-      (when (fx< _uname 0)
-        (##sys#update-errno)
-        (##sys#error 'system-information "cannot retrieve system information") )
-      (list _uname-sysname
-            _uname-nodename
-            _uname-release
-            _uname-version
-            _uname-machine) ) )
+(define set-user-id!                  ; DEPRECATED
+  (lambda (id)
+    (when (fx< (##core#inline "C_setuid" id) 0)
+      (##sys#update-errno)
+      (##sys#error 'set-user-id! "cannot set user ID" id) ) ) )
 
-  (define set-user-id!                  ; DEPRECATED
-    (lambda (id)
-      (when (fx< (##core#inline "C_setuid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 'set-user-id! "cannot set user ID" id) ) ) )
+(define current-user-id
+  (getter-with-setter
+   (foreign-lambda int "C_getuid")
+   set-user-id!) )
 
-  (define current-user-id
-    (getter-with-setter
-     (foreign-lambda int "C_getuid")
-     set-user-id!) )
-
-  (define current-effective-user-id
-    (getter-with-setter
-     (foreign-lambda int "C_geteuid")
-     (lambda (id)
-      (when (fx< (##core#inline "C_seteuid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 
+(define current-effective-user-id
+  (getter-with-setter
+   (foreign-lambda int "C_geteuid")
+   (lambda (id)
+    (when (fx< (##core#inline "C_seteuid" id) 0)
+      (##sys#update-errno)
+      (##sys#error 
 	 'effective-user-id!-setter "cannot set effective user ID" id) ) ) ) )
 
-  (define set-group-id!                 ; DEPRECATED
-    (lambda (id)
-      (when (fx< (##core#inline "C_setgid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 'set-user-id! "cannot set group ID" id) ) ) )
+(define set-group-id!                 ; DEPRECATED
+  (lambda (id)
+    (when (fx< (##core#inline "C_setgid" id) 0)
+      (##sys#update-errno)
+      (##sys#error 'set-user-id! "cannot set group ID" id) ) ) )
 
-  (define current-group-id
-    (getter-with-setter
-     (foreign-lambda int "C_getgid")
-     set-group-id!) )
+(define current-group-id
+  (getter-with-setter
+   (foreign-lambda int "C_getgid")
+   set-group-id!) )
 
-  (define current-effective-group-id
-    (getter-with-setter 
-     (foreign-lambda int "C_getegid")
-     (lambda (id)
-      (when (fx< (##core#inline "C_setegid" id) 0)
-        (##sys#update-errno)
-        (##sys#error 
+(define current-effective-group-id
+  (getter-with-setter 
+   (foreign-lambda int "C_getegid")
+   (lambda (id)
+    (when (fx< (##core#inline "C_setegid" id) 0)
+      (##sys#update-errno)
+      (##sys#error 
 	 'effective-group-id!-setter "cannot set effective group ID" id) ) ) ) )
 
-  (define-foreign-variable _user-name nonnull-c-string "C_user->pw_name")
-  (define-foreign-variable _user-passwd nonnull-c-string "C_user->pw_passwd")
-  (define-foreign-variable _user-uid int "C_user->pw_uid")
-  (define-foreign-variable _user-gid int "C_user->pw_gid")
-  (define-foreign-variable _user-gecos nonnull-c-string "C_user->pw_gecos")
-  (define-foreign-variable _user-dir c-string "C_user->pw_dir")
-  (define-foreign-variable _user-shell c-string "C_user->pw_shell")
+(define-foreign-variable _user-name nonnull-c-string "C_user->pw_name")
+(define-foreign-variable _user-passwd nonnull-c-string "C_user->pw_passwd")
+(define-foreign-variable _user-uid int "C_user->pw_uid")
+(define-foreign-variable _user-gid int "C_user->pw_gid")
+(define-foreign-variable _user-gecos nonnull-c-string "C_user->pw_gecos")
+(define-foreign-variable _user-dir c-string "C_user->pw_dir")
+(define-foreign-variable _user-shell c-string "C_user->pw_shell")
 
-  (define (user-information user #!optional as-vector)
-    (let ([r (if (fixnum? user)
-                 (##core#inline "C_getpwuid" user)
-                 (begin
-                   (##sys#check-string user 'user-information)
-                   (##core#inline "C_getpwnam" (##sys#make-c-string user)) ) ) ] )
-      (and r
-           ((if as-vector vector list)
-            _user-name
-            _user-passwd
-            _user-uid
-            _user-gid
-            _user-gecos
-            _user-dir
-            _user-shell) ) ) )
+(define (user-information user #!optional as-vector)
+  (let ([r (if (fixnum? user)
+               (##core#inline "C_getpwuid" user)
+               (begin
+                 (##sys#check-string user 'user-information)
+                 (##core#inline "C_getpwnam" (##sys#make-c-string user)) ) ) ] )
+    (and r
+         ((if as-vector vector list)
+          _user-name
+          _user-passwd
+          _user-uid
+          _user-gid
+          _user-gecos
+          _user-dir
+          _user-shell) ) ) )
 
-  (define (current-user-name)
-    (list-ref (user-information (current-user-id)) 0) )
+(define (current-user-name)
+  (list-ref (user-information (current-user-id)) 0) )
 
-  (define (current-effective-user-name)
-    (list-ref (user-information (current-effective-user-id)) 0) )
+(define (current-effective-user-name)
+  (list-ref (user-information (current-effective-user-id)) 0) )
 
-  (define-foreign-variable _group-name nonnull-c-string "C_group->gr_name")
-  (define-foreign-variable _group-passwd nonnull-c-string "C_group->gr_passwd")
-  (define-foreign-variable _group-gid int "C_group->gr_gid")
+(define-foreign-variable _group-name nonnull-c-string "C_group->gr_name")
+(define-foreign-variable _group-passwd nonnull-c-string "C_group->gr_passwd")
+(define-foreign-variable _group-gid int "C_group->gr_gid")
 
-  (define group-member
-    (foreign-lambda* c-string ([int i])
-      "return(C_group->gr_mem[ i ]);") )
+(define group-member
+  (foreign-lambda* c-string ([int i])
+    "return(C_group->gr_mem[ i ]);") )
 
-  (define (group-information group #!optional as-vector)
-    (let ([r (if (fixnum? group)
-                 (##core#inline "C_getgrgid" group)
-                 (begin
-                   (##sys#check-string group 'group-information)
-                   (##core#inline "C_getgrnam" (##sys#make-c-string group)) ) ) ] )
-      (and r
-           ((if as-vector vector list)
-            _group-name
-            _group-passwd
-            _group-gid
-            (let loop ([i 0])
-              (let ([n (group-member i)])
-                (if n
-                    (cons n (loop (fx+ i 1)))
-                    '() ) ) ) ) ) ) )
+(define (group-information group #!optional as-vector)
+  (let ([r (if (fixnum? group)
+               (##core#inline "C_getgrgid" group)
+               (begin
+                 (##sys#check-string group 'group-information)
+                 (##core#inline "C_getgrnam" (##sys#make-c-string group)) ) ) ] )
+    (and r
+         ((if as-vector vector list)
+          _group-name
+          _group-passwd
+          _group-gid
+          (let loop ([i 0])
+            (let ([n (group-member i)])
+              (if n
+                  (cons n (loop (fx+ i 1)))
+                  '() ) ) ) ) ) ) )
 
-  (define _get-groups
-    (foreign-lambda* int ([int n])
-      "return(getgroups(n, C_groups));") )
+(define _get-groups
+  (foreign-lambda* int ([int n])
+    "return(getgroups(n, C_groups));") )
 
-  (define _ensure-groups
-    (foreign-lambda* bool ([int n])
-      "if(C_groups != NULL) C_free(C_groups);"
-      "C_groups = (gid_t *)C_malloc(sizeof(gid_t) * n);"
-      "if(C_groups == NULL) return(0);"
-      "else return(1);") )
+(define _ensure-groups
+  (foreign-lambda* bool ([int n])
+    "if(C_groups != NULL) C_free(C_groups);"
+    "C_groups = (gid_t *)C_malloc(sizeof(gid_t) * n);"
+    "if(C_groups == NULL) return(0);"
+    "else return(1);") )
 
-  (define (get-groups)
-    (let ([n (foreign-value "getgroups(0, C_groups)" int)])
-      (when (fx< n 0)
-        (##sys#update-errno)
-        (##sys#error 'get-groups "cannot retrieve supplementary group ids") )
-      (unless (_ensure-groups n)
-        (##sys#error 'get-groups "out of memory") )
-      (when (fx< (_get-groups n) 0)
-        (##sys#update-errno)
-        (##sys#error 'get-groups "cannot retrieve supplementary group ids") )
-      (let loop ([i 0])
-        (if (fx>= i n)
-            '()
-            (cons (##core#inline "C_get_gid" i) (loop (fx+ i 1))) ) ) ) )
+(define (get-groups)
+  (let ([n (foreign-value "getgroups(0, C_groups)" int)])
+    (when (fx< n 0)
+      (##sys#update-errno)
+      (##sys#error 'get-groups "cannot retrieve supplementary group ids") )
+    (unless (_ensure-groups n)
+      (##sys#error 'get-groups "out of memory") )
+    (when (fx< (_get-groups n) 0)
+      (##sys#update-errno)
+      (##sys#error 'get-groups "cannot retrieve supplementary group ids") )
+    (let loop ([i 0])
+      (if (fx>= i n)
+          '()
+          (cons (##core#inline "C_get_gid" i) (loop (fx+ i 1))) ) ) ) )
 
-  (define (set-groups! lst0)
-    (unless (_ensure-groups (length lst0))
-      (##sys#error 'set-groups! "out of memory") )
-    (do ([lst lst0 (##sys#slot lst 1)]
-         [i 0 (fx+ i 1)] )
-        ((null? lst)
-         (when (fx< (##core#inline "C_set_groups" i) 0)
-         (##sys#update-errno)
-         (##sys#error 'set-groups! "cannot set supplementary group ids" lst0) ) )
-      (let ([n (##sys#slot lst 0)])
-        (##sys#check-exact n 'set-groups!)
-        (##core#inline "C_set_gid" i n) ) ) )
+(define (set-groups! lst0)
+  (unless (_ensure-groups (length lst0))
+    (##sys#error 'set-groups! "out of memory") )
+  (do ([lst lst0 (##sys#slot lst 1)]
+       [i 0 (fx+ i 1)] )
+      ((null? lst)
+       (when (fx< (##core#inline "C_set_groups" i) 0)
+       (##sys#update-errno)
+       (##sys#error 'set-groups! "cannot set supplementary group ids" lst0) ) )
+    (let ([n (##sys#slot lst 0)])
+      (##sys#check-exact n 'set-groups!)
+      (##core#inline "C_set_gid" i n) ) ) )
 
-  (define initialize-groups
-    (let ([init (foreign-lambda int "initgroups" c-string int)])
-      (lambda (user id)
-        (##sys#check-string user 'initialize-groups)
-        (##sys#check-exact id 'initialize-groups)
-        (when (fx< (init user id) 0)
-        (##sys#update-errno)
-        (##sys#error 'initialize-groups "cannot initialize supplementary group ids" user id) ) ) ) ) ] )
+(define initialize-groups
+  (let ([init (foreign-lambda int "initgroups" c-string int)])
+    (lambda (user id)
+      (##sys#check-string user 'initialize-groups)
+      (##sys#check-exact id 'initialize-groups)
+      (when (fx< (init user id) 0)
+      (##sys#update-errno)
+      (##sys#error 'initialize-groups "cannot initialize supplementary group ids" user id) ) ) ) )
 
 
 ;;; More errno codes:
@@ -1212,12 +1173,9 @@ EOF
 (define-foreign-variable _esrch int "ESRCH")
 (define-foreign-variable _eintr int "EINTR")
 (define-foreign-variable _eio int "EIO")
-(cond-expand
- [ecos]
- [else
-  (define-foreign-variable _efault int "EFAULT")
-  (define-foreign-variable _echild int "ECHILD")
-  (define-foreign-variable _enoexec int "ENOEXEC")])
+(define-foreign-variable _efault int "EFAULT")
+(define-foreign-variable _echild int "ECHILD")
+(define-foreign-variable _enoexec int "ENOEXEC")
 (define-foreign-variable _ebadf int "EBADF")
 (define-foreign-variable _enomem int "ENOMEM")
 (define-foreign-variable _eacces int "EACCES")
@@ -1275,98 +1233,94 @@ EOF
 (define errno/range 0)
 (define errno/xdev 0)
 
-(cond-expand
- [ecos]
- [else
+;;; Permissions and owners:
 
-  ;;; Permissions and owners:
+(define change-file-mode
+  (lambda (fname m)
+    (##sys#check-string fname 'change-file-mode)
+    (##sys#check-exact m 'change-file-mode)
+    (when (fx< (##core#inline "C_chmod" (##sys#make-c-string (##sys#expand-home-path fname)) m) 0)
+      (posix-error #:file-error 'change-file-mode "cannot change file mode" fname m) ) ) )
 
-  (define change-file-mode
-    (lambda (fname m)
-      (##sys#check-string fname 'change-file-mode)
-      (##sys#check-exact m 'change-file-mode)
-      (when (fx< (##core#inline "C_chmod" (##sys#make-c-string (##sys#expand-home-path fname)) m) 0)
-        (posix-error #:file-error 'change-file-mode "cannot change file mode" fname m) ) ) )
+(define change-file-owner
+  (lambda (fn uid gid)
+    (##sys#check-string fn 'change-file-owner)
+    (##sys#check-exact uid 'change-file-owner)
+    (##sys#check-exact gid 'change-file-owner)
+    (when (fx< (##core#inline "C_chown" (##sys#make-c-string (##sys#expand-home-path fn)) uid gid) 0)
+      (posix-error #:file-error 'change-file-owner "cannot change file owner" fn uid gid) ) ) )
 
-  (define change-file-owner
-    (lambda (fn uid gid)
-      (##sys#check-string fn 'change-file-owner)
-      (##sys#check-exact uid 'change-file-owner)
-      (##sys#check-exact gid 'change-file-owner)
-      (when (fx< (##core#inline "C_chown" (##sys#make-c-string (##sys#expand-home-path fn)) uid gid) 0)
-        (posix-error #:file-error 'change-file-owner "cannot change file owner" fn uid gid) ) ) )
+(define-foreign-variable _r_ok int "R_OK")
+(define-foreign-variable _w_ok int "W_OK")
+(define-foreign-variable _x_ok int "X_OK")
 
-  (define-foreign-variable _r_ok int "R_OK")
-  (define-foreign-variable _w_ok int "W_OK")
-  (define-foreign-variable _x_ok int "X_OK")
+(let ()
+  (define (check filename acc loc)
+    (##sys#check-string filename loc)
+    (let ([r (fx= 0 (##core#inline "C_access" (##sys#make-c-string (##sys#expand-home-path filename)) acc))])
+      (unless r (##sys#update-errno))
+      r) )
+  (set! file-read-access? (lambda (filename) (check filename _r_ok 'file-read-access?)))
+  (set! file-write-access? (lambda (filename) (check filename _w_ok 'file-write-access?)))
+  (set! file-execute-access? (lambda (filename) (check filename _x_ok 'file-execute-access?))) )
 
-  (let ()
-    (define (check filename acc loc)
-      (##sys#check-string filename loc)
-      (let ([r (fx= 0 (##core#inline "C_access" (##sys#make-c-string (##sys#expand-home-path filename)) acc))])
-        (unless r (##sys#update-errno))
-        r) )
-    (set! file-read-access? (lambda (filename) (check filename _r_ok 'file-read-access?)))
-    (set! file-write-access? (lambda (filename) (check filename _w_ok 'file-write-access?)))
-    (set! file-execute-access? (lambda (filename) (check filename _x_ok 'file-execute-access?))) )
-
-  (define (create-session)
-    (let ([a (##core#inline "C_setsid" #f)])
-      (when (fx< a 0)
-        (##sys#update-errno)
-        (##sys#error 'create-session "cannot create session") )
-      a) )
-
-  (define (set-process-group-id! pid pgid) ; DEPRECATED
-    (##sys#check-exact pid 'set-process-group-id!)
-    (##sys#check-exact pgid 'set-process-group-id!)
-    (when (fx< (##core#inline "C_setpgid" pid pgid) 0)
+(define (create-session)
+  (let ([a (##core#inline "C_setsid" #f)])
+    (when (fx< a 0)
       (##sys#update-errno)
-      (##sys#error 'set-process-group-id! "cannot set process group ID" pid pgid) ) )
+      (##sys#error 'create-session "cannot create session") )
+    a) )
 
-  (define process-group-id
-    (getter-with-setter
-     (lambda (pid)
-       (##sys#check-exact pid 'process-group-id)
-       (let ([a (##core#inline "C_getpgid" pid)])
-         (when (fx< a 0)
-           (##sys#update-errno)
-           (##sys#error 'process-group-id "cannot retrieve process group ID" pid) )
-      a) )
-     set-process-group-id!) )
+(define (set-process-group-id! pid pgid) ; DEPRECATED
+  (##sys#check-exact pid 'set-process-group-id!)
+  (##sys#check-exact pgid 'set-process-group-id!)
+  (when (fx< (##core#inline "C_setpgid" pid pgid) 0)
+    (##sys#update-errno)
+    (##sys#error 'set-process-group-id! "cannot set process group ID" pid pgid) ) )
 
-  ;;; Hard and symbolic links:
+(define process-group-id
+  (getter-with-setter
+   (lambda (pid)
+     (##sys#check-exact pid 'process-group-id)
+     (let ([a (##core#inline "C_getpgid" pid)])
+       (when (fx< a 0)
+         (##sys#update-errno)
+         (##sys#error 'process-group-id "cannot retrieve process group ID" pid) )
+    a) )
+   set-process-group-id!) )
 
-  (define create-symbolic-link
+;;; Hard and symbolic links:
+
+(define create-symbolic-link
+  (lambda (old new)
+    (##sys#check-string old 'create-symbolic-link)
+    (##sys#check-string new 'create-symbolic-link)
+    (when (fx< (##core#inline
+              "C_symlink"
+              (##sys#make-c-string (##sys#expand-home-path old))
+              (##sys#make-c-string (##sys#expand-home-path new)) )
+             0)
+      (posix-error #:file-error 'create-symbol-link "cannot create symbolic link" old new) ) ) )
+
+(define-foreign-variable _filename_max int "FILENAME_MAX")
+
+(define read-symbolic-link
+  (let ([substring substring]
+      [buf (make-string (fx+ _filename_max 1))] )
+    (lambda (fname)
+      (##sys#check-string fname 'read-symbolic-link)
+      (let ([len (##core#inline "C_readlink" (##sys#make-c-string (##sys#expand-home-path fname)) buf)])
+      (when (fx< len 0)
+        (posix-error #:file-error 'read-symbolic-link "cannot read symbolic link" fname) )
+      (substring buf 0 len) ) ) ) )
+
+(define file-link
+  (let ([link (foreign-lambda int "link" c-string c-string)])
     (lambda (old new)
-      (##sys#check-string old 'create-symbolic-link)
-      (##sys#check-string new 'create-symbolic-link)
-      (when (fx< (##core#inline
-                "C_symlink"
-                (##sys#make-c-string (##sys#expand-home-path old))
-                (##sys#make-c-string (##sys#expand-home-path new)) )
-               0)
-        (posix-error #:file-error 'create-symbol-link "cannot create symbolic link" old new) ) ) )
-
-  (define-foreign-variable _filename_max int "FILENAME_MAX")
-
-  (define read-symbolic-link
-    (let ([substring substring]
-        [buf (make-string (fx+ _filename_max 1))] )
-      (lambda (fname)
-        (##sys#check-string fname 'read-symbolic-link)
-        (let ([len (##core#inline "C_readlink" (##sys#make-c-string (##sys#expand-home-path fname)) buf)])
-        (when (fx< len 0)
-          (posix-error #:file-error 'read-symbolic-link "cannot read symbolic link" fname) )
-        (substring buf 0 len) ) ) ) )
-
-  (define file-link
-    (let ([link (foreign-lambda int "link" c-string c-string)])
-      (lambda (old new)
-        (##sys#check-string old 'file-link)
-        (##sys#check-string new 'file-link)
-        (when (fx< (link old new) 0)
-        (posix-error #:file-error 'hard-link "could not create hard link" old new) ) ) ) ) ] )
+      (##sys#check-string old 'file-link)
+      (##sys#check-string new 'file-link)
+      (when (fx< (link old new) 0)
+      (posix-error #:file-error 'hard-link "could not create hard link" old new) ) ) ) )
 
 
 ;;; Using file-descriptors:
@@ -1599,17 +1553,14 @@ EOF
 
 ;;; Other file operations:
 
-(cond-expand
- [ecos]
- [else
-  (define file-truncate
-    (lambda (fname off)
-      (##sys#check-number off 'file-truncate)
-      (when (fx< (cond [(string? fname) (##core#inline "C_truncate" (##sys#make-c-string (##sys#expand-home-path fname)) off)]
-                       [(fixnum? fname) (##core#inline "C_ftruncate" fname off)]
-                       [else (##sys#error 'file-truncate "invalid file" fname)] )
-                 0)
-            (posix-error #:file-error 'file-truncate "cannot truncate file" fname off) ) ) ) ] )
+(define file-truncate
+  (lambda (fname off)
+    (##sys#check-number off 'file-truncate)
+    (when (fx< (cond [(string? fname) (##core#inline "C_truncate" (##sys#make-c-string (##sys#expand-home-path fname)) off)]
+		     [(fixnum? fname) (##core#inline "C_ftruncate" fname off)]
+		     [else (##sys#error 'file-truncate "invalid file" fname)] )
+	       0)
+      (posix-error #:file-error 'file-truncate "cannot truncate file" fname off) ) ) )
 
 
 ;;; Record locking:
@@ -1657,109 +1608,102 @@ EOF
       (posix-error #:file-error 'file-unlock "cannot unlock file" lock) ) ) )
 
 
-(cond-expand
- [ecos]
- [else
-
 ;;; FIFOs:
 
-  (define create-fifo
-    (lambda (fname . mode)
-      (##sys#check-string fname 'create-fifo)
-      (let ([mode (if (pair? mode) (car mode) (fxior _s_irwxu (fxior _s_irwxg _s_irwxo)))])
-        (##sys#check-exact mode 'create-fifo)
-        (when (fx< (##core#inline "C_mkfifo" (##sys#make-c-string (##sys#expand-home-path fname)) mode) 0)
-        (posix-error #:file-error 'create-fifo "cannot create FIFO" fname mode) ) ) ) )
+(define create-fifo
+  (lambda (fname . mode)
+    (##sys#check-string fname 'create-fifo)
+    (let ([mode (if (pair? mode) (car mode) (fxior _s_irwxu (fxior _s_irwxg _s_irwxo)))])
+      (##sys#check-exact mode 'create-fifo)
+      (when (fx< (##core#inline "C_mkfifo" (##sys#make-c-string (##sys#expand-home-path fname)) mode) 0)
+      (posix-error #:file-error 'create-fifo "cannot create FIFO" fname mode) ) ) ) )
 
-  (define fifo?
-    (lambda (filename)
-      (##sys#check-string filename 'fifo?)
-      (let ([v (##sys#file-info (##sys#expand-home-path filename))])
-        (if v
-            (fx= 3 (##sys#slot v 4))
-            (posix-error #:file-error 'fifo? "file does not exist" filename) ) ) ) )
+(define fifo?
+  (lambda (filename)
+    (##sys#check-string filename 'fifo?)
+    (let ([v (##sys#file-info (##sys#expand-home-path filename))])
+      (if v
+          (fx= 3 (##sys#slot v 4))
+          (posix-error #:file-error 'fifo? "file does not exist" filename) ) ) ) )
 
 ;;; Environment access:
 
-  (define setenv
-    (lambda (var val)
-      (##sys#check-string var 'setenv)
-      (##sys#check-string val 'setenv)
-      (##core#inline "C_setenv" (##sys#make-c-string var) (##sys#make-c-string val))
-      (##core#undefined) ) )
+(define setenv
+  (lambda (var val)
+    (##sys#check-string var 'setenv)
+    (##sys#check-string val 'setenv)
+    (##core#inline "C_setenv" (##sys#make-c-string var) (##sys#make-c-string val))
+    (##core#undefined) ) )
 
-  (define (unsetenv var)
-    (##sys#check-string var 'unsetenv)
-    (##core#inline "C_putenv" (##sys#make-c-string var))
-    (##core#undefined) )
+(define (unsetenv var)
+  (##sys#check-string var 'unsetenv)
+  (##core#inline "C_putenv" (##sys#make-c-string var))
+  (##core#undefined) )
 
-  (define current-environment
-    (let ([get (foreign-lambda c-string "C_getenventry" int)])
-      (lambda ()
-        (let loop ([i 0])
-          (let ([entry (get i)])
-            (if entry
-                (let scan ([j 0])
-                  (if (char=? #\= (##core#inline "C_subchar" entry j))
-                      (cons (cons (##sys#substring entry 0 j)
-                                  (##sys#substring entry (fx+ j 1) (##sys#size entry)))
-                            (loop (fx+ i 1)))
-                      (scan (fx+ j 1)) ) )
-                '() ) ) ) ) ) ) ] )
+(define current-environment
+  (let ([get (foreign-lambda c-string "C_getenventry" int)])
+    (lambda ()
+      (let loop ([i 0])
+        (let ([entry (get i)])
+          (if entry
+              (let scan ([j 0])
+                (if (char=? #\= (##core#inline "C_subchar" entry j))
+                    (cons (cons (##sys#substring entry 0 j)
+                                (##sys#substring entry (fx+ j 1) (##sys#size entry)))
+                          (loop (fx+ i 1)))
+                    (scan (fx+ j 1)) ) )
+              '() ) ) ) ) ) )
 
 ;;; Memory mapped I/O:
-(cond-expand
- [ecos]
- [else
 
-  (define-foreign-variable _prot_read int "PROT_READ")
-  (define-foreign-variable _prot_write int "PROT_WRITE")
-  (define-foreign-variable _prot_exec int "PROT_EXEC")
-  (define-foreign-variable _prot_none int "PROT_NONE")
+(define-foreign-variable _prot_read int "PROT_READ")
+(define-foreign-variable _prot_write int "PROT_WRITE")
+(define-foreign-variable _prot_exec int "PROT_EXEC")
+(define-foreign-variable _prot_none int "PROT_NONE")
 
-  (define prot/read _prot_read)
-  (define prot/write _prot_write)
-  (define prot/exec _prot_exec)
-  (define prot/none _prot_none)
+(define prot/read _prot_read)
+(define prot/write _prot_write)
+(define prot/exec _prot_exec)
+(define prot/none _prot_none)
 
-  (define-foreign-variable _map_fixed int "MAP_FIXED")
-  (define-foreign-variable _map_shared int "MAP_SHARED")
-  (define-foreign-variable _map_private int "MAP_PRIVATE")
-  (define-foreign-variable _map_anonymous int "MAP_ANON")
-  (define-foreign-variable _map_file int "MAP_FILE")
+(define-foreign-variable _map_fixed int "MAP_FIXED")
+(define-foreign-variable _map_shared int "MAP_SHARED")
+(define-foreign-variable _map_private int "MAP_PRIVATE")
+(define-foreign-variable _map_anonymous int "MAP_ANON")
+(define-foreign-variable _map_file int "MAP_FILE")
 
-  (define map/fixed _map_fixed)
-  (define map/shared _map_shared)
-  (define map/private _map_private)
-  (define map/anonymous _map_anonymous)
-  (define map/file _map_file)
+(define map/fixed _map_fixed)
+(define map/shared _map_shared)
+(define map/private _map_private)
+(define map/anonymous _map_anonymous)
+(define map/file _map_file)
 
-  (define map-file-to-memory
-    (let ([mmap (foreign-lambda c-pointer "mmap" c-pointer integer int int int integer)] )
-      (lambda (addr len prot flag fd . off)
-        (let ([addr (if (not addr) (##sys#null-pointer) addr)]
-              [off (if (pair? off) (car off) 0)] )
-          (unless (and (##core#inline "C_blockp" addr) (##core#inline "C_specialp" addr))
-                  (##sys#signal-hook #:type-error 'map-file-to-memory "bad argument type - not a foreign pointer" addr) )
-          (let ([addr2 (mmap addr len prot flag fd off)])
-            (when (eq? -1 (##sys#pointer->address addr2))
-                  (posix-error #:file-error 'map-file-to-memory "cannot map file to memory" addr len prot flag fd off) )
-            (##sys#make-structure 'mmap addr2 len) ) ) ) ) )
+(define map-file-to-memory
+  (let ([mmap (foreign-lambda c-pointer "mmap" c-pointer integer int int int integer)] )
+    (lambda (addr len prot flag fd . off)
+      (let ([addr (if (not addr) (##sys#null-pointer) addr)]
+            [off (if (pair? off) (car off) 0)] )
+        (unless (and (##core#inline "C_blockp" addr) (##core#inline "C_specialp" addr))
+                (##sys#signal-hook #:type-error 'map-file-to-memory "bad argument type - not a foreign pointer" addr) )
+        (let ([addr2 (mmap addr len prot flag fd off)])
+          (when (eq? -1 (##sys#pointer->address addr2))
+                (posix-error #:file-error 'map-file-to-memory "cannot map file to memory" addr len prot flag fd off) )
+          (##sys#make-structure 'mmap addr2 len) ) ) ) ) )
 
-  (define unmap-file-from-memory
-    (let ([munmap (foreign-lambda int "munmap" c-pointer integer)] )
-      (lambda (mmap . len)
-        (##sys#check-structure mmap 'mmap 'unmap-file-from-memory)
-        (let ([len (if (pair? len) (car len) (##sys#slot mmap 2))])
-          (unless (eq? 0 (munmap (##sys#slot mmap 1) len))
-                  (posix-error #:file-error 'unmap-file-from-memory "cannot unmap file from memory" mmap len) ) ) ) ) )
+(define unmap-file-from-memory
+  (let ([munmap (foreign-lambda int "munmap" c-pointer integer)] )
+    (lambda (mmap . len)
+      (##sys#check-structure mmap 'mmap 'unmap-file-from-memory)
+      (let ([len (if (pair? len) (car len) (##sys#slot mmap 2))])
+        (unless (eq? 0 (munmap (##sys#slot mmap 1) len))
+                (posix-error #:file-error 'unmap-file-from-memory "cannot unmap file from memory" mmap len) ) ) ) ) )
 
-  (define (memory-mapped-file-pointer mmap)
-    (##sys#check-structure mmap 'mmap 'memory-mapped-file-pointer)
-    (##sys#slot mmap 1) )
+(define (memory-mapped-file-pointer mmap)
+  (##sys#check-structure mmap 'mmap 'memory-mapped-file-pointer)
+  (##sys#slot mmap 1) )
 
-  (define (memory-mapped-file? x)
-    (##sys#structure? x 'mmap) )])
+(define (memory-mapped-file? x)
+  (##sys#structure? x 'mmap) )
 
 ;;; Time related things:
 
@@ -1843,33 +1787,30 @@ EOF
                    0)
           (##sys#error 'set-buffering-mode! "cannot set buffering mode" port mode size) ) ) ) )
 
-(cond-expand
- [ecos]
- [else
-  (define (terminal-port? port)
-    (##sys#check-port port 'terminal-port?)
-    (let ([fp (##sys#peek-unsigned-integer port 0)])
-      (and (not (eq? fp 0)) (##core#inline "C_tty_portp" port) ) ) )
+(define (terminal-port? port)
+  (##sys#check-port port 'terminal-port?)
+  (let ([fp (##sys#peek-unsigned-integer port 0)])
+    (and (not (eq? fp 0)) (##core#inline "C_tty_portp" port) ) ) )
 
-  (define terminal-name
-    (let ([ttyname (foreign-lambda nonnull-c-string "ttyname" int)] )
-      (lambda (port)
-        (##sys#check-port port 'terminal-name)
-        (unless (and (eq? 'stream (##sys#slot port 7))
-                     (##core#inline "C_tty_portp" port) )
-        (##sys#error 'terminal-name "port is not connected to a terminal" port) )
-        (ttyname (##core#inline "C_C_fileno" port) ) ) ) )
+(define terminal-name
+  (let ([ttyname (foreign-lambda nonnull-c-string "ttyname" int)] )
+    (lambda (port)
+      (##sys#check-port port 'terminal-name)
+      (unless (and (eq? 'stream (##sys#slot port 7))
+                   (##core#inline "C_tty_portp" port) )
+      (##sys#error 'terminal-name "port is not connected to a terminal" port) )
+      (ttyname (##core#inline "C_C_fileno" port) ) ) ) )
 
-  (define get-host-name
-    (let ([getit
-         (foreign-lambda* c-string ()
-           "if(gethostname(C_hostbuf, 256) == -1) return(NULL);"
-           "else return(C_hostbuf);") ] )
-      (lambda ()
-        (let ([host (getit)])
-          (unless host
-            (posix-error #:error 'get-host-name "cannot retrieve host-name") )
-          host) ) ) ) ] )
+(define get-host-name
+  (let ([getit
+       (foreign-lambda* c-string ()
+         "if(gethostname(C_hostbuf, 256) == -1) return(NULL);"
+         "else return(C_hostbuf);") ] )
+    (lambda ()
+      (let ([host (getit)])
+        (unless host
+          (posix-error #:error 'get-host-name "cannot retrieve host-name") )
+        host) ) ) )
 
 
 ;;; Filename globbing:
@@ -1900,284 +1841,280 @@ EOF
 
 ;;; Process handling:
 
-(cond-expand [ecos]
-             [else
-  (define process-fork
-    (let ([fork (foreign-lambda int "C_fork")])
-      (lambda thunk
-        (let ([pid (fork)])
-        (cond [(fx= -1 pid) (posix-error #:process-error 'process-fork "cannot create child process")]
-              [(and (pair? thunk) (fx= pid 0))
-               ((car thunk))
-               ((foreign-lambda void "_exit" int) 0) ]
-              [else pid] ) ) ) ) )
+(define process-fork
+  (let ([fork (foreign-lambda int "C_fork")])
+    (lambda thunk
+      (let ([pid (fork)])
+      (cond [(fx= -1 pid) (posix-error #:process-error 'process-fork "cannot create child process")]
+            [(and (pair? thunk) (fx= pid 0))
+             ((car thunk))
+             ((foreign-lambda void "_exit" int) 0) ]
+            [else pid] ) ) ) ) )
 
-  (define process-execute
-    (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
-          [freeargs (foreign-lambda void "C_free_exec_args")]
-          [setenv (foreign-lambda void "C_set_exec_env" int scheme-pointer int)]
-          [freeenv (foreign-lambda void "C_free_exec_env")]
-          [pathname-strip-directory pathname-strip-directory] )
-      (lambda (filename #!optional (arglist '()) envlist)
-        (##sys#check-string filename 'process-execute)
-        (##sys#check-list arglist 'process-execute)
-        (let ([s (pathname-strip-directory filename)])
-          (setarg 0 s (##sys#size s)) )
-        (do ([al arglist (cdr al)]
-             [i 1 (fx+ i 1)] )
-            ((null? al)
-             (setarg i #f 0)
-             (when envlist
-               (##sys#check-list envlist 'process-execute)
-               (do ([el envlist (cdr el)]
-                    [i 0 (fx+ i 1)] )
-                   ((null? el) (setenv i #f 0))
-                 (let ([s (car el)])
-                   (##sys#check-string s 'process-execute)
-                   (setenv i s (##sys#size s)) ) ) )
-             (let* ([prg (##sys#make-c-string (##sys#expand-home-path filename))]
-                    [r (if envlist
-                           (##core#inline "C_execve" prg)
-                           (##core#inline "C_execvp" prg) )] )
-               (when (fx= r -1)
-                 (freeargs)
-                 (freeenv)
-                 (posix-error #:process-error 'process-execute "cannot execute process" filename) ) ) )
-          (let ([s (car al)])
-            (##sys#check-string s 'process-execute)
-            (setarg i s (##sys#size s)) ) ) ) ) )
+(define process-execute
+  (let ([setarg (foreign-lambda void "C_set_exec_arg" int scheme-pointer int)]
+        [freeargs (foreign-lambda void "C_free_exec_args")]
+        [setenv (foreign-lambda void "C_set_exec_env" int scheme-pointer int)]
+        [freeenv (foreign-lambda void "C_free_exec_env")]
+        [pathname-strip-directory pathname-strip-directory] )
+    (lambda (filename #!optional (arglist '()) envlist)
+      (##sys#check-string filename 'process-execute)
+      (##sys#check-list arglist 'process-execute)
+      (let ([s (pathname-strip-directory filename)])
+        (setarg 0 s (##sys#size s)) )
+      (do ([al arglist (cdr al)]
+           [i 1 (fx+ i 1)] )
+          ((null? al)
+           (setarg i #f 0)
+           (when envlist
+             (##sys#check-list envlist 'process-execute)
+             (do ([el envlist (cdr el)]
+                  [i 0 (fx+ i 1)] )
+                 ((null? el) (setenv i #f 0))
+               (let ([s (car el)])
+                 (##sys#check-string s 'process-execute)
+                 (setenv i s (##sys#size s)) ) ) )
+           (let* ([prg (##sys#make-c-string (##sys#expand-home-path filename))]
+                  [r (if envlist
+                         (##core#inline "C_execve" prg)
+                         (##core#inline "C_execvp" prg) )] )
+             (when (fx= r -1)
+               (freeargs)
+               (freeenv)
+               (posix-error #:process-error 'process-execute "cannot execute process" filename) ) ) )
+        (let ([s (car al)])
+          (##sys#check-string s 'process-execute)
+          (setarg i s (##sys#size s)) ) ) ) ) )
 
-  (define-foreign-variable _wnohang int "WNOHANG")
-  (define-foreign-variable _wait-status int "C_wait_status")
+(define-foreign-variable _wnohang int "WNOHANG")
+(define-foreign-variable _wait-status int "C_wait_status")
 
-  (define (##sys#process-wait pid nohang)
-    (let* ([res (##core#inline "C_waitpid" pid (if nohang _wnohang 0))]
-           [norm (##core#inline "C_WIFEXITED" _wait-status)] )
-      (values
-        res
-        norm
-        (cond [norm (##core#inline "C_WEXITSTATUS" _wait-status)]
-              [(##core#inline "C_WIFSIGNALED" _wait-status)
-                (##core#inline "C_WTERMSIG" _wait-status)]
-              [else (##core#inline "C_WSTOPSIG" _wait-status)] ) ) ) )
+(define (##sys#process-wait pid nohang)
+  (let* ([res (##core#inline "C_waitpid" pid (if nohang _wnohang 0))]
+         [norm (##core#inline "C_WIFEXITED" _wait-status)] )
+    (values
+      res
+      norm
+      (cond [norm (##core#inline "C_WEXITSTATUS" _wait-status)]
+            [(##core#inline "C_WIFSIGNALED" _wait-status)
+              (##core#inline "C_WTERMSIG" _wait-status)]
+            [else (##core#inline "C_WSTOPSIG" _wait-status)] ) ) ) )
 
-  (define process-wait
-    (lambda args
-      (let-optionals* args ([pid #f] [nohang #f])
-        (let ([pid (or pid -1)])
-          (##sys#check-exact pid 'process-wait)
-          (receive [epid enorm ecode] (##sys#process-wait pid nohang)
-            (if (fx= epid -1)
-                (posix-error #:process-error 'process-wait "waiting for child process failed" pid)
-                (values epid enorm ecode) ) ) ) ) ) )
+(define process-wait
+  (lambda args
+    (let-optionals* args ([pid #f] [nohang #f])
+      (let ([pid (or pid -1)])
+        (##sys#check-exact pid 'process-wait)
+        (receive [epid enorm ecode] (##sys#process-wait pid nohang)
+          (if (fx= epid -1)
+              (posix-error #:process-error 'process-wait "waiting for child process failed" pid)
+              (values epid enorm ecode) ) ) ) ) ) )
 
-  (define current-process-id (foreign-lambda int "C_getpid"))
-  (define parent-process-id (foreign-lambda int "C_getppid"))
+(define current-process-id (foreign-lambda int "C_getpid"))
+(define parent-process-id (foreign-lambda int "C_getppid"))
 
-  (define sleep (foreign-lambda int "C_sleep" int))
+(define sleep (foreign-lambda int "C_sleep" int))
 
-  (define process-signal
-    (lambda (id . sig)
-      (let ([sig (if (pair? sig) (car sig) _sigterm)])
-        (##sys#check-exact id 'process-signal)
-        (##sys#check-exact sig 'process-signal)
-        (let ([r (##core#inline "C_kill" id sig)])
-        (when (fx= r -1) (posix-error #:process-error 'process-signal "could not send signal to process" id sig) ) ) ) ) )
+(define process-signal
+  (lambda (id . sig)
+    (let ([sig (if (pair? sig) (car sig) _sigterm)])
+      (##sys#check-exact id 'process-signal)
+      (##sys#check-exact sig 'process-signal)
+      (let ([r (##core#inline "C_kill" id sig)])
+      (when (fx= r -1) (posix-error #:process-error 'process-signal "could not send signal to process" id sig) ) ) ) ) )
 
-  (define (##sys#shell-command)
-    (or (getenv "SHELL") "/bin/sh") )
+(define (##sys#shell-command)
+  (or (getenv "SHELL") "/bin/sh") )
 
-  (define (##sys#shell-command-arguments cmdlin)
-    (list "-c" cmdlin) )
+(define (##sys#shell-command-arguments cmdlin)
+  (list "-c" cmdlin) )
 
-  (define process-run
-    (let ([process-fork process-fork]
-          [process-execute process-execute]
-          [getenv getenv] )
-      (lambda (f . args)
-        (let ([args (if (pair? args) (car args) #f)]
-              [pid (process-fork)] )
-          (cond [(not (eq? pid 0)) pid]
-                [args (process-execute f args)]
-                [else
-                 (process-execute (##sys#shell-command) (##sys#shell-command-arguments f)) ] ) ) ) ) )
-
-  ;;; Run subprocess connected with pipes:
-
-  ;; ##sys#process
-  ; loc            caller procedure symbol
-  ; cmd            pathname or commandline
-  ; args           string-list or '()
-  ; env            string-list or #f
-  ; stdoutf        #f then share, or #t then create
-  ; stdinf         #f then share, or #t then create
-  ; stderrf        #f then share, or #t then create
-  ;
-  ; (values stdin-input-port? stdout-output-port? pid stderr-input-port?)
-  ; where stdin-input-port?, etc. is a port or #f, indicating no port created.
-
-  (define-constant DEFAULT-INPUT-BUFFER-SIZE 256)
-  (define-constant DEFAULT-OUTPUT-BUFFER-SIZE 0)
-
-  ;FIXME process-execute, process-fork don't show parent caller
-
-  (define ##sys#process
-    (let (
-        [create-pipe create-pipe]
-        [process-wait process-wait]
-        [process-fork process-fork]
+(define process-run
+  (let ([process-fork process-fork]
         [process-execute process-execute]
-        [duplicate-fileno duplicate-fileno]
-        [file-close file-close]
-        [replace-fd
-          (lambda (loc fd stdfd)
-            (unless (fx= stdfd fd)
-              (duplicate-fileno fd stdfd)
-              (file-close fd) ) )] )
+        [getenv getenv] )
+    (lambda (f . args)
+      (let ([args (if (pair? args) (car args) #f)]
+            [pid (process-fork)] )
+        (cond [(not (eq? pid 0)) pid]
+              [args (process-execute f args)]
+              [else
+               (process-execute (##sys#shell-command) (##sys#shell-command-arguments f)) ] ) ) ) ) )
+
+;;; Run subprocess connected with pipes:
+
+;; ##sys#process
+; loc            caller procedure symbol
+; cmd            pathname or commandline
+; args           string-list or '()
+; env            string-list or #f
+; stdoutf        #f then share, or #t then create
+; stdinf         #f then share, or #t then create
+; stderrf        #f then share, or #t then create
+;
+; (values stdin-input-port? stdout-output-port? pid stderr-input-port?)
+; where stdin-input-port?, etc. is a port or #f, indicating no port created.
+
+(define-constant DEFAULT-INPUT-BUFFER-SIZE 256)
+(define-constant DEFAULT-OUTPUT-BUFFER-SIZE 0)
+
+;FIXME process-execute, process-fork don't show parent caller
+
+(define ##sys#process
+  (let (
+      [create-pipe create-pipe]
+      [process-wait process-wait]
+      [process-fork process-fork]
+      [process-execute process-execute]
+      [duplicate-fileno duplicate-fileno]
+      [file-close file-close]
+      [replace-fd
+        (lambda (loc fd stdfd)
+          (unless (fx= stdfd fd)
+            (duplicate-fileno fd stdfd)
+            (file-close fd) ) )] )
+    (let (
+        [make-on-close
+          (lambda (loc pid clsvec idx idxa idxb)
+            (lambda ()
+              (vector-set! clsvec idx #t)
+              (when (and (vector-ref clsvec idxa) (vector-ref clsvec idxb))
+                (receive [_ flg cod] (process-wait pid)
+                  (unless flg
+                    (##sys#signal-hook #:process-error loc
+                      "abnormal process exit" pid cod)) ) ) ) )]
+        [needed-pipe
+          (lambda (loc port)
+            (and port
+                 (receive [i o] (create-pipe) (cons i o))) )]
+        [connect-parent
+          (lambda (loc pipe port fd)
+            (and port
+                 (let ([usefd (car pipe)] [clsfd (cdr pipe)])
+                   (file-close clsfd)
+                   usefd) ) )]
+        [connect-child
+          (lambda (loc pipe port stdfd)
+            (when port
+              (let ([usefd (car pipe)] [clsfd (cdr pipe)])
+                (file-close clsfd)
+                (replace-fd loc usefd stdfd)) ) )] )
       (let (
-          [make-on-close
-            (lambda (loc pid clsvec idx idxa idxb)
-              (lambda ()
-                (vector-set! clsvec idx #t)
-                (when (and (vector-ref clsvec idxa) (vector-ref clsvec idxb))
-                  (receive [_ flg cod] (process-wait pid)
-                    (unless flg
-                      (##sys#signal-hook #:process-error loc
-                        "abnormal process exit" pid cod)) ) ) ) )]
-          [needed-pipe
-            (lambda (loc port)
-              (and port
-                   (receive [i o] (create-pipe) (cons i o))) )]
-          [connect-parent
-            (lambda (loc pipe port fd)
-              (and port
-                   (let ([usefd (car pipe)] [clsfd (cdr pipe)])
-                     (file-close clsfd)
-                     usefd) ) )]
-          [connect-child
-            (lambda (loc pipe port stdfd)
-              (when port
-                (let ([usefd (car pipe)] [clsfd (cdr pipe)])
-                  (file-close clsfd)
-                  (replace-fd loc usefd stdfd)) ) )] )
-        (let (
-            [spawn
-              (let ([swapped-ends
-                      (lambda (pipe)
-                        (and pipe
-                             (cons (cdr pipe) (car pipe)) ) )])
-                (lambda (loc cmd args env stdoutf stdinf stderrf)
-                  (let ([ipipe (needed-pipe loc stdinf)]
-                        [opipe (needed-pipe loc stdoutf)]
-                        [epipe (needed-pipe loc stderrf)])
-                    (values
-                      ipipe (swapped-ends opipe) epipe
-                      (process-fork
-                        (lambda ()
-                          (connect-child loc opipe stdinf fileno/stdin)
-                          (connect-child loc (swapped-ends ipipe) stdoutf fileno/stdout)
-                          (connect-child loc (swapped-ends epipe) stderrf fileno/stderr)
-                          (process-execute cmd args env)))) ) ) )]
-            [input-port
-              (lambda (loc pid cmd pipe stdf stdfd on-close)
-                (and-let* ([fd (connect-parent loc pipe stdf stdfd)])
-                  (##sys#custom-input-port loc cmd fd #t DEFAULT-INPUT-BUFFER-SIZE on-close) ) )]
-            [output-port
-              (lambda (loc pid cmd pipe stdf stdfd on-close)
-                (and-let* ([fd (connect-parent loc pipe stdf stdfd)])
-                  (##sys#custom-output-port loc cmd fd #t DEFAULT-OUTPUT-BUFFER-SIZE on-close) ) )] )
-          (lambda (loc cmd args env stdoutf stdinf stderrf)
-            (receive [inpipe outpipe errpipe pid]
-                       (spawn loc cmd args env stdoutf stdinf stderrf)
-              ;When shared assume already "closed", since only created ports
-              ;should be explicitly closed, and when one is closed we want
-              ;to wait.
-              (let ([clsvec (vector (not stdinf) (not stdoutf) (not stderrf))])
-                (values
-                  (input-port loc pid cmd inpipe stdinf fileno/stdin
-                    (make-on-close loc pid clsvec 0 1 2))
-                  (output-port loc pid cmd outpipe stdoutf fileno/stdout
-                    (make-on-close loc pid clsvec 1 0 2))
-                  pid
-                  (input-port loc pid cmd errpipe stderrf fileno/stderr
-                    (make-on-close loc pid clsvec 2 0 1)) ) ) ) ) ) ) ) )
+          [spawn
+            (let ([swapped-ends
+                    (lambda (pipe)
+                      (and pipe
+                           (cons (cdr pipe) (car pipe)) ) )])
+              (lambda (loc cmd args env stdoutf stdinf stderrf)
+                (let ([ipipe (needed-pipe loc stdinf)]
+                      [opipe (needed-pipe loc stdoutf)]
+                      [epipe (needed-pipe loc stderrf)])
+                  (values
+                    ipipe (swapped-ends opipe) epipe
+                    (process-fork
+                      (lambda ()
+                        (connect-child loc opipe stdinf fileno/stdin)
+                        (connect-child loc (swapped-ends ipipe) stdoutf fileno/stdout)
+                        (connect-child loc (swapped-ends epipe) stderrf fileno/stderr)
+                        (process-execute cmd args env)))) ) ) )]
+          [input-port
+            (lambda (loc pid cmd pipe stdf stdfd on-close)
+              (and-let* ([fd (connect-parent loc pipe stdf stdfd)])
+                (##sys#custom-input-port loc cmd fd #t DEFAULT-INPUT-BUFFER-SIZE on-close) ) )]
+          [output-port
+            (lambda (loc pid cmd pipe stdf stdfd on-close)
+              (and-let* ([fd (connect-parent loc pipe stdf stdfd)])
+                (##sys#custom-output-port loc cmd fd #t DEFAULT-OUTPUT-BUFFER-SIZE on-close) ) )] )
+        (lambda (loc cmd args env stdoutf stdinf stderrf)
+          (receive [inpipe outpipe errpipe pid]
+                     (spawn loc cmd args env stdoutf stdinf stderrf)
+            ;When shared assume already "closed", since only created ports
+            ;should be explicitly closed, and when one is closed we want
+            ;to wait.
+            (let ([clsvec (vector (not stdinf) (not stdoutf) (not stderrf))])
+              (values
+                (input-port loc pid cmd inpipe stdinf fileno/stdin
+                  (make-on-close loc pid clsvec 0 1 2))
+                (output-port loc pid cmd outpipe stdoutf fileno/stdout
+                  (make-on-close loc pid clsvec 1 0 2))
+                pid
+                (input-port loc pid cmd errpipe stderrf fileno/stderr
+                  (make-on-close loc pid clsvec 2 0 1)) ) ) ) ) ) ) ) )
 
-  ;;; Run subprocess connected with pipes:
+;;; Run subprocess connected with pipes:
 
-  (define process)
-  (define process*)
-  (let ([%process
-          (lambda (loc err? cmd args env)
-            (let ([chkstrlst
-                   (lambda (lst)
-                     (##sys#check-list lst loc)
-                     (for-each (cut ##sys#check-string <> loc) lst) )])
-              (##sys#check-string cmd loc)
-              (if args
-                  (chkstrlst args)
-                  (begin
-                    (set! args (##sys#shell-command-arguments cmd))
-                    (set! cmd (##sys#shell-command)) ) )
-              (when env (chkstrlst env))
-              (receive [in out pid err] (##sys#process loc cmd args env #t #t err?)
-                (if err?
-                    (values in out pid err)
-                    (values in out pid) ) ) ) )] )
-    (set! process
-      (lambda (cmd #!optional args env)
-        (%process 'process #f cmd args env) ))
-    (set! process*
-      (lambda (cmd #!optional args env)
-        (%process 'process* #t cmd args env) )) ) ] )
+(define process)
+(define process*)
+(let ([%process
+        (lambda (loc err? cmd args env)
+          (let ([chkstrlst
+                 (lambda (lst)
+                   (##sys#check-list lst loc)
+                   (for-each (cut ##sys#check-string <> loc) lst) )])
+            (##sys#check-string cmd loc)
+            (if args
+                (chkstrlst args)
+                (begin
+                  (set! args (##sys#shell-command-arguments cmd))
+                  (set! cmd (##sys#shell-command)) ) )
+            (when env (chkstrlst env))
+            (receive [in out pid err] (##sys#process loc cmd args env #t #t err?)
+              (if err?
+                  (values in out pid err)
+                  (values in out pid) ) ) ) )] )
+  (set! process
+    (lambda (cmd #!optional args env)
+      (%process 'process #f cmd args env) ))
+  (set! process*
+    (lambda (cmd #!optional args env)
+      (%process 'process* #t cmd args env) )) )
 
 ;;; Find matching files:
 
 (define find-files
   (let ([glob glob]
-        [string-match string-match]
-        [make-pathname make-pathname]
-        [directory? directory?] )
+	[string-match string-match]
+	[make-pathname make-pathname]
+	[directory? directory?] )
     (lambda (dir pred . action-id-limit)
-      (let-optionals action-id-limit
-          ([action (lambda (x y) (cons x y))] ; we want cons inlined
-           [id '()]
-           [limit #f] )
-        (##sys#check-string dir 'find-files)
-        (let* ([depth 0]
-               [lproc
-                (cond [(not limit) (lambda _ #t)]
-                      [(fixnum? limit) (lambda _ (fx< depth limit))]
-                      [else limit] ) ]
-               [pproc
-                (if (or (string? pred) (regexp? pred))
-                    (lambda (x) (string-match pred x))
-                    pred) ] )
-          (let loop ([fs (glob (make-pathname dir "*"))]
-                     [r id] )
-            (if (null? fs)
-                r
-                (let ([f (##sys#slot fs 0)]
-                      [rest (##sys#slot fs 1)] )
-                  (cond [(directory? f)
-                         (cond [(member (pathname-file f) '("." "..")) (loop rest r)]
-                               [(lproc f)
-                                (loop rest
-                                      (fluid-let ([depth (fx+ depth 1)])
-                                        (loop (glob (make-pathname f "*")) r) ) ) ]
-                               [else (loop rest r)] ) ]
-                        [(pproc f) (loop rest (action f r))]
-                        [else (loop rest r)] ) ) ) ) ) ) ) ) )
+      (let-optionals
+	  action-id-limit
+	  ([action (lambda (x y) (cons x y))] ; we want cons inlined
+	   [id '()]
+	   [limit #f] )
+	(##sys#check-string dir 'find-files)
+	(let* ([depth 0]
+	       [lproc
+		(cond [(not limit) (lambda _ #t)]
+		      [(fixnum? limit) (lambda _ (fx< depth limit))]
+		      [else limit] ) ]
+	       [pproc
+		(if (or (string? pred) (regexp? pred))
+		    (lambda (x) (string-match pred x))
+		    pred) ] )
+	  (let loop ([fs (glob (make-pathname dir "*"))]
+		     [r id] )
+	    (if (null? fs)
+		r
+		(let ([f (##sys#slot fs 0)]
+		      [rest (##sys#slot fs 1)] )
+		  (cond [(directory? f)
+			 (cond [(member (pathname-file f) '("." "..")) (loop rest r)]
+			       [(lproc f)
+				(loop rest
+				      (fluid-let ([depth (fx+ depth 1)])
+					(loop (glob (make-pathname f "*"))
+					      (if (pproc f) (action f r) r)) ) ) ]
+			       [else (loop rest (if (pproc f) (action f r) r))] ) ]
+			[(pproc f) (loop rest (action f r))]
+			[else (loop rest r)] ) ) ) ) ) ) ) ) )
 
 
-(cond-expand
- [ecos]
- [else
+;;; chroot:
 
-  ;;; chroot:
-
-  (define set-root-directory!
-    (let ([chroot (foreign-lambda int "chroot" c-string)])
-      (lambda (dir)
-        (##sys#check-string dir 'set-root-directory!)
-        (when (fx< (chroot dir) 0)
-        (posix-error #:file-error 'set-root-directory! "unable to change root directory" dir) ) ) ) ) ] )
+(define set-root-directory!
+  (let ([chroot (foreign-lambda int "chroot" c-string)])
+    (lambda (dir)
+      (##sys#check-string dir 'set-root-directory!)
+      (when (fx< (chroot dir) 0)
+        (posix-error #:file-error 'set-root-directory! "unable to change root directory" dir) ) ) ) )
