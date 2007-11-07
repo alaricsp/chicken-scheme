@@ -33,7 +33,8 @@
 # Germany
 
 
-.PHONY: all clean distclean spotless install uninstall confclean check dist
+.PHONY: all clean distclean spotless install uninstall confclean check dist \
+	libs install-libs
 
 ifndef PLATFORM
 all clean spotless distclean install uninstall:
@@ -72,4 +73,8 @@ check:
 dist:
 	$(MAKE) -f Makefile.$(PLATFORM) distfiles
 	csi -s misc/makedist.scm
+libs:
+	$(MAKE) -f Makefile.$(PLATFORM) libs
+install-libs:
+	$(MAKE) -f Makefile.$(PLATFORM) install-libs
 endif
