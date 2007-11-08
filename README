@@ -127,14 +127,14 @@
 	PROGRAM_SUFFIX=
           A suffix to be appended to the names of all generated executables.
 
-	HOST=
+	HOSTSYSTEM=
 	  A "<machine>-<platform>" name prefix to use for the C compiler to to
 	  use to compile the runtime system and executables. Set this variable
 	  if you want to compile CHICKEN for a different architecture than
 	  the one on which you are building it.
 
-	TARGET=
-  	  Similar to "HOST", but specifies the name prefix to use for compiling
+	TARGETSYSTEM=
+  	  Similar to "HOSTSYSTEM", but specifies the name prefix to use for compiling
 	  code with the "csc" compiler driver. This is required for creating
 	  a "cross chicken", a specially built CHICKEN that invokes a cross
 	  C compiler to build the final binaries. You will need a cross compiled
