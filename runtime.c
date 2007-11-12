@@ -4233,7 +4233,7 @@ C_regparm C_word C_fcall C_double_to_number(C_word n)
 
   if(f <= (double)C_MOST_POSITIVE_FIXNUM && f >= (double)C_MOST_NEGATIVE_FIXNUM && modf(f, &m) == 0.0) 
     return C_fix(f);
-  else return f;
+  else return n;
 }
 
 
