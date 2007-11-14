@@ -7,6 +7,8 @@
 - "file-size" and "file-stat" handle file-sizes of >4GB now
 - "find-files" collects directories as well, now [Thanks to Ivan Raikov]
 - added "dist" target to toplevel makefile
+- "andmap" and "ormap" have been deprecated
+- makefiles support relinking now
 
 2.717
 
