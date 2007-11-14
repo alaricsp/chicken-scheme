@@ -139,7 +139,7 @@
   (cond
     ((and (list? args)
           (<= 1 (length args))
-          (andmap
+          (every
             (lambda (y) (and (list? y) (<= 2 (length y))))
             (cdr args))) (let* ((exp (car args))
                                 (clauses (cdr args))
@@ -158,7 +158,7 @@
 (define-macro
   (match-lambda . args)
   (if (and (list? args)
-           (andmap
+           (every
              (lambda (g126)
                (if (and (pair? g126) (list? (cdr g126)))
                    (pair? (cdr g126))
@@ -173,7 +173,7 @@
 (define-macro
   (match-lambda* . args)
   (if (and (list? args)
-           (andmap
+           (every
              (lambda (g134)
                (if (and (pair? g134) (list? (cdr g134)))
                    (pair? (cdr g134))
@@ -208,7 +208,7 @@
                   (if (null? g162)
                       (if (and (list? (cddr args)) (pair? (cddr args)))
                           ((lambda (name pat exp body)
-                             (if (andmap
+                             (if (every
                                    (cadddr ##match#expanders)
                                    pat)
                                  `(let ,@args)
@@ -229,7 +229,7 @@
                           (g146))))
                 (g146))
             (if (list? (car args))
-                (if (andmap
+                (if (every
                       (lambda (g167)
                         (if (and (pair? g167)
                                  (g136 (car g167))
@@ -456,7 +456,7 @@
                  `(match-letrec ((,pat ,exp)) ,@body)))))
     (if (pair? args)
         (if (list? (car args))
-            (if (andmap
+            (if (every
                   (lambda (g206)
                     (if (and (pair? g206)
                              (g200 (car g206))
@@ -822,7 +822,7 @@
                                     (and (<= 3 n)
                                          (memq (string-ref s 0) '(#\. #\_))
                                          (memq (string-ref s 1) '(#\. #\_))
-                                         (andmap
+                                         (every
                                            char-numeric?
                                            (string->list
                                              (substring s 2 n)))
@@ -1398,7 +1398,7 @@
                              (permutation (lambda (p1 p2)
                                             (and (= (length p1)
                                                     (length p2))
-                                                 (andmap
+                                                 (every
                                                    (lambda (x1)
                                                      (memq x1 p2))
                                                    p1)))))
@@ -1647,7 +1647,7 @@
                                                                                                             (car ptst)
                                                                                                             `(lambda (,eta)
                                                                                                                ,ptst))))
-                                                                                              (assm `(andmap
+                                                                                              (assm `(every
                                                                                                        ,tst
                                                                                                        ,e)
                                                                                                     (kf sf)

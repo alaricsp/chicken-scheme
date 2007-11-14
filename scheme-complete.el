@@ -33,6 +33,8 @@
 ;;; That's all there is to it.
 
 ;;; History:
+;;;   0.4: 2007/11/14 - silly bugfixe plus better repo env support
+;;;                     for searching chicken and gauche modules
 ;;;   0.3: 2007/11/13 - bugfixes, better inference, smart strings
 ;;;   0.2: 2007/10/15 - basic type inference
 ;;;   0.1: 2007/09/11 - initial release
@@ -2690,21 +2692,35 @@
      )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; special lookups
+;; special lookups (XXXX add more impls, try to abstract better)
 
 (defvar *chicken-base-repo*
-  "/usr/local/lib/chicken")
+  (or (getenv "CHICKEN_REPOSITORY")
+      (let ((dir
+             (car (remove-if-not #'file-directory-p
+                                 '("/usr/lib/chicken"
+                                   "/usr/local/lib/chicken"
+                                   "/opt/lib/chicken"
+                                   "/opt/local/lib/chicken")))))
+        (and dir
+             (car (reverse (sort (directory-files dir t "^[0-9]+$")
+                                 #'string-lessp)))))
+      (and (fboundp 'shell-command-to-string)
+           (let* ((res (shell-command-to-string "chicken-setup -R"))
+                  (res (substring res 0 (- (length res) 1))))
+             (and res (file-directory-p res) res)))
+      "/usr/local/lib/chicken"))
 
 (defvar *chicken-repo-dirs*
   (remove-if-not
    #'(lambda (x) (and (stringp x) (not (equal x ""))))
-   (union
-    (list
-     (car (reverse (sort (directory-files *chicken-base-repo* t "^[0-9]+$")
-                         #'string-lessp))))
-    (let ((home (getenv "CHICKEN_HOME")))
-      (if (and home (not (equal home "")))
-          (split-string home ";"))))))
+   (let ((home (getenv "CHICKEN_HOME")))
+     (if (and home (not (equal home "")))
+         (let ((res (split-string home ";")))
+           (if (member *chicken-repo-dirs* res)
+               res
+             (cons *chicken-repo-dirs* res))) 
+       (list *chicken-base-repo*)))))
 
 (defun chicken-available-modules (&optional sym)
   (append
@@ -2716,21 +2732,40 @@
          (directory-files dir nil ".*\\.\\(so\\|scm\\)$" t)))
     *chicken-repo-dirs*)))
 
+(defvar *gauche-repo-path*
+  (or (car (remove-if-not #'file-directory-p
+                          '("/usr/share/gauche"
+                            "/usr/local/share/gauche"
+                            "/opt/share/gauche"
+                            "/opt/local/share/gauche")))
+      (and (fboundp 'shell-command-to-string)
+           (let* ((res (shell-command-to-string "gauche-config --syslibdir"))
+                  (res (substring res 0 (- (length res) 1))))
+             (and res (file-directory-p res) res)))
+      "/usr/local/share/gauche"))
+
+(defvar *gauche-site-repo-path*
+  (concat *gauche-repo-path* "/site/lib"))
+
 (defun gauche-available-modules (&optional sym)
   (let ((version-dir (concat
-                      (car (directory-files "/usr/local/share/gauche/"
-                                            t
-                                            "^[0-9]"))
+                      (car (directory-files *gauche-repo-path* t "^[0-9]"))
                       "/lib"))
-        (site-dir "/usr/local/share/gauche/site/lib"))
+        (site-dir *gauche-site-repo-path*)
+        (other-dirs
+         (remove-if-not
+          #'file-directory-p
+          (split-string (or (getenv "GAUCHE_LOAD_PATH") "") ":"))))
     (mapcar
      #'(lambda (f) (subst-char-in-string ?/ ?. f))
      (mapcar
-      'file-name-sans-extension
-      (append (mapcar #'(lambda (f) (substring f (+ 1 (length version-dir))))
-                      (directory-tree-files version-dir t "\\.scm"))
-              (mapcar #'(lambda (f) (substring f (+ 1 (length site-dir))))
-                      (directory-tree-files site-dir t "\\.scm")))))))
+      #'file-name-sans-extension
+      (append-map
+       #'(lambda (dir)
+           (let ((len (length dir)))
+             (mapcar #'(lambda (f) (substring f (+ 1 len)))
+                     (directory-tree-files dir t "\\.scm"))))
+       (cons version-dir (cons site-dir other-dirs)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utilities
@@ -2857,7 +2892,7 @@
       (forward-sexp (+ n 1))
       (let ((end (point)))
         (forward-sexp -1)
-        (read-from-string (buffer-substring (point) end))))))
+        (car (read-from-string (buffer-substring (point) end)))))))
 
 (defun scheme-symbol-at-point ()
   (save-excursion

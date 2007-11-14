@@ -312,7 +312,7 @@
 		    (names (if (string? (car line))
 			       (list (car line))
 			       (car line))))
-	       (if (ormap match? names)
+	       (if (any match? names)
 		   line
 		   (loop (cdr lines)))))))))
 
@@ -322,18 +322,18 @@
 (define (make:check-spec spec)
   (and (or (list? spec) (make:form-error "specification is not a list" spec))
        (or (pair? spec) (make:form-error "specification is an empty list" spec))
-       (andmap
+       (every
 	(lambda (line)
 	  (and (or (and (list? line) (<= 2 (length line) 3))
 		   (make:form-error "list is not a list with 2 or 3 parts" line))
 	       (or (or (string? (car line))
 		       (and (list? (car line))
-			    (andmap string? (car line))))
+			    (every string? (car line))))
 		   (make:form-error "line does not start with a string or list of strings" line))
 	       (let ((name (car line)))
 		 (or (list? (cadr line))
 		     (make:line-error "second part of line is not a list" (cadr line) name)
-		     (andmap (lambda (dep)
+		     (every (lambda (dep)
 			       (or (string? dep)
 				   (make:form-error "dependency item is not a string" dep)))
 			     (cadr line)))
@@ -344,7 +344,7 @@
 
 (define (make:check-argv argv)
   (or (string? argv)
-      (andmap string? argv)
+      (every string? argv)
       (error "argument is not a string or string list" argv)))
 
 (define (make:make/proc/helper spec argv)
@@ -369,7 +369,7 @@
 				deps)
 		      (let ((reason
 			     (or (not date)
-				 (ormap (lambda (dep)
+				 (any (lambda (dep)
 					  (let ((dep2 (fixmaketarget dep)))
 					    (unless (file-exists? dep2)
 					      (error (sprintf "dependancy ~a was not made~%" dep2)))
@@ -421,7 +421,7 @@
   (let ((form-error (lambda (s . p) (apply error s spec p))))
     (and (or (list? spec) (form-error "illegal specification (not a sequence)"))
 	 (or (pair? spec) (form-error "empty specification"))
-	 (andmap
+	 (every
 	  (lambda (line)
 	    (and (or (and (list? line) (>= (length line) 2))
 		     (form-error "clause does not have at least 2 parts" line))

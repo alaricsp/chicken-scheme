@@ -4194,7 +4194,7 @@ EOF
   (##sys#structure? x 'promise) )
 
 
-;;; andmap + ormap:
+;;; andmap + ormap: DEPRECATED
 
 (define andmap
   (lambda (f first . rest)
@@ -4214,11 +4214,10 @@ EOF
 
 (define ormap
   (lambda (f first . rest)
-    (if (null? first)
-        (or)
-	(let ([lists (cons first rest)])
-	  (or (apply f (map (lambda (x) (car x)) lists))
-	      (apply ormap f (map (lambda (x) (cdr x)) lists)) ) ) ) ) )
+    (and (pair? first)
+	 (let ([lists (cons first rest)])
+	   (or (apply f (map (lambda (x) (car x)) lists))
+	       (apply ormap f (map (lambda (x) (cdr x)) lists)) ) ) ) ) )
 
 
 ;;; Support code for macro libraries (match):
