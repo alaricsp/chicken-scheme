@@ -67,8 +67,9 @@ EOF
      read-line reverse make-string ##sys#string-append random
      ##sys#gcd ##sys#lcm ##sys#fudge ##sys#check-list ##sys#user-read-hook) ) ] )
 
-#{extras
-  reverse-string-append generic-write hashtab-default-size hashtab-threshold hashtab-rehash hashtab-primes-table}
+(private
+ extras
+  reverse-string-append generic-write hashtab-default-size hashtab-threshold hashtab-rehash hashtab-primes-table)
 
 (declare
   (hide hashtab-threshold hashtab-rehash generic-write) )

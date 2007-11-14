@@ -52,15 +52,14 @@ EOF
 (include "chicken-more-macros")
 (include "banner")
 
-
-#{csi 
+(private csi 
   print-usage print-banner
   run hexdump del 
   parse-option-string chop-separator lookup-script-file
   report describe dump hexdump bytevector-data get-config
   deldups tty-input?
   history-list history-count history-add history-ref
-  trace-indent trace-indent-level traced-procedure-entry traced-procedure-exit}
+  trace-indent trace-indent-level traced-procedure-entry traced-procedure-exit)
 
 (declare
   (always-bound

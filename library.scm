@@ -159,7 +159,6 @@ EOF
 (include "banner.scm")
 
 
-(define-constant namespace-size 997)
 (define-constant namespace-max-id-len 31)
 (define-constant char-name-table-size 37)
 (define-constant output-string-initial-size 256)
@@ -2015,8 +2014,6 @@ EOF
 
 (define ##sys#default-read-info-hook #f)
 (define ##sys#read-error-with-line-number #f)
-(define ##sys#current-namespace #f)
-(define ##sys#default-namespace-prefix #f)
 (define ##sys#enable-qualifiers #t)
 (define (##sys#read-prompt-hook) #f)	; just here so that srfi-18 works without eval
 (define (##sys#infix-list-hook lst) lst)
@@ -2355,32 +2352,6 @@ EOF
 			    (##sys#read-error port "unterminated block-comment")
 			    (loop i) ) ) ) ) ) )
 
-	  (define (r-namespace)
-	    (set! ##sys#current-namespace (##sys#make-vector namespace-size '()))
-	    (let* ([ns (r-next-token)]
-		   [nslen (##sys#size ns)]
-		   [p (##sys#make-string 1)] )
-	      (when (fx> nslen namespace-max-id-len)
-		(set! ns (##sys#substring ns 0 namespace-max-id-len))
-		(set! nslen namespace-max-id-len) )
-	      (##sys#setbyte p 0 (##sys#size ns))
-	      (let ([prefix (##sys#string-append p ns)])
-		(let loop ([toks '()])
-		  (r-spaces)
-		  (cond [(memq (##sys#peek-char-0 port) '(#\} #\$)) ;*** change this to (char=? #\$ (##sys#peek-char-0 port)) later
-			 (##sys#read-char-0 port)
-			 (for-each
-			  (lambda (tok)
-			    (let ([i (##core#inline
-				      "C_fixnum_modulo"
-				      (##core#inline "C_hash_string" tok) namespace-size)])
-			      (##sys#setslot 
-			       ##sys#current-namespace i
-			       (cons (cons tok (##sys#intern-symbol (##sys#string-append prefix tok)))
-				     (##sys#slot ##sys#current-namespace i) ) ) ) )
-			  toks) ]
-			[else (loop (cons (r-next-token) toks))] ) ) ) ) )
-
 	  (define (r-ext-symbol)
 	    (let* ([p (##sys#make-string 1)]
 		   [tok (r-token)] 
@@ -2407,22 +2378,10 @@ EOF
 				   (char=? #\: (##core#inline "C_subchar" tok (fx- len 1)))
 				   (##sys#substring tok 0 (fx- len 1)) ) ) )
 		     => build-keyword]	; ugh
-		    [(not ##sys#current-namespace) (build-symbol tok)]
-		    [else
-		     (let ([i (##core#inline "C_fixnum_modulo" (##core#inline "C_hash_string" tok) namespace-size)])
-		       (let loop ([bucket (##sys#slot ##sys#current-namespace i)])
-			 (if (null? bucket)
-			     (build-symbol tok)
-			     (let ([e (##sys#slot bucket 0)])
-			       (if (string=? tok (##sys#slot e 0))
-				   (##sys#slot e 1)
-				   (loop (##sys#slot bucket 1)) ) ) ) ) ) ] ) ) )
+		    [else (build-symbol tok)])))
 
 	  (define (build-symbol tok)
-	    (##sys#intern-symbol
-	     (if ##sys#default-namespace-prefix
-		 (##sys#string-append ##sys#default-namespace-prefix tok)
-		 tok) ) )
+	    (##sys#intern-symbol tok) )
 	  
 	  (define (build-keyword tok)
 	    (##sys#intern-symbol (##sys#string-append kwprefix tok)) )
@@ -2483,9 +2442,6 @@ EOF
 				 ((#\|)
 				  (##sys#read-char-0 port)
 				  (r-comment) (readrec) )
-				 ((#\{)
-				  (##sys#read-char-0 port) 
-				  (r-namespace) (readrec) )
 				 ((#\#) 
 				  (##sys#read-char-0 port)
 				  (r-ext-symbol) )

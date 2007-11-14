@@ -38,7 +38,8 @@
   (disable-warning var))
 
 
-#{compiler
+(private
+ compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
@@ -77,7 +78,7 @@
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   export-list do-lambda-lifting compiler-warning export-file-name
-  foreign-argument-conversion foreign-result-conversion}
+  foreign-argument-conversion foreign-result-conversion)
 
 
 (include "tweaks")

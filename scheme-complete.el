@@ -33,6 +33,7 @@
 ;;; That's all there is to it.
 
 ;;; History:
+;;;   0.3: 2007/11/13 - bugfixes, better inference, smart strings
 ;;;   0.2: 2007/10/15 - basic type inference
 ;;;   0.1: 2007/09/11 - initial release
 ;;;
@@ -42,6 +43,8 @@
 
 (require 'cl)
 
+;; this is just to eliminate some warnings when compiling - this file
+;; should be loaded after 'scheme
 (eval-when (compile)
   (require 'scheme))
 
@@ -62,26 +65,26 @@
 (defvar *scheme-r5rs-info*
   '((define (syntax (identifier value) undefined) "define a new variable")
     (set! (syntax (identifier value) undefined) "set the value of a variable")
-    (let (syntax (vars body ...)) "bind new local variables in parallel")
-    (let* (syntax (vars body ...)) "bind new local variables sequentially")
-    (letrec (syntax (vars body ...)) "bind new local variables recursively")
-    (lambda (syntax (params body ...)) "procedure syntax")
+    (let (syntax (vars body |...|)) "bind new local variables in parallel")
+    (let* (syntax (vars body |...|)) "bind new local variables sequentially")
+    (letrec (syntax (vars body |...|)) "bind new local variables recursively")
+    (lambda (syntax (params body |...|)) "procedure syntax")
     (if (syntax (cond then else)) "conditional evaluation")
-    (cond (syntax (clause ...)) "try each clause until one succeeds")
-    (case (syntax (expr clause ...)) "look for EXPR among literal lists")
+    (cond (syntax (clause |...|)) "try each clause until one succeeds")
+    (case (syntax (expr clause |...|)) "look for EXPR among literal lists")
     (delay (syntax (expr)) "create a promise to evaluate EXPR")
-    (and (syntax (expr ...)) "evaluate EXPRs while true, return last")
-    (or (syntax (expr ...)) "return the first true EXPR")
-    (begin (syntax (expr ...)) "evaluate each EXPR in turn and return the last")
-    (do (syntax (vars finish body ...)) "simple iterator")
+    (and (syntax (expr |...|)) "evaluate EXPRs while true, return last")
+    (or (syntax (expr |...|)) "return the first true EXPR")
+    (begin (syntax (expr |...|)) "evaluate each EXPR in turn and return the last")
+    (do (syntax (vars finish body |...|)) "simple iterator")
     (quote (syntax (expr)) "represent EXPR literally without evaluating it")
     (quasiquote (syntax (expr)) "quote literals allowing escapes")
     (unquote (syntax (expr)) "escape an expression inside quasiquote")
     (unquote-splicing (syntax (expr)) "escape and splice a list expression inside quasiquote")
-    (define-syntax (syntax (identifier body ...) undefined) "create a macro")
-    (let-syntax (syntax (syntaxes body ...)) "a local macro")
-    (letrec-syntax (syntax (syntaxes body ...)) "a local macro")
-    (syntax-rules (syntax (literals clauses ...) undefined) "simple macro language")
+    (define-syntax (syntax (identifier body |...|) undefined) "create a macro")
+    (let-syntax (syntax (syntaxes body |...|)) "a local macro")
+    (letrec-syntax (syntax (syntaxes body |...|)) "a local macro")
+    (syntax-rules (syntax (literals clauses |...|) undefined) "simple macro language")
     (eqv? (lambda (obj1 obj2) bool) "returns #t if OBJ1 and OBJ2 are the same object")
     (eq? (lambda (obj1 obj2) bool) "finer grained version of EQV?")
     (equal? (lambda (obj1 obj2) bool) "recursive equivalence")
@@ -94,28 +97,28 @@
     (integer? (lambda (obj) bool) "returns #t iff OBJ is an integer")
     (exact? (lambda (z) bool) "returns #t iff Z is exact")
     (inexact? (lambda (z) bool) "returns #t iff Z is inexact")
-    (= (lambda (z1 z2 ...) bool) "returns #t iff the arguments are all equal")
-    (< (lambda (x1 x2 ...) bool) "returns #t iff the arguments are monotonically increasing")
-    (> (lambda (x1 x2 ...) bool) "returns #t iff the arguments are monotonically decreasing")
-    (<= (lambda (x1 x2 ...) bool) "returns #t iff the arguments are monotonically nondecreasing")
-    (>= (lambda (x1 x2 ...) bool) "returns #t iff the arguments are monotonically nonincreasing")
+    (= (lambda (z1 z2 |...|) bool) "returns #t iff the arguments are all equal")
+    (< (lambda (x1 x2 |...|) bool) "returns #t iff the arguments are monotonically increasing")
+    (> (lambda (x1 x2 |...|) bool) "returns #t iff the arguments are monotonically decreasing")
+    (<= (lambda (x1 x2 |...|) bool) "returns #t iff the arguments are monotonically nondecreasing")
+    (>= (lambda (x1 x2 |...|) bool) "returns #t iff the arguments are monotonically nonincreasing")
     (zero? (lambda (z) bool))
     (positive? (lambda (x) bool))
     (negative? (lambda (x) bool))
     (odd? (lambda (n) bool))
     (even? (lambda (n) bool))
-    (max (lambda (x1 x2 ...) x) "returns the maximum of the arguments")
-    (min (lambda (x1 x2 ...) x) "returns the minimum of the arguments")
-    (+ (lambda (z1 ...) z))
-    (* (lambda (z1 ...) z))
-    (- (lambda (z1 ...) z))
-    (/ (lambda (z1 ...) z))
+    (max (lambda (x1 x2 |...|) x) "returns the maximum of the arguments")
+    (min (lambda (x1 x2 |...|) x) "returns the minimum of the arguments")
+    (+ (lambda (z1 |...|) z))
+    (* (lambda (z1 |...|) z))
+    (- (lambda (z1 |...|) z))
+    (/ (lambda (z1 |...|) z))
     (abs (lambda (x) x) "returns the absolute value of X")
     (quotient (lambda (n1 n2) n) "integer division")
     (remainder (lambda (n1 n2) n) "same sign as N1")
     (modulo (lambda (n1 n2) n) "same sign as N2")
-    (gcd (lambda (n1 ...) n) "greatest common divisor")
-    (lcm (lambda (n2 ...) n) "least common multiple")
+    (gcd (lambda (n1 |...|) n) "greatest common divisor")
+    (lcm (lambda (n2 |...|) n) "least common multiple")
     (numerator (lambda (rational) n))
     (denominator (lambda (rational) n))
     (floor (lambda (x) n) "largest integer not larger than X")
@@ -179,9 +182,9 @@
     (cddddr (lambda (pair) obj))
     (null? (lambda (obj) bool) "returns #t iff OBJ is the empty list")
     (list? (lambda (obj) bool) "returns #t iff OBJ is a proper list")
-    (list (lambda (obj ...) list) "returns a newly allocated list")
+    (list (lambda (obj |...|) list) "returns a newly allocated list")
     (length (lambda (list) n))
-    (append (lambda (list ...) list) "concatenates the list arguments")
+    (append (lambda (list |...|) list) "concatenates the list arguments")
     (reverse (lambda (list) list))
     (list-tail (lambda (list k) list) "returns the Kth cdr of LIST")
     (list-ref (lambda (list k) obj) "returns the Kth element of LIST")
@@ -216,7 +219,7 @@
     (char-downcase (lambda (ch) ch))
     (string? (lambda (obj) bool) "returns #t iff OBJ is a string")
     (make-string (lambda (k :optional ch) str) "a new string of length k")
-    (string (lambda (ch ...) str) "a new string made of the char arguments")
+    (string (lambda (ch |...|) str) "a new string made of the char arguments")
     (string-length (lambda (str) n) "the number of characters in STR")
     (string-ref (lambda (str i) ch) "the Ith character of STR")
     (string-set! (lambda (str i ch) undefined) "set the Ith character of STR to CH")
@@ -231,14 +234,14 @@
     (string-ci<=? (lambda (str1 str2) bool))
     (string-ci>=? (lambda (str1 str2) bool))
     (substring (lambda (str start end) str))
-    (string-append (lambda (str ...) str) "concatenate the string arguments")
+    (string-append (lambda (str |...|) str) "concatenate the string arguments")
     (string->list (lambda (str) list))
     (list->string (lambda (list) str))
     (string-copy (lambda (str) str))
     (string-fill! (lambda (str ch) undefined) "set every char in STR to CH")
     (vector? (lambda (obj) bool) "returns #t iff OBJ is a vector")
     (make-vector (lambda (len :optional fill) vec) "a new vector of K elements")
-    (vector (lambda (obj ...) vec))
+    (vector (lambda (obj |...|) vec))
     (vector-length (lambda (vec) n) "the number of elements in VEC")
     (vector-ref (lambda (vec i) obj) "the Ith element of VEC")
     (vector-set! (lambda (vec i obj) undefined) "set the Ith element of VEC to OBJ")
@@ -246,12 +249,12 @@
     (list->vector (lambda (list) vec))
     (vector-fill! (lambda (vec obj) undefined) "set every element in VEC to OBJ")
     (procedure? (lambda (obj) bool) "returns #t iff OBJ is a procedure")
-    (apply (lambda (proc obj ...) obj) "procedure application")
+    (apply (lambda (proc obj |...|) obj) "procedure application")
     (map (lambda (proc list) list) "a new list of PROC applied to every element of LIST")
     (for-each (lambda (proc list)) "apply PROC to each element of LIST in order")
     (force (lambda (promise) obj) "force the delayed value of PROMISE")
     (call-with-current-continuation (lambda (proc) obj) "goto on steroids")
-    (values (lambda (obj ...)) "send multiple values to the calling continuation")
+    (values (lambda (obj |...|)) "send multiple values to the calling continuation")
     (call-with-values (lambda (producer consumer) obj))
     (dynamic-wind (lambda (before-thunk thunk after-thunk) obj))
     (scheme-report-environment (lambda (int) env) "INT should be 5")
@@ -277,29 +280,31 @@
     (display (lambda (object :optional output-port) undefined) "display")
     (newline (lambda (:optional output-port) undefined) "send a linefeed")
     (write-char (lambda (char :optional output-port) undefined) "write a single character")
+    (load (lambda (filename) undefined) "evaluate expressions from a file")
+    (eval (lambda (expr env)))
   ))
 
 (defvar *scheme-srfi-info*
   [
    ;; SRFI 0
    ("Feature-based conditional expansion construct"
-    (cond-expand (syntax (clause ...))))
+    (cond-expand (syntax (clause |...|))))
    
    ;; SRFI 1
    ("List Library"
     (xcons (lambda (object object) pair))
-    (cons* (lambda (object ...) pair))
+    (cons* (lambda (object |...|) pair))
     (make-list (lambda (integer :optional object) list))
     (list-tabulate (lambda (integer procedure) list))
     (list-copy (lambda (list) list))
-    (circular-list (lambda (object ...) list))
+    (circular-list (lambda (object |...|) list))
     (iota (lambda (integer :optional integer integer) list))
     (proper-list? (lambda (object) bool))
     (circular-list? (lambda (object) bool))
     (dotted-list? (lambda (object) bool))
     (not-pair? (lambda (object) bool))
     (null-list? (lambda (object) bool))
-    (list= (lambda (procedure list ...) bool))
+    (list= (lambda (procedure list |...|) bool))
     (first (lambda (pair)))
     (second (lambda (pair)))
     (third (lambda (pair)))
@@ -323,32 +328,32 @@
     (last-pair (lambda (pair) pair))
     (length+ (lambda (object) n))
     (concatenate (lambda (list) list))
-    (append! (lambda (list ...) list))
+    (append! (lambda (list |...|) list))
     (concatenate! (lambda (list) list))
     (reverse! (lambda (list) list))
     (append-reverse (lambda (list list) list))
     (append-reverse! (lambda (list list) list))
-    (zip (lambda (list ...) list))
+    (zip (lambda (list |...|) list))
     (unzip1 (lambda (list) list))
     (unzip2 (lambda (list) list))
     (unzip3 (lambda (list) list))
     (unzip4 (lambda (list) list))
     (unzip5 (lambda (list) list))
-    (count (lambda (procedure list ...) n))
-    (fold (lambda (procedure object list ...) obj))
+    (count (lambda (procedure list |...|) n))
+    (fold (lambda (procedure object list |...|) obj))
     (unfold (lambda (procedure procedure procedure object :optional procedure) obj))
-    (pair-fold (lambda (procedure object list ...) obj))
-    (reduce (lambda (procedure object list ...) obj))
-    (fold-right (lambda (procedure object list ...) obj))
+    (pair-fold (lambda (procedure object list |...|) obj))
+    (reduce (lambda (procedure object list |...|) obj))
+    (fold-right (lambda (procedure object list |...|) obj))
     (unfold-right (lambda (procedure procedure procedure object :optional object) obj))
-    (pair-fold-right (lambda (procedure object list ...) obj))
-    (reduce-right (lambda (procedure object list ...) obj))
-    (append-map (lambda (procedure list ...) list))
-    (append-map! (lambda (procedure list ...) list))
-    (map! (lambda (procedure list ...) list))
-    (pair-for-each (lambda (procedure list ...)))
-    (filter-map (lambda (procedure list ...) list))
-    (map-in-order (lambda (procedure list ...) list))
+    (pair-fold-right (lambda (procedure object list |...|) obj))
+    (reduce-right (lambda (procedure object list |...|) obj))
+    (append-map (lambda (procedure list |...|) list))
+    (append-map! (lambda (procedure list |...|) list))
+    (map! (lambda (procedure list |...|) list))
+    (pair-for-each (lambda (procedure list |...|)))
+    (filter-map (lambda (procedure list |...|) list))
+    (map-in-order (lambda (procedure list |...|) list))
     (filter (lambda (procedure list) list))
     (partition (lambda (procedure list) list))
     (remove (lambda (procedure list) list))
@@ -357,9 +362,9 @@
     (remove! (lambda (procedure list) list))
     (find (lambda (procedure list) obj))
     (find-tail (lambda (procedure list) obj))
-    (any (lambda (procedure list ...) obj))
-    (every (lambda (procedure list ...) obj))
-    (list-index (lambda (procedure list ...) obj))
+    (any (lambda (procedure list |...|) obj))
+    (every (lambda (procedure list |...|) obj))
+    (list-index (lambda (procedure list |...|) obj))
     (take-while (lambda (procedure list) list))
     (drop-while (lambda (procedure list) list))
     (take-while! (lambda (procedure list) list))
@@ -375,25 +380,25 @@
     (alist-copy (lambda (alist) alist))
     (alist-delete (lambda (obj alist) alist))
     (alist-delete! (lambda (obj alist) alist))
-    (lset<= (lambda (procedure list ...) bool))
-    (lset= (lambda (procedure list ...) bool))
-    (lset-adjoin (lambda (procedure list object ...) list))
-    (lset-union (lambda (procedure list ...) list))
-    (lset-union! (lambda (procedure list ...) list))
-    (lset-intersection (lambda (procedure list ...) list))
-    (lset-intersection! (lambda (procedure list ...) list))
-    (lset-difference (lambda (procedure list ...) list))
-    (lset-difference! (lambda (procedure list ...) list))
-    (lset-xor (lambda (procedure list ...) list))
-    (lset-xor! (lambda (procedure list ...) list))
-    (lset-diff+intersection (lambda (procedure list ...) list))
-    (lset-diff+intersection! (lambda (procedure list ...) list))
+    (lset<= (lambda (procedure list |...|) bool))
+    (lset= (lambda (procedure list |...|) bool))
+    (lset-adjoin (lambda (procedure list object |...|) list))
+    (lset-union (lambda (procedure list |...|) list))
+    (lset-union! (lambda (procedure list |...|) list))
+    (lset-intersection (lambda (procedure list |...|) list))
+    (lset-intersection! (lambda (procedure list |...|) list))
+    (lset-difference (lambda (procedure list |...|) list))
+    (lset-difference! (lambda (procedure list |...|) list))
+    (lset-xor (lambda (procedure list |...|) list))
+    (lset-xor! (lambda (procedure list |...|) list))
+    (lset-diff+intersection (lambda (procedure list |...|) list))
+    (lset-diff+intersection! (lambda (procedure list |...|) list))
 
     )
 
    ;; SRFI 2
    ("AND-LET*: an AND with local bindings, a guarded LET* special form"
-    (and-let* (syntax (bindings body ...))))
+    (and-let* (syntax (bindings body |...|))))
 
    ()
 
@@ -402,7 +407,7 @@
 
     (u8vector? (lambda (obj) bool))
     (make-u8vector (lambda (size integer) u8vector))
-    (u8vector (lambda (integer ...) u8vector))
+    (u8vector (lambda (integer |...|) u8vector))
     (u8vector-length (lambda (u8vector) n))
     (u8vector-ref (lambda (u8vector i) int))
     (u8vector-set! (lambda (u8vector i u8value) undefined))
@@ -411,7 +416,7 @@
 
     (s8vector? (lambda (obj) bool))
     (make-s8vector (lambda (size integer) s8vector))
-    (s8vector (lambda (integer ...) s8vector))
+    (s8vector (lambda (integer |...|) s8vector))
     (s8vector-length (lambda (s8vector) n))
     (s8vector-ref (lambda (s8vector i) int))
     (s8vector-set! (lambda (s8vector i s8value) undefined))
@@ -420,7 +425,7 @@
 
     (u16vector? (lambda (obj) bool))
     (make-u16vector (lambda (size integer) u16vector))
-    (u16vector (lambda (integer ...)))
+    (u16vector (lambda (integer |...|)))
     (u16vector-length (lambda (u16vector) n))
     (u16vector-ref (lambda (u16vector i) int))
     (u16vector-set! (lambda (u16vector i u16value) undefined))
@@ -429,7 +434,7 @@
 
     (s16vector? (lambda (obj) bool))
     (make-s16vector (lambda (size integer) s16vector))
-    (s16vector (lambda (integer ...) s16vector))
+    (s16vector (lambda (integer |...|) s16vector))
     (s16vector-length (lambda (s16vector) n))
     (s16vector-ref (lambda (s16vector i) int))
     (s16vector-set! (lambda (s16vector i s16value) undefined))
@@ -438,7 +443,7 @@
 
     (u32vector? (lambda (obj) bool))
     (make-u32vector (lambda (size integer) u32vector))
-    (u32vector (lambda (integer ...) u32vector))
+    (u32vector (lambda (integer |...|) u32vector))
     (u32vector-length (lambda (u32vector) n))
     (u32vector-ref (lambda (u32vector i) int))
     (u32vector-set! (lambda (u32vector i u32value) undefined))
@@ -447,7 +452,7 @@
 
     (s32vector? (lambda (obj) bool))
     (make-s32vector (lambda (size integer) s32vector))
-    (s32vector (lambda (integer ...) s32vector))
+    (s32vector (lambda (integer |...|) s32vector))
     (s32vector-length (lambda (s32vector) n))
     (s32vector-ref (lambda (s32vector i) int))
     (s32vector-set! (lambda (s32vector i s32value) undefined))
@@ -456,7 +461,7 @@
 
     (u64vector? (lambda (obj) bool))
     (make-u64vector (lambda (size integer) u64vector))
-    (u64vector (lambda (integer ...) u64vector))
+    (u64vector (lambda (integer |...|) u64vector))
     (u64vector-length (lambda (u64vector) n))
     (u64vector-ref (lambda (u64vector i) int))
     (u64vector-set! (lambda (u64vector i u64value) undefined))
@@ -465,7 +470,7 @@
 
     (s64vector? (lambda (obj) bool))
     (make-s64vector (lambda (size integer) s64vector))
-    (s64vector (lambda (integer ...) s64vector))
+    (s64vector (lambda (integer |...|) s64vector))
     (s64vector-length (lambda (s64vector) n))
     (s64vector-ref (lambda (s64vector i) int))
     (s64vector-set! (lambda (s64vector i s64value) undefined))
@@ -474,7 +479,7 @@
 
     (f32vector? (lambda (obj) bool))
     (make-f32vector (lambda (size integer) f32vector))
-    (f32vector (lambda (number ...) f32vector))
+    (f32vector (lambda (number |...|) f32vector))
     (f32vector-length (lambda (f32vector) n))
     (f32vector-ref (lambda (f32vector i) int))
     (f32vector-set! (lambda (f32vector i f32value) undefined))
@@ -483,7 +488,7 @@
 
     (f64vector? (lambda (obj) bool))
     (make-f64vector (lambda (size integer) f64vector))
-    (f64vector (lambda (number ...) f64vector))
+    (f64vector (lambda (number |...|) f64vector))
     (f64vector-length (lambda (f64vector) n))
     (f64vector-ref (lambda (f64vector i) int))
     (f64vector-set! (lambda (f64vector i f64value) undefined))
@@ -493,7 +498,7 @@
 
    ;; SRFI 5
    ("A compatible let form with signatures and rest arguments"
-    (let (syntax (bindings body ...))))
+    (let (syntax (bindings body |...|))))
 
    ;; SRFI 6
    ("Basic String Ports"
@@ -503,16 +508,16 @@
 
    ;; SRFI 7
    ("Feature-based program configuration language"
-    (program (syntax (clause ...)))
+    (program (syntax (clause |...|)))
     (feature-cond (syntax (clause))))
 
    ;; SRFI 8
    ("receive: Binding to multiple values"
-    (receive (syntax (identifiers producer body ...))))
+    (receive (syntax (identifiers producer body |...|))))
 
    ;; SRFI 9
    ("Defining Record Types"
-    (define-record-type (syntax (name constructor-name pred-name fields ...))))
+    (define-record-type (syntax (name constructor-name pred-name fields |...|))))
 
    ;; SRFI 10
    ("Sharp-Comma External Form"
@@ -520,8 +525,8 @@
 
    ;; SRFI 11
    ("Syntax for receiving multiple values"
-    (let-values (syntax (bindings body ...)))
-    (let-values* (syntax (bindings body ...))))
+    (let-values (syntax (bindings body |...|)))
+    (let-values* (syntax (bindings body |...|))))
 
    ()
 
@@ -596,7 +601,7 @@
     (string->list (lambda (s :optional start end) list))
     (string-concatenate (lambda (string-list) str))
     (string-concatenate/shared (lambda (string-list) str))
-    (string-append/shared (lambda (s ...) str))
+    (string-append/shared (lambda (s |...|) str))
     (string-concatenate-reverse (lambda (string-list :optional final-string end) str))
     (string-concatenate-reverse/shared (lambda (string-list :optional final-string end) str))
     (xsubstring (lambda (s from :optional to start end) str))
@@ -613,8 +618,8 @@
    ;; SRFI 14
    ("Character-Set Library"
     (char-set? (lambda (cset) bool))
-    (char-set= (lambda (cset ...) bool))
-    (char-set<= (lambda (cset ...) bool))
+    (char-set= (lambda (cset |...|) bool))
+    (char-set<= (lambda (cset |...|) bool))
     (char-set-hash (lambda (cset :optional int) int))
     (char-set-cursor (lambda (cset) cursor))
     (char-set-ref (lambda (cset cursor) ch))
@@ -626,7 +631,7 @@
     (char-set-for-each (lambda (proc cset)))
     (char-set-map (lambda (proc cset) cset))
     (char-set-copy (lambda (cset) cset))
-    (char-set (lambda (ch ...) cset))
+    (char-set (lambda (ch |...|) cset))
     (list->char-set (lambda (list :optional obj) cset))
     (list->char-set! (lambda (list cset) cset))
     (string->char-set (lambda (str :optional cset) cset))
@@ -641,24 +646,24 @@
     (char-set-contains? (lambda (cset ch) bool))
     (char-set-every (lambda (proc cset) obj))
     (char-set-any (lambda (proc cset) obj))
-    (char-set-adjoin (lambda (cset ch ...) cset))
-    (char-set-delete (lambda (cset ch ...) cset))
-    (char-set-adjoin! (lambda (cset ch ...) cset))
-    (char-set-delete! (lambda (cset ch ...) cset))
+    (char-set-adjoin (lambda (cset ch |...|) cset))
+    (char-set-delete (lambda (cset ch |...|) cset))
+    (char-set-adjoin! (lambda (cset ch |...|) cset))
+    (char-set-delete! (lambda (cset ch |...|) cset))
     (char-set->list (lambda (cset) list))
     (char-set->string (lambda (cset) str))
     (char-set-complement (lambda (cset) cset))
-    (char-set-union (lambda (cset ...) cset))
-    (char-set-intersection (lambda (cset ...) cset))
-    (char-set-xor (lambda (cset ...) cset))
-    (char-set-difference (lambda (cset ...) cset))
-    (char-set-diff+intersection (lambda (cset ...) cset))
+    (char-set-union (lambda (cset |...|) cset))
+    (char-set-intersection (lambda (cset |...|) cset))
+    (char-set-xor (lambda (cset |...|) cset))
+    (char-set-difference (lambda (cset |...|) cset))
+    (char-set-diff+intersection (lambda (cset |...|) cset))
     (char-set-complement! (lambda (cset) cset))
-    (char-set-union! (lambda (cset ...) cset))
-    (char-set-intersection! (lambda (cset ...) cset))
-    (char-set-xor! (lambda (cset ...) cset))
-    (char-set-difference! (lambda (cset ...) cset))
-    (char-set-diff+intersection! (lambda (cset ...) cset))
+    (char-set-union! (lambda (cset |...|) cset))
+    (char-set-intersection! (lambda (cset |...|) cset))
+    (char-set-xor! (lambda (cset |...|) cset))
+    (char-set-difference! (lambda (cset |...|) cset))
+    (char-set-diff+intersection! (lambda (cset |...|) cset))
     (char-set:lower-case char-set)
     (char-set:upper-case char-set)
     (char-set:letter char-set)
@@ -681,7 +686,7 @@
 
    ;; SRFI 16
    ("Syntax for procedures of variable arity"
-    (case-lambda (syntax (clauses ...) procedure)))
+    (case-lambda (syntax (clauses |...|) procedure)))
 
    ;; SRFI 17
    ("Generalized set!"
@@ -826,7 +831,7 @@
 
    ;; SRFI 23
    ("Error reporting mechanism"
-    (error (lambda (reason-string arg ...))))
+    (error (lambda (reason-string arg |...|))))
 
    ()
 
@@ -834,21 +839,21 @@
    ("Multi-dimensional Array Primitives"
     (array? (lambda (obj)))
     (make-array (lambda (shape :optional init)))
-    (shape (lambda (bound ...)))
-    (array (lambda (shape obj ...)))
+    (shape (lambda (bound |...|)))
+    (array (lambda (shape obj |...|)))
     (array-rank (lambda (array)))
     (array-start (lambda (array)))
     (array-end (lambda (array)))
     (array-shape (lambda (array)))
-    (array-ref (lambda (array i ...)))
-    (array-set! (lambda (array obj ...) undefined))
+    (array-ref (lambda (array i |...|)))
+    (array-set! (lambda (array obj |...|) undefined))
     (share-array (lambda (array shape proc)))
     )
 
    ;; SRFI 26
    ("Notation for Specializing Parameters without Currying"
-    (cut (syntax (obj ...)))
-    (cute (lambda (obj ...))))
+    (cut (syntax (obj |...|)))
+    (cute (lambda (obj |...|))))
 
    ;; SRFI 27
    ("Sources of Random Bits"
@@ -867,7 +872,7 @@
 
    ;; SRFI 28
    ("Basic Format Strings"
-    (format (lambda (port-or-boolean format-string arg ...))))
+    (format (lambda (port-or-boolean format-string arg |...|))))
 
    ;; SRFI 29
    ("Localization"
@@ -886,7 +891,7 @@
 
    ;; SRFI 31
    ("A special form for recursive evaluation"
-    (rec (syntax (name body ...) procedure)))
+    (rec (syntax (name body |...|) procedure)))
 
    ()
 
@@ -894,7 +899,7 @@
 
    ;; SRFI 34
    ("Exception Handling for Programs"
-    (guard (syntax (clauses ...)))
+    (guard (syntax (clauses |...|)))
     (raise (lambda (obj)))
     )
 
@@ -906,10 +911,10 @@
     (condition? (lambda (obj)))
     (condition-has-type? (lambda (condition condition-type)))
     (condition-ref (lambda (condition field-name)))
-    (make-compound-condition (lambda (condition ...)))
+    (make-compound-condition (lambda (condition |...|)))
     (extract-condition (lambda (condition condition-type)))
-    (define-condition-type (syntax (name parent pred-name fields ...)))
-    (condition (syntax (type-field-binding ...)))
+    (define-condition-type (syntax (name parent pred-name fields |...|)))
+    (condition (syntax (type-field-binding |...|)))
     )
 
    ;; SRFI 36
@@ -931,9 +936,9 @@
    ;; SRFI 37
    ("args-fold: a program argument processor"
     (args-fold
-     (arg-list option-list unrecognized-option-proc operand-proc seed ...))
-    (option-processor (lambda (option name arg seeds ...)))
-    (operand-processor (lambda (operand seeds ...)))
+     (arg-list option-list unrecognized-option-proc operand-proc seed |...|))
+    (option-processor (lambda (option name arg seeds |...|)))
+    (operand-processor (lambda (operand seeds |...|)))
     (option (lambda (name-list required-arg? optional-arg? option-proc)))
     (option-names (lambda (option)))
     (option-required-arg? (lambda (option)))
@@ -950,7 +955,7 @@
    ;; SRFI 39
    ("Parameter objects"
     (make-parameter (lambda (init-value :optional converter)))
-    (parameterize (syntax (bindings body ...))))
+    (parameterize (syntax (bindings body |...|))))
 
    ;; SRFI 40
    ("A Library of Streams"
@@ -962,10 +967,10 @@
     (stream-car (lambda (stream)))
     (stream-cdr (lambda (stream)))
     (stream-delay (syntax (expr)))
-    (stream (lambda (obj ...)))
+    (stream (lambda (obj |...|)))
     (stream-unfoldn (lambda (generator-proc seed n)))
-    (stream-map (lambda (proc stream ...)))
-    (stream-for-each (lambda (proc stream ...)))
+    (stream-map (lambda (proc stream |...|)))
+    (stream-for-each (lambda (proc stream |...|)))
     (stream-filter (lambda (pred stream)))
     )
 
@@ -1001,28 +1006,28 @@
 
    ;; SRFI 43
    ("Vector Library"
-    (vector-unfold (f length initial-seed ...))
-    (vector-unfold-right (lambda (f length initial-seed ...)))
+    (vector-unfold (f length initial-seed |...|))
+    (vector-unfold-right (lambda (f length initial-seed |...|)))
     (vector-tabulate (lambda (f size)))
     (vector-copy (lambda (vec :optional start end fill)))
     (vector-reverse-copy (lambda (vec :optional start end)))
-    (vector-append (lambda (vec ...)))
+    (vector-append (lambda (vec |...|)))
     (vector-concatenate (lambda (vector-list)))
     (vector-empty? (lambda (obj)))
-    (vector= (lambda (eq-proc vec ...)))
-    (vector-fold (lambda (kons knil vec ...)))
-    (vector-fold-right (lambda (kons knil vec ...)))
-    (vector-map (lambda (f vec ...)))
-    (vector-map! (lambda (f vec ...)))
-    (vector-for-each (lambda (f vec ...) undefined))
-    (vector-count (lambda (pred vec ...)))
-    (vector-index (lambda (pred vec ...)))
-    (vector-index-right (lambda (pred vec ...)))
-    (vector-skip (lambda (pred vec ...)))
-    (vector-skip-right (lambda (pred vec ...)))
+    (vector= (lambda (eq-proc vec |...|)))
+    (vector-fold (lambda (kons knil vec |...|)))
+    (vector-fold-right (lambda (kons knil vec |...|)))
+    (vector-map (lambda (f vec |...|)))
+    (vector-map! (lambda (f vec |...|)))
+    (vector-for-each (lambda (f vec |...|) undefined))
+    (vector-count (lambda (pred vec |...|)))
+    (vector-index (lambda (pred vec |...|)))
+    (vector-index-right (lambda (pred vec |...|)))
+    (vector-skip (lambda (pred vec |...|)))
+    (vector-skip-right (lambda (pred vec |...|)))
     (vector-binary-search (lambda (vec value cmp-proc)))
-    (vector-any (lambda (pred vec ...)))
-    (vector-every (lambda (pred vec ...)))
+    (vector-any (lambda (pred vec |...|)))
+    (vector-every (lambda (pred vec |...|)))
     (vector-swap! (lambda (vec i j) undefined))
     (vector-reverse! (lambda (vec :optional start end) undefined))
     (vector-copy! (lambda (target-vec t-start source-vec :optional start end) undefined))
@@ -1049,7 +1054,7 @@
 
    ;; SRFI 47
    ("Array"
-    (make-array (lambda (prototype k ...)))
+    (make-array (lambda (prototype k |...|)))
     (ac64 (lambda (:optional z)))
     (ac32 (lambda (:optional z)))
     (ar64 (lambda (:optional x)))
@@ -1063,17 +1068,17 @@
     (au16 (lambda (:optional n)))
     (au8 (lambda (:optional n)))
     (at1 (lambda (:optional bool)))
-    (make-shared-array (lambda (array mapper k ...)))
+    (make-shared-array (lambda (array mapper k |...|)))
     (array-rank (lambda (obj)))
     (array-dimensions (lambda (array)))
-    (array-in-bounds? (lambda (array k ...)))
-    (array-ref (lambda (array k ...)))
-    (array-set! (lambda (array obj k ...)))
+    (array-in-bounds? (lambda (array k |...|)))
+    (array-ref (lambda (array k |...|)))
+    (array-set! (lambda (array obj k |...|)))
     )
 
    ;; SRFI 48
    ("Intermediate Format Strings"
-    (format (lambda (port-or-boolean format-string arg ...))))
+    (format (lambda (port-or-boolean format-string arg |...|))))
 
    ;; SRFI 49
    ("Indentation-sensitive syntax"
@@ -1100,7 +1105,7 @@
 
    ;; SRFI 54
    ("Formatting"
-    (cat (lambda (obj ...))))
+    (cat (lambda (obj |...|))))
 
    ;; SRFI 55
    ("require-extension"
@@ -1136,9 +1141,9 @@
 
    ;; SRFI 60
    ("Integers as Bits"
-    (bitwise-and (lambda (n ...) int))
-    (bitwise-ior (lambda (n ...) int))
-    (bitwise-xor (lambda (n ...) int))
+    (bitwise-and (lambda (n |...|) int))
+    (bitwise-ior (lambda (n |...|) int))
+    (bitwise-xor (lambda (n |...|) int))
     (bitwise-not (lambda (n) int))
     (bitwise-if (lambda (mask n m) int))
     (any-bits-set? (lambda (n m) bool))
@@ -1179,12 +1184,12 @@
     (test-read-eval-string (lambda (string)))
     (test-begin (syntax (suite-name :optional count)))
     (test-end (syntax (suite-name)))
-    (test-group (syntax (suite-name decl-or-expr ...)))
-    (test-group-with-cleanup (syntax (suite-name decl-or-expr ...)))
+    (test-group (syntax (suite-name decl-or-expr |...|)))
+    (test-group-with-cleanup (syntax (suite-name decl-or-expr |...|)))
     (test-match-name (lambda (name)))
     (test-match-nth (lambda (n :optional count)))
-    (test-match-any (lambda (specifier ...)))
-    (test-match-all (lambda (specifier ...)))
+    (test-match-any (lambda (specifier |...|)))
+    (test-match-all (lambda (specifier |...|)))
     (test-skip (syntax (specifier)))
     (test-expect-fail (syntax (specifier)))
     (test-runner? (lambda (obj)))
@@ -1194,8 +1199,8 @@
     (test-runner-null (lambda ()))
     (test-runner-create (lambda ()))
     (test-runner-factory (lambda (:optional factory)))
-    (test-apply (syntax (runner specifier ...)))
-    (test-with-runner (syntax (runner decl-or-expr ...)))
+    (test-apply (syntax (runner specifier |...|)))
+    (test-with-runner (syntax (runner decl-or-expr |...|)))
     (test-result-kind (lambda (:optional runner)))
     (test-passed? (lambda (:optional runner)))
     (test-result-ref (lambda (runner prop-name (:optional default))))
@@ -1234,7 +1239,7 @@
    ;; SRFI 66
    ("Octet Vectors"
     (make-u8vector (lambda (len n)))
-    (u8vector (lambda (n ...)))
+    (u8vector (lambda (n |...|)))
     (u8vector->list (lambda (u8vector)))
     (list->u8vector (lambda (octet-list)))
     (u8vector-length u8vector)
@@ -1289,17 +1294,17 @@
      (call-with-output-string (lambda (proc)))
      (chop (lambda (list k) list))
      (complement (lambda (f) f2))
-     (compose (lambda (f1 f2 ...) f))
+     (compose (lambda (f1 f2 |...|) f))
      (compress (lambda (boolean-list list)))
-     (conc (lambda (obj ...)))
-     (conjoin (lambda (pred ...) pred))
-     (constantly (lambda (obj ...) f))
-     (disjoin (lambda (pred ...) pred))
-     (each (lambda (proc ...) proc))
-     (flatten (lambda (list1 ...) list))
+     (conc (lambda (obj |...|)))
+     (conjoin (lambda (pred |...|) pred))
+     (constantly (lambda (obj |...|) f))
+     (disjoin (lambda (pred |...|) pred))
+     (each (lambda (proc |...|) proc))
+     (flatten (lambda (list1 |...|) list))
      (flip (lambda (proc) proc))
-     (format (lambda (format-string arg ...)))
-     (fprintf (lambda (port format-string arg ...)))
+     (format (lambda (format-string arg |...|)))
+     (fprintf (lambda (port format-string arg |...|)))
      (hash (lambda (obj :optional n) int))
      (hash-by-identity (lambda (obj :optional n) int))
      (hash-table->alist (lambda (hash-table) alist))
@@ -1332,11 +1337,11 @@
      (make-queue (lambda () queue))
      (merge (lambda (list1 list2 less-fn) list))
      (merge! (lambda (list1 list2 less-fn) list))
-     (noop (lambda (obj ...) undefined))
+     (noop (lambda (obj |...|) undefined))
      (pp (lambda (obj :optional output-port) undefined))
      (pretty-print (lambda (obj :optional output-port) undefined))
      (pretty-print-width (lambda (:optional new-width) n))
-     (printf (lambda (format-string arg ...) undefined))
+     (printf (lambda (format-string arg |...|) undefined))
      (project (lambda (n) proc))
      (queue->list (lambda (queue) list))
      (queue-add! (lambda (queue obj) undefined))
@@ -1360,7 +1365,7 @@
      (sort (lambda (sequence less-fn) sequence))
      (sort! (lambda (sequence less-fn) sequence))
      (sorted? (lambda (sequence less-fn) bool))
-     (sprintf (lambda (format-string arg ...) str))
+     (sprintf (lambda (format-string arg |...|) str))
      (string-chomp (lambda (str :optional suffix-str) str))
      (string-chop (lambda (str length) list))
      (string-ci-hash (lambda (str :optional n) n))
@@ -1390,7 +1395,7 @@
      (allocate (lambda (size) block))
      (block-ref (lambda (block index) int))
      (block-set! (lambda (block index obj) undefined))
-     (byte-vector (lambda (n ...) byte-vector))
+     (byte-vector (lambda (n |...|) byte-vector))
      (byte-vector->list (lambda (byte-vector) list))
      (byte-vector->string (lambda (byte-vector) string))
      (byte-vector-fill! (lambda (byte-vector n) undefined))
@@ -1412,7 +1417,7 @@
      (locative? (lambda (obj) bool))
      (make-byte-vector (lambda (size :optional init-n) byte-vector))
      (make-locative (lambda (obj :optional index) locative))
-     (make-record-instance (lambda (sym arg ...)))
+     (make-record-instance (lambda (sym arg |...|)))
      (make-static-byte-vector (lambda (size :optional init-n)))
      (make-weak-locative (lambda (obj :optional index) locative))
      (move-memory! (lambda (from to :optional bytes from-offset to-offset) undefined))
@@ -1541,7 +1546,7 @@
      (find-files (lambda (dir pred :optional action-proc identity limit)))
      (get-groups (lambda ()))
      (get-host-name (lambda ()))
-     (glob (lambda (pattern1 ...)))
+     (glob (lambda (pattern1 |...|)))
      (group-information (lambda (group-name-or-n)))
      (initialize-groups (lambda (user-name base-group-n)))
      (local-time->seconds (lambda (vector)))
@@ -1697,7 +1702,7 @@
      (port-map (lambda (read-fn thunk)))
      (read-all (lambda (:optional file-or-port)))
      (shift! (lambda (list :optional default)))
-     (system* (lambda (format-string arg1 ...)))
+     (system* (lambda (format-string arg1 |...|)))
      (unshift! (lambda (obj pair)))
      )
     ))
@@ -1721,11 +1726,11 @@
      (any? (lambda (obj) bool))
      (argc+argv (lambda () (values n ptr)))
      (argv (lambda () list))
-     (bit-set? (lambda (n) bool))
-     (bitwise-and (lambda (n ...) n))
-     (bitwise-ior (lambda (n ...) n))
-     (bitwise-not (lambda (n ...) n))
-     (bitwise-xor (lambda (n ...) n))
+     (bit-set? (lambda (n index) bool))
+     (bitwise-and (lambda (n |...|) n))
+     (bitwise-ior (lambda (n |...|) n))
+     (bitwise-not (lambda (n |...|) n))
+     (bitwise-xor (lambda (n |...|) n))
      (blob->string (lambda (blob) string))
      (blob-size (lambda (blob) n))
      (blob? (lambda (obj) bool))
@@ -1742,7 +1747,7 @@
      (condition? (lambda (obj) bool))
      (continuation-capture (lambda (proc)))
      (continuation-graft (lambda (continuation thunk)))
-     (continuation-return (lambda (continuation vals...)))
+     (continuation-return (lambda (continuation vals|...|)))
      (continuation? (lambda (obj) bool))
      (copy-read-table (lambda (read-table) read-table))
      (cpu-time (lambda () (values n n)))
@@ -1760,7 +1765,7 @@
      (enable-interrupts (lambda () undefined))
      (enable-warnings (lambda () undefined))
      (errno (lambda () n))
-     (error (lambda (error-string args ...) undefined))
+     (error (lambda (error-string args |...|) undefined))
      (eval-handler (lambda () proc))
      (exit (lambda (:optional n) undefined))
      (exit-handler (lambda () proc))
@@ -1774,7 +1779,7 @@
      (flonum? (lambda (obj) bool))
      (flush-output (lambda (:optional port) undefined))
      (force (lambda (promise)))
-     (force-finalizers (lambda (f args ...)))
+     (force-finalizers (lambda (f args |...|)))
      (fp* (lambda (x1 x2) x))
      (fp+ (lambda (x1 x2) x))
      (fp- (lambda (x1 x2) x))
@@ -1829,24 +1834,24 @@
      (macroexpand (lambda (sexp) sexp))
      (macroexpand-1 (lambda (sexp) sexp))
      (make-blob (lambda (size) blob))
-     (make-composite-condition (lambda (condition ...) condition))
+     (make-composite-condition (lambda (condition |...|) condition))
      (make-parameter (lambda (val) proc))
-     (make-property-condition (lambda (kind ...) condition))
+     (make-property-condition (lambda (kind |...|) condition))
      (match-error-control (lambda (:optional proc) proc))
      (match-error-procedure (lambda (:optional proc) proc))
      (memory-statistics (lambda () vector))
      (on-exit (lambda (thunk) undefined))
      (open-input-string (lambda (string) string-input-port))
      (open-output-string (lambda () string-output-port))
-     (ormap (lambda (pred list ...) bool))
+     (ormap (lambda (pred list |...|) bool))
      (port-name (lambda (port) name))
      (port-position (lambda (port) n))
      (port? (lambda (obj) bool))
-     (print (lambda (obj ...)))
-     (print* (lambda (obj ...)))
+     (print (lambda (obj |...|)))
+     (print* (lambda (obj |...|)))
      (print-backtrace (lambda (:optional n) undefined))
      (print-call-chain (lambda (:optional n) undefined))
-     (print-error-message (lambda (err args ...) undefined))
+     (print-error-message (lambda (err args |...|) undefined))
      (procedure-information (lambda (proc)))
      (program-name (lambda (:optional name) name))
      (provide (lambda (name)))
@@ -1857,7 +1862,7 @@
      (rename-file (lambda (old-name new-name) undefined))
      (repl (lambda () undefined))
      (repository-path (lambda (:optional dirname) dirname))
-     (require (lambda (sym ...) undefined))
+     (require (lambda (sym |...|) undefined))
      (reset (lambda () undefined))
      (reset-handler (lambda (:optional proc) proc))
      (return-to-host (lambda () undefined))
@@ -1881,7 +1886,7 @@
      (string->uninterned-symbol (lambda (string) sym))
      (string-copy (lambda (string) string))
      (sub1 (lambda (x) x))
-     (syntax-error (lambda (args ...) undefined))
+     (syntax-error (lambda (args |...|) undefined))
      (system (lambda (str) n))
      (test-feature? (lambda (obj) bool))
      (undefine-macro! (lambda (sym) undefined))
@@ -1891,7 +1896,7 @@
      (vector-copy! (lambda (from-vector to-vector :optional start) undefined))
      (vector-resize (lambda (vec n :optional init)))
      (void (lambda () undefined))
-     (warning (lambda (msg-str args ...) undefined))
+     (warning (lambda (msg-str args |...|) undefined))
      (with-exception-handler (lambda (handler thunk)))
      (write-byte (lambda (n :optional output-port) undefined))
      )
@@ -2083,8 +2088,8 @@
      (and-let* (syntax))
      (any (lambda (pred list)))
      (any$ (lambda (pred) proc))
-     (any-pred (lambda (pred ...) pred))
-     (append! (lambda (list ...) list))
+     (any-pred (lambda (pred |...|) pred))
+     (append! (lambda (list |...|) list))
      (apply$ (lambda (proc) proc))
      (apply-generic (lambda (generic list)))
      (apply-method (lambda (method list)))
@@ -2108,7 +2113,7 @@
      (change-class (lambda (obj new-class)))
      (change-object-class (lambda (obj orig-class new-class)))
      (char->ucs (lambda (ch) int))
-     (char-set (lambda (ch ...) char-set))
+     (char-set (lambda (ch |...|) char-set))
      (char-set-contains? (lambda (char-set ch) bool))
      (char-set-copy (lambda (char-set) char-set))
      (char-set? (lambda (obj) bool))
@@ -2132,7 +2137,7 @@
      (closure? (lambda (obj) bool))
      (compare (lambda (obj1 obj2) n))
      (complement (lambda (proc) proc))
-     (compose (lambda (proc ...) proc))
+     (compose (lambda (proc |...|) proc))
      (compute-applicable-methods (lambda (generic list)))
      (compute-cpl (lambda (generic list)))
      (compute-get-n-set (lambda (class slot)))
@@ -2159,7 +2164,7 @@
      (current-thread (lambda () thread))
      (current-time (lambda () time))
      (cut (syntax))
-     (cute (lambda (args ...) proc))
+     (cute (lambda (args |...|) proc))
      (debug-print (lambda (obj)))
      (debug-print-width (lambda () int))
      (debug-source-info (lambda (obj)))
@@ -2189,11 +2194,11 @@
      (eager (lambda (obj)))
      (eq-hash (lambda (obj)))
      (eqv-hash (lambda (obj)))
-     (error (lambda (msg-string args ...)))
-     (errorf (lambda (fmt-string args ...)))
+     (error (lambda (msg-string args |...|)))
+     (errorf (lambda (fmt-string args |...|)))
      (eval-when (syntax))
      (every$ (lambda (pred) pred))
-     (every-pred (lambda (pred ...) pred))
+     (every-pred (lambda (pred |...|) pred))
      (exit (lambda (:optional n) undefined))
      (export (syntax))
      (export-all (syntax))
@@ -2222,8 +2227,8 @@
      (foreign-pointer-attribute-get (lambda (ptr attr)))
      (foreign-pointer-attribute-set (lambda (ptr attr val)))
      (foreign-pointer-attributes (lambda (ptr) list))
-     (format (lambda (fmt-string arg ...)))
-     (format/ss (lambda (fmt-string arg ...)))
+     (format (lambda (fmt-string arg |...|)))
+     (format/ss (lambda (fmt-string arg |...|)))
      (frexp (lambda (x) x))
      (gauche-architecture (lambda () string))
      (gauche-architecture-directory (lambda () string))
@@ -2251,7 +2256,7 @@
      (guard (syntax))
      (has-setter? (lambda (proc) bool))
      (hash (lambda (obj)))
-     (hash-table (lambda (id pair ...) hash-table))
+     (hash-table (lambda (id pair |...|) hash-table))
      (hash-table-delete! (lambda (hash-table key) undefined))
      (hash-table-exists? (lambda (hash-table key) bool))
      (hash-table-fold (lambda (hash-table proc init)))
@@ -2294,21 +2299,21 @@
      (library-for-each (lambda (string proc) undefined))
      (library-has-module? (lambda (filename id) bool))
      (library-map (lambda (string proc) list))
-     (list* (lambda (obj ...) list))
+     (list* (lambda (obj |...|) list))
      (list-copy (lambda (list) list))
-     (logand (lambda (n ...) n))
+     (logand (lambda (n |...|) n))
      (logbit? (lambda (index n) bool))
      (logcount (lambda (n) n))
-     (logior (lambda (n ...) n))
+     (logior (lambda (n |...|) n))
      (lognot (lambda (n) n))
-     (logtest (lambda (n ...) bool))
-     (logxor (lambda (n ...) n))
+     (logtest (lambda (n |...|) bool))
+     (logxor (lambda (n |...|) n))
      (macroexpand (lambda (obj)))
      (macroexpand-1 (lambda (obj)))
-     (make (lambda (class args ...)))
+     (make (lambda (class args |...|)))
      (make-byte-string (lambda (n :optional int) byte-string))
-     (make-compound-condition (lambda (condition ...) condition))
-     (make-condition (lambda (condition-type field+value ...) condition))
+     (make-compound-condition (lambda (condition |...|) condition))
+     (make-condition (lambda (condition-type field+value |...|) condition))
      (make-condition-type (lambda (id condition-type list) condition-type))
      (make-hash-table (lambda (:optional id) hash-table))
      (make-keyword (lambda (string) sym))
@@ -2320,7 +2325,7 @@
      (merge (lambda (list1 list2 proc) list))
      (merge! (lambda (list1 list2 proc) list))
      (method-more-specific? (lambda (method1 method2 list) bool))
-     (min&max (lambda (x ...) (values x1 x2)))
+     (min&max (lambda (x |...|) (values x1 x2)))
      (modf (lambda (x) x))
      (module-exports (lambda (env) list))
      (module-imports (lambda (env) list))
@@ -2331,11 +2336,11 @@
      (module-table (lambda (env) hash-table))
      (module? (lambda (obj) bool))
      (null-list? (lambda (obj) bool))
-     (object-* (lambda (z ...) z))
-     (object-+ (lambda (z ...) z))
-     (object-- (lambda (z ...) z))
-     (object-/ (lambda (z ...) z))
-     (object-apply (lambda (proc arg ...)))
+     (object-* (lambda (z |...|) z))
+     (object-+ (lambda (z |...|) z))
+     (object-- (lambda (z |...|) z))
+     (object-/ (lambda (z |...|) z))
+     (object-apply (lambda (proc arg |...|)))
      (object-compare (lambda (obj1 obj2) n))
      (object-equal? (lambda (obj1 obj2) bool))
      (object-hash (lambda (obj) n))
@@ -2346,7 +2351,7 @@
      (open-output-buffered-port (lambda ()))
      (open-output-fd-port (lambda (fileno) output-port))
      (open-output-string (lambda () string-output-port))
-     (pa$ (lambda (proc arg ...) proc))
+     (pa$ (lambda (proc arg |...|) proc))
      (partition$ (lambda (pred) proc))
      (path->module-name (lambda (str) sym))
      (peek-byte (lambda (:optional input-port) n))
@@ -2369,7 +2374,7 @@
      (port-seek (lambda (port offset (set int SEEK_SET SEEK_CUR SEEK_END))))
      (port-tell (lambda (port) n))
      (port-type (lambda (port) sym))
-     (print (lambda (obj ...)))
+     (print (lambda (obj |...|)))
      (procedure-arity-includes? (lambda (proc n) bool))
      (procedure-info (lambda (proc)))
      (profiler-reset (lambda () undefined))
@@ -2402,8 +2407,8 @@
      (redefine-class! (lambda ()))
      (reduce$ (lambda (proc :optional default) proc))
      (reduce-right$ (lambda (proc :optional default) proc))
-     (ref (lambda (obj key ...)))
-     (ref* (lambda (obj key ...)))
+     (ref (lambda (obj key |...|)))
+     (ref* (lambda (obj key |...|)))
      (regexp->string (lambda (regexp) string))
      (regexp-case-fold? (lambda (regexp) bool))
      (regexp-compile (lambda (str) regexp))
@@ -2411,9 +2416,9 @@
      (regexp-parse (lambda (str) list))
      (regexp-quote (lambda (str) str))
      (regexp-replace (lambda (regexp string subst) string))
-     (regexp-replace* (lambda (string regexp subst ...) string))
+     (regexp-replace* (lambda (string regexp subst |...|) string))
      (regexp-replace-all (lambda (regexp string subst) string))
-     (regexp-replace-all* (lambda (string regexp subst ...)))
+     (regexp-replace-all* (lambda (string regexp subst |...|)))
      (regexp? (lambda (obj) bool))
      (regmatch? (lambda (obj) bool))
      (remove$ (lambda (pred) proc))
@@ -2582,7 +2587,7 @@
      (sys-setuid (lambda (uid)))
      (sys-sigmask (lambda ((set how SIG_SETMASK SIG_BLOCK SIG_UNBLOCK) sigset)))
      (sys-signal-name (lambda (n)))
-     (sys-sigset (lambda (n ...) sigset))
+     (sys-sigset (lambda (n |...|) sigset))
      (sys-sigset-add! (lambda (sigset n)))
      (sys-sigset-delete! (lambda (sigset n)))
      (sys-sigset-empty! (lambda (sigset)))
@@ -2687,15 +2692,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; special lookups
 
+(defvar *chicken-base-repo*
+  "/usr/local/lib/chicken")
+
+(defvar *chicken-repo-dirs*
+  (remove-if-not
+   #'(lambda (x) (and (stringp x) (not (equal x ""))))
+   (union
+    (list
+     (car (reverse (sort (directory-files *chicken-base-repo* t "^[0-9]+$")
+                         #'string-lessp))))
+    (let ((home (getenv "CHICKEN_HOME")))
+      (if (and home (not (equal home "")))
+          (split-string home ";"))))))
+
 (defun chicken-available-modules (&optional sym)
   (append
    (mapcar 'symbol-name (mapcar 'car *scheme-chicken-modules*))
-   (mapcar
-    'file-name-sans-extension
-    (directory-files "/usr/local/lib/chicken/1/"
-                     nil
-                     ".*\\.\\(so\\|scm\\)$"
-                     t))))
+   (append-map
+    #'(lambda (dir)
+        (mapcar
+         'file-name-sans-extension
+         (directory-files dir nil ".*\\.\\(so\\|scm\\)$" t)))
+    *chicken-repo-dirs*)))
 
 (defun gauche-available-modules (&optional sym)
   (let ((version-dir (concat
@@ -2716,18 +2735,34 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utilities
 
+(defun append-map (proc init-ls)
+  (if (null init-ls)
+      '()
+    (let* ((ls (reverse init-ls))
+           (res (funcall proc (pop ls))))
+      (while (consp ls)
+        (setq res (append (funcall proc (pop ls)) res)))
+      res)))
+
 (defun flatten (ls)
   (cond
    ((consp ls) (cons (car ls) (flatten (cdr ls))))
    ((null ls) '())
    (t (list ls))))
 
-(defun in-string-or-comment-p ()
+(defun scheme-in-string-p ()
   (let ((orig (point)))
     (save-excursion
       (beginning-of-defun)
       (let ((parses (parse-partial-sexp (point) orig)))
-        (or (nth 3 parses) (nth 4 parses))))))
+        (nth 3 parses)))))
+
+(defun scheme-beginning-of-sexp ()
+  (let ((syn (char-syntax (char-before (point)))))
+    (if (or (eq syn ?\()
+	    (and (eq syn ?\") (scheme-in-string-p)))
+	(forward-char -1)
+      (forward-sexp -1))))
 
 (defun find-file-in-path (file path)
   (car (remove-if-not
@@ -2779,30 +2814,38 @@
 (defun beginning-of-current-sexp-operator ()
   (let ((pos 0))
     (skip-syntax-backward "w_")
-    (while (and (not (bobp)) (not (eq 40 (char-before))))
-      (beginning-of-sexp)
+    (while (and (not (bobp)) (not (eq ?\( (char-before))))
+      (scheme-beginning-of-sexp)
       (incf pos))
     pos))
 
+(defun beginning-of-next-sexp ()
+  (forward-sexp 2)
+  (backward-sexp 1))
+
 (defun beginning-of-string ()
+  (interactive)
   (search-backward "\"" nil t)
-  (if (and (eq ?\\ (char-before)) (> (point) (point-min)))
-      (beginning-of-string)))
+  (while (and (> (point) (point-min)) (eq ?\\ (char-before)))
+    (search-backward "\"" nil t)))
 
 ;; for the enclosing sexp, returns a cons of the leading symbol (if
 ;; any) and the current position within the sexp (starting at 0)
 (defun enclosing-sexp-prefix ()
   (save-excursion
     (let ((pos (beginning-of-current-sexp-operator)))
-      (cons (symbol-at-point) pos))))
+      (cons (scheme-symbol-at-point) pos))))
 
 (defun enclosing-2-sexp-prefixes ()
   (save-excursion
     (let* ((pos1 (beginning-of-current-sexp-operator))
-           (sym1 (symbol-at-point)))
+           (sym1 (scheme-symbol-at-point)))
       (backward-char)
-      (let ((pos2 (beginning-of-current-sexp-operator)))
-        (list sym1 pos1 (symbol-at-point) pos2)))))
+      (or
+       (ignore-errors
+         (let ((pos2 (beginning-of-current-sexp-operator)))
+           (list sym1 pos1 (scheme-symbol-at-point) pos2)))
+       (list sym1 pos1 nil 0)))))
 
 ;; sexp-at-point is always fragile, both because the user can input
 ;; incomplete sexps and because some scheme sexps are not valid elisp
@@ -2812,8 +2855,17 @@
   (ignore-errors
     (save-excursion
       (forward-sexp (+ n 1))
-      (forward-sexp -1)
-      (sexp-at-point))))
+      (let ((end (point)))
+        (forward-sexp -1)
+        (read-from-string (buffer-substring (point) end))))))
+
+(defun scheme-symbol-at-point ()
+  (save-excursion
+    (skip-syntax-backward "w_")
+    (let ((start (point)))
+      (skip-syntax-forward "w_")
+      (and (< start (point))
+           (intern (buffer-substring start (point)))))))
 
 (defun goto-next-top-level ()
   (or (re-search-forward "^(" nil t)
@@ -2822,17 +2874,50 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; variable extraction
 
-(defun extract-let-vars (ls)
-  (if (not (consp ls))
-      '()
-    (mapcar #'list
-            (remove-if-not 'symbolp (mapcar 'car (remove-if-not 'consp ls))))))
+(defun let-vars-at-point (&optional env)
+  (let ((end (save-excursion (forward-sexp) (point)))
+        (vars '()))
+    (forward-char 1)
+    (while (< (point) end)
+      (when (eq ?\( (char-after))
+        (save-excursion
+          (forward-char 1)
+          (if (eq ?w (char-syntax (char-after)))
+              (let ((sym (scheme-symbol-at-point)))
+                (beginning-of-next-sexp)
+                (let ((c (char-syntax (char-after))))
+                  (case c
+                    ((?\")
+                     (push (list sym 'string) vars))
+                    ((?\()
+                     (forward-char 1)
+                     (if (eq ?w (char-syntax (char-after)))
+                         (let ((op (scheme-symbol-at-point)))
+                           (cond
+                            ((eq op 'lambda)
+                             (let ((params
+                                    (nth-sexp-at-point 1)))
+                               (push (list sym `(lambda ,params)) vars)))
+                            (t
+                             (let ((spec (scheme-env-lookup env op)))
+                               (if (and spec
+                                        (consp (cadr spec))
+                                        (eq 'lambda (caadr spec))
+                                        (cddadr spec))
+                                   (push (list sym (car (cddadr spec))) vars)
+                                 (push (list sym) vars))))))
+                       (push (list sym) vars)))
+                    (t
+                     (push (list sym) vars))))))))
+      (or (ignore-errors (progn (beginning-of-next-sexp) t))
+          (goto-char end)))
+    (reverse vars)))
 
 (defun extract-match-clause-vars (x)
   (cond
    ((null x) '())
    ((symbolp x)
-    (if (memq x '(_ ___ ...))
+    (if (memq x '(_ ___ |...|))
         '()
       (list x)))
    ((consp x)
@@ -2897,16 +2982,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun current-local-vars ()
+(defun current-local-vars (&optional env)
   (let ((vars '())
         (limit (save-excursion (beginning-of-defun) (+ (point) 1))))
     (save-excursion
       (while (> (point) limit)
-        (or (ignore-errors (progn (beginning-of-sexp) t)
-                           (goto-char limit)))
-        (when (and (eq 40 (char-syntax (char-before (point))))
+        (or (ignore-errors
+              (progn
+                (skip-chars-backward " \t\n" limit)
+                (scheme-beginning-of-sexp)
+                t))
+            (goto-char limit))
+        (when (and (> (point) (point-min))
+                   (eq ?\( (char-syntax (char-before (point))))
                    (eq ?w (char-syntax (char-after (point)))))
-          (let ((sym (symbol-at-point)))
+          (let ((sym (scheme-symbol-at-point)))
             ;; XXXX handle internal defines
             (case sym
               ((lambda)
@@ -2924,17 +3014,25 @@
                                           (flatten (extract-match-vars
                                                     (nth-sexp-at-point 1))))
                                  vars)))
-              ((let let* letrec letrec* let-syntax letrec-syntax and-let*)
-               (let ((x (nth-sexp-at-point 1)))
-                 (if (symbolp x)        ; named let
-                     (push (list x) vars)
-                   (setq vars (append (extract-let-vars x) vars)))))
+              ((let let* letrec letrec* let-syntax letrec-syntax and-let* do)
+               (save-excursion
+                 (beginning-of-next-sexp)
+                 (if (and (eq sym 'let)
+                          (eq ?w (char-syntax (char-after (point)))))
+                     ;; named let
+                     (let* ((sym (scheme-symbol-at-point))
+                            (args (progn
+                                    (beginning-of-next-sexp)
+                                    (let-vars-at-point env))))
+                       (setq vars (cons `(,sym (lambda ,(mapcar #'car args)))
+                                        (append args vars))))
+                   (setq vars (append (let-vars-at-point env) vars)))))
               ((let-values let*-values)
                (setq vars
                      (append (mapcar
                               #'list
-                              (mapcan
-                               'flatten
+                              (append-map
+                               #'flatten
                                (remove-if-not 'consp (nth-sexp-at-point 1))))
                              vars)))
               ((receive defun defmacro)
@@ -3012,15 +3110,15 @@
 (defun extract-sexp-imports (sexp)
   (case (car sexp)
     ((begin)
-     (mapcan #'extract-sexp-imports (cdr sexp)))
+     (append-map #'extract-sexp-imports (cdr sexp)))
     ((cond-expand)
-     (mapcan #'extract-sexp-imports (mapcan 'cdr (cdr sexp))))
+     (append-map #'extract-sexp-imports (append-map #'cdr (cdr sexp))))
     ((use require-extension)
-     (mapcan #'scheme-module-exports (cdr sexp)))
+     (append-map #'scheme-module-exports (cdr sexp)))
     ((library module)
-     (mapcar #'extract-import-module-imports
-             (remove-if #'(lambda (x) (memq (car x) '(import require)))
-                        (cdr sexp))))
+     (append-map #'extract-import-module-imports
+                 (remove-if #'(lambda (x) (memq (car x) '(import require)))
+                            (cdr sexp))))
     (t '())))
 
 (defun module-symbol-p (sym)
@@ -3045,10 +3143,10 @@
         (if (ignore-errors (progn (forward-sexp) t))
             (let ((end (point)))
               (backward-sexp)
-              (when (eq 40 (char-after))
+              (when (eq ?\( (char-after))
                 (forward-char)
-                (when (and (not (eq 40 (char-after)))
-                           (module-symbol-p (symbol-at-point)))
+                (when (and (not (eq ?\( (char-after)))
+                           (module-symbol-p (scheme-symbol-at-point)))
                   (backward-char)
                   (ignore-errors
                     (setq imports
@@ -3072,7 +3170,7 @@
           (case (car sexp)
             ((define-syntax defmacro define-macro)
              (push (list (name-of-define sexp) '(syntax)) defs))
-            ((define defun)
+            ((define define-inline define-constant defun)
              (push (list (name-of-define sexp)
                          (if (or (eq 'defun (car sexp))
                                  (consp (cadr sexp))
@@ -3093,14 +3191,14 @@
              (setq defs
                    (cons (list (caddr sexp) 'procedure)
                          (cons (list (cadddr sexp) 'procedure)
-                               (append (mapcan #'(lambda (x)
+                               (append (append-map #'(lambda (x)
                                                    (list (cdr x) 'procedure))
                                                (cdddr sexp))
                                        defs)))))
             ((begin progn)
              (setq stack (append (cdr sexp) stack)))
             ((cond-expand)
-             (setq stack (mapcan #'cdr (cdr sexp))))
+             (setq stack (append-map #'cdr (cdr sexp))))
             (t
              '())))))
     defs))
@@ -3145,7 +3243,7 @@
                     (condition-case nil
                         (while (not (eobp))
                           (forward-sexp)
-                          (let ((sym (sexp-at-point)))
+                          (let ((sym (nth-sexp-at-point 0)))
                             (if sym (push (list sym) vars))))
                       (error (goto-char (point-max))))
                     vars)))))))
@@ -3167,7 +3265,8 @@
                (when (re-search-forward "(export" nil t)
                  (backward-sexp)
                  (backward-char)
-                 (mapcar #'list (cdr (ignore-errors (sexp-at-point)))))))))
+                 (mapcar #'list (cdr (ignore-errors
+                                       (nth-sexp-at-point 0)))))))))
         ((mzscheme)
          (let ((path (find-file-in-path
                       (symbol-name mod)
@@ -3181,7 +3280,8 @@
                (when (re-search-forward "(provide" nil t)
                  (backward-sexp)
                  (backward-char)
-                 (mapcar #'list (cdr (ignore-errors (sexp-at-point)))))))))
+                 (mapcar #'list (cdr (ignore-errors
+                                       (nth-sexp-at-point 0)))))))))
         (t '()))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3239,7 +3339,7 @@
       (cond
         ((eq :optional (car spec))
          (decf i))
-        ((eq '... (cadr spec))
+        ((eq '|...| (cadr spec))
          (setq type (car spec))
          (setq spec nil)))
       (setq spec (cdr spec))
@@ -3261,23 +3361,42 @@
   (defun read-event ()
     (aref (read-key-sequence nil) 0)))
 
-(defun do-completion (str coll &rest args)
-  (let* ((coll (mapcar #'(lambda (x) (if (symbolp x) (symbol-name x) x)) coll))
-         (completion (apply 'try-completion str coll args)))
+(defun do-completion (str coll &optional strs pred)
+  (let* ((coll (mapcar #'(lambda (x)
+                           (cond
+                            ((symbolp x) (list (symbol-name x)))
+                            ((stringp x) (list x))
+                            (t x)))
+                       coll))
+         (completion1 (try-completion str coll pred))
+         (completion2 (and strs (try-completion str strs pred)))
+         (completion (if (and completion2
+                              (or (not completion1)
+                                  (< (length completion2)
+                                     (length completion1))))
+                         completion2
+                       completion1)))
     (cond
      ((eq completion t))
      ((not completion)
       (message "Can't find completion for \"%s\"" str)
       (ding))
      ((not (string= str completion))
-      (insert (substring completion (length str))))
+      (unless (equal completion completion1)
+        (save-excursion
+          (backward-char (length str))
+          (insert "\"")))
+      (insert (substring completion (length str)))
+      (unless (equal completion completion1)
+        (insert "\"")
+        (backward-char)))
      (t
       (let ((win-config (current-window-configuration))
             (done nil))
         (message "Hit space to flush")
         (with-output-to-temp-buffer "*Completions*"
           (display-completion-list
-           (sort (all-completions str coll) 'string-lessp)))
+           (sort (all-completions str (append strs coll) pred) 'string-lessp)))
         (while (not done)
           (let ((event
                  (with-current-buffer (get-buffer "*Completions*")
@@ -3320,14 +3439,16 @@
     (let ((top (current-scheme-globals)))
       (if top (push top env)))
     ;; current local vars
-    (let ((locals (current-local-vars)))
+    (let ((locals (current-local-vars env)))
       (if locals (push locals env)))
     env))
 
 (defun scheme-env-filter (pred env)
   (mapcar #'car
-          (mapcan #'(lambda (e) (remove-if-not pred e))
-                  env)))
+          (apply #'concatenate
+                 'list
+                 (mapcar #'(lambda (e) (remove-if-not pred e))
+                         env))))
 
 ;; checking return values
 (defun scheme-type-match-p (a b)
@@ -3351,7 +3472,7 @@
   (let* ((end (point))
          (start (save-excursion (skip-syntax-backward "w_") (point)))
          (sym (buffer-substring-no-properties start end))
-         (in-str-p (in-string-p))
+         (in-str-p (scheme-in-string-p))
          (x (save-excursion
               (if in-str-p (beginning-of-string))
               (enclosing-2-sexp-prefixes)))
@@ -3359,7 +3480,9 @@
          (inner-pos (cadr x))
          (outer-proc (caddr x))
          (outer-pos (cadddr x))
-         (env (scheme-current-env))
+         (env (save-excursion
+                (if in-str-p (beginning-of-string))
+                (scheme-current-env)))
          (outer-spec (scheme-env-lookup env outer-proc))
          (outer-type (scheme-translate-type (cadr outer-spec)))
          (inner-spec (scheme-env-lookup env inner-proc))
@@ -3414,17 +3537,33 @@
                                   (memq (car param-type) '(set flags))))
              (base-type (if set-or-flags-p
                             (scheme-translate-type (cadr param-type))
-                            param-type)))
+                            param-type))
+             (base-completions
+              (scheme-env-filter
+               #'(lambda (x)
+                   (scheme-type-match-p base-type (cadr x)))
+               env))
+             (str-completions
+              (case base-type
+                ((filename directory)
+                 (let* ((file (file-name-nondirectory sym))
+                        (dir (or (file-name-directory sym) "."))
+                        (ls (file-name-all-completions file dir)))
+                   (if (eq base-type 'directory)
+                       (remove-if-not
+                        #'(lambda (x)
+                            (file-directory-p (concat dir "/" x)))
+                        ls)
+                     ls)))
+                (t '()))))
         (do-completion
          sym
          (append
           (if set-or-flags-p
               (cddr param-type)
             '())
-          (scheme-env-filter
-           #'(lambda (x)
-               (scheme-type-match-p base-type (cadr x)))
-           env)))))
+          base-completions)
+         str-completions)))
      ;; completing a function
      ((zerop inner-pos)
       (do-completion
@@ -3454,6 +3593,9 @@
 ;; optional eldoc function
 
 (defun scheme-optional-in-brackets (ls)
+  ;; stupid xemacs won't allow ... as a symbol
+  (setq ls (mapcar #'(lambda (x) (if (eq x '|...|) "..." x)) ls))
+  ;; put optional arguments inside brackets (via a vector)
   (if (memq :optional ls)
       (let ((res '()))
         (while (and (consp ls) (not (eq :optional (car ls))))
@@ -3476,7 +3618,9 @@
 (defun scheme-get-current-symbol-info ()
   (let* ((sym (eldoc-current-symbol))
          (fnsym (eldoc-fnsym-in-current-sexp))
-         (env (scheme-current-env))
+         (env (save-excursion
+                (if (scheme-in-string-p) (beginning-of-string))
+                (scheme-current-env)))
          (spec (or (and sym (scheme-env-lookup env sym))
                    (and fnsym (scheme-env-lookup env fnsym)))))
     (and (consp spec)

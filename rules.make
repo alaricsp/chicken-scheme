@@ -781,8 +781,8 @@ library.c: library.scm version.scm banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 eval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
-extras.c: extras.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
+extras.c: extras.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 lolevel.c: lolevel.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 tcp.c: tcp.scm
@@ -820,8 +820,8 @@ ulibrary.c: library.scm version.scm banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 ueval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uextras.c: extras.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
+uextras.c: extras.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
 ulolevel.c: lolevel.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 utcp.c: tcp.scm
@@ -847,23 +847,23 @@ uregex.c: regex.scm
 uregex-extras.c: regex-extras.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 
-chicken.c: chicken.scm chicken-more-macros.scm chicken-ffi-macros.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-support.c: support.scm banner.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-compiler.c: compiler.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-optimizer.c: optimizer.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-batch-driver.c: batch-driver.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-c-platform.c: c-platform.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-c-backend.c: c-backend.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
+chicken.c: chicken.scm chicken-more-macros.scm chicken-ffi-macros.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+support.c: support.scm banner.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+compiler.c: compiler.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+optimizer.c: optimizer.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+batch-driver.c: batch-driver.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+c-platform.c: c-platform.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+c-backend.c: c-backend.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 
-csi.c: csi.scm banner.scm chicken-more-macros.scm
-	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
+csi.c: csi.scm banner.scm chicken-more-macros.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ -extend private-namespace.scm
 chicken-profile.c: chicken-profile.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
 chicken-setup.c: chicken-setup.scm chicken-more-macros.scm

@@ -38,7 +38,7 @@
   (run-time-macros) )
 
 
-#{compiler
+(private compiler
   compiler-arguments
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
@@ -70,7 +70,7 @@
   foreign-string-result-reserve parameter-limit default-output-filename eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion}
+  foreign-argument-conversion foreign-result-conversion)
 
 
 (include "tweaks")

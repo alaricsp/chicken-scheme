@@ -35,7 +35,7 @@
 
 (declare (unit optimizer))
 
-#{compiler
+(private compiler
   compiler-arguments process-command-line perform-lambda-lifting!
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
@@ -72,7 +72,7 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type inline-max-size simplified-ops
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result}
+  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result)
 
 
 (eval-when (compile eval)

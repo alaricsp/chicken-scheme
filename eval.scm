@@ -1192,20 +1192,17 @@
 	(##core#undefined) ) ) )
   (set! load
     (lambda (filename . evaluator)
-      (fluid-let ([##sys#current-namespace ##sys#current-namespace])
-	(##sys#load filename (:optional evaluator #f) #f) ) ) )
+      (##sys#load filename (:optional evaluator #f) #f) ) )
   (set! load-relative
     (lambda (filename . evaluator)
-      (fluid-let ([##sys#current-namespace ##sys#current-namespace])
-	(##sys#load
-	 (if (char=? pds (string-ref filename 0))
-	     filename
-	     (##sys#string-append ##sys#current-load-path filename) )
-	 (:optional evaluator #f) #f) ) ) )
+      (##sys#load
+       (if (char=? pds (string-ref filename 0))
+	   filename
+	   (##sys#string-append ##sys#current-load-path filename) )
+       (:optional evaluator #f) #f) ) )
   (set! load-noisily
     (lambda (filename #!key (evaluator #f) (time #f) (printer #f))
-      (fluid-let ([##sys#current-namespace ##sys#current-namespace])
-	(##sys#load filename evaluator #t time printer) ) ) ) )
+      (##sys#load filename evaluator #t time printer) ) ) )
 
 (define ##sys#load-library-extension 	; this is crude...
   (cond [(eq? (software-type) 'windows) windows-load-library-extension]
@@ -2120,9 +2117,7 @@
 		(##sys#reset-handler
 		 (lambda ()
 		   (set! ##sys#read-error-with-line-number #f)
-		   (set! ##sys#default-namespace-prefix #f)
 		   (set! ##sys#enable-qualifiers #t)
-		   (set! ##sys#current-namespace #f)
 		   (resetports)
 		   (c #f) ) ) ) )
 	     (##sys#read-prompt-hook)

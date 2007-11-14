@@ -36,14 +36,14 @@
 (declare (unit backend))
 
 
-#{compiler
+(private compiler
   compiler-arguments process-command-line find-early-refs
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings 
   foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations debugging cleanup
-  file-io-only namespace-table
+  file-io-only
   unit-name insert-timer-checks used-units inlining external-variables
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
@@ -78,8 +78,7 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   default-optimization-iterations generate-foreign-callback-header generate-foreign-callback-stub-prototypes
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion quick-namespace-list setup-quick-namespace-list
-  namespace-lookup compute-namespace-size}
+  foreign-argument-conversion foreign-result-conversion)
 
 (include "tweaks")
 
@@ -101,37 +100,12 @@
    (lambda (x) (display x output))
    (intersperse lst #\space) ) )
 
-(define (compute-namespace-size n)
-  37)					; Arbitrary...
-
 
 ;;; Unique id/prefix:
 
 (define unique-id
   (string->c-identifier
    (sprintf "C_~X_~A_" (random #x1000000) (current-seconds)) ) )
-
-
-;;; Check name for namespace:
-;;
-;; This stuff is basically not needed. The namespace thingy once looked good, but
-;; can not replace a proper module system. It's still available, and might be
-;; handy for certain hacks.
-
-(define quick-namespace-list '())
-
-(define (setup-quick-namespace-list)
-  (for-each 
-   (lambda (ns)
-     (set! quick-namespace-list (append (cdr ns) quick-namespace-list)) )
-   namespace-table) )
-
-(define (namespace-lookup sym)
-  (and (memq sym quick-namespace-list)
-       (let loop ([nslist namespace-table] [i 0])
-	 (cond [(null? nslist) (bomb "symbol not in namespace" sym)]
-	       [(memq sym (cdar nslist)) i]
-	       [else (loop (cdr nslist) (add1 i))] ) ) ) )
 
 
 ;;; Generate target code:
@@ -741,16 +715,11 @@
 	    ((symbol? lit)
 	     (let* ([str (##sys#slot lit 1)]
 		    [cstr (c-ify-string str)]
-		    [len (##sys#size str)] 
-		    [nsi (namespace-lookup lit)] )
+		    [len (##sys#size str)] )
 	       (gen #t to "=")
-	       (if nsi
-		   (if lf
-		       (gen "C_h_intern_in(&" to #\, len #\, cstr ",stable" nsi ");")
-		       (gen "C_intern_in(C_heaptop," len #\, cstr ",stable" nsi ");") )
-		   (if lf
-		       (gen "C_h_intern(&" to #\, len #\, cstr ");")
-		       (gen "C_intern(C_heaptop," len #\, cstr ");") ) ) ) )
+	       (if lf
+		   (gen "C_h_intern(&" to #\, len #\, cstr ");")
+		   (gen "C_intern(C_heaptop," len #\, cstr ");") ) ) )
 	    ((##sys#immediate? lit) (bad-literal lit))
 	    ((##sys#bytevector? lit)
 	     (if (##sys#permanent? lit)
@@ -851,20 +820,11 @@
 		   ((zero? j))
 		 (gen #t "C_word t" i #\;) ) )
 	   (cond [(eq? 'toplevel id) 
-		  (do ([i 0 (add1 i)]
-		       [ns namespace-table (cdr ns)] )
-		      ((null? ns))
-		    (gen #t "C_SYMBOL_TABLE *stable" i #\;) )
 		  (let ([ldemand (fold (lambda (lit n) (+ n (literal-size lit))) 0 literals)]
 			[llen (length literals)] )
 		    (gen #t "C_word *a;"
 			 #t "if(toplevel_initialized) C_kontinue(t1,C_SCHEME_UNDEFINED);"
 			 #t "else C_toplevel_entry(C_text(\"" topname "\"));")
-		    (do ([i 0 (add1 i)]
-			 [ns namespace-table (cdr ns)] )
-			((null? ns))
-		      (gen #t "stable" i "=C_new_symbol_table(\""
-			   (caar ns) "\"," (compute-namespace-size (cdar ns)) ");") )
 		    (when disable-stack-overflow-checking
 		      (gen #t "C_disable_overflow_check=1;") )
 		    (unless unit-name
@@ -989,7 +949,6 @@
     (prototypes)
     (generate-foreign-callback-stubs foreign-callback-stubs db)
     (trampolines)
-    (setup-quick-namespace-list)
     (procedures)
     (emit-procedure-table-info lambdas source-file)
     (trailer) ) )

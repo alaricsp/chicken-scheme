@@ -69,7 +69,6 @@
 ; (export {<name>})
 ; (compress-literals [<threshold>])
 ; (safe-globals)
-; (namespace <name> {<symbol})
 ; (custom-declare (<tag> <name> <filename> <arg> ...) <string> ...)
 ; (data <tag1> <exp1> ...)
 ; (post-process <string> ...)
@@ -250,7 +249,7 @@
 <#
 
 
-#{compiler
+(private compiler
   compiler-arguments process-command-line explicit-use-flag inline-list not-inline-list
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
@@ -268,7 +267,7 @@
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
   broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
-  direct-call-ids foreign-type-table first-analysis callback-names namespace-table disabled-warnings
+  direct-call-ids foreign-type-table first-analysis callback-names disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
   compiler-warning import-table use-import-table compiler-macro-table compiler-macros-enabled
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
@@ -295,7 +294,7 @@
   lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
-  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result}
+  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result)
 
 (eval-when (compile eval)
   (match-error-control #:fail) )
@@ -366,7 +365,6 @@
 (define safe-globals-flag #f)
 (define explicit-use-flag #f)
 (define disable-stack-overflow-checking #f)
-(define namespace-table '())
 (define require-imports-flag #f)
 (define emit-unsafe-marker #f)
 (define external-protos-first #f)
@@ -1183,15 +1181,6 @@
 	    (if (number? n)
 		n
 		(quit "invalid argument to `inline-limit' declaration" spec) ) ) ) )
-       ((namespace)
-	(check-decl spec 2)
-	(let* ([syms (cdr spec)]
-	       [ns (car syms)] )
-	  (if (every symbol? syms)
-	      (let ([oldsyms (or (and-let* ([a (assq ns namespace-table)]) (cdr a)) '())])
-		(set! namespace-table 
-		  (alist-update! ns (lset-union eq? oldsyms (cdr syms)) namespace-table eq?) ) )
-	      (quit "invalid arguments to `namespace' declaration: ~S" spec) ) ) )
        ((constant)
 	(let ((syms (cdr spec)))
 	  (if (every symbol? syms)

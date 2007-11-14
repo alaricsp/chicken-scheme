@@ -253,3 +253,4 @@ Makefile.cygwin
 Makefile.cross-linux-mingw
 rules.make
 defaults.make
+compiler-namespace.scm

@@ -36,7 +36,7 @@
 (declare (unit support))
 
 
-#{compiler
+(private compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
@@ -50,8 +50,9 @@
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
   dependency-list broken-constant-nodes inline-substitutions-enabled emit-syntax-trace-info
-  always-bound-to-procedure block-variable-literal copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
+  always-bound-to-procedure block-variable-literal? copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
   direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string
+  make-block-variable-literal block-variable-literal-name
   expand-profile-lambda profile-lambda-list profile-lambda-index profile-info-vector-name
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
@@ -76,7 +77,7 @@
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
   lookup-exports-file constant-declarations process-lambda-documentation
   compiler-macro-table register-compiler-macro export-dump-hook export-import-hook
-  make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration}
+  make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
 
 
 (include "tweaks")

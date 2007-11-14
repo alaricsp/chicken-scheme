@@ -36,7 +36,7 @@
 (declare (unit platform))
 
 
-#{compiler
+(private compiler
   compiler-arguments process-command-line
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
@@ -70,7 +70,7 @@
   target-include-file default-profiling-declarations
   default-optimization-passes internal-bindings
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion}
+  foreign-argument-conversion foreign-result-conversion)
 
 
 (include "tweaks")

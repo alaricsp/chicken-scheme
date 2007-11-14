@@ -101,7 +101,7 @@ TARGET_PREFIX ?= $(PREFIX)
 TARGET_RUN_PREFIX ?= $(TARGET_PREFIX)
 TARGET_LIBRARIES ?= $(LIBRARIES)
 
-ifneq ($(TARGET_C_COMPILER),$(HOST_C_COMPILER))
+ifneq ($(TARGET_C_COMPILER),$(C_COMPILER))
 CROSS_CHICKEN = 1
 else
 CROSS_CHICKEN = 0
@@ -196,6 +196,7 @@ CHICKEN = $(PREFIX)/bin/chicken$(EXE)
 CHICKEN_OPTIONS = -quiet -no-trace -optimize-level 2 -include-path .
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
+CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 
 # targets
