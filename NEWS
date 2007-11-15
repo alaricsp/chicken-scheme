@@ -1,5 +1,16 @@
 2.736
 
+- removed deprecated functions:
+  extension-info
+  print-backtrace
+  test-feature?
+  ___callback (chicken.h)
+  foreign-callback-lambda[*]
+  thread-deliver-signal!
+  critical-section
+  enable-interrupts
+  disable-interrupts
+  invalid-procedure-call-handler
 - chicken-setup: can create repository catalog file from local 
   SVN checkout of egg repository
 - Better cross-development support for the build system (the

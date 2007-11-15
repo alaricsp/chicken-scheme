@@ -279,7 +279,6 @@ typedef unsigned __int64   uint64_t;
 #define ___scheme_pointer   void *
 #define ___byte_vector      unsigned char *
 #define ___symbol           char *
-#define ___callback
 #define ___safe
 #define ___declare(x, y)
 #define ___specialize

@@ -686,8 +686,6 @@ EOF
     (lambda args
       (ipc-hook-0 ##sys#last-invalid-procedure args) ) ) )
 
-(define invalid-procedure-call-handler set-invalid-procedure-call-handler!) ; DEPRECATED
-
 (define (unbound-variable-value . val)
   (set! ##sys#unbound-variable-value-hook 
     (and (pair? val)

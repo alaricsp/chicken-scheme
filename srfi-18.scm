@@ -479,8 +479,6 @@ EOF
 	   (old) ) )
 	(##sys#thread-unblock! thread) ) ) )
 
-(define thread-deliver-signal! thread-signal!)
-
 
 ;;; Don't block in the repl: (by Chris Double)
 

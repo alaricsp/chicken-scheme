@@ -1387,8 +1387,6 @@
 (define (extension-information ext)
   (##sys#extension-information ext 'extension-information) )
 
-(define extension-info extension-information) ; DEPRECATED
-
 (define ##sys#lookup-runtime-requirements 
   (let ([with-input-from-file with-input-from-file]
 	[read read] )

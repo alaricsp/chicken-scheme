@@ -360,10 +360,6 @@
      (warning (sprintf "`~s' is deprecated, use `~s' instead" ',old ',new))
      (cons ',new args) ) )
 
-(define-deprecated-macro foreign-callback-lambda foreign-safe-lambda)
-(define-deprecated-macro foreign-callback-lambda* foreign-safe-lambda*)
-(define-deprecated-macro foreign-callback-wrapper foreign-safe-wrapper)
-
 
 ;;; Not for general use, yet
 

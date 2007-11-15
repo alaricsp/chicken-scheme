@@ -2484,14 +2484,12 @@ EOF
 							  (##sys#read-error port "invalid `#!' token" tok) ) ) ] ) ) ) ) ) )
 				 (else (##sys#user-read-hook dchar port)) ) ) ) ) ) )
 		  ((#\() (r-list #\( #\)))
+		  ((#\{) (r-list #\{ #\}))
 		  ((#\[) 
 		   (r-list #\[ #\]) )
-		  ((#\) #\]) 
+		  ((#\) #\] #\}) 
 		   (##sys#read-char-0 port)
 		   (container c) )
-		  ((#\{ #\})
-		   (##sys#read-char-0 port)
-		   (##sys#read-error port "illegal character" c))
 		  ((#\") (r-string #\"))
 		  ((#\.) (r-number #f))
 		  ((#\- #\+) (r-number #f))
@@ -3214,7 +3212,6 @@ EOF
 	     (loop (##sys#slot ids 1)) ) ) ) )
 
 (define feature? ##sys#feature?)
-(define test-feature? ##sys#feature?)	; DEPRECATED
 
 
 ;;; Access backtrace:
@@ -3269,23 +3266,9 @@ EOF
     (##sys#really-print-call-chain port (##sys#get-call-chain start thread) header) ) )
 
 (define get-call-chain ##sys#get-call-chain)
-(define print-backtrace print-call-chain) ; DEPRECATED
 
 
 ;;; Interrupt handling:
-
-(let ([count 0])			; DEPRECATED
-  (set! ##sys#enable-interrupts
-    (lambda val
-      (set! count (fx+ count (if (pair? val) (car val) 1)))
-      (when (eq? count 0) (##core#inline "C_enable_interrupts")) ) )
-  (set! ##sys#disable-interrupts
-    (lambda ()
-      (when (eq? count 0) (##core#inline "C_disable_interrupts"))
-      (set! count (fx- count 1)) ) ) )
-
-(define enable-interrupts ##sys#enable-interrupts) ; DEPRECATED
-(define disable-interrupts ##sys#disable-interrupts) ; DEPRECATED
 
 (define (##sys#user-interrupt-hook)
   (define (break) (##sys#signal-hook #:user-interrupt #f))

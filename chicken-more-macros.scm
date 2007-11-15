@@ -363,14 +363,6 @@
    (##sys#check-syntax 'define-constant form '(symbol _))
    `(##core#define-constant ',(car form) ,(cadr form)) ) )
 
-(##sys#register-macro-2			; DEPRECATED
- 'critical-section
- (lambda (form)
-   `(##sys#dynamic-wind
-	##sys#disable-interrupts
-	(lambda () ,@form)
-	##sys#enable-interrupts) ) )
-
 (##sys#register-macro-2
  'and-let*
    (lambda (forms)
