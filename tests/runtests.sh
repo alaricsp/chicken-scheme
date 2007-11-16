@@ -31,9 +31,6 @@ $compile locative-stress-test.scm && ./a.out
 echo "======================================== embedding ..."
 $compile embedded1.c && ./a.out
 
-echo "======================================== rebuilding chicken ..."
-make 
-
 echo "======================================== benchmarks ..."
 cd ../benchmarks
 for x in `ls *.scm`; do

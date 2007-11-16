@@ -934,10 +934,12 @@ distclean: clean confclean
 
 # run tests
 
-.PHONY: check
+.PHONY: check fullcheck
 
 check: all
 	cd tests; sh runtests.sh
+
+fullcheck: check
 	$(MAKE) dist
 	tar -C tests -xzf `ls -t chicken-*.tar.gz | head -1`
 	$(MAKE) STATICBUILD=1 -C tests/chicken-*

@@ -34,7 +34,7 @@
 
 
 .PHONY: all clean distclean spotless install uninstall confclean check dist \
-	libs install-libs
+	libs install-libs fullcheck
 
 ifndef PLATFORM
 all clean spotless distclean install uninstall:
@@ -70,6 +70,8 @@ confclean:
 	$(MAKE) -f Makefile.$(PLATFORM) confclean
 check:
 	$(MAKE) -f Makefile.$(PLATFORM) check
+fullcheck:
+	$(MAKE) -f Makefile.$(PLATFORM) fullcheck
 dist:
 	$(MAKE) -f Makefile.$(PLATFORM) distfiles
 	csi -s misc/makedist.scm
