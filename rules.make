@@ -938,3 +938,9 @@ distclean: clean confclean
 
 check: all
 	cd tests; sh runtests.sh
+	$(MAKE) dist
+	tar -C tests -xzf `ls -t chicken-*.tar.gz | head -1`
+	$(MAKE) STATICBUILD=1 -C tests/chicken-*
+	touch tests/chicken-*/*.scm
+	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
+	tests/chicken/chicken
