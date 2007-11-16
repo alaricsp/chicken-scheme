@@ -429,7 +429,6 @@
 (define unused-variables '())
 (define compiler-macro-table #f)
 (define compiler-macros-enabled #t)
-(define inline-use-chain '())
 
 
 ;;; Initialize globals:
@@ -481,10 +480,7 @@
 	   => (lambda (val) (walk (car val) ae me dest)) ]
 	  [(and inline-table-used (##sys#hash-table-ref inline-table x))
 	   => (lambda (val)
-		(if (memq x inline-use-chain)
-		    (quit "recursive invocation of inline function `~a', invocation chain: ~s" x inline-use-chain)
-		    (fluid-let ((inline-use-chain (cons x inline-use-chain)))
-		      (walk val ae me dest)) ) ) ]
+		(walk val ae me dest)) ]
 	  [(assq x foreign-variables)
 	   => (lambda (fv) 
 		(let* ([t (second fv)]
@@ -532,10 +528,7 @@
 		      (walk xexpanded ae me dest) ]
 		     [(and inline-table-used (##sys#hash-table-ref inline-table name))
 		      => (lambda (val)
-			   (if (memq name inline-use-chain)
-			       (quit "recursive invocation of inline function `~a', invocation chain: ~s" name inline-use-chain)
-			       (fluid-let ((inline-use-chain (cons name inline-use-chain)))
-				 (walk (cons val (cdr x)) ae me dest)) ) ) ]
+			   (walk (cons val (cdr x)) ae me dest)) ]
 		     [else
 		      (case name
 

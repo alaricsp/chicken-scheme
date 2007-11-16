@@ -996,7 +996,7 @@ EOF
 	      (set! *dont-ask* #t)
 	      (let ((a (and *repository-tree* (assq (string->symbol ext) *repository-tree*))))
 		(when *debug* (printf "catalog entry: ~s~%" a))
-		(cond (a (let ((reqs (remove extension-info (delete-duplicates (requirements (cdddr a)) eq?))))
+		(cond (a (let ((reqs (remove extension-information (delete-duplicates (requirements (cdddr a)) eq?))))
 			   (when (pair? reqs)
 			     (print "downloading required extensions " reqs " ...")
 			     (for-each (cut download-data *last-decent-host* <>) reqs)
