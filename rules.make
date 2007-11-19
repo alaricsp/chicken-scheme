@@ -945,4 +945,5 @@ fullcheck: check
 	$(MAKE) STATICBUILD=1 -C tests/chicken-*
 	touch tests/chicken-*/*.scm
 	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
-	tests/chicken/chicken
+	tests/chicken-*/chicken
+	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
