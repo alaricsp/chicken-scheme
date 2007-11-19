@@ -941,7 +941,7 @@ check: all
 
 # Only for UNIX, yet:
 
-fullcheck: #check
+fullcheck: check
 	@echo "======================================== packing ..."
 	$(MAKE) dist
 	$(REMOVE_COMMAND $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
