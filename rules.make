@@ -939,11 +939,21 @@ distclean: clean confclean
 check: all
 	cd tests; sh runtests.sh
 
-fullcheck: check
+# Only for UNIX, yet:
+
+fullcheck: #check
+	@echo "======================================== packing ..."
 	$(MAKE) dist
+	$(REMOVE_COMMAND $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
 	tar -C tests -xzf `ls -t chicken-*.tar.gz | head -1`
-	$(MAKE) STATICBUILD=1 -C tests/chicken-*
-	touch tests/chicken-*/*.scm
+	@echo "======================================== building stage 1 ..."
 	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
-	tests/chicken-*/chicken
+	touch tests/chicken-*/*.scm
+	@echo "======================================== building stage 2 ..."
+	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
+	cat tests/chicken-*/*.c >tests/stage2.out
+	@echo "======================================== building stage 3 ..."
+	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
+	cat tests/chicken-*/*.c >tests/stage3.out
+	diff tests/stage2.out tests/stage3.out >tests/stages.diff
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*

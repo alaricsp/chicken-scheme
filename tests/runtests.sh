@@ -23,7 +23,8 @@ echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out
 
 echo "======================================== r4rstest ..."
-../csi -i -s r4rstest.scm
+../csi -i -s r4rstest.scm >r4rstest.log
+diff r4rstest.out r4rstest.log
 
 echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
