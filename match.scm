@@ -120,6 +120,7 @@
 
 (declare
  (unit match)
+ (uses srfi-1)
  (run-time-macros)
  (disable-interrupts)
  (usual-integrations) )
