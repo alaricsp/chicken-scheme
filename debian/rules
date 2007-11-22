@@ -15,7 +15,7 @@ major=0
 
 MAKE:=$(MAKE) PLATFORM=linux
 PREFIX=/usr
-BINARYVERSION=1
+BINARYVERSION=3
 
 build: build-stamp
 build-stamp:
