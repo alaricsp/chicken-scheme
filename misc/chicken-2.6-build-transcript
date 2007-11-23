@@ -1,0 +1,919 @@
+  <!-- /cygdrive/c/downloads --> tar xvfz chicken-2.6.tar.gz 
+chicken-2.6/
+chicken-2.6/benchmarks/
+chicken-2.6/benchmarks/others/
+chicken-2.6/benchmarks/others/Makefile
+chicken-2.6/benchmarks/others/except.scm
+chicken-2.6/benchmarks/others/except2.scm
+chicken-2.6/benchmarks/others/exception.cpp
+chicken-2.6/benchmarks/others/results.txt
+chicken-2.6/benchmarks/others/setlongjmp.c
+chicken-2.6/benchmarks/boyer.scm
+chicken-2.6/benchmarks/browse.scm
+chicken-2.6/benchmarks/conform.scm
+chicken-2.6/benchmarks/cpstak.scm
+chicken-2.6/benchmarks/ctak.scm
+chicken-2.6/benchmarks/dderiv.scm
+chicken-2.6/benchmarks/deriv.scm
+chicken-2.6/benchmarks/destructive.scm
+chicken-2.6/benchmarks/div-iter.scm
+chicken-2.6/benchmarks/div-rec.scm
+chicken-2.6/benchmarks/dynamic.scm
+chicken-2.6/benchmarks/earley.scm
+chicken-2.6/benchmarks/fft.scm
+chicken-2.6/benchmarks/fib.scm
+chicken-2.6/benchmarks/fibc.scm
+chicken-2.6/benchmarks/fprint.scm
+chicken-2.6/benchmarks/fread.scm
+chicken-2.6/benchmarks/hanoi.scm
+chicken-2.6/benchmarks/lattice.scm
+chicken-2.6/benchmarks/maze.scm
+chicken-2.6/benchmarks/nqueens.scm
+chicken-2.6/benchmarks/plists.scm
+chicken-2.6/benchmarks/puzzle.scm
+chicken-2.6/benchmarks/scheme.scm
+chicken-2.6/benchmarks/stack-size.cmake
+chicken-2.6/benchmarks/tak.scm
+chicken-2.6/benchmarks/takl.scm
+chicken-2.6/benchmarks/takr.scm
+chicken-2.6/benchmarks/traverse.scm
+chicken-2.6/benchmarks/travinit.scm
+chicken-2.6/benchmarks/triangl.scm
+chicken-2.6/boot/
+chicken-2.6/boot/cfiles/
+chicken-2.6/boot/cfiles/batch-driver.c
+chicken-2.6/boot/cfiles/c-backend.c
+chicken-2.6/boot/cfiles/c-platform.c
+chicken-2.6/boot/cfiles/chicken-profile.c
+chicken-2.6/boot/cfiles/chicken-setup.c
+chicken-2.6/boot/cfiles/chicken.c
+chicken-2.6/boot/cfiles/compiler.c
+chicken-2.6/boot/cfiles/csc.c
+chicken-2.6/boot/cfiles/csi.c
+chicken-2.6/boot/cfiles/eval.c
+chicken-2.6/boot/cfiles/eval.exports
+chicken-2.6/boot/cfiles/extras.c
+chicken-2.6/boot/cfiles/extras.exports
+chicken-2.6/boot/cfiles/library.c
+chicken-2.6/boot/cfiles/library.exports
+chicken-2.6/boot/cfiles/lolevel.c
+chicken-2.6/boot/cfiles/lolevel.exports
+chicken-2.6/boot/cfiles/match.c
+chicken-2.6/boot/cfiles/optimizer.c
+chicken-2.6/boot/cfiles/regex.c
+chicken-2.6/boot/cfiles/regex.exports
+chicken-2.6/boot/cfiles/posixunix.c
+chicken-2.6/boot/cfiles/posix.exports
+chicken-2.6/boot/cfiles/posixwin.c
+chicken-2.6/boot/cfiles/profiler.c
+chicken-2.6/boot/cfiles/scheduler.c
+chicken-2.6/boot/cfiles/scheduler.exports
+chicken-2.6/boot/cfiles/srfi-1.c
+chicken-2.6/boot/cfiles/srfi-1.exports
+chicken-2.6/boot/cfiles/srfi-13.c
+chicken-2.6/boot/cfiles/srfi-13.exports
+chicken-2.6/boot/cfiles/srfi-14.c
+chicken-2.6/boot/cfiles/srfi-14.exports
+chicken-2.6/boot/cfiles/srfi-18.c
+chicken-2.6/boot/cfiles/srfi-18.exports
+chicken-2.6/boot/cfiles/srfi-4.c
+chicken-2.6/boot/cfiles/srfi-4.exports
+chicken-2.6/boot/cfiles/stub.c
+chicken-2.6/boot/cfiles/support.c
+chicken-2.6/boot/cfiles/tcp.c
+chicken-2.6/boot/cfiles/tcp.exports
+chicken-2.6/boot/cfiles/ueval.c
+chicken-2.6/boot/cfiles/uextras.c
+chicken-2.6/boot/cfiles/ulibrary.c
+chicken-2.6/boot/cfiles/ulolevel.c
+chicken-2.6/boot/cfiles/uregex.c
+chicken-2.6/boot/cfiles/uposixunix.c
+chicken-2.6/boot/cfiles/uposixwin.c
+chicken-2.6/boot/cfiles/usrfi-1.c
+chicken-2.6/boot/cfiles/usrfi-13.c
+chicken-2.6/boot/cfiles/usrfi-14.c
+chicken-2.6/boot/cfiles/usrfi-18.c
+chicken-2.6/boot/cfiles/usrfi-4.c
+chicken-2.6/boot/cfiles/utcp.c
+chicken-2.6/boot/cfiles/utils.c
+chicken-2.6/boot/cfiles/utils.exports
+chicken-2.6/boot/cfiles/uutils.c
+chicken-2.6/boot/CMakeLists.txt
+chicken-2.6/html/
+chicken-2.6/html/accessing-external-objects.html
+chicken-2.6/html/acknowledgements.html
+chicken-2.6/html/basic-mode-of-operation.html
+chicken-2.6/html/bibliography.html
+chicken-2.6/html/bugs-and-limitations.html
+chicken-2.6/html/c-interface.html
+chicken-2.6/html/callbacks.html
+chicken-2.6/html/chicken-setup.html
+chicken-2.6/html/data-representation.html
+chicken-2.6/html/declarations.html
+chicken-2.6/html/deviations-from-the-standard.html
+chicken-2.6/html/embedding.html
+chicken-2.6/html/extensions-to-the-standard.html
+chicken-2.6/html/faq.html
+chicken-2.6/html/foreign-type-specifiers.html
+chicken-2.6/html/index.html
+chicken-2.6/html/interface-to-external-functions-and-variables.html
+chicken-2.6/html/locations.html
+chicken-2.6/html/non-standard-macros-and-special-forms.html
+chicken-2.6/html/non-standard-read-syntax.html
+chicken-2.6/html/other-support-procedures.html
+chicken-2.6/html/parameters.html
+chicken-2.6/html/pattern-matching.html
+chicken-2.6/html/supported-language.html
+chicken-2.6/html/unit-eval.html
+chicken-2.6/html/unit-extras.html
+chicken-2.6/html/unit-library.html
+chicken-2.6/html/unit-lolevel.html
+chicken-2.6/html/unit-match.html
+chicken-2.6/html/unit-posix.html
+chicken-2.6/html/unit-regex.html
+chicken-2.6/html/unit-srfi-1.html
+chicken-2.6/html/unit-srfi-13.html
+chicken-2.6/html/unit-srfi-14.html
+chicken-2.6/html/unit-srfi-18.html
+chicken-2.6/html/unit-srfi-4.html
+chicken-2.6/html/unit-tcp.html
+chicken-2.6/html/unit-utils.html
+chicken-2.6/html/using-the-compiler.html
+chicken-2.6/html/using-the-interpreter.html
+chicken-2.6/tests/
+chicken-2.6/tests/library-tests.scm
+chicken-2.6/tests/locative-stress-test.scm
+chicken-2.6/tests/r4rstest.scm
+chicken-2.6/tests/runtests.sh
+chicken-2.6/tests/srfi-18-tests.scm
+chicken-2.6/static/
+chicken-2.6/static/CMakeLists.txt
+chicken-2.6/pcre/
+chicken-2.6/pcre/AUTHORS
+chicken-2.6/pcre/chartables.c
+chicken-2.6/pcre/CMakeLists.txt
+chicken-2.6/pcre/config.h
+chicken-2.6/pcre/COPYING
+chicken-2.6/pcre/dftables.c
+chicken-2.6/pcre/LICENCE
+chicken-2.6/pcre/NON-UNIX-USE
+chicken-2.6/pcre/pcre_compile.c
+chicken-2.6/pcre/pcre_compile-static.o
+chicken-2.6/pcre/pcre_config.c
+chicken-2.6/pcre/pcre_dfa_exec.c
+chicken-2.6/pcre/pcre_exec.c
+chicken-2.6/pcre/pcre_fullinfo.c
+chicken-2.6/pcre/pcre_get.c
+chicken-2.6/pcre/pcre_globals.c
+chicken-2.6/pcre/pcre.h
+chicken-2.6/pcre/pcre_info.c
+chicken-2.6/pcre/pcre_internal.h
+chicken-2.6/pcre/pcre_maketables.c
+chicken-2.6/pcre/pcre_ord2utf8.c
+chicken-2.6/pcre/pcre_printint.c
+chicken-2.6/pcre/pcre_refcount.c
+chicken-2.6/pcre/pcre_study.c
+chicken-2.6/pcre/pcre_tables.c
+chicken-2.6/pcre/pcre_try_flipped.c
+chicken-2.6/pcre/pcre_ucp_findchar.c
+chicken-2.6/pcre/pcre_valid_utf8.c
+chicken-2.6/pcre/pcre_version.c
+chicken-2.6/pcre/pcre_xclass.c
+chicken-2.6/pcre/ucp_findchar.c
+chicken-2.6/pcre/ucp.h
+chicken-2.6/pcre/ucpinternal.h
+chicken-2.6/pcre/ucptable.c
+chicken-2.6/CMakeLists.txt
+chicken-2.6/ChangeLog
+chicken-2.6/ChangeLog.0-20040412
+chicken-2.6/INSTALL
+chicken-2.6/INSTALL-CMake.txt
+chicken-2.6/LICENSE
+chicken-2.6/Makefile.am
+chicken-2.6/NEWS
+chicken-2.6/README
+chicken-2.6/StackGrowsDownward.c
+chicken-2.6/autogen.sh
+chicken-2.6/banner.scm
+chicken-2.6/batch-driver.scm
+chicken-2.6/build.scm
+chicken-2.6/buildversion
+chicken-2.6/c-backend.scm
+chicken-2.6/c-platform.scm
+chicken-2.6/chicken-config-cmake.h.in
+chicken-2.6/chicken-defaults.h.in
+chicken-2.6/chicken-ffi-macros.scm
+chicken-2.6/chicken-more-macros.scm
+chicken-2.6/chicken-profile.1
+chicken-2.6/chicken-profile.scm
+chicken-2.6/chicken-setup.1
+chicken-2.6/chicken-setup.scm
+chicken-2.6/chicken.1
+chicken-2.6/chicken.h
+chicken-2.6/chicken.ico
+chicken-2.6/chicken.rc
+chicken-2.6/chicken.scm
+chicken-2.6/chicken.spec.in
+chicken-2.6/compiler.scm
+chicken-2.6/configure.in
+chicken-2.6/csc.1
+chicken-2.6/csc.scm
+chicken-2.6/cscbench.scm
+chicken-2.6/csi.1
+chicken-2.6/csi.scm
+chicken-2.6/csibatch.bat
+chicken-2.6/dist.cmake
+chicken-2.6/eval.scm
+chicken-2.6/extras.scm
+chicken-2.6/hen.el
+chicken-2.6/library.scm
+chicken-2.6/lolevel.scm
+chicken-2.6/match.scm
+chicken-2.6/optimizer.scm
+chicken-2.6/regex.scm
+chicken-2.6/posixunix.scm
+chicken-2.6/posixwin.scm
+chicken-2.6/profiler.scm
+chicken-2.6/runtime.c
+chicken-2.6/scheduler.scm
+chicken-2.6/srfi-1.scm
+chicken-2.6/srfi-13.scm
+chicken-2.6/srfi-14.scm
+chicken-2.6/srfi-18.scm
+chicken-2.6/srfi-4.scm
+chicken-2.6/stub.scm
+chicken-2.6/support.scm
+chicken-2.6/tcp.scm
+chicken-2.6/tweaks.scm
+chicken-2.6/utils.scm
+chicken-2.6/config.guess
+chicken-2.6/config.sub
+chicken-2.6/ltmain.sh
+chicken-2.6/autom4te.cache/
+chicken-2.6/autom4te.cache/requests
+chicken-2.6/autom4te.cache/output.0
+chicken-2.6/autom4te.cache/traces.0
+chicken-2.6/autom4te.cache/output.1
+chicken-2.6/autom4te.cache/traces.1
+chicken-2.6/aclocal.m4
+chicken-2.6/chicken-config.h.in
+chicken-2.6/install-sh
+chicken-2.6/missing
+chicken-2.6/compile
+chicken-2.6/Makefile.in
+chicken-2.6/configure
+  <!-- /cygdrive/c/downloads --> cd chicken-2.6
+  <!-- /cygdrive/c/downloads/chicken-2.6 --> ls
+CMakeLists.txt	      c-backend.scm		 config.sub    optimizer.scm
+ChangeLog	      c-platform.scm		 configure     pcre
+ChangeLog.0-20040412  chicken-config-cmake.h.in  configure.in  posixunix.scm
+INSTALL		      chicken-config.h.in	 csc.1	       posixwin.scm
+INSTALL-CMake.txt     chicken-defaults.h.in	 csc.scm       profiler.scm
+LICENSE		      chicken-ffi-macros.scm	 cscbench.scm  regex.scm
+Makefile.am	      chicken-more-macros.scm	 csi.1	       runtime.c
+Makefile.in	      chicken-profile.1		 csi.scm       scheduler.scm
+NEWS		      chicken-profile.scm	 csibatch.bat  srfi-1.scm
+README		      chicken-setup.1		 dist.cmake    srfi-13.scm
+StackGrowsDownward.c  chicken-setup.scm		 eval.scm      srfi-14.scm
+aclocal.m4	      chicken.1			 extras.scm    srfi-18.scm
+autogen.sh	      chicken.h			 hen.el        srfi-4.scm
+autom4te.cache	      chicken.ico		 html	       static
+banner.scm	      chicken.rc		 install-sh    stub.scm
+batch-driver.scm      chicken.scm		 library.scm   support.scm
+benchmarks	      chicken.spec.in		 lolevel.scm   tcp.scm
+boot		      compile			 ltmain.sh     tests
+build.scm	      compiler.scm		 match.scm     tweaks.scm
+buildversion	      config.guess		 missing       utils.scm
+  <!-- /cygdrive/c/downloads/chicken-2.6 --> ./configure && make
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for gawk... gawk
+checking whether make sets $(MAKE)... yes
+checking build system type... i686-pc-cygwin
+checking host system type... i686-pc-cygwin
+checking for gcc... gcc
+checking for C compiler default output file name... a.exe
+checking whether the C compiler works... yes
+checking whether we are cross compiling... no
+checking for suffix of executables... .exe
+checking for suffix of object files... o
+checking whether we are using the GNU C compiler... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to accept ANSI C... none needed
+checking for style of include used by make... GNU
+checking dependency style of gcc... none
+checking for g++... g++
+checking whether we are using the GNU C++ compiler... yes
+checking whether g++ accepts -g... yes
+checking dependency style of g++... none
+checking for a BSD-compatible install... /usr/bin/install -c
+checking for a sed that does not truncate output... /usr/bin/sed
+checking for egrep... grep -E
+checking for ld used by gcc... /usr/i686-pc-cygwin/bin/ld.exe
+checking if the linker (/usr/i686-pc-cygwin/bin/ld.exe) is GNU ld... yes
+checking for /usr/i686-pc-cygwin/bin/ld.exe option to reload object files... -r
+checking for BSD-compatible nm... /usr/bin/nm -B
+checking whether ln -s works... yes
+checking how to recognise dependent libraries... file_magic ^x86 archive import|^x86 DLL
+checking for dlltool... dlltool
+checking for as... as
+checking for objdump... objdump
+checking how to run the C preprocessor... gcc -E
+checking for ANSI C header files... yes
+checking for sys/types.h... yes
+checking for sys/stat.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for strings.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for unistd.h... yes
+checking dlfcn.h usability... yes
+checking dlfcn.h presence... yes
+checking for dlfcn.h... yes
+checking how to run the C++ preprocessor... g++ -E
+checking for g77... no
+checking for f77... no
+checking for xlf... no
+checking for frt... no
+checking for pgf77... no
+checking for fort77... no
+checking for fl32... no
+checking for af77... no
+checking for f90... no
+checking for xlf90... no
+checking for pgf90... no
+checking for epcf90... no
+checking for f95... no
+checking for fort... no
+checking for xlf95... no
+checking for ifc... no
+checking for efc... no
+checking for pgf95... no
+checking for lf95... no
+checking for gfortran... no
+checking whether we are using the GNU Fortran 77 compiler... no
+checking whether  accepts -g... no
+checking the maximum length of command line arguments... 8192
+checking command to parse /usr/bin/nm -B output from gcc object... ok
+checking for objdir... .libs
+checking for ar... ar
+checking for ranlib... ranlib
+checking for strip... strip
+checking if gcc static flag  works... yes
+checking if gcc supports -fno-rtti -fno-exceptions... no
+checking for gcc option to produce PIC... 
+checking if gcc supports -c -o file.o... yes
+checking whether the gcc linker (/usr/i686-pc-cygwin/bin/ld.exe) supports shared libraries... yes
+checking whether -lc should be explicitly linked in... yes
+checking dynamic linker characteristics... Win32 ld.exe
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... yes
+checking whether to build static libraries... yes
+configure: creating libtool
+appending configuration tag "CXX" to libtool
+checking for ld used by g++... /usr/i686-pc-cygwin/bin/ld.exe
+checking if the linker (/usr/i686-pc-cygwin/bin/ld.exe) is GNU ld... yes
+checking whether the g++ linker (/usr/i686-pc-cygwin/bin/ld.exe) supports shared libraries... yes
+checking for g++ option to produce PIC... 
+checking if g++ supports -c -o file.o... yes
+checking whether the g++ linker (/usr/i686-pc-cygwin/bin/ld.exe) supports shared libraries... yes
+checking dynamic linker characteristics... Win32 ld.exe
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+appending configuration tag "F77" to libtool
+checking for gmake... no
+checking for make... make
+checking whether make is GNU Make... yes
+checking GCC version... 
+checking whether we are in a MinGW system... 
+checking whether __MINGW32__ is declared... no
+checking for dirent.h that defines DIR... yes
+checking for library containing opendir... none required
+checking for ANSI C header files... (cached) yes
+checking limits.h usability... yes
+checking limits.h presence... yes
+checking for limits.h... yes
+checking for unistd.h... (cached) yes
+checking dirent.h usability... yes
+checking dirent.h presence... yes
+checking for dirent.h... yes
+checking netinet/in.h usability... yes
+checking netinet/in.h presence... yes
+checking for netinet/in.h... yes
+checking netdb.h usability... yes
+checking netdb.h presence... yes
+checking for netdb.h... yes
+checking errno.h usability... yes
+checking errno.h presence... yes
+checking for errno.h... yes
+checking for sys/types.h... (cached) yes
+checking sys/socket.h usability... yes
+checking sys/socket.h presence... yes
+checking for sys/socket.h... yes
+checking sys/time.h usability... yes
+checking sys/time.h presence... yes
+checking for sys/time.h... yes
+checking sysexits.h usability... yes
+checking sysexits.h presence... yes
+checking for sysexits.h... yes
+checking for dlfcn.h... (cached) yes
+checking dl.h usability... no
+checking dl.h presence... no
+checking for dl.h... no
+checking alloca.h usability... yes
+checking alloca.h presence... yes
+checking for alloca.h... yes
+checking for stdint.h... (cached) yes
+checking windows.h usability... yes
+checking windows.h presence... yes
+checking for windows.h... yes
+checking grp.h usability... yes
+checking grp.h presence... yes
+checking for grp.h... yes
+checking ffi.h usability... no
+checking ffi.h presence... no
+checking for ffi.h... no
+checking crt_externs.h usability... no
+checking crt_externs.h presence... no
+checking for crt_externs.h... no
+checking for an ANSI C-conforming const... yes
+checking for size_t... yes
+checking whether struct tm is in sys/time.h or time.h... time.h
+checking for working alloca.h... yes
+checking for alloca... yes
+checking return type of signal handlers... void
+checking for memmove... yes
+checking for strerror... yes
+checking for strtod... yes
+checking for strtol... yes
+checking for strtoul... yes
+checking for gcvt... yes
+checking for dlopen in -ldl... yes
+checking for ffi_prep_cif in -lffi... no
+checking whether LoadLibrary is declared... yes
+checking whether GetProcAddress is declared... yes
+checking for shl_load in -ldld... no
+checking for modf in -lm... yes
+checking for t_open in -lnsl... no
+checking for gethostbyname in -linet... no
+checking for socket in -lsocket... no
+checking for library containing nanosleep... none required
+checking stack growth direction... Your C stack grows downward.
+checking for better CFLAGS... -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL
+checking whether the linker supports -export-dynamic... yes
+checking supplied nursery size... 
+checking for boot/cfiles/batch-driver.c... yes
+checking for boot/cfiles/c-backend.c... yes
+checking for boot/cfiles/c-platform.c... yes
+checking for boot/cfiles/chicken.c... yes
+checking for boot/cfiles/chicken-profile.c... yes
+checking for boot/cfiles/chicken-setup.c... yes
+checking for boot/cfiles/compiler.c... yes
+checking for boot/cfiles/csc.c... yes
+checking for boot/cfiles/csi.c... yes
+checking for boot/cfiles/eval.c... yes
+checking for boot/cfiles/extras.c... yes
+checking for boot/cfiles/library.c... yes
+checking for boot/cfiles/lolevel.c... yes
+checking for boot/cfiles/match.c... yes
+checking for boot/cfiles/optimizer.c... yes
+checking for boot/cfiles/regex.c... yes
+checking for boot/cfiles/posixunix.c... yes
+checking for boot/cfiles/posixwin.c... yes
+checking for boot/cfiles/profiler.c... yes
+checking for boot/cfiles/scheduler.c... yes
+checking for boot/cfiles/srfi-1.c... yes
+checking for boot/cfiles/srfi-4.c... yes
+checking for boot/cfiles/srfi-13.c... yes
+checking for boot/cfiles/srfi-14.c... yes
+checking for boot/cfiles/srfi-14.exports... yes
+checking for boot/cfiles/srfi-18.c... yes
+checking for boot/cfiles/stub.c... yes
+checking for boot/cfiles/support.c... yes
+checking for boot/cfiles/tcp.c... yes
+checking for boot/cfiles/ueval.c... yes
+checking for boot/cfiles/uextras.c... yes
+checking for boot/cfiles/ulibrary.c... yes
+checking for boot/cfiles/ulolevel.c... yes
+checking for boot/cfiles/uregex.c... yes
+checking for boot/cfiles/uposixunix.c... yes
+checking for boot/cfiles/uposixwin.c... yes
+checking for boot/cfiles/usrfi-1.c... yes
+checking for boot/cfiles/usrfi-4.c... yes
+checking for boot/cfiles/usrfi-13.c... yes
+checking for boot/cfiles/usrfi-14.c... yes
+checking for boot/cfiles/usrfi-18.c... yes
+checking for boot/cfiles/utcp.c... yes
+checking for boot/cfiles/utils.c... yes
+checking for boot/cfiles/uutils.c... yes
+checking for boot/cfiles/eval.exports... yes
+checking for boot/cfiles/extras.exports... yes
+checking for boot/cfiles/library.exports... yes
+checking for boot/cfiles/lolevel.exports... yes
+checking for boot/cfiles/regex.exports... yes
+checking for boot/cfiles/posix.exports... yes
+checking for boot/cfiles/scheduler.exports... yes
+checking for boot/cfiles/srfi-1.exports... yes
+checking for boot/cfiles/srfi-4.exports... yes
+checking for boot/cfiles/srfi-13.exports... yes
+checking for boot/cfiles/srfi-18.exports... yes
+checking for boot/cfiles/tcp.exports... yes
+checking for boot/cfiles/utils.exports... yes
+configure: creating ./config.status
+config.status: creating chicken.spec
+config.status: creating Makefile
+config.status: creating chicken-config.h
+config.status: executing depfiles commands
+echo creating chicken-defaults.h; \
+	sed -e "s,@C_INSTALL_CC[@],\"gcc\"," \
+	    -e "s,@C_INSTALL_CXX[@],\"g++\"," \
+	    -e "s%@C_INSTALL_CFLAGS[@]%\"-DHAVE_CHICKEN_CONFIG_H -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL\"%" \
+	    -e "s,@C_INSTALL_SHARE_HOME[@],\"/usr/local/share/chicken\"," \
+	    -e "s,@C_INSTALL_BIN_HOME[@],\"/usr/local/bin\"," \
+	    -e "s,@C_INSTALL_EGG_HOME[@],\"/usr/local/lib/chicken/1\"," \
+	    -e "s,@C_INSTALL_LIB_HOME[@],\"/usr/local/lib\"," \
+	    -e "s,@C_INSTALL_STATIC_LIB_HOME[@],\"/usr/local/lib\"," \
+	    -e "s,@C_INSTALL_INCLUDE_HOME[@],\"/usr/local/include\"," \
+	    -e "s%@C_INSTALL_MORE_LIBS[@]%\"-ldl -lm  -ldl \"%" \
+	    -e "s%@C_INSTALL_MORE_STATIC_LIBS[@]%\"-ldl -lm \"%" \
+	    -e "s%@C_DEFAULT_TARGET_STACK_SIZE[@]%(128*1024)%" \
+	    -e "s%@C_TARGET_MORE_LIBS[@]%\"-ldl -lm  -ldl \"%" \
+	    -e "s%@C_TARGET_MORE_STATIC_LIBS[@]%\"-ldl -lm \"%" \
+	    -e "s,@C_TARGET_CC[@],\"gcc\"," \
+	    -e "s,@C_TARGET_CXX[@],\"g++\"," \
+	    -e "s,@C_TARGET_CFLAGS[@],\"-DHAVE_CHICKEN_CONFIG -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL\"," \
+	    -e "s,@C_TARGET_LIB_HOME[@],\"/usr/local/lib\"," \
+	    -e "s,@C_TARGET_STATIC_LIB_HOME[@],\"/usr/local/lib/lib\"," \
+	    -e "s,@C_TARGET_INCLUDE_HOME[@],\"/usr/local/include\"," \
+	    -e "s,@C_TARGET_SHARE_HOME[@],\"/usr/local/share/chicken\"," \
+	    -e "s,@C_STACK_GROWS_DOWNWARD[@],(1),g" \
+	    -e "s,@C_CROSS_CHICKEN[@],0,g" \
+	  <./chicken-defaults.h.in >chicken-defaults.h;
+creating chicken-defaults.h
+cp ./boot/cfiles/batch-driver.c .
+cp ./boot/cfiles/c-backend.c .
+cp ./boot/cfiles/c-platform.c .
+cp ./boot/cfiles/chicken.c .
+cp ./boot/cfiles/chicken-profile.c .
+cp ./boot/cfiles/chicken-setup.c .
+cp ./boot/cfiles/compiler.c .
+cp ./boot/cfiles/csc.c .
+cp ./boot/cfiles/csi.c .
+cp ./boot/cfiles/eval.c .
+cp ./boot/cfiles/extras.c .
+cp ./boot/cfiles/library.c .
+cp ./boot/cfiles/lolevel.c .
+cp ./boot/cfiles/match.c .
+cp ./boot/cfiles/optimizer.c .
+cp ./boot/cfiles/regex.c .
+cp ./boot/cfiles/posixunix.c .
+cp ./boot/cfiles/posixwin.c .
+cp ./boot/cfiles/profiler.c .
+cp ./boot/cfiles/scheduler.c .
+cp ./boot/cfiles/srfi-1.c .
+cp ./boot/cfiles/srfi-4.c .
+cp ./boot/cfiles/srfi-13.c .
+cp ./boot/cfiles/srfi-14.c .
+cp ./boot/cfiles/srfi-14.exports .
+cp ./boot/cfiles/srfi-18.c .
+cp ./boot/cfiles/stub.c .
+cp ./boot/cfiles/support.c .
+cp ./boot/cfiles/tcp.c .
+cp ./boot/cfiles/ueval.c .
+cp ./boot/cfiles/uextras.c .
+cp ./boot/cfiles/ulibrary.c .
+cp ./boot/cfiles/ulolevel.c .
+cp ./boot/cfiles/uregex.c .
+cp ./boot/cfiles/uposixunix.c .
+cp ./boot/cfiles/uposixwin.c .
+cp ./boot/cfiles/usrfi-1.c .
+cp ./boot/cfiles/usrfi-4.c .
+cp ./boot/cfiles/usrfi-13.c .
+cp ./boot/cfiles/usrfi-14.c .
+cp ./boot/cfiles/usrfi-18.c .
+cp ./boot/cfiles/utcp.c .
+cp ./boot/cfiles/utils.c .
+cp ./boot/cfiles/uutils.c .
+cp ./boot/cfiles/eval.exports .
+cp ./boot/cfiles/extras.exports .
+cp ./boot/cfiles/library.exports .
+cp ./boot/cfiles/lolevel.exports .
+cp ./boot/cfiles/regex.exports .
+cp ./boot/cfiles/posix.exports .
+cp ./boot/cfiles/scheduler.exports .
+cp ./boot/cfiles/srfi-1.exports .
+cp ./boot/cfiles/srfi-4.exports .
+cp ./boot/cfiles/srfi-13.exports .
+cp ./boot/cfiles/srfi-18.exports .
+cp ./boot/cfiles/tcp.exports .
+cp ./boot/cfiles/utils.exports .
+make  all-am
+make[1]: Entering directory `/cygdrive/c/downloads/chicken-2.6'
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-match.lo `test -f 'match.c' || echo './'`match.c
+mkdir .libs
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c match.c  -DPIC -o .libs/libchicken_la-match.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c match.c -o libchicken_la-match.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-profiler.lo `test -f 'profiler.c' || echo './'`profiler.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c profiler.c  -DPIC -o .libs/libchicken_la-profiler.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c profiler.c -o libchicken_la-profiler.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-runtime.lo `test -f 'runtime.c' || echo './'`runtime.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c runtime.c  -DPIC -o .libs/libchicken_la-runtime.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c runtime.c -o libchicken_la-runtime.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-scheduler.lo `test -f 'scheduler.c' || echo './'`scheduler.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c scheduler.c  -DPIC -o .libs/libchicken_la-scheduler.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c scheduler.c -o libchicken_la-scheduler.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-stub.lo `test -f 'stub.c' || echo './'`stub.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c stub.c  -DPIC -o .libs/libchicken_la-stub.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c stub.c -o libchicken_la-stub.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-eval.lo `test -f 'eval.c' || echo './'`eval.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c eval.c  -DPIC -o .libs/libchicken_la-eval.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c eval.c -o libchicken_la-eval.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-extras.lo `test -f 'extras.c' || echo './'`extras.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c extras.c  -DPIC -o .libs/libchicken_la-extras.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c extras.c -o libchicken_la-extras.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-library.lo `test -f 'library.c' || echo './'`library.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c library.c  -DPIC -o .libs/libchicken_la-library.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c library.c -o libchicken_la-library.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-lolevel.lo `test -f 'lolevel.c' || echo './'`lolevel.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c lolevel.c  -DPIC -o .libs/libchicken_la-lolevel.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c lolevel.c -o libchicken_la-lolevel.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-utils.lo `test -f 'utils.c' || echo './'`utils.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c utils.c  -DPIC -o .libs/libchicken_la-utils.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c utils.c -o libchicken_la-utils.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-tcp.lo `test -f 'tcp.c' || echo './'`tcp.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c tcp.c  -DPIC -o .libs/libchicken_la-tcp.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c tcp.c -o libchicken_la-tcp.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-srfi-1.lo `test -f 'srfi-1.c' || echo './'`srfi-1.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-1.c  -DPIC -o .libs/libchicken_la-srfi-1.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-1.c -o libchicken_la-srfi-1.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-srfi-4.lo `test -f 'srfi-4.c' || echo './'`srfi-4.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-4.c  -DPIC -o .libs/libchicken_la-srfi-4.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-4.c -o libchicken_la-srfi-4.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-srfi-13.lo `test -f 'srfi-13.c' || echo './'`srfi-13.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-13.c  -DPIC -o .libs/libchicken_la-srfi-13.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-13.c -o libchicken_la-srfi-13.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-srfi-14.lo `test -f 'srfi-14.c' || echo './'`srfi-14.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-14.c  -DPIC -o .libs/libchicken_la-srfi-14.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-14.c -o libchicken_la-srfi-14.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-srfi-18.lo `test -f 'srfi-18.c' || echo './'`srfi-18.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-18.c  -DPIC -o .libs/libchicken_la-srfi-18.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c srfi-18.c -o libchicken_la-srfi-18.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-regex.lo `test -f 'regex.c' || echo './'`regex.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c regex.c  -DPIC -o .libs/libchicken_la-regex.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c regex.c -o libchicken_la-regex.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-posixunix.lo `test -f 'posixunix.c' || echo './'`posixunix.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c posixunix.c  -DPIC -o .libs/libchicken_la-posixunix.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c posixunix.c -o libchicken_la-posixunix.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_compile.lo `test -f 'pcre/pcre_compile.c' || echo './'`pcre/pcre_compile.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_compile.c  -DPIC -o .libs/libchicken_la-pcre_compile.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_compile.c -o libchicken_la-pcre_compile.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_get.lo `test -f 'pcre/pcre_get.c' || echo './'`pcre/pcre_get.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_get.c  -DPIC -o .libs/libchicken_la-pcre_get.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_get.c -o libchicken_la-pcre_get.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_printint.lo `test -f 'pcre/pcre_printint.c' || echo './'`pcre/pcre_printint.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_printint.c  -DPIC -o .libs/libchicken_la-pcre_printint.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_printint.c -o libchicken_la-pcre_printint.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_ucp_findchar.lo `test -f 'pcre/pcre_ucp_findchar.c' || echo './'`pcre/pcre_ucp_findchar.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ucp_findchar.c  -DPIC -o .libs/libchicken_la-pcre_ucp_findchar.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ucp_findchar.c -o libchicken_la-pcre_ucp_findchar.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_config.lo `test -f 'pcre/pcre_config.c' || echo './'`pcre/pcre_config.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_config.c  -DPIC -o .libs/libchicken_la-pcre_config.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_config.c -o libchicken_la-pcre_config.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_globals.lo `test -f 'pcre/pcre_globals.c' || echo './'`pcre/pcre_globals.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_globals.c  -DPIC -o .libs/libchicken_la-pcre_globals.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_globals.c -o libchicken_la-pcre_globals.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_refcount.lo `test -f 'pcre/pcre_refcount.c' || echo './'`pcre/pcre_refcount.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_refcount.c  -DPIC -o .libs/libchicken_la-pcre_refcount.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_refcount.c -o libchicken_la-pcre_refcount.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_valid_utf8.lo `test -f 'pcre/pcre_valid_utf8.c' || echo './'`pcre/pcre_valid_utf8.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_valid_utf8.c  -DPIC -o .libs/libchicken_la-pcre_valid_utf8.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_valid_utf8.c -o libchicken_la-pcre_valid_utf8.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_dfa_exec.lo `test -f 'pcre/pcre_dfa_exec.c' || echo './'`pcre/pcre_dfa_exec.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_dfa_exec.c  -DPIC -o .libs/libchicken_la-pcre_dfa_exec.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_dfa_exec.c -o libchicken_la-pcre_dfa_exec.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_info.lo `test -f 'pcre/pcre_info.c' || echo './'`pcre/pcre_info.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_info.c  -DPIC -o .libs/libchicken_la-pcre_info.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_info.c -o libchicken_la-pcre_info.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_study.lo `test -f 'pcre/pcre_study.c' || echo './'`pcre/pcre_study.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_study.c  -DPIC -o .libs/libchicken_la-pcre_study.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_study.c -o libchicken_la-pcre_study.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_version.lo `test -f 'pcre/pcre_version.c' || echo './'`pcre/pcre_version.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_version.c  -DPIC -o .libs/libchicken_la-pcre_version.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_version.c -o libchicken_la-pcre_version.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_exec.lo `test -f 'pcre/pcre_exec.c' || echo './'`pcre/pcre_exec.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_exec.c  -DPIC -o .libs/libchicken_la-pcre_exec.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_exec.c -o libchicken_la-pcre_exec.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_maketables.lo `test -f 'pcre/pcre_maketables.c' || echo './'`pcre/pcre_maketables.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_maketables.c  -DPIC -o .libs/libchicken_la-pcre_maketables.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_maketables.c -o libchicken_la-pcre_maketables.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_tables.lo `test -f 'pcre/pcre_tables.c' || echo './'`pcre/pcre_tables.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_tables.c  -DPIC -o .libs/libchicken_la-pcre_tables.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_tables.c -o libchicken_la-pcre_tables.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_xclass.lo `test -f 'pcre/pcre_xclass.c' || echo './'`pcre/pcre_xclass.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_xclass.c  -DPIC -o .libs/libchicken_la-pcre_xclass.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_xclass.c -o libchicken_la-pcre_xclass.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_fullinfo.lo `test -f 'pcre/pcre_fullinfo.c' || echo './'`pcre/pcre_fullinfo.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_fullinfo.c  -DPIC -o .libs/libchicken_la-pcre_fullinfo.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_fullinfo.c -o libchicken_la-pcre_fullinfo.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_ord2utf8.lo `test -f 'pcre/pcre_ord2utf8.c' || echo './'`pcre/pcre_ord2utf8.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ord2utf8.c  -DPIC -o .libs/libchicken_la-pcre_ord2utf8.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ord2utf8.c -o libchicken_la-pcre_ord2utf8.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-pcre_try_flipped.lo `test -f 'pcre/pcre_try_flipped.c' || echo './'`pcre/pcre_try_flipped.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_try_flipped.c  -DPIC -o .libs/libchicken_la-pcre_try_flipped.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_try_flipped.c -o libchicken_la-pcre_try_flipped.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libchicken_la-chartables.lo `test -f 'pcre/chartables.c' || echo './'`pcre/chartables.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/chartables.c  -DPIC -o .libs/libchicken_la-chartables.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/chartables.c -o libchicken_la-chartables.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o libchicken.la -rpath /usr/local/lib -version-info=0:0:0 -no-undefined -ldl -lm  libchicken_la-match.lo libchicken_la-profiler.lo libchicken_la-runtime.lo libchicken_la-scheduler.lo libchicken_la-stub.lo libchicken_la-eval.lo libchicken_la-extras.lo libchicken_la-library.lo libchicken_la-lolevel.lo libchicken_la-utils.lo libchicken_la-tcp.lo libchicken_la-srfi-1.lo libchicken_la-srfi-4.lo libchicken_la-srfi-13.lo libchicken_la-srfi-14.lo libchicken_la-srfi-18.lo libchicken_la-regex.lo  libchicken_la-posixunix.lo libchicken_la-pcre_compile.lo libchicken_la-pcre_get.lo libchicken_la-pcre_printint.lo libchicken_la-pcre_ucp_findchar.lo libchicken_la-pcre_config.lo libchicken_la-pcre_globals.lo libchicken_la-pcre_refcount.lo libchicken_la-pcre_valid_utf8.lo libchicken_la-pcre_dfa_exec.lo libchicken_la-pcre_info.lo libchicken_la-pcre_study.lo libchicken_la-pcre_version.lo libchicken_la-pcre_exec.lo libchicken_la-pcre_maketables.lo libchicken_la-pcre_tables.lo libchicken_la-pcre_xclass.lo libchicken_la-pcre_fullinfo.lo libchicken_la-pcre_ord2utf8.lo libchicken_la-pcre_try_flipped.lo libchicken_la-chartables.lo  -ldl -lm
+gcc -shared  .libs/libchicken_la-match.o .libs/libchicken_la-profiler.o .libs/libchicken_la-runtime.o .libs/libchicken_la-scheduler.o .libs/libchicken_la-stub.o .libs/libchicken_la-eval.o .libs/libchicken_la-extras.o .libs/libchicken_la-library.o .libs/libchicken_la-lolevel.o .libs/libchicken_la-utils.o .libs/libchicken_la-tcp.o .libs/libchicken_la-srfi-1.o .libs/libchicken_la-srfi-4.o .libs/libchicken_la-srfi-13.o .libs/libchicken_la-srfi-14.o .libs/libchicken_la-srfi-18.o .libs/libchicken_la-regex.o .libs/libchicken_la-posixunix.o .libs/libchicken_la-pcre_compile.o .libs/libchicken_la-pcre_get.o .libs/libchicken_la-pcre_printint.o .libs/libchicken_la-pcre_ucp_findchar.o .libs/libchicken_la-pcre_config.o .libs/libchicken_la-pcre_globals.o .libs/libchicken_la-pcre_refcount.o .libs/libchicken_la-pcre_valid_utf8.o .libs/libchicken_la-pcre_dfa_exec.o .libs/libchicken_la-pcre_info.o .libs/libchicken_la-pcre_study.o .libs/libchicken_la-pcre_version.o .libs/libchicken_la-pcre_exec.o .libs/libchicken_la-pcre_maketables.o .libs/libchicken_la-pcre_tables.o .libs/libchicken_la-pcre_xclass.o .libs/libchicken_la-pcre_fullinfo.o .libs/libchicken_la-pcre_ord2utf8.o .libs/libchicken_la-pcre_try_flipped.o .libs/libchicken_la-chartables.o  -ldl  -o .libs/cygchicken-0.dll -Wl,--image-base=0x10000000 -Wl,--out-implib,.libs/libchicken.dll.a
+Creating library file: .libs/libchicken.dll.a
+ar cru .libs/libchicken.a  libchicken_la-match.o libchicken_la-profiler.o libchicken_la-runtime.o libchicken_la-scheduler.o libchicken_la-stub.o libchicken_la-eval.o libchicken_la-extras.o libchicken_la-library.o libchicken_la-lolevel.o libchicken_la-utils.o libchicken_la-tcp.o libchicken_la-srfi-1.o libchicken_la-srfi-4.o libchicken_la-srfi-13.o libchicken_la-srfi-14.o libchicken_la-srfi-18.o libchicken_la-regex.o libchicken_la-posixunix.o libchicken_la-pcre_compile.o libchicken_la-pcre_get.o libchicken_la-pcre_printint.o libchicken_la-pcre_ucp_findchar.o libchicken_la-pcre_config.o libchicken_la-pcre_globals.o libchicken_la-pcre_refcount.o libchicken_la-pcre_valid_utf8.o libchicken_la-pcre_dfa_exec.o libchicken_la-pcre_info.o libchicken_la-pcre_study.o libchicken_la-pcre_version.o libchicken_la-pcre_exec.o libchicken_la-pcre_maketables.o libchicken_la-pcre_tables.o libchicken_la-pcre_xclass.o libchicken_la-pcre_fullinfo.o libchicken_la-pcre_ord2utf8.o libchicken_la-pcre_try_flipped.o libchicken_la-chartables.o
+ranlib .libs/libchicken.a
+creating libchicken.la
+(cd .libs && rm -f libchicken.la && ln -s ../libchicken.la libchicken.la)
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-match.lo `test -f 'match.c' || echo './'`match.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c match.c  -DPIC -o .libs/libuchicken_la-match.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c match.c -o libuchicken_la-match.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-profiler.lo `test -f 'profiler.c' || echo './'`profiler.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c profiler.c  -DPIC -o .libs/libuchicken_la-profiler.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c profiler.c -o libuchicken_la-profiler.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-runtime.lo `test -f 'runtime.c' || echo './'`runtime.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c runtime.c  -DPIC -o .libs/libuchicken_la-runtime.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c runtime.c -o libuchicken_la-runtime.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-scheduler.lo `test -f 'scheduler.c' || echo './'`scheduler.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c scheduler.c  -DPIC -o .libs/libuchicken_la-scheduler.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c scheduler.c -o libuchicken_la-scheduler.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-stub.lo `test -f 'stub.c' || echo './'`stub.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c stub.c  -DPIC -o .libs/libuchicken_la-stub.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c stub.c -o libuchicken_la-stub.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-ueval.lo `test -f 'ueval.c' || echo './'`ueval.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c ueval.c  -DPIC -o .libs/libuchicken_la-ueval.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c ueval.c -o libuchicken_la-ueval.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-uextras.lo `test -f 'uextras.c' || echo './'`uextras.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uextras.c  -DPIC -o .libs/libuchicken_la-uextras.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uextras.c -o libuchicken_la-uextras.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-ulibrary.lo `test -f 'ulibrary.c' || echo './'`ulibrary.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c ulibrary.c  -DPIC -o .libs/libuchicken_la-ulibrary.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c ulibrary.c -o libuchicken_la-ulibrary.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-ulolevel.lo `test -f 'ulolevel.c' || echo './'`ulolevel.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c ulolevel.c  -DPIC -o .libs/libuchicken_la-ulolevel.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c ulolevel.c -o libuchicken_la-ulolevel.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-uutils.lo `test -f 'uutils.c' || echo './'`uutils.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uutils.c  -DPIC -o .libs/libuchicken_la-uutils.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uutils.c -o libuchicken_la-uutils.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-utcp.lo `test -f 'utcp.c' || echo './'`utcp.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c utcp.c  -DPIC -o .libs/libuchicken_la-utcp.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c utcp.c -o libuchicken_la-utcp.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-usrfi-1.lo `test -f 'usrfi-1.c' || echo './'`usrfi-1.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-1.c  -DPIC -o .libs/libuchicken_la-usrfi-1.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-1.c -o libuchicken_la-usrfi-1.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-usrfi-4.lo `test -f 'usrfi-4.c' || echo './'`usrfi-4.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-4.c  -DPIC -o .libs/libuchicken_la-usrfi-4.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-4.c -o libuchicken_la-usrfi-4.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-usrfi-13.lo `test -f 'usrfi-13.c' || echo './'`usrfi-13.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-13.c  -DPIC -o .libs/libuchicken_la-usrfi-13.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-13.c -o libuchicken_la-usrfi-13.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-usrfi-14.lo `test -f 'usrfi-14.c' || echo './'`usrfi-14.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-14.c  -DPIC -o .libs/libuchicken_la-usrfi-14.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-14.c -o libuchicken_la-usrfi-14.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-usrfi-18.lo `test -f 'usrfi-18.c' || echo './'`usrfi-18.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-18.c  -DPIC -o .libs/libuchicken_la-usrfi-18.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c usrfi-18.c -o libuchicken_la-usrfi-18.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-uregex.lo `test -f 'uregex.c' || echo './'`uregex.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uregex.c  -DPIC -o .libs/libuchicken_la-uregex.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uregex.c -o libuchicken_la-uregex.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-uposixunix.lo `test -f 'uposixunix.c' || echo './'`uposixunix.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uposixunix.c  -DPIC -o .libs/libuchicken_la-uposixunix.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c uposixunix.c -o libuchicken_la-uposixunix.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_compile.lo `test -f 'pcre/pcre_compile.c' || echo './'`pcre/pcre_compile.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_compile.c  -DPIC -o .libs/libuchicken_la-pcre_compile.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_compile.c -o libuchicken_la-pcre_compile.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_get.lo `test -f 'pcre/pcre_get.c' || echo './'`pcre/pcre_get.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_get.c  -DPIC -o .libs/libuchicken_la-pcre_get.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_get.c -o libuchicken_la-pcre_get.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_printint.lo `test -f 'pcre/pcre_printint.c' || echo './'`pcre/pcre_printint.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_printint.c  -DPIC -o .libs/libuchicken_la-pcre_printint.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_printint.c -o libuchicken_la-pcre_printint.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_ucp_findchar.lo `test -f 'pcre/pcre_ucp_findchar.c' || echo './'`pcre/pcre_ucp_findchar.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ucp_findchar.c  -DPIC -o .libs/libuchicken_la-pcre_ucp_findchar.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ucp_findchar.c -o libuchicken_la-pcre_ucp_findchar.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_config.lo `test -f 'pcre/pcre_config.c' || echo './'`pcre/pcre_config.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_config.c  -DPIC -o .libs/libuchicken_la-pcre_config.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_config.c -o libuchicken_la-pcre_config.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_globals.lo `test -f 'pcre/pcre_globals.c' || echo './'`pcre/pcre_globals.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_globals.c  -DPIC -o .libs/libuchicken_la-pcre_globals.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_globals.c -o libuchicken_la-pcre_globals.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_refcount.lo `test -f 'pcre/pcre_refcount.c' || echo './'`pcre/pcre_refcount.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_refcount.c  -DPIC -o .libs/libuchicken_la-pcre_refcount.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_refcount.c -o libuchicken_la-pcre_refcount.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_valid_utf8.lo `test -f 'pcre/pcre_valid_utf8.c' || echo './'`pcre/pcre_valid_utf8.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_valid_utf8.c  -DPIC -o .libs/libuchicken_la-pcre_valid_utf8.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_valid_utf8.c -o libuchicken_la-pcre_valid_utf8.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_dfa_exec.lo `test -f 'pcre/pcre_dfa_exec.c' || echo './'`pcre/pcre_dfa_exec.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_dfa_exec.c  -DPIC -o .libs/libuchicken_la-pcre_dfa_exec.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_dfa_exec.c -o libuchicken_la-pcre_dfa_exec.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_info.lo `test -f 'pcre/pcre_info.c' || echo './'`pcre/pcre_info.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_info.c  -DPIC -o .libs/libuchicken_la-pcre_info.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_info.c -o libuchicken_la-pcre_info.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_study.lo `test -f 'pcre/pcre_study.c' || echo './'`pcre/pcre_study.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_study.c  -DPIC -o .libs/libuchicken_la-pcre_study.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_study.c -o libuchicken_la-pcre_study.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_version.lo `test -f 'pcre/pcre_version.c' || echo './'`pcre/pcre_version.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_version.c  -DPIC -o .libs/libuchicken_la-pcre_version.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_version.c -o libuchicken_la-pcre_version.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_exec.lo `test -f 'pcre/pcre_exec.c' || echo './'`pcre/pcre_exec.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_exec.c  -DPIC -o .libs/libuchicken_la-pcre_exec.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_exec.c -o libuchicken_la-pcre_exec.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_maketables.lo `test -f 'pcre/pcre_maketables.c' || echo './'`pcre/pcre_maketables.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_maketables.c  -DPIC -o .libs/libuchicken_la-pcre_maketables.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_maketables.c -o libuchicken_la-pcre_maketables.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_tables.lo `test -f 'pcre/pcre_tables.c' || echo './'`pcre/pcre_tables.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_tables.c  -DPIC -o .libs/libuchicken_la-pcre_tables.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_tables.c -o libuchicken_la-pcre_tables.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_xclass.lo `test -f 'pcre/pcre_xclass.c' || echo './'`pcre/pcre_xclass.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_xclass.c  -DPIC -o .libs/libuchicken_la-pcre_xclass.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_xclass.c -o libuchicken_la-pcre_xclass.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_fullinfo.lo `test -f 'pcre/pcre_fullinfo.c' || echo './'`pcre/pcre_fullinfo.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_fullinfo.c  -DPIC -o .libs/libuchicken_la-pcre_fullinfo.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_fullinfo.c -o libuchicken_la-pcre_fullinfo.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_ord2utf8.lo `test -f 'pcre/pcre_ord2utf8.c' || echo './'`pcre/pcre_ord2utf8.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ord2utf8.c  -DPIC -o .libs/libuchicken_la-pcre_ord2utf8.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_ord2utf8.c -o libuchicken_la-pcre_ord2utf8.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-pcre_try_flipped.lo `test -f 'pcre/pcre_try_flipped.c' || echo './'`pcre/pcre_try_flipped.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_try_flipped.c  -DPIC -o .libs/libuchicken_la-pcre_try_flipped.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/pcre_try_flipped.c -o libuchicken_la-pcre_try_flipped.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=compile gcc -DHAVE_CONFIG_H -I. -I. -I.    -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c -o libuchicken_la-chartables.lo `test -f 'pcre/chartables.c' || echo './'`pcre/chartables.c
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/chartables.c  -DPIC -o .libs/libuchicken_la-chartables.o
+ gcc -DHAVE_CONFIG_H -I. -I. -I. -DC_BUILDING_LIBCHICKEN -DC_UNSAFE_RUNTIME -DNDEBUG -Ipcre -DSUPPORT_UTF8 -DSUPPORT_UCP -DPCRE_STATIC -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c pcre/chartables.c -o libuchicken_la-chartables.o >/dev/null 2>&1
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o libuchicken.la -rpath /usr/local/lib -version-info=0:0:0 -no-undefined -ldl -lm  libuchicken_la-match.lo libuchicken_la-profiler.lo libuchicken_la-runtime.lo libuchicken_la-scheduler.lo libuchicken_la-stub.lo libuchicken_la-ueval.lo libuchicken_la-uextras.lo libuchicken_la-ulibrary.lo libuchicken_la-ulolevel.lo libuchicken_la-uutils.lo libuchicken_la-utcp.lo libuchicken_la-usrfi-1.lo libuchicken_la-usrfi-4.lo libuchicken_la-usrfi-13.lo libuchicken_la-usrfi-14.lo libuchicken_la-usrfi-18.lo libuchicken_la-uregex.lo  libuchicken_la-uposixunix.lo libuchicken_la-pcre_compile.lo libuchicken_la-pcre_get.lo libuchicken_la-pcre_printint.lo libuchicken_la-pcre_ucp_findchar.lo libuchicken_la-pcre_config.lo libuchicken_la-pcre_globals.lo libuchicken_la-pcre_refcount.lo libuchicken_la-pcre_valid_utf8.lo libuchicken_la-pcre_dfa_exec.lo libuchicken_la-pcre_info.lo libuchicken_la-pcre_study.lo libuchicken_la-pcre_version.lo libuchicken_la-pcre_exec.lo libuchicken_la-pcre_maketables.lo libuchicken_la-pcre_tables.lo libuchicken_la-pcre_xclass.lo libuchicken_la-pcre_fullinfo.lo libuchicken_la-pcre_ord2utf8.lo libuchicken_la-pcre_try_flipped.lo libuchicken_la-chartables.lo  -ldl -lm
+gcc -shared  .libs/libuchicken_la-match.o .libs/libuchicken_la-profiler.o .libs/libuchicken_la-runtime.o .libs/libuchicken_la-scheduler.o .libs/libuchicken_la-stub.o .libs/libuchicken_la-ueval.o .libs/libuchicken_la-uextras.o .libs/libuchicken_la-ulibrary.o .libs/libuchicken_la-ulolevel.o .libs/libuchicken_la-uutils.o .libs/libuchicken_la-utcp.o .libs/libuchicken_la-usrfi-1.o .libs/libuchicken_la-usrfi-4.o .libs/libuchicken_la-usrfi-13.o .libs/libuchicken_la-usrfi-14.o .libs/libuchicken_la-usrfi-18.o .libs/libuchicken_la-uregex.o .libs/libuchicken_la-uposixunix.o .libs/libuchicken_la-pcre_compile.o .libs/libuchicken_la-pcre_get.o .libs/libuchicken_la-pcre_printint.o .libs/libuchicken_la-pcre_ucp_findchar.o .libs/libuchicken_la-pcre_config.o .libs/libuchicken_la-pcre_globals.o .libs/libuchicken_la-pcre_refcount.o .libs/libuchicken_la-pcre_valid_utf8.o .libs/libuchicken_la-pcre_dfa_exec.o .libs/libuchicken_la-pcre_info.o .libs/libuchicken_la-pcre_study.o .libs/libuchicken_la-pcre_version.o .libs/libuchicken_la-pcre_exec.o .libs/libuchicken_la-pcre_maketables.o .libs/libuchicken_la-pcre_tables.o .libs/libuchicken_la-pcre_xclass.o .libs/libuchicken_la-pcre_fullinfo.o .libs/libuchicken_la-pcre_ord2utf8.o .libs/libuchicken_la-pcre_try_flipped.o .libs/libuchicken_la-chartables.o  -ldl  -o .libs/cyguchicken-0.dll -Wl,--image-base=0x10000000 -Wl,--out-implib,.libs/libuchicken.dll.a
+Creating library file: .libs/libuchicken.dll.a
+ar cru .libs/libuchicken.a  libuchicken_la-match.o libuchicken_la-profiler.o libuchicken_la-runtime.o libuchicken_la-scheduler.o libuchicken_la-stub.o libuchicken_la-ueval.o libuchicken_la-uextras.o libuchicken_la-ulibrary.o libuchicken_la-ulolevel.o libuchicken_la-uutils.o libuchicken_la-utcp.o libuchicken_la-usrfi-1.o libuchicken_la-usrfi-4.o libuchicken_la-usrfi-13.o libuchicken_la-usrfi-14.o libuchicken_la-usrfi-18.o libuchicken_la-uregex.o libuchicken_la-uposixunix.o libuchicken_la-pcre_compile.o libuchicken_la-pcre_get.o libuchicken_la-pcre_printint.o libuchicken_la-pcre_ucp_findchar.o libuchicken_la-pcre_config.o libuchicken_la-pcre_globals.o libuchicken_la-pcre_refcount.o libuchicken_la-pcre_valid_utf8.o libuchicken_la-pcre_dfa_exec.o libuchicken_la-pcre_info.o libuchicken_la-pcre_study.o libuchicken_la-pcre_version.o libuchicken_la-pcre_exec.o libuchicken_la-pcre_maketables.o libuchicken_la-pcre_tables.o libuchicken_la-pcre_xclass.o libuchicken_la-pcre_fullinfo.o libuchicken_la-pcre_ord2utf8.o libuchicken_la-pcre_try_flipped.o libuchicken_la-chartables.o
+ranlib .libs/libuchicken.a
+creating libuchicken.la
+(cd .libs && rm -f libuchicken.la && ln -s ../libuchicken.la libuchicken.la)
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c chicken.c
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c support.c
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c compiler.c
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c optimizer.c
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c c-platform.c
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c c-backend.c
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c batch-driver.c
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o chicken.exe  chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la -ldl -lm  -ldl  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o .libs/chicken.exe chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o -Wl,--export-dynamic  ./.libs/libchicken.dll.a -ldl -Wl,--rpath -Wl,/usr/local/lib
+Info: resolving _C_temporary_stack by linking to __imp__C_temporary_stack (auto-import)
+Info: resolving _C_temporary_stack_bottom by linking to __imp__C_temporary_stack_bottom (auto-import)
+Info: resolving _C_stack_limit by linking to __imp__C_stack_limit (auto-import)
+Info: resolving _C_fromspace_top by linking to __imp__C_fromspace_top (auto-import)
+Info: resolving _C_fromspace_limit by linking to __imp__C_fromspace_limit (auto-import)
+Info: resolving _C_disable_overflow_check by linking to __imp__C_disable_overflow_check (auto-import)
+creating chicken.exe
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c csi.c
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o csi.exe  csi.o libchicken.la -ldl -lm  -ldl  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o .libs/csi.exe csi.o -Wl,--export-dynamic  ./.libs/libchicken.dll.a -ldl -Wl,--rpath -Wl,/usr/local/lib
+Info: resolving _C_temporary_stack by linking to __imp__C_temporary_stack (auto-import)
+Info: resolving _C_temporary_stack_bottom by linking to __imp__C_temporary_stack_bottom (auto-import)
+Info: resolving _C_stack_limit by linking to __imp__C_stack_limit (auto-import)
+Info: resolving _C_fromspace_top by linking to __imp__C_fromspace_top (auto-import)
+Info: resolving _C_fromspace_limit by linking to __imp__C_fromspace_limit (auto-import)
+Info: resolving _C_disable_overflow_check by linking to __imp__C_disable_overflow_check (auto-import)
+creating csi.exe
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c csc.c
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o csc.exe  csc.o libchicken.la -ldl -lm  -ldl  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o .libs/csc.exe csc.o -Wl,--export-dynamic  ./.libs/libchicken.dll.a -ldl -Wl,--rpath -Wl,/usr/local/lib
+Info: resolving _C_temporary_stack by linking to __imp__C_temporary_stack (auto-import)
+Info: resolving _C_temporary_stack_bottom by linking to __imp__C_temporary_stack_bottom (auto-import)
+Info: resolving _C_stack_limit by linking to __imp__C_stack_limit (auto-import)
+Info: resolving _C_fromspace_top by linking to __imp__C_fromspace_top (auto-import)
+Info: resolving _C_fromspace_limit by linking to __imp__C_fromspace_limit (auto-import)
+Info: resolving _C_timer_interrupt_counter by linking to __imp__C_timer_interrupt_counter (auto-import)
+creating csc.exe
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c chicken-profile.c
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o chicken-profile.exe  chicken-profile.o libchicken.la -ldl -lm  -ldl  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o .libs/chicken-profile.exe chicken-profile.o -Wl,--export-dynamic  ./.libs/libchicken.dll.a -ldl -Wl,--rpath -Wl,/usr/local/lib
+Info: resolving _C_temporary_stack by linking to __imp__C_temporary_stack (auto-import)
+Info: resolving _C_stack_limit by linking to __imp__C_stack_limit (auto-import)
+Info: resolving _C_fromspace_top by linking to __imp__C_fromspace_top (auto-import)
+Info: resolving _C_fromspace_limit by linking to __imp__C_fromspace_limit (auto-import)
+Info: resolving _C_timer_interrupt_counter by linking to __imp__C_timer_interrupt_counter (auto-import)
+creating chicken-profile.exe
+gcc -DHAVE_CONFIG_H -I. -I. -I.     -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -c chicken-setup.c
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o chicken-setup.exe  chicken-setup.o libchicken.la -ldl -lm  -ldl  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o .libs/chicken-setup.exe chicken-setup.o -Wl,--export-dynamic  ./.libs/libchicken.dll.a -ldl -Wl,--rpath -Wl,/usr/local/lib
+Info: resolving _C_temporary_stack by linking to __imp__C_temporary_stack (auto-import)
+Info: resolving _C_temporary_stack_bottom by linking to __imp__C_temporary_stack_bottom (auto-import)
+Info: resolving _C_stack_limit by linking to __imp__C_stack_limit (auto-import)
+Info: resolving _C_fromspace_top by linking to __imp__C_fromspace_top (auto-import)
+Info: resolving _C_fromspace_limit by linking to __imp__C_fromspace_limit (auto-import)
+Info: resolving _C_timer_interrupt_counter by linking to __imp__C_timer_interrupt_counter (auto-import)
+creating chicken-setup.exe
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o chicken-static.exe -static chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o libchicken.la -ldl -lm  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o chicken-static.exe chicken.o support.o compiler.o optimizer.o c-platform.o c-backend.o batch-driver.o -Wl,--export-dynamic  ./.libs/libchicken.a -ldl
+/bin/sh ./libtool --mode=link gcc  -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL  -export-dynamic -o csi-static.exe -static csi.o libchicken.la -ldl -lm  -ldl -lm
+gcc -Os -fomit-frame-pointer -fno-strict-aliasing -Wall -Wno-unused -Wno-uninitialized -DC_ENABLE_PTABLES -DC_NO_PIC_NO_DLL -o csi-static.exe csi.o -Wl,--export-dynamic  ./.libs/libchicken.a -ldl
+make[1]: Leaving directory `/cygdrive/c/downloads/chicken-2.6'
+  <!-- /cygdrive/c/downloads/chicken-2.6 --> 
