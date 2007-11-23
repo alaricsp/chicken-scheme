@@ -55,9 +55,11 @@
 
 	  make PLATFORM=<platform> PREFIX=<destination>
 
-	where "PLATFORM" specifies on what kind of system CHICKEN shall
-	be built and "PREFIX" specifies where the executables and
-   	libraries shall be installed. 
+	where "PLATFORM" specifies on what kind of system CHICKEN
+	shall be built and "PREFIX" specifies where the executables
+	and libraries shall be installed. Out-of-directory builds are
+	currently not supported, so you must be in the toplevel source
+	directory to invoke "make".
 
 	Enter "make" without any options to see a list of supported 
 	platforms.

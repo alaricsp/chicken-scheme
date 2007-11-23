@@ -40,19 +40,37 @@ HACKED_APPLY=1
 
 # options
 
+SO = .dll
+EXE = .exe
+
+C_COMPILER = gcc
+CXX_COMPILER = g++
+LINKER = gcc
+
+
 C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
 ifdef DEBUGBUILD
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
 else
-C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
+C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os
 endif
 C_COMPILER_SHARED_OPTIONS = -DPIC
-LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
-LIBRARIES = -lm
+LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared 
+LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,--dll-search-prefix=cyg -Wl,--export-dynamic
+LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libchicken.dll.a -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--image-base=0x10000000
+LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libuchicken.dll.a -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--image-base=0x10000000
+
+LIBRARIES = -lm 
+LIBCHICKEN_SO_LIBRARIES = -lm 
+LIBUCHICKEN_SO_LIBRARIES = -lm 
+LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
+LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
+
 
 # special files
 
 CHICKEN_CONFIG_H = chicken-config.h
+APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 
 # select default and internal settings
 
@@ -83,7 +101,7 @@ chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_ERRNO_H 1" >>$@
 	echo "#define HAVE_GCVT 1" >>$@
 	echo "#define HAVE_SYSEXITS_H 1" >>$@
-	echo "#define HAVE_MEMMOVE 1" >>$@
+	echo "#define HAVE_DLFCN_H 1" >>$@
 	echo "#define C_STACK_GROWS_DOWNWARD 1" >>$@
 ifdef GCHOOKS
 	echo "#define C_GC_HOOKS" >>$@
