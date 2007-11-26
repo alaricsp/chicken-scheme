@@ -68,7 +68,7 @@
   parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   target-include-file default-profiling-declarations
-  default-optimization-passes internal-bindings
+  default-optimization-passes internal-bindings big-fixnum?
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion)
 
@@ -867,7 +867,7 @@
 		 (or (and-let* ([(eq? 'quote (node-class val))]
 				[(eq? number-type 'fixnum)]
 				[n (first (node-parameters val))]
-				[(fixnum? n)] )
+				[(and (fixnum? n) (not (big-fixnum? n)))] )
 		       (if (negative? n)
 			   (make-node 
 			    '##core#inline '("C_fixnum_shift_right")

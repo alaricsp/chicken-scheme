@@ -75,7 +75,7 @@
   default-optimization-iterations chop-separator chop-extension follow-without-loop dump-exported-globals
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  lookup-exports-file constant-declarations process-lambda-documentation
+  lookup-exports-file constant-declarations process-lambda-documentation big-fixnum?
   compiler-macro-table register-compiler-macro export-dump-hook export-import-hook
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
 
@@ -257,7 +257,7 @@
       (symbol? x) ) )
 
 (define (immediate? x)
-  (or (fixnum? x)
+  (or (and (fixnum? x) (not (big-fixnum? x)))
       (eq? (##core#undefined) x)
       (null? x)
       (eof-object? x)
@@ -1520,3 +1520,12 @@ EOF
 	name
 	(eval `(lambda (,wvar) (apply (lambda ,llist ,@body) (cdr ,wvar))) ) )
        #t) ) ) )
+
+
+;;; 64-bit fixnum?
+
+(define (big-fixnum? x)
+  (and (fixnum? x)
+       (##sys#fudge 3)			; 64 bit?
+       (or (fx> x 1073741823)
+	   (fx< x -1073741824) ) ) )

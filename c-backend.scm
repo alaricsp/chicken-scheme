@@ -73,7 +73,7 @@
   scan-free-variables external-protos-first emit-closure-info
   topological-sort print-version print-usage initialize-analysis-database
   generate-external-variables real-name real-name2 unique-id
-  default-declarations units-used-by-default words-per-flonum
+  default-declarations units-used-by-default words-per-flonum big-fixnum?
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   default-optimization-iterations generate-foreign-callback-header generate-foreign-callback-stub-prototypes
@@ -655,7 +655,7 @@
 	    [else (bad-literal lit)] ) )
 
     ;; This is currently not needed but will be handy for optimized literal lists/vector constructors...
-    (define (imm-lit lit)
+    #;(define (imm-lit lit)
       (cond [(fixnum? lit) (string-append "C_fix(" (number->string lit) ")")]
 	    [(eq? #t lit) "C_SCHEME_TRUE"]
 	    [(eq? #f lit) "C_SCHEME_FALSE"]
@@ -671,9 +671,11 @@
 
     (define (gen-lit lit to lf)
       (cond ((fixnum? lit)
-	     (if (eq? 'flonum number-type)
-		 (gen #t to "=C_flonum(C_heaptop," lit ");")
-		 (gen #t to "=C_fix(" lit ");") ) )
+	     (cond ((big-fixnum? lit)
+		    (gen #t to "=C_double_to_number(C_flonum(C_heaptop," lit ".0));") )
+		   ((eq? 'flonum number-type)
+		    (gen #t to "=C_flonum(C_heaptop," lit ");") )
+		   (else (gen #t to "=C_fix(" lit ");") ) ) )
 	    ((block-variable-literal? lit))
 	    ((eq? lit (void))
 	     (gen #t to "=C_SCHEME_UNDEFINED;") )

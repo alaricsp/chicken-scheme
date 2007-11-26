@@ -120,10 +120,10 @@
 
 (declare
  (unit match)
- (uses srfi-1)
  (run-time-macros)
  (disable-interrupts)
- (usual-integrations) )
+ (usual-integrations) 
+ (hide every))
 
 (cond-expand 
  [paranoia]
@@ -131,6 +131,11 @@
   (declare
     (no-procedure-checks-for-usual-bindings)
     (no-bound-checks) ) ] )
+
+
+(define (every fn lst)
+  (or (null? lst)
+      (and (fn (car lst)) (every fn (cdr lst)))))
 
 
 ;;; Macros

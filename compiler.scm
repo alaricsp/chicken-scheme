@@ -294,7 +294,8 @@
   lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
-  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result)
+  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
+  big-fixnum?)
 
 (eval-when (compile eval)
   (match-error-control #:fail) )
@@ -2270,11 +2271,11 @@
 
 	  ((quote)
 	   (let ((c (first params)))
-	     (cond ((fixnum? c)
+	     (cond ((and (fixnum? c) (not (big-fixnum? c)))
 		    (immediate-literal c) )
 		   ((number? c)
 		    (cond ((eq? 'fixnum number-type)
-			   (cond ((integer? c)
+			   (cond ((and (integer? c) (not (big-fixnum? c)))
 				  (compiler-warning 
 				   'type 
 				   "coerced inexact literal number `~S' to fixnum ~S" c (inexact->exact c))
