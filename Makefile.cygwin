@@ -57,8 +57,20 @@ endif
 C_COMPILER_SHARED_OPTIONS = -DPIC
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared 
 LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,--dll-search-prefix=cyg -Wl,--export-dynamic
-LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libchicken.dll.a -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--image-base=0x10000000
-LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libuchicken.dll.a -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--image-base=0x10000000
+LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libchicken.dll.a \
+	-Wl,--export-all-symbols \
+	-Wl,--enable-auto-import \
+	-Wl,--image-base=0x10000000 \
+	-Wl,--dll \
+	-Wl,--add-stdcall-alias \
+	-Wl,--no-whole-archive
+LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libuchicken.dll.a \
+	-Wl,--export-all-symbols \
+	-Wl,--enable-auto-import \
+	-Wl,--image-base=0x10000000 \
+	-Wl,--dll \
+	-Wl,--add-stdcall-alias \
+	-Wl,--no-whole-archive
 
 LIBRARIES = -lm 
 LIBCHICKEN_SO_LIBRARIES = -lm 
@@ -74,6 +86,7 @@ APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 
 # select default and internal settings
 
+CUSTOM_CHICKEN_DEFAULTS=1
 include defaults.make
 
 chicken-config.h: chicken-defaults.h
@@ -116,5 +129,100 @@ ifdef HACKED_APPLY
 	echo "#define C_HACKED_APPLY" >>$@
 endif
 	cat chicken-defaults.h >>$@
+
+chicken-defaults.h:
+	echo "/* generated */" >$@
+	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
+	echo "#ifndef C_INSTALL_CC" >>$@
+	echo "# define C_INSTALL_CC \"$(C_COMPILER)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_CXX" >>$@
+	echo "# define C_INSTALL_CXX \"$(CXX_COMPILER)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_CFLAGS" >>$@
+	echo "# define C_INSTALL_CFLAGS \"$(C_COMPILER_OPTIONS) $(C_COMPILER_OPTIMIZATION_OPTIONS)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_SHARE_HOME" >>$@
+	echo "# define C_INSTALL_SHARE_HOME \"$(DATADIR)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_BIN_HOME" >>$@
+	echo "# define C_INSTALL_BIN_HOME \"$(BINDIR)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_EGG_HOME" >>$@
+	echo "# define C_INSTALL_EGG_HOME \"$(EGGDIR)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_LIB_HOME" >>$@
+	echo "# define C_INSTALL_LIB_HOME \"$(BINDIR)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_STATIC_LIB_HOME" >>$@
+	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(LIBDIR)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_INCLUDE_HOME" >>$@
+	echo "# define C_INSTALL_INCLUDE_HOME \"$(INCDIR)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_MORE_LIBS" >>$@
+	echo "# define C_INSTALL_MORE_LIBS \"$(LIBRARIES)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_MORE_STATIC_LIBS" >>$@
+	echo "# define C_INSTALL_MORE_STATIC_LIBS \"$(LIBRARIES)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_DEFAULT_TARGET_STACK_SIZE" >>$@
+	echo "# define C_DEFAULT_TARGET_STACK_SIZE $(NURSERY)" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_STACK_GROWS_DOWNWARD" >>$@
+	echo "# define C_STACK_GROWS_DOWNWARD $(STACKDIRECTION)" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_MORE_LIBS" >>$@
+	echo "# define C_TARGET_MORE_LIBS \"$(TARGET_LIBRARIES)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_MORE_STATIC_LIBS" >>$@
+	echo "# define C_TARGET_MORE_STATIC_LIBS \"$(TARGET_LIBRARIES)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_CC" >>$@
+	echo "# define C_TARGET_CC \"$(TARGET_C_COMPILER)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_CXX" >>$@
+	echo "# define C_TARGET_CXX \"$(TARGET_CXX_COMPILER)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_CFLAGS" >>$@
+	echo "# define C_TARGET_CFLAGS \"$(TARGET_C_COMPILER_OPTIONS) $(TARGET_C_COMPILER_OPTIMIZATION_OPTIONS)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CROSS_CHICKEN" >>$@
+	echo "# define C_CROSS_CHICKEN $(CROSS_CHICKEN)" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_LIB_HOME" >>$@
+	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)/bin\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_RUN_LIB_HOME" >>$@
+	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_RUN_PREFIX)/lib\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_SHARE_HOME" >>$@
+	echo "# define C_TARGET_SHARE_HOME \"$(TARGET_PREFIX)/share\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_INCLUDE_HOME" >>$@
+	echo "# define C_TARGET_INCLUDE_HOME \"$(TARGET_PREFIX)/include\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_STATIC_LIB_HOME" >>$@
+	echo "# define C_TARGET_STATIC_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_PROGRAM" >>$@
+	echo "# define C_CHICKEN_PROGRAM \"$(CHICKEN_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CSC_PROGRAM" >>$@
+	echo "# define C_CSC_PROGRAM \"$(CSC_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CSI_PROGRAM" >>$@
+	echo "# define C_CSI_PROGRAM \"$(CSI_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_PROFILE_PROGRAM" >>$@
+	echo "# define C_CHICKEN_PROFILE_PROGRAM \"$(CHICKEN_PROFILE_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_SETUP_PROGRAM" >>$@
+	echo "# define C_CHICKEN_SETUP_PROGRAM \"$(CHICKEN_SETUP_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
+	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+endif
 
 include rules.make

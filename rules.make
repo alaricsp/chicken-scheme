@@ -934,14 +934,16 @@ distclean: clean confclean
 
 # run tests
 
-.PHONY: check fullcheck
+.PHONY: check fullcheck compiler-check
 
 check: all
 	cd tests; sh runtests.sh
 
 # Only for UNIX, yet:
 
-fullcheck: check
+fullcheck: check compiler-check
+
+compiler-check:
 	@echo "======================================== packing ..."
 	$(MAKE) dist
 	$(REMOVE_COMMAND $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*

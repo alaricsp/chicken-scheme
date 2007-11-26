@@ -201,6 +201,7 @@ tests/apply-test.scm
 tests/embedded1.c
 tests/fixnum-tests.scm
 tests/path-tests.scm
+tests/r4rstest.out
 tweaks.scm
 utils.scm
 pcre/AUTHORS
@@ -254,3 +255,4 @@ Makefile.cross-linux-mingw
 rules.make
 defaults.make
 private-namespace.scm
+misc/makedist.scm
