@@ -58,7 +58,6 @@ CHICKENLIBDIR = $(LIBDIR)\\chicken
 EGGDIR = $(CHICKENLIBDIR)\\$(BINARYVERSION)
 else
 PREFIX ?= /usr/local
-endif
 DESTDIR = $(PREFIX)
 BINDIR = $(DESTDIR)/bin
 LIBDIR = $(DESTDIR)/lib
@@ -71,6 +70,7 @@ INCDIR = $(DESTDIR)/include
 DOCDIR = $(DATADIR)/doc
 CHICKENLIBDIR = $(LIBDIR)/chicken
 EGGDIR = $(CHICKENLIBDIR)/$(BINARYVERSION)
+endif
 
 # commands
 
