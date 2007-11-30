@@ -194,7 +194,7 @@ chicken-defaults.h:
 	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)/bin\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_RUN_LIB_HOME" >>$@
-	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_RUN_PREFIX)/lib\"" >>$@
+	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_RUN_PREFIX)/bin\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_SHARE_HOME" >>$@
 	echo "# define C_TARGET_SHARE_HOME \"$(TARGET_PREFIX)/share\"" >>$@
