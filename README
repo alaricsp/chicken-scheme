@@ -241,6 +241,9 @@
 	  Be sure that the Chicken LIBDIR is in the Path. Windows
 	  looks for '.dll' files along the Path.
 
+        - Cygwin is now supported!  However, Cygwin will not be able to find
+          the chicken shared libraries until Windows is rebooted.  
+
 	- gcc 3.4 shows sometimes warnings of the form
 
            easyffi.c: In function `f_11735':
