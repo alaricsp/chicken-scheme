@@ -812,7 +812,7 @@ uninstall:
 	  $(BINDIR)/$(CHICKEN_SETUP_PROGRAM)$(EXE) $(BINDIR)/$(CSC_PROGRAM)$(EXE) \
 	  $(BINDIR)/$(CHICKEN_BUG_PROGRAM)$(EXE)
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(LIBDIR)/libchicken.* $(LIBDIR)/libuchicken.*
-ifdef($(PLATFORM),cygwin)
+ifdef ($(PLATFORM),cygwin)
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(BINDIR)/cygchicken* $(BINDIR)/cyguchicken*
 endif
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(MANDIR)/chicken.1 $(MANDIR)/csi.1 $(MANDIR)/csc.1 \

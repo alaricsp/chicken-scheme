@@ -223,6 +223,5 @@ chicken-defaults.h:
 	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
 	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
-endif
 
 include rules.make
