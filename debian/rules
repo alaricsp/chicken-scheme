@@ -21,7 +21,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 #	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
-	$(MAKE) MAKEINFO_PROGRAM_OPTIONS="" CFLAGS="$(CFLAGS)" PREFIX="$(PREFIX)" MANDIR="$(PREFIX)/share/man" INFODIR="$(PREFIX)/share/info" SHAREDIR="$(PREFIX)/share" EGGDIR="/var/lib/chicken/$(BINARYVERSION)"
+	$(MAKE) MAKEINFO_PROGRAM_OPTIONS="" CFLAGS="$(CFLAGS)" PREFIX="$(PREFIX)" MANDIR="$(PREFIX)/share/man" INFODIR="$(PREFIX)/share/info" SHAREDIR="$(PREFIX)/share" EGGDIR="/var/lib/chicken/$(BINARYVERSION)" MAKEINFO_PROGRAM_OPTIONS= HOSTNAME=debian
 	touch build-stamp
 
 clean:
@@ -43,7 +43,7 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-	$(MAKE) install PREFIX="$(CURDIR)/debian/tmp/usr" MANDIR="$(CURDIR)/debian/tmp/usr/share/man" INFODIR="$(CURDIR)/debian/tmp/usr/share/info" SHAREDIR="$(CURDIR)/debian/tmp/usr/share" EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)"
+	$(MAKE) install PREFIX="$(CURDIR)/debian/tmp/usr" MANDIR="$(CURDIR)/debian/tmp/usr/share/man" INFODIR="$(CURDIR)/debian/tmp/usr/share/info" SHAREDIR="$(CURDIR)/debian/tmp/usr/share" EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)" MAKEINFO_PROGRAM_OPTIONS= HOSTNAME=debian
 
 binary-common:
 	dh_testdir
@@ -51,7 +51,7 @@ binary-common:
 	dh_movefiles
 	dh_installdocs
 	dh_installman
-	dh_installinfo chicken.info
+	dh_installinfo chicken.info*
 	dh_installchangelogs ChangeLog.20070807
 	dh_link
 ifeq "$(findstring nostrip,$(DEB_BUILD_OPTIONS))" ""
