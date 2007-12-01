@@ -189,7 +189,7 @@ EOF
 (define (mail-headers)
     (string-append
         "Date: " (mail-date-str (seconds->utc-time (current-seconds))) "\r\n"
-        "From: \"chicken-bug user\" <chicken-bug-command@call-with-current-continuation.org>\r\n"
+        "From: \"chicken-bug user\" <chicken-bug-command@callcc.org>\r\n"
         "To: \"Chicken Janitors\" <chicken-janitors@nongnu.org>\r\n"
         "Subject: Automated chicken-bug output -- "))
 
@@ -217,14 +217,14 @@ EOF
             (close-output-port o)
             (k #f))))
 
-(define (send-mail serv msg hdrs msg)
+(define (send-mail serv msg hdrs fname)
     (receive (i o)
         (tcp-connect serv 25)
         (call-with-current-continuation
             (lambda (k)
                 (mail-check i o (mail-read i o) 220 k)
-                (mail-check i o (mail-write i o "HELO call-with-current-continuation.org\r\n") 250 k)
-                (mail-check i o (mail-write i o "MAIL FROM:<chicken-bug-command@call-with-current-continuation.org>\r\n") 250 k)
+                (mail-check i o (mail-write i o "HELO callcc.org\r\n") 250 k)
+                (mail-check i o (mail-write i o "MAIL FROM:<chicken-bug-command@callcc.org>\r\n") 250 k)
                 (mail-check i o (mail-write i o "RCPT TO:<chicken-janitors@nongnu.org>\r\n") 250 k)
                 (mail-check i o (mail-write i o "DATA\r\n") 354 k)
                 (mail-check i o (mail-write i o (string-append hdrs fname "\r\n\r\n" msg "\r\n.\r\n")) 250 k)
