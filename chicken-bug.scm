@@ -1,7 +1,7 @@
 ;;;; chicken-bug.scm - Bug report-generator
 
 
-(use posix utils)
+(use srfi-13 posix utils tcp extras)
 
 
 #>
@@ -17,9 +17,11 @@
 
 (define-constant +bug-report-file+ "chicken-bug-report.~a-~a-~a")
 
-(define-constant +destinations+ 
+(define-constant +fallbackdestinations+ 
   "chicken-janitors@nongnu.org\nchicken-hackers@nongnu.org\nchicken-users@nongnu.org\nfelix@call-with-current-continuation.org")
 
+(define-constant +destination+ "chicken-janitors@nongnu.org")
+(define-constant +mxservers+ (list "mx10.gnu.org" "mx20.gnu.org"))
 
 (define-foreign-variable +cc+ c-string "C_TARGET_CC")
 (define-foreign-variable +cxx+ c-string "C_TARGET_CXX")
@@ -118,15 +120,118 @@ EOF
     (unless files
       (set! msg (string-append msg "\n\n" (user-input))))
     (match-let ((#(_ _ _ day mon yr _ _ _ _) (seconds->local-time (current-seconds))))
-      (let* ((file (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day)))
-	     (port (if stdout (current-output-port) (open-output-file file))))
-	(with-output-to-port port
-	  (lambda ()
-	    (print msg)
-	    (collect-info) ) )
-	(unless stdout
-	  (close-output-port port)
-	  (print "\nA bug report has been written to `" file "'. Please send it to")
-	  (print "one of the following addresses:\n\n" +destinations+) ) ) ) ) )
+        (if stdout
+            (begin
+                (print msg)
+                (collect-info))
+            (try-mail
+                +mxservers+
+                (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day))
+                (mail-headers)
+                (with-output-to-string
+                    (lambda ()
+                        (print msg)
+                        (collect-info))))))))
+      ;(let* ((file (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day)))
+	;     (port (if stdout (current-output-port) (open-output-file file))))
+	;(with-output-to-port port
+	;  (lambda ()
+	;    (print msg)
+	;    (collect-info) ) )
+	;(unless stdout
+	;  (close-output-port port)
+	;  (print "\nA bug report has been written to `" file "'. Please send it to")
+	;  (print "one of the following addresses:\n\n" +destinations+) ) ) ) ) )
+
+(define (try-mail servs fname hdrs msg)
+    (if (null? servs)
+        (begin
+            (with-output-to-file fname
+                (lambda () (print msg)))
+            (print "\nCould not send mail automatically!\n\nA bug report has been written to `" fname "'.  Please send it to")
+            (print "one of the following addresses:\n\n" +fallbackdestinations+))
+        (or (send-mail (car servs) msg hdrs fname)
+            (try-mail (cdr servs) fname hdrs msg))))
+
+(define (mail-date-str tm)
+    (string-append
+        (case (vector-ref tm 6)
+            ((0) "Sun, ")
+            ((1) "Mon, ")
+            ((2) "Tue, ")
+            ((3) "Wed, ")
+            ((4) "Thu, ")
+            ((5) "Fri, ")
+            ((6) "Sat, "))
+        (string-pad (number->string (vector-ref tm 3)) 2 #\0)
+        (case (vector-ref tm 4)
+            ((0)  " Jan ")
+            ((1)  " Feb ")
+            ((2)  " Mar ")
+            ((3)  " Apr ")
+            ((4)  " May ")
+            ((5)  " Jun ")
+            ((6)  " Jul ")
+            ((7)  " Aug ")
+            ((8)  " Sep ")
+            ((9)  " Oct ")
+            ((10) " Nov ")
+            ((11) " Dec "))
+        (number->string (+ 1900 (vector-ref tm 5)))
+        " "
+        (string-pad (number->string (vector-ref tm 2)) 2 #\0)
+        ":"
+        (string-pad (number->string (vector-ref tm 1)) 2 #\0)
+        ":"
+        (string-pad (number->string (vector-ref tm 0)) 2 #\0)
+        " +0000"))
+
+(define (mail-headers)
+    (string-append
+        "Date: " (mail-date-str (seconds->utc-time (current-seconds))) "\r\n"
+        "From: \"chicken-bug user\" <chicken-bug-command@call-with-current-continuation.org>\r\n"
+        "To: \"Chicken Janitors\" <chicken-janitors@nongnu.org>\r\n"
+        "Subject: Automated chicken-bug output -- "))
+
+(define (mail-read i o)
+    (let ((v   (condition-case (read-line i)
+                   (var () (close-input-port i) (close-output-port o) #f))))
+        (if v
+            (if (char-numeric? (string-ref v 0))
+                (string->number (substring v 0 3))
+                (mail-read i o))
+            #f)))
+
+(define (mail-write i o m)
+    (let ((v   (condition-case (display m o)
+                   (var () (close-input-port i) (close-output-port o) #f))))
+        (if v
+            (mail-read i o)
+            #f)))
+
+(define (mail-check i o v e k)
+    (if (and v (= v e))
+        #t
+        (begin
+            (close-input-port i)
+            (close-output-port o)
+            (k #f))))
+
+(define (send-mail serv msg hdrs msg)
+    (receive (i o)
+        (tcp-connect serv 25)
+        (call-with-current-continuation
+            (lambda (k)
+                (mail-check i o (mail-read i o) 220 k)
+                (mail-check i o (mail-write i o "HELO call-with-current-continuation.org\r\n") 250 k)
+                (mail-check i o (mail-write i o "MAIL FROM:<chicken-bug-command@call-with-current-continuation.org>\r\n") 250 k)
+                (mail-check i o (mail-write i o "RCPT TO:<chicken-janitors@nongnu.org>\r\n") 250 k)
+                (mail-check i o (mail-write i o "DATA\r\n") 354 k)
+                (mail-check i o (mail-write i o (string-append hdrs fname "\r\n\r\n" msg "\r\n.\r\n")) 250 k)
+                (display "QUIT" o)
+                (close-input-port i)
+                (close-output-port o)
+                (print "Bug report successfully mailed to the Chicken maintainers.\nThank you very much!\n\n")
+                #t))))
 
 (main (command-line-arguments))
