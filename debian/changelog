@@ -1,3 +1,9 @@
+chicken (2.732-0.1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Ivan Raikov <raikov@oist.jp>  Sat, 01 Dec 2007 14:30:55 +0900
+
 chicken (2.703-0.1) unstable; urgency=low
 
   * Minor updates from upstream.
@@ -154,3 +160,4 @@ chicken (0.990-1) unstable; urgency=low
   * Initial release.
 
  -- zhaoway <zw@debian.org>  Mon, 21 Jan 2002 20:40:17 +0800
+  
