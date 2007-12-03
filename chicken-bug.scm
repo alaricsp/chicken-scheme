@@ -119,6 +119,7 @@ EOF
      args)
     (unless files
       (set! msg (string-append msg "\n\n" (user-input))))
+    (newline)
     (match-let ((#(_ _ _ day mon yr _ _ _ _) (seconds->local-time (current-seconds))))
         (if stdout
             (begin
@@ -218,6 +219,7 @@ EOF
             (k #f))))
 
 (define (send-mail serv msg hdrs fname)
+  (print "connecting to " serv " ...")
     (receive (i o)
         (tcp-connect serv 25)
         (call-with-current-continuation
