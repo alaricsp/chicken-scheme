@@ -43,6 +43,11 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
+# The directories here have to be prefixed by $(CURDIR)/debian/tmp
+# because that is the location where the binary package files are
+# placed by dpkg-buildpackage. If absolute files are specified,
+# i.e. /var/lib/chicken, then those files will be installed on the
+# build system, but will not end up in the package.
 	$(MAKE) install PREFIX="$(CURDIR)/debian/tmp/usr" MANDIR="$(CURDIR)/debian/tmp/usr/share/man" INFODIR="$(CURDIR)/debian/tmp/usr/share/info" SHAREDIR="$(CURDIR)/debian/tmp/usr/share" EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)" MAKEINFO_PROGRAM_OPTIONS= HOSTNAME=debian
 
 binary-common:
@@ -51,6 +56,9 @@ binary-common:
 	dh_movefiles
 	dh_installdocs
 	dh_installman
+# The asterisk in chicken.info* is necessary, because Debian makeinfo
+# is very different from the standard makeinfo, and it is incredibly
+# difficult to convince it to produce standalone Texinfo files. 
 	dh_installinfo chicken.info*
 	dh_installchangelogs ChangeLog.20070807
 	dh_link
