@@ -375,6 +375,8 @@ inode, blocksize and blocks allocated.  On Windows systems the last 4
 values are undefined.  If the optional argument {{LINK}} is given and
 not {{#f}}, then the file-statistics vector will be resolved for
 symbolic links (otherwise symbolic links are not resolved).
+Note that for very large files, the {{file-size}} value may be an
+inexact integer.
 
 ==== file-position
 
@@ -389,7 +391,8 @@ port or a file-descriptor.
 
 Returns the size of the file designated by {{FILE}}.  {{FILE}}
 may be a filename or a file-descriptor.  If the file does not exist,
-an error is signaled.
+an error is signaled. Note that for very large files, {{file-size}} may
+return an inexact integer.
 
 ==== regular-file?
 

@@ -1116,6 +1116,7 @@ C_varextern C_TLS void *C_restart_address;
 C_varextern C_TLS int C_entry_point_status;
 
 C_varextern C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
+C_varextern C_TLS void (*C_pre_gc_hook)(int mode);
 C_varextern C_TLS void (*C_post_gc_hook)(int mode, long ms);
 C_varextern C_TLS void (*C_panic_hook)(C_char *msg);
 

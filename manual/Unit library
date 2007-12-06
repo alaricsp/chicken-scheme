@@ -800,27 +800,6 @@ switches statistics off.
 
 
 
-==== andmap
-
- [procedure] (andmap PROC LIST1 ...)
-
-Repeatedly calls {{PROC}} with arguments taken from {{LIST1 ...}}.
-If any invocation should return {{#f}}, the result of
-{{andmap}} is {{#f}}. If all invocations return a true result,
-then the result of {{andmap}} is {{#t}}.
-
-
-==== ormap
-
- [procedure] (ormap PROC LIST1 ...)
-
-Repeatedly calls {{PROC}} with arguments taken from {{LIST1 ...}}.
-If any invocation should return a value different from
-{{#f}}, then this value is returned as the  result of
-{{ormap}}. If all invocations return '''#f''',
-then the result of {{ormap}} is {{#f}}.
-
-
 ==== promise?
 
  [procedure] (promise? X)

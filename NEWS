@@ -1,5 +1,7 @@
 2.736
 
+- added pre GC hook C-level variable
+- Cygwin is now fully supported
 - removed deprecated functions:
   extension-info
   print-backtrace

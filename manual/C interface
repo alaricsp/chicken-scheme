@@ -282,20 +282,39 @@ Removes the last {{n}} registered variables from the set of
 root variables.
 
 
+=== C_pre_gc_hook
+
+ [C Variable] void (*C_pre_gc_hook)(int mode)
+
+If not {{NULL}}, the function pointed to by this variable will be
+called before each garbage collection with a flag indicating what kind
+of collection was performed (either {{0}} for a minor collection or
+{{2}} for a resizing collection). A "resizing" collection means a
+secondary collection that moves all live data into a enlarged (or
+shrinked) heap-space. Minor collections happen very frequently, so the
+hook function should not consume too much time. The hook function may
+not invoke Scheme callbacks.
+
+Note that resizing collections may be nested in normal major collections.
+
 === C_post_gc_hook
 
- [C Variable] void (*C_post_gc_hook)(int mode)
+ [C Variable] void (*C_post_gc_hook)(int mode, long ms)
 
-If not {{NULL}}, the function pointed to by this variable will be called
-after each garbage collection with a flag indicating what kind of collection
-was performed (either {{0}} for a minor collection or {{1}} for a major
-collection). Minor collections happen very frequently, so the hook function
-should not consume too much time. The hook function may not invoke Scheme
-callbacks.
+If not {{NULL}}, the function pointed to by this variable will be
+called after each garbage collection with a flag indicating what kind
+of collection was performed (either {{0}} for a minor collection,
+{{1}} for a major collection or {{2}} for a resizing
+collection). Minor collections happen very frequently, so the hook
+function should not consume too much time. The hook function may not
+invoke Scheme callbacks. The {{ms}} argument records the number of
+milliseconds required for the garbage collection, if the collection
+was a major one. For minor collections the value of the {{ms}} argument
+is undefined.
 
 
 
-An example:
+=== An example for simple calls to foreign code involving callbacks
 
  % cat foo.scm
  #>
@@ -334,7 +353,7 @@ An example:
  123
 
 
-'''Notes:'''
+=== Notes:
 
 Scheme procedures can call C functions, and C functions can call
 Scheme procedures, but for every pending C stack frame, the available

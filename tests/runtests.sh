@@ -5,10 +5,11 @@ set -e
 TEST_DIR=`pwd`
 export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
-compile="../csc -compiler ../chicken -o a.out"
+compile="../csc -compiler ../chicken -C -I.. -L.. -o a.out"
 
 echo "======================================== runtime tests ..."
 ../csi -s apply-test.scm
+$compile test-gc-hooks.scm && ./a.out
 
 echo "======================================== library tests ..."
 ../csi -w -s library-tests.scm
@@ -40,7 +41,8 @@ for x in `ls *.scm`; do
 	"plists.scm");;
 	*)
 	    echo $x
-	    ../csc $x -compiler ../chicken -O2 -d0 && ./`basename $x .scm` >/dev/null;;
+	    ../csc $x -compiler ../chicken -C -I.. -L.. -O2 -d0 && \
+		./`basename $x .scm` >/dev/null;;
     esac
 done
 cd ${TEST_DIR}

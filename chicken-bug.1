@@ -38,6 +38,14 @@ are inserted into the bug report. If no option is given, or if
 .B \-
 has been passed on the command line, then a description of the problem
 is read from standard input, until EOF (CTRL-D) is read.
+
+The report will be automatically e-mailed to the CHICKEN maintainers,
+if an SMTP connection can be established. If no connection can be
+made, the bug report will be written to a file in the current directory,
+which should be sent to CHICKEN maintainers as it contains various
+useful bits of information that make it easier to classify the 
+problem described.
+
 Bug reports should be as detailed as possible. It is also very helpful
 to include code that reproduces the problem. The more detailed the input
 and the more thorough the description is, the easier you make it for
@@ -45,7 +53,7 @@ the CHICKEN developers to help you.
 
 .SH BUGS
 Submit bug reports by e-mail to
-.I felix@call-with-current-continuation.org
+.I chicken-janitors@nongnu.org
 
 .SH AUTHOR
 .I chicken-bug

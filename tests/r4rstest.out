@@ -530,37 +530,37 @@ SECTION(6 9)
 (#<procedure (list-length obj)> (a b . c))  ==> #f
 (#<procedure (map fn767 lst1768 . lsts769)> #<procedure (f_3807 x91)> ())  ==> ()
 SECTION(6 10 1)
-(#<procedure (input-port? x814)> #<input port (stdin)>)  ==> #t
-(#<procedure (output-port? x815)> #<output port (stdout)>)  ==> #t
+(#<procedure (input-port? x814)> #<input port "(stdin)">)  ==> #t
+(#<procedure (output-port? x815)> #<output port "(stdout)">)  ==> #t
 (#<procedure (call-with-input-file name938 p939 . mode940)> "r4rstest.scm" #<procedure (input-port? x814)>)  ==> #t
-(#<procedure (input-port? x814)> #<input port r4rstest.scm>)  ==> #t
+(#<procedure (input-port? x814)> #<input port "r4rstest.scm">)  ==> #t
 SECTION(6 10 2)
-(#<procedure (peek-char . g10501051)> #<input port r4rstest.scm>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port r4rstest.scm>)  ==> #\;
-(#<procedure (read . g10601061)> #<input port r4rstest.scm>)  ==> (define cur-section (quote ()))
-(#<procedure (peek-char . g10501051)> #<input port r4rstest.scm>)  ==> #\(
-(#<procedure (read . g10601061)> #<input port r4rstest.scm>)  ==> (define errs (quote ()))
+(#<procedure (peek-char . g10501051)> #<input port "r4rstest.scm">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "r4rstest.scm">)  ==> #\;
+(#<procedure (read . g10601061)> #<input port "r4rstest.scm">)  ==> (define cur-section (quote ()))
+(#<procedure (peek-char . g10501051)> #<input port "r4rstest.scm">)  ==> #\(
+(#<procedure (read . g10601061)> #<input port "r4rstest.scm">)  ==> (define errs (quote ()))
 SECTION(6 10 3)
 (#<procedure (call-with-output-file name946 p947 . mode948)> "tmp1" #<procedure (? test-file)>)  ==> #t
-(#<procedure (read . g10601061)> #<input port tmp1>)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure (read . g10601061)> #<input port "tmp1">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
 (#<procedure (eof-object? x1029)> #!eof)  ==> #t
 (#<procedure (eof-object? x1029)> #!eof)  ==> #t
 (input-port? #t)  ==> #t
-(#<procedure (read-char . g10371038)> #<input port tmp1>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port tmp1>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port tmp1>)  ==> #\;
-(#<procedure (read . g10601061)> #<input port tmp1>)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
-(#<procedure (read . g10601061)> #<input port tmp1>)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
-(#<procedure (output-port? x815)> #<output port tmp2>)  ==> #t
-(#<procedure (read . g10601061)> #<input port tmp2>)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure (read-char . g10371038)> #<input port "tmp1">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "tmp1">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "tmp1">)  ==> #\;
+(#<procedure (read . g10601061)> #<input port "tmp1">)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
+(#<procedure (read . g10601061)> #<input port "tmp1">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure (output-port? x815)> #<output port "tmp2">)  ==> #t
+(#<procedure (read . g10601061)> #<input port "tmp2">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
 (#<procedure (eof-object? x1029)> #!eof)  ==> #t
 (#<procedure (eof-object? x1029)> #!eof)  ==> #t
 (input-port? #t)  ==> #t
-(#<procedure (read-char . g10371038)> #<input port tmp2>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port tmp2>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port tmp2>)  ==> #\;
-(#<procedure (read . g10601061)> #<input port tmp2>)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
-(#<procedure (read . g10601061)> #<input port tmp2>)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure (read-char . g10371038)> #<input port "tmp2">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "tmp2">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "tmp2">)  ==> #\;
+(#<procedure (read . g10601061)> #<input port "tmp2">)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
+(#<procedure (read . g10601061)> #<input port "tmp2">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
 
 Passed all tests
 
@@ -588,15 +588,15 @@ SECTION(6 5 5)
 (#<procedure C_expt> 0 1)  ==> 0
 (#<procedure (atan n1472 . n2473)> 1 1)  ==> 0.785398163397448
 (#<procedure (call-with-output-file name946 p947 . mode948)> "tmp3" #<procedure (? test-file)>)  ==> #t
-(#<procedure (read . g10601061)> #<input port tmp3>)  ==> (define foo (quote (0.25 -3.25)))
+(#<procedure (read . g10601061)> #<input port "tmp3">)  ==> (define foo (quote (0.25 -3.25)))
 (#<procedure (eof-object? x1029)> #!eof)  ==> #t
 (#<procedure (eof-object? x1029)> #!eof)  ==> #t
 (input-port? #t)  ==> #t
-(#<procedure (read-char . g10371038)> #<input port tmp3>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port tmp3>)  ==> #\;
-(#<procedure (read-char . g10371038)> #<input port tmp3>)  ==> #\;
-(#<procedure (read . g10601061)> #<input port tmp3>)  ==> (0.25 -3.25)
-(#<procedure (read . g10601061)> #<input port tmp3>)  ==> (define foo (quote (0.25 -3.25)))
+(#<procedure (read-char . g10371038)> #<input port "tmp3">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "tmp3">)  ==> #\;
+(#<procedure (read-char . g10371038)> #<input port "tmp3">)  ==> #\;
+(#<procedure (read . g10601061)> #<input port "tmp3">)  ==> (0.25 -3.25)
+(#<procedure (read . g10601061)> #<input port "tmp3">)  ==> (define foo (quote (0.25 -3.25)))
 (pentium-fdiv-bug #t)  ==> #t
 
 Passed all tests

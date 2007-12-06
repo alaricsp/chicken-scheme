@@ -352,9 +352,9 @@ C_TLS int (*C_gc_mutation_hook)(C_word *slot, C_word val);
 C_TLS void (*C_gc_trace_hook)(C_word *var, int mode);
 C_TLS C_word(*C_get_unbound_variable_value_hook)(C_word sym);
 C_TLS void (*C_panic_hook)(C_char *msg);
-
-C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
+C_TLS void (*C_pre_gc_hook)(int mode);
 C_TLS void (*C_post_gc_hook)(int mode, long ms);
+C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
 
 C_TLS int
   C_abort_on_thread_exceptions,
@@ -736,6 +736,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   initialize_symbol_table();
   C_dlerror = "can not load compiled code dynamically - this is a statically linked executable";
   error_location = C_SCHEME_FALSE;
+  C_pre_gc_hook = NULL;
   C_post_gc_hook = NULL;
   live_finalizer_count = 0;
   allocated_finalizer_count = 0;
@@ -2638,6 +2639,9 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   if(interrupt_reason && C_interrupts_enabled)
     handle_interrupt(trampoline, proc);
 
+  /* Note: the mode argument will always be GC_MINOR or GC_REALLOC. */
+  if(C_pre_gc_hook != NULL) C_pre_gc_hook(GC_MINOR);
+
   lock_tospace(0);
   finalizers_checked = 0;
   C_restart_trampoline = (TRAMPOLINE)trampoline;
@@ -2807,8 +2811,9 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
     update_locative_table(gc_mode);
     count = (C_uword)tospace_top - (C_uword)tospace_start;
 
-    /* isn't gc_mode always GC_MAJOR here? */
-    if(gc_mode == GC_MAJOR && count < percentage(percentage(heap_size, C_heap_shrinkage), DEFAULT_HEAP_SHRINKAGE_USED) &&
+    /*** isn't gc_mode always GC_MAJOR here? */
+    if(gc_mode == GC_MAJOR && 
+       count < percentage(percentage(heap_size, C_heap_shrinkage), DEFAULT_HEAP_SHRINKAGE_USED) &&
        heap_size > MINIMAL_HEAP_SIZE && !C_heap_size_is_fixed)
       C_rereclaim2(percentage(heap_size, C_heap_shrinkage), 0);
     else {
@@ -3087,6 +3092,8 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
 
   lock_tospace(0);
 
+  if(C_pre_gc_hook != NULL) C_pre_gc_hook(GC_REALLOC);
+
   if(double_plus) size = heap_size * 2 + size;
 
   if(size < MINIMAL_HEAP_SIZE) size = MINIMAL_HEAP_SIZE;
@@ -3213,12 +3220,14 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   C_fromspace_top = new_tospace_top;
   C_fromspace_limit = new_tospace_limit;
   lock_tospace(1);
-  
+
   if(gc_report_flag) {
     C_printf(C_text("[GC] resized heap to %d bytes\n"), heap_size);
     C_printf(C_text("(new) fromspace: \tstart=%08lx, \tlimit=%08lx\n"), (long)fromspace_start, (long)C_fromspace_limit);
     C_printf(C_text("(new) tospace:   \tstart=%08lx, \tlimit=%08lx\n"), (long)tospace_start, (long)tospace_limit);
   }
+
+  if(C_post_gc_hook != NULL) C_post_gc_hook(GC_REALLOC, 0);
 }
 
 
