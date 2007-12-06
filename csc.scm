@@ -50,6 +50,10 @@
 # define C_TARGET_CFLAGS  C_INSTALL_CFLAGS
 #endif
 
+#ifndef C_TARGET_LDFLAGS
+# define C_TARGET_LDFLAGS  C_INSTALL_LDFLAGS
+#endif
+
 #ifndef C_TARGET_BIN_HOME
 # define C_TARGET_BIN_HOME  C_INSTALL_BIN_HOME
 #endif
@@ -86,6 +90,8 @@
 (define-foreign-variable TARGET_CXX c-string "C_TARGET_CXX")
 (define-foreign-variable TARGET_CFLAGS c-string "C_TARGET_CFLAGS")
 (define-foreign-variable INSTALL_CFLAGS c-string "C_INSTALL_CFLAGS")
+(define-foreign-variable TARGET_LDFLAGS c-string "C_TARGET_LDFLAGS")
+(define-foreign-variable INSTALL_LDFLAGS c-string "C_INSTALL_LDFLAGS")
 (define-foreign-variable INSTALL_MORE_LIBS c-string "C_INSTALL_MORE_LIBS")
 (define-foreign-variable INSTALL_MORE_STATIC_LIBS c-string "C_INSTALL_MORE_STATIC_LIBS")
 (define-foreign-variable INSTALL_SHARE_HOME c-string "C_INSTALL_SHARE_HOME")
@@ -160,8 +166,8 @@
       (lambda (s) s)))
 (define default-compilation-optimization-options (string-split (if host-mode INSTALL_CFLAGS TARGET_CFLAGS)))
 (define best-compilation-optimization-options default-compilation-optimization-options)
-(define default-linking-optimization-options '())
-(define best-linking-optimization-options '())
+(define default-linking-optimization-options (string-split (if host-mode INSTALL_LDFLAGS TARGET_LDFLAGS)))
+(define best-linking-optimization-options default-linking-optimization-options)
 
 (define-constant simple-options
   '(-explicit-use -no-trace -no-warnings -no-usual-integrations -optimize-leaf-routines -unsafe

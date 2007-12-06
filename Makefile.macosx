@@ -53,6 +53,11 @@ endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -dynamiclib -compatibility_version 1 -current_version 1.0
 POSTINSTALL_PROGRAM_FLAGS = -change libchicken$(SO) $(LIBDIR)/libchicken$(SO)
 
+ifeq ($(ARCH),x86-64)
+C_COMPILER_OPTIONS += -m64
+LINKER_OPTIONS += -m64
+endif
+
 # file extensions
 
 SO = .dylib

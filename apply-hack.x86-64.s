@@ -36,8 +36,10 @@
 	.text
 
 	.globl _C_do_apply_hack
+#ifndef __APPLE__
 	.type _C_do_apply_hack, @function
-	
+#endif
+
 _C_do_apply_hack:
 	subq $8, %rsp		/* force non-16 byte alignment */
 	movq %rdi, %r11		/* get proc */
