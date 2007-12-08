@@ -438,7 +438,7 @@
 					      `((lambda ()
 						  ,@l))))))
 			     spec))
-		,argv)))
+		',argv)))
 
 
 ;;; Create new repository file
