@@ -85,7 +85,7 @@
 
 	To install CHICKEN for a particular PREFIX on a different
 	location, set the "DESTDIR" variable in addition to "PREFIX":
-	It designates the directory where the files are installed
+	It designates the directory where the files are copied
 	into.
 
 	You can further enable various optional features by adding
