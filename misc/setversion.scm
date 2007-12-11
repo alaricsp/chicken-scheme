@@ -5,7 +5,7 @@
 (define buildversion (->string (car (read-file "buildversion"))))
 (define buildbinaryversion (car (read-file "buildbinaryversion")))
 
-(define files '("README"))
+(define files '("README" "manual/The User's Manual"))
 
 (define (patch which rx subst)
   (match which
@@ -23,7 +23,7 @@
     (both
      (let ((tmp (create-temporary-file)))
        (patch (list both tmp) rx subst)
-       (system* "mv ~A ~A" tmp both ) ) ) ) )
+       (system* "mv ~S ~S" tmp both ) ) ) ) )
 
 (define (main args)
   (cond ((member "-set" args) =>
@@ -36,8 +36,8 @@
       (write `(define-constant +build-version+ ,buildversion))
       (newline) ) )
   (system* "cat version.scm")
-  (let ([vstr (sprintf "Version ~A" buildversion)])
-    (for-each (cut patch <> "Version [-.0-9a-zA-Z]+" vstr) files) )
+  (let ([vstr (sprintf "version ~A" buildversion)])
+    (for-each (cut patch <> "version [0-9][-.0-9a-zA-Z]+" vstr) files) )
   (with-output-to-file "DONE" (cut print "- version is " buildversion))
   0)
 
