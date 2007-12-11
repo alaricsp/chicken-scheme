@@ -142,6 +142,9 @@ chicken-defaults.h:
 	echo "#ifndef C_INSTALL_CFLAGS" >>$@
 	echo "# define C_INSTALL_CFLAGS \"$(C_COMPILER_OPTIONS) $(C_COMPILER_OPTIMIZATION_OPTIONS)\"" >>$@
 	echo "#endif" >>$@
+	echo "#ifndef C_INSTALL_LDFLAGS" >>$@
+	echo "# define C_INSTALL_LDFLAGS \"$(LINKER_OPTIONS) $(LINKER_OPTIMIZATION_OPTIONS)\"" >>$@
+	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_SHARE_HOME" >>$@
 	echo "# define C_INSTALL_SHARE_HOME \"$(DATADIR)\"" >>$@
 	echo "#endif" >>$@
@@ -186,6 +189,9 @@ chicken-defaults.h:
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_CFLAGS" >>$@
 	echo "# define C_TARGET_CFLAGS \"$(TARGET_C_COMPILER_OPTIONS) $(TARGET_C_COMPILER_OPTIMIZATION_OPTIONS)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_LDFLAGS" >>$@
+	echo "# define C_TARGET_LDFLAGS \"$(TARGET_LINKER_OPTIONS) $(TARGET_LINKER_OPTIMIZATION_OPTIONS)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_CROSS_CHICKEN" >>$@
 	echo "# define C_CROSS_CHICKEN $(CROSS_CHICKEN)" >>$@
