@@ -30,8 +30,11 @@ diff r4rstest.out r4rstest.log
 echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
 
-echo "======================================== embedding ..."
+echo "======================================== embedding (1) ..."
 $compile embedded1.c && ./a.out
+
+echo "======================================== embedding (2) ..."
+$compile -e embedded2.scm && ./a.out
 
 echo "======================================== benchmarks ..."
 cd ../benchmarks

@@ -74,21 +74,22 @@ This function can be used to invoke the Scheme procedure {{closure}}.
 the procedure on the temporary stack. Values are put onto the temporary
 stack with the {{C_save}} macro.
 
-=== C_callback_adjust_stack_limits
+=== C_callback_adjust_stack
 
- [C function] void C_callback_adjust_stack_limits (C_word *ptr)
+ [C function] void C_callback_adjust_stack (C_word *ptr, int size)
 
 The runtime-system uses the stack as a special allocation area and
-internally holds pointers to estimated limits to distinguish between Scheme
-data objects inside the stack from objects outside of it.
-If you invoke callbacks at wildly differing stack-levels,
-these limits may shift from invocation to invocation. Callbacks defined
-with {{define-external}} will perform appropriate adjustments automatically,
-but if you invoke {{C_callback}} manually, you should perform a
-{{C_callback_adjust_stack_limits}} to make sure the internal limits are
-set properly. {{ptr}} should point to some data object on the stack. The
-call will make sure the limits are adjusted so that the value pointed to
-by {{ptr}} is located in the stack.
+internally holds pointers to estimated limits to distinguish between
+Scheme data objects inside the stack from objects outside of it.  If
+you invoke callbacks at wildly differing stack-levels, these limits
+may shift from invocation to invocation. Callbacks defined with
+{{define-external}} will perform appropriate adjustments
+automatically, but if you invoke {{C_callback}} manually, you should
+perform a {{C_callback_adjust_stack}} to make sure the internal limits
+are set properly. {{ptr}} should point to some data object on the
+stack and {{size}} is the number of words contained in the data object
+(or some estimate). The call will make sure the limits are adjusted so
+that the value pointed to by {{ptr}} is located in the stack.
 
 Previous: [[Embedding]]
 

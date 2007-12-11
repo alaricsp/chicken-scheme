@@ -1741,7 +1741,31 @@ C_word C_fcall C_callback(C_word closure, int argc)
 }
 
 
-void C_fcall C_callback_adjust_stack_limits(C_word *a)
+void C_fcall C_callback_adjust_stack(C_word *a, int size)
+{
+  if(!chicken_is_running && !C_in_stackp((C_word)a)) {
+    if(debug_mode)
+      C_printf(C_text("[debug] callback invoked in lower stack region - adjusting limits:\n"
+		      "[debug]   current:  \t%p\n"
+		      "[debug]   previous: \t%p (bottom) - %p (limit)\n"),
+	       a, stack_bottom, C_stack_limit);
+
+#if C_STACK_GROWS_DOWNWARD
+    C_stack_limit = (C_word *)((C_byte *)a - stack_size);
+    stack_bottom = a + size;
+#else
+    C_stack_limit = (C_word *)((C_byte *)a + stack_size);
+    stack_bottom = a;
+#endif
+
+    if(debug_mode)
+      C_printf(C_text("[debug]   new:      \t%p (bottom) - %p (limit)\n"),
+	       stack_bottom, C_stack_limit);
+  }
+}
+
+
+void C_fcall C_callback_adjust_stack_limits(C_word *a) /* DEPRECATED */
 {
   if(!chicken_is_running && !C_in_stackp((C_word)a)) {
     if(debug_mode)
@@ -4147,6 +4171,12 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 #else
     return C_SCHEME_FALSE;
 #endif
+    
+  case C_fix(36):
+    debug_mode = !debug_mode;
+    return C_mk_bool(debug_mode);
+
+    /* 37 - 38 */
 
   case C_fix(39):
 #if defined(C_CROSS_CHICKEN) && C_CROSS_CHICKEN

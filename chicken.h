@@ -1161,7 +1161,8 @@ C_fctexport C_word C_fcall C_restore_callback_continuation(void);
 C_fctexport C_word C_fcall C_restore_callback_continuation2(int level);
 C_fctexport C_word C_fcall C_callback(C_word closure, int argc);
 C_fctexport C_word C_fcall C_callback_wrapper(void *proc, int argc);
-C_fctexport void C_fcall C_callback_adjust_stack_limits(C_word *base);
+C_fctexport void C_fcall C_callback_adjust_stack_limits(C_word *base); /* DEPRECATED */
+C_fctexport void C_fcall C_callback_adjust_stack(C_word *base, int size);
 C_fctexport void CHICKEN_parse_command_line(int argc, char *argv[], C_word *heap, C_word *stack, C_word *symbols);
 C_fctexport void C_fcall C_toplevel_entry(C_char *name) C_regparm;
 C_fctexport C_word C_fcall C_enable_interrupts(void) C_regparm;
