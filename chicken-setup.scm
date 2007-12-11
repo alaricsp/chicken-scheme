@@ -415,7 +415,12 @@
 (define make/proc
   (case-lambda
    ((spec) (make:make/proc/helper spec '()))
-   ((spec argv) (make:make/proc/helper spec argv))))
+   ((spec argv)
+    (make:make/proc/helper
+     spec
+     (if (vector? argv)
+	 (vector->list argv)
+	 argv) ) ) ) )
 
 (define-macro (make spec #!optional (argv '()))
   (let ((form-error (lambda (s . p) (apply error s spec p))))
