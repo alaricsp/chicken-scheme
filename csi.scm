@@ -847,7 +847,8 @@ EOF
 	     (set-cdr! p '()) ) ] )
     (let* ([eval? (member* '("-e" "-eval") args)]
 	   [batch (or script (member* '("-b" "-batch") args) eval?)]
-	   [quiet (or script (member* '("-q" "-quiet") args) eval?)]
+	   [quietflag (member* '("-q" "-quiet") args)]
+	   [quiet (or script quietflag eval?)]
 	   [ipath (map chop-separator (string-split (or (getenv "CHICKEN_INCLUDE_PATH") "") ";"))] )      
       (define (collect-options opt)
 	(let loop ([opts args])
@@ -865,6 +866,7 @@ EOF
 		     [fn (string-append prefix (string ##sys#pathname-directory-separator) init-file)] )
 		(when (file-exists? fn) 
 		  (load fn) ) ) ) ) )
+      (when quietflag (set! ##sys#eval-debug-level 0))
       (when (member* '("-h" "-help" "--help") args)
 	(print-usage)
 	(exit 0) )

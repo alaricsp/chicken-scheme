@@ -39,7 +39,7 @@ The options recognized by the interpreter are:
 
 ; -w  -no-warnings : Disables any warnings that might be issued by the reader or evaluated code.
 
-; -q  -quiet : Do not print a startup message.
+; -q  -quiet : Do not print a startup message. Also disables generation of call-trace information for interpreted code.
 
 ; -s  -script PATHNAME : This is equivalent to {{-batch -quiet -no-init PATHNAME}}. Arguments following {{PATHNAME}} are available by using  {{command-line-arguments}} and are not processed as interpreter options. Extra options in the environment variable {{CSI_OPTIONS}} are ignored.
 
