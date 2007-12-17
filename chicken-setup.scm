@@ -422,7 +422,7 @@
 	 (vector->list argv)
 	 argv) ) ) ) )
 
-(define-macro (make spec #!optional (argv '()))
+(define-macro (make spec #!optional (argv ''()))
   (let ((form-error (lambda (s . p) (apply error s spec p))))
     (and (or (list? spec) (form-error "illegal specification (not a sequence)"))
 	 (or (pair? spec) (form-error "empty specification"))
@@ -443,7 +443,7 @@
 					      `((lambda ()
 						  ,@l))))))
 			     spec))
-		',argv)))
+		,argv)))
 
 
 ;;; Create new repository file
