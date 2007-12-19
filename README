@@ -211,13 +211,13 @@
 	  compile your translated Scheme files with `kgcc' instead of
 	  `gcc'.
 
-        - Older versions of Solaris have a bug in ld.so that causes
-          trouble with dynamic loading.  Patching Solaris fixes the
-          problem. Solaris 7 needs patch 106950-18. Solaris 8 has an
-          equivalent patch, 109147-16.
+	- Older versions of Solaris have a bug in ld.so that causes
+	  trouble with dynamic loading.	 Patching Solaris fixes the
+	  problem. Solaris 7 needs patch 106950-18. Solaris 8 has an
+	  equivalent patch, 109147-16.
 
-          You can find out if you have these patches installed by
-          running:
+	  You can find out if you have these patches installed by
+	  running:
 
 	  % showrev -p | grep 106950	# solaris 7
 	  % showrev -p | grep 109147	# solaris 8
@@ -225,7 +225,7 @@
 	- On NetBSD it might be possible that compilation fails with a
 	  "virtual memory exhausted error".  Try the following:
 
-          % unlimit datasize
+	  % unlimit datasize
 
 	- For Mac OS X, Chicken requires libdl, for loading compiled
 	  code dynamically. This library is available on Mac OS X 10.4
@@ -235,9 +235,9 @@
 
 	- On Mac OS X, Chicken can be built in 64-bit mode on Intel
 	  Core 2 Duo systems--basically, most recent machines.  The default
-          is 32-bit mode.  To enable 64-bit mode, invoke `make` thusly:
+	  is 32-bit mode.  To enable 64-bit mode, invoke `make` thusly:
 
-            make PLATFORM=macosx ARCH=x86-64
+	    make PLATFORM=macosx ARCH=x86-64
 
  	- On Windows, only mingw32 <http://mingw.sourceforge.net/> is
 	  supported (Microsoft Visual Studio is NOT). Makefiles for
@@ -246,15 +246,15 @@
 	  
 	  Be sure that the Chicken LIBDIR is in the Path. Windows
 	  looks for '.dll' files along the Path.
-          The 'install' target now works for MingW as well.
+	  The 'install' target now works for MingW as well.
 
-        - Cygwin is now supported!  However, Cygwin will not be able to find
-          the chicken shared libraries until Windows is rebooted.  
+	- Cygwin is now supported!  However, Cygwin will not be able to find
+	  the chicken shared libraries until Windows is rebooted.  
 
 	- gcc 3.4 shows sometimes warnings of the form
 
-           easyffi.c: In function `f_11735':
-           easyffi.c:18697: warning: `noreturn' function does return
+	    easyffi.c: In function `f_11735':
+	    easyffi.c:18697: warning: `noreturn' function does return
 	
 	  when compiling the system or compiled Scheme files. These
 	  warnings are bogus and can be ignored.
