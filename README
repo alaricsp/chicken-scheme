@@ -199,7 +199,7 @@
 	
  5. Platform issues:
 
-  - *BSD system users *must* use GNU make ("gmake") - the makefiles
+	- *BSD system users *must* use GNU make ("gmake") - the makefiles
 	  can not be processed by BSD make.
 
 	- Some old Linux distributions ship with a buggy version of
@@ -222,16 +222,22 @@
 	  % showrev -p | grep 106950	# solaris 7
 	  % showrev -p | grep 109147	# solaris 8
 
-  - On NetBSD it might be possible that compilation fails with a
+	- On NetBSD it might be possible that compilation fails with a
 	  "virtual memory exhausted error".  Try the following:
 
           % unlimit datasize
 
-  - For Mac OS X, Chicken requires libdl, for loading compiled
+	- For Mac OS X, Chicken requires libdl, for loading compiled
 	  code dynamically. This library is available on Mac OS X 10.4
 	  (Tiger) by default. For older version you can find it here:
 
 	    http://www.opendarwin.org/projects/dlcompat
+
+	- On Mac OS X, Chicken can be built in 64-bit mode on Intel
+	  Core 2 Duo systems--basically, most recent machines.  The default
+          is 32-bit mode.  To enable 64-bit mode, invoke `make` thusly:
+
+            make PLATFORM=macosx ARCH=x86-64
 
  	- On Windows, only mingw32 <http://mingw.sourceforge.net/> is
 	  supported (Microsoft Visual Studio is NOT). Makefiles for
