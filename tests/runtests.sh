@@ -45,7 +45,7 @@ for x in `ls *.scm`; do
 	*)
 	    echo $x
 	    ../csc $x -compiler ../chicken -C -I.. -L.. -O2 -d0 && \
-		./`basename $x .scm` >/dev/null;;
+		./`basename $x .scm`;;
     esac
 done
 cd ${TEST_DIR}

@@ -22,6 +22,6 @@ int main()
 
 (define (oink x)
   (pp x)
-  (pp (vector-length x)) )
+  (vector-length x))
 
 (return-to-host)
