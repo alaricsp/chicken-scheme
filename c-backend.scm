@@ -51,7 +51,7 @@
   target-initial-heap-size disable-stack-overflow-checking
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  mutable-constants
+  mutable-constants encode-literal
   broken-constant-nodes inline-substitutions-enabled
   direct-call-ids foreign-type-table first-analysis block-variable-literal?
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database 
@@ -110,7 +110,7 @@
 
 ;;; Generate target code:
 
-(define (generate-code literals lambdas out source-file dynamic db)
+(define (generate-code literals lliterals lambdas out source-file dynamic db)
   (let ()
 
     ;; Some helper procedures
@@ -139,7 +139,11 @@
 	       ((eof) (gen "C_SCHEME_END_OF_FILE"))
 	       (else (bomb "bad immediate")) ) )
 
-	    ((##core#literal) (gen "lf[" (first params) #\]))
+	    ((##core#literal) 
+	     (let ((lit (first params)))
+	       (if (vector? lit)
+		   (gen "((C_word)li" (vector-ref lit 0) ")") 
+		   (gen "lf[" (first params) #\])) ) )
 
 	    ((if)
 	     (gen #t "if(C_truep(")
@@ -455,7 +459,10 @@
 	  (gen "/* Generated from " source-file " by the CHICKEN compiler" #t
 	       "   http://www.call-with-current-continuation.org" #t
 	       "   " (+ 1900 year) #\- (pad0 (add1 mon)) #\- (pad0 mday) #\space (pad0 hour) #\: (pad0 min) #t
-	       "   " (chicken-version #t) #t
+	       (string-intersperse
+		(map (cut string-append "   " <> "\n") 
+		     (string-split (chicken-version #t) "\n") ) 
+		"")
 	       "   command line: ")
 	  (gen-list compiler-arguments)
 	  (gen #t)
@@ -484,7 +491,21 @@
 		#t "C_externimport void C_ccall C_" uu "_toplevel(C_word c,C_word d,C_word k) C_noret;"))
 	 used-units)
 	(unless (zero? n)
-	  (gen #t #t "static C_TLS C_word lf[" n"];") ) ) )
+	  (gen #t #t "static C_TLS C_word lf[" n "];") )
+	(do ((i 0 (add1 i))
+	     (llits lliterals (cdr llits)))
+	    ((null? llits))
+	  (let* ((ll (##sys#lambda-info->string (car llits)))
+		 (llen (string-length ll)))
+	    (gen #t "static C_char C_TLS li" i "[]={C_lihdr(" 
+		 (arithmetic-shift llen -16) #\,
+		 (bitwise-and #xff (arithmetic-shift llen -8)) #\,
+		 (bitwise-and #xff llen)
+		 #\))
+	    (do ((n 0 (add1 n)))
+		((>= n llen))
+	      (gen #\, (char->integer (string-ref ll n))) )
+	    (gen "};")))))
   
     (define (prototypes)
       (let ([large-signatures '()])
@@ -624,10 +645,10 @@
 	(for-each (emitter #t) nsrv) ) )
   
     (define (literal-frame)
-      (do ([i 0 (+ i 1)]
+      (do ([i 0 (add1 i)]
 	   [lits literals (cdr lits)] )
 	  ((null? lits))
-	(gen-lit (car lits) (sprintf "lf[~s]" i) #t) ) )
+	(gen-lit (car lits) (sprintf "lf[~s]" i)) ) )
 
     (define (bad-literal lit)
       (bomb "type of literal not supported" lit) )
@@ -642,10 +663,7 @@
 	    [(block-variable-literal? lit) 0]
 	    [(##sys#immediate? lit) (bad-literal lit)]
 	    [(##core#inline "C_lambdainfop" lit) 0]
-	    [(##sys#bytevector? lit)
-	     (if (##sys#permanent? lit)
-		 0
-		 (+ 2 (words (##sys#size lit))) ) ]
+	    [(##sys#bytevector? lit) (+ 2 (words (##sys#size lit))) ] ; drops "permanent" property!
 	    [(##sys#generic-structure? lit)
 	     (let ([n (##sys#size lit)])
 	       (let loop ([i 0] [s (+ 2 n)])
@@ -654,114 +672,48 @@
 		     (loop (add1 i) (+ s (literal-size (##sys#slot lit i)))) ) ) ) ]
 	    [else (bad-literal lit)] ) )
 
-    ;; This is currently not needed but will be handy for optimized literal lists/vector constructors...
-    #;(define (imm-lit lit)
-      (cond [(fixnum? lit) (string-append "C_fix(" (number->string lit) ")")]
-	    [(eq? #t lit) "C_SCHEME_TRUE"]
-	    [(eq? #f lit) "C_SCHEME_FALSE"]
-	    [(null? lit) "C_SCHEME_END_OF_LIST"]
-	    [(eq? lit (void)) "C_SCHEME_UNDEFINED"]
-	    [(char? lit) (string-append "C_make_character(" (number->string (char->integer lit)) ")")]
-	    [(eof-object? lit) "C_SCHEME_END_OF_FILE"]
-	    [(and (number? lit) (eq? 'fixnum number-type))
-	     (let ([flit (##sys#flo2fix lit)])
-	       (compiler-warning 'type "coerced inexact literal number `~S' to fixnum `~S'" lit flit)
-	       (string-append "C_fix(" (number->string flit) ")") ) ]
-	    [else #f] ) )
-
-    (define (gen-lit lit to lf)
-      (cond ((fixnum? lit)
-	     (cond ((big-fixnum? lit)
-		    (gen #t to "=C_double_to_number(C_flonum(C_heaptop," lit ".0));") )
-		   ((eq? 'flonum number-type)
-		    (gen #t to "=C_flonum(C_heaptop," lit ");") )
-		   (else (gen #t to "=C_fix(" lit ");") ) ) )
+    (define (gen-lit lit to)
+      ;; we do simple immediate literals directly to avoid a function call:
+      (cond ((and (fixnum? lit) (not (big-fixnum? lit)))
+	     (gen #t to "=C_fix(" lit ");") )
 	    ((block-variable-literal? lit))
 	    ((eq? lit (void))
 	     (gen #t to "=C_SCHEME_UNDEFINED;") )
-	    ((number? lit)
-	     (cond [(eq? 'fixnum number-type)
-		    (let ([flit (##sys#flo2fix lit)])
-		      (compiler-warning 'type "coerced inexact literal number `~S' to fixnum `~S'" lit flit)
-		      (gen #t to "=C_fix(" flit ");") ) ]
-		   [else
-		    (let ((str (number->string lit)))
-		      (if (and (> (string-length str) 1) (char-alphabetic? (string-ref str 1)))	; inf or nan?
-			  (gen #t to "=C_flonum(C_heaptop, C_strtod(\"" lit "\", NULL));")
-			  (gen #t to "=C_flonum(C_heaptop," lit ");"))) ] ) )
 	    ((boolean? lit) 
 	     (gen #t to #\= (if lit "C_SCHEME_TRUE" "C_SCHEME_FALSE") #\;) )
 	    ((char? lit)
 	     (gen #t to "=C_make_character(" (char->integer lit) ");") )
-	    ((null? lit) 
-	     (gen #t to "=C_SCHEME_END_OF_LIST;") )
-	    ((string? lit) (gen-string-like-lit to lit "C_static_string" #t))
-	    ((##core#inline "C_lambdainfop" lit) (gen-string-like-lit to lit "C_static_lambda_info" #t))
-	    ((pair? lit)
-	     (cond ((and (proper-list? lit) (pair? (cdr lit)))
-		    (do ((len 0 (add1 len))
-			 (lst lit (cdr lst)) )
-			((null? lst)
-			 (gen #t to "=C_h_list(" len)
-			 (do ((k (sub1 len) (sub1 k)))
-			     ((< k 0) (gen ");" #t "C_drop(" len ");"))
-			   (gen ",C_pick(" k #\)) ) )
-		      (gen-lit (car lst) "tmp" #f)
-		      (gen #t "C_save(tmp);") ) )
-		   (else
-		    (gen-lit (car lit) "tmp" #f)
-		    (gen #t "C_save(tmp);")
-		    (gen-lit (cdr lit) "tmp" #f)
-		    (gen #t to "=C_h_pair(C_restore,tmp);") ) ) )
-	    ((vector? lit) (gen-vector-like-lit to lit "C_h_vector"))
-	    ((symbol? lit)
+	    ((symbol? lit)		; handled slightly specially (see C_h_intern_in)
 	     (let* ([str (##sys#slot lit 1)]
 		    [cstr (c-ify-string str)]
 		    [len (##sys#size str)] )
 	       (gen #t to "=")
-	       (if lf
-		   (gen "C_h_intern(&" to #\, len #\, cstr ");")
-		   (gen "C_intern(C_heaptop," len #\, cstr ");") ) ) )
+	       (gen "C_h_intern(&" to #\, len #\, cstr ");") ) )
+	    ((null? lit) 
+	     (gen #t to "=C_SCHEME_END_OF_LIST;") )
 	    ((##sys#immediate? lit) (bad-literal lit))
-	    ((##sys#bytevector? lit)
-	     (if (##sys#permanent? lit)
-		 (gen-string-like-lit to lit "C_pbytevector" #f)
-		 (gen-string-like-lit to lit "C_bytevector" #t) ) )
-	    ((##sys#generic-structure? lit) (gen-vector-like-lit to lit "C_h_structure"))
-	    (else (bad-literal lit)) ) )
+	    ((##core#inline "C_lambdainfop" lit))
+	    (else
+	     (gen #t to "=C_decode_literal(C_heaptop,")
+	     (gen-string-constant (encode-literal lit))
+	     (gen ");") ) ) )
 
-    (define (gen-string-like-lit to lit conser top)
-      (let* ([len (##sys#size lit)]
+    (define (gen-string-constant str)
+      (let* ([len (##sys#size str)]
 	     [ns (fx/ len 80)]
 	     [srest (modulo len 80)] )
-	(gen #t to #\= conser #\()
-	(when top (gen "C_heaptop,"))
-	(gen len #\,)
 	(do ([i ns (sub1 i)]
 	     [offset 0 (+ offset 80)] )
 	    ((zero? i)
 	     (when (or (zero? len) (not (zero? srest)))
-	       (gen (c-ify-string (string-like-substring lit offset len))) )
-	     (gen ");") )
-	  (gen (c-ify-string (string-like-substring lit offset (+ offset 80))) #t) ) ) )
-  
+	       (gen (c-ify-string (string-like-substring str offset len))) ) )
+	  (gen (c-ify-string (string-like-substring str offset (+ offset 80))) #t) ) ) )
+ 
     (define (string-like-substring s start end)
       (let* ([len (- end start)]
 	     [s2 (make-string len)] )
 	(##sys#copy-bytes s s2 start 0 len)
 	s2) )
-
-    (define (gen-vector-like-lit to lit conser)
-      (let ([len (##sys#size lit)])
-	(do ([j 0 (+ j 1)]
-	     [n len (- n 1)] )
-	    ((zero? n)
-	     (gen #t to #\= conser #\( len)
-	     (do ([j (- len 1) (- j 1)])
-		 ((< j 0) (gen ");" #t "C_drop(" len ");"))
-	       (gen ",C_pick(" j #\)) ) )
-	  (gen-lit (##sys#slot lit j) "tmp" #f)
-	  (gen #t "C_save(tmp);") ) ) )
 
     (define (procedures)
       (for-each
@@ -1141,8 +1093,8 @@
 	 (when rname
 	   (gen #t "/* from " (cleanup rname) " */") )
 	 (generate-foreign-callback-header "" stub)
-	 (gen #\{ #t "C_word x,s=" sizestr ",*a=C_alloc(s);")
-	 (gen #t "C_callback_adjust_stack(a,s);")
+	 (gen #\{ #t "C_word x, *a=C_alloc(" sizestr ");")
+	 (gen #t "C_callback_adjust_stack_limits(a);")
 	 (for-each
 	  (lambda (v t)
 	    (gen #t "x=" (foreign-result-conversion t "a") v ");"
@@ -1374,3 +1326,67 @@
 		[`(enum ,etype) (sprintf "C_int_to_num(&~a," dest)]
 		[else (err)] ) ]
 	     [else (err)] ) ) ) ) )
+
+
+;;; Encoded literals as strings, to be decoded by "C_decode_literal()"
+;; 
+;; - everything hardcoded, using the FFI would be the ugly, but safer method.
+
+(define (encode-literal lit)
+  (define getbits
+    (foreign-lambda* int ((scheme-object lit))
+      "
+#ifdef C_SIXTY_FOUR
+return((C_header_bits(lit) >> (24 + 32)) & 0xff);
+#else
+return((C_header_bits(lit) >> 24) & 0xff);
+#endif
+") )
+  (define getsize
+    (foreign-lambda* int ((scheme-object lit))
+      "return(C_header_size(lit));"))
+  (define (encode-size n)
+    ;; only handles sizes in the 24-bit range!
+    (string (integer->char (bitwise-and #xff (arithmetic-shift n -16)))
+	    (integer->char (bitwise-and #xff (arithmetic-shift n -8)))
+	    (integer->char (bitwise-and #xff n))))
+  (define (finish str)		   ; can be taken out at a later stage
+    (string-append (string #\xfe) str))
+  (finish
+   (cond ((eq? #t lit) "\xff\x06\x01")
+	 ((eq? #f lit) "\xff\x06\x00")
+	 ((char? lit) (string-append "\xff\x0a" (encode-size (char->integer lit))))
+	 ((null? lit) "\xff\x0e")
+	 ((eof-object? lit) "\xff\x3e")
+	 ((eq? (void) lit) "\xff\x1e")
+	 ((and (fixnum? lit) (not (big-fixnum? lit)))
+	  (string-append
+	   "\xff\x01"
+	   (string (integer->char (bitwise-and #xff (arithmetic-shift lit -24)))
+		   (integer->char (bitwise-and #xff (arithmetic-shift lit -16)))
+		   (integer->char (bitwise-and #xff (arithmetic-shift lit -8)))
+		   (integer->char (bitwise-and #xff lit)) ) ) )
+	 ((number? lit)
+	  (string-append "\x55" (number->string lit) "\x00") )
+	 ((symbol? lit)
+	  (let ((str (##sys#slot lit 1)))
+	    (string-append 
+	     "\x01" 
+	     (encode-size (string-length str))
+	     str) ) )
+	 ((##sys#immediate? lit)
+	  (bomb "invalid literal - can not encode" lit))
+	 ((##core#inline "C_byteblockp" lit)
+	  (##sys#string-append ; relies on the fact that ##sys#string-append doesn't check
+	   (string-append
+	    (string (integer->char (getbits lit)))
+	    (encode-size (getsize lit)) )
+	   lit) )
+	 (else
+	  (let ((len (getsize lit)))
+	    (string-intersperse
+	     (cons*
+	      (string (integer->char (getbits lit)))
+	      (encode-size len)
+	      (list-tabulate len (lambda (i) (encode-literal (##sys#slot lit i)))))
+	     ""))))) )

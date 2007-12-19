@@ -70,15 +70,6 @@ with the {{csc}} compiler driver.
 Enables or disables syntax-checking of embedded C/C++ code fragments. Checking C syntax is the default.
 
 
-=== compress-literals
-
- [declaration specifier] (compress-literals [THRESHOLD [INITIALIZER]])
-
-The same as the {{-compress-literals}} compiler option.
-The threshold argument defaults to 50. If the optional argument {{INITIALIZER}}
-is given, then the literals will not be created at module startup,
-but when the procedure with this name will be called.
-
 === constant
 
  [declaration specifier] (constant SYMBOL ...)

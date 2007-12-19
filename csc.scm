@@ -182,7 +182,7 @@
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
     -inline-limit -profile-name -disable-warning -import -require-static-extension
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
-    -compress-literals) )
+    -compress-literals) )		; DEPRECATED
 
 (define-constant shortcuts
   '((-h "-help")
@@ -442,7 +442,6 @@
 
     -debug MODES                display debugging output for the given modes
     -compiler PATHNAME          use other compiler than default `chicken'
-    -compress-literals NUMBER   compile literals above threshold as strings
     -disable-c-syntax-checks    disable syntax checks of C code fragments
     -raw                        do not generate implicit init- and exit code			       
     -emit-external-prototypes-first  emit protoypes for callbacks before foreign

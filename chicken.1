@@ -54,18 +54,6 @@ Search for references to undefined global variables.
 Aborts compilation process after macro-expansion and syntax checks.
 
 .TP
-.B \-compress\-literals\ threshold
-Compiles quoted literals that exceed the size 
-.BI threshold
-as strings
-and parse the strings at run-time. This reduces the size of the code and
-speeds up compile-times of the host C compiler, but has a small run-time
-performance penalty. The size of a literal is computed by counting recursively the objects
-in the literal, so a vector counts as 1 plus the count of the elements,
-a pair counts as the counts of the car and the cdr, respectively.
-All other objects count 1.
-
-.TP
 .BI \-database\-size \ number
 Specifies the initial size of the analysis-database. Should only be used if extremely large files are to be compiled.
 

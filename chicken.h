@@ -1082,6 +1082,24 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 #define C_u_i_bit_setp(x, i)            C_mk_bool((C_unfix(x) & (1 << C_unfix(i))) != 0)
 
+#ifdef C_BIG_ENDIAN
+# ifdef C_SIXTY_FOUR
+#  define C_lihdr(x, y, z)              ((C_LAMBDA_INFO_TYPE >> 56) & 0xff), \
+                                        0, 0, 0, 0, (x), (y), (z)
+# else
+#  define C_lihdr(x, y, z)              ((C_LAMBDA_INFO_TYPE >> 24) & 0xff), \
+                                        (x), (y), (z)
+# endif
+#else
+# ifdef C_SIXTY_FOUR
+#  define C_lihdr(x, y, z)              (z), (y), (x), 0, 0, 0, 0, \
+                                        ((C_LAMBDA_INFO_TYPE >> 56) & 0xff)
+# else
+#  define C_lihdr(x, y, z)              (z), (y), (x), \
+                                        ((C_LAMBDA_INFO_TYPE >> 24) & 0xff)
+# endif
+#endif
+
 #define C_end_of_main
 
 #if !defined(C_EMBEDDED) && !defined(C_SHARED)
@@ -1504,6 +1522,8 @@ C_fctexport void C_ccall C_peek_unsigned_integer_32(C_word c, C_word closure, C_
 # define C_peek_signed_integer_32    C_peek_signed_integer
 # define C_peek_unsigned_integer_32  C_peek_unsigned_integer
 #endif
+
+C_fctexport C_word C_fcall C_decode_literal(C_word **ptr, C_char *str) C_regparm;
 
 /* defined in eval.scm: */
 C_fctexport  void  CHICKEN_get_error_message(char *buf,int bufsize);

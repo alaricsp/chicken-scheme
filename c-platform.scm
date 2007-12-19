@@ -133,7 +133,8 @@
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
 	  inline-limit profile-name disable-warning emit-exports import
-    prelude postlude prologue epilogue nursery extend feature compress-literals
+    prelude postlude prologue epilogue nursery extend feature 
+    compress-literals			; DEPRECATED
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 

@@ -36,8 +36,6 @@ Possible options are:
 
 ; -check-syntax : Aborts compilation process after macro-expansion and syntax checks.
 
-; -compress-literals THRESHOLD : Compiles quoted literals that exceed the size {{THRESHOLD}} as strings and parse the strings at run-time. This reduces the size of the code and speeds up compile-times of the host C compiler, but has a small run-time performance penalty. The size of a literal is computed by counting recursively the objects in the literal, so a vector counts as 1 plus the count of the elements, a pair counts as the counts of the car and the cdr, respectively. All other objects count 1.
-
 ; -debug MODES : Enables one or more compiler debugging modes. {{MODES}} is a string of characters that select debugging information about the compiler that will be printed to standard output.
 
      t          show time needed for compilation

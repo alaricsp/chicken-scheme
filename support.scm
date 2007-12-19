@@ -58,7 +58,7 @@
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! finish-foreign-result compressable-literal csc-control-file
+  transform-direct-lambdas! finish-foreign-result csc-control-file
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
   constant? basic-literal? source-info->string import-table
@@ -263,18 +263,6 @@
       (eof-object? x)
       (char? x)
       (boolean? x) ) )
-
-(define (compressable-literal lit t)
-  (let* ([count 0]
-	 [f (let rec ([x lit])
-	      (set! count (add1 count))
-	      (cond [(or (number? x) (char? x) (string? x) (boolean? x) (null? x) (symbol? x))] ; 1
-		    [(pair? x)		; car + cdr
-		     (set! count (sub1 count))
-		     (and (rec (car x)) (rec (cdr x))) ]
-		    [(vector? x) (every rec (vector->list x))] ; 1 + elements
-		    [else #f] ) ) ] )
-    (and f (> count t) count) ) )
 
 (define (basic-literal? x)
   (or (null? x)
@@ -1329,7 +1317,6 @@ Usage: chicken FILENAME OPTION ...
   Obscure options:
 
     -debug MODES                display debugging output for the given modes
-    -compress-literals NUMBER   compile literals above threshold as strings
     -unsafe-libraries           marks the generated file as being linked
                                 with the unsafe runtime system
     -raw                        do not generate implicit init- and exit code			       

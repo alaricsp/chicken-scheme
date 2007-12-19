@@ -1942,7 +1942,7 @@ C_regparm C_word C_fcall C_intern_in(C_word **ptr, int len, C_char *str, C_SYMBO
 C_regparm C_word C_fcall C_h_intern_in(C_word *slot, int len, C_char *str, C_SYMBOL_TABLE *stable)
 {
   /* Intern as usual, but remember slot, if looked up symbol is in nursery.
-     also: allocatein static memory. */
+     also: allocate in static memory. */
   int key;
   C_word s;
 
@@ -8962,4 +8962,136 @@ C_regparm C_word C_fcall C_i_o_fixnum_difference(C_word n1, C_word n2)
   
   if((((s ^ x1) & ~(s ^ x2)) >> 30) != 0) return C_SCHEME_FALSE;
   else return C_fix(s);
+}
+
+
+static C_regparm C_uword C_fcall decode_size(C_char **str)
+{
+  C_uchar **ustr = (C_uchar **)str;
+  C_uword size = (*((*ustr)++) & 0xff) << 16; /* always big endian */
+
+  size |= (*((*ustr)++) & 0xff) << 8;
+  size |= (*((*ustr)++) & 0xff);
+  return size;
+}
+
+
+static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
+{
+  unsigned long bits = *((*str)++) & 0xff;
+  C_word *data, *dptr, val;
+  C_uword size;
+
+  /* vvv this can be taken out at a later stage vvv */
+  if(bits != 0xfe)
+    panic(C_text("invalid encoded literal format"));
+
+  bits = *((*str)++) & 0xff;
+  /* ^^^ this can be taken out at a later stage ^^^ */
+
+#ifdef C_SIXTY_FOUR
+  bits <<= 24 + 32;
+#else
+  bits <<= 24;
+#endif
+
+  if(bits == C_HEADER_BITS_MASK) {		/* special/immediate */
+    switch(0xff & *((*str)++)) {
+    case C_BOOLEAN_BITS: 
+      val = C_mk_bool(*((*str)++));
+      break;
+
+    case C_CHARACTER_BITS: 
+      val = C_make_character(decode_size(str));
+      break;
+
+    case C_SCHEME_END_OF_LIST:
+    case C_SCHEME_UNDEFINED:
+    case C_SCHEME_END_OF_FILE:
+      val = (C_word)(*(*str - 1));
+      break;
+
+    case C_FIXNUM_BIT:
+      val = *((*str)++) << 24; /* always big endian */
+      val |= (*((*str)++) & 0xff) << 16;
+      val |= (*((*str)++) & 0xff) << 8;
+      val |= (*((*str)++) & 0xff);
+      val = C_fix(val); 
+      break;
+
+    default: 
+      panic(C_text("invalid encoded special literal"));
+    }
+
+    return val;
+  }
+
+#ifndef C_SIXTY_FOUR
+  if((bits & C_8ALIGN_BIT) != 0) {
+    /* Align _data_ on 8-byte boundary: */
+    if(aligned8(*ptr)) ++(*ptr);
+  }
+#endif
+
+  val = (C_word)(*ptr);
+
+  if(bits == C_FLONUM_TYPE) {
+    *((*ptr)++) = C_FLONUM_TAG;
+    data = *ptr;
+    *((double *)data) = C_strtod(*str, str);
+    ++(*str);			/* skip terminating '\0' */
+    *ptr = (C_word *)((C_word)(*ptr) + sizeof(double));
+    return val;
+  }
+
+  if((bits & C_SPECIALBLOCK_BIT) != 0)
+    panic(C_text("literals with special bit can not be decoded"));
+
+  size = decode_size(str);
+
+  switch(bits) {
+  case C_STRING_TYPE:
+    /* strings are always allocated statically */
+    val = C_static_string(ptr, size, *str);
+    *str += size;
+    break;
+    
+  case C_SYMBOL_TYPE:
+    val = C_intern(ptr, size, *str);
+    *str += size;
+    break;
+
+  case C_LAMBDA_INFO_TYPE:
+    /* lambda infos are always allocated statically */
+    val = C_static_lambda_info(ptr, size, *str);
+    *str += size;
+    break;
+
+  default:
+    *((*ptr)++) = C_make_header(bits, size);
+    data = *ptr;
+
+    if((bits & C_BYTEBLOCK_BIT) != 0) {
+      C_memcpy(data, *str, size);
+      size = C_align(size);
+      *str += size;
+      *ptr = (C_word *)C_align((C_word)(*ptr) + size);
+    }
+    else {
+      C_word *dptr = *ptr;
+      *ptr += size;
+
+      while(size--) {
+	*(dptr++) = decode_literal2(ptr, str);
+      }
+    }
+  }
+
+  return val;
+}
+
+
+C_regparm C_word C_fcall C_decode_literal(C_word **ptr, C_char *str)
+{
+  return decode_literal2(ptr, &str);
 }

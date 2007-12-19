@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  version 2.737
+  version 2.738
 
 
  1. Introduction:
@@ -85,7 +85,7 @@
 
 	To install CHICKEN for a particular PREFIX on a different
 	location, set the "DESTDIR" variable in addition to "PREFIX":
-	It designates the directory where the files are copied
+	It designates the directory where the files are installed
 	into.
 
 	You can further enable various optional features by adding

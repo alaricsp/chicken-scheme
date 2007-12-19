@@ -67,7 +67,6 @@
 ; (separate)
 ; (run-time-macros)
 ; (export {<name>})
-; (compress-literals [<threshold>])
 ; (safe-globals)
 ; (custom-declare (<tag> <name> <filename> <arg> ...) <string> ...)
 ; (data <tag1> <exp1> ...)
@@ -284,13 +283,13 @@
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database export-list csc-control-file
-  estimate-foreign-result-location-size compressed-literals-initializer unused-variables
+  estimate-foreign-result-location-size unused-variables
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
   units-used-by-default words-per-flonum disable-stack-overflow-checking
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
-  location-pointer-map literal-compression-threshold compressed-literals compressable-literal
+  location-pointer-map
   lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
@@ -330,7 +329,6 @@
 (define-constant constant-table-size 301)
 (define-constant real-name-table-size 997)
 (define-constant import-table-size 997)
-(define-constant default-literal-compression-threshold 50)
 (define-constant default-inline-max-size 10)
 
 
@@ -360,9 +358,6 @@
 (define block-globals '())
 (define source-filename #f)
 (define export-list #f)
-(define compressed-literals '())
-(define literal-compression-threshold #f)
-(define compressed-literals-initializer #f)
 (define safe-globals-flag #f)
 (define explicit-use-flag #f)
 (define disable-stack-overflow-checking #f)
@@ -543,18 +538,7 @@
 
 			((quote)
 			 (##sys#check-syntax 'quote x '(quote _))
-			 (let* ([lit (cadr x)] 
-				[cf (and literal-compression-threshold
-					 (compressable-literal lit literal-compression-threshold) ) ] )
-			   (if cf
-			       (let ([var (gensym 'lf)])
-				 (debugging 'o "compressing literal of size" cf)
-				 (set! compressed-literals
-				   (alist-cons var (write-to-string lit) compressed-literals) )
-				 (set! always-bound (cons var always-bound))
-				 (set! block-globals (cons var block-globals))
-				 var)
-			       x) ) )
+			 x)
 
 			((##core#check)
 			 (if unsafe
@@ -1159,12 +1143,6 @@
 	(let ((syms (cdr spec)))
 	  (set! block-globals (lset-difference eq? block-globals syms))
 	  (set! export-list (lset-union eq? syms (or export-list '())))))
-       ((compress-literals)
-	(set! literal-compression-threshold 
-	  (or (and (pair? (cdr spec)) (number? (cadr spec)) (cadr spec))
-	      default-literal-compression-threshold) ) 
-	(when (and (list? spec) (= 3 (length spec)))
-	  (set! compressed-literals-initializer (third spec)) ) )
        ((emit-exports)
 	(cond ((null? (cdr spec))
 	       (quit "invalid `emit-exports' declaration" spec) )
@@ -2080,6 +2058,7 @@
   
 (define (prepare-for-code-generation node db)
   (let ([literals '()]
+	[lambda-info-literals '()]
         [lambdas '()]
         [temporaries 0]
         [allocated 0]
@@ -2293,14 +2272,20 @@
     (define (literal x)
       (cond [(immediate? x) (immediate-literal x)]
 	    [(and (number? x) (inexact? x) 
-		  (list-index (lambda (y) (and (number? y) (inexact? y) (= x y))) literals) )
+		  (list-index (lambda (y) (and (number? y) (inexact? y) (= x y)))
+			      literals) )
 	     => values]
-            [(posq x literals) => values]
+	    ((##core#inline "C_lambdainfop" x)
+	     (let ((i (length lambda-info-literals)))
+	       (set! lambda-info-literals 
+		 (append lambda-info-literals (list x))) ;*** see below
+	       (vector i) ) )
+            [(posq x literals) => identity]
 	    [else (new-literal x)] ) )
 
     (define (new-literal x)
       (let ([i (length literals)])
-	(set! literals (append literals (list x))) ; could be optimized
+	(set! literals (append literals (list x))) ;*** could (should) be optimized
 	i) )
 
     (define (blockvar-literal var)
@@ -2326,4 +2311,4 @@
       (debugging 'o "fast box initializations" fastinits)
       (debugging 'o "fast global references" fastrefs)
       (debugging 'o "fast global assignments" fastsets)
-      (values node2 literals lambdas) ) ) )
+      (values node2 literals lambda-info-literals lambdas) ) ) )

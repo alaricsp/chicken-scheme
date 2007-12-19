@@ -61,7 +61,7 @@
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call emit-unsafe-marker
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! source-filename compressed-literals literal-compression-threshold
+  transform-direct-lambdas! source-filename
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
@@ -71,7 +71,7 @@
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
-  default-profiling-declarations default-optimization-passes compressed-literals-initializer
+  default-profiling-declarations default-optimization-passes
   inline-max-size file-requirements use-import-table lookup-exports-file
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
@@ -129,7 +129,6 @@
 	[hgrowth (memq 'heap-growth options)]
 	[hshrink (memq 'heap-shrinkage options)]
 	[kwstyle (memq 'keyword-style options)]
-	[lcthreshold (memq 'compress-literals options)]
 	[uses-units '()]
 	[uunit (memq 'unit options)]
 	[a-only (memq 'analyze-only options)]
@@ -261,17 +260,14 @@
       (when verbose (printf "Identifiers and symbols are case insensitive~%~!"))
       (register-feature! 'case-insensitive)
       (case-sensitive #f) )
+    (when (memq 'compress-literals options)
+      (compiler-warning 'usage "`the -compress-literals' option is obsolete") )
     (when kwstyle
       (let ([val (option-arg kwstyle)])
 	(cond [(string=? "prefix" val) (keyword-style #:prefix)]
 	      [(string=? "none" val) (keyword-style #:none)]
 	      [(string=? "suffix" val) (keyword-style #:suffix)]
 	      [else (quit "invalid argument to `-keyword-style' option")] ) ) )
-    (when lcthreshold
-      (let ([t (option-arg lcthreshold)])
-	(set! literal-compression-threshold 
-	  (or (string->number t)
-	      (quit "invalid argument to `-compress-literals' option: ~A" t) ) ) ) )
     (set! verbose-mode verbose)
     (set! ##sys#read-error-with-line-number #t)
     (set! ##sys#include-pathnames
@@ -455,17 +451,6 @@
 				  ',(car pl)
 				  ',(cdr pl) ) )
 			      profile-lambda-list)
-			 (let ([is (fold (lambda (clf r)
-					   `(let ([,(gensym) 
-						   (set! ,(car clf)
-						     (##sys#read-from-string ',(cdr clf)))])
-					      ,r) )
-					 '(##core#undefined) 
-					 compressed-literals) ] )
-			   (if compressed-literals-initializer
-			       `((##core#set! ,compressed-literals-initializer 
-					      (lambda () ,is) ) )
-			       (list is) ) )
 			 exps0
 			 (if (and (not unit-name) (not dynamic))
 			     cleanup-forms
@@ -603,14 +588,15 @@
 			      (print-node "closure-converted" '|9| node3)
 
 			      (begin-time)
-			      (receive (node literals lambdas) (prepare-for-code-generation node3 db)
+			      (receive (node literals lliterals lambdas)
+				  (prepare-for-code-generation node3 db)
 				(end-time "preparation")
 
                                 (begin-time)
 				(let ((out (if outfile (open-output-file outfile) (current-output-port))) )
 				  (unless quiet
 				    (printf "generating `~A' ...~%" outfile) )
-				  (generate-code literals lambdas out filename dynamic db)
+				  (generate-code literals lliterals lambdas out filename dynamic db)
 				  (when outfile (close-output-port out)))
                                 (end-time "code generation")
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
