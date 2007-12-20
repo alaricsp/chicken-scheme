@@ -185,7 +185,7 @@
 	  '(#\")
 	  (let* ((c (car chars))
 		 (code (char->integer c)) )
-	    (if (or (< code 32) (> code 128) (memq c '(#\" #\' #\\ #\?)))
+	    (if (or (< code 32) (>= code 127) (memq c '(#\" #\' #\\ #\?)))
 		(append '(#\\)
 			(cond ((< code 8) '(#\0 #\0))
 			      ((< code 64) '(#\0))
