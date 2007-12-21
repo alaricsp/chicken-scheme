@@ -219,9 +219,12 @@
 (define (chop-pds str pds)
   (and str
        (let ((len (##sys#size str))
-	     (pdslen (##sys#size pds)) )
-	 (if (and (fx>= len pdslen) 
-		  (##core#inline "C_substring_compare" str pds (fx- len pdslen) 0 pdslen) )
+	     (pdslen (if pds (##sys#size pds) 1)))
+	 (if (and (fx>= len 1)
+		  (if pds
+		      (##core#inline "C_substring_compare" str pds (fx- len pdslen) 0 pdslen)
+		      (memq (##core#inline "C_subchar" str (fx- len pdslen))
+			    '(#\/ #\\) ) ) )
 	     (##sys#substring str 0 (fx- len pdslen))
 	     str) ) ) )
 
@@ -239,7 +242,10 @@
 	  (let ((s1 (car strs)))
 	    (if (zero? (string-length s1))
 		(loop (cdr strs))
-		(string-append (chop-pds (car strs) pds) pds (loop (cdr strs))) ) ) ) ) )
+		(string-append 
+		 (chop-pds (car strs) pds)
+		 (or pds "/")
+		 (loop (cdr strs))) ) ) ) ) )
 
   (define (canonicalize dir pds)
     (cond [(or (not dir) (null? dir)) ""]
@@ -248,17 +254,19 @@
 
   (define (_make-pathname loc dir file ext pds)
     (let ([dirs (canonicalize dir pds)]
-	  [pdslen (##sys#size pds)]
+	  [pdslen (if pds (##sys#size pds) 1)]
 	  [ext (or ext "")]
 	  [file (or file "")] )
       (##sys#check-string file loc)
       (##sys#check-string ext loc)
-      (##sys#check-string pds loc)
+      (when pds (##sys#check-string pds loc))
       (string-append
        dirs
        (if (and dir
 		(and (fx>= (##sys#size file) pdslen)
-		     (##core#inline "C_substring_compare" pds file 0 0 pdslen) ) )
+		     (if pds
+			 (##core#inline "C_substring_compare" pds file 0 0 pdslen)
+			 (memq (##core#inline "C_subchar" file 0) '(#\\ #\/)))))
 	   (##sys#substring file pdslen (##sys#size file))
 	   file)
        (if (and (fx> (##sys#size ext) 0)
@@ -268,11 +276,11 @@
        ext) ) )
 
   (set! make-pathname
-    (lambda (dir file #!optional ext (pds "/"))
+    (lambda (dir file #!optional ext pds)
       (_make-pathname 'make-pathname dir file ext pds)))
 
   (set! make-absolute-pathname
-    (lambda (dir file #!optional ext (pds "/"))
+    (lambda (dir file #!optional ext pds)
       (_make-pathname
        'make-absolute-pathname
        (let* ([dirs (canonicalize dir pds)]
@@ -295,7 +303,7 @@
 	        (and dir
 		     (if (member dir '("/" "\\"))
 		         dir
-		         (chop-pds dir pds) ) ) )] )
+		         (chop-pds dir #f) ) ) )] )
       (lambda (pn)
         (##sys#check-string pn 'decompose-pathname)
         (if (fx= 0 (##sys#size pn))
