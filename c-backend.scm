@@ -566,7 +566,7 @@
 	 lambdas) 
 	(for-each
 	 (lambda (s)
-	   (gen #t "typedef void (C_cdecl *C_proc" s ")(C_word")
+	   (gen #t "typedef void (*C_proc" s ")(C_word")
 	   (for-each gen (make-list s ",C_word"))
 	   (gen ") C_noret;") )
 	 large-signatures) ) )
