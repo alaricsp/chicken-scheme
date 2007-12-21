@@ -42,35 +42,24 @@ CROSS_CHICKEN ?= 0
 
 # directories
 
-ifeq ($(PLATFORM),mingw)
-PREFIX ?= c:\\devtools
 DESTDIR =
-BINDIR = $(DESTDIR)$(PREFIX)\\bin
-LIBDIR = $(DESTDIR)$(PREFIX)\\lib
-SHAREDIR = $(DESTDIR)$(PREFIX)\\share
-DATADIR = $(SHAREDIR)\\chicken
-TOPMANDIR = $(SHAREDIR)\\man
-MANDIR = $(TOPMANDIR)\\man1
-INFODIR = $(SHAREDIR)\\info
-INCDIR = $(DESTDIR)$(PREFIX)\\include
-DOCDIR = $(DATADIR)\\doc
-CHICKENLIBDIR = $(LIBDIR)\\chicken
-EGGDIR = $(CHICKENLIBDIR)\\$(BINARYVERSION)
+ifeq ($(PLATFORM),mingw)
+PREFIX ?= c:/devtools
 else
 PREFIX ?= /usr/local
-DESTDIR =
-BINDIR = $(DESTDIR)$(PREFIX)/bin
-LIBDIR = $(DESTDIR)$(PREFIX)/lib
-SHAREDIR = $(DESTDIR)$(PREFIX)/share
+endif
+
+BINDIR = $(PREFIX)/bin
+LIBDIR = $(PREFIX)/lib
+SHAREDIR = $(PREFIX)/share
 DATADIR = $(SHAREDIR)/chicken
 TOPMANDIR = $(SHAREDIR)/man
 MANDIR = $(TOPMANDIR)/man1
 INFODIR = $(SHAREDIR)/info
-INCDIR = $(DESTDIR)$(PREFIX)/include
+INCDIR = $(PREFIX)/include
 DOCDIR = $(DATADIR)/doc
 CHICKENLIBDIR = $(LIBDIR)/chicken
 EGGDIR = $(CHICKENLIBDIR)/$(BINARYVERSION)
-endif
 
 # commands
 

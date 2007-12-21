@@ -209,9 +209,6 @@ is set, it should contain a list of alternative include
 pathnames separated by
 .I \;
 \.
-The environment variable
-.B CHICKEN_HOME
-is also considered as a search path.
 
 .TP
 .B \-inline
@@ -410,8 +407,8 @@ Prints the version and some copyright information and exit the compiler.
 .SH ENVIRONMENT\ VARIABLES
 
 .TP
-.B CHICKEN_HOME
-Should contain the pathname where support- and include-files can be found.
+.B CHICKEN_PREFIX
+Is used as a prefix directory for support files, include-files and libraries.
 
 .TP
 .B CHICKEN_INCLUDE_PATH

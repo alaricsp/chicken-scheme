@@ -3145,8 +3145,7 @@ EOF
 	 "\n" +copyright+ "\t" +build-tag+) )
       +build-version+) )
 
-(define ##sys#pathname-directory-separator
-  (if ##sys#windows-platform #\\ #\/) )
+(define ##sys#pathname-directory-separator #\/) ; DEPRECATED
 
 
 ;;; Feature identifiers:

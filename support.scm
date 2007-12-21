@@ -1209,7 +1209,8 @@
 
 (define (chop-separator str)
   (let ([len (sub1 (string-length str))])
-    (if (and (> len 0) (char=? (string-ref str len) ##sys#pathname-directory-separator))
+    (if (and (> len 0) 
+	     (memq (string-ref str len) '(#\\ #\/)))
 	(substring str 0 len)
 	str) ) )
 

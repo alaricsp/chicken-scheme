@@ -35,6 +35,7 @@
 
 # platform configuration
 
+DLLSINPATH = 1
 ARCH = x86
 HACKED_APPLY = 1
 WINDOWS = 1
@@ -68,6 +69,8 @@ LIBUCHICKEN_SO_LIBRARIES = -lws2_32
 LIBCHICKENGUI_SO_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lws2_32 
 LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
 LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
+TARGET_C_COMPILER = gcc
+TARGET_CXX_COMPILER = g++
 
 # special files
 

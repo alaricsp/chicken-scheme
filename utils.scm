@@ -46,8 +46,7 @@
  [else
   (declare
     (always-bound
-      ##sys#windows-platform
-      ##sys#pathname-directory-separator)
+      ##sys#windows-platform)
     (bound-to-procedure
       string-search string-match regexp regexp-escape
       ##sys#symbol-has-toplevel-binding? ##sys#environment-symbols
@@ -206,15 +205,12 @@
 
 ;;; Pathname operations:
 
-(define ##sys#pathname-directory-separator-string (string ##sys#pathname-directory-separator))
-
 (define absolute-pathname?
   (let ([string-match string-match]
         [regexp regexp]
         [string-append string-append])
     (let* ([drv (if ##sys#windows-platform "([A-Za-z]:)?" "")]
-           [patt (string-append drv
-	                        "^[\\/\\" ##sys#pathname-directory-separator-string "].*$")]
+           [patt (string-append drv "^[\\/\\\\].*$")]
 	   [rx (regexp patt)] )
       (lambda (pn)
         (##sys#check-string pn 'absolute-pathname?)
@@ -231,9 +227,9 @@
 
 (define make-pathname)
 (define make-absolute-pathname)
+
 (let ([string-append string-append]
-      [absolute-pathname? absolute-pathname?]
-      [syspds ##sys#pathname-directory-separator-string] )
+      [absolute-pathname? absolute-pathname?])
 
   (define (conc-dirs dirs pds)
     (##sys#check-list dirs 'make-pathname)
@@ -272,11 +268,11 @@
        ext) ) )
 
   (set! make-pathname
-    (lambda (dir file #!optional ext (pds syspds))
+    (lambda (dir file #!optional ext (pds "/"))
       (_make-pathname 'make-pathname dir file ext pds)))
 
   (set! make-absolute-pathname
-    (lambda (dir file #!optional ext (pds syspds))
+    (lambda (dir file #!optional ext (pds "/"))
       (_make-pathname
        'make-absolute-pathname
        (let* ([dirs (canonicalize dir pds)]
@@ -290,16 +286,14 @@
   (let ([string-match string-match]
         [regexp regexp]
         [string-append string-append])
-    (let* ([pds ##sys#pathname-directory-separator-string]
-	   [pdsset (##sys#string-append "\\/\\" pds)]
-           [patt1 (string-append "^(.*[" pdsset "])?([^" pdsset "]+)(\\.([^" pdsset ".]+))$")]
-	   [patt2 (string-append "^(.*[" pdsset "])?((\\.)?[^" pdsset "]+)$")]
+    (let* ([patt1 "^(.*[\\/\\\\])?([^\\/\\\\]+)(\\.([^\\/\\\\.]+))$"]
+	   [patt2 "^(.*[\\/\\\\])?((\\.)?[^\\/\\\\]+)$"]
 	   [rx1 (regexp patt1)]
 	   [rx2 (regexp patt2)]
 	   [strip-pds
 	     (lambda (dir)
 	        (and dir
-		     (if (string=? dir pds)
+		     (if (member dir '("/" "\\"))
 		         dir
 		         (chop-pds dir pds) ) ) )] )
       (lambda (pn)

@@ -65,7 +65,7 @@ EOF
   (always-bound
     ##sys#windows-platform)
   (hide parse-option-string bytevector-data member* canonicalize-args do-trace do-untrace
-	traced-procedures describer-table
+	traced-procedures describer-table dirseparator?
 	findall trace-indent command-table do-break do-unbreak broken-procedures) )
 
 
@@ -129,12 +129,15 @@ EOF
 
 ;;; Chop terminating separator from pathname:
 
+(define (dirseparator? c)
+  (or (char=? c #\\) (char=? c #\/)))
+
 (define chop-separator 
-  (let ([pds ##sys#pathname-directory-separator]
-	[substring substring] )
+  (let ([substring substring] )
     (lambda (str)
-      (let ([len (sub1 (##sys#size str))])
-	(if (and (fx> len 0) (char=? (string-ref str len) pds))
+      (let* ((len (sub1 (##sys#size str)))
+	     (c (string-ref str len)))
+	(if (and (fx> len 0) (dirseparator? c))
 	    (substring str 0 len)
 	    str) ) ) ) )
 
@@ -160,13 +163,13 @@ EOF
     (lambda (name)
       (let ([path (getenv "PATH")])
 	(and (> (##sys#size name) 0)
-	     (cond [(char=? ##sys#pathname-directory-separator (string-ref name 0)) (addext name)]
-		   [(string-index (lambda (c) (char=? c ##sys#pathname-directory-separator)) name)
+	     (cond [(dirseparator? (string-ref name 0)) (addext name)]
+		   [(string-index dirseparator? name)
 		    (and-let* ([p (_getcwd buf 256)])
-		      (addext (string-append (chop-separator p) (string ##sys#pathname-directory-separator) name)) ) ]
+		      (addext (string-append (chop-separator p) "/" name)) ) ]
 		   [(addext name)]
 		   [else
-		    (let ([name2 (string-append (string ##sys#pathname-directory-separator) name)])
+		    (let ([name2 (string-append "/" name)])
 		      (let loop ([ps (string-split path ";")])
 			(and (pair? ps)
 			     (let ([name2 (string-append (chop-separator (##sys#slot ps 0)) name2)])
@@ -863,7 +866,7 @@ EOF
 	  (if (file-exists? fn)
 	      (load fn)
 	      (let* ([prefix (chop-separator (or (getenv "HOME") "."))]
-		     [fn (string-append prefix (string ##sys#pathname-directory-separator) init-file)] )
+		     [fn (string-append prefix "/" init-file)] )
 		(when (file-exists? fn) 
 		  (load fn) ) ) ) ) )
       (when quietflag (set! ##sys#eval-debug-level 0))

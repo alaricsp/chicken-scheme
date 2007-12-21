@@ -74,9 +74,6 @@ special form. This option may be given multiple times. If the environment variab
 is set, it should contain a list of alternative include
 pathnames separated by
 .B \; .
-The environment variable 
-.B CHICKEN_HOME
-is also considered as a search path.
 
 .TP
 .BI \-k\ \-keyword\-style style
@@ -140,10 +137,8 @@ Contains one or more pathnames where the interpreter should also look for includ
 characters.
 
 .TP
-.B CHICKEN_HOME
-Should contain the pathname of a directory where interpreter
-support-files can be found. This path is also added to the list of
-pathnames where include-filesd are searched.
+.B CHICKEN_PREFIX
+Is used as a prefix directory for support files, include-files and libraries.
 
 .TP
 .B CSI_OPTIONS

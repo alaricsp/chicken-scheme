@@ -35,6 +35,7 @@
 
 # platform configuration
 
+DLLSINPATH = 1
 ARCH = x86
 HACKED_APPLY = 1
 WINDOWS = 1

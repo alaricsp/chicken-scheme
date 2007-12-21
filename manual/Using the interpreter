@@ -31,7 +31,7 @@ The options recognized by the interpreter are:
 
 ; -h  -help : Write a summary of the available command line options to standard output and exit.
 
-; -I  -include-path PATHNAME : Specifies an alternative search-path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}. The environment variable {{CHICKEN_HOME}} is also considered as a search path.
+; -I  -include-path PATHNAME : Specifies an alternative search-path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}.
 
 ; -k  -keyword-style STYLE : Enables alternative keyword syntax, where {{STYLE}} may be either {{prefix}} (as in Common Lisp) or {{suffix}} (as in DSSSL). Any other value is ignored.
 

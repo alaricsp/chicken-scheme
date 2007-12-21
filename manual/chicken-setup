@@ -117,7 +117,7 @@ a link to it will be automatically included in the index page (accessible via
  [extension property] (examples FILENAME ...)
 
 Copies the given files into the examples directory, which is usually 
-{{$prefix/share/chicken/examples}} (equivalent to {{$CHICKEN_HOME/examples}}
+{{$prefix/share/chicken/examples}}
 or {{(make-pathname (chicken-home) "examples")}}).
 
 Note that the files listed in this property should not be listed in the normal
@@ -269,7 +269,7 @@ specified at the time the system was built.
  [parameter] (program-path [PATH])
 
 Holds the path where executables are installed and defaults to either {{$CHICKEN_PREFIX/bin}},
-if the environment variable {{CHICKEN_PREFIX}} is set, {{$CHICKEN_HOME}} or the
+if the environment variable {{CHICKEN_PREFIX}} is set or the
 path where the CHICKEN binaries ({{chicken}}, {{csi}}, etc.) are installed.
 
 
@@ -556,7 +556,7 @@ depends on the {{tar}} and {{gunzip}} tools to extract the contents of
 an egg. The best way is to download an egg either manually (or with
 {{chicken-setup -fetch}}) and extract its contents with a separate
 program (like {{winzip}}). the {{CHICKEN_REPOSITORY}} environment
-variable has to be set (in addition to {{CHICKEN_HOME}}) to a
+variable has to be set to a
 directory where your compiled extensions should be located.
 
 The {{.setup}} scripts will not always work under Windows, and the

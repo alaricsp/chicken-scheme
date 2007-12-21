@@ -2,7 +2,7 @@
   README file for the CHICKEN compiler
   (c)2000-2007 Felix L. Winkelmann
 
-  version 2.738
+  version 2.739
 
 
  1. Introduction:
@@ -239,17 +239,13 @@
 
 	    make PLATFORM=macosx ARCH=x86-64
 
- 	- On Windows, only mingw32 <http://mingw.sourceforge.net/> is
-	  supported (Microsoft Visual Studio is NOT). Makefiles for
-	  mingw under MSYS and Windows shell are provided
-	  (`Makefile.mingw-msys' and `Makefile.mingw').
+ 	- On Windows, only mingw32 <http://mingw.sourceforge.net/> and
+  	  Cygwin is supported (Microsoft Visual Studio is
+  	  NOT). Makefiles for mingw under MSYS and Windows shell are
+  	  provided (`Makefile.mingw-msys' and `Makefile.mingw').
 	  
-	  Be sure that the Chicken LIBDIR is in the Path. Windows
-	  looks for '.dll' files along the Path.
-	  The 'install' target now works for MingW as well.
-
-	- Cygwin is now supported!  However, Cygwin will not be able to find
-	  the chicken shared libraries until Windows is rebooted.  
+	- Cygwin will not be able to find the chicken shared libraries
+          until Windows is rebooted.
 
 	- gcc 3.4 shows sometimes warnings of the form
 

@@ -111,9 +111,6 @@
 (define-foreign-variable install-egg-home c-string "C_INSTALL_EGG_HOME")
 (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
-(define pds ##sys#pathname-directory-separator)
-(define pdss (string ##sys#pathname-directory-separator))
-
 (define ##sys#core-library-modules
   '(extras lolevel utils tcp regex regex-extras posix match srfi-1 srfi-4 srfi-13 srfi-14 srfi-18))
 
@@ -146,11 +143,10 @@
 (define chicken-home
   (let ([getenv getenv])
     (lambda ()
-      (or (getenv "CHICKEN_HOME")
-	  (and-let* ((p (getenv "CHICKEN_PREFIX")))
+      (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	    (##sys#string-append 
 	     p
-	     (if (char=? (string-ref p (fx- (##sys#size p) 1)) ##sys#pathname-directory-separator)
+	     (if (memq (string-ref p (fx- (##sys#size p) 1)) '(#\\ #\/))
 		 "share"
 		 "/share") ) )
 	  installation-home) ) ) )
@@ -1119,7 +1115,7 @@
   (define (has-sep? str)
     (let loop ([i (fx- (##sys#size str) 1)])
       (and (not (zero? i))
-	   (if (char=? pds (##core#inline "C_subchar" str i))
+	   (if (memq (##core#inline "C_subchar" str i) '(#\\ #\/))
 	       i
 	       (loop (fx- i 1)) ) ) ) )
   (define (badfile x)
@@ -1155,7 +1151,7 @@
 	(or (and fname
 		 (or (##sys#dload (##sys#make-c-string fname) topentry #t) 
 		     (and (not (has-sep? fname))
-			  (##sys#dload (##sys#make-c-string (string-append "." pdss fname)) topentry #t) ) ) )
+			  (##sys#dload (##sys#make-c-string (##sys#string-append "./" fname)) topentry #t) ) ) )
 	    (call-with-current-continuation
 	     (lambda (abrt)
 	       (fluid-let ([##sys#read-error-with-line-number #t]
@@ -1196,7 +1192,7 @@
   (set! load-relative
     (lambda (filename . evaluator)
       (##sys#load
-       (if (char=? pds (string-ref filename 0))
+       (if (memq (string-ref filename 0) '(#\\ #\/))
 	   filename
 	   (##sys#string-append ##sys#current-load-path filename) )
        (:optional evaluator #f) #f) ) )
@@ -1280,6 +1276,7 @@
   (let ([string-append string-append])
     (lambda (id loc)
       (define (err) (##sys#error loc "invalid extension path" id))
+      (define (sep? c) (or (char=? #\\ c) (char=? #\/ c)))
       (let ([p (cond [(string? id) id]
 		     [(symbol? id) (##sys#symbol->string id)]
 		     [(list? id) 
@@ -1293,21 +1290,20 @@
 				     [else (err)] ) )
 			     (if (null? (##sys#slot id 1))
 				 ""
-				 pdss)
+				 "/")
 			     (loop (##sys#slot id 1)) ) ) ) ] ) ] )
 	(let check ([p p])
 	  (let ([n (##sys#size p)])
 	    (cond [(fx= 0 n) (err)]
-		  [(char=? pds (string-ref p 0))
+		  [(sep? (string-ref p 0))
 		   (check (##sys#substring p 1 n)) ]
-		  [(char=? pds (string-ref p (fx- n 1)))
+		  [(sep? (string-ref p (fx- n 1)))
 		   (check (##sys#substring p 0 (fx- n 1))) ]
 		  [else p] ) ) ) ) ) ) )
 
 (define ##sys#repository-path
   (make-parameter 
    (or (getenv repository-environment-variable)
-       (getenv "CHICKEN_HOME")
        install-egg-home) ) )
 
 (define repository-path ##sys#repository-path)
@@ -1317,7 +1313,7 @@
 	[string-append string-append] )
     (lambda (p inc?)
 	(define (check path)
-	  (let ([p0 (string-append path pdss p)])
+	  (let ([p0 (string-append path "/" p)])
 	    (and (or (file-exists? (##sys#string-append p0 ##sys#load-dynamic-extension))
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
@@ -1379,7 +1375,7 @@
 	[read read] )
     (lambda (id loc)
       (let* ((p (##sys#canonicalize-extension-path id loc))
-	     (rpath (string-append (##sys#repository-path) pdss p ".")) )
+	     (rpath (string-append (##sys#repository-path) "/" p ".")) )
 	(cond ((file-exists? (string-append rpath setup-file-extension))
 	       => (cut with-input-from-file <> read) )
 	      (else #f) ) ) ) ) )
@@ -1683,7 +1679,7 @@
 				##sys#include-pathnames) ) )
 	    (cond ((eq? paths '()) fname)
 		  ((test (string-append (##sys#slot paths 0)
-					pdss
+					"/"
 					fname) ) )
 		  (else (loop (##sys#slot paths 1))) ) ) ) ) ) )
 

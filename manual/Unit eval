@@ -165,8 +165,8 @@ loading of compiled code. Currently Linux, BSD, Solaris, Windows (with Cygwin) a
 
 ; [parameter] repository-path :
 Contains a string naming the path to the extension repository, which defaults to
-either the value of the environment variable {{CHICKEN_REPOSITORY}}, the value
-of the environment variable {{CHICKEN_HOME}} or the default library path
+either the value of the environment variable {{CHICKEN_REPOSITORY}}
+or the default library path
 (usually {{/usr/local/lib/chicken}} on UNIX systems).
 
 ==== extension-information
@@ -204,7 +204,7 @@ extension library is available for the given ID, then an attempt is
 made to load the file {{ID.so}} or {{ID.scm}} (in that order)
 from one of the following locations:
 
-* the current include path, which defaults to the pathnames given in {{CHICKEN_INCLUDE_PATH}} and {{CHICKEN_HOME}}.
+* the current include path, which defaults to the pathnames given in {{CHICKEN_INCLUDE_PATH}}.
 * the current directory
 
 {{ID}} should be a string or a symbol. The difference between {{require}} and 
@@ -248,7 +248,7 @@ visible in compiled code.
  [procedure] (chicken-home)
 
 Returns a string given the installation directory (usually {{/usr/local/share/chicken}} on UNIX-like systems).
-If the environment variable {{CHICKEN_HOME}} is set, then its value will be returned. As a last option,
+As a last option,
 if the environment variable {{CHICKEN_PREFIX}} is set, then {{chicken-home}} will return
 {{$CHICKEN_PREFIX/share}}.
 

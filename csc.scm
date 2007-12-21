@@ -135,9 +135,8 @@
       str) )
 
 (define home
-  (or (getenv "CHICKEN_HOME") 
-      (quotewrap 
-       (prefix "" "share" (if host-mode INSTALL_SHARE_HOME TARGET_SHARE_HOME)))))
+  (quotewrap 
+   (prefix "" "share" (if host-mode INSTALL_SHARE_HOME TARGET_SHARE_HOME))))
 
 (define translator
   (quotewrap 
@@ -164,6 +163,7 @@
   (if (not mingw)
       (lambda (s) (quotewrap s)) ; allow filenames w/ whitespace
       (lambda (s) s)))
+
 (define default-compilation-optimization-options (string-split (if host-mode INSTALL_CFLAGS TARGET_CFLAGS)))
 (define best-compilation-optimization-options default-compilation-optimization-options)
 (define default-linking-optimization-options (string-split (if host-mode INSTALL_LDFLAGS TARGET_LDFLAGS)))
@@ -570,7 +570,7 @@
 	       [(-v3)
 		(set! verbose #t)
 		(t-options "-verbose")
-		(set! compile-options (cons "-v -Q" compile-options))
+		(set! compile-options (cons* "-v" "-Q" compile-options))
 		(set! link-options (cons "-v" link-options)) ]
 	       [(|-A| -analyze-only)
 		(set! translate-only #t)

@@ -121,7 +121,7 @@ Possible options are:
 
 ; -import FILENAME : Read exports from linked or loaded libraries from given file. See also {{-check-imports}}. This is equivalent to declaring {{(declare (import FILENAME))}}. Implies {{-check-imports}}.
 
-; -include-path PATHNAME : Specifies an additional search path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}. The environment variable {{CHICKEN_HOME}} is also considered as a search path.
+; -include-path PATHNAME : Specifies an additional search path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}.
 
 ; -inline : Enable procedure inlining for known procedures of a size below the threshold (which can be set through the {{-inline-limit}} option).
 

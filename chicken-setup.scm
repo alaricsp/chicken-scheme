@@ -138,7 +138,6 @@
 (define *install-bin-path* 
   (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	(make-pathname p "bin") )
-      (getenv "CHICKEN_HOME")
       (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
 (define *cc* (foreign-value "C_TARGET_CC" c-string))
