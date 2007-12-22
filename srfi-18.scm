@@ -491,3 +491,11 @@ EOF
 	  (old)
 	  (##sys#thread-block-for-i/o! ##sys#current-thread 0 #t)
 	  (thread-yield!)))) ) )
+
+
+;;; Waiting for I/O on file-descriptor
+
+(define (thread-wait-for-i/o! fd #!optional (mode #:all))
+  (##sys#check-exact fd 'thread-wait-for-i/o!)
+  (##sys#thread-block-for-i/o! ##sys#current-thread fd mode) 
+  (thread-yield!) )

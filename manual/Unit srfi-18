@@ -69,6 +69,14 @@ Suspends the execution of {{THREAD}} until resumed.
 
 Readies the suspended thread {{THREAD}}.
 
+=== thread-wait-for-i/o!
+
+ [procedure] (thread-wait-for-i/o! FD [MODE])
+
+Suspends the current thread until input ({{MODE}} is {{#:input}}), output ({{MODE}} is {{#:output}})
+or both ({{MODE}} is {{#:all}}) is available. {{FD}} should be a file-descriptor (not a port!) open
+for input or output, respectively.
+
 === time->milliseconds
 
  [procedure] (time->milliseconds TIME)
