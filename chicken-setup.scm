@@ -1180,23 +1180,56 @@ EOF
 	(string-append pad str)
 	(string-append str pad) ) ) )
 
+(define get-terminal-width
+  (let ((default-width 78)) ; Standard default terminal width
+    (lambda ()
+      (let ((cop (current-output-port)))
+	(if (terminal-port? cop)
+	    (with-exception-handler
+	     (lambda (_) 
+	       default-width)
+	     (lambda ()
+	       (call-with-values
+		   (lambda () (terminal-size cop))
+		   (lambda (_ cols) cols))))
+	     default-width)))))
+
 (define (list-installed)
-  (for-each
-   (lambda (f)
-     (and-let* ((info (extension-information f)))
-       (print (format-string (->string f) 32)
-	      " "
-	      (format-string 
-	       (or (and-let* ((v (assq 'version info)))
-		     (sprintf "Version: ~A" (cadr v)) )
-		   "") 
-	       32 #t)
-	      (or (and-let* ((r (assq 'release info)))
-		    (sprintf " (Release ~a)" (cadr r)) )
-		  "") ) ) )
-   (sort (delete-duplicates
-	  (grep "^[^.].*\\.*$" (map pathname-file (directory (repository-path)))) string=?)
-	 string<?) ) )
+  (let* ((line-width (get-terminal-width))
+	 (eggs (sort (delete-duplicates
+		      (grep "^[^.].*\\.*$"
+			    (map pathname-file
+				 (directory (repository-path)))) string=?)
+		     string<?)) 
+	 (version-number-width
+	  (fold
+	   (lambda (egg maxlen)
+	     (max maxlen
+		  (or (and-let* ((info (extension-information egg))
+				 (v (assq 'version info)))
+				(string-length (->string (cadr v))))
+		      0))) 0 eggs))
+	 (version-width (fx+ version-number-width 9))
+	 (release-width 22)
+	 (name-width (fxmax (- line-width version-width release-width 3) 12)))
+    (for-each
+     (lambda (f)
+       (and-let* ((info (extension-information f)))
+		 (print (format-string (->string f) name-width)
+			" "
+			(format-string 
+			 (or (and-let*
+			      ((v (assq 'version info)))
+			      (sprintf "Version: ~A"
+				       (format-string (->string (cadr v))
+						      version-number-width #t)))
+			     "") 
+			 version-width #t)
+			" "
+			(or (and-let* ((r (assq 'release info)))
+				      (sprintf "(Release ~a)" (cadr r)) )
+			    "") ) ) )
+     eggs)))
 
 
 ;;; Command line processing

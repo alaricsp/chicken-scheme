@@ -1976,6 +1976,7 @@ EOF
 (define-unimplemented signal-unmask!)
 (define-unimplemented terminal-name)
 (define-unimplemented terminal-port?)
+(define-unimplemented terminal-size)
 (define-unimplemented unmap-file-from-memory)
 (define-unimplemented user-information)
 (define-unimplemented utc-time->seconds)

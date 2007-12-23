@@ -38,7 +38,8 @@
   (uses scheduler regex extras utils)
   (disable-interrupts)
   (usual-integrations)
-  (hide ##sys#stat group-member _get-groups _ensure-groups posix-error)
+  (hide ##sys#stat group-member _get-groups _ensure-groups posix-error
+	##sys#terminal-check)
   (foreign-declare #<<EOF
 #include <signal.h>
 #include <errno.h>
@@ -55,6 +56,7 @@ static C_TLS int C_wait_status;
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <pwd.h>
@@ -359,6 +361,22 @@ static gid_t *C_groups = NULL;
 #define C_get_gid(n)      C_fix(C_groups[ C_unfix(n) ])
 #define C_set_gid(n, id)  (C_groups[ C_unfix(n) ] = C_unfix(id), C_SCHEME_UNDEFINED)
 #define C_set_groups(n)   C_fix(setgroups(C_unfix(n), C_groups))
+
+static int get_tty_size(int p, int *rows, int *cols)
+{
+ struct winsize tty_size;
+ int r;
+
+ memset(&tty_size, 0, sizeof tty_size);
+
+ r = ioctl(p, TIOCGWINSZ, &tty_size);
+ if (r == 0) {
+    *rows = tty_size.ws_row;
+    *cols = tty_size.ws_col;
+ }
+ return r;
+}
+
 EOF
 ) )
 
@@ -1792,15 +1810,34 @@ EOF
   (let ([fp (##sys#peek-unsigned-integer port 0)])
     (and (not (eq? fp 0)) (##core#inline "C_tty_portp" port) ) ) )
 
+(define (##sys#terminal-check caller port)
+  (##sys#check-port port caller)
+  (unless (and (eq? 'stream (##sys#slot port 7))
+	       (##core#inline "C_tty_portp" port))
+	  (##sys#error caller "port is not connected to a terminal" port)))
+
 (define terminal-name
   (let ([ttyname (foreign-lambda nonnull-c-string "ttyname" int)] )
     (lambda (port)
-      (##sys#check-port port 'terminal-name)
-      (unless (and (eq? 'stream (##sys#slot port 7))
-                   (##core#inline "C_tty_portp" port) )
-      (##sys#error 'terminal-name "port is not connected to a terminal" port) )
+      (##sys#terminal-check 'terminal-name port)
       (ttyname (##core#inline "C_C_fileno" port) ) ) ) )
 
+(define terminal-size
+  (let ((ttysize (foreign-lambda int "get_tty_size" int
+				 (nonnull-c-pointer int)
+				 (nonnull-c-pointer int))))
+    (lambda (port)
+      (##sys#terminal-check 'terminal-size port)
+      (let-location ((columns int)
+		     (rows int))
+		    (if (fx= 0
+			     (ttysize (##core#inline "C_C_fileno" port)
+				      (location columns)
+				      (location rows)))
+			(values columns rows)
+			(posix-error #:error 'terminal-size
+				     "Unable to get size of terminal" port))))))
+  
 (define get-host-name
   (let ([getit
        (foreign-lambda* c-string ()
