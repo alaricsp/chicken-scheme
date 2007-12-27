@@ -1094,7 +1094,7 @@
 	   (gen #t "/* from " (cleanup rname) " */") )
 	 (generate-foreign-callback-header "" stub)
 	 (gen #\{ #t "C_word x,s=" sizestr ",*a=C_alloc(s);")
-	 (gen #t "C_callback_adjust_stack(a,s);")
+	 (gen #t "C_callback_adjust_stack(a,s);") ; make sure content is below stack_bottom as well
 	 (for-each
 	  (lambda (v t)
 	    (gen #t "x=" (foreign-result-conversion t "a") v ");"
