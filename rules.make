@@ -1021,3 +1021,18 @@ compiler-check:
 	cat tests/chicken-*/*.c >tests/stage3.out
 	diff tests/stage2.out tests/stage3.out >tests/stages.diff
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
+
+
+# bootstrap from C source tarball
+
+.PHONY: bootstrap bootstrap.tar.gz
+
+bootstrap:
+	gzip -d -c bootstrap.tar.gz | tar xvf -
+	touch *.c
+	$(MAKE) STATICBUILD=1 chicken
+	touch *.scm
+	$(MAKE)
+
+bootstrap.tar.gz:
+	tar cfz bootstrap.tar.gz $(LIBCHICKEN_OBJECTS_1:=.c) $(COMPILER_OBJECTS_1:=.c)

@@ -79,4 +79,6 @@ libs:
 	$(MAKE) -f Makefile.$(PLATFORM) libs
 install-libs:
 	$(MAKE) -f Makefile.$(PLATFORM) install-libs
+bootstrap:
+	$(MAKE) -f Makefile.$(PLATFORM) bootstrap
 endif
