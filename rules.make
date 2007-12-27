@@ -1030,9 +1030,9 @@ compiler-check:
 bootstrap:
 	gzip -d -c bootstrap.tar.gz | tar xvf -
 	touch *.c
-	$(MAKE) STATICBUILD=1 chicken
+	$(MAKE) -f Makefile.$(PLATFORM) STATICBUILD=1 chicken
 	touch *.scm
-	$(MAKE)
+	$(MAKE) CHICKEN=./chicken all
 
 bootstrap.tar.gz:
 	tar cfz bootstrap.tar.gz $(LIBCHICKEN_OBJECTS_1:=.c) $(COMPILER_OBJECTS_1:=.c)

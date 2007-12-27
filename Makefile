@@ -34,7 +34,7 @@
 
 
 .PHONY: all clean distclean spotless install uninstall confclean check dist \
-	libs install-libs fullcheck
+	libs install-libs fullcheck bootstrap
 
 ifndef PLATFORM
 all clean spotless distclean install uninstall:
