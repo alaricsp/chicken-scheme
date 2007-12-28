@@ -417,7 +417,7 @@ interpreter, {{csi}}:
   % cp $CHICKEN_BUILD/library.c .
   % cp $CHICKEN_BUILD/eval.c    .
   % cp $CHICKEN_BUILD/extras.c  .
-  % gcc -static -O3 -fomit-frame-pointer runtime.c library.c eval.c \
+  % gcc -static -Os -fomit-frame-pointer runtime.c library.c eval.c \
     extras.c hello.c -o hello -lm
 
 Now we have all files together, and can create an tarball containing all the files:
