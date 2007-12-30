@@ -815,9 +815,10 @@
 ;;; Link object files and libraries:
 
 (define (run-linking)
-  (let ([files (map cleanup-filename
+  (let ((files (map cleanup-filename
 		    (append object-files
-			    (nth-value 0 (static-extension-info)) ) ) ] )
+			    (nth-value 0 (static-extension-info)) ) ) )
+	(target (cleanup-filename target-filename)))
     (unless (zero?
 	     ($system
 	      (string-intersperse 
@@ -825,10 +826,24 @@
 			    (else linker) )
 		      (append 
 		       files
-		       (list (string-append link-output-flag (cleanup-filename target-filename)) 
+		       (list (string-append link-output-flag target)
 			     (linker-options)
 			     (linker-libraries #f) ) ) ) ) ) )
       (exit last-exit-code) )
+    (when (and osx (not host-mode))
+      (unless (zero? ($system 
+		      (string-append
+		       "install_name_tool -change libchicken.dylib "
+		       (quotewrap 
+			(make-pathname
+			 (prefix "" "lib"
+				 (if host-mode
+				     INSTALL_LIB_HOME
+				     TARGET_RUN_LIB_HOME))
+			 "libchicken.dylib") )
+		       " " 
+		       target) ) )
+	(exit last-exit-code) ) )
     (unless keep-files (for-each $delete-file generated-object-files)) ) )
 
 (define (static-extension-info)
