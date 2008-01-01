@@ -123,6 +123,7 @@
 (define chicken-prefix (getenv "CHICKEN_PREFIX"))
 (define arguments (command-line-arguments))
 (define host-mode (member "-host" arguments))
+(define cross-chicken (##sys#fudge 39))
 
 (define (prefix str dir default)
   (if chicken-prefix
@@ -830,7 +831,7 @@
 			     (linker-options)
 			     (linker-libraries #f) ) ) ) ) ) )
       (exit last-exit-code) )
-    (when (and osx (not host-mode))
+    (when (and osx (or (not cross-chicken) host-mode))
       (unless (zero? ($system 
 		      (string-append
 		       "install_name_tool -change libchicken.dylib "

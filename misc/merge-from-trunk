@@ -1,10 +1,10 @@
 #!/bin/sh
-#| merge-from-trunk                                                   -*- Scheme -*-
+#| merge-from-trunk                                   -*- Scheme -*-
 exec csi -s "$0" "$@"
 |#
 
 
-; usage: merge-from-trunk [--dry-run] [--diff] [--commit] [--repourl=URL]
+; usage: merge-from-trunk [--dry-run] [--diff[=REVS]] [--commit] [--repourl=URL]
 
 
 (load-relative "build.scm")
