@@ -1,5 +1,13 @@
-2.736
+2.739
 
+- literals are compiled in a platform-independent binary encoding into 
+  the executable which results in faster C compile times and moe compact
+  binaries. This also makes the "compress-literals" option and declaration
+  unnecessary
+- the "-compress-literals" compiler option and the "compress-literals"
+  declaration have been removed
+- the CHICKEN_HOME environment variable is now obsolete, use CHICKEN_PREFIX
+  and possibly CHICKEN_REPOSITORY_PATH
 - added pre GC hook C-level variable
 - Cygwin is now fully supported
 - removed deprecated functions:
@@ -13,8 +21,18 @@
   enable-interrupts
   disable-interrupts
   invalid-procedure-call-handler
+- There is no platform-dependent pathname directory separator
+  anymore, the slash ("/") and backslash ("\") characters can be
+  used interchangably
+- New procedures "regexp*", "regex-optimize" and "make-anchored-pattern"
+  (regex library unit)
+- New procedures "terminall-size", "terminal-name" and "get-host-name"
+  (posix library unit)
 - chicken-setup: can create repository catalog file from local 
   SVN checkout of egg repository
+- chicken-setup has the new option "-host-extension" to force
+  compiling extensions in "host" mode when using a cross-compiling
+  chicken
 - Better cross-development support for the build system (the
   Makefile accepts various variables for customizing the build)
 - "file-size" and "file-stat" handle file-sizes of >4GB now
@@ -22,6 +40,9 @@
 - added "dist" target to toplevel makefile
 - "andmap" and "ormap" have been deprecated
 - makefiles support relinking now
+- added "thread-wait-for-i/o!" (srfi-18 library unit)
+- the "chicken-bug" program can now be used to create bug reports
+  and send them to the CHICKEN maintainers
 
 2.717
 
