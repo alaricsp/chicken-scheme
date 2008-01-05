@@ -1,5 +1,7 @@
 2.739
 
+- the SVN checkout can now be built from a bootstrapping tarball without
+  the need for a pre-installed "chicken" executable
 - literals are compiled in a platform-independent binary encoding into 
   the executable which results in faster C compile times and moe compact
   binaries. This also makes the "compress-literals" option and declaration
