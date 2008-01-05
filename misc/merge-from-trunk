@@ -4,7 +4,7 @@ exec csi -s "$0" "$@"
 |#
 
 
-; usage: merge-from-trunk [--dry-run] [--diff[=REVS]] [--commit] [--repourl=URL]
+; usage: merge-from-trunk [--dry-run] [--diff[=REVS]] [--commit] [--repourl=URL] [--verbose]
 
 
 (load-relative "build.scm")

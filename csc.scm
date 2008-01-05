@@ -337,7 +337,7 @@
   Syntax related options:
 
     -i -case-insensitive        don't preserve case of read symbols    
-    -K -keyword-style STYLE     allow alternative keyword syntax (prefix or suffix)
+    -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
     -run-time-macros            macros are made available at run-time
 
   Translation options:
