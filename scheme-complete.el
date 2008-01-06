@@ -27,13 +27,21 @@
 ;;; (autoload 'scheme-get-current-symbol-info "scheme-complete" nil t)
 ;;; (add-hook 'scheme-mode-hook
 ;;;   (lambda ()
-;;;     (setq eldoc-info-function 'scheme-get-current-symbol-info)
+;;;     (make-local-variable 'eldoc-documentation-function)
+;;;     (setq eldoc-documentation-function 'scheme-get-current-symbol-info)
 ;;;     (eldoc-mode)))
+;;;
+;;; There's a single custom variable, default-scheme-implementation,
+;;; which you can use to specify your preferred implementation when we
+;;; can't infer it from the source code.
 ;;;
 ;;; That's all there is to it.
 
 ;;; History:
-;;;   0.4: 2007/11/14 - silly bugfixe plus better repo env support
+;;;   0.6: 2008/01/06 - more bugfixes (merry christmas)
+;;;   0.5: 2008/01/03 - handling internal defines, records, smarter
+;;;                     parsing
+;;;   0.4: 2007/11/14 - silly bugfix plus better repo env support
 ;;;                     for searching chicken and gauche modules
 ;;;   0.3: 2007/11/13 - bugfixes, better inference, smart strings
 ;;;   0.2: 2007/10/15 - basic type inference
@@ -1709,6 +1717,8 @@
      )
     ))
 
+;; by default chicken has a single top-level namespace, so we want to
+;; handle recursive imports
 (defvar *scheme-chicken-deps*
   '((lolevel extras)
     (posix regex extras utils)
@@ -1718,8 +1728,20 @@
     (aquaterm srfi-4 srfi-13 lolevel regex)
     (args srfi-37)
     (array-lib srfi-1 srfi-4 lolevel miscmacros)
+    (awk regex)
+    (bloom-filter 
+     srfi-1 utils lolevel
+     iset message-digest hash-utils lookup-table mathh-int
+     misc-extn-control misc-extn-numeric misc-extn-record)
+    (binary-tree srfi-1 misc-extn-record)
+    (box lolevel)
+    (cgi-util extras input-parse)
+    (charplot array-lib array-lib-hof)
+    (charconv regex posix)
+    (content-type regex format-modular)
     ))
 
+;; another big table - consider moving to a separate file
 (defvar *scheme-implementation-exports*
   '((chicken
      (abort (lambda (obj) undefined))
@@ -2724,11 +2746,14 @@
 
 (defun chicken-available-modules (&optional sym)
   (append
-   (mapcar 'symbol-name (mapcar 'car *scheme-chicken-modules*))
+   (mapcar #'symbol-name (mapcar #'car *scheme-chicken-modules*))
+   (mapcar
+    #'file-name-sans-extension
+    (directory-files "." nil ".*\\.scm$" t))
    (append-map
     #'(lambda (dir)
         (mapcar
-         'file-name-sans-extension
+         #'file-name-sans-extension
          (directory-files dir nil ".*\\.\\(so\\|scm\\)$" t)))
     *chicken-repo-dirs*)))
 
@@ -2754,7 +2779,7 @@
         (site-dir *gauche-site-repo-path*)
         (other-dirs
          (remove-if-not
-          #'file-directory-p
+          #'(lambda (d) (and (not (equal d "")) (file-directory-p d)))
           (split-string (or (getenv "GAUCHE_LOAD_PATH") "") ":"))))
     (mapcar
      #'(lambda (f) (subst-char-in-string ?/ ?. f))
@@ -2903,11 +2928,43 @@
            (intern (buffer-substring start (point)))))))
 
 (defun goto-next-top-level ()
-  (or (re-search-forward "^(" nil t)
-      (goto-char (point-max))))
+  (let ((here (point)))
+    (or (ignore-errors (end-of-defun) (end-of-defun)
+                       (beginning-of-defun)
+                       (not (eq here (point))))
+        (progn (forward-char) (re-search-forward "^(" nil t))
+        (goto-char (point-max)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; variable extraction
+
+(defun sexp-type-at-point (&optional env)
+  (case (char-syntax (char-after))
+    ((?\()
+     (forward-char 1)
+     (if (eq ?w (char-syntax (char-after)))
+         (let ((op (scheme-symbol-at-point)))
+           (cond
+            ((eq op 'lambda)
+             (let ((params
+                    (nth-sexp-at-point 1)))
+               `(lambda ,params)))
+            (t
+             (let ((spec (scheme-env-lookup env op)))
+               (and spec
+                    (consp (cadr spec))
+                    (eq 'lambda (caadr spec))
+                    (cddadr spec)
+                    (car (cddadr spec)))))))
+       nil))
+    ((?\")
+     'string)
+    ((?\w)
+     (if (string-match "[0-9]" (string (char-after)))
+         'number
+       nil))
+    (t
+     nil)))
 
 (defun let-vars-at-point (&optional env)
   (let ((end (save-excursion (forward-sexp) (point)))
@@ -2918,32 +2975,11 @@
         (save-excursion
           (forward-char 1)
           (if (eq ?w (char-syntax (char-after)))
-              (let ((sym (scheme-symbol-at-point)))
-                (beginning-of-next-sexp)
-                (let ((c (char-syntax (char-after))))
-                  (case c
-                    ((?\")
-                     (push (list sym 'string) vars))
-                    ((?\()
-                     (forward-char 1)
-                     (if (eq ?w (char-syntax (char-after)))
-                         (let ((op (scheme-symbol-at-point)))
-                           (cond
-                            ((eq op 'lambda)
-                             (let ((params
-                                    (nth-sexp-at-point 1)))
-                               (push (list sym `(lambda ,params)) vars)))
-                            (t
-                             (let ((spec (scheme-env-lookup env op)))
-                               (if (and spec
-                                        (consp (cadr spec))
-                                        (eq 'lambda (caadr spec))
-                                        (cddadr spec))
-                                   (push (list sym (car (cddadr spec))) vars)
-                                 (push (list sym) vars))))))
-                       (push (list sym) vars)))
-                    (t
-                     (push (list sym) vars))))))))
+              (let* ((sym (scheme-symbol-at-point))
+                     (type (ignore-errors
+                             (beginning-of-next-sexp)
+                             (sexp-type-at-point env))))
+                (push (if type (list sym type) (list sym)) vars)))))
       (or (ignore-errors (progn (beginning-of-next-sexp) t))
           (goto-char end)))
     (reverse vars)))
@@ -2983,11 +3019,20 @@
 ;;
 ;; (setq *current-scheme-implementation* whatever)
 
+(defgroup scheme-complete nil
+  "Smart tab completion"
+  :group 'scheme)
+
+(defcustom default-scheme-implementation nil
+  "Default scheme implementation to provide completion for
+when scheme-complete can't infer the current implementation."
+  :type 'symbol
+  :group 'scheme-complete)
+
 (defvar *current-scheme-implementation* nil)
 (make-variable-buffer-local '*current-scheme-implementation*)
 
-(defvar *default-scheme-implementation* 'chicken)
-
+;; most implementations use their name as the script name
 (defvar *scheme-interpreter-alist*
   '(("csi" . chicken)
     ("gosh" . gauche)
@@ -3013,13 +3058,15 @@
                  ((re-search-forward "(module " nil t)
                   'mzscheme))))))
   (or *current-scheme-implementation*
-      *default-scheme-implementation*))
+      default-scheme-implementation))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun current-local-vars (&optional env)
   (let ((vars '())
-        (limit (save-excursion (beginning-of-defun) (+ (point) 1))))
+        (limit (save-excursion (beginning-of-defun) (+ (point) 1)))
+        (start (point))
+        (scan-internal))
     (save-excursion
       (while (> (point) limit)
         (or (ignore-errors
@@ -3031,8 +3078,8 @@
         (when (and (> (point) (point-min))
                    (eq ?\( (char-syntax (char-before (point))))
                    (eq ?w (char-syntax (char-after (point)))))
+          (setq scan-internal t)
           (let ((sym (scheme-symbol-at-point)))
-            ;; XXXX handle internal defines
             (case sym
               ((lambda)
                (setq vars
@@ -3075,11 +3122,32 @@
                      (append (mapcar #'list (flatten (nth-sexp-at-point 1)))
                              vars)))
               (t
-               (when (string-match "^define\\(-.*\\)?" (symbol-name sym))
-                 (setq vars
-                       (append (mapcar #'list (flatten (nth-sexp-at-point 1)))
-                               vars)))))
-            ))))
+               (if (string-match "^define\\(-.*\\)?" (symbol-name sym))
+                   (let ((defs (save-excursion
+                                 (backward-char)
+                                 (scheme-extract-definitions))))
+                     (setq vars
+                           (append (append-map
+                                    #'(lambda (x)
+                                        (and (consp (cdr x))
+                                             (consp (cadr x))
+                                             (eq 'lambda (caadr x))
+                                             (mapcar #'list
+                                                     (flatten (cadadr x)))))
+                                    defs)
+                                   defs
+                                   vars)))
+                 (setq scan-internal nil))))
+            ;; check for internal defines
+            (when scan-internal
+              (ignore-errors
+                (save-excursion
+                  (forward-sexp
+                   (+ 1 (if (numberp scan-internal) scan-internal 2)))
+                  (backward-sexp)
+                  (if (< (point) start)
+                      (setq vars (append (current-scheme-definitions) vars))
+                    ))))))))
     (reverse vars)))
 
 (defun extract-import-module-name (sexp &optional mzschemep)
@@ -3193,63 +3261,106 @@
           (goto-next-top-level))))
     imports))
 
-(defun name-of-define (sexp)
-  (if (consp (cadr sexp)) (caadr sexp) (cadr sexp)))
+;; we should be just inside the opening paren of an expression
+(defun scheme-name-of-define ()
+  (save-excursion
+    (beginning-of-next-sexp)
+    (if (eq ?\( (char-syntax (char-after)))
+        (forward-char))
+    (and (memq (char-syntax (char-after)) '(?\w ?\_))
+         (scheme-symbol-at-point))))
 
-(defun scheme-top-definitions (sexp)
-  (let ((defs '())
-        (stack (list sexp)))
-    (while (consp stack)
-      (let ((sexp (pop stack)))
-        (when (and (consp sexp) (consp (cdr sexp)))
-          (case (car sexp)
-            ((define-syntax defmacro define-macro)
-             (push (list (name-of-define sexp) '(syntax)) defs))
-            ((define define-inline define-constant defun)
-             (push (list (name-of-define sexp)
-                         (if (or (eq 'defun (car sexp))
-                                 (consp (cadr sexp))
-                                 (and (consp (caddr sexp))
-                                      (eq 'lambda (caaddr sexp))))
-                             (cond
-                              ((eq 'defun (car sexp))
-                               `(lambda ,(caddr sexp)))
-                              ((consp (cadr sexp))
-                               `(lambda ,(cdadr sexp)))
-                              (t
-                               `(lambda ,(car (cdaddr sexp)))))
-                             'object))
-                   defs))
-            ((defvar define-class)
-             (push (list (name-of-define sexp) 'non-procedure) defs))
-            ((define-record-type)
-             (setq defs
-                   (cons (list (caddr sexp) 'procedure)
-                         (cons (list (cadddr sexp) 'procedure)
-                               (append (append-map #'(lambda (x)
-                                                   (list (cdr x) 'procedure))
-                                               (cdddr sexp))
-                                       defs)))))
-            ((begin progn)
-             (setq stack (append (cdr sexp) stack)))
-            ((cond-expand)
-             (setq stack (append-map #'cdr (cdr sexp))))
-            (t
-             '())))))
-    defs))
+(defun scheme-type-of-define ()
+  (save-excursion
+    (beginning-of-next-sexp)
+    (cond
+     ((eq ?\( (char-syntax (char-after)))
+      `(lambda ,(cdr (nth-sexp-at-point 0))))
+     (t
+      (beginning-of-next-sexp)
+      (sexp-type-at-point)))))
 
+;; we should be at the opening paren of an expression
+(defun scheme-extract-definitions (&optional env)
+  (save-excursion
+    (let ((sym (ignore-errors (and (eq ?\( (char-syntax (char-after)))
+                                   (progn (forward-char)
+                                          (scheme-symbol-at-point))))))
+      (case sym
+        ((define-syntax defmacro define-macro)
+         (list (list (scheme-name-of-define) '(syntax))))
+        ((define define-inline define-constant define-primitive defun)
+         (let ((name (scheme-name-of-define))
+               (type (scheme-type-of-define)))
+           (list (if type (list name type) (list name)))))
+        ((defvar define-class)
+         (list (list (scheme-name-of-define) 'non-procedure)))
+        ((define-record)
+         (backward-char)
+         (ignore-errors
+           (let* ((sexp (nth-sexp-at-point 0))
+                  (name (symbol-name (cadr sexp))))
+             `((,(intern (concat name "?")) (lambda (obj) boolean))
+               (,(intern (concat "make-" name)) (lambda ,(cddr sexp) ))
+               ,@(append-map
+                  #'(lambda (x)
+                      `((,(intern (concat name "-" (symbol-name x)))
+                         (lambda (non-procedure)))
+                        (,(intern (concat name "-" (symbol-name x) "-set!"))
+                         (lambda (non-procedure val) undefined))))
+                  (cddr sexp))))))
+        ((define-record-type)
+         (backward-char)
+         (ignore-errors
+           (let ((sexp (nth-sexp-at-point 0)))
+             `((,(caaddr sexp) (lambda ,(cdaddr sexp)))
+               (,(cadddr sexp) (lambda (obj)))
+               ,@(append-map 
+                  #'(lambda (x)
+                      (if (consp x)
+                          (if (consp (cddr x))
+                              `((,(cadr x) (lambda (non-procedure)))
+                                (,(caddr x)
+                                 (lambda (non-procedure val) undefined)))
+                            `((,(cadr x) (lambda (non-procedure)))))))
+                  (cddddr sexp))))))
+        ((begin progn)
+         (forward-sexp)
+         (current-scheme-definitions))
+        (t
+         '())))))
+
+;; a little more liberal than -definitions, we try to scan to a new
+;; top-level form (i.e. a line beginning with an open paren) if
+;; there's an error during normal sexp movement
 (defun current-scheme-globals ()
   (let ((globals '()))
     (save-excursion
       (goto-char (point-min))
+      (or (ignore-errors (end-of-defun) (beginning-of-defun) t)
+          (re-search-forward "^(" nil t)
+          (goto-char (point-max)))
       (while (not (eobp))
-        (if (ignore-errors (progn (forward-sexp) t))
-            (setq globals
-                  ;; XXXX avoid reading whole top-level form
-                  (append (scheme-top-definitions (nth-sexp-at-point 0))
-                          globals))
-          (goto-next-top-level))))
+        (setq globals
+              (append (scheme-extract-definitions) globals))
+        (goto-next-top-level)))
     globals))
+
+;; for internal defines, etc.
+(defun current-scheme-definitions (&optional enclosing-end)
+  (let ((defs '())
+        (end (or enclosing-end (point-max))))
+    (save-excursion
+      (while (< (point) end)
+        (let ((new-defs (scheme-extract-definitions)))
+          (cond
+           (new-defs
+             (setq defs (append new-defs defs))
+             (or (ignore-errors (beginning-of-next-sexp) t)
+                 (goto-char end)))
+           (t ;; non-definition form, stop scanning
+            (goto-char end))))))
+    defs))
 
 (defun scheme-module-exports (mod)
   (if (not (symbolp mod))
@@ -3320,6 +3431,11 @@
         (t '()))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; This is rather complicated because we to auto-generate docstring
+;; summaries from the type information, which means inferring various
+;; types from common names.  The benefit is that you don't have to
+;; input the same information twice, and can often cut&paste&munge
+;; procedure descriptions from the original documentation.
 
 (defun scheme-translate-type (type)
   (if (not (symbolp type))
@@ -3373,14 +3489,16 @@
     (while (and (consp spec) (< i pos))
       (cond
         ((eq :optional (car spec))
-         (decf i))
-        ((eq '|...| (cadr spec))
+         (if (and (= i (- pos 1)) (consp (cdr spec)))
+             (setq type (cadr spec)))
+         (setq i pos))
+        ((and (consp (cdr spec)) (eq '|...| (cadr spec)))
          (setq type (car spec))
          (setq spec nil)))
       (setq spec (cdr spec))
       (incf i))
     (if (and (not type) (= i pos))
-        (setq type (car (remove ':optional spec))))
+        (setq type (if (consp spec) (car spec) spec)))
     (if type
         (setq type (scheme-translate-type type)))
     type))
@@ -3502,6 +3620,12 @@
                ((string) (memq a1 '(filename directory)))
                (t nil))))))
 
+(defun nth* (n ls)
+  (while (and (consp ls) (> n 0))
+    (setq n (- n 1)
+          ls (cdr ls)))
+  (and (consp ls) (car ls)))
+
 (defun scheme-smart-complete (&optional arg)
   (interactive "P")
   (let* ((end (point))
@@ -3546,7 +3670,7 @@
      ((and (consp outer-type)
            (eq 'lambda (car outer-type))
            (not (zerop outer-pos))
-           (nth outer-pos (cadr outer-type))
+           (nth* outer-pos (cadr outer-type))
            (zerop inner-pos))
       (let ((ret-type (scheme-lookup-type (cadr outer-type) outer-pos)))
         (do-completion
@@ -3652,7 +3776,8 @@
 
 (defun scheme-get-current-symbol-info ()
   (let* ((sym (eldoc-current-symbol))
-         (fnsym (eldoc-fnsym-in-current-sexp))
+         (fnsym0 (eldoc-fnsym-in-current-sexp))
+         (fnsym (if (consp fnsym0) (car fnsym0) fnsym0))
          (env (save-excursion
                 (if (scheme-in-string-p) (beginning-of-string))
                 (scheme-current-env)))
