@@ -4064,7 +4064,8 @@ EOF
 	       '()
 	       (let ([arg (##sys#slot args 0)]
 		     [r (##sys#slot args 1)] )
-		 (if (and (fx>= (##sys#size arg) 3) (string=? "-:" (##sys#substring arg 0 2)))
+		 (if (and (fx>= (##sys#size arg) 3)
+			  (string=? "-:" (##sys#substring arg 0 2)))
 		     (loop r)
 		     (cons arg (loop r)) ) ) ) )
 	 args) )

@@ -808,17 +808,7 @@ EOF
 	'()
 	(let ((x (car args)))
 	  (cond 
-	   ((member x '("-s" "-ss" "-script" "--"))
-	    ;; remove any runtime options
-	    (let loop2 ((args args))
-	      (if (null? args) 
-		  '()
-		  (let ((x (car args)))
-		    (if (and (fx> (##sys#size x) 2)
-			     (char=? #\- (##core#inline "C_subchar" x 0))
-			     (char=? #\: (##core#inline "C_subchar" x 1)) )
-			(loop2 (cdr args)) 
-			(cons x (loop2 (cdr args))))))))
+	   ((member x '("-s" "-ss" "-script" "--")) args)
 	   ((and (fx> (##sys#size x) 2)
 		 (char=? #\- (##core#inline "C_subchar" x 0))
 		 (not (member x long-options)) )
@@ -838,7 +828,7 @@ EOF
 
 (define (run)
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
-	 [args (canonicalize-args (cdr (argv)))]
+	 [args (canonicalize-args (command-line-arguments))]
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
 	 [script (member* '("-s" "-ss" "-script") args)])
     (cond [script
