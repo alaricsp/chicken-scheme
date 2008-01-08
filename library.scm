@@ -1208,6 +1208,13 @@ EOF
     (##core#inline "C_copy_memory" s bv n) 
     s) )
 
+(define (blob=? b1 b2)
+  (##sys#check-blob b1 'blob=?)
+  (##sys#check-blob b2 'blob=?)
+  (let ((n (##sys#size b1)))
+    (and (eq? (##sys#size b2) n)
+	 (##core#inline "C_string_compare" b1 b2 n))))
+
 
 ;;; Vectors:
 

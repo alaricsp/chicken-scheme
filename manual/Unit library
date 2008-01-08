@@ -936,6 +936,13 @@ Returns a string with the contents of {{BLOB}}.
 
 Returns a blob with the contents of {{STRING}}.
 
+==== blob=?
+
+ [procedure] (blob=? BLOB1 BLOB2)
+
+Returns {{#t}} if the two argument blobs are of the same
+size and have the same content.
+
 
 
 === Vectors
