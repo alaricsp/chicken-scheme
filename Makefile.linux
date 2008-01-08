@@ -51,6 +51,14 @@ LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(RUNTIME_LINKER_PATH)
 LIBRARIES = -lm -ldl
 NEEDS_RELINKING = yes
 
+ifneq ($(USE_HOST_PCRE),)
+LIBRARIES       += -lpcre
+PCRE_INCLUDES   ?=
+C_COMPILER_PCRE_OPTIONS ?=
+PCRE_OBJECTS_1 =
+endif
+
+
 # special files
 
 CHICKEN_CONFIG_H = chicken-config.h
@@ -98,6 +106,9 @@ ifdef NOAPPLYHOOK
 endif
 ifdef HACKED_APPLY
 	echo "#define C_HACKED_APPLY" >>$@
+endif
+ifneq ($(USE_HOST_PCRE),)
+	echo "#define C_USE_HOST_PCRE" >>$@
 endif
 	cat chicken-defaults.h >>$@
 

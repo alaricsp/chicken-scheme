@@ -56,7 +56,7 @@ LIBCHICKENGUI_OBJECTS_1 = \
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
 LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
 
-PCRE_OBJECTS_1 = \
+PCRE_OBJECTS_1 ?= \
        pcre/pcre_compile \
        pcre/pcre_config \
        pcre/pcre_dfa_exec \

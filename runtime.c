@@ -4176,7 +4176,14 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     debug_mode = !debug_mode;
     return C_mk_bool(debug_mode);
 
-    /* 37 - 38 */
+  case C_fix(37):
+#ifdef C_USE_HOST_PCRE
+    return C_SCHEME_TRUE;
+#else
+    return C_SCHEME_FALSE;
+#endif
+
+    /* 38 */
 
   case C_fix(39):
 #if defined(C_CROSS_CHICKEN) && C_CROSS_CHICKEN
