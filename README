@@ -148,15 +148,25 @@
 	  if you want to compile CHICKEN for a different architecture than
 	  the one on which you are building it.
 
-	TARGETSYSTEM=
-  	  Similar to "HOSTSYSTEM", but specifies the name prefix to use for compiling
-	  code with the "csc" compiler driver. This is required for creating
-	  a "cross chicken", a specially built CHICKEN that invokes a cross
-	  C compiler to build the final binaries. You will need a cross compiled
-	  runtime system by building a version of CHICKEN with the "HOST" option
-	  mentioned above. More information about this process and the variables
-	  that you should set are provided in the CHICKEN wiki at
-   	  <http://chicken.wiki.br/cross-compilation>.
+	TARGETSYSTEM= 
+	  Similar to "HOSTSYSTEM", but specifies the name
+  	  prefix to use for compiling code with the "csc" compiler
+  	  driver. This is required for creating a "cross chicken", a
+  	  specially built CHICKEN that invokes a cross C compiler to
+  	  build the final binaries. You will need a cross compiled
+  	  runtime system by building a version of CHICKEN with the
+  	  "HOST" option mentioned above. More information about this
+  	  process and the variables that you should set are provided
+  	  in the CHICKEN wiki at
+  	  <http://chicken.wiki.br/cross-compilation>.
+
+ 	USE_HOST_PCRE= 
+   	  The PCRE library is included with the CHICKEN
+	  distribution to remove external dependencies and to avoid
+	  incompatibilities with any previously installed version. If
+	  you want to link with an installed libpcre, set this
+	  variable to a non-empty value. Only use this feature if you
+	  know what you are doing.
 
 	To remove CHICKEN from your file-system, enter (probably as
         root):
