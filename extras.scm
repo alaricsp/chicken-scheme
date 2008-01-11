@@ -765,7 +765,7 @@ EOF
 	       (out "#<lambda info " col)
 	       (out (##sys#lambda-info->string obj) col)
 	       (out "#>" col) )
-	      (else               (out "#<unprintable object>" col)) ) )
+	      (else (out "#<unprintable object>" col)) ) )
 
       (define (pp obj col)
 
