@@ -474,7 +474,7 @@ static C_TLS int
   pending_finalizer_count,
   callback_returned_flag;
 static C_TLS WEAK_TABLE_ENTRY *weak_item_table;
-static C_TLS C_GC_ROOT *gc_root_list;
+static C_TLS C_GC_ROOT *gc_root_list = NULL;
 static C_TLS FINALIZER_NODE 
   *finalizer_list,
   *finalizer_free_list,
