@@ -21,7 +21,16 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 #	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
-	$(MAKE) MAKEINFO_PROGRAM_OPTIONS="" CFLAGS="$(CFLAGS)" PREFIX="$(PREFIX)" MANDIR="$(PREFIX)/share/man" INFODIR="$(PREFIX)/share/info" SHAREDIR="$(PREFIX)/share" EGGDIR="/var/lib/chicken/$(BINARYVERSION)" MAKEINFO_PROGRAM_OPTIONS= HOSTNAME=debian
+	$(MAKE) \
+	    MAKEINFO_PROGRAM_OPTIONS="" \
+	    CFLAGS="$(CFLAGS)" \
+	    PREFIX="$(PREFIX)" \
+	    MANDIR="$(PREFIX)/share/man" \
+	    INFODIR="$(PREFIX)/share/info" \
+	    SHAREDIR="$(PREFIX)/share" \
+	    EGGDIR="/var/lib/chicken/$(BINARYVERSION)" \
+	    MAKEINFO_PROGRAM_OPTIONS= \
+	    HOSTNAME=debian
 	touch build-stamp
 
 clean:
@@ -48,7 +57,15 @@ install: build
 # placed by dpkg-buildpackage. If absolute files are specified,
 # i.e. /var/lib/chicken, then those files will be installed on the
 # build system, but will not end up in the package.
-	$(MAKE) install PREFIX="$(CURDIR)/debian/tmp/usr" MANDIR="$(CURDIR)/debian/tmp/usr/share/man" INFODIR="$(CURDIR)/debian/tmp/usr/share/info" SHAREDIR="$(CURDIR)/debian/tmp/usr/share" EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)" MAKEINFO_PROGRAM_OPTIONS= HOSTNAME=debian
+	$(MAKE) \
+	    install \
+	    PREFIX="$(CURDIR)/debian/tmp/usr" \
+	    MANDIR="$(CURDIR)/debian/tmp/usr/share/man" \
+	    INFODIR="$(CURDIR)/debian/tmp/usr/share/info" \
+	    SHAREDIR="$(CURDIR)/debian/tmp/usr/share" \
+	    EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)" \
+	    MAKEINFO_PROGRAM_OPTIONS= \
+	    HOSTNAME=debian
 
 binary-common:
 	dh_testdir
