@@ -761,7 +761,7 @@ else
 endif
 ifdef WINDOWS
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_SHARED_LIBRARY_OPTIONS) libchickengui$(SO) \
-	  $(DESTDIR)$(ILIBDIR)
+	  $(DESTDIR)$(IBINDIR)
 endif
 endif
 
