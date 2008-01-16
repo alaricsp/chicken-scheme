@@ -1,3 +1,11 @@
+3.0.0rc1
+
+- upgraded scheme-complete.el to version 0.6
+- unit library: added "blob=?"
+- the library can optionally be built with an already installed libpcre
+- chicken-setup accesses a separate set of eggs, specific on the major CHICKEN
+  version (3)
+
 2.739
 
 - the SVN checkout can now be built from a bootstrapping tarball without
