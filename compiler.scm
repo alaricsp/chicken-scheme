@@ -2297,14 +2297,16 @@
 	  (new-literal (make-block-variable-literal var)) ) )
     
     (define (immediate-literal x)
-      (make-node '##core#immediate
-		 (cond ((fixnum? x) `(fix ,x))
-		       ((boolean? x) `(bool ,x))
-		       ((char? x) `(char ,x))
-		       ((null? x) '(nil))
-		       ((eof-object? x) '(eof))
-		       (else (bomb "bad immediate (prepare)")) )
-		 '() ) )
+      (if (eq? (void) x)
+	  (make-node '##core#undefined '() '())
+	  (make-node '##core#immediate
+		     (cond ((fixnum? x) `(fix ,x))
+			   ((boolean? x) `(bool ,x))
+			   ((char? x) `(char ,x))
+			   ((null? x) '(nil))
+			   ((eof-object? x) '(eof))
+			   (else (bomb "bad immediate (prepare)")) )
+		     '() ) ) )
     
     (debugging 'p "preparation phase...")
     (let ((node2 (walk node '() #f '())))
