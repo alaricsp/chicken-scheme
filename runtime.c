@@ -4199,6 +4199,9 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     return C_SCHEME_FALSE;
 #endif
 
+  case C_fix(41):
+    return C_fix(C_MAJOR_VERSION);
+
   default: return C_SCHEME_UNDEFINED;
   }
 }

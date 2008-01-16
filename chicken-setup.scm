@@ -146,6 +146,9 @@
 (define *target-libs* (foreign-value "C_TARGET_MORE_LIBS" c-string))
 (define *target-lib-home* (foreign-value "C_TARGET_LIB_HOME" c-string))
 
+(define *major-version* (##sys#fudge 41))
+(define *default-eggdir* (conc "eggs/" *major-version*))
+
 (define *windows*
   (and (eq? (software-type) 'windows) 
        (build-platform) ) )
@@ -187,7 +190,8 @@
 (define *svn-repository* #f)
 (define *local-repository* #f)
 (define *destdir* #f)
-(define *repository-hosts* '(("www.call-with-current-continuation.org" "eggs" 80)))
+(define *repository-hosts*
+  (list (list "www.call-with-current-continuation.org" *default-eggdir* 80)))
 (define *revision* #f)
 (define *run-tests* #f)
 (define *fetched-eggs* '())
@@ -1140,15 +1144,17 @@ EOF
 			  )))
     (with-output-to-file (doc-index)
       (lambda ()
-	(printf "<html><head><title>Egg documentation index for ~a</title><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/></head>~%" hn)
-	(printf "<body><a id=\"official-index\" href=\"http://www.call-with-current-continuation.org/eggs/index.html\">Visit the official egg index</a>~%")
-	(printf "<h1 id=\"title\">Egg documentation index:</h1>~%")
+	(print "<html><head><title>Egg documentation index for " hn 
+	       "</title><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/></head>")
+	(print "<body><a id=\"official-index\" href=\"http://www.call-with-current-continuation.org/"
+	       *default-eggdir* "/index.html\">Visit the official egg index</a>")
+	(print "<h1 id=\"title\">Egg documentation index:</h1>")
 	(printf "<p id=\"install-info\">CHICKEN: ~a<br>Host: ~a<br>Repository path: ~a<br><p>~%" 
 		(chicken-version #t)
 		(get-host-name)
 		rpath)
-	(printf "<table id=\"egg-index\">~%")
-	(printf "<thead><tr><th>Egg name</th><th>Version</th><th>Release</th></tr></thead>~%<tbody>~%")
+	(print "<table id=\"egg-index\">")
+	(print "<thead><tr><th>Egg name</th><th>Version</th><th>Release</th></tr></thead>\n<tbody>")
 	(let ((c 0))
 	  (for-each
 	   (lambda (f)
@@ -1238,8 +1244,8 @@ EOF
   (define (parse-host host eggdir)
     (set! *repository-hosts*
       (cons (match (string-match "(.+)\\:([0-9]+)" host)
-	      ((_ host port) (list host (if eggdir "eggs" "") (string->number port)))
-	      (_ (list host (if eggdir "eggs" "") 80)) )
+	      ((_ host port) (list host (if eggdir *default-eggdir* "") (string->number port)))
+	      (_ (list host (if eggdir (conc *default-eggdir* "") 80)) ) )
 	    *repository-hosts*) )  )
   (setup-root-directory *base-directory*)
   (let ((uinst #f)

@@ -35,7 +35,7 @@
 
 # basic parameters
 
-BINARYVERSION ?= 3
+BINARYVERSION = 3
 NURSERY ?= (128*1024)
 STACKDIRECTION ?= 1
 CROSS_CHICKEN ?= 0
@@ -231,7 +231,7 @@ endif
 
 O ?= .o
 A ?= .a
-# EXE =
+# EXE ?=
 SO ?= .so
 
 # special files

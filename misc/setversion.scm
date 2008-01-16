@@ -1,6 +1,6 @@
 ;;;; setversion.scm - Bump version-number
 
-(use utils)
+(use srfi-1 utils)
 
 (define buildversion (->string (car (read-file "buildversion"))))
 (define buildbinaryversion (car (read-file "buildbinaryversion")))
@@ -25,11 +25,16 @@
        (patch (list both tmp) rx subst)
        (system* "mv ~S ~S" tmp both ) ) ) ) )
 
+(define (parse-version v)
+  (string-match "(\\d+)\\.(\\d+)\\.(\\d+)(.*)" v) )
+
 (define (main args)
   (cond ((member "-set" args) =>
 	 (lambda (a) (set! buildversion (cadr a))) )
 	((not (member "-noinc" args))
-	 (set! buildversion (number->string (+ (string->number buildversion) 0.001))) ) )
+	 (match (parse-version buildversion)
+	   ((_ maj min pl huh) 
+	    (set! buildversion (conc maj "." min "." (add1 (string->number pl)) huh)) ) ) ) )
   (with-output-to-file "buildversion" (cut display buildversion))
   (with-output-to-file "version.scm" 
     (lambda ()
