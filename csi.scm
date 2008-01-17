@@ -90,6 +90,8 @@ EOF
         -release                print release number and exit
     -i  -case-insensitive       enable case-insensitive reading
     -e  -eval EXPRESSION        evaluate given expression
+    -p  -print EXPRESSION       evaluate and print result(s)
+    -P  -pretty-print EXPRESSION  evaluate and print result(s) prettily
     -D  -feature SYMBOL         register feature identifier
     -q  -quiet                  do not print banner
     -n  -no-init                do not load initialization file `")
@@ -796,11 +798,14 @@ EOF
 		 (else (find (cdr ks))) ) ) ) ) )
 
 (define-constant short-options 
-  '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #f #f) )
+  '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #\p #\P) )
 
 (define-constant long-options
-  '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" "-eval" "-case-insensitive"
-    "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" "-include-path" "-release" "-ss") )
+  '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" 
+    "-eval" "-case-insensitive"
+    "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
+    "-include-path" "-release" "-ss"
+    "-print" "-pretty-print") )
 
 (define (canonicalize-args args)
   (let loop ((args args))
@@ -847,7 +852,7 @@ EOF
 	   (set! args (append (canonicalize-args extraopts) args))
 	   (and-let* ([p (member "--" args)])
 	     (set-cdr! p '()) ) ] )
-    (let* ([eval? (member* '("-e" "-eval") args)]
+    (let* ([eval? (member* '("-e" "-p" "-P" "-eval" "-print" "-pretty-print") args)]
 	   [batch (or script (member* '("-b" "-batch") args) eval?)]
 	   [quietflag (member* '("-q" "-quiet") args)]
 	   [quiet (or script quietflag eval?)]
@@ -868,6 +873,11 @@ EOF
 		     [fn (string-append prefix "/" init-file)] )
 		(when (file-exists? fn) 
 		  (load fn) ) ) ) ) )
+      (define (evalstring str #!optional (rec (lambda _ (void))))
+	(let ((in (open-input-string str)))
+	  (do ([x (read in) (read in)])
+	      ((eof-object? x))
+	    (rec (receive (eval x))) ) ) )
       (when quietflag (set! ##sys#eval-debug-level 0))
       (when (member* '("-h" "-help" "--help") args)
 	(print-usage)
@@ -918,19 +928,28 @@ EOF
 	       [len (string-length arg)] )
 	  (cond ((member 
 		  arg 
-		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script" "-b" "-q" "-n" "-w" "-s" "-i"
+		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script"
+		    "-b" "-q" "-n" "-w" "-s" "-i"
 		    "-case-insensitive" "-ss") ) )
-		((member arg '("-feature" "-include-path" "-keyword-style" "-D" "-I" "-k"))
+		((member arg '("-feature" "-include-path" "-keyword-style" 
+			       "-D" "-I" "-k"))
 		 (set! args (cdr args)) )
 		((or (string=? "-R" arg) (string=? "-require-extension" arg))
 		 (eval `(##core#require-extension ',(string->symbol (cadr args))))
 		 (set! args (cdr args)) )
 		((or (string=? "-e" arg) (string=? "-eval" arg))
-		 (let ([in (open-input-string (cadr args))])
-		   (do ([x (read in) (read in)])
-		       ((eof-object? x))
-		     (eval x) )
-		   (set! args (cdr args)) ) )
+		 (evalstring (cadr args))
+		 (set! args (cdr args)) )
+		((or (string=? "-p" arg) (string=? "-print" arg))
+		 (evalstring 
+		  (cadr args)
+		  (cut for-each print <...>) )
+		 (set! args (cdr args)) )
+		((or (string=? "-P" arg) (string=? "-pretty-print" arg))
+		 (evalstring 
+		  (cadr args)
+		  (cut for-each pretty-print <...>) )
+		 (set! args (cdr args)) )
 		(else
 		 (load arg) 
 		 (when (and script (string=? "-ss" (car script)))

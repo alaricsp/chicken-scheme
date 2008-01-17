@@ -5,6 +5,7 @@
 - the library can optionally be built with an already installed libpcre
 - chicken-setup accesses a separate set of eggs, specific on the major CHICKEN
   version (3)
+- added csi options "-p" ("-print") and "-P" ("-pretty-print")
 
 2.739
 
