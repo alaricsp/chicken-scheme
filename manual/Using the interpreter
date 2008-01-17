@@ -27,7 +27,11 @@ The options recognized by the interpreter are:
 
 ; -e  -eval EXPRESSIONS : Evaluate {{EXPRESSIONS}}. This option implies {{-batch}} and {{-quiet}}, so no startup message will be printed and the interpreter exits after processing all {{-eval}} options and/or loading files given on the command-line.
 
-; -D  -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}}.
+; -p  -print EXPRESSIONS : Evaluate {{EXPRESSIONS}} and print the results of each expression using {{print}}. Implies {{-batch}} and {{-quiet}}.
+
+; -P  -pretty-print EXPRESSIONS : Evaluate {{EXPRESSIONS}} and print the results of each expression using {{pretty-print}}. Implies {{-batch}} and {{-quiet}}.
+
+; -D  -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}} and {{feature?}}.
 
 ; -h  -help : Write a summary of the available command line options to standard output and exit.
 
