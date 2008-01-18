@@ -31,13 +31,16 @@
 ;;;     (setq eldoc-documentation-function 'scheme-get-current-symbol-info)
 ;;;     (eldoc-mode)))
 ;;;
-;;; There's a single custom variable, default-scheme-implementation,
+;;; There's a single custom variable, `default-scheme-implementation',
 ;;; which you can use to specify your preferred implementation when we
 ;;; can't infer it from the source code.
 ;;;
 ;;; That's all there is to it.
 
 ;;; History:
+;;;   0.7: 2008/01/18 - handles higher-order types (for apply, map, etc.)
+;;;                     smarter string completion (hostname, username, etc.)
+;;;                     smarter type inference, various bugfixes
 ;;;   0.6: 2008/01/06 - more bugfixes (merry christmas)
 ;;;   0.5: 2008/01/03 - handling internal defines, records, smarter
 ;;;                     parsing
@@ -70,7 +73,9 @@
 ;;   (syntax (param-types) [return-type])
 ;;   (set name values ...)
 ;;   (flags name values ...)
-;;   (special function [outer-function])
+;;   (list type)
+;;   (string expander)
+;;   (special type function [outer-function])
 
 (defvar *scheme-r5rs-info*
   '((define (syntax (identifier value) undefined) "define a new variable")
@@ -259,9 +264,9 @@
     (list->vector (lambda (list) vec))
     (vector-fill! (lambda (vec obj) undefined) "set every element in VEC to OBJ")
     (procedure? (lambda (obj) bool) "returns #t iff OBJ is a procedure")
-    (apply (lambda (proc obj |...|) obj) "procedure application")
-    (map (lambda (proc list) list) "a new list of PROC applied to every element of LIST")
-    (for-each (lambda (proc list)) "apply PROC to each element of LIST in order")
+    (apply (lambda ((lambda obj a) obj |...|) a) "procedure application")
+    (map (lambda ((lambda obj a) obj |...|) (list a)) "a new list of PROC applied to every element of LIST")
+    (for-each (lambda ((lambda obj a) obj |...|) undefined) "apply PROC to each element of LIST in order")
     (force (lambda (promise) obj) "force the delayed value of PROMISE")
     (call-with-current-continuation (lambda (proc) obj) "goto on steroids")
     (values (lambda (obj |...|)) "send multiple values to the calling continuation")
@@ -350,18 +355,18 @@
     (unzip4 (lambda (list) list))
     (unzip5 (lambda (list) list))
     (count (lambda (procedure list |...|) n))
-    (fold (lambda (procedure object list |...|) obj))
+    (fold (lambda ((lambda obj a) object list |...|) a))
     (unfold (lambda (procedure procedure procedure object :optional procedure) obj))
-    (pair-fold (lambda (procedure object list |...|) obj))
-    (reduce (lambda (procedure object list |...|) obj))
-    (fold-right (lambda (procedure object list |...|) obj))
+    (pair-fold (lambda ((lambda obj a) object list |...|) a))
+    (reduce (lambda ((lambda obj a) object list |...|) a))
+    (fold-right (lambda ((lambda obj a) object list |...|) a))
     (unfold-right (lambda (procedure procedure procedure object :optional object) obj))
-    (pair-fold-right (lambda (procedure object list |...|) obj))
-    (reduce-right (lambda (procedure object list |...|) obj))
+    (pair-fold-right (lambda ((lambda obj a) object list |...|) a))
+    (reduce-right (lambda ((lambda obj a) object list |...|) a))
     (append-map (lambda (procedure list |...|) list))
     (append-map! (lambda (procedure list |...|) list))
     (map! (lambda (procedure list |...|) list))
-    (pair-for-each (lambda (procedure list |...|)))
+    (pair-for-each (lambda (procedure list |...|) undefined))
     (filter-map (lambda (procedure list |...|) list))
     (map-in-order (lambda (procedure list |...|) list))
     (filter (lambda (procedure list) list))
@@ -372,9 +377,9 @@
     (remove! (lambda (procedure list) list))
     (find (lambda (procedure list) obj))
     (find-tail (lambda (procedure list) obj))
-    (any (lambda (procedure list |...|) obj))
-    (every (lambda (procedure list |...|) obj))
-    (list-index (lambda (procedure list |...|) obj))
+    (any (lambda ((lambda obj a) list |...|) a))
+    (every (lambda ((lambda obj a) list |...|) a))
+    (list-index (lambda (procedure list |...|) (or bool integer)))
     (take-while (lambda (procedure list) list))
     (drop-while (lambda (procedure list) list))
     (take-while! (lambda (procedure list) list))
@@ -542,19 +547,19 @@
 
    ;; SRFI 13
    ("String Library"
-    (string-map (lambda (proc s :optional start end) s))
-    (string-map! (lambda (proc s :optional start end) undefined))
-    (string-fold (lambda (kons knil s :optional start end) obj))
-    (string-fold-right (lambda (kons knil s :optional start end) obj))
+    (string-map (lambda (proc str :optional start end) str))
+    (string-map! (lambda (proc str :optional start end) undefined))
+    (string-fold (lambda (kons knil str :optional start end) obj))
+    (string-fold-right (lambda (kons knil str :optional start end) obj))
     (string-unfold (lambda (p f g seed :optional base make-final) str))
     (string-unfold-right (lambda (p f g seed :optional base make-final) str))
     (string-tabulate (lambda (proc len) str))
-    (string-for-each (lambda (proc s :optional start end)))
-    (string-for-each-index (lambda (proc s :optional start end)))
-    (string-every (lambda (pred s :optional start end) obj))
-    (string-any (lambda (pred s :optional start end) obj))
-    (string-hash (lambda (s :optional bound start end) int))
-    (string-hash-ci (lambda (s :optional bound start end) int))
+    (string-for-each (lambda (proc str :optional start end) undefined))
+    (string-for-each-index (lambda (proc str :optional start end) undefined))
+    (string-every (lambda (pred str :optional start end) obj))
+    (string-any (lambda (pred str :optional start end) obj))
+    (string-hash (lambda (str :optional bound start end) int))
+    (string-hash-ci (lambda (str :optional bound start end) int))
     (string-compare (lambda (string1 string2 lt-proc eq-proc gt-proc :optional start end) obj))
     (string-compare-ci (lambda (string1 string2 lt-proc eq-proc gt-proc :optional start end) obj))
     (string= (lambda (string1 string2 :optional start1 end1 start2 end2) bool))
@@ -572,9 +577,9 @@
     (string-titlecase (lambda (string :optional start end) str))
     (string-upcase (lambda (string :optional start end) str))
     (string-downcase (lambda (string :optional start end) str))
-    (string-titlecase! (lambda (string :optional start end)))
-    (string-upcase! (lambda (string :optional start end)))
-    (string-downcase! (lambda (string :optional start end)))
+    (string-titlecase! (lambda (string :optional start end) undefined))
+    (string-upcase! (lambda (string :optional start end) undefined))
+    (string-downcase! (lambda (string :optional start end) undefined))
     (string-take (lambda (string nchars) str))
     (string-drop (lambda (string nchars) str))
     (string-take-right (lambda (string nchars) str))
@@ -586,10 +591,10 @@
     (string-trim-both (lambda (string :optional char/char-set/pred start end) str))
     (string-filter (lambda (char/char-set/pred string :optional start end) str))
     (string-delete (lambda (char/char-set/pred string :optional start end) str))
-    (string-index (lambda (string char/char-set/pred :optional start end) obj))
-    (string-index-right (lambda (string char/char-set/pred :optional end start) obj))
-    (string-skip (lambda (string char/char-set/pred :optional start end) str))
-    (string-skip-right (lambda (string char/char-set/pred :optional end start) str))
+    (string-index (lambda (string char/char-set/pred :optional start end) (or integer bool)))
+    (string-index-right (lambda (string char/char-set/pred :optional end start) (or integer bool)))
+    (string-skip (lambda (string char/char-set/pred :optional start end) (or integer bool)))
+    (string-skip-right (lambda (string char/char-set/pred :optional end start) (or integer bool)))
     (string-count (lambda (string char/char-set/pred :optional start end) n))
     (string-prefix-length (lambda (string1 string2 :optional start1 end1 start2 end2) n))
     (string-suffix-length (lambda (string1 string2 :optional start1 end1 start2 end2) n))
@@ -602,26 +607,26 @@
     (string-contains (lambda (string pattern :optional s-start s-end p-start p-end) obj))
     (string-contains-ci (lambda (string pattern :optional s-start s-end p-start p-end) obj))
     (string-fill! (lambda (string char :optional start end) undefined))
-    (string-copy! (lambda (to tstart from :optional fstart fend)))
-    (string-copy (lambda (s :optional start end) str))
-    (substring/shared (lambda (s start :optional end) str))
-    (string-reverse (lambda (s :optional start end) str))
-    (string-reverse! (lambda (s :optional start end)))
+    (string-copy! (lambda (to tstart from :optional fstart fend) undefined))
+    (string-copy (lambda (str :optional start end) str))
+    (substring/shared (lambda (str start :optional end) str))
+    (string-reverse (lambda (str :optional start end) str))
+    (string-reverse! (lambda (str :optional start end) undefined))
     (reverse-list->string (lambda (char-list) str))
-    (string->list (lambda (s :optional start end) list))
+    (string->list (lambda (str :optional start end) list))
     (string-concatenate (lambda (string-list) str))
     (string-concatenate/shared (lambda (string-list) str))
-    (string-append/shared (lambda (s |...|) str))
+    (string-append/shared (lambda (str |...|) str))
     (string-concatenate-reverse (lambda (string-list :optional final-string end) str))
     (string-concatenate-reverse/shared (lambda (string-list :optional final-string end) str))
-    (xsubstring (lambda (s from :optional to start end) str))
-    (string-xcopy! (lambda (target tstart s from :optional to start end)))
-    (string-null? (lambda (s) bool))
+    (xsubstring (lambda (str from :optional to start end) str))
+    (string-xcopy! (lambda (target tstart str from :optional to start end) undefined))
+    (string-null? (lambda (str) bool))
     (string-join (lambda (string-list :optional delim grammar) str))
     (string-tokenize (lambda (string :optional token-chars start end) str))
-    (string-replace (lambda (s1 s2 start1 end1 :optional start2 end2) str))
-    (string-kmp-partial-search (lambda (pat rv s i :optional c= p-start s-start s-end) n))
-    (make-kmp-restart-vector (lambda (s :optional c= start end) vec))
+    (string-replace (lambda (str1 str2 start1 end1 :optional start2 end2) str))
+    (string-kmp-partial-search (lambda (pat rv str i :optional c= p-start s-start s-end) n))
+    (make-kmp-restart-vector (lambda (str :optional c= start end) vec))
     (kmp-step (lambda (pat rv c i c= p-start) n))
     )
 
@@ -638,7 +643,7 @@
     (char-set-fold (lambda (proc obj cset) obj))
     (char-set-unfold (lambda (proc proc proc obj :optional obj) cset))
     (char-set-unfold! (lambda (proc proc proc obj obj) cset))
-    (char-set-for-each (lambda (proc cset)))
+    (char-set-for-each (lambda (proc cset) undefined))
     (char-set-map (lambda (proc cset) cset))
     (char-set-copy (lambda (cset) cset))
     (char-set (lambda (ch |...|) cset))
@@ -980,7 +985,7 @@
     (stream (lambda (obj |...|)))
     (stream-unfoldn (lambda (generator-proc seed n)))
     (stream-map (lambda (proc stream |...|)))
-    (stream-for-each (lambda (proc stream |...|)))
+    (stream-for-each (lambda (proc stream |...|) undefined))
     (stream-filter (lambda (pred stream)))
     )
 
@@ -1301,7 +1306,7 @@
      (binary-search (lambda (vec proc)))
      (butlast (lambda (list) list) "drops the last element of list")
      (call-with-input-string (lambda (string proc)))
-     (call-with-output-string (lambda (proc)))
+     (call-with-output-string (lambda (proc) str))
      (chop (lambda (list k) list))
      (complement (lambda (f) f2))
      (compose (lambda (f1 f2 |...|) f))
@@ -1536,7 +1541,7 @@
      (file-lock/blocking (lambda (port :optional start len)))
      (file-mkstemp (lambda (template-filename)))
      (file-modification-time (lambda (filename) real))
-     (file-open (lambda (filename (flags open-mode open/binary open/excl open/fsync open/noctty open/nonblock open/rdonly open/rdwr open/read open/sync open/text) :optional mode) fd))
+     (file-open (lambda (filename (flags open-mode open/binary open/excl open/fsync open/noctty open/nonblock open/rdonly open/rdwr open/read open/sync open/text) :optional mode) fileno))
      (file-owner (lambda (filename)))
      (file-permissions (lambda (filename) int))
      (file-position (lambda (port-or-fileno) int))
@@ -1656,8 +1661,8 @@
      (terminal-port? (lambda (port)))
      (time->string (lambda (vector)))
      (unmap-file-from-memory (lambda (mmap :optional len)))
-     (unsetenv (lambda (name)))
-     (user-information (lambda (user-name-or-n)))
+     (unsetenv (lambda (name) undefined))
+     (user-information (lambda ((or integer (string complete-user-name))) list))
      (utc-time->seconds (lambda (vector)))
      (with-input-from-pipe (lambda (cmdline-string thunk :optional mode)))
      (with-output-to-pipe (lambda (cmdline-string thunk :optional mode)))
@@ -1665,10 +1670,10 @@
     (regex
      (glob->regexp (lambda (pattern)))
      (glob? (lambda (obj)))
-     (grep (lambda (pattern list)))
+     (grep (lambda (pattern list) list))
      (regexp (lambda (pattern ignore-case? ignore-space? utf-8?)))
-     (regexp-escape (lambda (string)))
-     (regexp? (lambda (obj)))
+     (regexp-escape (lambda (str) str))
+     (regexp? (lambda (obj) bool))
      (string-match (lambda (pattern str :optional start)))
      (string-match-positions (lambda (pattern str :optional start)))
      (string-search (lambda (pattern str :optional start)))
@@ -1684,7 +1689,7 @@
      (tcp-addresses (lambda (port)))
      (tcp-buffer-size (lambda (:optional new-size)))
      (tcp-close (lambda (listener)))
-     (tcp-connect (lambda (host-string :optioanl tcp-port-n)))
+     (tcp-connect (lambda ((string complete-host-name) :optional (string complete-port-name))))
      (tcp-listen (lambda (tcp-port-n :optional backlog-n host-string)))
      (tcp-listener-fileno (lambda (listener)))
      (tcp-listener-port (lambda (listener)))
@@ -1696,8 +1701,8 @@
      (create-temporary-file (lambda (:optional ext-str)))
      (decompose-pathname (lambda (pathname)))
      (delete-file* (lambda (filename)))
-     (for-each-argv-line (lambda (proc)))
-     (for-each-line (lambda (proc :optional input-port)))
+     (for-each-argv-line (lambda (proc) undefined))
+     (for-each-line (lambda (proc :optional input-port) undefined))
      (make-absolute-pathname (lambda (dir filename :optional ext-str)))
      (make-pathname (lambda (dir filename :optional ext-str)))
      (pathname-directory (lambda (pathname)))
@@ -1708,37 +1713,13 @@
      (pathname-replace-file (lambda (pathname filename)))
      (pathname-strip-directory (lambda (pathname)))
      (pathname-strip-extension (lambda (pathname)))
-     (port-for-each (lambda (read-fn thunk)))
+     (port-for-each (lambda (read-fn thunk) undefined))
      (port-map (lambda (read-fn thunk)))
      (read-all (lambda (:optional file-or-port)))
      (shift! (lambda (list :optional default)))
      (system* (lambda (format-string arg1 |...|)))
      (unshift! (lambda (obj pair)))
      )
-    ))
-
-;; by default chicken has a single top-level namespace, so we want to
-;; handle recursive imports
-(defvar *scheme-chicken-deps*
-  '((lolevel extras)
-    (posix regex extras utils)
-    (srfi-13 srfi-14)
-    (tcp extras)
-    (ajax md5 url srfi-1 spiffy)
-    (aquaterm srfi-4 srfi-13 lolevel regex)
-    (args srfi-37)
-    (array-lib srfi-1 srfi-4 lolevel miscmacros)
-    (awk regex)
-    (bloom-filter 
-     srfi-1 utils lolevel
-     iset message-digest hash-utils lookup-table mathh-int
-     misc-extn-control misc-extn-numeric misc-extn-record)
-    (binary-tree srfi-1 misc-extn-record)
-    (box lolevel)
-    (cgi-util extras input-parse)
-    (charplot array-lib array-lib-hof)
-    (charconv regex posix)
-    (content-type regex format-modular)
     ))
 
 ;; another big table - consider moving to a separate file
@@ -1871,8 +1852,8 @@
      (port-name (lambda (port) name))
      (port-position (lambda (port) n))
      (port? (lambda (obj) bool))
-     (print (lambda (obj |...|)))
-     (print* (lambda (obj |...|)))
+     (print (lambda (obj |...|) undefined))
+     (print* (lambda (obj |...|) undefined))
      (print-backtrace (lambda (:optional n) undefined))
      (print-call-chain (lambda (:optional n) undefined))
      (print-error-message (lambda (err args |...|) undefined))
@@ -1915,7 +1896,7 @@
      (test-feature? (lambda (obj) bool))
      (undefine-macro! (lambda (sym) undefined))
      (unregister-feature! (lambda (sym) undefined))
-     (use (special chicken-available-modules)
+     (use (special symbol chicken-available-modules)
           "import extensions into top-level namespace")
      (vector-copy! (lambda (from-vector to-vector :optional start) undefined))
      (vector-resize (lambda (vec n :optional init)))
@@ -2247,7 +2228,7 @@
      (fold$ (lambda (proc :optional init) proc))
      (fold-right (lambda (proc init list)))
      (fold-right$ (lambda (proc :optional init)))
-     (for-each$ (lambda (proc) proc))
+     (for-each$ (lambda (proc) (lambda (ls) undefined)))
      (foreign-pointer-attribute-get (lambda (ptr attr)))
      (foreign-pointer-attribute-set (lambda (ptr attr val)))
      (foreign-pointer-attributes (lambda (ptr) list))
@@ -2391,7 +2372,7 @@
      (port-file-number (lambda (port) n))
      (port-fold (lambda (proc init port)))
      (port-fold-right (lambda (proc init port)))
-     (port-for-each (lambda (proc read-proc)))
+     (port-for-each (lambda (proc read-proc) undefined))
      (port-map (lambda (proc read-proc)))
      (port-name (lambda (port) name))
      (port-position-prefix (lambda ()))
@@ -2675,7 +2656,7 @@
      (update! (syntax))
      (update-direct-method! (lambda ()))
      (update-direct-subclass! (lambda ()))
-     (use (special gauche-available-modules))
+     (use (special symbol gauche-available-modules))
      (use-version (syntax))
      (values-ref (syntax))
      (vector-copy (lambda (vector :optional start end fill) vector))
@@ -2813,7 +2794,7 @@
 (defun scheme-in-string-p ()
   (let ((orig (point)))
     (save-excursion
-      (beginning-of-defun)
+      (goto-char (point-min))
       (let ((parses (parse-partial-sexp (point) orig)))
         (nth 3 parses)))))
 
@@ -3218,6 +3199,13 @@ when scheme-complete can't infer the current implementation."
      (append-map #'extract-sexp-imports (append-map #'cdr (cdr sexp))))
     ((use require-extension)
      (append-map #'scheme-module-exports (cdr sexp)))
+    ((autoload)
+     (mapcar #'(lambda (x) (cons (if (consp x) (car x) x) '((lambda obj))))
+             (cddr sexp)))
+    ((load)
+     (and (file-exists-p (cadr sexp))
+          (with-find-file (cadr sexp)
+            (current-scheme-globals))))
     ((library module)
      (append-map #'extract-import-module-imports
                  (remove-if #'(lambda (x) (memq (car x) '(import require)))
@@ -3226,7 +3214,7 @@ when scheme-complete can't infer the current implementation."
 
 (defun module-symbol-p (sym)
   (memq sym '(use require require-extension begin cond-expand
-              module library define-module)))
+              module library define-module autoload load)))
 
 (defun skip-shebang ()
   ;; skip shebang if present
@@ -3377,22 +3365,22 @@ when scheme-complete can't infer the current implementation."
       (case (current-scheme-implementation)
         ((chicken)
          (let ((predefined (assq mod *scheme-chicken-modules*)))
-          (if predefined
-              (cdr predefined) 
-            (let ((path (concat "/usr/local/lib/chicken/1/"
-                                (symbol-name mod)
-                                ".exports")))
-              (if (not (file-exists-p path))
-                  '()
-                (with-find-file path
-                  (let ((vars '()))
-                    (condition-case nil
-                        (while (not (eobp))
-                          (forward-sexp)
-                          (let ((sym (nth-sexp-at-point 0)))
-                            (if sym (push (list sym) vars))))
-                      (error (goto-char (point-max))))
-                    vars)))))))
+           (if predefined
+               (cdr predefined) 
+             (mapcar
+              #'(lambda (x) (cons x '((lambda obj))))
+              (or (mapcar #'intern
+                          (file->lines (concat "/usr/local/lib/chicken/3/"
+                                               (symbol-name mod)
+                                               ".exports")))
+                  (let ((setup-info (concat "/usr/local/lib/chicken/3/"
+                                            (symbol-name mod)
+                                            ".setup-info")))
+                    (and (file-exists-p setup-info)
+                         (with-find-file setup-info
+                           (let* ((alist (nth-sexp-at-point 0))
+                                  (cell (assq 'exports alist)))
+                             (cdr cell))))))))))
         ((gauche)
          (let ((path (find-file-in-path
                       (concat (subst-char-in-string ?. ?/ (symbol-name mod))
@@ -3486,19 +3474,20 @@ when scheme-complete can't infer the current implementation."
 (defun scheme-lookup-type (spec pos)
   (let ((i 1)
         (type nil))
-    (while (and (consp spec) (< i pos))
+    (while (and (consp spec) (<= i pos))
       (cond
-        ((eq :optional (car spec))
-         (if (and (= i (- pos 1)) (consp (cdr spec)))
-             (setq type (cadr spec)))
-         (setq i pos))
-        ((and (consp (cdr spec)) (eq '|...| (cadr spec)))
-         (setq type (car spec))
-         (setq spec nil)))
+       ((eq :optional (car spec))
+        (if (and (= i pos) (consp (cdr spec)))
+            (setq type (cadr spec)))
+        (setq i (+ pos 1)))
+       ((= i pos)
+        (setq type (car spec))
+        (setq spec nil))
+       ((and (consp (cdr spec)) (eq '|...| (cadr spec)))
+        (setq type (car spec))
+        (setq spec nil)))
       (setq spec (cdr spec))
       (incf i))
-    (if (and (not type) (= i pos))
-        (setq type (if (consp spec) (car spec) spec)))
     (if type
         (setq type (scheme-translate-type type)))
     type))
@@ -3549,7 +3538,9 @@ when scheme-complete can't infer the current implementation."
         (message "Hit space to flush")
         (with-output-to-temp-buffer "*Completions*"
           (display-completion-list
-           (sort (all-completions str (append strs coll) pred) 'string-lessp)))
+           (sort
+            (all-completions str (append strs coll) pred)
+            'string-lessp)))
         (while (not done)
           (let ((event
                  (with-current-buffer (get-buffer "*Completions*")
@@ -3603,28 +3594,179 @@ when scheme-complete can't infer the current implementation."
                  (mapcar #'(lambda (e) (remove-if-not pred e))
                          env))))
 
-;; checking return values
+;; checking return values:
+;;   a should be capable of returning instances of b
 (defun scheme-type-match-p (a b)
   (let ((a1 (scheme-translate-type a))
         (b1 (scheme-translate-type b)))
-    (and (not (eq a1 'undefined))
-         (or (eq a1 b1)
-             (eq a1 'object)
-             (case b1
-               ((object) t)
-               ((number) (memq a1 '(complex real rational integer)))
-               ((complex) (memq a1 '(real rational integer)))
-               ((real) (memq a1 '(rational integer)))
-               ((rational) (memq a1 '(integer)))
-               ((port) (memq a1 '(input-port output-port)))
-               ((string) (memq a1 '(filename directory)))
-               (t nil))))))
+    (and (not (eq a1 'undefined))   ; check a *does* return something
+         (or (eq a1 b1)             ; and they're the same
+             (eq a1 'object)        ; ... or a can return anything
+             (eq b1 'object)        ; ... or b can receive anything
+             (if (symbolp a1)
+                 (if (symbolp b1)
+                     (case a1           ; ... or the types overlap
+                       ((number complex real rational integer)
+                        (memq b1 '(number complex real rational integer)))
+                       ((port input-port output-port)
+                        (memq b1 '(port input-port output-port)))
+                       ((pair list)
+                        (memq b1 '(pair list)))
+                       ((non-procedure)
+                        (not (eq 'procedure b1))))
+                   (and
+                    (consp b1)
+                    (if (eq 'or (car b1))
+                        ;; type unions
+                        (find-if
+                         #'(lambda (x)
+                             (scheme-type-match-p
+                              a1 (scheme-translate-type x)))
+                         (cdr b1))
+                      (let ((b2 (scheme-translate-special-type b1)))
+                        (and (not (equal b1 b2))
+                             (scheme-type-match-p a1 b2))))))
+               (and (consp a1)
+                    ;; type unions
+                    (if (eq 'or (car a1))
+                        (find-if
+                         #'(lambda (x)
+                             (scheme-type-match-p (scheme-translate-type x) b1))
+                         (cdr a1))
+                      ;; other special types
+                      (let ((a2 (scheme-translate-special-type a1))
+                            (b2 (scheme-translate-special-type b1)))
+                        (and (or (not (equal a1 a2)) (not (equal b1 b2)))
+                             (scheme-type-match-p a2 b2))))
+                    ))))))
+
+(defun scheme-translate-special-type (x)
+  (if (not (consp x))
+      x
+    (case (car x)
+      ((list string) (car x))
+      ((set special) (cadr x))
+      ((flags) 'integer)
+      (t x))))
 
 (defun nth* (n ls)
   (while (and (consp ls) (> n 0))
     (setq n (- n 1)
           ls (cdr ls)))
   (and (consp ls) (car ls)))
+
+(defun file->lines (file)
+  (and (file-readable-p file)
+       (with-find-file file
+         (goto-char (point-min))
+         (let ((res '()))
+           (while (not (eobp))
+             (let ((start (point)))
+               (forward-line)
+               (push (buffer-substring-no-properties start (- (point) 1))
+                     res)))
+           (reverse res)))))
+
+(defun passwd-file-names (file &optional pat)
+  (delete
+   nil
+   (mapcar
+    #'(lambda (line)
+        (and (not (string-match "^[ 	]*#" line))
+             (or (not pat) (string-match pat line))
+             (string-match "^\\([^:]*\\):" line)
+             (match-string 1 line)))
+    (file->lines file))))
+
+(defun host-file-names (file)
+  (append-map
+   #'(lambda (line)
+       (let ((i (string-match "#" line)))
+         (if i (setq line (substring line 0 i))))
+       (cdr (split-string line)))
+   (file->lines file)))
+
+(defun ssh-known-hosts-file-names (file)
+  (append-map
+   #'(lambda (line)
+       (split-string (car (split-string line)) ","))
+   (file->lines file)))
+
+(defun ssh-config-file-names (file)
+  (append-map
+   #'(lambda (line)
+       (and (string-match "^ *Host" line)
+            (cdr (split-string line))))
+   (file->lines file)))
+
+(defun complete-user-name (sym)
+  (if (string-match "apple" (emacs-version))
+      (append (passwd-file-names "/etc/passwd" "^[^_].*")
+              (delete "Shared" (directory-files "/Users" nil "^[^.].*")))
+    (passwd-file-names "/etc/passwd")))
+
+(defun complete-host-name (sym)
+  (append (host-file-names "/etc/hosts")
+          (ssh-known-hosts-file-names "~/.ssh/known_hosts")
+          (ssh-config-file-names "~/.ssh/config")))
+
+;; my /etc/services is 14k lines, so we try to optimize this
+(defun complete-port-name (sym)
+  (and (file-readable-p "/etc/services")
+       (with-find-file "/etc/services"
+         (goto-char (point-min))
+         (let ((rx (concat "^\\(" (regexp-quote (if (symbolp sym)
+                                                    (symbol-name sym)
+                                                  sym))
+                           "[^ 	]*\\)"))
+               (res '()))
+           (while (not (eobp))
+             (if (not (re-search-forward rx nil t))
+                 (goto-char (point-max))
+               (let ((str (match-string-no-properties 1)))
+                 (if (not (equal str (car res)))
+                     (push str res)))
+               (forward-char 1)))
+           res))))
+
+(defun complete-file-name (sym)
+  (let ((file (file-name-nondirectory sym))
+        (dir (or (file-name-directory sym) ".")))
+    (file-name-all-completions file dir)))
+
+(defun complete-directory-name (sym)
+  (let ((file (file-name-nondirectory sym))
+        (dir (or (file-name-directory sym) ".")))
+    (remove-if-not
+     #'(lambda (x) (file-directory-p (concat dir "/" x)))
+     (file-name-all-completions file dir))))
+
+(defun scheme-string-completer (type)
+  (case type
+    ((filename)
+     '(complete-file-name file-name-nondirectory))
+    ((directory)
+     '(complete-directory-name file-name-nondirectory))
+    (t
+     (cond
+      ((and (consp type) (eq 'string (car type)))
+       (cadr type))
+      ((and (consp type) (eq 'or (car type)))
+       (car (delete nil (mapcar #'scheme-string-completer (cdr type)))))))))
+
+;; (defun remove-duplicate-strings/tail (ls)
+;;   (while (consp ls)
+;;     (delete (car ls) (cdr ls))
+;;     (setq ls (cdr ls))))
+
+;; (defun remove-duplicate-strings (ls)
+;;   (remove-duplicate-strings/tail ls)
+;;   ls)
+
+(defun scheme-apply-string-completer (cmpl sym)
+  (let ((func (if (consp cmpl) (car cmpl) cmpl))
+        (trans (and (consp cmpl) (cadr cmpl))))
+    (funcall func (if trans (funcall trans sym) sym))))
 
 (defun scheme-smart-complete (&optional arg)
   (interactive "P")
@@ -3652,27 +3794,41 @@ when scheme-complete can't infer the current implementation."
       (do-completion sym (scheme-env-filter #'(lambda (x) t) env)))
      ;; for now just do file-name completion in strings
      (in-str-p
-      (let ((file (file-name-nondirectory sym))
-            (dir (or (file-name-directory sym) ".")))
-        (do-completion file (file-name-all-completions file dir))))
+      (let* ((param-type
+              (and (consp inner-type)
+                   (eq 'lambda (car inner-type))
+                   (scheme-lookup-type (cadr inner-type) inner-pos)))
+             (completer (or (scheme-string-completer param-type)
+                            '(complete-file-name file-name-nondirectory))))
+        (do-completion
+         (if (consp completer) (funcall (cadr completer) sym) sym)
+         (scheme-apply-string-completer completer sym))))
      ;; outer special
      ((and (consp outer-type)
            (eq 'special (car outer-type))
-           (caddr outer-type))
-      (do-completion sym (funcall (caddr outer-type) sym)))
+           (cadddr outer-type))
+      (do-completion sym (funcall (cadddr outer-type) sym)))
      ;; inner special
      ((and (consp inner-type)
            (eq 'special (car inner-type))
-           (cadr inner-type))
-      (do-completion sym (funcall (cadr inner-type) sym)))
+           (caddr inner-type))
+      (do-completion sym (funcall (caddr inner-type) sym)))
      ;; completing inner procedure, complete procedures with a
      ;; matching return type
      ((and (consp outer-type)
            (eq 'lambda (car outer-type))
            (not (zerop outer-pos))
            (nth* outer-pos (cadr outer-type))
-           (zerop inner-pos))
-      (let ((ret-type (scheme-lookup-type (cadr outer-type) outer-pos)))
+           (or (zerop inner-pos)
+               (and (>= 1 inner-pos)
+                    (consp inner-type)
+                    (eq 'lambda (car inner-type))
+                    (let ((param-type
+                           (scheme-lookup-type (cadr inner-type) inner-pos)))
+                      (and (consp param-type)
+                           (eq 'lambda (car param-type))
+                           (eq (caddr inner-type) (caddr param-type)))))))
+      (let ((want-type (scheme-lookup-type (cadr outer-type) outer-pos)))
         (do-completion
          sym
          (scheme-env-filter
@@ -3684,7 +3840,7 @@ when scheme-complete can't infer the current implementation."
                                   (not (eq 'undefined (caddr type))))
                              (and (eq 'lambda (car type))
                                   (scheme-type-match-p (caddr type)
-                                                       ret-type)))))))
+                                                       want-type)))))))
           env))))
      ;; completing a normal parameter
      ((and inner-proc
@@ -3692,36 +3848,45 @@ when scheme-complete can't infer the current implementation."
            (consp inner-type)
            (eq 'lambda (car inner-type)))
       (let* ((param-type (scheme-lookup-type (cadr inner-type) inner-pos))
-             (set-or-flags-p (and (consp param-type)
-                                  (memq (car param-type) '(set flags))))
-             (base-type (if set-or-flags-p
-                            (scheme-translate-type (cadr param-type))
+             (set-or-flags
+              (or (and (consp param-type)
+                       (case (car param-type)
+                         ((set) (cddr param-type))
+                         ((flags) (cdr param-type))))
+                  ;; handle nested arithmetic functions inside a flags
+                  ;; parameter
+                  (and (not (zerop outer-pos))
+                       (consp outer-type)
+                       (eq 'lambda (car outer-type))
+                       (let ((outer-param-type
+                              (scheme-lookup-type (cadr outer-type)
+                                                  outer-pos)))
+                         (and (consp outer-param-type)
+                              (eq 'flags (car outer-param-type))
+                              (memq (scheme-translate-type param-type)
+                                    '(number complex real rational integer))
+                              (memq (scheme-translate-type (caddr inner-type))
+                                    '(number complex real rational integer))
+                              (cdr outer-param-type))))))
+             (base-type (if set-or-flags
+                            (if (and (consp param-type)
+                                     (eq 'set (car param-type)))
+                                (scheme-translate-type (cadr param-type))
+                              'integer)
                             param-type))
              (base-completions
               (scheme-env-filter
                #'(lambda (x)
-                   (scheme-type-match-p base-type (cadr x)))
+                   (scheme-type-match-p (cadr x) base-type))
                env))
              (str-completions
-              (case base-type
-                ((filename directory)
-                 (let* ((file (file-name-nondirectory sym))
-                        (dir (or (file-name-directory sym) "."))
-                        (ls (file-name-all-completions file dir)))
-                   (if (eq base-type 'directory)
-                       (remove-if-not
-                        #'(lambda (x)
-                            (file-directory-p (concat dir "/" x)))
-                        ls)
-                     ls)))
-                (t '()))))
+              (let ((completer (scheme-string-completer base-type)))
+                (and
+                 completer
+                 (scheme-apply-string-completer completer sym)))))
         (do-completion
          sym
-         (append
-          (if set-or-flags-p
-              (cddr param-type)
-            '())
-          base-completions)
+         (append set-or-flags base-completions)
          str-completions)))
      ;; completing a function
      ((zerop inner-pos)
@@ -3766,7 +3931,9 @@ when scheme-complete can't infer the current implementation."
   (if (not (consp x))
       x
     (case (car x)
-      ((flags set) (or (cadr x) (car x)))
+      ((string list) (car x))
+      ((set) (or (cadr x) (car x)))
+      ((flags) 'integer)
       ((lambda) 'procedure)
       ((syntax) 'syntax)
       (t x))))
@@ -3812,3 +3979,4 @@ when scheme-complete can't infer the current implementation."
             (or (nth 4 spec) ""))))))
 
 (provide 'scheme-complete)
+
