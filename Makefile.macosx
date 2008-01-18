@@ -32,14 +32,12 @@
 # 37130 Gleichen
 # Germany
 
-
 # platform configuration
 
 ARCH = $(shell sh config-arch.sh)
 
 # commands
 
-POSTINSTALL_STATIC_LIBRARY = ranlib
 POSTINSTALL_PROGRAM = install_name_tool
 
 # options
@@ -50,13 +48,9 @@ C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
 else
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
 endif
-LINKER_LINK_SHARED_LIBRARY_OPTIONS = -dynamiclib -compatibility_version 1 -current_version 1.0
+LINKER_LINK_SHARED_LIBRARY_OPTIONS = -dynamiclib -compatibility_version 1 -current_version 1.0 -install_name $@
 POSTINSTALL_PROGRAM_FLAGS = -change libchicken$(SO) $(LIBDIR)/libchicken$(SO)
-
-ifeq ($(ARCH),x86-64)
-C_COMPILER_OPTIONS += -m64
-LINKER_OPTIONS += -m64
-endif
+LIBRARIAN_OPTIONS = scru
 
 # file extensions
 
@@ -109,5 +103,30 @@ ifdef NOAPPLYHOOK
 endif
 	echo "#define C_HACKED_APPLY" >>$@
 	cat chicken-defaults.h >>$@
+
+# architectures
+
+ifeq ($(ARCH),x86-64)
+C_COMPILER_OPTIONS += -m64
+LINKER_OPTIONS += -m64
+else
+
+ifeq ($(ARCH),universal)
+C_COMPILER_OPTIONS += -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+LINKER_OPTIONS += -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+
+ifdef HACKED_APPLY
+# We undefine HACKED_APPLY in order to override rules.make.
+HACKED_APPLY=
+apply-hack.ppc.darwin$(O): apply-hack.ppc.darwin.s
+	as -arch ppc -o $@ $<
+apply-hack.x86$(O): apply-hack.x86.s
+	as -arch i386 -o $@ $<
+$(APPLY_HACK_OBJECT): apply-hack.x86$(O) apply-hack.ppc.darwin$(O)
+	lipo -create -output $(APPLY_HACK_OBJECT) $^
+endif
+
+endif
+endif
 
 include rules.make

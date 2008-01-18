@@ -256,6 +256,11 @@
 
 	    http://www.opendarwin.org/projects/dlcompat
 
+	- On Mac OS X, Chicken and its eggs can be built as universal 
+	  binaries which will work on either Intel or PowerPC.
+
+	    make PLATFORM=macosx ARCH=universal
+
 	- On Mac OS X, Chicken can be built in 64-bit mode on Intel
 	  Core 2 Duo systems--basically, most recent machines.  The default
 	  is 32-bit mode.  To enable 64-bit mode, invoke `make` thusly:
