@@ -506,6 +506,7 @@ typedef unsigned __int64   uint64_t;
 #  define C_cblockend             })
 #  define C_noret                 __attribute__ ((noreturn))
 #  define C_noret_decl(name)
+#  define C_aligned               __attribute__ ((aligned))
 # endif
 # ifdef __i386__
 #  define C_regparm               __attribute__ ((regparm(3)))
@@ -533,6 +534,10 @@ typedef unsigned __int64   uint64_t;
 
 #ifndef C_ccall
 # define C_ccall
+#endif
+
+#ifndef C_aligned
+# define C_aligned
 #endif
 
 #define C_c_regparm

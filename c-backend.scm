@@ -497,7 +497,7 @@
 	    ((null? llits))
 	  (let* ((ll (##sys#lambda-info->string (car llits)))
 		 (llen (string-length ll)))
-	    (gen #t "static C_char C_TLS li" i "[]={C_lihdr(" 
+	    (gen #t "static C_char C_TLS li" i "[] C_aligned={C_lihdr(" 
 		 (arithmetic-shift llen -16) #\,
 		 (bitwise-and #xff (arithmetic-shift llen -8)) #\,
 		 (bitwise-and #xff llen)
