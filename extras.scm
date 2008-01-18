@@ -372,7 +372,7 @@ EOF
 	     [p (if parg (car args) ##sys#standard-input)]
 	     [limit (and parg (pair? (cdr args)) (cadr args))])
 	(##sys#check-port p 'read-line)
-	(cond ((##sys#slot p 8) => (lambda (rl) (rl p limit)))
+	(cond ((##sys#slot (##sys#slot p 2) 8) => (lambda (rl) (rl p limit)))
 	      (else
 	       (let* ((buffer-len (if limit limit 256))
 		      (buffer (##sys#make-string buffer-len)))

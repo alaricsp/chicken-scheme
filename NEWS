@@ -1,11 +1,12 @@
 3.0.0rc1
 
-- upgraded scheme-complete.el to version 0.6
+- upgraded scheme-complete.el to version 0.6 [Thanks to Alex Shinn]
 - unit library: added "blob=?"
 - the library can optionally be built with an already installed libpcre
 - chicken-setup accesses a separate set of eggs, specific on the major CHICKEN
   version (3)
 - added csi options "-p" ("-print") and "-P" ("-pretty-print")
+- support for Mac OS X universal binaries hase been added [Thanks to Zbigniew]
 
 2.739
 
