@@ -1670,8 +1670,8 @@ EOF
 	    (##core#inline "C_char_ready_p" p) )
 	  #f				; read-string!
 	  (lambda (p limit)		; read-line
-	    (let ((buffer-len (if limit limit 256))
-		  (buffer (make-string buffer-len)))
+	    (let* ((buffer-len (if limit limit 256))
+		   (buffer (make-string buffer-len)))
 	      (let loop ([len buffer-len]
 			 [buffer buffer]
 			 [result ""]
@@ -3010,10 +3010,10 @@ EOF
 	 (##sys#setislot p 10 (fx+ pos n))
 	 n))
      (lambda (p limit)			; read-line
-       (let ((pos (##sys#slot p 10))
-	     (size (##sys#slot p 11)) 
-	     (buf (##sys#slot p 12)) 
-	     (end (if limit (fx+ pos limit) size)))
+       (let* ((pos (##sys#slot p 10))
+	      (size (##sys#slot p 11)) 
+	      (buf (##sys#slot p 12)) 
+	      (end (if limit (fx+ pos limit) size)))
 	 (if (fx>= pos size)
 	     #!eof
 	     (##sys#scan-buffer-line

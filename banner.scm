@@ -5,4 +5,4 @@ CHICKEN
 EOF
 )
 
-(define-constant +copyright+ "(c)2000-2007 Felix L. Winkelmann")
+(define-constant +copyright+ "(c)2000-2008 Felix L. Winkelmann")

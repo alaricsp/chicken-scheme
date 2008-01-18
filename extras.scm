@@ -409,7 +409,7 @@ EOF
 	     (max (if (pair? rest) (##sys#slot rest 0) #f)) )
 	(define (doread port)
 	  (let loop ((lns '())
-		     (n (or max 1000000)) )
+		     (n (or max 1000000000)) ) ; this is silly
 	    (if (eq? n 0)
 		(reverse lns)
 		(let ((ln (read-line port)))
