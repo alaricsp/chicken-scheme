@@ -3036,7 +3036,7 @@ EOF
 	  (cond ((eq? c #\newline) (k pos2 (fx+ pos2 1)))
 		((and (eq? c #\return) 
 		      (fx> limit (fx+ pos2 1))
-		      (eq (##core#inline "C_subchar" buf (fx+ pos2 1)) #\newline) )
+		      (eq? (##core#inline "C_subchar" buf (fx+ pos2 1)) #\newline) )
 		 (k pos2 (fx+ pos2 1)) )
 		(else (loop (fx+ pos2 1))) ) ) ) ) )
 
