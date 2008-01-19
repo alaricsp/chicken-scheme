@@ -492,6 +492,7 @@
 	 used-units)
 	(unless (zero? n)
 	  (gen #t #t "static C_TLS C_word lf[" n "];") )
+	(gen #t "static double C_possibly_force_alignment;")
 	(do ((i 0 (add1 i))
 	     (llits lliterals (cdr llits)))
 	    ((null? llits))
@@ -505,6 +506,9 @@
 	    (do ((n 0 (add1 n)))
 		((>= n llen))
 	      (gen #\, (char->integer (string-ref ll n))) )
+	    (do ((n (remainder llen 8) (sub1 n))) ; fill up with zeros to align following entry
+		((zero? n))
+	      (gen ",0") )
 	    (gen "};")))))
   
     (define (prototypes)

@@ -36,9 +36,10 @@ Strait, Dorai Sitaram, Robert Skeels, Jason Songhurst, Clifford Stein,
 Sunnan, Zbigniew Szadkowski, Rick Taube, Mike Thomas, Minh Thu,
 Christian Tismer, Andre van Tonder, John Tobey, Henrik Tramberend,
 Vladimir Tsichevsky, Neil van Dyke, Sander Vesik, Panagiotis Vossos,
-Shawn Wagner, Peter Wang, Ed Watkeys, Thomas Weidner, Goeran Weinholt,
-Matthew Welland, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard
-Zidlicky and Houman Zolfaghari for bug-fixes, tips and suggestions.
+Shawn Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas Weidner,
+Goeran Weinholt, Matthew Welland, Joerg Wittenberger, Peter Wright,
+Mark Wutka, Richard Zidlicky and Houman Zolfaghari for bug-fixes, tips
+and suggestions.
 
 CHICKEN uses the PCRE regular expression package ([[http://www.pcre.org]]),
 which is written by Philip Hazel.
@@ -48,6 +49,8 @@ Special thanks to Brandon van Every for contributing the (now defunct)
 build issues.
 
 Also special thanks to Benedikt Rosenau for his constant encouragement.
+
+Thanks to Dunja Winkelmann for putting up with all of this.
 
 CHICKEN contains code from several people:
 

@@ -78,10 +78,8 @@
 
 	which will unpack a tarball containing precompiled C sources
 	that are recent enough to generate the current version. After
-	building a statically linked "chicken" executable, all Scheme
-	sources are recompiled with it. From this stage on
-	bootstrapping isn't necessary anymore, as long as you have a
-	compiler binary in your source tree.
+	building a statically linked "chicken" executable, the system
+	is rebuilt using the static compiler. 
 
 	The build may show errors when creating the info(1)
 	documentation, if you do not have GNU texinfo installed.

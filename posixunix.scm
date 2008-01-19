@@ -61,6 +61,10 @@ static C_TLS int C_wait_status;
 #include <dirent.h>
 #include <pwd.h>
 
+#if defined(__sun__) && defined(__svr4__)
+# include <sys/tty.h>
+#endif
+
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
