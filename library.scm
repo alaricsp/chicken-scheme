@@ -3037,7 +3037,7 @@ EOF
 		((and (eq? c #\return) 
 		      (fx> limit (fx+ pos2 1))
 		      (eq? (##core#inline "C_subchar" buf (fx+ pos2 1)) #\newline) )
-		 (k pos2 (fx+ pos2 1)) )
+		 (k pos2 (fx+ pos2 2)) )
 		(else (loop (fx+ pos2 1))) ) ) ) ) )
 
 (define open-input-string 
