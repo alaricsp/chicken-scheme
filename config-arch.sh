@@ -40,6 +40,7 @@ case "`uname -m`" in
 	    Darwin) echo "ppc.darwin";;
 	    *) echo "ppc.sysv";;
 	esac;;
+    sparc64) echo "sparc64";;
     amd64|x86_64) echo "x86-64";;
     *) ;;
 esac
