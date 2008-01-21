@@ -611,7 +611,7 @@ to use the local repository file:
 Retrieve complete extension repository (big):
 
  % cd /opt
- % svn co https://galinha.ucpel.tche.br/svn/chicken-eggs
+ % svn co https://galinha.ucpel.tche.br/svn/chicken-eggs/release/3 eggs
 
 Get your own copy of the repository file:
 
@@ -621,7 +621,7 @@ Now you can install eggs from your local checkout, with full
 dependency tracking and without being connected to the internet:
 
  % cd ~/tmp
- % chicken-setup -local /opt/eggs/chicken-eggs -tree ~/my-repository-file opengl
+ % chicken-setup -local /opt/eggs -tree ~/my-repository-file opengl
 
 
 === Linking extensions statically
