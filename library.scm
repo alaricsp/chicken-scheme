@@ -912,8 +912,20 @@ EOF
   n)
 
 (define (imag-part n)
-  (##sys#check-number n 'real-part)
+  (##sys#check-number n 'imag-part)
   0)
+
+(define (numerator n)
+  (##sys#check-number n 'numerator)
+  (if (##core#inline "C_i_integerp" n)
+      n
+      (##sys#signal-hook #:type-error 'numerator "bad argument type - not a rational number" n) ) )
+
+(define (denominator n)
+  (##sys#check-number n 'denominator)
+  (if (##core#inline "C_i_integerp" n)
+      1
+      (##sys#signal-hook #:type-error 'numerator "bad argument type - not a rational number" n) ) )
 
 (define magnitude abs)
 
