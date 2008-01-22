@@ -1742,7 +1742,7 @@ EOF
     (lambda (secs)
       (let ([str (ctime secs)])
         (unless str (##sys#error 'seconds->string "cannot convert seconds to string" secs))
-        str) ) ) )
+	(##sys#substring str 0 (fx- (##sys#size str) 1))))))
 
 (define time->string
   (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)])
@@ -1751,7 +1751,7 @@ EOF
       (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
       (let ([str (asctime tm)])
         (unless str (##sys#error 'time->string "cannot convert time vector to string" tm))
-        str) ) ) )
+	(##sys#substring str 0 (fx- (##sys#size str) 1))))))
 
 (define (local-time->seconds tm)
   (##sys#check-vector tm 'local-time->seconds)

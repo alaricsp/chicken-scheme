@@ -939,7 +939,7 @@ Returns the abbreviation for the local timezone as a string.
  [procedure] (seconds->string SECONDS)
 
 Converts the local time represented in {{SECONDS}} into a string
-of the form {{"Tue May 21 13:46:22 1991\n"}}.
+of the form {{"Tue May 21 13:46:22 1991"}}.
 
 ==== seconds->utc-time
 
@@ -961,7 +961,7 @@ the number of seconds since the first of January, 1970 UTC.
 
 Converts the broken down time represented in the 10 element vector
 {{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
-1991\n"}}.
+1991"}}.
 
 
 === Raw exit

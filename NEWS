@@ -10,6 +10,8 @@
 - `cond-expand' is available in the set of core macros [Thanks to Alex Shinn]
 - On sparc64 architectures more than 126 procedure arguments are allowed 
   [Thanks to Peter Bex]
+- posix unit: "seconds->string" and "time->string" have now their trailing
+  #\newline character removed. THIS IS A BACKWARD-INCOMPATIBLE CHANGE.
 
 2.739
 
