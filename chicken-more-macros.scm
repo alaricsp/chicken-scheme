@@ -384,54 +384,6 @@
 			       (if ,var ,(fold bs2) #f) ) ) ] ) ) ) ) ) ) ) )
 
 (##sys#register-macro-2
- 'cond-expand
-   (lambda (clauses)
-
-     (define (err x) 
-       (##sys#error "syntax error in `cond-expand' form" x (cons 'cond-expand clauses)) )
-
-     (define (test fx)
-       (cond ((symbol? fx) (##sys#feature? fx))
-	     ((not (pair? fx)) (err fx))
-	     (else
-	      (let ((rest (##sys#slot fx 1)))
-		(case (##sys#slot fx 0)
-		  ((and)
-		   (or (eq? rest '())
-		       (if (pair? rest)
-			   (and (test (##sys#slot rest 0))
-				(test `(and ,@(##sys#slot rest 1))) )
-			   (err fx) ) ) )
-		  ((or) 
-		   (and (not (eq? rest '()))
-			(if (pair? rest)
-			    (or (test (##sys#slot rest 0))
-				(test `(or ,@(##sys#slot rest 1))) )
-			    (err fx) ) ) )
-		  ((not) (not (test (cadr fx))))
-		  (else (err fx)) ) ) ) ) )
-
-     (let expand ((cls clauses))
-       (cond ((eq? cls '())
-	      (##sys#apply
-	       ##sys#error "no matching clause in `cond-expand' form" 
-	       (map (lambda (x) (car x)) clauses) ) )
-	     ((not (pair? cls)) (err cls))
-	     (else
-	      (let ((clause (##sys#slot cls 0))
-		    (rclauses (##sys#slot cls 1)) )
-		(if (not (pair? clause)) 
-		    (err clause)
-		    (let ((id (##sys#slot clause 0)))
-		      (cond ((eq? id 'else)
-			     (let ((rest (##sys#slot clause 1)))
-			       (if (eq? rest '())
-				   '(##core#undefined)
-				   `(begin ,@rest) ) ) )
-			    ((test id) `(begin ,@(##sys#slot clause 1)))
-			    (else (expand rclauses)) ) ) ) ) ) ) ) ) )
-
-(##sys#register-macro-2
  'select
  (let ((gensym gensym))
    (lambda (form)

@@ -7,6 +7,9 @@
   version (3)
 - added csi options "-p" ("-print") and "-P" ("-pretty-print")
 - support for Mac OS X universal binaries hase been added [Thanks to Zbigniew]
+- `cond-expand' is available in the set of core macros [Thanks to Alex Shinn]
+- On sparc64 architectures more than 126 procedure arguments are allowed 
+  [Thanks to Peter Bex]
 
 2.739
 
