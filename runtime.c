@@ -397,6 +397,9 @@ static C_TLS C_byte
   *new_tospace_limit,
   *heap_scan_top,
   *timer_start_fromspace_top;
+static C_TLS size_t
+  heapspace1_size,
+  heapspace2_size;
 static C_TLS C_char 
   buffer[ STRING_BUFFER_SIZE ],
   *current_module_name,
@@ -1019,23 +1022,69 @@ void global_signal_handler(int signum)
 
 /* Align memory to page boundary */
 
+#ifndef C_LOCK_TOSPACE
 static void *align_to_page(void *mem)
 {
-#ifdef C_LOCK_TOSPACE
-  C_uword ptr = (C_word)mem;
-
-  return (void *)(((ptr) + page_size - 1) & ~(page_size - 1));
-#else
   return (void *)C_align((C_uword)mem);
+}
 #endif
+
+static C_byte *
+heap_alloc (size_t size, C_byte **page_aligned)
+{
+  C_byte *p;
+#ifdef C_LOCK_TOSPACE
+  p = (C_byte *)mmap (NULL, size, (PROT_READ | PROT_WRITE),
+                      (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+  if (p != NULL && page_aligned) *page_aligned = p;
+#else
+  p = (C_byte *)C_malloc (size + page_size);
+  if (p != NULL && page_aligned) *page_aligned = align_to_page (p);
+#endif
+
+  /* . */
+  return p;
 }
 
+static void
+heap_free (C_byte *ptr, size_t size)
+{
+#ifdef C_LOCK_TOSPACE
+  int r = munmap (ptr, size);
+  assert (r == 0);
+#else
+  C_free (ptr);
+#endif
+  /* . */
+}
+
+static C_byte *
+heap_realloc (C_byte *ptr, size_t old_size,
+	      size_t new_size, C_byte **page_aligned)
+{
+  C_byte *p;
+#ifdef C_LOCK_TOSPACE
+  p = (C_byte *)mmap (NULL, new_size, (PROT_READ | PROT_WRITE),
+                      (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+  if (ptr != NULL) {
+    memcpy (p, ptr, old_size);
+    heap_free (ptr, old_size);
+  }
+  if (p != NULL && page_aligned) *page_aligned = p;
+#else
+  p = (C_byte *)C_realloc (ptr, new_size + page_size);
+  if (p != NULL && page_aligned) *page_aligned = align_to_page (p);
+#endif
+
+  /* . */
+  return p;
+}
 
 /* Modify heap size at runtime: */
 
 void C_set_or_change_heap_size(C_word heap, int reintern)
 {
-  C_byte *ptr1, *ptr2;
+  C_byte *ptr1, *ptr2, *ptr1a, *ptr2a;
   C_word size = heap / 2;
 
   if(heap_size_changed && fromspace_start) return;
@@ -1046,18 +1095,20 @@ void C_set_or_change_heap_size(C_word heap, int reintern)
 
   heap_size = heap;
 
-  if((ptr1 = (C_byte *)C_realloc(fromspace_start, size + page_size)) == NULL ||
-     (ptr2 = (C_byte *)C_realloc(tospace_start, size + page_size)) == NULL)
+  if((ptr1 = heap_realloc (fromspace_start,
+			   C_fromspace_limit - fromspace_start,
+			   size, &ptr1a)) == NULL ||
+     (ptr2 = heap_realloc (tospace_start,
+			   tospace_limit - tospace_start,
+			   size, &ptr2a)) == NULL)
     panic(C_text("out of memory - can not allocate heap"));
 
-  heapspace1 = ptr1;
-  heapspace2 = ptr2;
-  ptr1 = align_to_page(ptr1);
-  ptr2 = align_to_page(ptr2);
-  fromspace_start = ptr1;
+  heapspace1 = ptr1, heapspace1_size = size;
+  heapspace2 = ptr2, heapspace2_size = size;
+  fromspace_start = ptr1a;
   C_fromspace_top = fromspace_start;
   C_fromspace_limit = fromspace_start + size;
-  tospace_start = ptr2;
+  tospace_start = ptr2a;
   tospace_top = tospace_start;
   tospace_limit = tospace_start + size;
   mutation_stack_top = mutation_stack_bottom;
@@ -3112,7 +3163,8 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   C_SYMBOL_TABLE *stp;
   FINALIZER_NODE *flist;
   TRACE_INFO *tinfo;
-  void *new_heapspace;
+  C_byte *new_heapspace;
+  size_t  new_heapspace_size;
 
   lock_tospace(0);
 
@@ -3138,11 +3190,10 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   heap_size = size;
   size /= 2;
 
-  if((new_tospace_start = (C_byte *)C_malloc(size + page_size)) == NULL)
+  if ((new_heapspace = heap_alloc (size, &new_tospace_start)) == NULL)
     panic(C_text("out of memory - can not allocate heap segment"));
+  new_heapspace_size = size;
 
-  new_heapspace = new_tospace_start;
-  new_tospace_start = align_to_page(new_tospace_start);
   new_tospace_top = new_tospace_start;
   new_tospace_limit = new_tospace_start + size;
   heap_scan_top = new_tospace_top;
@@ -3229,15 +3280,15 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
     heap_scan_top = (C_byte *)bp + C_align(bytes) + sizeof(C_word);
   }
 
-  C_free(heapspace1);
-  C_free(heapspace2);
+  heap_free (heapspace1, heapspace1_size);
+  heap_free (heapspace2, heapspace1_size);
   
-  if((tospace_start = (C_byte *)C_malloc(size + page_size)) == NULL)
+  if ((heapspace2 = heap_alloc (size, &tospace_start)) == NULL)
     panic(C_text("out ot memory - can not allocate heap segment"));
+  heapspace2_size = size;
 
   heapspace1 = new_heapspace;
-  heapspace2 = tospace_start;
-  tospace_start = align_to_page(tospace_start);
+  heapspace1_size = new_heapspace_size;
   tospace_limit = tospace_start + size;
   tospace_top = tospace_start;
   fromspace_start = new_tospace_start;
