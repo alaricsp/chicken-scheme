@@ -711,25 +711,43 @@
 
 (define-macro (condition-case exp . clauses)
   (let ([exvar (gensym)]
+        [ccvar (gensym)]
+        [evar (gensym)]
+        [elsvar (gensym)]
+        [elsbod `((##sys#apply ##sys#values ,elsvar))]
 	[kvar (gensym)] )
     (define (parse-clause c)
-      (let* ([var (and (symbol? (car c)) (car c))]
+      (let* ([els (and (symbol? (car c)) (eq? 'else (car c)))]
+             [var (and (symbol? (car c)) (car c))]
 	     [kinds (if var (cadr c) (car c))]
 	     [body (if var (cddr c) (cdr c))] )
-	(if (null? kinds)
-	    `(else 
-	      ,(if var
-		   `(let ([,var ,exvar]) ,@body)
-		   `(let () ,@body) ) )
-	    `((and ,kvar ,@(map (lambda (k) `(memv ',k ,kvar)) kinds))
-	      ,(if var
-		   `(let ([,var ,exvar]) ,@body)
-		   `(let () ,@body) ) ) ) ) )
-    `(handle-exceptions ,exvar
-	 (let ([,kvar (and (##sys#structure? ,exvar 'condition) (##sys#slot ,exvar 1))])
-	   (cond ,@(map parse-clause clauses)
-		 (else (##sys#signal ,exvar)) ) )
-       ,exp) ) )
+        (if els
+            (begin
+                (set! elsvar kinds)
+                (set! elsbod body)
+                `(#f   #f))
+	    (if (null? kinds)
+	        `(else 
+	          ,(if var
+		       `(let ([,var ,exvar]) (,ccvar (begin ,@body)))
+		       `(let () (,ccvar (begin ,@body))) ) )
+	        `((and ,kvar ,@(map (lambda (k) `(memv ',k ,kvar)) kinds))
+	          ,(if var
+		       `(let ([,var ,exvar]) (,ccvar (begin ,@body)))
+		       `(let () (,ccvar (begin ,@body))) ) ) ) ) ) )
+    `(call-with-current-continuation
+        (lambda (,ccvar)
+            (##sys#call-with-values
+                (lambda ()
+                    (handle-exceptions
+                        ,exvar
+                        (let ((,kvar   (and (##sys#structure? ,exvar 'condition)
+                                            (##sys#slot ,exvar 1))))
+                            (cond ,@(map parse-clause clauses)
+                                  (else    (##sys#signal ,exvar))))
+                        ,exp))
+                (lambda ,evar
+                    (##sys#apply (lambda ,elsvar ,@elsbod) ,evar)))))))
 
 
 ;;; SRFI-9:
