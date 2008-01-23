@@ -710,12 +710,12 @@
 	     (lambda ,args (,k (lambda () (##sys#apply ##sys#values ,args)))) ) ) ) ) ) ) ) )
 
 (define-macro (condition-case exp . clauses)
-  (let ([exvar (gensym)]
-        [ccvar (gensym)]
-        [evar (gensym)]
-        [elsvar (gensym)]
-        [elsbod `((##sys#apply ##sys#values ,elsvar))]
-	[kvar (gensym)] )
+  (let* ([exvar (gensym)]
+         [ccvar (gensym)]
+         [evar (gensym)]
+         [elsvar (gensym)]
+         [elsbod `((##sys#apply ##sys#values ,elsvar))]
+ 	 [kvar (gensym)] )
     (define (parse-clause c)
       (let* ([els (and (symbol? (car c)) (eq? 'else (car c)))]
              [var (and (symbol? (car c)) (car c))]
@@ -748,12 +748,6 @@
                         ,exp))
                 (lambda ,evar
                     (##sys#apply (lambda ,elsvar ,@elsbod) ,evar)))))))
-
-(define-macro (if-condition texp bvar bbody gll gbody)
-    `(condition-case ,texp
-        (,bvar () ,bbody)
-        (else ,gll ,gbody)))
-
 
 
 ;;; SRFI-9:
