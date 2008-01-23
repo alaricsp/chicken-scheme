@@ -2377,6 +2377,11 @@ EOF
 		   [toklen (##sys#size tok)] )
 	      (unless ##sys#enable-qualifiers 
 		(##sys#read-error port "qualified symbol syntax is not allowed" tok) )
+              (cond ((equal? "current-line" tok)
+                        (##sys#slot port 4))
+                    ((equal? "current-file" tok)
+                        (port-name port))
+              (else
 	      (let loop ([i 0])
 		(cond [(fx>= i toklen) (##sys#read-error port "invalid qualified symbol syntax" tok)]
 		      [(fx= (##sys#byte tok i) (char->integer #\#))
@@ -2385,7 +2390,7 @@ EOF
 		       (##sys#setbyte p 0 i)
 		       (##sys#intern-symbol
 			(string-append p (##sys#substring tok 0 i) (##sys#substring tok (fx+ i 1) toklen)) ) ]
-		      [else (loop (fx+ i 1))] ) ) ) )
+		      [else (loop (fx+ i 1))] ) ) ) ) ) )
 
 	  (define (resolve-symbol tok)
 	    (let ([len (##sys#size tok)])
