@@ -230,9 +230,9 @@
 
 (define make-pathname)
 (define make-absolute-pathname)
-
 (let ([string-append string-append]
-      [absolute-pathname? absolute-pathname?])
+      [absolute-pathname? absolute-pathname?]
+      [def-pds "/"] )
 
   (define (conc-dirs dirs pds)
     (##sys#check-list dirs 'make-pathname)
@@ -244,24 +244,24 @@
 		(loop (cdr strs))
 		(string-append 
 		 (chop-pds (car strs) pds)
-		 (or pds "/")
+		 (or pds def-pds)
 		 (loop (cdr strs))) ) ) ) ) )
 
-  (define (canonicalize dir pds)
+  (define (canonicalize-dirs dir pds)
     (cond [(or (not dir) (null? dir)) ""]
 	  [(string? dir) (conc-dirs (list dir) pds)]
 	  [else          (conc-dirs dir pds)] ) )
 
   (define (_make-pathname loc dir file ext pds)
-    (let ([dirs (canonicalize dir pds)]
-	  [pdslen (if pds (##sys#size pds) 1)]
-	  [ext (or ext "")]
-	  [file (or file "")] )
+    (let ([ext (or ext "")]
+	  [file (or file "")]
+	  [pdslen (if pds (##sys#size pds) 1)] )
+      (##sys#check-string dir loc)
       (##sys#check-string file loc)
       (##sys#check-string ext loc)
       (when pds (##sys#check-string pds loc))
       (string-append
-       dirs
+       dir
        (if (and dir
 		(and (fx>= (##sys#size file) pdslen)
 		     (if pds
@@ -276,18 +276,17 @@
        ext) ) )
 
   (set! make-pathname
-    (lambda (dir file #!optional ext pds)
-      (_make-pathname 'make-pathname dir file ext pds)))
+    (lambda (dirs file #!optional ext pds)
+      (_make-pathname 'make-pathname (canonicalize-dirs dirs pds) file ext pds)))
 
   (set! make-absolute-pathname
-    (lambda (dir file #!optional ext pds)
+    (lambda (dirs file #!optional ext pds)
       (_make-pathname
        'make-absolute-pathname
-       (let* ([dirs (canonicalize dir pds)]
-	      [dlen (##sys#size dirs)] )
-	 (if (not (absolute-pathname? dirs))
-	     (##sys#string-append pds dirs)
-	     dirs) )
+       (let ([dir (canonicalize-dirs dirs pds)])
+	 (if (absolute-pathname? dir)
+	     dir
+	     (##sys#string-append (or pds def-pds) dir)) )
        file ext pds) ) ) )
 
 (define decompose-pathname
