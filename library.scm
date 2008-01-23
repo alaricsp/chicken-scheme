@@ -2379,12 +2379,7 @@ EOF
 		(##sys#read-error port "qualified symbol syntax is not allowed" tok) )
 	      (let loop ([i 0])
 		(cond [(fx>= i toklen)
-                          (cond ((equal? "current-line" tok)
-                                    (##sys#slot port 4))
-                                ((equal? "current-file" tok)
-                                    (port-name port))
-                                (else
-                                    (##sys#read-error port "invalid qualified symbol syntax" tok) )) ]
+                       (##sys#read-error port "invalid qualified symbol syntax" tok) ]
 		      [(fx= (##sys#byte tok i) (char->integer #\#))
 		       (when (fx> i namespace-max-id-len)
 			 (set! tok (##sys#substring tok 0 namespace-max-id-len)) )
@@ -2502,6 +2497,10 @@ EOF
 					     (cond [(string=? "eof" tok) #!eof]
 						   [(member tok '("optional" "rest" "key"))
 						    (build-symbol (##sys#string-append "#!" tok)) ]
+                                                   [(string=? "current-line" tok)
+                                                       (##sys#slot port 4)]
+                                                   [(string=? "current-file" tok)
+                                                       (port-name port)]
 						   [else 
 						    (let ((a (assq (string->symbol tok) read-marks)))
 						      (if a
