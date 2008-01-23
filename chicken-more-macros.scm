@@ -749,6 +749,12 @@
                 (lambda ,evar
                     (##sys#apply (lambda ,elsvar ,@elsbod) ,evar)))))))
 
+(define-macro (if-condition texp bvar bbody gll gbody)
+    `(condition-case ,texp
+        (,bvar () ,bbody)
+        (else ,gll ,gbody)))
+
+
 
 ;;; SRFI-9:
 
