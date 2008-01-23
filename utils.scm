@@ -247,10 +247,10 @@
 		 (or pds def-pds)
 		 (loop (cdr strs))) ) ) ) ) )
 
-  (define (canonicalize-dirs dir pds)
-    (cond [(or (not dir) (null? dir)) ""]
-	  [(string? dir) (conc-dirs (list dir) pds)]
-	  [else          (conc-dirs dir pds)] ) )
+  (define (canonicalize-dirs dirs pds)
+    (cond [(or (not dirs) (null? dirs)) ""]
+	  [(string? dirs) (conc-dirs (list dirs) pds)]
+	  [else           (conc-dirs dirs pds)] ) )
 
   (define (_make-pathname loc dir file ext pds)
     (let ([ext (or ext "")]
@@ -262,11 +262,10 @@
       (when pds (##sys#check-string pds loc))
       (string-append
        dir
-       (if (and dir
-		(and (fx>= (##sys#size file) pdslen)
-		     (if pds
-			 (##core#inline "C_substring_compare" pds file 0 0 pdslen)
-			 (memq (##core#inline "C_subchar" file 0) '(#\\ #\/)))))
+       (if (and (fx>= (##sys#size file) pdslen)
+		(if pds
+                    (##core#inline "C_substring_compare" pds file 0 0 pdslen)
+                    (memq (##core#inline "C_subchar" file 0) '(#\\ #\/))))
 	   (##sys#substring file pdslen (##sys#size file))
 	   file)
        (if (and (fx> (##sys#size ext) 0)
