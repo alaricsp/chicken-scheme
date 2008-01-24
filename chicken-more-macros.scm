@@ -376,7 +376,7 @@
 		 `(begin ,@body)
 		 (let ([b (##sys#slot bs 0)]
 		       [bs2 (##sys#slot bs 1)] )
-		   (cond [(not-pair? b) `(if ,b ,(fold bs2) #f)]
+		   (cond [(not (pair? b)) `(if ,b ,(fold bs2) #f)]
 			 [(null? (##sys#slot b 1)) `(if ,(##sys#slot b 0) ,(fold bs2) #f)]
 			 [else
 			  (let ([var (##sys#slot b 0)])
@@ -633,55 +633,68 @@
 ;;; case-lambda (SRFI-16):
 
 (define-macro (case-lambda . clauses)
-  (define (genvars n)
-    (let loop ([i 0])
-      (if (fx>= i n)
-	  '()
-	  (cons (gensym) (loop (fx+ i 1))) ) ) )
-  (##sys#check-syntax 'case-lambda clauses '#(_ 0))
-  (require 'srfi-1)			; Urgh...
-  (let* ((mincount (apply min (map (lambda (c)
-				     (##sys#decompose-lambda-list 
-				      (car c)
-				      (lambda (vars argc rest) argc) ) )
-				   clauses) ) ) 
-	 (minvars (genvars mincount))
-	 (rvar (gensym)) 
-	 (lvar (gensym)) )
-    `(lambda ,(append minvars rvar)
-       (let ((,lvar (length ,rvar)))
-	 ,(fold-right
-	   (lambda (c body)
-	     (##sys#decompose-lambda-list
-	      (car c)
-	      (lambda (vars argc rest)
-		(##sys#check-syntax 'case-lambda (car c) 'lambda-list)
-		`(if ,(let ([a2 (fx- argc mincount)])
-			(if rest
-			    (if (zero? a2)
-				#t
-				`(fx>= ,lvar ,a2) )
-			    `(fx= ,lvar ,a2) ) )
-		     ,(receive
-		       (vars1 vars2) (split-at! (take vars argc) mincount)
-		       (let ((bindings
-			      (let build ((vars2 vars2) (vrest rvar))
-				(if (null? vars2)
-				    (cond (rest `(let ((,rest ,vrest)) ,@(cdr c)))
-					  ((null? (cddr c)) (cadr c))
-					  (else `(let () ,@(cdr c))) )
-				    (let ((vrest2 (gensym)))
-				      `(let ((,(car vars2) (car ,vrest))
-					     (,vrest2 (cdr ,vrest)) )
-					 ,(if (pair? (cdr vars2))
-					      (build (cdr vars2) vrest2)
-					      (build '() vrest2) ) ) ) ) ) ) )
-			 (if (null? vars1)
-			     bindings
-			     `(let ,(map list vars1 minvars) ,bindings) ) ) )
-		     ,body) ) ) )
-	   '(##core#check (##sys#error (##core#immutable '"no matching clause in call to 'case-lambda' form")))
-	   clauses) ) ) ) )
+    (let ((args   (gensym))
+          (tblv   (gensym))
+          (cntv   (gensym)))
+        (define ptbl
+            (let loop ((l   clauses)
+                       (m   #f)
+                       (e   (lambda m    (error 'case-lambda (apply conc m))))
+                       (w   (lambda m    (##sys#warn (apply conc m))))
+                       (r   '()))
+                (cond ((null? l)
+                          (if (null? r)
+                              (e "not enough arguments: no clauses given.")
+                              (map
+                                  (lambda (x)
+                                      `(cons ,(car x) ,(caddr x)))
+                                  (reverse r))))
+                      ((and (list? (car l)) (> (length (car l)) 1))
+                          (let* ((la   (caar l))
+                                 (ld   (cdar l))
+                                 (al   (car l))
+                                 (ll   (or (and (pair? la) (length la)) 0))
+                                 (ck   `(cons ,ll ,(not (list? la))))
+                                 (cp   `(lambda ,la ,@ld)))
+                              (cond ((symbol? la)
+                                        (or (null? (cdr l))
+                                            (w "rest clause found with "
+                                               (length (cdr l))
+                                               " following clauses - "
+                                               "skipping them."))
+                                        (loop '() 0 e w
+                                              (cons `(,ck ',al ,cp) r)))
+                                    ((and (not (pair? la)) (not (null? la)))
+                                        (e "invalid lambda list: " la))
+                                    ((and m (fx<= m ll))
+                                        (w "prior clause with fewer req args "
+                                           "and rest arg: skipping clause "
+                                           al)
+                                        (loop (cdr l) m e w r))
+                                    ((assoc ck r)
+                                        (w "prior clause with same signature - "
+                                           "skipping clause " al)
+                                        (loop (cdr l) m e w r))
+                                    ((not (list? la))
+                                        (loop (cdr l) ll e w
+                                              (cons `(,ck ',al ,cp) r)))
+                                    (else
+                                        (loop (cdr l) m e w 
+                                              (cons `(,ck ',al ,cp) r))))))
+                      (else
+                          (e "invalid clause: " (car l))))))
+        `(lambda ,args
+            (let loop ((,tblv   (list ,@ptbl))
+                       (,cntv   (length ,args)))
+                (if (null? ,tblv)
+                    (error 'case-lambda
+                           (conc "no matching clause in call to case-lambda: "
+                                 "arity - " ,cntv "  , args - " ,args))
+                    (if (or (fx= (caaar ,tblv) ,cntv)
+                            (and (cdaar ,tblv) (fx< (caaar ,tblv) ,cntv)))
+                        (##sys#apply (cdar ,tblv) ,args)
+                        (loop (cdr ,tblv) ,cntv)))))))
+
 
 
 ;;; Record printing:
