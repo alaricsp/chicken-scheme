@@ -366,6 +366,7 @@ static gid_t *C_groups = NULL;
 #define C_set_gid(n, id)  (C_groups[ C_unfix(n) ] = C_unfix(id), C_SCHEME_UNDEFINED)
 #define C_set_groups(n)   C_fix(setgroups(C_unfix(n), C_groups))
 
+#ifdef TIOCGWINSZ
 static int get_tty_size(int p, int *rows, int *cols)
 {
  struct winsize tty_size;
@@ -380,6 +381,13 @@ static int get_tty_size(int p, int *rows, int *cols)
  }
  return r;
 }
+#else
+static int get_tty_size(int p, int *rows, int *cols)
+{
+ *rows = *cols = 0;
+ return -1;
+}
+#endif
 
 EOF
 ) )
