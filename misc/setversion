@@ -1,4 +1,7 @@
-;;;; setversion.scm - Bump version-number
+#!/bin/sh
+#| setversion - Bump version-number
+exec csi -s "$0" "$@"
+|#
 
 (use srfi-1 utils)
 
