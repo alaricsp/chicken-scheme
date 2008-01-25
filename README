@@ -78,8 +78,10 @@
 
 	which will unpack a tarball containing precompiled C sources
 	that are recent enough to generate the current version. After
-	building a statically linked "chicken" executable, the system
-	is rebuilt using the static compiler. 
+	building a statically linked compiler executable (named
+	"chicken-boot") all *.scm files are marked for rebuilt. By
+	passing "CHICKEN=./chicken-boot" to "make", you can force
+	using this bootstrapped compiler to build the system.
 
 	The build may show errors when creating the info(1)
 	documentation, if you do not have GNU texinfo installed.

@@ -1036,7 +1036,6 @@ bootstrap:
 	$(MAKE) -f Makefile.$(PLATFORM) STATICBUILD=1 chicken
 	cp chicken chicken-boot
 	touch *.scm
-	$(MAKE) CHICKEN=./chicken-boot all
 
 bootstrap.tar.gz:
 	tar cfz bootstrap.tar.gz $(LIBCHICKEN_OBJECTS_1:=.c) $(COMPILER_OBJECTS_1:=.c)
