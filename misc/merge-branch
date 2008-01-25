@@ -8,7 +8,7 @@ exec csi -s "$0" "$@"
 (define-constant +repobase+ "https://galinha.ucpel.tche.br/svn/chicken-eggs")
 
 (define (usage)
-  (print " usage: merge-chicken-branch [--dry-run] [--diff[=REVS]] [--repourl=URL] [--verbose] BRANCH1 BRANCH2 [WC]")
+  (print " usage: merge-branch [--dry-run] [--diff[=REVS]] [--repourl=URL] [--verbose] BRANCHFROM BRANCHTO [WC]")
   (exit 1) )
 
 (define *dry-run* #f)
@@ -21,7 +21,7 @@ exec csi -s "$0" "$@"
 	     "merge")
 	,(if *dry-run* "--dry-run" "")
 	,(make-pathname +repobase+ b2)
-	,(make-pathname +repobase+ b2)
+	,(make-pathname +repobase+ b1)
 	,(if (not *diff*) wc "") ) ) )
 
 (match (simple-args)
