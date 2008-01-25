@@ -1,0 +1,31 @@
+#!/bin/sh
+#| merge-branch                                   -*- Scheme -*-
+exec csi -s "$0" "$@"
+|#
+
+(load-relative "build.scm")
+
+(define-constant +repobase+ "https://galinha.ucpel.tche.br/svn/chicken-eggs")
+
+(define (usage)
+  (print " usage: merge-chicken-branch [--dry-run] [--diff[=REVS]] [--repourl=URL] [--verbose] BRANCH1 BRANCH2 [WC]")
+  (exit 1) )
+
+(define *dry-run* #f)
+(define *diff* #f)
+
+(define (do-merge b1 b2 #!optional (wc "."))
+  (run (svn 
+	,(if *diff* 
+	     `("diff" ,(if (string? *diff*) (conc "-r" *diff*) ""))
+	     "merge")
+	,(if *dry-run* "--dry-run" "")
+	,(make-pathname +repobase+ b2)
+	,(make-pathname +repobase+ b2)
+	,(if (not *diff*) wc "") ) ) )
+
+(match (simple-args)
+  ((b1 b2 . wc) (apply do-merge b1 b2 wc))
+  (_ (usage)))
+
+(exit)
