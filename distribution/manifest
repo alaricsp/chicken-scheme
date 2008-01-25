@@ -241,6 +241,7 @@ apply-hack.x86.s
 apply-hack.x86-64.s
 apply-hack.ppc.darwin.s
 apply-hack.ppc.sysv.s
+apply-hack.sparc64.s
 chicken.texi
 chicken.pdf
 Makefile
@@ -256,3 +257,4 @@ rules.make
 defaults.make
 private-namespace.scm
 misc/makedist.scm
+tests/port-tests.scm
