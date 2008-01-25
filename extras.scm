@@ -65,7 +65,8 @@ EOF
      ##sys#procedure->string ##sys#pointer->string port? ##sys#user-print-hook char-name 
      read open-input-string ##sys#peek-char-0 ##sys#read-char-0 ##sys#write-char call-with-input-file
      read-line reverse make-string ##sys#string-append random
-     ##sys#gcd ##sys#lcm ##sys#fudge ##sys#check-list ##sys#user-read-hook) ) ] )
+     ##sys#gcd ##sys#lcm ##sys#fudge ##sys#check-list ##sys#user-read-hook
+     ##sys#check-closure) ) ] )
 
 (private
  extras
@@ -77,6 +78,7 @@ EOF
 (cond-expand
  [unsafe
   (eval-when (compile)
+    (define-macro (##sys#check-closure . _) '(##core#undefined))
     (define-macro (##sys#check-structure . _) '(##core#undefined))
     (define-macro (##sys#check-range . _) '(##core#undefined))
     (define-macro (##sys#check-pair . _) '(##core#undefined))
@@ -1539,6 +1541,8 @@ EOF
       (let-optionals test-and-size ([test equal?] 
 				    [hashf ##sys#hash] 
 				    [len hashtab-default-size])
+        (##sys#check-closure test 'make-hash-table)
+        (##sys#check-closure hashf 'make-hash-table)
 	(##sys#check-exact len 'make-hash-table)
 	(##sys#make-structure 'hash-table (make-vector len '()) 0 test hashf) ) ) ) )
 

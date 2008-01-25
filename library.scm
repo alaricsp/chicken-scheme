@@ -318,9 +318,15 @@ EOF
   (unless (and (##core#inline "C_blockp" ptr) (##core#inline "C_specialp" ptr))
     (##sys#signal-hook #:type-error loc "bad argument type - not a pointer-like object" ptr) ) )
 
+(define (##sys#check-closure x . y)
+  (if (pair? y)
+      (##core#inline "C_i_check_closure_2" x (car y))
+      (##core#inline "C_i_check_closure" x) ) )
+
 (cond-expand
  [unsafe
   (eval-when (compile)
+    (define-macro (##sys#check-closure . _) '(##core#undefined))
     (define-macro (##sys#check-structure . _) '(##core#undefined))
     (define-macro (##sys#check-range . _) '(##core#undefined))
     (define-macro (##sys#check-pair . _) '(##core#undefined))
@@ -3702,7 +3708,8 @@ EOF
 	((34) (apply ##sys#signal-hook #:runtime-error loc
 		     "code to load dynamically was linked with unsafe runtime libraries, but executing runtime was not"
 		     args) )
-	((35) (apply ##sys#signal-hook #:runtime-error loc "bad argument type - not a floating-point number" args))
+	((35) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a floating-point number" args))
+	((36) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a procedure" args))
 	(else (apply ##sys#signal-hook #:runtime-error loc "unknown internal error" args)) ) ) ) )
 
 

@@ -1630,6 +1630,11 @@ void barf(int code, char *loc, ...)
     c = 1;
     break;
 
+  case C_BAD_ARGUMENT_TYPE_NO_CLOSURE_ERROR:
+    msg = C_text("bad argument type - procedure expected");
+    c = 1;
+    break;
+
   default: panic(C_text("illegal internal error code"));
   }
   
@@ -2054,7 +2059,12 @@ C_regparm int C_fcall hash_string(int len, C_char *str, unsigned int m)
 {
   unsigned int key = 0;
 
+# if 0
+  /* Zbigniew's suggested change for extended significance & ^2 table sizes. */
+  while(len--) key += (key << 5) + *(str++);
+# else
   while(len--) key = (key << 4) + *(str++);
+# endif
 
   return (int)(key % m);
 }
@@ -5690,6 +5700,17 @@ C_regparm C_word C_fcall C_i_member(C_word x, C_word lst)
 
 
 /* Inline routines for extended bindings: */
+
+C_regparm C_word C_fcall C_i_check_closure_2(C_word x, C_word loc)
+{
+  if(C_immediatep(x) || (C_header_bits(x) != C_CLOSURE_TYPE)) {
+    error_location = loc;
+    barf(C_BAD_ARGUMENT_TYPE_NO_CLOSURE_ERROR, NULL, x);
+  }
+
+  return C_SCHEME_UNDEFINED;
+}
+
 
 C_regparm C_word C_fcall C_i_check_exact_2(C_word x, C_word loc)
 {
