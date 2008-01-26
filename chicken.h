@@ -1291,6 +1291,8 @@ C_fctexport C_word C_fcall C_set_gc_report(C_word flag) C_regparm;
 C_fctexport C_word C_fcall C_start_timer(void) C_regparm;
 C_fctexport C_word C_exit_runtime(C_word code);
 C_fctexport C_word C_fcall C_display_flonum(C_word port, C_word n) C_regparm;
+C_fctexport C_word C_fcall C_set_print_precision(C_word n) C_regparm;
+C_fctexport C_word C_fcall C_get_print_precision(void) C_regparm;
 C_fctexport C_word C_fcall C_read_char(C_word port) C_regparm;
 C_fctexport C_word C_fcall C_peek_char(C_word port) C_regparm;
 C_fctexport C_word C_fcall C_execute_shell_command(C_word string) C_regparm;

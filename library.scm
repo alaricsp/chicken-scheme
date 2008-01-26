@@ -1079,6 +1079,13 @@ EOF
 (define ##sys#number->string (##core#primitive "C_number_to_string"))
 (define number->string ##sys#number->string)
 
+(define (flonum-print-precision #!optional prec)
+  (let ([prev (##core#inline "C_get_print_precision")])
+    (when prec
+      (##sys#check-exact prec 'flonum-print-precision)
+      (##core#inline "C_set_print_precision" prec) )
+    prev ) )
+
 
 ;;; Symbols:
 

@@ -483,7 +483,7 @@ static C_TLS FINALIZER_NODE
   *finalizer_free_list,
   **pending_finalizer_indices;
 static C_TLS void *current_module_handle;
-
+static C_TLS int flonum_print_precision = FLONUM_PRINT_PRECISION;
 
 /* Prototypes: */
 
@@ -3982,14 +3982,27 @@ C_word C_exit_runtime(C_word code)
 }
 
 
+C_regparm C_word C_fcall C_set_print_precision(C_word n)
+{
+  flonum_print_precision = C_unfix(n);
+  return C_SCHEME_UNDEFINED;
+}
+
+
+C_regparm C_word C_fcall C_get_print_precision(void)
+{
+  return C_fix(flonum_print_precision);
+}
+
+
 C_regparm C_word C_fcall C_display_flonum(C_word port, C_word n)
 {
   C_FILEPTR fp = C_port_file(port);
 
 #ifdef HAVE_GCVT
-  C_fprintf(fp, C_text("%s"), C_gcvt(C_flonum_magnitude(n), FLONUM_PRINT_PRECISION, buffer));
+  C_fprintf(fp, C_text("%s"), C_gcvt(C_flonum_magnitude(n), flonum_print_precision, buffer));
 #else
-  C_fprintf(fp, C_text("%.*g"), FLONUM_PRINT_PRECISION, C_flonum_magnitude(n));
+  C_fprintf(fp, C_text("%.*g"), flonum_print_precision, C_flonum_magnitude(n));
 #endif
   return C_SCHEME_UNDEFINED;
 }
@@ -7742,9 +7755,9 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 #endif
 
 #ifdef HAVE_GCVT
-    C_gcvt(f, FLONUM_PRINT_PRECISION, buffer);
+    C_gcvt(f, flonum_print_precision, buffer);
 #else
-    C_sprintf(buffer, C_text("%.*g"), FLONUM_PRINT_PRECISION, f);
+    C_sprintf(buffer, C_text("%.*g"), flonum_print_precision, f);
 #endif
 
     if((p = C_strpbrk(buffer, C_text(".eE"))) == NULL) {
