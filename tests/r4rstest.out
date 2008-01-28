@@ -1,21 +1,21 @@
 SECTION(2 1)
 SECTION(3 4)
- #<procedure (boolean? x75)>
-    #<procedure (char? x653)>
-       #<procedure (null? x119)>
-          #<procedure (##sys#number? x409)>
-             #<procedure (pair? x82)>
-                #<procedure (procedure? x732)>
-                   #<procedure (string? x158)>
-                      #<procedure (symbol? x504)>
-                         #<procedure (vector? x582)>
+ #<procedure>
+    #<procedure>
+       #<procedure>
+          #<procedure>
+             #<procedure>
+                #<procedure>
+                   #<procedure>
+                      #<procedure>
+                         #<procedure>
 (#t #f #f #f #f #f #f #f #f)#t
 (#t #f #f #f #f #f #f #f #f)#f
 (#f #t #f #f #f #f #f #f #f)#\a
 (#f #f #t #f #f #f #f #f #f)()
 (#f #f #f #t #f #f #f #f #f)9739
 (#f #f #f #f #t #f #f #f #f)(test)
-(#f #f #f #f #f #t #f #f #f)#<procedure (record-error e)>
+(#f #f #f #f #f #t #f #f #f)#<procedure>
 (#f #f #f #f #f #f #t #f #f)"test"
 (#f #f #f #f #f #f #t #f #f)""
 (#f #f #f #f #f #f #f #t #f)test
@@ -25,13 +25,13 @@ SECTION(4 1 2)
 (quote (quote a))  ==> (quote a)
 (quote (quote a))  ==> (quote a)
 SECTION(4 1 3)
-(#<procedure C_times> 3 4)  ==> 12
+(#<procedure> 3 4)  ==> 12
 SECTION(4 1 4)
-(#<procedure (? x)> 4)  ==> 8
-(#<procedure (reverse-subtract x y)> 7 10)  ==> 3
-(#<procedure (? y)> 6)  ==> 10
-(#<procedure (? . x)> 3 4 5 6)  ==> (3 4 5 6)
-(#<procedure (? x y . z)> 3 4 5 6)  ==> (5 6)
+(#<procedure> 4)  ==> 8
+(#<procedure> 7 10)  ==> 3
+(#<procedure> 6)  ==> 10
+(#<procedure> 3 4 5 6)  ==> (3 4 5 6)
+(#<procedure> 3 4 5 6)  ==> (5 6)
 SECTION(4 1 5)
 (if yes)  ==> yes
 (if no)  ==> no
@@ -93,510 +93,510 @@ SECTION(4 2 6)
 SECTION(5 2 1)
 (define 6)  ==> 6
 (define 1)  ==> 1
-(#<procedure (add3 x)> 6)  ==> (3 6)
-(#<procedure (add3 x)> 6)  ==> 9
+(#<procedure> 6)  ==> (3 6)
+(#<procedure> 6)  ==> 9
 SECTION(5 2 2)
-(#<procedure (foo)>)  ==> 5
+(#<procedure>)  ==> 5
 (define 34)  ==> 34
-(#<procedure (foo)>)  ==> 5
+(#<procedure>)  ==> 5
 (define 34)  ==> 34
-(#<procedure (foo x)> 88)  ==> 88
-(#<procedure (foo x)> 4)  ==> 4
+(#<procedure> 88)  ==> 88
+(#<procedure> 4)  ==> 4
 (define 34)  ==> 34
 (internal-define 99)  ==> 99
 (internal-define 77)  ==> 77
 SECTION(6 1)
-(#<procedure (not x74)> #t)  ==> #f
-(#<procedure (not x74)> 3)  ==> #f
-(#<procedure (not x74)> (3))  ==> #f
-(#<procedure (not x74)> #f)  ==> #t
-(#<procedure (not x74)> ())  ==> #f
-(#<procedure (not x74)> ())  ==> #f
-(#<procedure (not x74)> nil)  ==> #f
+(#<procedure> #t)  ==> #f
+(#<procedure> 3)  ==> #f
+(#<procedure> (3))  ==> #f
+(#<procedure> #f)  ==> #t
+(#<procedure> ())  ==> #f
+(#<procedure> ())  ==> #f
+(#<procedure> nil)  ==> #f
 SECTION(6 2)
-(#<procedure (eqv? x78 y79)> a a)  ==> #t
-(#<procedure (eqv? x78 y79)> a b)  ==> #f
-(#<procedure (eqv? x78 y79)> 2 2)  ==> #t
-(#<procedure (eqv? x78 y79)> () ())  ==> #t
-(#<procedure (eqv? x78 y79)> 10000 10000)  ==> #t
-(#<procedure (eqv? x78 y79)> (1 . 2) (1 . 2))  ==> #f
-(#<procedure (eqv? x78 y79)> #<procedure (?)> #<procedure (?)>)  ==> #f
-(#<procedure (eqv? x78 y79)> #f nil)  ==> #f
-(#<procedure (eqv? x78 y79)> #<procedure (p x)> #<procedure (p x)>)  ==> #t
-(#<procedure (eqv? x78 y79)> #<procedure (?)> #<procedure (?)>)  ==> #t
-(#<procedure (eqv? x78 y79)> #<procedure (?)> #<procedure (?)>)  ==> #f
-(#<procedure (eqv? x78 y79)> #<procedure (f)> #<procedure (g)>)  ==> #f
-(#<procedure (eq? x76 y77)> a a)  ==> #t
-(#<procedure (eq? x76 y77)> (a) (a))  ==> #f
-(#<procedure (eq? x76 y77)> () ())  ==> #t
-(#<procedure (eq? x76 y77)> #<procedure (f_3801 x85)> #<procedure (f_3801 x85)>)  ==> #t
-(#<procedure (eq? x76 y77)> (a) (a))  ==> #t
-(#<procedure (eq? x76 y77)> #() #())  ==> #t
-(#<procedure (eq? x76 y77)> #<procedure (x x)> #<procedure (x x)>)  ==> #t
-(#<procedure (equal? x80 y81)> a a)  ==> #t
-(#<procedure (equal? x80 y81)> (a) (a))  ==> #t
-(#<procedure (equal? x80 y81)> (a (b) c) (a (b) c))  ==> #t
-(#<procedure (equal? x80 y81)> "abc" "abc")  ==> #t
-(#<procedure (equal? x80 y81)> 2 2)  ==> #t
-(#<procedure (equal? x80 y81)> #(a a a a a) #(a a a a a))  ==> #t
+(#<procedure> a a)  ==> #t
+(#<procedure> a b)  ==> #f
+(#<procedure> 2 2)  ==> #t
+(#<procedure> () ())  ==> #t
+(#<procedure> 10000 10000)  ==> #t
+(#<procedure> (1 . 2) (1 . 2))  ==> #f
+(#<procedure> #<procedure> #<procedure>)  ==> #f
+(#<procedure> #f nil)  ==> #f
+(#<procedure> #<procedure> #<procedure>)  ==> #t
+(#<procedure> #<procedure> #<procedure>)  ==> #t
+(#<procedure> #<procedure> #<procedure>)  ==> #f
+(#<procedure> #<procedure> #<procedure>)  ==> #f
+(#<procedure> a a)  ==> #t
+(#<procedure> (a) (a))  ==> #f
+(#<procedure> () ())  ==> #t
+(#<procedure> #<procedure> #<procedure>)  ==> #t
+(#<procedure> (a) (a))  ==> #t
+(#<procedure> #() #())  ==> #t
+(#<procedure> #<procedure> #<procedure>)  ==> #t
+(#<procedure> a a)  ==> #t
+(#<procedure> (a) (a))  ==> #t
+(#<procedure> (a (b) c) (a (b) c))  ==> #t
+(#<procedure> "abc" "abc")  ==> #t
+(#<procedure> 2 2)  ==> #t
+(#<procedure> #(a a a a a) #(a a a a a))  ==> #t
 SECTION(6 3)
 (dot (a b c d e))  ==> (a b c d e)
-(#<procedure (list? x157)> (a b c))  ==> #t
+(#<procedure> (a b c))  ==> #t
 (set-cdr! (a . 4))  ==> (a . 4)
-(#<procedure (eqv? x78 y79)> (a . 4) (a . 4))  ==> #t
+(#<procedure> (a . 4) (a . 4))  ==> #t
 (dot (a b c . d))  ==> (a b c . d)
-(#<procedure (list? x157)> (a . 4))  ==> #f
+(#<procedure> (a . 4))  ==> #f
 (list? #f)  ==> #f
-(#<procedure (cons x83 y84)> a ())  ==> (a)
-(#<procedure (cons x83 y84)> (a) (b c d))  ==> ((a) b c d)
-(#<procedure (cons x83 y84)> "a" (b c))  ==> ("a" b c)
-(#<procedure (cons x83 y84)> a 3)  ==> (a . 3)
-(#<procedure (cons x83 y84)> (a b) c)  ==> ((a b) . c)
-(#<procedure (f_3801 x85)> (a b c))  ==> a
-(#<procedure (f_3801 x85)> ((a) b c d))  ==> (a)
-(#<procedure (f_3801 x85)> (1 . 2))  ==> 1
-(#<procedure (f_3804 x86)> ((a) b c d))  ==> (b c d)
-(#<procedure (f_3804 x86)> (1 . 2))  ==> 2
-(#<procedure (list . lst120)> a 7 c)  ==> (a 7 c)
-(#<procedure (list . lst120)>)  ==> ()
-(#<procedure (length lst121)> (a b c))  ==> 3
-(#<procedure (length lst121)> (a (b) (c d e)))  ==> 3
-(#<procedure (length lst121)> ())  ==> 0
-(#<procedure (append . lsts133)> (x) (y))  ==> (x y)
-(#<procedure (append . lsts133)> (a) (b c d))  ==> (a b c d)
-(#<procedure (append . lsts133)> (a (b)) ((c)))  ==> (a (b) (c))
-(#<procedure (append . lsts133)>)  ==> ()
-(#<procedure (append . lsts133)> (a b) (c . d))  ==> (a b c . d)
-(#<procedure (append . lsts133)> () a)  ==> a
-(#<procedure (reverse lst0140)> (a b c))  ==> (c b a)
-(#<procedure (reverse lst0140)> (a (b c) d (e (f))))  ==> ((e (f)) d (b c) a)
-(#<procedure (list-ref lst124 i125)> (a b c d) 2)  ==> c
-(#<procedure (memq x145 lst146)> a (a b c))  ==> (a b c)
-(#<procedure (memq x145 lst146)> b (a b c))  ==> (b c)
-(#<procedure (memq x145 lst146)> a (b c d))  ==> #f
-(#<procedure (memq x145 lst146)> (a) (b (a) c))  ==> #f
-(#<procedure (member x149 lst150)> (a) (b (a) c))  ==> ((a) c)
-(#<procedure (memv x147 lst148)> 101 (100 101 102))  ==> (101 102)
-(#<procedure (assq x151 lst152)> a ((a 1) (b 2) (c 3)))  ==> (a 1)
-(#<procedure (assq x151 lst152)> b ((a 1) (b 2) (c 3)))  ==> (b 2)
-(#<procedure (assq x151 lst152)> d ((a 1) (b 2) (c 3)))  ==> #f
-(#<procedure (assq x151 lst152)> (a) (((a)) ((b)) ((c))))  ==> #f
-(#<procedure (assoc x155 lst156)> (a) (((a)) ((b)) ((c))))  ==> ((a))
-(#<procedure (assv x153 lst154)> 5 ((2 3) (5 7) (11 13)))  ==> (5 7)
+(#<procedure> a ())  ==> (a)
+(#<procedure> (a) (b c d))  ==> ((a) b c d)
+(#<procedure> "a" (b c))  ==> ("a" b c)
+(#<procedure> a 3)  ==> (a . 3)
+(#<procedure> (a b) c)  ==> ((a b) . c)
+(#<procedure> (a b c))  ==> a
+(#<procedure> ((a) b c d))  ==> (a)
+(#<procedure> (1 . 2))  ==> 1
+(#<procedure> ((a) b c d))  ==> (b c d)
+(#<procedure> (1 . 2))  ==> 2
+(#<procedure> a 7 c)  ==> (a 7 c)
+(#<procedure>)  ==> ()
+(#<procedure> (a b c))  ==> 3
+(#<procedure> (a (b) (c d e)))  ==> 3
+(#<procedure> ())  ==> 0
+(#<procedure> (x) (y))  ==> (x y)
+(#<procedure> (a) (b c d))  ==> (a b c d)
+(#<procedure> (a (b)) ((c)))  ==> (a (b) (c))
+(#<procedure>)  ==> ()
+(#<procedure> (a b) (c . d))  ==> (a b c . d)
+(#<procedure> () a)  ==> a
+(#<procedure> (a b c))  ==> (c b a)
+(#<procedure> (a (b c) d (e (f))))  ==> ((e (f)) d (b c) a)
+(#<procedure> (a b c d) 2)  ==> c
+(#<procedure> a (a b c))  ==> (a b c)
+(#<procedure> b (a b c))  ==> (b c)
+(#<procedure> a (b c d))  ==> #f
+(#<procedure> (a) (b (a) c))  ==> #f
+(#<procedure> (a) (b (a) c))  ==> ((a) c)
+(#<procedure> 101 (100 101 102))  ==> (101 102)
+(#<procedure> a ((a 1) (b 2) (c 3)))  ==> (a 1)
+(#<procedure> b ((a 1) (b 2) (c 3)))  ==> (b 2)
+(#<procedure> d ((a 1) (b 2) (c 3)))  ==> #f
+(#<procedure> (a) (((a)) ((b)) ((c))))  ==> #f
+(#<procedure> (a) (((a)) ((b)) ((c))))  ==> ((a))
+(#<procedure> 5 ((2 3) (5 7) (11 13)))  ==> (5 7)
 SECTION(6 4)
-(#<procedure (symbol? x504)> a)  ==> #t
+(#<procedure> a)  ==> #t
 (standard-case #t)  ==> #t
 (standard-case #t)  ==> #t
-(#<procedure (symbol->string s531)> flying-fish)  ==> "flying-fish"
-(#<procedure (symbol->string s531)> martin)  ==> "martin"
-(#<procedure (symbol->string s531)> Malvina)  ==> "Malvina"
+(#<procedure> flying-fish)  ==> "flying-fish"
+(#<procedure> martin)  ==> "martin"
+(#<procedure> Malvina)  ==> "Malvina"
 (standard-case #t)  ==> #t
 (string-set! "cb")  ==> "cb"
-(#<procedure (symbol->string s531)> ab)  ==> "ab"
-(#<procedure (string->symbol str534)> "ab")  ==> ab
-(#<procedure (eq? x76 y77)> mississippi mississippi)  ==> #t
+(#<procedure> ab)  ==> "ab"
+(#<procedure> "ab")  ==> ab
+(#<procedure> mississippi mississippi)  ==> #t
 (string->symbol #f)  ==> #f
-(#<procedure (string->symbol str534)> "jollywog")  ==> jollywog
+(#<procedure> "jollywog")  ==> jollywog
 SECTION(6 5 5)
-(#<procedure (##sys#number? x409)> 3)  ==> #t
-(#<procedure (##sys#number? x409)> 3)  ==> #t
-(#<procedure (##sys#number? x409)> 3)  ==> #t
-(#<procedure (##sys#number? x409)> 3)  ==> #t
-(#<procedure (##sys#integer? x410)> 3)  ==> #t
-(#<procedure (##sys#exact? x411)> 3)  ==> #t
-(#<procedure (##sys#inexact? x412)> 3)  ==> #f
-(#<procedure C_nequalp> 22 22 22)  ==> #t
-(#<procedure C_nequalp> 22 22)  ==> #t
-(#<procedure C_nequalp> 34 34 35)  ==> #f
-(#<procedure C_nequalp> 34 35)  ==> #f
-(#<procedure C_greaterp> 3 -6246)  ==> #t
-(#<procedure C_greaterp> 9 9 -2424)  ==> #f
-(#<procedure C_greater_or_equal_p> 3 -4 -6246)  ==> #t
-(#<procedure C_greater_or_equal_p> 9 9)  ==> #t
-(#<procedure C_greater_or_equal_p> 8 9)  ==> #f
-(#<procedure C_lessp> -1 2 3 4 5 6 7 8)  ==> #t
-(#<procedure C_lessp> -1 2 3 4 4 5 6 7)  ==> #f
-(#<procedure C_less_or_equal_p> -1 2 3 4 5 6 7 8)  ==> #t
-(#<procedure C_less_or_equal_p> -1 2 3 4 4 5 6 7)  ==> #t
-(#<procedure C_lessp> 1 3 2)  ==> #f
-(#<procedure C_greater_or_equal_p> 1 3 2)  ==> #f
-(#<procedure (zero? n417)> 0)  ==> #t
-(#<procedure (zero? n417)> 1)  ==> #f
-(#<procedure (zero? n417)> -1)  ==> #f
-(#<procedure (zero? n417)> -100)  ==> #f
-(#<procedure (positive? n418)> 4)  ==> #t
-(#<procedure (positive? n418)> -4)  ==> #f
-(#<procedure (positive? n418)> 0)  ==> #f
-(#<procedure (negative? n419)> 4)  ==> #f
-(#<procedure (negative? n419)> -4)  ==> #t
-(#<procedure (negative? n419)> 0)  ==> #f
-(#<procedure (odd? n446)> 3)  ==> #t
-(#<procedure (odd? n446)> 2)  ==> #f
-(#<procedure (odd? n446)> -4)  ==> #f
-(#<procedure (odd? n446)> -1)  ==> #t
-(#<procedure (even? n445)> 3)  ==> #f
-(#<procedure (even? n445)> 2)  ==> #t
-(#<procedure (even? n445)> -4)  ==> #t
-(#<procedure (even? n445)> -1)  ==> #f
-(#<procedure (max n1458 . ns459)> 34 5 7 38 6)  ==> 38
-(#<procedure (min n1460 . ns461)> 3 5 5 330 4 -24)  ==> -24
-(#<procedure C_plus> 3 4)  ==> 7
-(#<procedure C_plus> 3)  ==> 3
-(#<procedure C_plus>)  ==> 0
-(#<procedure C_times> 4)  ==> 4
-(#<procedure C_times>)  ==> 1
-(#<procedure C_minus> 3 4)  ==> -1
-(#<procedure C_minus> 3)  ==> -3
-(#<procedure (abs n420)> -7)  ==> 7
-(#<procedure (abs n420)> 7)  ==> 7
-(#<procedure (abs n420)> 0)  ==> 0
-(#<procedure C_quotient> 35 7)  ==> 5
-(#<procedure C_quotient> -35 7)  ==> -5
-(#<procedure C_quotient> 35 -7)  ==> -5
-(#<procedure C_quotient> -35 -7)  ==> 5
-(#<procedure (modulo x440 y441)> 13 4)  ==> 1
-(#<procedure (remainder x437 y438)> 13 4)  ==> 1
-(#<procedure (modulo x440 y441)> -13 4)  ==> 3
-(#<procedure (remainder x437 y438)> -13 4)  ==> -1
-(#<procedure (modulo x440 y441)> 13 -4)  ==> -3
-(#<procedure (remainder x437 y438)> 13 -4)  ==> 1
-(#<procedure (modulo x440 y441)> -13 -4)  ==> -1
-(#<procedure (remainder x437 y438)> -13 -4)  ==> -1
-(#<procedure (modulo x440 y441)> 0 86400)  ==> 0
-(#<procedure (modulo x440 y441)> 0 -86400)  ==> 0
-(#<procedure (divtest n1 n2)> 238 9)  ==> #t
-(#<procedure (divtest n1 n2)> -238 9)  ==> #t
-(#<procedure (divtest n1 n2)> 238 -9)  ==> #t
-(#<procedure (divtest n1 n2)> -238 -9)  ==> #t
-(#<procedure (gcd . ns482)> 0 4)  ==> 4
-(#<procedure (gcd . ns482)> -4 0)  ==> 4
-(#<procedure (gcd . ns482)> 32 -36)  ==> 4
-(#<procedure (gcd . ns482)>)  ==> 0
-(#<procedure (lcm . ns494)> 32 -36)  ==> 288
-(#<procedure (lcm . ns494)>)  ==> 1
+(#<procedure> 3)  ==> #t
+(#<procedure> 3)  ==> #t
+(#<procedure> 3)  ==> #t
+(#<procedure> 3)  ==> #t
+(#<procedure> 3)  ==> #t
+(#<procedure> 3)  ==> #t
+(#<procedure> 3)  ==> #f
+(#<procedure> 22 22 22)  ==> #t
+(#<procedure> 22 22)  ==> #t
+(#<procedure> 34 34 35)  ==> #f
+(#<procedure> 34 35)  ==> #f
+(#<procedure> 3 -6246)  ==> #t
+(#<procedure> 9 9 -2424)  ==> #f
+(#<procedure> 3 -4 -6246)  ==> #t
+(#<procedure> 9 9)  ==> #t
+(#<procedure> 8 9)  ==> #f
+(#<procedure> -1 2 3 4 5 6 7 8)  ==> #t
+(#<procedure> -1 2 3 4 4 5 6 7)  ==> #f
+(#<procedure> -1 2 3 4 5 6 7 8)  ==> #t
+(#<procedure> -1 2 3 4 4 5 6 7)  ==> #t
+(#<procedure> 1 3 2)  ==> #f
+(#<procedure> 1 3 2)  ==> #f
+(#<procedure> 0)  ==> #t
+(#<procedure> 1)  ==> #f
+(#<procedure> -1)  ==> #f
+(#<procedure> -100)  ==> #f
+(#<procedure> 4)  ==> #t
+(#<procedure> -4)  ==> #f
+(#<procedure> 0)  ==> #f
+(#<procedure> 4)  ==> #f
+(#<procedure> -4)  ==> #t
+(#<procedure> 0)  ==> #f
+(#<procedure> 3)  ==> #t
+(#<procedure> 2)  ==> #f
+(#<procedure> -4)  ==> #f
+(#<procedure> -1)  ==> #t
+(#<procedure> 3)  ==> #f
+(#<procedure> 2)  ==> #t
+(#<procedure> -4)  ==> #t
+(#<procedure> -1)  ==> #f
+(#<procedure> 34 5 7 38 6)  ==> 38
+(#<procedure> 3 5 5 330 4 -24)  ==> -24
+(#<procedure> 3 4)  ==> 7
+(#<procedure> 3)  ==> 3
+(#<procedure>)  ==> 0
+(#<procedure> 4)  ==> 4
+(#<procedure>)  ==> 1
+(#<procedure> 3 4)  ==> -1
+(#<procedure> 3)  ==> -3
+(#<procedure> -7)  ==> 7
+(#<procedure> 7)  ==> 7
+(#<procedure> 0)  ==> 0
+(#<procedure> 35 7)  ==> 5
+(#<procedure> -35 7)  ==> -5
+(#<procedure> 35 -7)  ==> -5
+(#<procedure> -35 -7)  ==> 5
+(#<procedure> 13 4)  ==> 1
+(#<procedure> 13 4)  ==> 1
+(#<procedure> -13 4)  ==> 3
+(#<procedure> -13 4)  ==> -1
+(#<procedure> 13 -4)  ==> -3
+(#<procedure> 13 -4)  ==> 1
+(#<procedure> -13 -4)  ==> -1
+(#<procedure> -13 -4)  ==> -1
+(#<procedure> 0 86400)  ==> 0
+(#<procedure> 0 -86400)  ==> 0
+(#<procedure> 238 9)  ==> #t
+(#<procedure> -238 9)  ==> #t
+(#<procedure> 238 -9)  ==> #t
+(#<procedure> -238 -9)  ==> #t
+(#<procedure> 0 4)  ==> 4
+(#<procedure> -4 0)  ==> 4
+(#<procedure> 32 -36)  ==> 4
+(#<procedure>)  ==> 0
+(#<procedure> 32 -36)  ==> 288
+(#<procedure>)  ==> 1
 SECTION(6 5 5)
-(#<procedure (test-string->number str)> "+#.#")  ==> #t
-(#<procedure (test-string->number str)> "-#.#")  ==> #t
-(#<procedure (test-string->number str)> "#.#")  ==> #t
-(#<procedure (test-string->number str)> "1/0")  ==> #t
-(#<procedure (test-string->number str)> "-1/0")  ==> #t
-(#<procedure (test-string->number str)> "0/0")  ==> #t
-(#<procedure (test-string->number str)> "+1/0i")  ==> #t
-(#<procedure (test-string->number str)> "-1/0i")  ==> #t
-(#<procedure (test-string->number str)> "0/0i")  ==> #t
-(#<procedure (test-string->number str)> "0/0-0/0i")  ==> #t
-(#<procedure (test-string->number str)> "1/0-1/0i")  ==> #t
-(#<procedure (test-string->number str)> "-1/0+1/0i")  ==> #t
-(#<procedure (test-string->number str)> "#i")  ==> #t
-(#<procedure (test-string->number str)> "#e")  ==> #t
-(#<procedure (test-string->number str)> "#")  ==> #t
-(#<procedure (test-string->number str)> "#i0/0")  ==> #t
+(#<procedure> "+#.#")  ==> #t
+(#<procedure> "-#.#")  ==> #t
+(#<procedure> "#.#")  ==> #t
+(#<procedure> "1/0")  ==> #t
+(#<procedure> "-1/0")  ==> #t
+(#<procedure> "0/0")  ==> #t
+(#<procedure> "+1/0i")  ==> #t
+(#<procedure> "-1/0i")  ==> #t
+(#<procedure> "0/0i")  ==> #t
+(#<procedure> "0/0-0/0i")  ==> #t
+(#<procedure> "1/0-1/0i")  ==> #t
+(#<procedure> "-1/0+1/0i")  ==> #t
+(#<procedure> "#i")  ==> #t
+(#<procedure> "#e")  ==> #t
+(#<procedure> "#")  ==> #t
+(#<procedure> "#i0/0")  ==> #t
 SECTION(6 5 9)
-(#<procedure C_number_to_string> 0)  ==> "0"
-(#<procedure C_number_to_string> 100)  ==> "100"
-(#<procedure C_number_to_string> 256 16)  ==> "100"
-(#<procedure C_string_to_number> "100")  ==> 100
-(#<procedure C_string_to_number> "100" 16)  ==> 256
-(#<procedure C_string_to_number> "")  ==> #f
-(#<procedure C_string_to_number> ".")  ==> #f
-(#<procedure C_string_to_number> "d")  ==> #f
-(#<procedure C_string_to_number> "D")  ==> #f
-(#<procedure C_string_to_number> "i")  ==> #f
-(#<procedure C_string_to_number> "I")  ==> #f
-(#<procedure C_string_to_number> "3i")  ==> #f
-(#<procedure C_string_to_number> "3I")  ==> #f
-(#<procedure C_string_to_number> "33i")  ==> #f
-(#<procedure C_string_to_number> "33I")  ==> #f
-(#<procedure C_string_to_number> "3.3i")  ==> #f
-(#<procedure C_string_to_number> "3.3I")  ==> #f
-(#<procedure C_string_to_number> "-")  ==> #f
-(#<procedure C_string_to_number> "+")  ==> #f
+(#<procedure> 0)  ==> "0"
+(#<procedure> 100)  ==> "100"
+(#<procedure> 256 16)  ==> "100"
+(#<procedure> "100")  ==> 100
+(#<procedure> "100" 16)  ==> 256
+(#<procedure> "")  ==> #f
+(#<procedure> ".")  ==> #f
+(#<procedure> "d")  ==> #f
+(#<procedure> "D")  ==> #f
+(#<procedure> "i")  ==> #f
+(#<procedure> "I")  ==> #f
+(#<procedure> "3i")  ==> #f
+(#<procedure> "3I")  ==> #f
+(#<procedure> "33i")  ==> #f
+(#<procedure> "33I")  ==> #f
+(#<procedure> "3.3i")  ==> #f
+(#<procedure> "3.3I")  ==> #f
+(#<procedure> "-")  ==> #f
+(#<procedure> "+")  ==> #f
 (string->number #t)  ==> #t
 (string->number #t)  ==> #t
 SECTION(6 6)
-(#<procedure (char? x653)> #\a)  ==> #t
-(#<procedure (char? x653)> #\()  ==> #t
-(#<procedure (char? x653)> #\space)  ==> #t
-(#<procedure (char? x653)> #\newline)  ==> #t
-(#<procedure (char=? c1658 c2659)> #\A #\B)  ==> #f
-(#<procedure (char=? c1658 c2659)> #\a #\b)  ==> #f
-(#<procedure (char=? c1658 c2659)> #\9 #\0)  ==> #f
-(#<procedure (char=? c1658 c2659)> #\A #\A)  ==> #t
-(#<procedure (char<? c1666 c2667)> #\A #\B)  ==> #t
-(#<procedure (char<? c1666 c2667)> #\a #\b)  ==> #t
-(#<procedure (char<? c1666 c2667)> #\9 #\0)  ==> #f
-(#<procedure (char<? c1666 c2667)> #\A #\A)  ==> #f
-(#<procedure (char>? c1662 c2663)> #\A #\B)  ==> #f
-(#<procedure (char>? c1662 c2663)> #\a #\b)  ==> #f
-(#<procedure (char>? c1662 c2663)> #\9 #\0)  ==> #t
-(#<procedure (char>? c1662 c2663)> #\A #\A)  ==> #f
-(#<procedure (char<=? c1674 c2675)> #\A #\B)  ==> #t
-(#<procedure (char<=? c1674 c2675)> #\a #\b)  ==> #t
-(#<procedure (char<=? c1674 c2675)> #\9 #\0)  ==> #f
-(#<procedure (char<=? c1674 c2675)> #\A #\A)  ==> #t
-(#<procedure (char>=? c1670 c2671)> #\A #\B)  ==> #f
-(#<procedure (char>=? c1670 c2671)> #\a #\b)  ==> #f
-(#<procedure (char>=? c1670 c2671)> #\9 #\0)  ==> #t
-(#<procedure (char>=? c1670 c2671)> #\A #\A)  ==> #t
-(#<procedure (char-ci=? x683 y684)> #\A #\B)  ==> #f
-(#<procedure (char-ci=? x683 y684)> #\a #\B)  ==> #f
-(#<procedure (char-ci=? x683 y684)> #\A #\b)  ==> #f
-(#<procedure (char-ci=? x683 y684)> #\a #\b)  ==> #f
-(#<procedure (char-ci=? x683 y684)> #\9 #\0)  ==> #f
-(#<procedure (char-ci=? x683 y684)> #\A #\A)  ==> #t
-(#<procedure (char-ci=? x683 y684)> #\A #\a)  ==> #t
-(#<procedure (char-ci<? x687 y688)> #\A #\B)  ==> #t
-(#<procedure (char-ci<? x687 y688)> #\a #\B)  ==> #t
-(#<procedure (char-ci<? x687 y688)> #\A #\b)  ==> #t
-(#<procedure (char-ci<? x687 y688)> #\a #\b)  ==> #t
-(#<procedure (char-ci<? x687 y688)> #\9 #\0)  ==> #f
-(#<procedure (char-ci<? x687 y688)> #\A #\A)  ==> #f
-(#<procedure (char-ci<? x687 y688)> #\A #\a)  ==> #f
-(#<procedure (char-ci>? x685 y686)> #\A #\B)  ==> #f
-(#<procedure (char-ci>? x685 y686)> #\a #\B)  ==> #f
-(#<procedure (char-ci>? x685 y686)> #\A #\b)  ==> #f
-(#<procedure (char-ci>? x685 y686)> #\a #\b)  ==> #f
-(#<procedure (char-ci>? x685 y686)> #\9 #\0)  ==> #t
-(#<procedure (char-ci>? x685 y686)> #\A #\A)  ==> #f
-(#<procedure (char-ci>? x685 y686)> #\A #\a)  ==> #f
-(#<procedure (char-ci<=? x691 y692)> #\A #\B)  ==> #t
-(#<procedure (char-ci<=? x691 y692)> #\a #\B)  ==> #t
-(#<procedure (char-ci<=? x691 y692)> #\A #\b)  ==> #t
-(#<procedure (char-ci<=? x691 y692)> #\a #\b)  ==> #t
-(#<procedure (char-ci<=? x691 y692)> #\9 #\0)  ==> #f
-(#<procedure (char-ci<=? x691 y692)> #\A #\A)  ==> #t
-(#<procedure (char-ci<=? x691 y692)> #\A #\a)  ==> #t
-(#<procedure (char-ci>=? x689 y690)> #\A #\B)  ==> #f
-(#<procedure (char-ci>=? x689 y690)> #\a #\B)  ==> #f
-(#<procedure (char-ci>=? x689 y690)> #\A #\b)  ==> #f
-(#<procedure (char-ci>=? x689 y690)> #\a #\b)  ==> #f
-(#<procedure (char-ci>=? x689 y690)> #\9 #\0)  ==> #t
-(#<procedure (char-ci>=? x689 y690)> #\A #\A)  ==> #t
-(#<procedure (char-ci>=? x689 y690)> #\A #\a)  ==> #t
-(#<procedure (char-alphabetic? c705)> #\a)  ==> #t
-(#<procedure (char-alphabetic? c705)> #\A)  ==> #t
-(#<procedure (char-alphabetic? c705)> #\z)  ==> #t
-(#<procedure (char-alphabetic? c705)> #\Z)  ==> #t
-(#<procedure (char-alphabetic? c705)> #\0)  ==> #f
-(#<procedure (char-alphabetic? c705)> #\9)  ==> #f
-(#<procedure (char-alphabetic? c705)> #\space)  ==> #f
-(#<procedure (char-alphabetic? c705)> #\;)  ==> #f
-(#<procedure (char-numeric? c701)> #\a)  ==> #f
-(#<procedure (char-numeric? c701)> #\A)  ==> #f
-(#<procedure (char-numeric? c701)> #\z)  ==> #f
-(#<procedure (char-numeric? c701)> #\Z)  ==> #f
-(#<procedure (char-numeric? c701)> #\0)  ==> #t
-(#<procedure (char-numeric? c701)> #\9)  ==> #t
-(#<procedure (char-numeric? c701)> #\space)  ==> #f
-(#<procedure (char-numeric? c701)> #\;)  ==> #f
-(#<procedure (char-whitespace? c703)> #\a)  ==> #f
-(#<procedure (char-whitespace? c703)> #\A)  ==> #f
-(#<procedure (char-whitespace? c703)> #\z)  ==> #f
-(#<procedure (char-whitespace? c703)> #\Z)  ==> #f
-(#<procedure (char-whitespace? c703)> #\0)  ==> #f
-(#<procedure (char-whitespace? c703)> #\9)  ==> #f
-(#<procedure (char-whitespace? c703)> #\space)  ==> #t
-(#<procedure (char-whitespace? c703)> #\;)  ==> #f
-(#<procedure (char-upper-case? c697)> #\0)  ==> #f
-(#<procedure (char-upper-case? c697)> #\9)  ==> #f
-(#<procedure (char-upper-case? c697)> #\space)  ==> #f
-(#<procedure (char-upper-case? c697)> #\;)  ==> #f
-(#<procedure (char-lower-case? c699)> #\0)  ==> #f
-(#<procedure (char-lower-case? c699)> #\9)  ==> #f
-(#<procedure (char-lower-case? c699)> #\space)  ==> #f
-(#<procedure (char-lower-case? c699)> #\;)  ==> #f
-(#<procedure (integer->char n656)> 46)  ==> #\.
-(#<procedure (integer->char n656)> 65)  ==> #\A
-(#<procedure (integer->char n656)> 97)  ==> #\a
-(#<procedure (char-upcase c678)> #\A)  ==> #\A
-(#<procedure (char-upcase c678)> #\a)  ==> #\A
-(#<procedure (char-downcase c680)> #\A)  ==> #\a
-(#<procedure (char-downcase c680)> #\a)  ==> #\a
+(#<procedure> #\a)  ==> #t
+(#<procedure> #\()  ==> #t
+(#<procedure> #\space)  ==> #t
+(#<procedure> #\newline)  ==> #t
+(#<procedure> #\A #\B)  ==> #f
+(#<procedure> #\a #\b)  ==> #f
+(#<procedure> #\9 #\0)  ==> #f
+(#<procedure> #\A #\A)  ==> #t
+(#<procedure> #\A #\B)  ==> #t
+(#<procedure> #\a #\b)  ==> #t
+(#<procedure> #\9 #\0)  ==> #f
+(#<procedure> #\A #\A)  ==> #f
+(#<procedure> #\A #\B)  ==> #f
+(#<procedure> #\a #\b)  ==> #f
+(#<procedure> #\9 #\0)  ==> #t
+(#<procedure> #\A #\A)  ==> #f
+(#<procedure> #\A #\B)  ==> #t
+(#<procedure> #\a #\b)  ==> #t
+(#<procedure> #\9 #\0)  ==> #f
+(#<procedure> #\A #\A)  ==> #t
+(#<procedure> #\A #\B)  ==> #f
+(#<procedure> #\a #\b)  ==> #f
+(#<procedure> #\9 #\0)  ==> #t
+(#<procedure> #\A #\A)  ==> #t
+(#<procedure> #\A #\B)  ==> #f
+(#<procedure> #\a #\B)  ==> #f
+(#<procedure> #\A #\b)  ==> #f
+(#<procedure> #\a #\b)  ==> #f
+(#<procedure> #\9 #\0)  ==> #f
+(#<procedure> #\A #\A)  ==> #t
+(#<procedure> #\A #\a)  ==> #t
+(#<procedure> #\A #\B)  ==> #t
+(#<procedure> #\a #\B)  ==> #t
+(#<procedure> #\A #\b)  ==> #t
+(#<procedure> #\a #\b)  ==> #t
+(#<procedure> #\9 #\0)  ==> #f
+(#<procedure> #\A #\A)  ==> #f
+(#<procedure> #\A #\a)  ==> #f
+(#<procedure> #\A #\B)  ==> #f
+(#<procedure> #\a #\B)  ==> #f
+(#<procedure> #\A #\b)  ==> #f
+(#<procedure> #\a #\b)  ==> #f
+(#<procedure> #\9 #\0)  ==> #t
+(#<procedure> #\A #\A)  ==> #f
+(#<procedure> #\A #\a)  ==> #f
+(#<procedure> #\A #\B)  ==> #t
+(#<procedure> #\a #\B)  ==> #t
+(#<procedure> #\A #\b)  ==> #t
+(#<procedure> #\a #\b)  ==> #t
+(#<procedure> #\9 #\0)  ==> #f
+(#<procedure> #\A #\A)  ==> #t
+(#<procedure> #\A #\a)  ==> #t
+(#<procedure> #\A #\B)  ==> #f
+(#<procedure> #\a #\B)  ==> #f
+(#<procedure> #\A #\b)  ==> #f
+(#<procedure> #\a #\b)  ==> #f
+(#<procedure> #\9 #\0)  ==> #t
+(#<procedure> #\A #\A)  ==> #t
+(#<procedure> #\A #\a)  ==> #t
+(#<procedure> #\a)  ==> #t
+(#<procedure> #\A)  ==> #t
+(#<procedure> #\z)  ==> #t
+(#<procedure> #\Z)  ==> #t
+(#<procedure> #\0)  ==> #f
+(#<procedure> #\9)  ==> #f
+(#<procedure> #\space)  ==> #f
+(#<procedure> #\;)  ==> #f
+(#<procedure> #\a)  ==> #f
+(#<procedure> #\A)  ==> #f
+(#<procedure> #\z)  ==> #f
+(#<procedure> #\Z)  ==> #f
+(#<procedure> #\0)  ==> #t
+(#<procedure> #\9)  ==> #t
+(#<procedure> #\space)  ==> #f
+(#<procedure> #\;)  ==> #f
+(#<procedure> #\a)  ==> #f
+(#<procedure> #\A)  ==> #f
+(#<procedure> #\z)  ==> #f
+(#<procedure> #\Z)  ==> #f
+(#<procedure> #\0)  ==> #f
+(#<procedure> #\9)  ==> #f
+(#<procedure> #\space)  ==> #t
+(#<procedure> #\;)  ==> #f
+(#<procedure> #\0)  ==> #f
+(#<procedure> #\9)  ==> #f
+(#<procedure> #\space)  ==> #f
+(#<procedure> #\;)  ==> #f
+(#<procedure> #\0)  ==> #f
+(#<procedure> #\9)  ==> #f
+(#<procedure> #\space)  ==> #f
+(#<procedure> #\;)  ==> #f
+(#<procedure> 46)  ==> #\.
+(#<procedure> 65)  ==> #\A
+(#<procedure> 97)  ==> #\a
+(#<procedure> #\A)  ==> #\A
+(#<procedure> #\a)  ==> #\A
+(#<procedure> #\A)  ==> #\a
+(#<procedure> #\a)  ==> #\a
 SECTION(6 7)
-(#<procedure (string? x158)> "The word \"recursion\\\" has many meanings.")  ==> #t
+(#<procedure> "The word \"recursion\\\" has many meanings.")  ==> #t
 (string-set! "?**")  ==> "?**"
-(#<procedure (string . chars333)> #\a #\b #\c)  ==> "abc"
-(#<procedure (string . chars333)>)  ==> ""
-(#<procedure (string-length s159)> "abc")  ==> 3
-(#<procedure (f_4309 s160 i161)> "abc" 0)  ==> #\a
-(#<procedure (f_4309 s160 i161)> "abc" 2)  ==> #\c
-(#<procedure (string-length s159)> "")  ==> 0
-(#<procedure (substring s222 start223 . end224)> "ab" 0 0)  ==> ""
-(#<procedure (substring s222 start223 . end224)> "ab" 1 1)  ==> ""
-(#<procedure (substring s222 start223 . end224)> "ab" 2 2)  ==> ""
-(#<procedure (substring s222 start223 . end224)> "ab" 0 1)  ==> "a"
-(#<procedure (substring s222 start223 . end224)> "ab" 1 2)  ==> "b"
-(#<procedure (substring s222 start223 . end224)> "ab" 0 2)  ==> "ab"
-(#<procedure (string-append . all321)> "foo" "bar")  ==> "foobar"
-(#<procedure (string-append . all321)> "foo")  ==> "foo"
-(#<procedure (string-append . all321)> "foo" "")  ==> "foo"
-(#<procedure (string-append . all321)> "" "foo")  ==> "foo"
-(#<procedure (string-append . all321)>)  ==> ""
-(#<procedure (make-string size176 . fill177)> 0)  ==> ""
-(#<procedure (string=? x236 y237)> "" "")  ==> #t
-(#<procedure (string<? s1249 s2250)> "" "")  ==> #f
-(#<procedure (string>? s1256 s2257)> "" "")  ==> #f
-(#<procedure (string<=? s1263 s2264)> "" "")  ==> #t
-(#<procedure (string>=? s1268 s2269)> "" "")  ==> #t
-(#<procedure (string-ci=? x238 y239)> "" "")  ==> #t
-(#<procedure (string-ci<? s1286 s2287)> "" "")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "" "")  ==> #f
-(#<procedure (string-ci<=? s1300 s2301)> "" "")  ==> #t
-(#<procedure (string-ci>=? s1305 s2306)> "" "")  ==> #t
-(#<procedure (string=? x236 y237)> "A" "B")  ==> #f
-(#<procedure (string=? x236 y237)> "a" "b")  ==> #f
-(#<procedure (string=? x236 y237)> "9" "0")  ==> #f
-(#<procedure (string=? x236 y237)> "A" "A")  ==> #t
-(#<procedure (string<? s1249 s2250)> "A" "B")  ==> #t
-(#<procedure (string<? s1249 s2250)> "a" "b")  ==> #t
-(#<procedure (string<? s1249 s2250)> "9" "0")  ==> #f
-(#<procedure (string<? s1249 s2250)> "A" "A")  ==> #f
-(#<procedure (string>? s1256 s2257)> "A" "B")  ==> #f
-(#<procedure (string>? s1256 s2257)> "a" "b")  ==> #f
-(#<procedure (string>? s1256 s2257)> "9" "0")  ==> #t
-(#<procedure (string>? s1256 s2257)> "A" "A")  ==> #f
-(#<procedure (string<=? s1263 s2264)> "A" "B")  ==> #t
-(#<procedure (string<=? s1263 s2264)> "a" "b")  ==> #t
-(#<procedure (string<=? s1263 s2264)> "9" "0")  ==> #f
-(#<procedure (string<=? s1263 s2264)> "A" "A")  ==> #t
-(#<procedure (string>=? s1268 s2269)> "A" "B")  ==> #f
-(#<procedure (string>=? s1268 s2269)> "a" "b")  ==> #f
-(#<procedure (string>=? s1268 s2269)> "9" "0")  ==> #t
-(#<procedure (string>=? s1268 s2269)> "A" "A")  ==> #t
-(#<procedure (string-ci=? x238 y239)> "A" "B")  ==> #f
-(#<procedure (string-ci=? x238 y239)> "a" "B")  ==> #f
-(#<procedure (string-ci=? x238 y239)> "A" "b")  ==> #f
-(#<procedure (string-ci=? x238 y239)> "a" "b")  ==> #f
-(#<procedure (string-ci=? x238 y239)> "9" "0")  ==> #f
-(#<procedure (string-ci=? x238 y239)> "A" "A")  ==> #t
-(#<procedure (string-ci=? x238 y239)> "A" "a")  ==> #t
-(#<procedure (string-ci<? s1286 s2287)> "A" "B")  ==> #t
-(#<procedure (string-ci<? s1286 s2287)> "a" "B")  ==> #t
-(#<procedure (string-ci<? s1286 s2287)> "A" "b")  ==> #t
-(#<procedure (string-ci<? s1286 s2287)> "a" "b")  ==> #t
-(#<procedure (string-ci<? s1286 s2287)> "9" "0")  ==> #f
-(#<procedure (string-ci<? s1286 s2287)> "A" "A")  ==> #f
-(#<procedure (string-ci<? s1286 s2287)> "A" "a")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "A" "B")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "a" "B")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "A" "b")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "a" "b")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "9" "0")  ==> #t
-(#<procedure (string-ci>? s1293 s2294)> "A" "A")  ==> #f
-(#<procedure (string-ci>? s1293 s2294)> "A" "a")  ==> #f
-(#<procedure (string-ci<=? s1300 s2301)> "A" "B")  ==> #t
-(#<procedure (string-ci<=? s1300 s2301)> "a" "B")  ==> #t
-(#<procedure (string-ci<=? s1300 s2301)> "A" "b")  ==> #t
-(#<procedure (string-ci<=? s1300 s2301)> "a" "b")  ==> #t
-(#<procedure (string-ci<=? s1300 s2301)> "9" "0")  ==> #f
-(#<procedure (string-ci<=? s1300 s2301)> "A" "A")  ==> #t
-(#<procedure (string-ci<=? s1300 s2301)> "A" "a")  ==> #t
-(#<procedure (string-ci>=? s1305 s2306)> "A" "B")  ==> #f
-(#<procedure (string-ci>=? s1305 s2306)> "a" "B")  ==> #f
-(#<procedure (string-ci>=? s1305 s2306)> "A" "b")  ==> #f
-(#<procedure (string-ci>=? s1305 s2306)> "a" "b")  ==> #f
-(#<procedure (string-ci>=? s1305 s2306)> "9" "0")  ==> #t
-(#<procedure (string-ci>=? s1305 s2306)> "A" "A")  ==> #t
-(#<procedure (string-ci>=? s1305 s2306)> "A" "a")  ==> #t
+(#<procedure> #\a #\b #\c)  ==> "abc"
+(#<procedure>)  ==> ""
+(#<procedure> "abc")  ==> 3
+(#<procedure> "abc" 0)  ==> #\a
+(#<procedure> "abc" 2)  ==> #\c
+(#<procedure> "")  ==> 0
+(#<procedure> "ab" 0 0)  ==> ""
+(#<procedure> "ab" 1 1)  ==> ""
+(#<procedure> "ab" 2 2)  ==> ""
+(#<procedure> "ab" 0 1)  ==> "a"
+(#<procedure> "ab" 1 2)  ==> "b"
+(#<procedure> "ab" 0 2)  ==> "ab"
+(#<procedure> "foo" "bar")  ==> "foobar"
+(#<procedure> "foo")  ==> "foo"
+(#<procedure> "foo" "")  ==> "foo"
+(#<procedure> "" "foo")  ==> "foo"
+(#<procedure>)  ==> ""
+(#<procedure> 0)  ==> ""
+(#<procedure> "" "")  ==> #t
+(#<procedure> "" "")  ==> #f
+(#<procedure> "" "")  ==> #f
+(#<procedure> "" "")  ==> #t
+(#<procedure> "" "")  ==> #t
+(#<procedure> "" "")  ==> #t
+(#<procedure> "" "")  ==> #f
+(#<procedure> "" "")  ==> #f
+(#<procedure> "" "")  ==> #t
+(#<procedure> "" "")  ==> #t
+(#<procedure> "A" "B")  ==> #f
+(#<procedure> "a" "b")  ==> #f
+(#<procedure> "9" "0")  ==> #f
+(#<procedure> "A" "A")  ==> #t
+(#<procedure> "A" "B")  ==> #t
+(#<procedure> "a" "b")  ==> #t
+(#<procedure> "9" "0")  ==> #f
+(#<procedure> "A" "A")  ==> #f
+(#<procedure> "A" "B")  ==> #f
+(#<procedure> "a" "b")  ==> #f
+(#<procedure> "9" "0")  ==> #t
+(#<procedure> "A" "A")  ==> #f
+(#<procedure> "A" "B")  ==> #t
+(#<procedure> "a" "b")  ==> #t
+(#<procedure> "9" "0")  ==> #f
+(#<procedure> "A" "A")  ==> #t
+(#<procedure> "A" "B")  ==> #f
+(#<procedure> "a" "b")  ==> #f
+(#<procedure> "9" "0")  ==> #t
+(#<procedure> "A" "A")  ==> #t
+(#<procedure> "A" "B")  ==> #f
+(#<procedure> "a" "B")  ==> #f
+(#<procedure> "A" "b")  ==> #f
+(#<procedure> "a" "b")  ==> #f
+(#<procedure> "9" "0")  ==> #f
+(#<procedure> "A" "A")  ==> #t
+(#<procedure> "A" "a")  ==> #t
+(#<procedure> "A" "B")  ==> #t
+(#<procedure> "a" "B")  ==> #t
+(#<procedure> "A" "b")  ==> #t
+(#<procedure> "a" "b")  ==> #t
+(#<procedure> "9" "0")  ==> #f
+(#<procedure> "A" "A")  ==> #f
+(#<procedure> "A" "a")  ==> #f
+(#<procedure> "A" "B")  ==> #f
+(#<procedure> "a" "B")  ==> #f
+(#<procedure> "A" "b")  ==> #f
+(#<procedure> "a" "b")  ==> #f
+(#<procedure> "9" "0")  ==> #t
+(#<procedure> "A" "A")  ==> #f
+(#<procedure> "A" "a")  ==> #f
+(#<procedure> "A" "B")  ==> #t
+(#<procedure> "a" "B")  ==> #t
+(#<procedure> "A" "b")  ==> #t
+(#<procedure> "a" "b")  ==> #t
+(#<procedure> "9" "0")  ==> #f
+(#<procedure> "A" "A")  ==> #t
+(#<procedure> "A" "a")  ==> #t
+(#<procedure> "A" "B")  ==> #f
+(#<procedure> "a" "B")  ==> #f
+(#<procedure> "A" "b")  ==> #f
+(#<procedure> "a" "b")  ==> #f
+(#<procedure> "9" "0")  ==> #t
+(#<procedure> "A" "A")  ==> #t
+(#<procedure> "A" "a")  ==> #t
 SECTION(6 8)
-(#<procedure (vector? x582)> #(0 (2 2 2 2) "Anna"))  ==> #t
-(#<procedure (vector . xs607)> a b c)  ==> #(a b c)
-(#<procedure (vector . xs607)>)  ==> #()
-(#<procedure (vector-length v583)> #(0 (2 2 2 2) "Anna"))  ==> 3
-(#<procedure (vector-length v583)> #())  ==> 0
-(#<procedure (f_6088 v584 i585)> #(1 1 2 3 5 8 13 21) 5)  ==> 8
+(#<procedure> #(0 (2 2 2 2) "Anna"))  ==> #t
+(#<procedure> a b c)  ==> #(a b c)
+(#<procedure>)  ==> #()
+(#<procedure> #(0 (2 2 2 2) "Anna"))  ==> 3
+(#<procedure> #())  ==> 0
+(#<procedure> #(1 1 2 3 5 8 13 21) 5)  ==> 8
 (vector-set #(0 ("Sue" "Sue") "Anna"))  ==> #(0 ("Sue" "Sue") "Anna")
-(#<procedure (##sys#make-vector size589 . fill590)> 2 hi)  ==> #(hi hi)
-(#<procedure (##sys#make-vector size589 . fill590)> 0)  ==> #()
-(#<procedure (##sys#make-vector size589 . fill590)> 0 a)  ==> #()
+(#<procedure> 2 hi)  ==> #(hi hi)
+(#<procedure> 0)  ==> #()
+(#<procedure> 0 a)  ==> #()
 SECTION(6 9)
-(#<procedure (procedure? x732)> #<procedure (f_3801 x85)>)  ==> #t
-(#<procedure (procedure? x732)> #<procedure (? x)>)  ==> #t
-(#<procedure (procedure? x732)> (lambda (x) (* x x)))  ==> #f
-(#<procedure (call-with-current-continuation proc791)> #<procedure (procedure? x732)>)  ==> #t
-(#<procedure C_apply> #<procedure C_plus> (3 4))  ==> 7
-(#<procedure C_apply> #<procedure (? a b)> (3 4))  ==> 7
-(#<procedure C_apply> #<procedure C_plus> 10 (3 4))  ==> 17
-(#<procedure C_apply> #<procedure (list . lst120)> ())  ==> ()
-(#<procedure (? . args)> 12 75)  ==> 30
-(#<procedure (map fn772 lst1773 . lsts774)> #<procedure (f_3813 x91)> ((a b) (d e) (g h)))  ==> (b e h)
-(#<procedure (map fn772 lst1773 . lsts774)> #<procedure C_plus> (1 2 3) (4 5 6))  ==> (5 7 9)
-(#<procedure (map fn772 lst1773 . lsts774)> #<procedure C_plus> (1 2 3))  ==> (1 2 3)
-(#<procedure (map fn772 lst1773 . lsts774)> #<procedure C_times> (1 2 3))  ==> (1 2 3)
-(#<procedure (map fn772 lst1773 . lsts774)> #<procedure C_minus> (1 2 3))  ==> (-1 -2 -3)
+(#<procedure> #<procedure>)  ==> #t
+(#<procedure> #<procedure>)  ==> #t
+(#<procedure> (lambda (x) (* x x)))  ==> #f
+(#<procedure> #<procedure>)  ==> #t
+(#<procedure> #<procedure> (3 4))  ==> 7
+(#<procedure> #<procedure> (3 4))  ==> 7
+(#<procedure> #<procedure> 10 (3 4))  ==> 17
+(#<procedure> #<procedure> ())  ==> ()
+(#<procedure> 12 75)  ==> 30
+(#<procedure> #<procedure> ((a b) (d e) (g h)))  ==> (b e h)
+(#<procedure> #<procedure> (1 2 3) (4 5 6))  ==> (5 7 9)
+(#<procedure> #<procedure> (1 2 3))  ==> (1 2 3)
+(#<procedure> #<procedure> (1 2 3))  ==> (1 2 3)
+(#<procedure> #<procedure> (1 2 3))  ==> (-1 -2 -3)
 (for-each #(0 1 4 9 16))  ==> #(0 1 4 9 16)
-(#<procedure (call-with-current-continuation proc791)> #<procedure (? exit)>)  ==> -3
-(#<procedure (list-length obj)> (1 2 3 4))  ==> 4
-(#<procedure (list-length obj)> (a b . c))  ==> #f
-(#<procedure (map fn772 lst1773 . lsts774)> #<procedure (f_3813 x91)> ())  ==> ()
+(#<procedure> #<procedure>)  ==> -3
+(#<procedure> (1 2 3 4))  ==> 4
+(#<procedure> (a b . c))  ==> #f
+(#<procedure> #<procedure> ())  ==> ()
 SECTION(6 10 1)
-(#<procedure (input-port? x819)> #<input port "(stdin)">)  ==> #t
-(#<procedure (output-port? x820)> #<output port "(stdout)">)  ==> #t
-(#<procedure (call-with-input-file name943 p944 . mode945)> "r4rstest.scm" #<procedure (input-port? x819)>)  ==> #t
-(#<procedure (input-port? x819)> #<input port "r4rstest.scm">)  ==> #t
+(#<procedure> #<input port "(stdin)">)  ==> #t
+(#<procedure> #<output port "(stdout)">)  ==> #t
+(#<procedure> "r4rstest.scm" #<procedure>)  ==> #t
+(#<procedure> #<input port "r4rstest.scm">)  ==> #t
 SECTION(6 10 2)
-(#<procedure (peek-char . g10551056)> #<input port "r4rstest.scm">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "r4rstest.scm">)  ==> #\;
-(#<procedure (read . g10651066)> #<input port "r4rstest.scm">)  ==> (define cur-section (quote ()))
-(#<procedure (peek-char . g10551056)> #<input port "r4rstest.scm">)  ==> #\(
-(#<procedure (read . g10651066)> #<input port "r4rstest.scm">)  ==> (define errs (quote ()))
+(#<procedure> #<input port "r4rstest.scm">)  ==> #\;
+(#<procedure> #<input port "r4rstest.scm">)  ==> #\;
+(#<procedure> #<input port "r4rstest.scm">)  ==> (define cur-section (quote ()))
+(#<procedure> #<input port "r4rstest.scm">)  ==> #\(
+(#<procedure> #<input port "r4rstest.scm">)  ==> (define errs (quote ()))
 SECTION(6 10 3)
-(#<procedure (call-with-output-file name951 p952 . mode953)> "tmp1" #<procedure (? test-file)>)  ==> #t
-(#<procedure (read . g10651066)> #<input port "tmp1">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
-(#<procedure (eof-object? x1034)> #!eof)  ==> #t
-(#<procedure (eof-object? x1034)> #!eof)  ==> #t
+(#<procedure> "tmp1" #<procedure>)  ==> #t
+(#<procedure> #<input port "tmp1">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure> #!eof)  ==> #t
+(#<procedure> #!eof)  ==> #t
 (input-port? #t)  ==> #t
-(#<procedure (read-char . g10421043)> #<input port "tmp1">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "tmp1">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "tmp1">)  ==> #\;
-(#<procedure (read . g10651066)> #<input port "tmp1">)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
-(#<procedure (read . g10651066)> #<input port "tmp1">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
-(#<procedure (output-port? x820)> #<output port "tmp2">)  ==> #t
-(#<procedure (read . g10651066)> #<input port "tmp2">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
-(#<procedure (eof-object? x1034)> #!eof)  ==> #t
-(#<procedure (eof-object? x1034)> #!eof)  ==> #t
+(#<procedure> #<input port "tmp1">)  ==> #\;
+(#<procedure> #<input port "tmp1">)  ==> #\;
+(#<procedure> #<input port "tmp1">)  ==> #\;
+(#<procedure> #<input port "tmp1">)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
+(#<procedure> #<input port "tmp1">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure> #<output port "tmp2">)  ==> #t
+(#<procedure> #<input port "tmp2">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure> #!eof)  ==> #t
+(#<procedure> #!eof)  ==> #t
 (input-port? #t)  ==> #t
-(#<procedure (read-char . g10421043)> #<input port "tmp2">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "tmp2">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "tmp2">)  ==> #\;
-(#<procedure (read . g10651066)> #<input port "tmp2">)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
-(#<procedure (read . g10651066)> #<input port "tmp2">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
+(#<procedure> #<input port "tmp2">)  ==> #\;
+(#<procedure> #<input port "tmp2">)  ==> #\;
+(#<procedure> #<input port "tmp2">)  ==> #\;
+(#<procedure> #<input port "tmp2">)  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
+(#<procedure> #<input port "tmp2">)  ==> (define foo (quote (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))))
 
 Passed all tests
 
 ;testing inexact numbers; 
 SECTION(6 2)
-(#<procedure (eqv? x78 y79)> 1 1.0)  ==> #f
-(#<procedure (eqv? x78 y79)> 0 0.0)  ==> #f
+(#<procedure> 1 1.0)  ==> #f
+(#<procedure> 0 0.0)  ==> #f
 SECTION(6 5 5)
-(#<procedure (##sys#inexact? x412)> 3.9)  ==> #t
+(#<procedure> 3.9)  ==> #t
 (max #t)  ==> #t
-(#<procedure (max n1458 . ns459)> 3.9 4)  ==> 4.0
-(#<procedure C_exact_to_inexact> 4)  ==> 4.0
-(#<procedure C_exact_to_inexact> 4.0)  ==> 4.0
-(#<procedure (##sys#inexact->exact n428)> 4)  ==> 4
-(#<procedure (##sys#inexact->exact n428)> 4.0)  ==> 4
-(#<procedure (round x435)> -4.5)  ==> -4.0
-(#<procedure (round x435)> -3.5)  ==> -4.0
-(#<procedure (round x435)> -3.9)  ==> -4.0
-(#<procedure (round x435)> 0.0)  ==> 0.0
-(#<procedure (round x435)> 0.25)  ==> 0.0
-(#<procedure (round x435)> 0.8)  ==> 1.0
-(#<procedure (round x435)> 3.5)  ==> 4.0
-(#<procedure (round x435)> 4.5)  ==> 4.0
-(#<procedure C_expt> 0 0)  ==> 1
-(#<procedure C_expt> 0 1)  ==> 0
-(#<procedure (atan n1472 . n2473)> 1 1)  ==> 0.785398163397448
-(#<procedure (call-with-output-file name951 p952 . mode953)> "tmp3" #<procedure (? test-file)>)  ==> #t
-(#<procedure (read . g10651066)> #<input port "tmp3">)  ==> (define foo (quote (0.25 -3.25)))
-(#<procedure (eof-object? x1034)> #!eof)  ==> #t
-(#<procedure (eof-object? x1034)> #!eof)  ==> #t
+(#<procedure> 3.9 4)  ==> 4.0
+(#<procedure> 4)  ==> 4.0
+(#<procedure> 4.0)  ==> 4.0
+(#<procedure> 4)  ==> 4
+(#<procedure> 4.0)  ==> 4
+(#<procedure> -4.5)  ==> -4.0
+(#<procedure> -3.5)  ==> -4.0
+(#<procedure> -3.9)  ==> -4.0
+(#<procedure> 0.0)  ==> 0.0
+(#<procedure> 0.25)  ==> 0.0
+(#<procedure> 0.8)  ==> 1.0
+(#<procedure> 3.5)  ==> 4.0
+(#<procedure> 4.5)  ==> 4.0
+(#<procedure> 0 0)  ==> 1
+(#<procedure> 0 1)  ==> 0
+(#<procedure> 1 1)  ==> 0.785398163397448
+(#<procedure> "tmp3" #<procedure>)  ==> #t
+(#<procedure> #<input port "tmp3">)  ==> (define foo (quote (0.25 -3.25)))
+(#<procedure> #!eof)  ==> #t
+(#<procedure> #!eof)  ==> #t
 (input-port? #t)  ==> #t
-(#<procedure (read-char . g10421043)> #<input port "tmp3">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "tmp3">)  ==> #\;
-(#<procedure (read-char . g10421043)> #<input port "tmp3">)  ==> #\;
-(#<procedure (read . g10651066)> #<input port "tmp3">)  ==> (0.25 -3.25)
-(#<procedure (read . g10651066)> #<input port "tmp3">)  ==> (define foo (quote (0.25 -3.25)))
+(#<procedure> #<input port "tmp3">)  ==> #\;
+(#<procedure> #<input port "tmp3">)  ==> #\;
+(#<procedure> #<input port "tmp3">)  ==> #\;
+(#<procedure> #<input port "tmp3">)  ==> (0.25 -3.25)
+(#<procedure> #<input port "tmp3">)  ==> (define foo (quote (0.25 -3.25)))
 (pentium-fdiv-bug #t)  ==> #t
 
 Passed all tests
@@ -738,8 +738,8 @@ To fully test continuations, Scheme 4, and DELAY/FORCE do:
 
 ;testing continuations; 
 SECTION(6 9)
-(#<procedure (leaf-eq? x y)> (a (b (c))) ((a) b c))  ==> #t
-(#<procedure (leaf-eq? x y)> (a (b (c))) ((a) b c d))  ==> #f
+(#<procedure> (a (b (c))) ((a) b c))  ==> #t
+(#<procedure> (a (b (c))) ((a) b c d))  ==> #f
 
 errors were:
 (SECTION (got expected (call)))
@@ -752,15 +752,15 @@ errors were:
 
 ;testing scheme 4 functions; 
 SECTION(6 7)
-(#<procedure (##sys#string->list s184)> "P l")  ==> (#\P #\space #\l)
-(#<procedure (##sys#string->list s184)> "")  ==> ()
-(#<procedure (##sys#list->string lst0190)> (#\1 #\\ #\"))  ==> "1\\\""
-(#<procedure (##sys#list->string lst0190)> ())  ==> ""
+(#<procedure> "P l")  ==> (#\P #\space #\l)
+(#<procedure> "")  ==> ()
+(#<procedure> (#\1 #\\ #\"))  ==> "1\\\""
+(#<procedure> ())  ==> ""
 SECTION(6 8)
-(#<procedure (vector->list v601)> #(dah dah didah))  ==> (dah dah didah)
-(#<procedure (vector->list v601)> #())  ==> ()
-(#<procedure (list->vector lst0593)> (dididit dah))  ==> #(dididit dah)
-(#<procedure (list->vector lst0593)> ())  ==> #()
+(#<procedure> #(dah dah didah))  ==> (dah dah didah)
+(#<procedure> #())  ==> ()
+(#<procedure> (dididit dah))  ==> #(dididit dah)
+(#<procedure> ())  ==> #()
 SECTION(6 10 4)
 (load (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c)))  ==> (#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c))
 
@@ -778,8 +778,8 @@ SECTION(6 9)
 (delay 3)  ==> 3
 (delay (3 3))  ==> (3 3)
 (delay 2)  ==> 2
-(#<procedure (##sys#force promise69)> #<promise>)  ==> 6
-(#<procedure (##sys#force promise69)> #<promise>)  ==> 6
+(#<procedure> #<promise>)  ==> 6
+(#<procedure> #<promise>)  ==> 6
 (force 3)  ==> 3
 
 errors were:

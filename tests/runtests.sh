@@ -27,10 +27,9 @@ echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out
 
 echo "======================================== r4rstest ..."
-../csi -i -s r4rstest.scm >r4rstest.log
-../csi -s fix-gensyms.scm r4rstest.out r4rstest.out.fixed
-../csi -s fix-gensyms.scm r4rstest.log r4rstest.log.fixed
-diff -u r4rstest.out.fixed r4rstest.log.fixed
+../csi -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
+  -i -s r4rstest.scm >r4rstest.log
+diff -u r4rstest.out r4rstest.log
 
 echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
