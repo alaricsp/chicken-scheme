@@ -350,15 +350,44 @@ time_t timegm(struct tm *t)
 }
 #endif
 
+#define C_tm_set_07(v) \
+        (memset(&C_tm, 0, sizeof(struct tm)), \
+        C_tm.tm_sec = C_unfix(C_block_item(v, 0)), \
+        C_tm.tm_min = C_unfix(C_block_item(v, 1)), \
+        C_tm.tm_hour = C_unfix(C_block_item(v, 2)), \
+        C_tm.tm_mday = C_unfix(C_block_item(v, 3)), \
+        C_tm.tm_mon = C_unfix(C_block_item(v, 4)), \
+        C_tm.tm_year = C_unfix(C_block_item(v, 5)), \
+        C_tm.tm_wday = C_unfix(C_block_item(v, 6)), \
+        C_tm.tm_yday = C_unfix(C_block_item(v, 7)))
+
+#define C_tm_set_8(v) \
+        (C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE))
+
+#define C_tm_get_07(v) \
+        (C_set_block_item(v, 0, C_fix(C_tm.tm_sec)), \
+        C_set_block_item(v, 1, C_fix(C_tm.tm_min)), \
+        C_set_block_item(v, 2, C_fix(C_tm.tm_hour)), \
+        C_set_block_item(v, 3, C_fix(C_tm.tm_mday)), \
+        C_set_block_item(v, 4, C_fix(C_tm.tm_mon)), \
+        C_set_block_item(v, 5, C_fix(C_tm.tm_year)), \
+        C_set_block_item(v, 6, C_fix(C_tm.tm_wday)), \
+        C_set_block_item(v, 7, C_fix(C_tm.tm_yday)))
+
+#define C_tm_get_8(v) \
+        (C_set_block_item(v, 8, (C_tm.tm_isdst ? C_SCHEME_TRUE : C_SCHEME_FALSE)))
+
 #if !defined(C_GNU_ENV) || defined(__CYGWIN__) || defined(__uClinux__)
-# define C_asctime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
-# define C_mktime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
-# define C_timegm(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = timegm(&C_tm)) != -1)
+# define C_tm_set(v) (C_tm_set_07(v), C_tm_set_8(v))
+# define C_tm_get(v) (C_tm_get_07(v), C_tm_get_8(v))
 #else
-# define C_asctime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), C_tm.tm_gmtoff = C_unfix(C_block_item(v, 9)), asctime(&C_tm) )
-# define C_mktime(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), C_tm.tm_gmtoff = C_unfix(C_block_item(v, 9)), (C_temporary_flonum = mktime(&C_tm)) != -1)
-# define C_timegm(v)        (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), C_tm.tm_gmtoff = C_unfix(C_block_item(v, 9)), (C_temporary_flonum = timegm(&C_tm)) != -1)
+# define C_tm_set(v) (C_tm_set_07(v))
+# define C_tm_get(v) (C_tm_get_07(v))
 #endif
+
+#define C_asctime(v)    (C_tm_set(v), asctime(&C_tm))
+#define C_mktime(v)     (C_tm_set(v), (C_temporary_flonum = mktime(&C_tm)) != -1)
+#define C_timegm(v)     (C_tm_set(v), (C_temporary_flonum = timegm(&C_tm)) != -1)
 
 static gid_t *C_groups = NULL;
 
@@ -1785,7 +1814,6 @@ EOF
    "char *z = (daylight ? tzname[1] : tzname[0]);"
    "\n#endif\n"
    "return(z);") )
-
 
 ;;; Other things:
 
