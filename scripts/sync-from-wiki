@@ -7,7 +7,7 @@ exec csi -s "$0" "$@"
 ; usage: sync-from-wiki [--wikidir=DIR] [--dry-run]
 
 
-(load-relative "build.scm")
+(load-relative "tools.scm")
 
 
 (define *wikidir* #f)

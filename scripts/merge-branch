@@ -3,7 +3,7 @@
 exec csi -s "$0" "$@"
 |#
 
-(load-relative "build.scm")
+(load-relative "tools.scm")
 
 (define-constant +repobase+ "https://galinha.ucpel.tche.br/svn/chicken-eggs")
 

@@ -4,7 +4,7 @@
 (define *release* #f)
 (define *test* #f)
 
-(load-relative "build.scm")
+(load-relative "tools.scm")
 
 (set! *verbose* #t)
 
