@@ -100,6 +100,32 @@ static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
   }
   return C_SCHEME_FALSE;
 }
+
+static C_word
+fast_read_string_from_file (C_word dest, C_word port, C_word len, C_word pos)
+{
+  int n = C_unfix (len);
+  char * buf = (char *) (C_data_pointer (dest) + C_unfix (pos));
+  C_FILEPTR fp = C_port_file (port);
+
+  size_t m = fread (buf, sizeof (char), n, fp);
+
+  if (m < n) {
+    if (feof (fp)) {
+      clearerr (fp);
+      if (0 == m)
+        return C_SCHEME_END_OF_FILE;
+    } else if (ferror (fp)) {
+      if (0 == m) {
+        return C_SCHEME_FALSE;
+      } else {
+        clearerr (fp);
+      }
+    }
+  }
+
+  return C_fix (m);
+}
 EOF
 ) )
 
@@ -1653,7 +1679,7 @@ EOF
 ; 7:  type ('stream | 'custom | 'string | 'socket)
 ; 8:  closed (bool)
 ; 9:  data
-; 10-15: reserved
+; 10-15: reserved, port class specific
 ;
 ; Port-class:
 ;
@@ -1694,6 +1720,18 @@ EOF
 	  (lambda (p)			; char-ready?
 	    (##core#inline "C_char_ready_p" p) )
 	  #f				; read-string!
+	  #; ;UNUSED
+          (lambda (p n dest start)      ; read-string!
+            (let loop ([rem (or n (fx- (##sys#size dest) start))] [act 0] [start start])
+              (let ([len (##core#inline "fast_read_string_from_file" dest p rem start)])
+                (cond [(eof-object? len)
+                        (if (eq? 0 act) #!eof act)]
+                      [(not len)
+                        act]
+                      [(fx< len rem)
+                        (loop (fx- rem len) (fx+ act len) (fx+ start len))]
+                      [else
+                        act ] ) ) ) )
 	  (lambda (p limit)		; read-line
 	    (let* ((buffer-len (if limit limit 256))
 		   (buffer (make-string buffer-len)))
@@ -2008,11 +2046,6 @@ EOF
 (define (read-char #!optional (port ##sys#standard-input))
   (##sys#read-char/port port) )
 
-(define (##sys#read-char/port port)
-  (##sys#check-port* port 'read-char)
-  (##sys#check-port-mode port #t 'read-char)
-  (##sys#read-char-0 port) )
-
 (define (##sys#read-char-0 p)
   (let ([c (if (##sys#slot p 6)
 	       (begin
@@ -2026,10 +2059,10 @@ EOF
 	   (##sys#setislot p 5 (fx+ (##sys#slot p 5) 1)) ] )
     c) )
 
-(define (peek-char #!optional (port ##sys#standard-input))
-  (##sys#check-port* port 'peek-char)
-  (##sys#check-port-mode port #t 'peek-char)
-  (##sys#peek-char-0 port) )
+(define (##sys#read-char/port port)
+  (##sys#check-port* port 'read-char)
+  (##sys#check-port-mode port #t 'read-char)
+  (##sys#read-char-0 port) )
 
 (define (##sys#peek-char-0 p)
   (if (##sys#slot p 6)
@@ -2038,6 +2071,11 @@ EOF
 	(when (##core#inline "C_eofp" c)
 	  (##sys#setislot p 6 #t) )
 	c) ) )
+
+(define (peek-char #!optional (port ##sys#standard-input))
+  (##sys#check-port* port 'peek-char)
+  (##sys#check-port-mode port #t 'peek-char)
+  (##sys#peek-char-0 port) )
 
 (define (read #!optional (port ##sys#standard-input))
   (##sys#check-port* port 'read)
@@ -3058,6 +3096,7 @@ EOF
 		  (##sys#setislot p 10 next)
 		  dest) ) ) ) ) ) ) ) )
 
+; Invokes the eol handler when EOL or EOS is reached.
 (define (##sys#scan-buffer-line buf limit pos k)
   (let loop ((pos2 pos))
     (if (fx>= pos2 limit)
@@ -3069,6 +3108,24 @@ EOF
 		      (eq? (##core#inline "C_subchar" buf (fx+ pos2 1)) #\newline) )
 		 (k pos2 (fx+ pos2 2)) )
 		(else (loop (fx+ pos2 1))) ) ) ) ) )
+
+; Scans a string, 'buf', from a start index, 'pos', to an end index,
+; 'lim'. During the scan the current position of the 'port' is updated to
+; reflect the rows & columns encountered.
+#; ;UNUSED (at the moment)
+(define (##sys#update-port-position/scan port buf pos lim)
+  (let loop ([pos pos])
+    (let ([bumper
+           (lambda (cur ptr)
+             (cond [(eq? cur ptr)       ; at EOB
+                     (##sys#setislot port 5 (fx+ (##sys#slot port 5) (fx- cur pos)))
+                     #f ]
+                   [else                ; at EOL
+                     (##sys#setislot port 4 (fx+ (##sys#slot port 4) 1))
+                     (##sys#setislot port 5 0)
+                     ptr ] ) ) ] )
+      (when pos
+        (loop (##sys#scan-buffer-line buf lim pos bumper)) ) ) ) )
 
 (define open-input-string 
   (lambda (string)

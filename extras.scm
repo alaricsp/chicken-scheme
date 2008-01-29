@@ -621,7 +621,7 @@ EOF
 	     #f				; flush-output
 	     (lambda (p)		; char-ready?
 	       (ready?) )
-	     read-string 		; read-string
+	     read-string 		; read-string!
 	     read-line) )		; read-line
 	   (data (vector #f))
 	   (port (##sys#make-port #t class "(custom)" 'custom)) )
@@ -630,9 +630,8 @@ EOF
 
 (define make-output-port
   (let ([string string])
-    (lambda (write close . flush)
-      (let* ((flush (and (pair? flush) (car flush)))
-	     (class
+    (lambda (write close #!optional flush)
+      (let* ((class
 	      (vector
 	       #f			; read-char
 	       #f			; peek-char
@@ -646,7 +645,7 @@ EOF
 	       (lambda (p)		; flush-output
 		 (when flush (flush)) )
 	       #f			; char-ready?
-	       #f			; read-string
+	       #f			; read-string!
 	       #f) )			; read-line
 	     (data (vector #f))
 	     (port (##sys#make-port #f class "(custom)" 'custom)) )
