@@ -207,8 +207,7 @@ static C_TLS struct stat C_statbuf;
 #ifdef C_GNU_ENV
 # define C_setenv(x, y)     C_fix(setenv((char *)C_data_pointer(x), (char *)C_data_pointer(y), 1))
 #else
-static C_word C_fcall C_setenv(C_word x, C_word y);
-C_word C_fcall C_setenv(C_word x, C_word y) {
+static C_word C_fcall C_setenv(C_word x, C_word y) {
   char *sx = C_data_pointer(x),
        *sy = C_data_pointer(y);
   int n1 = C_strlen(sx), n2 = C_strlen(sy);
@@ -321,7 +320,7 @@ static C_TLS sigset_t C_sigset;
 #if defined(__CYGWIN__) || defined(__SVR4)
 /* Seen here: http://lists.samba.org/archive/samba-technical/2002-November/025571.html */
 
-time_t timegm(struct tm *t)
+static time_t timegm(struct tm *t)
 {
   time_t tl, tb;
   struct tm *tg;
@@ -350,7 +349,7 @@ time_t timegm(struct tm *t)
 }
 #endif
 
-#define C_tm_set_07(v) \
+#define C_tm_set_08(v) \
         (memset(&C_tm, 0, sizeof(struct tm)), \
         C_tm.tm_sec = C_unfix(C_block_item(v, 0)), \
         C_tm.tm_min = C_unfix(C_block_item(v, 1)), \
@@ -359,12 +358,13 @@ time_t timegm(struct tm *t)
         C_tm.tm_mon = C_unfix(C_block_item(v, 4)), \
         C_tm.tm_year = C_unfix(C_block_item(v, 5)), \
         C_tm.tm_wday = C_unfix(C_block_item(v, 6)), \
-        C_tm.tm_yday = C_unfix(C_block_item(v, 7)))
+        C_tm.tm_yday = C_unfix(C_block_item(v, 7)), \
+        C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE))
 
-#define C_tm_set_8(v) \
-        (C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE))
+#define C_tm_set_9(v) \
+        (C_tm.tm_gmtoff = C_unfix(C_block_item(v, 9)))
 
-#define C_tm_get_07(v) \
+#define C_tm_get_08(v) \
         (C_set_block_item(v, 0, C_fix(C_tm.tm_sec)), \
         C_set_block_item(v, 1, C_fix(C_tm.tm_min)), \
         C_set_block_item(v, 2, C_fix(C_tm.tm_hour)), \
@@ -372,22 +372,33 @@ time_t timegm(struct tm *t)
         C_set_block_item(v, 4, C_fix(C_tm.tm_mon)), \
         C_set_block_item(v, 5, C_fix(C_tm.tm_year)), \
         C_set_block_item(v, 6, C_fix(C_tm.tm_wday)), \
-        C_set_block_item(v, 7, C_fix(C_tm.tm_yday)))
+        C_set_block_item(v, 7, C_fix(C_tm.tm_yday)), \
+        C_set_block_item(v, 8, (C_tm.tm_isdst ? C_SCHEME_TRUE : C_SCHEME_FALSE)))
 
-#define C_tm_get_8(v) \
-        (C_set_block_item(v, 8, (C_tm.tm_isdst ? C_SCHEME_TRUE : C_SCHEME_FALSE)))
+#define C_tm_get_9(v) \
+        (C_set_block_item(v, 9, C_fix(C_tm.tm_gmtoff)))
 
 #if !defined(C_GNU_ENV) || defined(__CYGWIN__) || defined(__uClinux__)
-# define C_tm_set(v) (C_tm_set_07(v), C_tm_set_8(v))
-# define C_tm_get(v) (C_tm_get_07(v), C_tm_get_8(v))
+# define C_tm_set(v) (C_tm_set_08(v), &C_tm)
+# define C_tm_get(v) (C_tm_get_08(v), v)
 #else
-# define C_tm_set(v) (C_tm_set_07(v))
-# define C_tm_get(v) (C_tm_get_07(v))
+# define C_tm_set(v) (C_tm_set_08(v), C_tm_set_9(v), &C_tm)
+# define C_tm_get(v) (C_tm_get_08(v), C_tm_get_9(v), v)
 #endif
 
-#define C_asctime(v)    (C_tm_set(v), asctime(&C_tm))
-#define C_mktime(v)     (C_tm_set(v), (C_temporary_flonum = mktime(&C_tm)) != -1)
-#define C_timegm(v)     (C_tm_set(v), (C_temporary_flonum = timegm(&C_tm)) != -1)
+#define C_asctime(v)    (asctime(C_tm_set(v)))
+#define C_mktime(v)     ((C_temporary_flonum = mktime(C_tm_set(v))) != -1)
+#define C_timegm(v)     ((C_temporary_flonum = timegm(C_tm_set(v))) != -1)
+
+#define TIME_STRING_MAXLENGTH 255
+static char C_time_string [TIME_STRING_MAXLENGTH + 1];
+#undef TIME_STRING_MAXLENGTH
+
+#define C_strftime(v, f) \
+        (strftime(C_time_string, sizeof(C_time_string), C_c_string(f), C_tm_set(v)) ? C_time_string : NULL)
+
+#define C_strptime(s, f, v) \
+        (strptime(C_c_string(s), C_c_string(f), &C_tm) ? C_tm_get(v) : C_SCHEME_FALSE)
 
 static gid_t *C_groups = NULL;
 
@@ -1778,17 +1789,32 @@ EOF
   (let ([ctime (foreign-lambda c-string "C_ctime" integer)])
     (lambda (secs)
       (let ([str (ctime secs)])
-        (unless str (##sys#error 'seconds->string "cannot convert seconds to string" secs))
-	(##sys#substring str 0 (fx- (##sys#size str) 1))))))
+        (if str
+            (##sys#substring str 0 (fx- (##sys#size str) 1))
+            (##sys#error 'seconds->string "cannot convert seconds to string" secs) ) ) ) ) )
 
 (define time->string
-  (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)])
-    (lambda (tm)
+  (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)]
+        [strftime (foreign-lambda c-string "C_strftime" scheme-object scheme-object)])
+    (lambda (tm #!optional fmt)
       (##sys#check-vector tm 'time->string)
       (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
-      (let ([str (asctime tm)])
-        (unless str (##sys#error 'time->string "cannot convert time vector to string" tm))
-	(##sys#substring str 0 (fx- (##sys#size str) 1))))))
+      (if fmt
+          (begin
+            (##sys#check-string fmt 'time->string)
+            (or (strftime tm fmt)
+                (##sys#error 'time->string "time formatting overflows buffer" tm)) )
+          (let ([str (asctime tm)])
+            (if str
+                (##sys#substring str 0 (fx- (##sys#size str) 1))
+                (##sys#error 'time->string "cannot convert time vector to string" tm) ) ) ) ) ) )
+
+(define string->time
+  (let ([strptime (foreign-lambda scheme-object "C_strptime" scheme-object scheme-object scheme-object)])
+    (lambda (tim #!optional (fmt "%a %b %e %H:%M:%S %Z %Y"))
+      (##sys#check-string tim 'string->time)
+      (##sys#check-string fmt 'string->time)
+      (strptime tim fmt (make-vector 10 #f)) ) ) )
 
 (define (local-time->seconds tm)
   (##sys#check-vector tm 'local-time->seconds)

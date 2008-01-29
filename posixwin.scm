@@ -332,8 +332,29 @@ C_free_arg_string(char **where) {
 
 #define C_ctime(n)	    (C_secs = (n), ctime(&C_secs))
 
-#define C_asctime(v)	    (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), asctime(&C_tm) )
-#define C_mktime(v)	    (memset(&C_tm, 0, sizeof(struct tm)), C_tm.tm_sec = C_unfix(C_block_item(v, 0)), C_tm.tm_min = C_unfix(C_block_item(v, 1)), C_tm.tm_hour = C_unfix(C_block_item(v, 2)), C_tm.tm_mday = C_unfix(C_block_item(v, 3)), C_tm.tm_mon = C_unfix(C_block_item(v, 4)), C_tm.tm_year = C_unfix(C_block_item(v, 5)), C_tm.tm_wday = C_unfix(C_block_item(v, 6)), C_tm.tm_yday = C_unfix(C_block_item(v, 7)), C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE), (C_temporary_flonum = mktime(&C_tm)) != -1)
+#define C_tm_set_08(v) \
+        (memset(&C_tm, 0, sizeof(struct tm)), \
+        C_tm.tm_sec = C_unfix(C_block_item(v, 0)), \
+        C_tm.tm_min = C_unfix(C_block_item(v, 1)), \
+        C_tm.tm_hour = C_unfix(C_block_item(v, 2)), \
+        C_tm.tm_mday = C_unfix(C_block_item(v, 3)), \
+        C_tm.tm_mon = C_unfix(C_block_item(v, 4)), \
+        C_tm.tm_year = C_unfix(C_block_item(v, 5)), \
+        C_tm.tm_wday = C_unfix(C_block_item(v, 6)), \
+        C_tm.tm_yday = C_unfix(C_block_item(v, 7)), \
+        C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE))
+
+#define C_tm_set(v) (C_tm_set_08(v), &C_tm)
+
+#define C_asctime(v)    (asctime(C_tm_set(v)))
+#define C_mktime(v)     ((C_temporary_flonum = mktime(C_tm_set(v))) != -1)
+
+#define TIME_STRING_MAXLENGTH 255
+static char C_time_string [TIME_STRING_MAXLENGTH + 1];
+#undef TIME_STRING_MAXLENGTH
+
+#define C_strftime(v, f) \
+        (strftime(C_time_string, sizeof(C_time_string), C_c_string(f), C_tm_set(v)) ? C_time_string : NULL)
 
 /*
   mapping from Win32 error codes to errno
@@ -1574,17 +1595,25 @@ EOF
   (let ([ctime (foreign-lambda c-string "C_ctime" integer)])
     (lambda (secs)
       (let ([str (ctime secs)])
-	(unless str (##sys#error 'seconds->string "cannot convert seconds to string" secs))
-	(##sys#substring str 0 (fx- (##sys#size str) 1))))))
+        (if str
+            (##sys#substring str 0 (fx- (##sys#size str) 1))
+            (##sys#error 'seconds->string "cannot convert seconds to string" secs) ) ) ) ) )
 
 (define time->string
-  (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)])
-    (lambda (tm)
+  (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)]
+        [strftime (foreign-lambda c-string "C_strftime" scheme-object scheme-object)])
+    (lambda (tm #!optional fmt)
       (##sys#check-vector tm 'time->string)
       (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
-      (let ([str (asctime tm)])
-	(unless str (##sys#error 'time->string "cannot time vector to string" tm))
-	(##sys#substring str 0 (fx- (##sys#size str) 1))))))
+      (if fmt
+          (begin
+            (##sys#check-string fmt 'time->string)
+            (or (strftime tm fmt)
+                (##sys#error 'time->string "time formatting overflows buffer" tm)) )
+          (let ([str (asctime tm)])
+            (if str
+                (##sys#substring str 0 (fx- (##sys#size str) 1))
+                (##sys#error 'time->string "cannot convert time vector to string" tm) ) ) ) ) ) )
 
 (define (local-time->seconds tm)
   (##sys#check-vector tm 'local-time->seconds)
@@ -1980,6 +2009,7 @@ EOF
 (define-unimplemented unmap-file-from-memory)
 (define-unimplemented user-information)
 (define-unimplemented utc-time->seconds)
+(define-unimplemented string->time)
 
 (define errno/wouldblock 0)
 
