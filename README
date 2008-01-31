@@ -112,7 +112,7 @@
 	STATICBUILD=1
 	  Build only static versions of the runtime library, compiler
 	  and interpreter. `chicken-setup' will not be generated,
-	  as it is mostly unless compiled code can be loaded.
+	  as it is mostly useless unless compiled code can be loaded.
 
 	SYMBOLGC=1
 	  Always enable garbage collection for unused symbols in the 
