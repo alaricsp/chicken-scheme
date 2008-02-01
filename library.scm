@@ -314,6 +314,11 @@ EOF
       (##core#inline "C_i_check_exact_2" x (car y))
       (##core#inline "C_i_check_exact" x) ) )
 
+(define (##sys#check-inexact x . y) 
+  (if (pair? y)
+      (##core#inline "C_i_check_inexact_2" x (car y))
+      (##core#inline "C_i_check_inexact" x) ) )
+
 (define (##sys#check-symbol x . y) 
   (if (pair? y)
       (##core#inline "C_i_check_symbol_2" x (car y))

@@ -1059,6 +1059,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 #define C_i_check_closure(x)            C_i_check_closure_2(x, C_SCHEME_FALSE)
 #define C_i_check_exact(x)              C_i_check_exact_2(x, C_SCHEME_FALSE)
+#define C_i_check_inexact(x)            C_i_check_inexact_2(x, C_SCHEME_FALSE)
 #define C_i_check_number(x)             C_i_check_number_2(x, C_SCHEME_FALSE)
 #define C_i_check_string(x)             C_i_check_string_2(x, C_SCHEME_FALSE)
 #define C_i_check_bytevector(x)         C_i_check_bytevector_2(x, C_SCHEME_FALSE)
@@ -1460,6 +1461,7 @@ C_fctexport C_word C_fcall C_i_length(C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_inexact_to_exact(C_word n) C_regparm;
 C_fctexport C_word C_fcall C_i_check_closure_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_exact_2(C_word x, C_word loc) C_regparm;
+C_fctexport C_word C_fcall C_i_check_inexact_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_number_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_string_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_bytevector_2(C_word x, C_word loc) C_regparm;
