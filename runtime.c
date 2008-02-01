@@ -5747,7 +5747,7 @@ C_regparm C_word C_fcall C_i_check_inexact_2(C_word x, C_word loc)
 {
   if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) {
     error_location = loc;
-    barf(C_BAD_ARGUMENT_TYPE_NO_NUMBER_ERROR, NULL, x);
+    barf(C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR, NULL, x);
   }
 
   return C_SCHEME_UNDEFINED;
@@ -5876,7 +5876,7 @@ C_regparm C_word C_fcall C_i_foreign_flonum_argumentp(C_word x)
   if((x & C_FIXNUM_BIT) != 0) return x;
 
   if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG)
-    barf(C_BAD_ARGUMENT_TYPE_NO_NUMBER_ERROR, NULL, x);
+    barf(C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR, NULL, x);
 
   return x;
 }
