@@ -246,7 +246,7 @@ endif
 
 # bootstrapping compiler
 
-CHICKEN = $(PREFIX)/bin/chicken$(EXE)
+CHICKEN = chicken$(EXE)
 
 # Scheme compiler flags
 
@@ -396,5 +396,7 @@ chicken-defaults.h:
 	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
 	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
+	echo "#ifndef C_BINARY_VERSION" >>$@
+	echo "# define C_BINARY_VERSION $(BINARYVERSION)" >>$@
+	echo "#endif" >>$@
 endif
-#

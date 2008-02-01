@@ -127,7 +127,9 @@
 (define-constant source-file-extension ".scm")
 (define-constant setup-file-extension "setup-info")
 (define-constant repository-environment-variable "CHICKEN_REPOSITORY")
+(define-constant prefix-environment-variable "CHICKEN_PREFIX")
 (define-constant special-syntax-files '(chicken-ffi-macros chicken-more-macros))
+(define-constant default-binary-version 3)
 
 ; these are actually in unit extras, but that is used by default
 ; srfi-12 in unit library
@@ -137,18 +139,23 @@
 (define-constant builtin-features/compiled
   '(srfi-6 srfi-8 srfi-9 srfi-11 srfi-15 srfi-16 srfi-17 srfi-26 srfi-55) )
 
+(define ##sys#chicken-prefix
+  (let ((prefix (and-let* ((p (getenv prefix-environment-variable)))
+		  (##sys#string-append 
+		   p
+		   (if (memq (string-ref p (fx- (##sys#size p) 1)) '(#\\ #\/))
+		       "" "/") ) ) ) )
+    (lambda (#!optional dir)
+      (and prefix
+	   (if dir (##sys#string-append prefix dir) prefix) ) ) ) )
+	  
 
 ;;; System settings
 
 (define chicken-home
   (let ([getenv getenv])
     (lambda ()
-      (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
-	    (##sys#string-append 
-	     p
-	     (if (memq (string-ref p (fx- (##sys#size p) 1)) '(#\\ #\/))
-		 "share"
-		 "/share") ) )
+      (or (##sys#chicken-prefix "share/chicken")
 	  installation-home) ) ) )
 
 
@@ -1304,6 +1311,10 @@
 (define ##sys#repository-path
   (make-parameter 
    (or (getenv repository-environment-variable)
+       (##sys#chicken-prefix 
+	(##sys#string-append 
+	 "lib/chicken/"
+	 (##sys#number->string (or (##sys#fudge 42) default-binary-version)) ) )
        install-egg-home) ) )
 
 (define repository-path ##sys#repository-path)

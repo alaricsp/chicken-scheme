@@ -331,8 +331,8 @@
 
 (define decompose-lambda-list ##sys#decompose-lambda-list)
 
-(define (process-lambda-documentation id doc)
-  #f)					; Hook this
+(define (process-lambda-documentation id doc proc)
+  proc)					; Hook this
 
 
 ;;; Profiling instrumentation:
@@ -508,7 +508,7 @@
   (let ([count 0])
     (define (walk x)
       (cond ((symbol? x) (varnode x))
-	    ((not-pair? x) (bomb "bad expression"))
+	    ((not-pair? x) (bomb "bad expression" x))
 	    ((symbol? (car x))
 	     (case (car x)
 	       ((##core#global-ref) (make-node '##core#global-ref (list (cadr x)) '()))

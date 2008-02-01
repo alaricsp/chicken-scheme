@@ -209,5 +209,8 @@ chicken-defaults.h:
 	echo #ifndef C_TARGET_STATIC_LIB_HOME >>$@
 	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
 	echo #endif >>$@
+	echo #ifndef C_BINARY_VERSION >>$@
+	echo # define C_BINARY_VERSION $(BINARYVERSION) >>$@
+	echo #endif >>$@
 
 include rules.make

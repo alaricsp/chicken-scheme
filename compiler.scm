@@ -620,23 +620,25 @@
 			   (decompose-lambda-list
 			    llist
 			    (lambda (vars argc rest)
-			      (let* ([aliases (map gensym vars)]
-				     [ae2 (append (map cons vars aliases) ae)]
-				     [body0 (##sys#canonicalize-body obody (cut assq <> ae2) me dest)]
-				     [body (walk body0 ae2 me #f)]
-				     [llist2 
+			      (let* ((aliases (map gensym vars))
+				     (ae2 (append (map cons vars aliases) ae))
+				     (body0 (##sys#canonicalize-body obody (cut assq <> ae2) me dest))
+				     (body (walk body0 ae2 me #f))
+				     (llist2 
 				      (build-lambda-list
 				       aliases argc
-				       (and rest (list-ref aliases (posq rest vars))) ) ] )
-				(when dest
-				  (match body0
-				    (('begin (or (? string? doc) ('quote doc)) _ . more)
-				     (process-lambda-documentation dest doc) )
-				    (_ #f) ) )
+				       (and rest (list-ref aliases (posq rest vars))) ) )
+				     (l `(lambda ,llist2 ,body)) )
 				(set-real-names! aliases vars)
-				(cond [(and dest emit-profile (eq? 'lambda name))
-				       (expand-profile-lambda dest llist2 body) ]
-				      [else `(lambda ,llist2 ,body)] ) ) ) ) ) )
+				(if dest
+				    (if (and emit-profile (eq? 'lambda name))
+					(expand-profile-lambda dest llist2 body) 
+					(match body0
+					  (('begin (or (? string? doc) ('quote doc)) _ . more)
+					   (process-lambda-documentation
+					    dest doc l) )
+					  (_ l) ) )
+				    l) ) ) ) ) )
 
 			((##core#named-lambda)
 			 (walk `(lambda ,@(cddr x)) ae me (cadr x)) )
