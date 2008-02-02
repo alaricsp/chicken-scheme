@@ -1019,6 +1019,9 @@ EOF
 (define (even? n) (##core#inline "C_i_evenp" n))
 (define (odd? n) (##core#inline "C_i_oddp" n))
 
+(define max)
+(define min)
+
 (let ([> >]
       [< <] )
   (letrec ([maxmin
@@ -1035,6 +1038,7 @@ EOF
 				    ni)
 				nbest)
 			    (##sys#slot ns 1) ) ) ) ) ) ] )
+
     (set! max (lambda (n1 . ns) (maxmin n1 ns >)))
     (set! min (lambda (n1 . ns) (maxmin n1 ns <))) ) )
 
@@ -1130,19 +1134,26 @@ EOF
   (##sys#check-string str)
   (##sys#intern-symbol str) )
 
+(define ##sys#symbol->string)
+(define ##sys#symbol->qualified-string)
+(define ##sys#qualified-symbol-prefix)
+
 (let ([string-append string-append]
       [string-copy string-copy] )
+
   (define (split str len)
     (let ([b0 (##sys#byte str 0)])	; we fetch the byte, wether len is 0 or not
       (if (and (fx> len 0) (fx< b0 len) (fx<= b0 namespace-max-id-len))
 	  (fx+ b0 1)
 	  #f) ) )
+
   (set! ##sys#symbol->string
     (lambda (s)
       (let* ([str (##sys#slot s 1)]
 	     [len (##sys#size str)]
 	     [i (split str len)] )
 	(if i (##sys#substring str i len) str) ) ) )
+
   (set! ##sys#symbol->qualified-string 
     (lambda (s)
       (let* ([str (##sys#slot s 1)]
@@ -1151,6 +1162,7 @@ EOF
 	(if i
 	    (string-append "##" (##sys#substring str 1 i) "#" (##sys#substring str i len))
 	    str) ) ) )
+
   (set! ##sys#qualified-symbol-prefix 
     (lambda (s)
       (let* ([str (##sys#slot s 1)]
@@ -1417,6 +1429,12 @@ EOF
   (##core#inline "C_make_character"
 	     (##core#inline tolower (##core#inline "C_character_code" c)) ) )
 
+(define char-ci=?)
+(define char-ci>?)
+(define char-ci<?)
+(define char-ci>=?)
+(define char-ci<=?)
+
 (let ((char-downcase char-downcase))
   (set! char-ci=? (lambda (x y) (eq? (char-downcase x) (char-downcase y))))
   (set! char-ci>? (lambda (x y) (fx> (char-downcase x) (char-downcase y))))
@@ -1538,6 +1556,9 @@ EOF
 	     (cons (p (##sys#slot lst 0)) (loop (##sys#slot lst 1))) )
 	    (else (##sys#not-a-proper-list-error lst0 'map)) ) ] ) ) )
 
+(define for-each)
+(define map)
+
 (let ([car car]
       [cdr cdr] )
   (letrec ((mapsafe
@@ -1559,6 +1580,7 @@ EOF
 			     (not (eq? (##sys#slot lsts 0) '()))
 			     (loop (##sys#slot lsts 1)) ) ) )
 		  (##sys#error loc "lists are not of same length" lsts) ) ) ) )
+
     (set! for-each
 	  (lambda (fn lst1 . lsts)
 	    (if (null? lsts)
@@ -1569,6 +1591,7 @@ EOF
 			   (apply fn (mapsafe car all #t 'for-each))
 			   (loop (mapsafe cdr all #t 'for-each)) )
 			  (else (check all #t 'for-each)) ) ) ) ) ) )
+
     (set! map
 	  (lambda (fn lst1 . lsts)
 	    (if (null? lsts)
@@ -1857,7 +1880,13 @@ EOF
 	      (else path) )
 	    "") ) ) ) )
 
+(define open-input-file)
+(define open-output-file)
+(define close-input-file)
+(define close-output-file)
+
 (let ()
+ 
   (define (open name inp modes loc)
     (##sys#check-string name loc)
     (##sys#pathname-resolution
@@ -1882,12 +1911,14 @@ EOF
 	     (##sys#signal-hook #:file-error loc (##sys#string-append "can not open file - " strerror) name) )
 	   port) ) )
      #:open (not inp) modes) )
+
   (define (close port loc)
     (##sys#check-port port loc)
     (unless (##sys#slot port 8)		; closed?
       ((##sys#slot (##sys#slot port 2) 4) port) ; close
       (##sys#setislot port 8 #t) )
     (##core#undefined) )
+
   (set! open-input-file (lambda (name . mode) (open name #t mode 'open-input-file)))
   (set! open-output-file (lambda (name . mode) (open name #f mode 'open-output-file)))
   (set! close-input-port (lambda (port) (close port 'close-input-port)))
@@ -2644,7 +2675,8 @@ EOF
 (define set-parameterized-read-syntax!)
 
 (let ((crt current-read-table))
-  (define ((syntax-setter loc slot wrap) chr proc)
+ 
+ (define ((syntax-setter loc slot wrap) chr proc)
     (cond ((symbol? chr) (##sys#set-read-mark! chr proc))
 	  (else
 	   (let ((crt (crt)))
@@ -2654,6 +2686,7 @@ EOF
 	     (let ([i (char->integer chr)])
 	       (##sys#check-range i 0 256 loc)
 	       (##sys#setslot (##sys#slot crt slot) i (wrap proc)) ) ) ) ) )
+ 
   (set! set-read-syntax!
     (syntax-setter
      'set-read-syntax! 1 
@@ -2661,6 +2694,7 @@ EOF
        (lambda (_ port) 
 	 (##sys#read-char-0 port)
 	 (proc port) ) ) ) )
+
   (set! set-sharp-read-syntax!
     (syntax-setter
      'set-sharp-read-syntax! 2
@@ -2668,6 +2702,7 @@ EOF
        (lambda (_ port) 
 	 (##sys#read-char-0 port)
 	 (proc port) ) ) ) )
+
   (set! set-parameterized-read-syntax!
     (syntax-setter
      'set-parameterized-read-syntax! 3
@@ -3267,6 +3302,8 @@ EOF
 	    [else         (err x)] ) ) ) )
 
 (define ##sys#features '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
+
+;; Add system features:
 
 (let ((check (lambda (f)
 	       (unless (eq? 'unknown f)
@@ -4022,12 +4059,16 @@ EOF
 
 (define-foreign-variable ##sys#errno int "errno")
 
+(define ##sys#update-errno)
+(define errno)
+
 (let ([rn 0])
   (set! ##sys#update-errno (lambda () (set! rn ##sys#errno) rn))
   (set! errno (lambda () rn)) )
 
 
-;;; Format error string for unterminated here-docs
+;;; Format error string for unterminated here-docs:
+
 (define (##sys#format-here-doc-warning end)
   (##sys#print-to-string `("unterminated here-doc string literal `" ,end "'")))
 
