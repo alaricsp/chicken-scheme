@@ -380,7 +380,7 @@
 	  ((not filename)
 	   (unless quiet
 	     (print-version #t)
-	     (display "\n\nEnter \"chicken -help\" for information on how to use it.\n") ) )
+	     (display "\nEnter \"chicken -help\" for information on how to use it.\n") ) )
 	  (else
 
 	   ;; Display header:

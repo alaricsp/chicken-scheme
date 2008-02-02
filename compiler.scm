@@ -630,15 +630,17 @@
 				       (and rest (list-ref aliases (posq rest vars))) ) )
 				     (l `(lambda ,llist2 ,body)) )
 				(set-real-names! aliases vars)
-				(if dest
-				    (if (and emit-profile (eq? 'lambda name))
-					(expand-profile-lambda dest llist2 body) 
-					(match body0
-					  (('begin (or (? string? doc) ('quote doc)) _ . more)
-					   (process-lambda-documentation
-					    dest doc l) )
-					  (_ l) ) )
-				    l) ) ) ) ) )
+				(cond ((or (not dest) 
+					   (not (eq? dest (resolve dest ae)))) ; global?
+				       l)
+				      ((and emit-profile (eq? 'lambda name))
+				       (expand-profile-lambda dest llist2 body) )
+				      (else
+				       (match body0
+					 (('begin (or (? string? doc) ('quote doc)) _ . more)
+					  (process-lambda-documentation
+					   dest doc l) )
+					 (_ l) ) ) ) ) ) ) ) )
 
 			((##core#named-lambda)
 			 (walk `(lambda ,@(cddr x)) ae me (cadr x)) )
