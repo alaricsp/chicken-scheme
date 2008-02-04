@@ -36,9 +36,14 @@
 # basic parameters
 
 BINARYVERSION = 3
-NURSERY ?= (128*1024)
 STACKDIRECTION ?= 1
 CROSS_CHICKEN ?= 0
+
+ifeq ($(ARCH),x86-64)
+NURSERY ?= (256*1024)
+else
+NURSERY ?= (128*1024)
+endif
 
 # directories
 
@@ -299,7 +304,7 @@ all: get-svn-revision $(TARGETS)
 endif
 
 get-svn-revision:
-	sh scripts/svnrevision.sh
+	sh svnrevision.sh
 
 # generic part of chicken-config.h
 

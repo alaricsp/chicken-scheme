@@ -1,7 +1,7 @@
 #!/bin/sh
-# config-arch.sh - return host architecture id, if supported by apply-hack
+# svnrevision.sh - figure oout SVN revision and update buildsvnrevision file, if needed
 #
-# Copyright (c) 2000-2007, Felix L. Winkelmann
+# Copyright (c) 2008, Felix L. Winkelmann
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -34,14 +34,12 @@
 # Germany
 
 
-case "`uname -m`" in
-    i*86) echo "x86";;
-    "Power Macintosh"|ppc|powerpc|macppc)
-	case "`uname -s`" in
-	    Darwin) echo "ppc.darwin";;
-	    *) echo "ppc.sysv";;
-	esac;;
-    sparc64) echo "sparc64";;
-    amd64|x86_64) echo "x86-64";;
-    *) ;;
-esac
+if test -d .svn; then
+    rev=`svn info | sed -n -e 's/Revision: \([0-9]*\)/\1/p'`
+else
+    rev='0'
+fi
+
+if test `cat buildsvnrevision` != "$rev"; then
+    echo "$rev" >buildsvnrevision
+fi
