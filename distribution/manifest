@@ -105,6 +105,7 @@ uutils.c
 build.scm
 version.scm
 buildversion
+buildsvnrevision
 c-backend.scm
 c-platform.scm
 chicken-ffi-macros.scm
