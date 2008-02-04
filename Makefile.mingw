@@ -39,6 +39,7 @@ DLLSINPATH = 1
 ARCH = x86
 HACKED_APPLY = 1
 WINDOWS = 1
+NO_UNIX_SHELL = 1
 
 # file extensions
 
@@ -88,7 +89,7 @@ all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE
 	chicken.info
 
 chicken-config.h: chicken-defaults.h
-	echo #define HAVE_DIRENT_H 1 >>$@
+	echo #define HAVE_DIRENT_H 1 >$@
 	echo #define HAVE_INTTYPES_H 1 >>$@
 	echo #define HAVE_LIMITS_H 1 >>$@
 	echo #define HAVE_LONG_LONG 1 >>$@

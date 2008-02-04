@@ -258,3 +258,4 @@ defaults.make
 private-namespace.scm
 misc/makedist.scm
 tests/port-tests.scm
+scripts/svnrevision.sh

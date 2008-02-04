@@ -90,7 +90,7 @@ CUSTOM_CHICKEN_DEFAULTS=1
 include defaults.make
 
 chicken-config.h: chicken-defaults.h
-	echo "#define HAVE_DIRENT_H 1" >>$@
+	echo "#define HAVE_DIRENT_H 1" >$@
 	echo "#define HAVE_INTTYPES_H 1" >>$@
 	echo "#define HAVE_LIMITS_H 1" >>$@
 	echo "#define HAVE_LONG_LONG 1" >>$@

@@ -290,16 +290,24 @@ endif
 
 # main rule
 
-.PHONY: all
+.PHONY: all get-svn-revision
 
+ifdef NO_UNIX_SHELL
 all: $(TARGETS)
+else
+all: get-svn-revision $(TARGETS)
+endif
+
+get-svn-revision:
+	sh scripts/svnrevision.sh
 
 # generic part of chicken-config.h
 
 ifndef CUSTOM_CHICKEN_DEFAULTS
-chicken-defaults.h:
+chicken-defaults.h: buildsvnrevision
 	echo "/* generated */" >$@
 	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
+	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >>$@
 	echo "#ifndef C_INSTALL_CC" >>$@
 	echo "# define C_INSTALL_CC \"$(C_COMPILER)\"" >>$@
 	echo "#endif" >>$@

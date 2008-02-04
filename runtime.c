@@ -4257,7 +4257,12 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     return C_SCHEME_FALSE;
 #endif
 
-    /* 38 */
+  case C_fix(38):
+#ifdef C_SVN_REVISION
+    return C_fix(C_SVN_REVISION);
+#else
+    return C_fix(0);
+#endif
 
   case C_fix(39):
 #if defined(C_CROSS_CHICKEN) && C_CROSS_CHICKEN

@@ -3261,7 +3261,8 @@ EOF
 	    (string-append (symbol->string x) "-") ) )
       (string-append (str sv) (str st) (str bp) (##sys#symbol->string mt)) ) )
   (if full
-      (let ((spec (string-append
+      (let ((rev (##sys#fudge 38))
+	    (spec (string-append
 		   (if (##sys#fudge 3)  " 64bit" "")
 		   (if (##sys#fudge 15) " symbolgc" "")
 		   (if (##sys#fudge 40) " manyargs" "")
@@ -3278,7 +3279,10 @@ EOF
 	 (if (eq? 0 (##sys#size spec))
 	     ""
 	     (string-append "\t[" spec " ]") )
-	 "\n" +copyright+ "\t" +build-tag+) )
+	 "\n" +copyright+ "\t" +build-tag+
+	 (if (not (zero? rev)) 
+	     (##sys#string-append "\nSVN rev. " (number->string rev))
+	     "")))
       +build-version+) )
 
 (define ##sys#pathname-directory-separator #\/) ; DEPRECATED

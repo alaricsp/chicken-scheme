@@ -12,6 +12,10 @@ found in several modern languages, notably Standard ML, Haskell and
 Miranda. These syntactic extensions internally use the {{match}}
 library unit.
 
+Note: this pattern matching package is not compatible with hygienic
+macro-expanders like the {{syntax-case}} extension (available
+separately).
+
 The basic form of pattern matching expression is:
 
 <enscript highlight=scheme>

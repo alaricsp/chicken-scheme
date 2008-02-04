@@ -124,6 +124,29 @@ on the stack or on the heap or completely outside the GC-able data space) has to
 be rather complex and inefficient in a situation where multiple threads are involved.
 
 
+==== Does CHICKEN support Unicode strings?
+
+Yes, as an extension.
+
+By default all string and character functions operate bytewise, so that characters with an iteger value greater than 255 don't make much sense and multibyte UTF-8 characters are seen and manipulated as separate bytes, analogous to what a C program would see.
+
+You can enable UTF-8 support by placing the following two lines at the beginning of your source file (or in your ~/.csirc for interactive sessions) before any other code, including other use directives:
+
+<enscript highlight=scheme>
+(use iset syntax-case utf8)
+(import utf8)
+</enscript>
+
+This will replace all builtin string operators with UTF-8-aware versions, that will treat strings as sequences of multibyte UTF-8 characters, thus enabling you to represent and manipulate Unicode characters while remaining compatible with most C libraries and system interfaces.
+
+Most eggs should work correctly in utf8 mode, including the regex extension, but you still have the option of working around incompatibilities of specific eggs by loading them before the (import utf8) directive. Keep in mind that some operations, such as string-length, are much more expensive in utf8 (multibyte) mode, and should be used with care. See the [[http://www.call-with-current-continuation.org/eggs/utf8.html|utf8 egg documentation]] for details.
+
+
+==== Why do I get an "Error: invalid syntax: ..." using 'match' and 'syntax-case'?
+
+The built-in 'match' macro is incompatible with 'syntax-case'. Use the  [[http://www.call-with-current-continuation.org/eggs/matchable.html|matchable egg]] instead.
+
+
 === Platform specific
 
 ==== How do I generate a DLL under MS Windows (tm) ?

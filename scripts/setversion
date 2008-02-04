@@ -1,9 +1,9 @@
 #!/bin/sh
-#| setversion - Bump version-number
+#| setversion - Bump version-number -*- Scheme -*-
 exec csi -s "$0" "$@"
 |#
 
-(use srfi-1 utils)
+(use srfi-1 utils posix)
 
 (define buildversion (->string (car (read-file "buildversion"))))
 (define buildbinaryversion (car (read-file "buildbinaryversion")))
