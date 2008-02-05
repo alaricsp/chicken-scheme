@@ -80,7 +80,7 @@ EOF
 
 (declare
   (hide
-    #;##sys#sprintf
+   fprintf0
     ##sys#hash-table-ref	; shadows eval unit defines if not hidden
     ##sys#hash-table-update!
     ##sys#hash-table-for-each	; shadows eval unit defines if not hidden
@@ -1328,23 +1328,28 @@ EOF
 
 ;;; Write simple formatted output:
 
-(define fprintf
-  (let ([write write]
-	[newline newline]
-	[display display] )
-    (lambda (port msg . args)
+(define fprintf0
+  (let ((write write)
+	(newline newline)
+	(display display) 
+	(open-output-string open-output-string)
+	(get-output-string get-output-string))
+    (lambda (loc port msg args)
       (let rec ([msg msg] [args args])
-	(##sys#check-string msg 'fprintf)
-	(##sys#check-port port 'fprintf)
+	(##sys#check-string msg loc)
+	(when port (##sys#check-port port loc))
 	(let ((index 0)
-	      (len (##sys#size msg)) )
+	      (len (##sys#size msg)) 
+	      (out (if (and port (##sys#tty-port? port))
+		       port
+		       (open-output-string))))
 	  (define (fetch)
 	    (let ((c (##core#inline "C_subchar" msg index)))
 	      (set! index (fx+ index 1))
 	      c) )
 	  (define (next)
 	    (if (cond-expand [unsafe #f] [else (##core#inline "C_eqp" args '())])
-		(##sys#error 'fprintf "too few arguments to formatted output procedure")
+		(##sys#error loc "too few arguments to formatted output procedure")
 		(let ((x (##sys#slot args 0)))
 		  (set! args (##sys#slot args 1)) 
 		  x) ) )
@@ -1354,48 +1359,42 @@ EOF
 		(if (and (eq? c #\~) (fx< index len))
 		    (let ((dchar (fetch)))
 		      (case (char-upcase dchar)
-			((#\S) (write (next) port))
-			((#\A) (display (next) port))
-			((#\C) (##sys#write-char-0 (next) port))
-			((#\B) (display (##sys#number->string (next) 2) port))
-			((#\O) (display (##sys#number->string (next) 8) port))
-			((#\X) (display (##sys#number->string (next) 16) port))
-			((#\!) (##sys#flush-output port))
+			((#\S) (write (next) out))
+			((#\A) (display (next) out))
+			((#\C) (##sys#write-char-0 (next) out))
+			((#\B) (display (##sys#number->string (next) 2) out))
+			((#\O) (display (##sys#number->string (next) 8) out))
+			((#\X) (display (##sys#number->string (next) 16) out))
+			((#\!) (##sys#flush-output out))
 			((#\?)
 			 (let* ([fstr (next)]
 				[lst (next)] )
 			   (##sys#check-list lst 'fprintf)
 			   (rec fstr lst) ) )
-			((#\~) (##sys#write-char-0 #\~ port))
-			((#\%) (newline port))
-			((#\% #\N) (newline port))
+			((#\~) (##sys#write-char-0 #\~ out))
+			((#\%) (newline out))
+			((#\% #\N) (newline out))
 			(else
 			 (if (char-whitespace? dchar)
 			     (let skip ((c (fetch)))
 			       (if (char-whitespace? c)
 				   (skip (fetch))
 				   (set! index (fx- index 1)) ) )
-			     (##sys#error 'fprintf "illegal format-string character" dchar) ) ) ) )
-		    (##sys#write-char-0 c port) )
-		(loop) ) ) ) ) ) ) ) )
+			     (##sys#error loc "illegal format-string character" dchar) ) ) ) )
+		    (##sys#write-char-0 c out) )
+		(loop) ) ) )
+	  (cond ((not port) (get-output-string out))
+		((not (eq? out port))
+		 (##sys#print (get-output-string out) #f port) ) ) ) ) ) ) )
 
+(define (fprintf port fstr . args)
+  (fprintf0 'fprintf port fstr args) )
 
-(define printf
-  (let ((fprintf fprintf)
-	(current-output-port current-output-port) )
-    (lambda (msg . args)
-      (apply fprintf (current-output-port) msg args) ) ) )
+(define (printf fstr . args)
+  (fprintf0 'printf ##sys#standard-output fstr args) )
 
-
-(define sprintf
-  (let ((open-output-string open-output-string)
-	(get-output-string get-output-string)
-	(fprintf fprintf) )
-    (lambda (fstr . args)
-      (let ((out (open-output-string)))
-	(apply fprintf out fstr args)
-	(get-output-string out) ) ) ) )
-
+(define (sprintf fstr . args)
+  (fprintf0 'sprintf #f fstr args) )
 
 (define format
   (let ([fprintf fprintf]
