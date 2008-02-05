@@ -73,21 +73,18 @@ EOF
 
 (private extras
   reverse-string-append
-  generic-write
+  fprintf0 generic-write
   unbound-value-thunk false-thunk
   %number-hash %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
+  %hash-table-ref %hash-table-update! %hash-table-for-each %hash-table-fold
   hash-table-canonical-length hash-table-rehash )
 
 (declare
   (hide
-   fprintf0
-    ##sys#hash-table-ref	; shadows eval unit defines if not hidden
-    ##sys#hash-table-update!
-    ##sys#hash-table-for-each	; shadows eval unit defines if not hidden
-    ##sys#hash-table-fold
-    generic-write
+    fprintf0 generic-write
     unbound-value-thunk false-thunk
     %number-hash %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
+    %hash-table-ref %hash-table-update! %hash-table-for-each %hash-table-fold
     hash-table-canonical-length hash-table-rehash) )
 
 (cond-expand
@@ -1372,7 +1369,6 @@ EOF
 			   (##sys#check-list lst 'fprintf)
 			   (rec fstr lst) ) )
 			((#\~) (##sys#write-char-0 #\~ out))
-			((#\%) (newline out))
 			((#\% #\N) (newline out))
 			(else
 			 (if (char-whitespace? dchar)
@@ -2065,7 +2061,7 @@ EOF
 
 ;; Hash-Table Reference:
 
-(define ##sys#hash-table-ref
+(define %hash-table-ref
   (let ([core-eq? eq?])
     (lambda (ht key def)
        (let  ([vec (##sys#slot ht 1)]
@@ -2098,16 +2094,16 @@ EOF
                                       "hash-table does not contain key" key ht))))
      (##sys#check-structure ht 'hash-table 'hash-table-ref)
      (##sys#check-closure def 'hash-table-ref)
-     (apply ##sys#hash-table-ref ht key def) )
+     (apply %hash-table-ref ht key def) )
    hash-table-set!))
 
 (define (hash-table-ref/default ht key default)
   (##sys#check-structure ht 'hash-table 'hash-table-ref/default)
-  (##sys#hash-table-ref ht key (lambda () default)) )
+  (%hash-table-ref ht key (lambda () default)) )
 
 (define (hash-table-exists? ht key)
   (##sys#check-structure ht 'hash-table 'hash-table-exists?)
-  (not ($unbound? (##sys#hash-table-ref ht key unbound-value-thunk))) )
+  (not ($unbound? (%hash-table-ref ht key unbound-value-thunk))) )
 
 ;; hash-table-update!:
 ;;
@@ -2129,7 +2125,7 @@ EOF
 				 (##sys#slot vec2 hshidx)))
 	    (loop (##sys#slot bucket 1)) ) ) ) ) ) )
 
-(define ##sys#hash-table-update!
+(define %hash-table-update!
   (let ([core-eq? eq?]
 	[floor floor] )
     (lambda (ht key func thunk)
@@ -2201,17 +2197,17 @@ EOF
   (##sys#check-structure ht 'hash-table 'hash-table-update!)
   (##sys#check-closure func 'hash-table-update!)
   (##sys#check-closure thunk 'hash-table-update!)
-  (##sys#hash-table-update! ht key func thunk) )
+  (%hash-table-update! ht key func thunk) )
 
 (define (hash-table-update!/default ht key func def)
   (##sys#check-structure ht 'hash-table 'hash-table-update!/default)
   (##sys#check-closure func 'hash-table-update!/default)
-  (##sys#hash-table-update! ht key func (lambda () def)) )
+  (%hash-table-update! ht key func (lambda () def)) )
 
 (define (hash-table-set! ht key val)
   (##sys#check-structure ht 'hash-table 'hash-table-set!)
   (let ([val-thunk (lambda _ val)])
-    (##sys#hash-table-update! ht key val-thunk val-thunk) ) )
+    (%hash-table-update! ht key val-thunk val-thunk) ) )
 
 ;; hash-table-delete!:
 
@@ -2285,7 +2281,7 @@ EOF
 	  [(null? lst)]
 	(let* ([b (##sys#slot lst 0)]
 	       [val-thunk (lambda _ (##sys#slot b 1))] )
-	  (##sys#hash-table-update! ht (##sys#slot b 0) val-thunk val-thunk) ) ) ) ) )
+	  (%hash-table-update! ht (##sys#slot b 0) val-thunk val-thunk) ) ) ) ) )
 
 ;; Hash-Table <-> Association-List:
 
@@ -2310,7 +2306,7 @@ EOF
       (let ((ht (apply make-hash-table rest)))
 	(for-each (lambda (x)
 		    (let ([val-thunk (lambda _ (cdr x))])
-		      (##sys#hash-table-update! ht (car x) val-thunk val-thunk) ) )
+		      (%hash-table-update! ht (car x) val-thunk val-thunk) ) )
 		  alist)
 	ht ) ) ) )
 
@@ -2353,7 +2349,7 @@ EOF
 ;; hash-table-fold:
 ;; hash-table-map:
 
-(define (##sys#hash-table-for-each ht proc)
+(define (%hash-table-for-each ht proc)
   (let* ([vec (##sys#slot ht 1)]
 	 [len (##sys#size vec)] )
     (do ([i 0 (fx+ i 1)] )
@@ -2362,7 +2358,7 @@ EOF
 			(proc (##sys#slot bucket 0) (##sys#slot bucket 1)) )
 		      (##sys#slot vec i)) ) ) )
 
-(define (##sys#hash-table-fold ht func init)
+(define (%hash-table-fold ht func init)
   (let* ([vec (##sys#slot ht 1)]
 	 [len (##sys#size vec)] )
     (let loop ([i 0] [acc init])
@@ -2376,28 +2372,25 @@ EOF
 		  (fold2 (##sys#slot bucket 1)
 			 (func (##sys#slot pare 0) (##sys#slot pare 1) acc) ) ) ) ) ) ) ) )
 
-(define (##sys#hash-table-map ht func)
-  (##sys#hash-table-fold ht (lambda (k v a) (cons (func k v) a)) '()) )
-
 (define (hash-table-fold ht func init)
   (##sys#check-structure ht 'hash-table 'hash-table-fold)
   (##sys#check-closure func 'hash-table-fold)
-  (##sys#hash-table-fold ht func init) )
+  (%hash-table-fold ht func init) )
 
 (define (hash-table-for-each ht proc)
   (##sys#check-structure ht 'hash-table 'hash-table-for-each)
   (##sys#check-closure proc 'hash-table-for-each)
-  (##sys#hash-table-for-each ht proc) )
+  (%hash-table-for-each ht proc) )
 
 (define (hash-table-walk ht proc)
   (##sys#check-structure ht 'hash-table 'hash-table-walk)
   (##sys#check-closure proc 'hash-table-walk)
-  (##sys#hash-table-for-each ht proc) )
+  (%hash-table-for-each ht proc) )
 
 (define (hash-table-map ht func)
   (##sys#check-structure ht 'hash-table 'hash-table-map)
   (##sys#check-closure func 'hash-table-map)
-  (##sys#hash-table-map ht func) )
+  (%hash-table-fold ht (lambda (k v a) (cons (func k v) a)) '()) )
 
 ;; Done with Hash-Tables:
 
