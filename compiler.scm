@@ -851,11 +851,6 @@
 				  (##sys#hash-table-set! constant-table name (list val))
 				  '(##core#undefined) ]
 				 [else
-				  (unless (basic-literal? val)
-				    (compiler-warning 
-				     'const
-				     "value for constant binding appears not to be a valid literal: ~s"
-				     val) )
 				  (let ([var (gensym "constant")])
 				    (##sys#hash-table-set! constant-table name (list var))
 				    (set! mutable-constants (alist-cons var val mutable-constants))
