@@ -70,7 +70,7 @@
 	library sources. If you have a recent version of CHICKEN
 	installed, then pass "CHICKEN=<chicken-executable>" to the
 	"make" invocation to override this setting. "CHICKEN" defaults
-	to defaults to "$PREFIX/bin/chicken".
+	to "$PREFIX/bin/chicken".
 
 	If you do not have a "chicken" binary installed, enter
 
