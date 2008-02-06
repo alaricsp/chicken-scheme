@@ -469,7 +469,7 @@
 	       ()
 	       ,(conc e ".egg")
 	       ,@(if needs (cdr needs) '())))))
-     *eggs*) 
+     eggs) 
     (write-char #\))))
 
 
@@ -502,7 +502,7 @@ usage: chicken-setup [OPTION ...] FILENAME
       -host-extension            compile any extensions in "host" mode
       -ls EXTENSION              list installed files for extension
       -fetch-tree                download and show repository catalog
-      -create-tree               create repository catalog from SVN checkout
+      -create-tree DIRECTORY     create repository catalog from SVN checkout
       -tree FILENAME             use repository catalog from given file
       -svn URL                   fetch extension from subversion repository
       -local PATH                fetch extension from local filesystem
@@ -1378,7 +1378,8 @@ EOF
 	(("-host-extension" . more)
 	 (host-extension #t)
 	 (loop more) )
-	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" "-tree" "-local" "-svn" "-eval"))
+	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" 
+	      "-tree" "-local" "-svn" "-eval" "-create-tree"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
 	 (cond ((and (> (string-length filename) 0) (char=? #\- (string-ref filename 0)))
