@@ -1366,7 +1366,7 @@ EOF
 			((#\?)
 			 (let* ([fstr (next)]
 				[lst (next)] )
-			   (##sys#check-list lst 'fprintf)
+			   (##sys#check-list lst loc)
 			   (rec fstr lst) ) )
 			((#\~) (##sys#write-char-0 #\~ out))
 			((#\% #\N) (newline out))
