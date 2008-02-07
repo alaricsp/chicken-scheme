@@ -252,18 +252,24 @@
 
 	- For Mac OS X, Chicken requires libdl, for loading compiled
 	  code dynamically. This library is available on Mac OS X 10.4
-	  (Tiger) by default. For older version you can find it here:
+	  (Tiger) by default. For older versions you can find it here:
 
 	    http://www.opendarwin.org/projects/dlcompat
 
 	- On Mac OS X, Chicken and its eggs can be built as universal 
 	  binaries which will work on either Intel or PowerPC.
+	  To build on Tiger (10.4):
 
+	    make PLATFORM=macosx ARCH=universal
+
+	  On Leopard (10.5), an extra step is required before `make':
+
+	    export MACOSX_DEPLOYMENT_TARGET=10.4
 	    make PLATFORM=macosx ARCH=universal
 
 	- On Mac OS X, Chicken can be built in 64-bit mode on Intel
 	  Core 2 Duo systems--basically, most recent machines.  The default
-	  is 32-bit mode.  To enable 64-bit mode, invoke `make` thusly:
+	  is 32-bit mode.  To enable 64-bit mode, invoke `make' thusly:
 
 	    make PLATFORM=macosx ARCH=x86-64
 
