@@ -2094,7 +2094,7 @@ EOF
                                       "hash-table does not contain key" key ht))))
      (##sys#check-structure ht 'hash-table 'hash-table-ref)
      (##sys#check-closure def 'hash-table-ref)
-     (apply %hash-table-ref ht key def) )
+     (%hash-table-ref ht key def) )
    hash-table-set!))
 
 (define (hash-table-ref/default ht key default)
