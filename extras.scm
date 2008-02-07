@@ -1394,15 +1394,15 @@ EOF
 
 (define format
   (let ([fprintf fprintf]
-        [sprintf sprintf]
-        [printf printf] )
+	[sprintf sprintf]
+	[printf printf] )
     (lambda (fmt-or-dst . args)
-      (apply (cond [(not fmt-or-dst)             sprintf]
-	           [(boolean? fmt-or-dst)        printf]
-	           [(string? fmt-or-dst)         (set! args (cons fmt-or-dst args)) sprintf]
-	           [(output-port? fmt-or-dst)    (set! args (cons fmt-or-dst args)) fprintf]
-	           [else
-	            (##sys#error 'format "illegal destination" fmt-or-dst args)])
+      (apply (cond [(not fmt-or-dst)		 sprintf]
+		   [(boolean? fmt-or-dst)	 printf]
+		   [(string? fmt-or-dst)	 (set! args (cons fmt-or-dst args)) sprintf]
+		   [(output-port? fmt-or-dst)	 (set! args (cons fmt-or-dst args)) fprintf]
+		   [else
+		    (##sys#error 'format "illegal destination" fmt-or-dst args)])
 	     args) ) ) )
 
 (register-feature! 'srfi-28)
@@ -1698,7 +1698,7 @@ EOF
 	[(eof-object? obj)	eof-hash-value]
 	[(symbol? obj)		($symbol-hash obj)]
 	#; ;UNUSED (no keyword vs. symbol issue)
-	[(keyword? obj)         ($keyword-hash obj)]
+	[(keyword? obj)		($keyword-hash obj)]
 	[($immediate? obj)	unknown-immediate-hash-value]
 	[else			(%object-uid-hash obj) ] ) )
 
@@ -1724,7 +1724,7 @@ EOF
 	[(number? obj)		(%number-hash obj)]
 	[(symbol? obj)		($symbol-hash obj)]
 	#; ;UNUSED (no keyword vs. symbol issue)
-	[(keyword? obj)         ($keyword-hash obj)]
+	[(keyword? obj)		($keyword-hash obj)]
 	[($immediate? ,?obj)	unknown-immediate-hash-value]
 	[else			(%object-uid-hash obj) ] ) )
 
@@ -1899,7 +1899,7 @@ EOF
 	    [weak-values #f])
 	(let ([hash-for-test
 		(lambda ()
-		  (cond [(eq? core-eq? test)      eq?-hash]
+		  (cond [(eq? core-eq? test)	  eq?-hash]
 			[(eq? eqv? test)	  eqv?-hash]
 			[(eq? equal? test)	  equal?-hash]
 			[(eq? string=? test)	  string-hash]
@@ -2089,9 +2089,9 @@ EOF
 (define hash-table-ref
   (getter-with-setter
    (lambda (ht key #!optional (def (lambda ()
-                                     (##sys#signal-hook #:access-error
-                                      'hash-table-ref
-                                      "hash-table does not contain key" key ht))))
+				     (##sys#signal-hook #:access-error
+				      'hash-table-ref
+				      "hash-table does not contain key" key ht))))
      (##sys#check-structure ht 'hash-table 'hash-table-ref)
      (##sys#check-closure def 'hash-table-ref)
      (%hash-table-ref ht key def) )
