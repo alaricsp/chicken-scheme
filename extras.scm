@@ -63,9 +63,8 @@ EOF
       ##extras#reverse-string-append ##sys#number? ##sys#procedure->string
       ##sys#pointer->string ##sys#user-print-hook ##sys#peek-char-0
       ##sys#read-char-0 ##sys#write-char ##sys#string-append ##sys#gcd ##sys#lcm
-      ##sys#fudge ##sys#check-list ##sys#user-read-hook ##sys#check-closure
-      %equal?-hash
-      hash-table-set!
+      ##sys#fudge ##sys#check-list ##sys#user-read-hook ##sys#check-closure ##sys#check-inexact
+      ##extras#%equal?-hash
       input-port? make-vector list->vector sort! merge! open-output-string floor
       get-output-string current-output-port display write port? list->string
       make-string string pretty-print-width newline char-name read random
@@ -75,22 +74,25 @@ EOF
   reverse-string-append
   fprintf0 generic-write
   unbound-value-thunk false-thunk
-  %number-hash %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
-  %hash-table-ref %hash-table-update! %hash-table-for-each %hash-table-fold
+  %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
+  %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
+  %hash-table-for-each %hash-table-fold
   hash-table-canonical-length hash-table-rehash )
 
 (declare
   (hide
     fprintf0 generic-write
     unbound-value-thunk false-thunk
-    %number-hash %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
-    %hash-table-ref %hash-table-update! %hash-table-for-each %hash-table-fold
+    %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
+    %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
+    %hash-table-for-each %hash-table-fold
     hash-table-canonical-length hash-table-rehash) )
 
 (cond-expand
  [unsafe
   (eval-when (compile)
     (define-macro (##sys#check-closure . _) '(##core#undefined))
+    (define-macro (##sys#check-inexact . _) '(##core#undefined))
     (define-macro (##sys#check-structure . _) '(##core#undefined))
     (define-macro (##sys#check-range . _) '(##core#undefined))
     (define-macro (##sys#check-pair . _) '(##core#undefined))
@@ -112,45 +114,43 @@ EOF
 
 ;; This only works because of '(no-bound-checks)'
 
-(define *unbound* (##sys#slot '##sys#arbitrary-unbound-symbol 0))
+(define-macro ($unbound-value)
+ '(##sys#slot '##sys#arbitrary-unbound-symbol 0) )
 
-(define unbound-value-thunk (lambda () *unbound*))
+(define unbound-value-thunk (lambda () ($unbound-value)))
 
 (define-macro ($unbound? ?val)
-  `(eq? *unbound* ,?val) )
+  `(eq? ($unbound-value) ,?val) )
 
 
 ;;; Core Inlines:
 
-(define-inline ($quick-flonum-truncate flo)
-  `(##core#inline "C_quickflonumtruncate" flo) )
+(define-macro ($quick-flonum-truncate ?flo)
+  `(##core#inline "C_quickflonumtruncate" ,?flo) )
 
-(define-inline ($block? obj)
-  (##core#inline "C_blockp" obj) )
+(define-macro ($fix ?wrd)
+  `(##core#inline "C_fix" ,?wrd) )
 
-(define-inline ($pair? obj)
-  (##core#inline "C_pairp" obj) )
+(define-macro ($block? ?obj)
+  `(##core#inline "C_blockp" ,?obj) )
 
-(define-inline ($special? obj)
-  (##core#inline "C_specialp" obj) )
+(define-macro ($special? ?obj)
+  `(##core#inline "C_specialp" ,?obj) )
 
-(define-inline ($port? obj)
-  (##core#inline "C_portp" obj) )
+(define-macro ($port? ?obj)
+  `(##core#inline "C_portp" ,?obj) )
 
-(define-inline ($byte-block? obj)
-  (##core#inline "C_byteblockp" obj) )
+(define-macro ($byte-block? ?obj)
+  `(##core#inline "C_byteblockp" ,?obj) )
 
-(define-inline ($hash-string str)
-  (##core#inline "C_hash_string" str) )
+(define-macro ($hash-string ?str)
+  `(##core#inline "C_hash_string" ,?str) )
 
-(define-inline ($hash-string-ci str)
-  (##core#inline "C_hash_string_ci" str) )
+(define-macro ($hash-string-ci ?str)
+  `(##core#inline "C_hash_string_ci" ,?str) )
 
 
 ;;;
-
-(define-macro ($64-bit?)
-  `(##sys#fudge 3) )
 
 (define-macro ($immediate? ?obj)
   `(not ($block? ,?obj)) )
@@ -158,14 +158,7 @@ EOF
 
 ;;; Boolean Thunks:
 
-#; ;UNUSED
-(define true-thunk (lambda () #t))
-
 (define false-thunk (lambda () #f))
-
-#; ;UNUSED
-(define-macro ($unbound-symbol? ?sym)
-  `($unbound-value? (##sys#slot ,?sym 0)) )
 
 
 ;;; Read expressions from file:
@@ -293,7 +286,7 @@ EOF
   (##sys#check-pair lst 'butlast)
   (let loop ((lst lst))
     (let ((next (##sys#slot lst 1)))
-      (if (and ($block? next) ($pair? next))
+      (if (and (##core#inline "C_blockp" next) (##core#inline "C_pairp" next))
 	  (cons (##sys#slot lst 0) (loop next))
 	  '() ) ) ) )
 
@@ -820,7 +813,7 @@ EOF
 	      ((eof-object? obj)  (out "#<eof>" col))
 	      ((##core#inline "C_undefinedp" obj) (out "#<unspecified>" col))
 	      ((##core#inline "C_anypointerp" obj) (out (##sys#pointer->string obj) col))
-	      (($unbound? obj)
+	      ((eq? obj (##sys#slot '##sys#arbitrary-unbound-symbol 0))
 	       (out "#<unbound value>" col) )
 	      ((##sys#generic-structure? obj)
 	       (let ([o (open-output-string)])
@@ -1205,7 +1198,7 @@ EOF
 			     (begin
 			       (##core#inline "C_substring_copy" ds str2 0 dslen n3)
 			       (loop2 next (fx+ n3 dslen)) ) ) ) ) ) ) ) )
-	    ((and ($block? ss) ($pair? ss))
+	    ((and (##core#inline "C_blockp" ss) (##core#inline "C_pairp" ss))
 	     (let ((stri (##sys#slot ss 0)))
 	       (##sys#check-string stri 'string-intersperse)
 	       (loop1 (##sys#slot ss 1)
@@ -1591,6 +1584,8 @@ EOF
 ;; ##sys#foo - global un-checked procedure
 ;; foo - global checked procedure
 
+;; All '%foo-hash' return fixnum
+
 ;; Fixed hash-values:
 
 (define-constant other-hash-value 99)
@@ -1606,42 +1601,58 @@ EOF
 
 ;; Force Hash to Bounded Fixnum:
 
+(define-macro ($fxabs ?fxn)
+  `(let ([_fxn ,?fxn]) (if (fx< _fxn 0) (fxneg _fxn) _fxn ) ) )
+
 (define-macro ($hash/limit ?hsh ?lim)
   `(fxmod (fxand (foreign-value "C_MOST_POSITIVE_FIXNUM" int)
-		 ,?hsh)
+		 ($fxabs ,?hsh))
 	  ,?lim) )
 
 ;; Number Hash:
 
 (define-constant flonum-magic 331804471)
 
-(define-macro ($hash-flonum ?obj)
-  `(if ($64-bit?)
-       ;XXX should split & combine
-       (fx* flonum-magic ($quick-flonum-truncate (##sys#slot ,?obj 0)))
-       (fx* flonum-magic
-	    (fx+ ($quick-flonum-truncate (##sys#slot ,?obj 0))
-		 (fxshl ($quick-flonum-truncate (##sys#slot ,?obj 1)) 1))) ) )
+(define-macro ($subbyte ?bytvec ?i)
+  `(##core#inline "C_subbyte" ,?bytvec ,?i) )
 
-(define ##sys#number-hash-hook %equal?-hash)
+#; ; Not sure which is "better"
+(define-macro ($hash-flonum ?flo)
+  `(fx* flonum-magic
+	,(let loop ([idx (fx- (##sys#size 1.0) 1)])
+	    (if (fx= 0 idx)
+		`($subbyte ,?flo 0)
+		`(fx+ ($subbyte ,?flo ,idx)
+		      (fxshl ,(loop (fx- idx 1)) 1))))) )
 
-(define (%number-hash obj)
-  (cond [(fixnum? obj)	obj]
-	[(flonum? obj)	($hash-flonum ?obj) ]
-	[else		(##sys#number-hash-hook obj)] ) )
+(define-macro ($hash-flonum ?flo)
+  `(fx* flonum-magic ($quick-flonum-truncate ,?flo)) )
+
+(define (##sys#number-hash-hook obj)
+  (%equal?-hash obj) )
+
+(define-macro ($other-number-hash ?obj)
+  `(cond [(flonum? obj)	($hash-flonum ,?obj)]
+	 [else		($fix (##sys#number-hash-hook ,?obj))] ) )
+
+(define-macro ($number-hash ?obj)
+  `(cond [(fixnum? obj)	,?obj]
+	 [else		($other-number-hash ?obj)] ) )
 
 (define (number-hash obj #!optional (bound hash-default-bound))
   (unless (number? obj)
     (##sys#signal-hook #:type 'number-hash "invalid number" obj) )
   (##sys#check-exact bound 'number-hash)
-  ($hash/limit (%number-hash obj) bound) )
+  ($hash/limit ($number-hash obj) bound) )
 
 ;; Object UID Hash:
 
 #; ;NOT YET (no weak-reference)
 (define (%object-uid-hash obj)
   (%uid-hash (##sys#object->uid obj)) )
-(define %object-uid-hash %equal?-hash)
+
+(define (%object-uid-hash obj)
+  (%equal?-hash obj) )
 
 (define (object-uid-hash obj #!optional (bound hash-default-bound))
   (##sys#check-exact bound 'object-uid-hash)
@@ -1652,6 +1663,7 @@ EOF
 #; ;NOT YET (no unique-symbol-hash)
 (define-macro ($symbol-hash ?obj)
   `(##sys#slot ,?obj INDEX-OF-UNIQUE-HASH-VALUE-COMPUTED-DURING-SYMBOL-CREATION) )
+
 (define-macro ($symbol-hash ?obj)
   `($hash-string (##sys#slot ,?obj 1)) )
 
@@ -1662,16 +1674,16 @@ EOF
 
 ;; Keyword Hash:
 
-#| UNUSED (no keyword vs. symbol issue)
 (define (##sys#check-keyword x . y)
   (unless (keyword? x)
     (##sys#signal-hook #:type-error
 		       (and (not (null? y)) (car y))
 		       "bad argument type - not a keyword" x) ) )
 
-#; ;NOT YET (no unique-symbol-hash)
+#; ;NOT YET (no unique-keyword-hash)
 (define-macro ($keyword-hash ?obj)
   `(##sys#slot ,?obj INDEX-OF-UNIQUE-HASH-VALUE-COMPUTED-DURING-KEYWORD-CREATION) )
+
 (define-macro ($keyword-hash ?obj)
   `($hash-string (##sys#slot ,?obj 1)) )
 
@@ -1679,15 +1691,14 @@ EOF
   (##sys#check-keyword obj 'keyword-hash)
   (##sys#check-exact bound 'keyword-hash)
   ($hash/limit ($keyword-hash obj) bound) )
-|#
 
 ;; Eq Hash:
 
 (define-macro ($eq?-hash-object? ?obj)
   `(or ($immediate? ,?obj)
        (symbol? ,?obj)
-       #; ;UNUSED (no keyword vs. symbol issue)
-       (keyword? obj) ) )
+       #; ;NOT YET (no keyword vs. symbol issue)
+       (keyword? ,?obj) ) )
 
 (define (%eq?-hash obj)
   (cond [(fixnum? obj)		obj]
@@ -1697,7 +1708,7 @@ EOF
 	[(null? obj)		null-hash-value]
 	[(eof-object? obj)	eof-hash-value]
 	[(symbol? obj)		($symbol-hash obj)]
-	#; ;UNUSED (no keyword vs. symbol issue)
+	#; ;NOT YET (no keyword vs. symbol issue)
 	[(keyword? obj)		($keyword-hash obj)]
 	[($immediate? obj)	unknown-immediate-hash-value]
 	[else			(%object-uid-hash obj) ] ) )
@@ -1721,11 +1732,11 @@ EOF
 	[(eq? obj #f)		false-hash-value]
 	[(null? obj)		null-hash-value]
 	[(eof-object? obj)	eof-hash-value]
-	[(number? obj)		(%number-hash obj)]
 	[(symbol? obj)		($symbol-hash obj)]
-	#; ;UNUSED (no keyword vs. symbol issue)
+	#; ;NOT YET (no keyword vs. symbol issue)
 	[(keyword? obj)		($keyword-hash obj)]
-	[($immediate? ,?obj)	unknown-immediate-hash-value]
+	[(number? obj)		($other-number-hash obj)]
+	[($immediate? obj)	unknown-immediate-hash-value]
 	[else			(%object-uid-hash obj) ] ) )
 
 (define (eqv?-hash obj #!optional (bound hash-default-bound))
@@ -1741,7 +1752,7 @@ EOF
 (define (%equal?-hash obj)
 
   (define-macro ($*list-hash ?obj)
-    `(fx+ (fxshl (length ,?obj) 4)
+    `(fx+ (length ,?obj)
 	  (recursive-atomic-hash (##sys#slot ,?obj 0) depth)) )
 
   (define-macro ($*pair-hash ?obj)
@@ -1749,7 +1760,7 @@ EOF
 	  (recursive-atomic-hash (##sys#slot ,?obj 1) depth)) )
 
   (define-macro ($*port-hash ?obj)
-    `(fx+ (fxshl (##sys#peek-fixnum ,?obj 0) 4)
+    `(fx+ (fxshl (##sys#peek-fixnum ,?obj 0) 4) ; Little extra "identity"
 	  (if (input-port? ,?obj)
 	      input-port-hash-value
 	      output-port-hash-value)) )
@@ -1791,15 +1802,15 @@ EOF
 	  [(eq? obj #f)		  false-hash-value]
 	  [(null? obj)		  null-hash-value]
 	  [(eof-object? obj)	  eof-hash-value]
-	  [(number? obj)	  (%number-hash obj)]
 	  [(symbol? obj)	  ($symbol-hash obj)]
-	  #; ;UNUSED (no keyword vs. symbol issue)
+	  #; ;NOT YET (no keyword vs. symbol issue)
 	  [(keyword? obj)	  ($keyword-hash obj)]
-	  [($immediate? ,?obj)	  unknown-immediate-hash-value]
+	  [(number? obj)	  ($other-number-hash obj)]
+	  [($immediate? obj)	  unknown-immediate-hash-value]
 	  [($byte-block? obj)	  ($hash-string obj)]
-	  [(list? obj)		  ($*list-hash ?obj)]
-	  [(pair? obj)		  ($*pair-hash ?obj)]
-	  [($port? obj)		  ($*port-hash ?obj)]
+	  [(list? obj)		  ($*list-hash obj)]
+	  [(pair? obj)		  ($*pair-hash obj)]
+	  [($port? obj)		  ($*port-hash obj)]
 	  [($special? obj)	  ($*special-vector-hash obj)]
 	  [else			  ($*regular-vector-hash obj)] ) )
 
@@ -1886,7 +1897,12 @@ EOF
 ;; Wish DSSSL (extended) argument list processing Did-What-I-Want (DWIW).
 
 (define make-hash-table
-  (let ([core-eq? eq?])
+  (let ([core-eq? eq?]
+	[core-eqv? eqv?]
+	[core-equal? equal?]
+	[core-string=? string=?]
+	[core-string-ci=? string-ci=?]
+	[core= =] )
     (lambda arguments0
       (let ([arguments arguments0]
 	    [test equal?]
@@ -1899,12 +1915,19 @@ EOF
 	    [weak-values #f])
 	(let ([hash-for-test
 		(lambda ()
-		  (cond [(eq? core-eq? test)	  eq?-hash]
-			[(eq? eqv? test)	  eqv?-hash]
-			[(eq? equal? test)	  equal?-hash]
-			[(eq? string=? test)	  string-hash]
-			[(eq? string-ci=? test)	  string-ci-hash]
-			[else			  #f] ) ) ] )
+		  (cond [(or (eq? core-eq? test)
+			     (eq? eq? test))		  eq?-hash]
+			[(or (eq? core-eqv? test)
+			     (eq? eqv? test))		  eqv?-hash]
+			[(or (eq? core-equal? test)
+			     (eq? equal? test))		  equal?-hash]
+			[(or (eq? core-string=? test)
+			     (eq? string=? test))	  string-hash]
+			[(or (eq? core-string-ci=? test)
+			     (eq? string-ci=? test))	  string-ci-hash]
+			[(or (eq? core= test)
+			     (eq? = test))		  number-hash]
+			[else				  #f] ) ) ] )
 	  ; Process optional arguments
 	  (unless (null? arguments)
 	    (let ([arg (car arguments)])
@@ -1933,7 +1956,7 @@ EOF
 		(let ([invarg-err
 			(lambda (msg)
 			  (error 'make-hash-table msg arg arguments0))])
-		  (if (keyword? args)
+		  (if (keyword? arg)
 		      (let* ([nxt (cdr args)]
 			     [val (if (pair? nxt)
 				      (car nxt)
@@ -1963,11 +1986,9 @@ EOF
 			      (error 'make-hash-table "invalid max-load" val) )
 			    (set! max-load val)]
 			  [(#:weak-keys)
-			    (##sys#check-boolean val 'make-hash-table)
-			    (set! weak-keys val)]
+			    (set! weak-keys (and val #t))]
 			  [(#:weak-values)
-			    (##sys#check-boolean val 'make-hash-table)
-			    (set! weak-values val)]
+			    (set! weak-values (and val #t))]
 			  [else
 			    (invarg-err "unknown keyword")])
 			(loop (cdr nxt)) )
@@ -1975,7 +1996,7 @@ EOF
 	  ; Load must be a proper interval
 	  (when (fp< max-load min-load)
 	    (error 'make-hash-table "min-load greater than max-load" min-load max-load) )
-	  ; Force non-canonical hash-table vector length
+	  ; Force canonical hash-table vector length
 	  (set! size (hash-table-canonical-length hash-table-prime-lengths size))
 	  ; Decide on a hash function when not supplied
 	  (unless hash
@@ -2024,21 +2045,20 @@ EOF
   (##sys#slot ht 8) )
 
 (define (hash-table-has-initial? ht)
-  (##sys#check-structure ht 'hash-table 'hash-table-weak-values)
+  (##sys#check-structure ht 'hash-table 'hash-table-has-initial?)
   (and (##sys#slot ht 9)
        #t ) )
 
 (define (hash-table-initial ht)
-  (##sys#check-structure ht 'hash-table 'hash-table-weak-values)
+  (##sys#check-structure ht 'hash-table 'hash-table-initial)
   (and-let* ([thunk (##sys#slot ht 9)])
     (thunk) ) )
 
 ;; hash-table-copy:
 
-(define hash-table-copy
+(define %hash-table-copy
   (let ([make-vector make-vector])
     (lambda (ht)
-      (##sys#check-structure ht 'hash-table 'hash-table-copy)
       (let* ([vec1 (##sys#slot ht 1)]
 	     [len (##sys#size vec1)]
 	     [vec2 (make-vector len '())] )
@@ -2059,51 +2079,9 @@ EOF
 		   (cons (cons (##sys#slot pare 0) (##sys#slot pare 1))
 			 (copy-loop (##sys#slot bucket 1))))))) ) ) ) ) )
 
-;; Hash-Table Reference:
-
-(define %hash-table-ref
-  (let ([core-eq? eq?])
-    (lambda (ht key def)
-       (let  ([vec (##sys#slot ht 1)]
-	      [test (##sys#slot ht 3)] )
-	 (let* ([hash (##sys#slot ht 4)]
-		[hshidx (hash key (##sys#size vec))] )
-	   (if (eq? core-eq? test)
-	       ; Fast path (eq? is rewritten by the compiler):
-	       (let loop ([bucket (##sys#slot vec hshidx)])
-		 (if (null? bucket)
-		     (def)
-		     (let ([pare (##sys#slot bucket 0)])
-		       (if (eq? key (##sys#slot pare 0))
-			   (##sys#slot pare 1)
-			   (loop (##sys#slot bucket 1)) ) ) ) )
-	       ; Slow path
-	       (let loop ([bucket (##sys#slot vec hshidx)])
-		 (if (null? bucket)
-		     (def)
-		     (let ([pare (##sys#slot bucket 0)])
-		       (if (test key (##sys#slot pare 0))
-			   (##sys#slot pare 1)
-			   (loop (##sys#slot bucket 1)) ) ) ) ) ) ) ) ) ) )
-
-(define hash-table-ref
-  (getter-with-setter
-   (lambda (ht key #!optional (def (lambda ()
-				     (##sys#signal-hook #:access-error
-				      'hash-table-ref
-				      "hash-table does not contain key" key ht))))
-     (##sys#check-structure ht 'hash-table 'hash-table-ref)
-     (##sys#check-closure def 'hash-table-ref)
-     (%hash-table-ref ht key def) )
-   hash-table-set!))
-
-(define (hash-table-ref/default ht key default)
-  (##sys#check-structure ht 'hash-table 'hash-table-ref/default)
-  (%hash-table-ref ht key (lambda () default)) )
-
-(define (hash-table-exists? ht key)
-  (##sys#check-structure ht 'hash-table 'hash-table-exists?)
-  (not ($unbound? (%hash-table-ref ht key unbound-value-thunk))) )
+(define (hash-table-copy ht)
+  (##sys#check-structure ht 'hash-table 'hash-table-copy)
+  (%hash-table-copy ht) )
 
 ;; hash-table-update!:
 ;;
@@ -2186,11 +2164,12 @@ EOF
 				       (loop (##sys#slot bucket 1)) ) ) ] ) ) ) ) ) ) ) ) ) ) ) )
 
 (define (hash-table-update!
-	 ht key func
-	 #!optional (thunk
-		     (lambda ()
-		       (let ([thunk (##sys#slot ht 9)])
-			 (or thunk
+	 ht key
+	 #!optional (func identity)
+		    (thunk
+		     (let ([thunk (##sys#slot ht 9)])
+		       (or thunk
+			   (lambda ()
 			     (##sys#signal-hook #:access-error
 			      'hash-table-update!
 			      "hash-table does not contain key" key ht))))))
@@ -2206,15 +2185,60 @@ EOF
 
 (define (hash-table-set! ht key val)
   (##sys#check-structure ht 'hash-table 'hash-table-set!)
-  (let ([val-thunk (lambda _ val)])
-    (%hash-table-update! ht key val-thunk val-thunk) ) )
+  (%hash-table-update! ht key identity (lambda () val)) )
+
+;; Hash-Table Reference:
+
+(define %hash-table-ref
+  (let ([core-eq? eq?])
+    (lambda (ht key def)
+       (let  ([vec (##sys#slot ht 1)]
+	      [test (##sys#slot ht 3)] )
+	 (let* ([hash (##sys#slot ht 4)]
+		[hshidx (hash key (##sys#size vec))] )
+	   (if (eq? core-eq? test)
+	       ; Fast path (eq? is rewritten by the compiler):
+	       (let loop ([bucket (##sys#slot vec hshidx)])
+		 (if (null? bucket)
+		     (def)
+		     (let ([pare (##sys#slot bucket 0)])
+		       (if (eq? key (##sys#slot pare 0))
+			   (##sys#slot pare 1)
+			   (loop (##sys#slot bucket 1)) ) ) ) )
+	       ; Slow path
+	       (let loop ([bucket (##sys#slot vec hshidx)])
+		 (if (null? bucket)
+		     (def)
+		     (let ([pare (##sys#slot bucket 0)])
+		       (if (test key (##sys#slot pare 0))
+			   (##sys#slot pare 1)
+			   (loop (##sys#slot bucket 1)) ) ) ) ) ) ) ) ) ) )
+
+(define hash-table-ref
+  (getter-with-setter
+   (lambda (ht key #!optional (def (lambda ()
+				     (##sys#signal-hook #:access-error
+				      'hash-table-ref
+				      "hash-table does not contain key" key ht))))
+     (##sys#check-structure ht 'hash-table 'hash-table-ref)
+     (##sys#check-closure def 'hash-table-ref)
+     (%hash-table-ref ht key def) )
+   hash-table-set!))
+
+(define (hash-table-ref/default ht key default)
+  (##sys#check-structure ht 'hash-table 'hash-table-ref/default)
+  (%hash-table-ref ht key (lambda () default)) )
+
+(define (hash-table-exists? ht key)
+  (##sys#check-structure ht 'hash-table 'hash-table-exists?)
+  (not ($unbound? (%hash-table-ref ht key unbound-value-thunk))) )
 
 ;; hash-table-delete!:
 
-(define (hash-table-delete! ht key)
-  (##sys#check-structure ht 'hash-table 'hash-table-delete!)
+(define hash-table-delete!
   (let ([core-eq? eq?])
     (lambda (ht key)
+      (##sys#check-structure ht 'hash-table 'hash-table-delete!)
       (let* ([vec (##sys#slot ht 1)]
 	     [len (##sys#size vec)] )
 	(let* ([hash (##sys#slot ht 4)]
@@ -2226,27 +2250,29 @@ EOF
 		; Fast path (eq? is rewritten by the compiler):
 		(let loop ([prev #f] [bucket bucket0])
 		  (and (not (null? bucket))
-		       (let ([pare (##sys#slot bucket 0)])
+		       (let ([pare (##sys#slot bucket 0)]
+			     [nxt (##sys#slot bucket 1)])
 			 (if (eq? key (##sys#slot pare 0))
 			     (begin
-			       (if (not prev)
-				   (##sys#setslot vec hshidx (##sys#slot bucket 1))
-				   (##sys#setslot prev 1 (##sys#slot bucket 1)))
+			       (if prev
+				   (##sys#setslot prev 1 nxt)
+				   (##sys#setslot vec hshidx nxt) )
 			       (##sys#setslot ht 2 newsiz)
 			       #t )
-			     (loop bucket (##sys#slot bucket 1)) ) ) ) )
+			     (loop bucket nxt) ) ) ) )
 		; Slow path
 		(let loop ([prev #f] [bucket bucket0])
 		  (and (not (null? bucket))
-		       (let ([pare (##sys#slot bucket 0)])
+		       (let ([pare (##sys#slot bucket 0)]
+			     [nxt (##sys#slot bucket 1)])
 			 (if (test key (##sys#slot pare 0))
 			     (begin
-			       (if (not prev)
-				   (##sys#setslot vec hshidx (##sys#slot bucket 1))
-				   (##sys#setslot prev 1 (##sys#slot bucket 1)))
+			       (if prev
+				   (##sys#setslot prev 1 nxt)
+				   (##sys#setslot vec hshidx nxt) )
 			       (##sys#setslot ht 2 newsiz)
 			       #t )
-			     (loop bucket (##sys#slot bucket 1)) ) ) ) ) ) ) ) ) ) ) )
+			     (loop bucket nxt) ) ) ) ) ) ) ) ) ) ) )
 
 ;; hash-table-remove!:
 
@@ -2259,29 +2285,40 @@ EOF
       (do ([i 0 (fx+ i 1)])
 	  [(fx>= i len) (##sys#setislot ht 2 siz)]
 	(let loop ([prev #f] [bucket (##sys#slot vec i)])
-	  (unless (null? bucket)
-	    (let ([pare (##sys#slot bucket 0)])
-	      (when (func (##sys#slot pare 0) (##sys#slot pare 1))
-		(if prev
-		    (##sys#setslot prev 1 (##sys#slot bucket 1))
-		    (##sys#setslot vec i (##sys#slot bucket 1)) )
-		(set! siz (fx- siz 1)) )
-	      (loop bucket (##sys#slot bucket 1) ) ) ) ) ) ) ) )
+	  (and (not (null? bucket))
+	       (let ([pare (##sys#slot bucket 0)]
+		     [nxt (##sys#slot bucket 1)])
+		 (if (func (##sys#slot pare 0) (##sys#slot pare 1))
+		     (begin
+		       (if prev
+			   (##sys#setslot prev 1 nxt)
+			   (##sys#setslot vec i nxt) )
+		       (set! siz (fx- siz 1))
+		       #t )
+		     (loop bucket nxt ) ) ) ) ) ) ) ) )
 
-;; hash-table-merge!:
+;; Hash Table Merge:
 
-(define (hash-table-merge! ht1 ht2)
-  (##sys#check-structure ht1 'hash-table 'hash-table-merge!)
-  (##sys#check-structure ht2 'hash-table 'hash-table-merge!)
+(define (%hash-table-merge! ht1 ht2)
   (let* ([vec (##sys#slot ht2 1)]
 	 [len (##sys#size vec)] )
     (do ([i 0 (fx+ i 1)])
 	[(fx>= i len) ht1]
       (do ([lst (##sys#slot vec i) (##sys#slot lst 1)])
 	  [(null? lst)]
-	(let* ([b (##sys#slot lst 0)]
-	       [val-thunk (lambda _ (##sys#slot b 1))] )
-	  (%hash-table-update! ht (##sys#slot b 0) val-thunk val-thunk) ) ) ) ) )
+	(let ([b (##sys#slot lst 0)])
+	  (%hash-table-update! ht1 (##sys#slot b 0)
+				   identity (lambda () (##sys#slot b 1))) ) ) ) ) )
+
+(define (hash-table-merge! ht1 ht2)
+  (##sys#check-structure ht1 'hash-table 'hash-table-merge!)
+  (##sys#check-structure ht2 'hash-table 'hash-table-merge!)
+  (%hash-table-merge! ht1 ht2) )
+
+(define (hash-table-merge ht1 ht2)
+  (##sys#check-structure ht1 'hash-table 'hash-table-merge)
+  (##sys#check-structure ht2 'hash-table 'hash-table-merge)
+  (%hash-table-merge! (%hash-table-copy ht1) ht2) )
 
 ;; Hash-Table <-> Association-List:
 
@@ -2292,21 +2329,22 @@ EOF
     (let loop ([i 0] [lst '()])
       (if (fx>= i len)
 	  lst
-	  (let loop2 ([bucket (##sys#slot vec i)] [lst lst])
+	  (let loop2 ([bucket (##sys#slot vec i)]
+		      [lst lst])
 	    (if (null? bucket)
 		(loop (fx+ i 1) lst)
 		(loop2 (##sys#slot bucket 1)
 		       (let ([x (##sys#slot bucket 0)])
-			  (cons (cons (##sys#slot x 0) (##sys#slot x 1)) lst) ) ) ) ) ) ) ) )
+			 (cons (cons (##sys#slot x 0) (##sys#slot x 1)) lst) ) ) ) ) ) ) ) )
 
 (define alist->hash-table
   (let ([make-hash-table make-hash-table])
     (lambda (alist . rest)
       (##sys#check-list alist 'alist->hash-table)
-      (let ((ht (apply make-hash-table rest)))
+      (let ([ht (apply make-hash-table rest)])
 	(for-each (lambda (x)
-		    (let ([val-thunk (lambda _ (cdr x))])
-		      (%hash-table-update! ht (car x) val-thunk val-thunk) ) )
+		    (%hash-table-update! ht (##sys#slot x 0)
+					    identity (lambda () (##sys#slot x 1))) )
 		  alist)
 	ht ) ) ) )
 
@@ -2475,8 +2513,8 @@ EOF
        '()
        (do ((lst lst0 (##sys#slot lst 1)))
 	   ((eq? (##sys#slot lst 1) '()) lst)
-	 (if (or ($immediate? lst)
-		 (not ($pair? lst)) )
+	 (if (or (not (##core#inline "C_blockp" lst))
+		 (not (##core#inline "C_pairp" lst)) )
 	     (##sys#not-a-proper-list-error lst0 'list->queue) ) ) ) ) )
 
 

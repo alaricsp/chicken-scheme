@@ -14,6 +14,9 @@ $compile test-gc-hooks.scm && ./a.out
 echo "======================================== library tests ..."
 ../csi -w -s library-tests.scm
 
+echo "======================================== hash-table tests ..."
+../csi -w -s hash-table-tests.scm
+
 echo "======================================== port tests ..."
 ../csi -w -s port-tests.scm
 
