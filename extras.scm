@@ -736,7 +736,7 @@ EOF
 	(let ((head (car l)) (tail (cdr l)))
 	  (case head
 	    ((quote quasiquote unquote unquote-splicing) (length1? tail))
-	    (else					 #f))))
+	    (else                                        #f))))
 
       (define (read-macro-body l)
 	(cadr l))
@@ -744,9 +744,9 @@ EOF
       (define (read-macro-prefix l)
 	(let ((head (car l)) (tail (cdr l)))
 	  (case head
-	    ((quote)		"'")
-	    ((quasiquote)	"`")
-	    ((unquote)		",")
+	    ((quote)            "'")
+	    ((quasiquote)       "`")
+	    ((unquote)          ",")
 	    ((unquote-splicing) ",@"))))
 
       (define (out str col)
@@ -767,21 +767,21 @@ EOF
 		      ((pair? l)
 		       (loop (cdr l) (wr (car l) (out " " col))))
 		      ((null? l) (out ")" col))
-		      (else	 (out ")" (wr l (out " . " col))))))
+		      (else      (out ")" (wr l (out " . " col))))))
 	      (out "()" col)))
 
-	(cond ((pair? obj)	  (wr-expr obj col))
-	      ((null? obj)	  (wr-lst obj col))
+	(cond ((pair? obj)        (wr-expr obj col))
+	      ((null? obj)        (wr-lst obj col))
 	      ((eof-object? obj)  (out "#<eof>" col))
-	      ((vector? obj)	  (wr-lst (vector->list obj) (out "#" col)))
-	      ((boolean? obj)	  (out (if obj "#t" "#f") col))
-	      ((##sys#number? obj)	(out (##sys#number->string obj) col))
+	      ((vector? obj)      (wr-lst (vector->list obj) (out "#" col)))
+	      ((boolean? obj)     (out (if obj "#t" "#f") col))
+	      ((##sys#number? obj)      (out (##sys#number->string obj) col))
 	      ((symbol? obj)
 	       (let ([s (open-output-string)])
 		 (##sys#print obj #t s)
 		 (out (get-output-string s) col) ) )
-	      ((procedure? obj)	  (out (##sys#procedure->string obj) col))
-	      ((string? obj)	  (if display?
+	      ((procedure? obj)   (out (##sys#procedure->string obj) col))
+	      ((string? obj)      (if display?
 				      (out obj col)
 				      (let loop ((i 0) (j 0) (col (out "\"" col)))
 					(if (and col (< j (string-length obj)))
@@ -796,7 +796,7 @@ EOF
 						  (loop i (+ j 1) col)))
 					    (out "\""
 						 (out (##sys#substring obj i j) col))))))
-	      ((char? obj)	  (if display?
+	      ((char? obj)        (if display?
 				      (out (make-string 1 obj) col)
 				      (let ([code (char->integer obj)])
 					(out "#\\" col)
@@ -837,8 +837,8 @@ EOF
 	(define (spaces n col)
 	  (if (> n 0)
 	      (if (> n 7)
-		  (spaces (- n 8) (out "	" col))
-		  (out (##sys#substring "	 " 0 n) col))
+		  (spaces (- n 8) (out "        " col))
+		  (out (##sys#substring "        " 0 n) col))
 	      col))
 
 	(define (indent to col)
@@ -881,8 +881,8 @@ EOF
 		    (pp-list expr col extra pp-expr)))))
 
 					; (head item1
-					;	item2
-					;	item3)
+					;       item2
+					;       item3)
 	(define (pp-call expr col extra pp-item)
 	  (let ((col* (wr (car expr) (out "(" col))))
 	    (and col
@@ -983,14 +983,14 @@ EOF
 	(define (style head)
 	  (case head
 	    ((lambda let* letrec define) pp-lambda)
-	    ((if set!)			 pp-if)
-	    ((cond)			 pp-cond)
-	    ((case)			 pp-case)
-	    ((and or)			 pp-and)
-	    ((let)			 pp-let)
-	    ((begin)			 pp-begin)
-	    ((do)			 pp-do)
-	    (else			 #f)))
+	    ((if set!)                   pp-if)
+	    ((cond)                      pp-cond)
+	    ((case)                      pp-case)
+	    ((and or)                    pp-and)
+	    ((let)                       pp-let)
+	    ((begin)                     pp-begin)
+	    ((do)                        pp-do)
+	    (else                        #f)))
 
 	(pr obj col 0 pp-expr))
 
