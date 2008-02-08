@@ -38,6 +38,10 @@
 ;;; That's all there is to it.
 
 ;;; History:
+;;;   0.8: 2008/02/08 - several parsing bugfixes on unclosed parenthesis
+;;;                       (thanks to Kazushi NODA)
+;;;                     filename completion works properly on absolute paths
+;;;                     eldoc works properly on dotted lambdas
 ;;;   0.7: 2008/01/18 - handles higher-order types (for apply, map, etc.)
 ;;;                     smarter string completion (hostname, username, etc.)
 ;;;                     smarter type inference, various bugfixes
@@ -2821,7 +2825,7 @@
                              (buffer-list))))
          (if ,buf
              (switch-to-buffer ,buf)
-           (find-file ,path))
+           (switch-to-buffer (find-file-noselect ,path t t)))
          (let ((,res (save-excursion ,@body)))
            (unless ,buf (kill-buffer (current-buffer)))
            ,res)))))
@@ -2912,7 +2916,7 @@
   (let ((here (point)))
     (or (ignore-errors (end-of-defun) (end-of-defun)
                        (beginning-of-defun)
-                       (not (eq here (point))))
+                       (< here (point)))
         (progn (forward-char) (re-search-forward "^(" nil t))
         (goto-char (point-max)))))
 
@@ -2948,7 +2952,9 @@
      nil)))
 
 (defun let-vars-at-point (&optional env)
-  (let ((end (save-excursion (forward-sexp) (point)))
+  (let ((end (or (ignore-errors
+                   (save-excursion (forward-sexp) (point)))
+                 (point-min)))
         (vars '()))
     (forward-char 1)
     (while (< (point) end)
@@ -2961,8 +2967,10 @@
                              (beginning-of-next-sexp)
                              (sexp-type-at-point env))))
                 (push (if type (list sym type) (list sym)) vars)))))
-      (or (ignore-errors (progn (beginning-of-next-sexp) t))
-          (goto-char end)))
+      (unless (ignore-errors (let ((here (point)))
+                               (beginning-of-next-sexp)
+                               (> (point) here)))
+        (goto-char end)))
     (reverse vars)))
 
 (defun extract-match-clause-vars (x)
@@ -3076,20 +3084,24 @@ when scheme-complete can't infer the current implementation."
                (setq vars (append (mapcar #'list
                                           (flatten (extract-match-vars
                                                     (nth-sexp-at-point 1))))
-                                 vars)))
+                                  vars)))
               ((let let* letrec letrec* let-syntax letrec-syntax and-let* do)
-               (save-excursion
-                 (beginning-of-next-sexp)
-                 (if (and (eq sym 'let)
-                          (eq ?w (char-syntax (char-after (point)))))
-                     ;; named let
-                     (let* ((sym (scheme-symbol-at-point))
-                            (args (progn
-                                    (beginning-of-next-sexp)
-                                    (let-vars-at-point env))))
-                       (setq vars (cons `(,sym (lambda ,(mapcar #'car args)))
-                                        (append args vars))))
-                   (setq vars (append (let-vars-at-point env) vars)))))
+               (or
+                (ignore-errors
+                  (save-excursion
+                    (beginning-of-next-sexp)
+                    (if (and (eq sym 'let)
+                             (eq ?w (char-syntax (char-after (point)))))
+                        ;; named let
+                        (let* ((sym (scheme-symbol-at-point))
+                               (args (progn
+                                       (beginning-of-next-sexp)
+                                       (let-vars-at-point env))))
+                          (setq vars (cons `(,sym (lambda ,(mapcar #'car args)))
+                                           (append args vars))))
+                      (setq vars (append (let-vars-at-point env) vars)))
+                    t))
+                (goto-char limit)))
               ((let-values let*-values)
                (setq vars
                      (append (mapcar
@@ -3330,7 +3342,7 @@ when scheme-complete can't infer the current implementation."
           (goto-char (point-max)))
       (while (not (eobp))
         (setq globals
-              (append (scheme-extract-definitions) globals))
+              (append (ignore-errors (scheme-extract-definitions)) globals))
         (goto-next-top-level)))
     globals))
 
@@ -3340,11 +3352,13 @@ when scheme-complete can't infer the current implementation."
         (end (or enclosing-end (point-max))))
     (save-excursion
       (while (< (point) end)
-        (let ((new-defs (scheme-extract-definitions)))
+        (let ((here (point))
+              (new-defs (scheme-extract-definitions)))
           (cond
            (new-defs
              (setq defs (append new-defs defs))
-             (or (ignore-errors (beginning-of-next-sexp) t)
+             (or (ignore-errors (beginning-of-next-sexp)
+                                (> (point) here))
                  (goto-char end)))
            (t ;; non-definition form, stop scanning
             (goto-char end))))))
@@ -3503,6 +3517,12 @@ when scheme-complete can't infer the current implementation."
   (defun read-event ()
     (aref (read-key-sequence nil) 0)))
 
+(defun string-prefix-p (pref str)
+  (let ((p-len (length pref))
+        (s-len (length str)))
+    (and (<= p-len s-len)
+         (equal pref (substring str 0 p-len)))))
+
 (defun do-completion (str coll &optional strs pred)
   (let* ((coll (mapcar #'(lambda (x)
                            (cond
@@ -3524,14 +3544,15 @@ when scheme-complete can't infer the current implementation."
       (message "Can't find completion for \"%s\"" str)
       (ding))
      ((not (string= str completion))
-      (unless (equal completion completion1)
-        (save-excursion
-          (backward-char (length str))
-          (insert "\"")))
-      (insert (substring completion (length str)))
-      (unless (equal completion completion1)
-        (insert "\"")
-        (backward-char)))
+      (let ((prefix-p (string-prefix-p completion completion1)))
+        (unless prefix-p
+          (save-excursion
+            (backward-char (length str))
+            (insert "\"")))
+        (insert (substring completion (length str)))
+        (unless prefix-p
+          (insert "\"")
+          (backward-char))))
      (t
       (let ((win-config (current-window-configuration))
             (done nil))
@@ -3577,13 +3598,13 @@ when scheme-complete can't infer the current implementation."
                            *scheme-implementation-exports*))))
       (if base (push base env)))
     ;; imports
-    (let ((imports (current-scheme-imports)))
+    (let ((imports (ignore-errors (current-scheme-imports))))
       (if imports (push imports env)))
     ;; top-level defs
-    (let ((top (current-scheme-globals)))
+    (let ((top (ignore-errors (current-scheme-globals))))
       (if top (push top env)))
     ;; current local vars
-    (let ((locals (current-local-vars env)))
+    (let ((locals (ignore-errors (current-local-vars env))))
       (if locals (push locals env)))
     env))
 
@@ -3699,19 +3720,19 @@ when scheme-complete can't infer the current implementation."
             (cdr (split-string line))))
    (file->lines file)))
 
-(defun complete-user-name (sym)
+(defun complete-user-name (trans sym)
   (if (string-match "apple" (emacs-version))
       (append (passwd-file-names "/etc/passwd" "^[^_].*")
               (delete "Shared" (directory-files "/Users" nil "^[^.].*")))
     (passwd-file-names "/etc/passwd")))
 
-(defun complete-host-name (sym)
+(defun complete-host-name (trans sym)
   (append (host-file-names "/etc/hosts")
           (ssh-known-hosts-file-names "~/.ssh/known_hosts")
           (ssh-config-file-names "~/.ssh/config")))
 
 ;; my /etc/services is 14k lines, so we try to optimize this
-(defun complete-port-name (sym)
+(defun complete-port-name (trans sym)
   (and (file-readable-p "/etc/services")
        (with-find-file "/etc/services"
          (goto-char (point-min))
@@ -3729,17 +3750,20 @@ when scheme-complete can't infer the current implementation."
                (forward-char 1)))
            res))))
 
-(defun complete-file-name (sym)
-  (let ((file (file-name-nondirectory sym))
-        (dir (or (file-name-directory sym) ".")))
-    (file-name-all-completions file dir)))
+(defun complete-file-name (trans sym)
+  (let* ((file (file-name-nondirectory sym))
+         (dir (file-name-directory sym))
+         (res (file-name-all-completions file (or dir "."))))
+    (if dir
+        (mapcar #'(lambda (f) (concat dir f)) res)
+      res)))
 
-(defun complete-directory-name (sym)
-  (let ((file (file-name-nondirectory sym))
-        (dir (or (file-name-directory sym) ".")))
-    (remove-if-not
-     #'(lambda (x) (file-directory-p (concat dir "/" x)))
-     (file-name-all-completions file dir))))
+(defun complete-directory-name (trans sym)
+  (let* ((file (file-name-nondirectory sym))
+         (dir (file-name-directory sym))
+         (res (file-name-all-completions file (or dir ".")))
+         (res2 (if dir (mapcar #'(lambda (f) (concat dir f)) res) res)))
+    (remove-if-not #'file-directory-p res2)))
 
 (defun scheme-string-completer (type)
   (case type
@@ -3766,7 +3790,7 @@ when scheme-complete can't infer the current implementation."
 (defun scheme-apply-string-completer (cmpl sym)
   (let ((func (if (consp cmpl) (car cmpl) cmpl))
         (trans (and (consp cmpl) (cadr cmpl))))
-    (funcall func (if trans (funcall trans sym) sym))))
+    (funcall func trans sym)))
 
 (defun scheme-smart-complete (&optional arg)
   (interactive "P")
@@ -3801,7 +3825,8 @@ when scheme-complete can't infer the current implementation."
              (completer (or (scheme-string-completer param-type)
                             '(complete-file-name file-name-nondirectory))))
         (do-completion
-         (if (consp completer) (funcall (cadr completer) sym) sym)
+         ;;(if (consp completer) (funcall (cadr completer) sym) sym)
+         sym
          (scheme-apply-string-completer completer sym))))
      ;; outer special
      ((and (consp outer-type)
@@ -3916,6 +3941,15 @@ when scheme-complete can't infer the current implementation."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; optional eldoc function
 
+(defun translate-dot-to-optional (ls)
+  (let ((res '()))
+    (while (consp ls)
+      (setq res (cons (car ls) res))
+      (setq ls (cdr ls)))
+    (if (not (null ls))
+        (setq res (cons ls (cons :optional res))))
+    (reverse res)))
+
 (defun scheme-optional-in-brackets (ls)
   ;; stupid xemacs won't allow ... as a symbol
   (setq ls (mapcar #'(lambda (x) (if (eq x '|...|) "..." x)) ls))
@@ -3966,7 +4000,8 @@ when scheme-complete can't infer the current implementation."
                (sexp-to-string
                 (cons (car spec)
                       (scheme-optional-in-brackets
-                       (mapcar #'scheme-base-type (cadr type)))))
+                       (mapcar #'scheme-base-type
+                               (translate-dot-to-optional (cadr type))))))
                (if (and (consp (cddr type))
                         (not (memq (caddr type) '(obj object))))
                    (concat " => " (sexp-to-string (caddr type)))
