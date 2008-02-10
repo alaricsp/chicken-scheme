@@ -1608,7 +1608,7 @@ EOF
       (if fmt
           (begin
             (##sys#check-string fmt 'time->string)
-            (or (strftime tm fmt)
+            (or (strftime tm (##sys#make-c-string fmt))
                 (##sys#error 'time->string "time formatting overflows buffer" tm)) )
           (let ([str (asctime tm)])
             (if str

@@ -1843,7 +1843,7 @@ EOF
       (if fmt
           (begin
             (##sys#check-string fmt 'time->string)
-            (or (strftime tm fmt)
+            (or (strftime tm (##sys#make-c-string fmt))
                 (##sys#error 'time->string "time formatting overflows buffer" tm)) )
           (let ([str (asctime tm)])
             (if str
@@ -1855,7 +1855,7 @@ EOF
     (lambda (tim #!optional (fmt "%a %b %e %H:%M:%S %Z %Y"))
       (##sys#check-string tim 'string->time)
       (##sys#check-string fmt 'string->time)
-      (strptime tim fmt (make-vector 10 #f)) ) ) )
+      (strptime (##sys#make-c-string tim) (##sys#make-c-string fmt) (make-vector 10 #f)) ) ) )
 
 (define (local-time->seconds tm)
   (##sys#check-vector tm 'local-time->seconds)
