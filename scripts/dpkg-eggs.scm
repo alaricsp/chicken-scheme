@@ -68,7 +68,7 @@
   (let ((tags (s+ path dirsep "tags")))
     (cond ((file-exists? tags) 
 	   (let ((lst (read-subdirs tags)))
-	     (if (pair? lst) (car (sort lst version<))
+	     (if (pair? lst) (car (reverse (sort lst version<)))
 		 (error 'find-latest-tag "no releases found in " tags))))
 	  (else path))))
 	    
