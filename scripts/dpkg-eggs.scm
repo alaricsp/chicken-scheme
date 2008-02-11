@@ -5,6 +5,7 @@
 ;; Usage: dpkg-eggs --eggdir=DIR --output-dir=DIR
 ;;
 
+(require-extension srfi-1)
 (require-extension srfi-13)
 (require-extension posix)
 (require-extension regex)
@@ -24,6 +25,8 @@
     ,(args:make-option (verbose)       #:none
 		       (s+ "enable verbose mode")
 		       (set! *verbose* #t))
+    ,(args:make-option (exclude)       (required: "EGGS")    
+		       (s+ "a comma separated list of eggs to exclude from building"))
     ,(args:make-option (h help)  #:none               "Print help"
 		       (usage))
 
@@ -67,9 +70,10 @@
 (define (find-latest-release path)
   (let ((tags (s+ path dirsep "tags")))
     (cond ((file-exists? tags) 
-	   (let ((lst (read-subdirs tags)))
-	     (if (pair? lst) (car (reverse (sort lst version<)))
-		 (error 'find-latest-tag "no releases found in " tags))))
+	   (let ((lst (filter-map (lambda (x) (and (not (string=? (pathname-strip-directory x) ".svn")) x))
+				  (read-subdirs tags)))
+		 (cmp (lambda (x y) (version< (pathname-strip-directory x) (pathname-strip-directory y)))))
+	     (if (pair? lst) (car (reverse (sort lst cmp))) path)))
 	  (else path))))
 	    
 ;; Find the debian subdirectory in a given egg directory
@@ -80,7 +84,7 @@
 	  (else #f))))
 
 (define (build-deb eggdir output-dir path)
-  (let* ((name     (pathname-file path))
+  (let* ((name     (pathname-strip-directory path))
 	 (release  (find-latest-release path))
 	 (debdir   (find-debian-subdir path release)))
     (if debdir
@@ -96,7 +100,8 @@
 	(message "No debian subdirectory found in ~a" path))))
 
 (define (main options operands)
-  (let ((opt_eggdir (alist-ref 'eggdir options))
+  (let ((opt_eggdir  (alist-ref 'eggdir options))
+	(opt_exclude ((lambda (x) (and x (string-split x ","))) (alist-ref 'exclude options)))
 	(opt_output-dir (alist-ref 'output-dir options)))
     (if (not (and opt_eggdir opt_output-dir))
 	(begin
@@ -109,8 +114,10 @@
 	(begin
 	  (message "Creating directory ~a" opt_output-dir)
 	  (create-directory opt_output-dir)))
-    (let ((eggdirs (or (and (pair? operands) (map (lambda (x) (s+ opt_eggdir dirsep (->string x))) operands))
-		       (read-subdirs opt_eggdir))))
+    (let ((eggdirs (filter-map 
+		    (lambda (x) (and (not (member (pathname-strip-directory x) opt_exclude)) x))
+		    (or (and (pair? operands) (map (lambda (x) (s+ opt_eggdir dirsep (->string x))) operands))
+			(read-subdirs opt_eggdir)))))
       (if (null? eggdirs)
 	  (message "No egg directories found in ~a" opt_eggdir)
 	  (message "Found egg directories: ~a" eggdirs))
