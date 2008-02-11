@@ -65,7 +65,7 @@ EOF
 (private extras
   reverse-string-append
   fprintf0 generic-write
-  unbound-value-thunk false-thunk
+  unbound-value-thunk
   %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
   %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
   %hash-table-for-each %hash-table-fold
@@ -74,7 +74,7 @@ EOF
 (declare
   (hide
     fprintf0 generic-write
-    unbound-value-thunk false-thunk
+    unbound-value-thunk
     %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
     %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
     %hash-table-for-each %hash-table-fold
@@ -146,11 +146,6 @@ EOF
 
 (define-macro ($immediate? ?obj)
   `(not ($block? ,?obj)) )
-
-
-;;; Boolean Thunks:
-
-(define false-thunk (lambda () #f))
 
 
 ;;; Read expressions from file:
@@ -250,6 +245,12 @@ EOF
 		     (loop t) ) ) ) ) ) ) ) )
 
 (define (any? x) #t)
+
+(define (none? x) #f)
+
+(define (always? . _) #t)
+
+(define (never? . _) #f)
 
 (define (left-section proc . args)
   (##sys#check-closure proc 'left-section)
@@ -1580,17 +1581,19 @@ EOF
 
 ;;; Generation of hash-values:
 
-;; The "overflow" of a, supposedly, unsigned hash value into negative is not
-;; checked during computation.
-
 ;; Naming Conventions:
-;; $foo - local macro
-;; $*foo - really local macro
-;; %foo - local procedure
-;; ##sys#foo - global un-checked procedure
-;; foo - global checked procedure
-
-;; All '%foo-hash' return fixnum
+;; $foo - macro
+;; $*foo - local macro (no such thing but at least it looks different)
+;; %foo - private, usually unchecked, procedure
+;; ##sys#foo - public, but undocumented, un-checked procedure
+;; foo - public checked procedure
+;;
+;; All '%foo-hash' return a fixnum, not necessarily positive. The "overflow" of
+;; a, supposedly, unsigned hash value into negative is not checked during
+;; intermediate computation.
+;;
+;; The body of '%eq?-hash' is duplicated in 'eqv?-hash' and the body of '%eqv?-hash'
+;; is duplicated in '%equal?-hash' to save on procedure calls.
 
 ;; Fixed hash-values:
 
@@ -1619,10 +1622,10 @@ EOF
 
 (define-constant flonum-magic 331804471)
 
+#| Not sure which is "better"; went with speed
 (define-macro ($subbyte ?bytvec ?i)
   `(##core#inline "C_subbyte" ,?bytvec ,?i) )
 
-#; ; Not sure which is "better"
 (define-macro ($hash-flonum ?flo)
   `(fx* flonum-magic
 	,(let loop ([idx (fx- (##sys#size 1.0) 1)])
@@ -1630,6 +1633,7 @@ EOF
 		`($subbyte ,?flo 0)
 		`(fx+ ($subbyte ,?flo ,idx)
 		      (fxshl ,(loop (fx- idx 1)) 1))))) )
+|#
 
 (define-macro ($hash-flonum ?flo)
   `(fx* flonum-magic ($quick-flonum-truncate ,?flo)) )
@@ -1637,13 +1641,13 @@ EOF
 (define (##sys#number-hash-hook obj)
   (%equal?-hash obj) )
 
-(define-macro ($other-number-hash ?obj)
+(define-macro ($non-fixnum-number-hash ?obj)
   `(cond [(flonum? obj)	($hash-flonum ,?obj)]
 	 [else		($fix (##sys#number-hash-hook ,?obj))] ) )
 
 (define-macro ($number-hash ?obj)
   `(cond [(fixnum? obj)	,?obj]
-	 [else		($other-number-hash ?obj)] ) )
+	 [else		($non-fixnum-number-hash ?obj)] ) )
 
 (define (number-hash obj #!optional (bound hash-default-bound))
   (unless (number? obj)
@@ -1741,7 +1745,7 @@ EOF
 	[(symbol? obj)		($symbol-hash obj)]
 	#; ;NOT YET (no keyword vs. symbol issue)
 	[(keyword? obj)		($keyword-hash obj)]
-	[(number? obj)		($other-number-hash obj)]
+	[(number? obj)		($non-fixnum-number-hash obj)]
 	[($immediate? obj)	unknown-immediate-hash-value]
 	[else			(%object-uid-hash obj) ] ) )
 
@@ -1811,7 +1815,7 @@ EOF
 	  [(symbol? obj)	  ($symbol-hash obj)]
 	  #; ;NOT YET (no keyword vs. symbol issue)
 	  [(keyword? obj)	  ($keyword-hash obj)]
-	  [(number? obj)	  ($other-number-hash obj)]
+	  [(number? obj)	  ($non-fixnum-number-hash obj)]
 	  [($immediate? obj)	  unknown-immediate-hash-value]
 	  [($byte-block? obj)	  ($hash-string obj)]
 	  [(list? obj)		  ($*list-hash obj)]
@@ -1882,7 +1886,7 @@ EOF
 
 ;; "Raw" make-hash-table:
 
-(define ##sys#make-hash-table
+(define %make-hash-table
   (let ([make-vector make-vector])
     (lambda (test hash len min-load max-load weak-keys weak-values initial
 	     #!optional (vec (make-vector len '())))
@@ -2013,7 +2017,7 @@ EOF
 		    (warning 'make-hash-table "user test without user hash")
 		    (set! hash equal?-hash) ) ) ) )
 	  ; Done
-	  (##sys#make-hash-table test hash size min-load max-load weak-keys weak-values initial) ) ) ) ) )
+	  (%make-hash-table test hash size min-load max-load weak-keys weak-values initial) ) ) ) ) )
 
 ;; Hash-Table Predicate:
 
@@ -2070,7 +2074,7 @@ EOF
 	     [vec2 (make-vector len '())] )
 	(do ([i 0 (fx+ i 1)])
 	    [(fx>= i len)
-	     (##sys#make-hash-table
+	     (%make-hash-table
 	      (##sys#slot ht 3) (##sys#slot ht 4)
 	      (##sys#slot ht 2)
 	      (##sys#slot ht 5) (##sys#slot ht 6)
@@ -2191,7 +2195,8 @@ EOF
 
 (define (hash-table-set! ht key val)
   (##sys#check-structure ht 'hash-table 'hash-table-set!)
-  (%hash-table-update! ht key identity (lambda () val)) )
+  (%hash-table-update! ht key identity (lambda () val))
+  (void) )
 
 ;; Hash-Table Reference:
 

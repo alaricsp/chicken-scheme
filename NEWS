@@ -1,3 +1,19 @@
+3.0.1
+
+- unit library: added "flonum-print-precision" for changing the default of
+  16
+- unit posix: added strftime format string support to "time->string"
+- unit posix: added "string->time", which takes a strptime format string
+  (Unix only)
+- unit extras: added "left-section", "right-section", "none?", "always?",
+  and "never?"
+- unit extras: added "hash-table-merge", "hash-table-map",
+  "hash-table-for-each", and extended "make-hash-table" with minimum/maximum
+  load & initial value
+- unit extras: added "eq?-hash", "eqv?-hash", "equal?-hash", "number-hash",
+  "symbol-hash", "keyword-hash", "##sys#number-hash-hook", and
+  "hash-by-identity" as a synonym for "eq?-hash"
+
 3.0.0rc1
 
 - upgraded scheme-complete.el to version 0.6 [Thanks to Alex Shinn]
