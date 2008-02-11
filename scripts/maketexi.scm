@@ -2,12 +2,16 @@
 ;
 ; (by Ivan Raikov)
 
-
+(require-extension syntax-case)
 (require-extension srfi-1)
 (require-extension posix)
 (require-extension utils)
 (require-extension stream-wiki)
 (require-extension stream-ext)
+
+(define extensions (make-hash-table))
+
+(load-extensions-from-file extensions "enscript.scm")
 
 (define wikipath (optional (command-line-arguments) "chicken-manual"))
 
@@ -59,7 +63,13 @@
  (texi-page 
   "Felix Winkelmann"
   "Chicken Scheme Reference Manual"
-  "Copyright 2007 Felix Winkelmann"
+  "Copyright 2007-2008 Felix Winkelmann"
   "The User's Manual"
-  (wiki->texi str))
+  (wiki->texi str
+	      stream-null ;; tail
+	      "" ;; name
+	      (constantly stream-null) ;; open
+	      (lambda (name tail) tail) ;; include
+	      (make-hash-table) ;; linktypes
+	      extensions))
  (open-output-file "chicken.texi"))
