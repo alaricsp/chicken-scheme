@@ -253,6 +253,12 @@ CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 
+ifneq ($(USE_HOST_PCRE),)
+CHICKEN_PCRE_LIBRARY_OPTIONS = 
+else
+CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path pcre
+endif
+
 # targets
 
 CHICKEN_PROGRAM = $(PROGRAM_PREFIX)chicken$(PROGRAM_SUFFIX)

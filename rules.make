@@ -29,7 +29,7 @@
 
 LIBCHICKEN_OBJECTS_1 = \
        library eval extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
-       srfi-14 srfi-18 $(POSIXFILE) regex regex-extras scheduler \
+       srfi-14 srfi-18 $(POSIXFILE) regex scheduler \
        profiler stub match runtime
 LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
 LIBCHICKEN_STATIC_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=-static$(O))
@@ -43,7 +43,7 @@ LIBUCHICKEN_STATIC_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBCHICKENGUI_OBJECTS_1 = \
        library eval extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
-       srfi-14 srfi-18 $(POSIXFILE) regex regex-extras scheduler \
+       srfi-14 srfi-18 $(POSIXFILE) regex scheduler \
        profiler stub match gui-runtime
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
 LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
@@ -122,11 +122,7 @@ profiler$(O): profiler.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 regex$(O): regex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
-	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
-	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
-	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
-regex-extras$(O): regex-extras.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
-	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 scheduler$(O): scheduler.c chicken.h $(CHICKEN_CONFIG_H)
@@ -195,11 +191,11 @@ uposixwin$(O): uposixwin.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 uregex$(O): uregex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
-	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 usrfi-1$(O): usrfi-1.c chicken.h $(CHICKEN_CONFIG_H)
-	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 usrfi-13$(O): usrfi-13.c chicken.h $(CHICKEN_CONFIG_H)
@@ -269,11 +265,7 @@ profiler-static$(O): profiler.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 regex-static$(O): regex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
-	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
-	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
-	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
-regex-extras-static$(O): regex-extras.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
-	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 scheduler-static$(O): scheduler.c chicken.h $(CHICKEN_CONFIG_H)
@@ -343,7 +335,7 @@ uposixwin-static$(O): uposixwin.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 uregex-static$(O): uregex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
-	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT_OPTION) $@
 usrfi-1-static$(O): usrfi-1.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
@@ -869,9 +861,7 @@ posixunix.c: posixunix.scm
 posixwin.c: posixwin.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 regex.c: regex.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
-regex-extras.c: regex-extras.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_PCRE_LIBRARY_OPTIONS) -output-file $@ 
 scheduler.c: scheduler.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 profiler.c: profiler.scm
@@ -908,9 +898,7 @@ uposixunix.c: posixunix.scm
 uposixwin.c: posixwin.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 uregex.c: regex.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uregex-extras.c: regex-extras.scm
-	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_PCRE_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 
 chicken.c: chicken.scm chicken-more-macros.scm chicken-ffi-macros.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
@@ -944,7 +932,7 @@ chicken-bug.c: chicken-bug.scm
 
 distfiles: library.c eval.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
-	posixunix.c posixwin.c regex.c regex-extras.c scheduler.c profiler.c stub.c match.c \
+	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
 	ulibrary.c ueval.c uextras.c ulolevel.c \
 	uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	usrfi-18.c uposixunix.c uposixwin.c uregex.c \
@@ -979,7 +967,7 @@ confclean:
 spotless: distclean
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c extras.c lolevel.c utils.c \
 	  tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
-	  posixunix.c posixwin.c regex.c regex-extras.c scheduler.c profiler.c stub.c match.c \
+	  posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
 	  ulibrary.c ueval.c uextras.c ulolevel.c \
 	  uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	  usrfi-18.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c chicken-bug.c \

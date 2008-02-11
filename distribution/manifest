@@ -64,8 +64,6 @@ match.c
 optimizer.c
 regex.c
 regex.exports
-regex-extras.c
-regex-extras.exports
 posixunix.c
 posix.exports
 posixwin.c
@@ -179,7 +177,6 @@ lolevel.scm
 match.scm
 optimizer.scm
 regex.scm
-regex-extras.scm
 posixunix.scm
 posixwin.scm
 profiler.scm

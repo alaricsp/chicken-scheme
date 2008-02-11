@@ -34,17 +34,6 @@
   (disable-interrupts)
   (generic) ; PCRE options use lotsa bits
   (disable-warning var)
-  (export
-    ##sys#regex-chardef-table?
-    regexp? regexp regexp*
-    regexp-optimize
-    regex-chardef-table?
-    make-anchored-pattern
-    string-match string-match-positions string-search string-search-positions
-    string-split-fields string-substitute string-substitute*
-    glob? glob->regexp
-    grep
-    regexp-escape)
   (bound-to-procedure
     ;; Forward reference
     make-anchored-pattern
@@ -58,7 +47,18 @@
     ##sys#make-structure ##sys#structure?
     ##sys#error ##sys#signal-hook
     ##sys#substring ##sys#fragments->string ##sys#make-c-string ##sys#string-append
-    ##sys#write-char-0) )
+    ##sys#write-char-0 )
+  (export
+    ##sys#regex-chardef-table?
+    regexp? regexp regexp*
+    regexp-optimize
+    regex-chardef-table?
+    make-anchored-pattern
+    string-match string-match-positions string-search string-search-positions
+    string-split-fields string-substitute string-substitute*
+    glob? glob->regexp
+    grep
+    regexp-escape ) )
 
 (cond-expand
  [paranoia]
@@ -98,18 +98,7 @@
 
 ;;;
 
-;FIXME should have a common handler in "runtime.c"
-(foreign-declare #<<EOF
-static void
-out_of_memory_failure(const char *modnam, const char *prcnam, const char *typnam)
-{
-  fprintf(stderr, "%s@%s: out of memory - cannot allocate %s\\n", modnam, prcnam, typnam);
-  exit(EXIT_FAILURE);
-}
-EOF
-)
-
-(foreign-declare "#include \"pcre/pcre.h\"")
+#>#include "pcre.h"<#
 
 
 ;;;
@@ -220,11 +209,10 @@ EOF
 
 ;;; PCRE errors:
 
-(foreign-declare #<<EOF
+#>
 static const char *C_regex_error;
 static int C_regex_error_offset;
-EOF
-)
+<#
 
 (define-foreign-variable C_regex_error c-string)
 (define-foreign-variable C_regex_error_offset int)
@@ -300,12 +288,11 @@ EOF
 
 ;; Match positions vector (PCRE ovector)
 
-(foreign-declare #<<EOF
+#>
 #define OVECTOR_LENGTH_MULTIPLE 3
 #define STATIC_OVECTOR_LEN 256
 static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
-EOF
-)
+<#
 
 ;;
 
