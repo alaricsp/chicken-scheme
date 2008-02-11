@@ -5,4 +5,4 @@
       n
       (+ (fib (- n 1)) (fib (- n 2))) ) )
 
-(time (pp (fib 40)))
+(time (pp (fib 30)))

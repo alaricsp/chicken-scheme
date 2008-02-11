@@ -28,7 +28,7 @@ for the existence of CHICKEN are:
 
 ==== What should I do if I find a bug?
 
-Send e-mail to felix@call-with-current-continuation.org
+Send e-mail to chicken-janitors@nongnu.org (preferably using the {{chicken-bug(1)}} tool)
 with some hints about the problem, like
 version/build of the compiler, platform, system configuration, code that
 causes the bug, etc.

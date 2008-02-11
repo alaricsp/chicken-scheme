@@ -203,6 +203,8 @@ tests/embedded1.c
 tests/fixnum-tests.scm
 tests/path-tests.scm
 tests/r4rstest.out
+tests/port-tests.scm
+tests/test-gc-hook.scm
 tweaks.scm
 utils.scm
 pcre/AUTHORS
@@ -258,5 +260,4 @@ rules.make
 defaults.make
 private-namespace.scm
 misc/makedist.scm
-tests/port-tests.scm
 svnrevision.sh

@@ -1,6 +1,7 @@
 ;;; c-backend.scm - C-generating backend for the CHICKEN compiler
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
+; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -22,15 +23,6 @@
 ; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
-;
-; Send bugs, suggestions and ideas to: 
-;
-; felix@call-with-current-continuation.org
-;
-; Felix L. Winkelmann
-; Unter den Gleichen 1
-; 37130 Gleichen
-; Germany
 
 
 (declare (unit backend))
@@ -695,12 +687,13 @@
 	       (gen "C_h_intern(&" to #\, len #\, cstr ");") ) )
 	    ((null? lit) 
 	     (gen #t to "=C_SCHEME_END_OF_LIST;") )
-	    ((##sys#immediate? lit) (bad-literal lit))
-	    ((##core#inline "C_lambdainfop" lit))
-	    (else
+	    ((and (not (##sys#immediate? lit))
+		  (##core#inline "C_lambdainfop" lit)))
+	    ((or (fixnum? lit) (not (##sys#immediate? lit)))
 	     (gen #t to "=C_decode_literal(C_heaptop,")
 	     (gen-string-constant (encode-literal lit))
-	     (gen ");") ) ) )
+	     (gen ");") )
+	    (else (bad-literal lit))))
 
     (define (gen-string-constant str)
       (let* ([len (##sys#size str)]
@@ -1363,13 +1356,15 @@ return((C_header_bits(lit) >> 24) & 0xff);
 	 ((null? lit) "\xff\x0e")
 	 ((eof-object? lit) "\xff\x3e")
 	 ((eq? (void) lit) "\xff\x1e")
-	 ((and (fixnum? lit) (not (big-fixnum? lit)))
-	  (string-append
-	   "\xff\x01"
-	   (string (integer->char (bitwise-and #xff (arithmetic-shift lit -24)))
-		   (integer->char (bitwise-and #xff (arithmetic-shift lit -16)))
-		   (integer->char (bitwise-and #xff (arithmetic-shift lit -8)))
-		   (integer->char (bitwise-and #xff lit)) ) ) )
+	 ((fixnum? lit)
+	  (if (not (big-fixnum? lit))
+	      (string-append
+	       "\xff\x01"
+	       (string (integer->char (bitwise-and #xff (arithmetic-shift lit -24)))
+		       (integer->char (bitwise-and #xff (arithmetic-shift lit -16)))
+		       (integer->char (bitwise-and #xff (arithmetic-shift lit -8)))
+		       (integer->char (bitwise-and #xff lit)) ) )
+	      (string-append "\xff\x55" (number->string lit) "\x00") ) )
 	 ((number? lit)
 	  (string-append "\x55" (number->string lit) "\x00") )
 	 ((symbol? lit)

@@ -1,11 +1,13 @@
 ;;;; compiler.scm - The CHICKEN Scheme compiler
 ;
 ;
+;
 ; "This is insane. What we clearly want to do is not exactly clear, and is rooted in NCOMPLR."
 ;
 ;
 ;-----------------------------------------------------------------------------------------------------------
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
+; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -27,15 +29,6 @@
 ; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
-;
-; Send bugs, suggestions and ideas to: 
-;
-; felix@call-with-current-continuation.org
-;
-; Felix L. Winkelmann
-; Unter den Gleichen 1
-; 37130 Gleichen
-; Germany
 ;
 ;
 ; Supported syntax:
@@ -2270,10 +2263,11 @@
 
     (define (literal x)
       (cond [(immediate? x) (immediate-literal x)]
-	    [(and (number? x) (inexact? x) 
-		  (list-index (lambda (y) (and (number? y) (inexact? y) (= x y)))
-			      literals) )
-	     => values]
+	    [(number? x)
+	     (or (and (inexact? x) 
+		      (list-index (lambda (y) (and (number? y) (inexact? y) (= x y)))
+				  literals) )
+		 (new-literal x)) ]
 	    ((##core#inline "C_lambdainfop" x)
 	     (let ((i (length lambda-info-literals)))
 	       (set! lambda-info-literals 

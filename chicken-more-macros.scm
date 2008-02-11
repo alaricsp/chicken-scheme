@@ -1,6 +1,7 @@
 ;;;; chicken-more-macros.scm - More syntax extensions
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
+; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -22,15 +23,6 @@
 ; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
-;
-; Send bugs, suggestions and ideas to: 
-;
-; felix@call-with-current-continuation.org
-;
-; Felix L. Winkelmann
-; Unter den Gleichen 1
-; 37130 Gleichen
-; Germany
 
 
 (##sys#provide 'chicken-more-macros)

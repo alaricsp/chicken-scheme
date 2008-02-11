@@ -1,6 +1,7 @@
 /* runtime.c - Runtime code for compiler generated executables
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
+; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -22,15 +23,6 @@
 ; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
-;
-; Send bugs, suggestions and ideas to: 
-;
-; felix@call-with-current-continuation.org
-;
-; Felix L. Winkelmann
-; Unter den Gleichen 1
-; 37130 Gleichen
-; Germany
 */
 
 
@@ -9099,13 +9091,14 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
   unsigned long bits = *((*str)++) & 0xff;
   C_word *data, *dptr, val;
   C_uword size;
+  int maybe_fixnum = 0;
 
-  /* vvv this can be taken out at a later stage vvv */
+  /* vvv this can be taken out at a later stage (once it works reliably) vvv */
   if(bits != 0xfe)
     panic(C_text("invalid encoded literal format"));
 
   bits = *((*str)++) & 0xff;
-  /* ^^^ this can be taken out at a later stage ^^^ */
+  /* ^^^ */
 
 #ifdef C_SIXTY_FOUR
   bits <<= 24 + 32;
@@ -9116,32 +9109,35 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
   if(bits == C_HEADER_BITS_MASK) {		/* special/immediate */
     switch(0xff & *((*str)++)) {
     case C_BOOLEAN_BITS: 
-      val = C_mk_bool(*((*str)++));
-      break;
+      return C_mk_bool(*((*str)++));
 
     case C_CHARACTER_BITS: 
-      val = C_make_character(decode_size(str));
-      break;
+      return C_make_character(decode_size(str));
 
     case C_SCHEME_END_OF_LIST:
     case C_SCHEME_UNDEFINED:
     case C_SCHEME_END_OF_FILE:
-      val = (C_word)(*(*str - 1));
-      break;
+      return (C_word)(*(*str - 1));
 
     case C_FIXNUM_BIT:
       val = *((*str)++) << 24; /* always big endian */
       val |= (*((*str)++) & 0xff) << 16;
       val |= (*((*str)++) & 0xff) << 8;
       val |= (*((*str)++) & 0xff);
-      val = C_fix(val); 
+      return C_fix(val); 
+
+#ifdef C_SIXTY_FOUR
+    case (C_FLONUM_TYPE >> (24 + 32)) & 0xff:
+#else
+    case (C_FLONUM_TYPE >> 24) & 0xff:
+#endif
+      maybe_fixnum = 1;
+      bits = C_FLONUM_TYPE;
       break;
 
     default: 
       panic(C_text("invalid encoded special literal"));
     }
-
-    return val;
   }
 
 #ifndef C_SIXTY_FOUR
@@ -9154,11 +9150,10 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
   val = (C_word)(*ptr);
 
   if(bits == C_FLONUM_TYPE) {
-    *((*ptr)++) = C_FLONUM_TAG;
-    data = *ptr;
-    *((double *)data) = C_strtod(*str, str);
+    if(maybe_fixnum) val = C_number(ptr, C_strtod(*str, str));
+    else val = C_flonum(ptr, C_strtod(*str, str));
+
     ++(*str);			/* skip terminating '\0' */
-    *ptr = (C_word *)((C_word)(*ptr) + sizeof(double));
     return val;
   }
 
