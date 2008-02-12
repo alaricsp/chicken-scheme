@@ -36,23 +36,23 @@
   (disable-warning var)
   (bound-to-procedure
     ;; Forward reference
-    make-anchored-pattern
+    regex-chardef-table? make-anchored-pattern
     ;; Imports
     get-output-string open-output-string
     string->list list->string string-length string-ref substring make-string string-append
     reverse list-ref
     char=? char-alphabetic? char-numeric? char->integer
     set-finalizer!
+    ##sys#pointer?
     ##sys#slot ##sys#setslot ##sys#size
     ##sys#make-structure ##sys#structure?
     ##sys#error ##sys#signal-hook
     ##sys#substring ##sys#fragments->string ##sys#make-c-string ##sys#string-append
     ##sys#write-char-0 )
   (export
-    ##sys#regex-chardef-table?
+    regex-chardef-table? regex-chardef-table
     regexp? regexp regexp*
     regexp-optimize
-    regex-chardef-table?
     make-anchored-pattern
     string-match string-match-positions string-search string-search-positions
     string-split-fields string-substitute string-substitute*
@@ -86,14 +86,17 @@
     (define-macro (##sys#check-number . _) '(##core#undefined))
     (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
  [else
+  (define (##sys#check-chardef-table x loc)
+    (unless (regex-chardef-table? x)
+      (##sys#error loc "invalid character definition tables structure" x) ) )
   (declare
-    (export
-      ##sys#check-chardef-table)
     (bound-to-procedure
       ;; Imports
       ##sys#check-string ##sys#check-list ##sys#check-exact ##sys#check-vector
-      ##sys#check-structure ##sys#check-symbol ##sys#check-blob ##sys#check-integer)
-    (emit-exports "regex.exports")) ] )
+      ##sys#check-structure ##sys#check-symbol ##sys#check-blob ##sys#check-integer )
+    (export
+      ##sys#check-chardef-table )
+    (emit-exports "regex.exports") ) ] )
 
 
 ;;;
@@ -108,24 +111,15 @@
 
 ;;; From unit lolevel:
 
+(define-inline (%tag-pointer ptr tag)
+  (let ([tp (##sys#make-tagged-pointer tag)])
+    (##core#inline "C_copy_pointer" ptr tp)
+    tp ) )
+
 (define-inline (%tagged-pointer? x tag)
   (and (##core#inline "C_blockp" x)
        (##core#inline "C_taggedpointerp" x)
        (eq? tag (##sys#slot x 1)) ) )
-
-
-;;; Character Definition Tables:
-;;; See unit regex-extras
-
-(define (##sys#regex-chardef-table? x)
-  (%tagged-pointer? x 'chardef-table) )
-
-(cond-expand
- [unsafe]
- [else
-  (define (##sys#check-chardef-table x loc)
-    (unless (##sys#regex-chardef-table? x)
-      (##sys#error loc "invalid character definition tables structure" x) ) ) ] )
 
 
 ;;; PCRE Types:
@@ -199,6 +193,42 @@
 
 (define-inline (%regexp-options-set! rx options)
   (##sys#setslot rx 3 options) )
+
+
+;;; Character Definition Tables:
+
+;; The minimum necessary to handle chardef table parameters.
+
+;;
+
+(define (regex-chardef-table? x)
+  (%tagged-pointer? x 'chardef-table) )
+
+;; Get a character definitions tables structure for the current locale.
+
+(define regex-chardef-table
+  (let ([re-maketables
+          (foreign-lambda* (c-pointer unsigned-char) ()
+            "return (pcre_maketables ());")]
+        [re-make-chardef-table-type
+          (lambda (tables)
+            (%tag-pointer tables 'chardef-table) ) ] )
+    (lambda (#!optional tables)
+      ; Using this to type tag a ref is a bit of a hack but beats
+      ; having another public variable.
+      (if tables
+          ; then existing reference so just tag it
+          (if (##sys#pointer? tables)
+              (re-make-chardef-table-type tables)
+              (##sys#signal-hook #:type-error 'regex-chardef-table
+               "bad argument type - not a pointer" tables) )
+          ; else make a new chardef tables
+          (let ([tables (re-maketables)])
+            (if tables
+                (let ([tables (re-make-chardef-table-type tables)])
+                  (set-finalizer! tables re-finalizer)
+                  tables )
+                (##sys#error-hook 6 'regex-chardef-table) ) ) ) ) ) )
 
 
 ;;; Regexp record:
