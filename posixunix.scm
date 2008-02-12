@@ -370,36 +370,32 @@ static time_t timegm(struct tm *t)
 #define C_tm_get_9(v) \
         (C_set_block_item(v, 9, C_fix(C_tm.tm_gmtoff)))
 
-#if 0
 #if !defined(C_GNU_ENV) || defined(__CYGWIN__) || defined(__uClinux__)
-# define C_tm_set(v) (C_tm_set_08(v), &C_tm)
-# define C_tm_get(v) (C_tm_get_08(v), v)
-#else
-# define C_tm_set(v) (C_tm_set_08(v), C_tm_set_9(v), &C_tm)
-# define C_tm_get(v) (C_tm_get_08(v), C_tm_get_9(v), v)
-#endif
-#else
-#if !defined(C_GNU_ENV) || defined(__CYGWIN__) || defined(__uClinux__)
+
 static struct tm *
 C_tm_set (C_word v)
 {
   C_tm_set_08 (v);
   return &C_tm;
 }
+
 static C_word
 C_tm_get (C_word v)
 {
   C_tm_get_08 (v);
-  C_tm_set_9 (v);
   return v;
 }
+
 #else
+
 static struct tm *
 C_tm_set (C_word v)
 {
   C_tm_set_08 (v);
+  C_tm_set_9 (v);
   return &C_tm;
 }
+
 static C_word
 C_tm_get (C_word v)
 {
@@ -407,7 +403,7 @@ C_tm_get (C_word v)
   C_tm_get_9 (v);
   return v;
 }
-#endif
+
 #endif
 
 #define C_asctime(v)    (asctime(C_tm_set(v)))
