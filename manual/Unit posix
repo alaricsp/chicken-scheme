@@ -957,12 +957,27 @@ the number of seconds since the first of January, 1970 UTC.
 
 ==== time->string
 
- [procedure] (time->string VECTOR)
+ [procedure] (time->string VECTOR [FORMAT])
 
-Converts the broken down time represented in the 10 element vector
-{{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
+Without a {{FORMAT}} string converts the broken out time represented in the 10
+element vector {{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
 1991"}}.
 
+Otherwise returns the time as a string formatted per the {{FORMAT}} string.
+
+See the {{strftime}} C procedure for a specification of the {{FORMAT}} string.
+
+==== string->time
+
+ [procedure] (string->time STRING [FORMAT])
+
+Returns the time string parsed per the {{FORMAT}} string as a broken out time
+10 element vector.
+
+The default {{FORMAT}} string is {{"%a %b %e %H:%M:%S %Z %Y"}}. (The default
+{{date}} command format.)
+
+See the {{strptime}} C procedure for a specification of the {{FORMAT}} string.
 
 === Raw exit
 
@@ -1071,6 +1086,11 @@ Returns the name of the terminal that is connected to {{PORT}}.
 Returns {{#t}} if {{PORT}} is connected to a terminal and
 {{#f}} otherwise.
 
+==== terminal-size
+
+ [procedure] (terminal-size PORT)
+
+Returns two values: The height and width of the terminal connected to {{PORT}}.
 
 === How Scheme procedures relate to UNIX C functions
 
@@ -1285,11 +1305,12 @@ Microsoft tools or with MinGW):
  map/...
  map-file-to-memory  unmap-file-from-memory  memory-mapped-file-pointer  memory-mapped-file?
  set-alarm!
- terminal-port?  terminal-name
+ terminal-port?  terminal-name terminal-size
  process-fork  process-signal
  parent-process-id
  set-root-directory!
  utc-time->seconds
+ string->time
 
 ==== Additional Definitions
 
