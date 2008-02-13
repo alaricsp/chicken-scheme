@@ -199,6 +199,8 @@ char *alloca ();
 
 #if defined(__MINGW32__)
 # include <sys/param.h>
+#elif defined(__CYGWIN__)
+# include <endian.h>
 #elif defined(__linux__)
 # include <endian.h>
 #elif defined(C_MACOSX) || defined(C_XXXBSD)
