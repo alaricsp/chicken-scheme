@@ -79,8 +79,8 @@
 ;; Find the debian subdirectory in a given egg directory
 (define (find-debian-subdir path . rest)
   (let-optionals rest ((release (find-latest-release path)))
-    (cond ((file-exists? (s+ release dirsep "debian")) => identity)
-	  ((file-exists? (s+ path dirsep "trunk" dirsep "debian")) => identity)
+    (cond ((file-exists? (s+ path dirsep "trunk" dirsep "debian")) => identity)
+	  ((file-exists? (s+ release dirsep "debian")) => identity)
 	  (else #f))))
 
 (define (build-deb eggdir output-dir path)
