@@ -165,9 +165,6 @@ char *alloca ();
 
 #if defined(__APPLE__) && defined(__MACH__)
 # define C_MACOSX
-#elif defined(__MWERKS__) && !defined(__INTEL__)
-/* This is a rather crude way of assuming this is MacOS 9 or lower! */
-# define C_MACOS
 #endif
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
@@ -233,11 +230,6 @@ char *alloca ();
 # define C_LITTLE_ENDIAN
 #elif defined (__alpha__) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
 # define C_LITTLE_ENDIAN
-#endif
-
-#ifdef C_MACOS
-# include <alloca.h>
-int strncasecmp(const char *one, const char *two, size_t n);
 #endif
 
 #ifdef __MINGW32__
