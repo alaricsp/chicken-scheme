@@ -25,8 +25,6 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 */
 
-#define BITWISE_UINT_ONLY
-
 #include "chicken.h"
 #include <errno.h>
 #include <signal.h>
