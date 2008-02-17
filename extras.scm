@@ -2195,7 +2195,8 @@ EOF
 
 (define (hash-table-set! ht key val)
   (##sys#check-structure ht 'hash-table 'hash-table-set!)
-  (%hash-table-update! ht key identity (lambda () val))
+  (let ([thunk (lambda _ val)])
+    (%hash-table-update! ht key thunk thunk) )
   (void) )
 
 ;; Hash-Table Reference:

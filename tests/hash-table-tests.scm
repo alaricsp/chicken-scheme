@@ -48,9 +48,11 @@
 (assert (hash-table-has-initial? ht))
 (assert (eq? (hash-table-initial ht) 'foo))
 
-(print "HT - Insert")
+(print "HT - Insert with setter")
 (set! (hash-table-ref ht 23.0) 'bar)
 (assert (eq? (hash-table-ref ht 23.0) 'bar))
+
+(print "HT - Insert with update!")
 (hash-table-update! ht 'baz)
 (assert (eq? (hash-table-ref ht 'baz) 'foo))
 (assert (= (hash-table-size ht) 2))
@@ -61,6 +63,10 @@
   (assert (= (length alist) 2))
   (assert (eq? (alist-ref 23.0 alist) 'bar))
   (assert (eq? (alist-ref 'baz alist) 'foo)) )
+
+(print "HT - set! overwrites")
+(hash-table-set! ht 23.0 'foo-bar)
+(assert (eq? (hash-table-ref ht 23.0) 'foo-bar))
 
 (print "HT - Delete")
 (assert (hash-table-delete! ht 23.0))
