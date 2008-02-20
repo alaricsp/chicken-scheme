@@ -9072,7 +9072,9 @@ void C_call_with_cthulhu(C_word c, C_word self, C_word k, C_word proc)
 }
 
 
-/* fixnum arithmetic with overflow detection (from "Hacker's Delight" by Hank Warren) */
+/* fixnum arithmetic with overflow detection (from "Hacker's Delight" by Hank Warren) 
+   These routines return #f if the operation failed due to overflow. 
+ */
 
 C_regparm C_word C_fcall C_i_o_fixnum_plus(C_word n1, C_word n2)
 {
@@ -9103,6 +9105,53 @@ C_regparm C_word C_fcall C_i_o_fixnum_difference(C_word n1, C_word n2)
   else return C_fix(s);
 }
 
+
+C_regparm C_word C_fcall C_i_o_fixnum_and(C_word n1, C_word n2)
+{
+  C_uword x1, x2, r;
+
+  if((n1 & C_FIXNUM_BIT) == 0 || (n2 & C_FIXNUM_BIT) == 0) return C_SCHEME_FALSE;
+
+  x1 = C_unfix(n1);
+  x2 = C_unfix(n2);
+  r = x1 & x2;
+  
+  if(((r & C_INT_SIGN_BIT) >> 1) != (r & C_INT_TOP_BIT)) return C_SCHEME_FALSE;
+  else return C_fix(r);
+}
+
+
+C_regparm C_word C_fcall C_i_o_fixnum_ior(C_word n1, C_word n2)
+{
+  C_uword x1, x2, r;
+
+  if((n1 & C_FIXNUM_BIT) == 0 || (n2 & C_FIXNUM_BIT) == 0) return C_SCHEME_FALSE;
+
+  x1 = C_unfix(n1);
+  x2 = C_unfix(n2);
+  r = x1 | x2;
+  
+  if(((r & C_INT_SIGN_BIT) >> 1) != (r & C_INT_TOP_BIT)) return C_SCHEME_FALSE;
+  else return C_fix(r);
+}
+
+
+C_regparm C_word C_fcall C_i_o_fixnum_xor(C_word n1, C_word n2)
+{
+  C_uword x1, x2, r;
+
+  if((n1 & C_FIXNUM_BIT) == 0 || (n2 & C_FIXNUM_BIT) == 0) return C_SCHEME_FALSE;
+
+  x1 = C_unfix(n1);
+  x2 = C_unfix(n2);
+  r = x1 ^ x2;
+  
+  if(((r & C_INT_SIGN_BIT) >> 1) != (r & C_INT_TOP_BIT)) return C_SCHEME_FALSE;
+  else return C_fix(r);
+}
+
+
+/* decoding of literals in compressed format */
 
 static C_regparm C_uword C_fcall decode_size(C_char **str)
 {

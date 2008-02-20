@@ -498,7 +498,7 @@
 	    (do ((n 0 (add1 n)))
 		((>= n llen))
 	      (gen #\, (char->integer (string-ref ll n))) )
-	    (do ((n (remainder llen 8) (sub1 n))) ; fill up with zeros to align following entry
+	    (do ((n (- (bitwise-and #xfffff8 (+ llen 7)) llen) (sub1 n))) ; fill up with zeros to align following entry
 		((zero? n))
 	      (gen ",0") )
 	    (gen "};")))))
