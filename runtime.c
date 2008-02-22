@@ -153,6 +153,7 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 #include <sys/mman.h>
 #endif
 
+#define BITWISE_UINT_ONLY
 
 /* Parameters: */
 
@@ -274,6 +275,16 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
                                          barf(C_BAD_ARGUMENT_TYPE_NO_UINTEGER_ERROR, w, x); \
                                        else n = (C_uword)f; \
                                      }
+
+#define C_check_uintX(x, f, n, w)    if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
+                                      else if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) \
+                                        barf(C_BAD_ARGUMENT_TYPE_NO_NUMBER_ERROR, w, x); \
+                                      else { double _m; \
+                                        f = C_flonum_magnitude(x); \
+                                        if(modf(f, &_m) != 0.0 || f > C_UWORD_MAX) \
+                                          barf(C_BAD_ARGUMENT_TYPE_NO_UINTEGER_ERROR, w, x); \
+                                        else n = (C_uword)f; \
+                                      }
 
 #define C_check_uintX(x, f, n, w)    if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
                                       else if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) \
@@ -1036,7 +1047,7 @@ heap_alloc (size_t size, C_byte **page_aligned)
   C_byte *p;
 #ifdef C_LOCK_TOSPACE
   p = (C_byte *)mmap (NULL, size, (PROT_READ | PROT_WRITE),
-                      (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+                      (MAP_PRIVATE | MAP_ANON), -1, 0);
   if (p != NULL && page_aligned) *page_aligned = p;
 #else
   p = (C_byte *)C_malloc (size + page_size);
@@ -1066,7 +1077,7 @@ heap_realloc (C_byte *ptr, size_t old_size,
   C_byte *p;
 #ifdef C_LOCK_TOSPACE
   p = (C_byte *)mmap (NULL, new_size, (PROT_READ | PROT_WRITE),
-                      (MAP_PRIVATE | MAP_ANONYMOUS), -1, 0);
+                      (MAP_PRIVATE | MAP_ANON), -1, 0);
   if (ptr != NULL) {
     memcpy (p, ptr, old_size);
     heap_free (ptr, old_size);
