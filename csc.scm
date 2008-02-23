@@ -104,6 +104,7 @@
 ;;; Parameters:
 
 (define mingw (eq? (build-platform) 'mingw32))
+(define msvc (eq? (build-platform) 'msvc))
 (define osx (eq? (software-version) 'macosx))
 (define hpux-hppa (and (eq? (software-version) 'hpux)
                        (eq? (machine-type) 'hppa)))
@@ -140,17 +141,24 @@
 
 (define compiler (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
 (define c++-compiler (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))
-(define linker (quotewrap (if host-mode INSTALL_CC TARGET_CC)))
-(define c++-linker (quotewrap (if host-mode INSTALL_CXX TARGET_CXX)))
-(define object-extension "o")
-(define library-extension "a")
-(define link-output-flag "-o ")
-(define executable-extension "")
-(define compile-output-flag "-o ")
+(define linker (quotewrap (if msvc "link" (if host-mode INSTALL_CC TARGET_CC))))
+(define c++-linker (quotewrap (if msvc "link" (if host-mode INSTALL_CXX TARGET_CXX))))
+(define object-extension (if msvc "obj" "o"))
+(define library-extension (if msvc "lib" "a"))
+(define link-output-flag (if msvc "-out:" "-o "))
+(define executable-extension (if msvc "exe" ""))
+(define compile-output-flag (if msvc "-Fo" "-o "))
 (define nonstatic-compilation-options '())
 (define shared-library-extension ##sys#load-dynamic-extension)
 (define default-translation-optimization-options '())
-(define pic-options (if mingw '("-DPIC") '("-fPIC" "-DPIC")))
+(define pic-options (if (or mingw msvc) '("-DPIC") '("-fPIC" "-DPIC")))
+
+(define default-library (string-append
+                         (if msvc "libchicken-static." "libchicken.")
+                         library-extension))
+(define default-unsafe-library (string-append
+                                (if msvc "libuchicken-static." "libuchicken.")
+                                library-extension))
 
 (define cleanup-filename
   (if (not mingw)
@@ -227,19 +235,23 @@
 (define default-library-files 
   (list
    (quotewrap
-    (prefix "libchicken.a" "lib"
+    (prefix default-library "lib"
 	    (string-append
 	     (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-	     "/libchicken.a"))) ))
-(define default-shared-library-files '("-lchicken"))
+	     (string-append "/" default-library)))) ))
+(define default-shared-library-files (if msvc
+                                         (list (string-append "libchicken." library-extension))
+                                         '("-lchicken")))
 (define unsafe-library-files
   (list
    (quotewrap 
-    (prefix "libuchicken.a" "lib"
+    (prefix default-unsafe-library "lib"
 	    (string-append 
 	     (if host-mode INSTALL_LIB_HOME TARGET_LIB_HOME)
-	     "/libuchicken.a"))) ))
-(define unsafe-shared-library-files '("-luchicken"))
+	     (string-append "/" default-unsafe-library)))) ))
+(define unsafe-shared-library-files (if msvc
+                                        (list (string-append "libuchicken." library-extension))
+                                        '("-luchicken")))
 (define gui-library-files default-library-files)
 (define gui-shared-library-files default-shared-library-files)
 (define library-files default-library-files)
@@ -268,6 +280,12 @@
 				   (if host-mode 
 				       INSTALL_LIB_HOME
 				       TARGET_LIB_HOME)) ))))
+        (msvc
+         (list (conc "-LIBPATH:" (quotewrap
+                                  (prefix "" "lib"
+                                          (if host-mode 
+                                              INSTALL_LIB_HOME
+                                              TARGET_LIB_HOME)) ))))
 	(else 
 	 (list
 	  (conc "-L" (quotewrap (prefix "" "lib"
@@ -469,9 +487,12 @@
 
   (define (shared-build lib)
     (set! translate-options (cons* "-feature" "chicken-compile-shared" translate-options))
-    (set! compile-options (append pic-options '("-DC_SHARED") compile-options)) 
+    (set! compile-options (append pic-options '("-DC_SHARED") compile-options))
     (set! link-options
-      (cons (if osx (if lib "-dynamiclib" "-bundle") "-shared") link-options))
+      (cons (cond
+             (osx (if lib "-dynamiclib" "-bundle"))
+             (msvc "-dll")
+             (else "-shared")) link-options))
     (set! shared #t) )
 
   (let loop ([args args])
@@ -563,8 +584,9 @@
 	       [(-v3)
 		(set! verbose #t)
 		(t-options "-verbose")
-		(set! compile-options (cons* "-v" "-Q" compile-options))
-		(set! link-options (cons "-v" link-options)) ]
+                (if (not msvc)
+                    (set! compile-options (cons* "-v" "-Q" compile-options)))
+		(set! link-options (cons (if msvc "-VERBOSE" "-v") link-options)) ]
 	       [(|-A| -analyze-only)
 		(set! translate-only #t)
 		(t-options "-analyze-only") ]
@@ -584,11 +606,16 @@
 		(set! rest (cdr rest)) ]
 	       [(-windows |-W|)
 		(set! gui #t)
-		(when mingw
+		(cond
+                 (mingw
 		  (set! link-options
 		    (cons* "-lkernel32" "-luser32.lib" "-lgdi32" "-mwindows"
 			   link-options))
-		  (set! compile-options (cons "-DC_WINDOWS_GUI" compile-options))) ]
+		  (set! compile-options (cons "-DC_WINDOWS_GUI" compile-options)))
+                 (msvc
+                  (set! link-options
+                    (cons* "kernel32.lib" "user32.lib" "gdi32.lib" link-options))
+		  (set! compile-options (cons "-DC_WINDOWS_GUI" compile-options)))) ]
 	       [(-framework)
 		(check s rest)
 		(when osx 
@@ -817,7 +844,7 @@
 	      (string-intersperse 
 	       (cons* (cond (cpp-mode c++-linker)
 			    (else linker) )
-		      (append 
+		      (append
 		       files
 		       (list (string-append link-output-flag target)
 			     (linker-options)
@@ -860,7 +887,7 @@
    (string-intersperse
     (append linking-optimization-options link-options
 	    (nth-value 1 (static-extension-info)) ) )
-   (if (and static (not mingw) (not osx)) " -static" "") ) )
+   (if (and static (not mingw) (not msvc) (not osx)) " -static" "") ) )
 
 (define (linker-libraries #!optional staticexts)
   (string-intersperse

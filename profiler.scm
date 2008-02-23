@@ -40,7 +40,12 @@
      write-char write make-vector)
     (no-bound-checks) ) ] )
 
-(foreign-declare "#include <unistd.h>")
+(foreign-declare #<<EOF
+#if !defined(_MSC_VER) && !defined(__DJGPP__) && !defined(__MWERKS__)
+# include <unistd.h>
+#endif
+EOF
+)
 
 (define-foreign-variable profile-id int "getpid()")
 

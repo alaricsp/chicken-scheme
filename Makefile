@@ -42,6 +42,7 @@ all clean spotless distclean install uninstall:
 	@echo "  $(MAKE) PLATFORM=cygwin"
 	@echo "  $(MAKE) PLATFORM=solaris"
 	@echo "  $(MAKE) PLATFORM=cross-linux-mingw"
+	@echo "  $(MAKE) PLATFORM=msvc"
 	@echo ""
 	@echo "For more information, consult the README file."
 	@exit 1

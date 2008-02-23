@@ -25,7 +25,6 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 /* Configuration: */
 
 #ifndef ___CHICKEN
@@ -84,16 +83,17 @@ char *alloca ();
 #  define C_fctimport              __declspec(dllexport)
 #  undef  C_externimport
 #  undef  C_externexport
-#  define C_externimport           C_extern __declspec(dllimport)
 #  define C_externexport           C_extern __declspec(dllexport)
 #  undef  C_varextern
 #  undef  C_fctexport
 #  ifdef C_BUILDING_LIBCHICKEN
 #   define C_varextern             C_extern __declspec(dllexport)
 #   define C_fctexport             __declspec(dllexport)
+#   define C_externimport          C_extern __declspec(dllexport)
 #  else
 #   define C_varextern             C_extern __declspec(dllimport)
 #   define C_fctexport             __declspec(dllimport)
+#   define C_externimport          C_extern __declspec(dllimport)
 #  endif
 # elif defined(__WATCOMC__)
 #  undef  C_fctimport
@@ -247,8 +247,8 @@ typedef unsigned __int8    uint8_t;
 typedef __int16            int16_t;
 typedef unsigned  __int16  uint16_t;
 typedef __int32            int32_t;
-typedef unsigned __int32   int32_t;
-typedef __int64            uint64_t;
+typedef unsigned __int32   uint32_t;
+typedef __int64            int64_t;
 typedef unsigned __int64   uint64_t;
 # pragma warning(disable: 4101)
 #endif

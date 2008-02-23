@@ -1,0 +1,211 @@
+# Makefile.msvc - configuration for MSVC -*- Makefile -*-
+#
+# Copyright (c) 2007, Felix L. Winkelmann
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
+# conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+#     disclaimer. 
+#   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided with the distribution. 
+#   Neither the name of the author nor the names of its contributors may be used to endorse or promote
+#     products derived from this software without specific prior written permission. 
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Send bugs, suggestions and ideas to: 
+#
+# felix@call-with-current-continuation.org
+#
+# Felix L. Winkelmann
+# Unter den Gleichen 1
+# 37130 Gleichen
+# Germany
+
+PREFIX = c:/msvc-devtools
+
+# platform configuration
+
+DLLSINPATH = 1
+ARCH = x86
+HACKED_APPLY =
+WINDOWS = 1
+
+# file extensions
+
+O = .obj
+A = -static.lib
+SO = .dll
+EXE = .exe
+ASM = .c
+MANIFEST = .manifest
+
+# commands
+
+C_COMPILER = cl
+CXX_COMPILER = cl
+LINKER = link
+LIBRARIAN = lib
+
+# options
+
+C_COMPILER_OPTIONS = -nologo -MD -wd4142 -DHAVE_CHICKEN_CONFIG_H
+LINKER_OPTIONS = -nologo
+C_COMPILER_GUI_RUNTIME_OPTIONS = -DC_WINDOWS_GUI
+INCLUDES = -I.
+LIBRARIES = ws2_32.lib advapi32.lib
+
+# debug
+
+ifdef DEBUGBUILD
+C_COMPILER_OPTIONS = -nologo -MDd -DHAVE_CHICKEN_CONFIG_H
+C_COMPILER_OPTIMIZATION_OPTIONS = -Zi -Wall
+LINKER_OPTIONS += -debug
+endif
+
+# compiler-dependent output options used by rules
+
+C_COMPILER_COMPILE_OPTION = -c
+C_COMPILER_OUTPUT_OPTION = -Fo
+C_COMPILER_OUTPUT = $(C_COMPILER_OUTPUT_OPTION)$@
+
+C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS = $(C_COMPILER_BUILD_RUNTIME_OPTIONS) -DC_UNSAFE_RUNTIME
+C_COMPILER_SHARED_OPTIONS = -DPIC
+
+# linker-dependent output options
+
+LINKER_EXECUTABLE_OPTIONS = 
+LINKER_STATIC_OPTIONS = $(LINKER_EXECUTABLE_OPTIONS)
+LINKER_OUTPUT_OPTION = -out:
+LINKER_OUTPUT = $(LINKER_OUTPUT_OPTION)$@
+LINKER_LIBRARY_OPTION =
+LINKER_LIBRARY_PREFIX = lib
+LINKER_LIBRARY_SUFFIX = .lib
+LINKER_LINK_SHARED_LIBRARY_OPTIONS = -dll
+
+PROGRAM_IMPORT_LIBRARIES = chicken.lib csi.lib csc.lib chicken-setup.lib chicken-profile.lib chicken-bug.lib
+LIBCHICKEN_IMPORT_LIBRARY = libchicken.lib
+LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.lib
+LIBCHICKENGUI_IMPORT_LIBRARY = libchickengui.lib
+MSVC_CHICKEN_IMPORT_LIBRARIES = $(PROGRAM_IMPORT_LIBRARIES) $(LIBCHICKEN_IMPORT_LIBRARY) \
+	  		        $(LIBUCHICKEN_IMPORT_LIBRARY) $(LIBCHICKENGUI_IMPORT_LIBRARY)
+MSVC_CHICKEN_EXPORT_FILES = $(MSVC_CHICKEN_IMPORT_LIBRARIES:.lib=.exp)
+LIBCHICKEN_SO_LINKER_OPTIONS = -implib:$(LIBCHICKEN_IMPORT_LIBRARY)
+LIBUCHICKEN_SO_LINKER_OPTIONS = -implib:$(LIBUCHICKEN_IMPORT_LIBRARY)
+LIBCHICKENGUI_SO_LINKER_OPTIONS = -implib:$(LIBCHICKENGUI_IMPORT_LIBRARY)
+
+# librarian-dependent output options
+
+LIBRARIAN_OPTIONS = -nologo
+LIBRARIAN_OUTPUT_OPTION = -out:
+LIBRARIAN_OUTPUT = $(LIBRARIAN_OUTPUT_OPTION)$@
+
+# assembler-dependent (here we are configured for compiling C w/ inline assembly)
+
+ASSEMBLER_OPTIONS = $(C_COMPILER_OPTIONS)
+ASSEMBLER_OUTPUT_OPTION = -Fo
+ASSEMBLER_OUTPUT = $(ASSEMBLER_OUTPUT_OPTION)$@
+ASSEMBLER_COMPILE_OPTION = -c
+
+# stuff for static-only builds
+ifdef STATICBUILD
+PRIMARY_LIBCHICKEN = libchicken$(A)
+else
+PRIMARY_LIBCHICKEN = libchicken$(SO)
+LIBCHICKEN_SO_FILE = libchicken$(SO)
+LIBUCHICKEN_SO_FILE = libuchicken$(SO)
+LIBCHICKENGUI_SO_FILE = libchickengui$(SO)
+endif
+
+# import libraries, needed in windows
+
+LIBCHICKEN_SO_LIBRARIES = $(LIBRARIES)
+LIBUCHICKEN_SO_LIBRARIES = $(LIBRARIES)
+LIBCHICKENGUI_SO_LIBRARIES = $(LIBRARIES) kernel32.lib user32.lib gdi32.lib
+
+# manifest files, yet more windows crap (VC2005+)
+
+INSTALL_MANIFEST_OPTIONS = -m755
+
+CHICKEN_MANIFEST = $(CHICKEN_PROGRAM)$(EXE)$(MANIFEST)
+CSI_MANIFEST = $(CSI_PROGRAM)$(EXE)$(MANIFEST)
+CHICKEN_PROFILE_MANIFEST = $(CHICKEN_PROFILE_PROGRAM)$(EXE)$(MANIFEST)
+CSC_MANIFEST = $(CSC_PROGRAM)$(EXE)$(MANIFEST)
+CHICKEN_BUG_MANIFEST = $(CHICKEN_BUG_PROGRAM)$(EXE)$(MANIFEST)
+CHICKEN_SETUP_MANIFEST = $(CHICKEN_SETUP_PROGRAM)$(EXE)$(MANIFEST)
+
+CLEAN_MANIFESTS = $(CHICKEN_MANIFEST) $(CSI_MANIFEST) $(CHICKEN_PROFILE_MANIFEST) \
+	          $(CSC_MANIFEST) $(CHICKEN_BUG_MANIFEST) $(CHICKEN_SETUP_MANIFEST) \
+	          $(LIBCHICKEN_SO_FILE)$(MANIFEST) $(LIBUCHICKEN_SO_FILE)$(MANIFEST) \
+	          $(LIBCHICKENGUI_SO_FILE)$(MANIFEST)
+
+# special files
+
+CHICKEN_CONFIG_H = chicken-config.h
+APPLY_HACK_SRC = 
+APPLY_HACK_OBJECT = 
+POSIXFILE = posixwin
+
+# default settings (the default chicken-defaults.h seems to be fine)
+
+include defaults.make
+
+# main target
+
+all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
+	csc$(EXE) libchicken$(SO) \
+	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE) \
+	chicken.info
+
+chicken-config.h: chicken-defaults.h
+	echo "#define HAVE_DIRENT_H 0" >>$@
+	echo "#define HAVE_INTTYPES_H 0" >>$@
+	echo "#define HAVE_LIMITS_H 1" >>$@
+	echo "#define HAVE_LONG_LONG 1" >>$@
+	echo "#define HAVE_MEMMOVE 1" >>$@
+	echo "#define HAVE_MEMORY_H 1" >>$@
+	echo "#define HAVE_STDINT_H 0" >>$@
+	echo "#define HAVE_STDLIB_H 1" >>$@
+	echo "#define HAVE_STRERROR 1" >>$@
+	echo "#define HAVE_STRINGS_H 0" >>$@
+	echo "#define HAVE_STRING_H 1" >>$@
+	echo "#define HAVE_STRTOLL 0" >>$@
+	echo "#define HAVE_SYS_STAT_H 1" >>$@
+	echo "#define HAVE_SYS_TYPES_H 1" >>$@
+	echo "#define HAVE_UNISTD_H 0" >>$@
+	echo "#define HAVE_UNSIGNED_LONG_LONG 0" >>$@
+	echo "#define HAVE_WINDOWS_H 1" >>$@
+	echo "#define HAVE__STRTOI64 1" >>$@
+	echo "#define STDC_HEADERS 1" >>$@
+	echo "#define HAVE_ALLOCA_H 0" >>$@
+	echo "#define HAVE_DIRECT_H 1" >>$@
+	echo "#define HAVE_ERRNO_H 1" >>$@
+	echo "#define HAVE_GCVT 1" >>$@
+	echo "#define HAVE_LOADLIBRARY 1" >>$@
+	echo "#define HAVE_GETPROCADDRESS 1" >>$@
+	echo "#define HAVE_WINSOCK2_H 1" >>$@
+	echo "#define HAVE_WS2TCPIP_H 1" >>$@
+	echo "#define C_STACK_GROWS_DOWNWARD 1" >>$@
+ifdef GCHOOKS
+	echo "#define C_GC_HOOKS" >>$@
+endif
+ifdef SYMBOLGC
+	echo "#define C_COLLECT_ALL_SYMBOLS" >>$@
+endif
+ifdef NOAPPLYHOOK
+	echo "#define C_NO_APPLY_HOOK" >>$@
+endif
+	echo "#define C_HACKED_APPLY" >>$@
+	cat chicken-defaults.h >>$@
+
+include rules.make

@@ -145,7 +145,8 @@
   (and (eq? (software-type) 'windows) 
        (build-platform) ) )
 
-(define *windows-shell* (eq? *windows* 'mingw32))
+(define *windows-shell* (or (eq? *windows* 'mingw32)
+                            (eq? *windows* 'msvc)))
 (define *debug* #f)
 
 (register-feature! 'chicken-setup)

@@ -253,6 +253,7 @@ Makefile.solaris
 Makefile.bsd
 Makefile.cygwin
 Makefile.cross-linux-mingw
+Makefile.msvc
 rules.make
 defaults.make
 private-namespace.scm
