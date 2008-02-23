@@ -2758,43 +2758,47 @@ EOF
   (##sys#flush-output ##sys#standard-output)
   (void) )
 
-(define current-print-length 0)
-(define print-length-limit #f)
-(define ##sys#print-exit #f)
+(define current-print-length (make-parameter 0))
+(define print-length-limit (make-parameter #f))
+(define ##sys#print-exit (make-parameter #f))
 
 (define ##sys#print
   (let ([char-name char-name]
 	[csp case-sensitive]
 	[ksp keyword-style]
+	[cpp current-print-length]
 	[string-append string-append] )
     (lambda (x readable port)
       (##sys#check-port-mode port #f)
       (let ([csp (csp)]
-	    [ksp (ksp)] )
+	    [ksp (ksp)]
+	    [length-limit (print-length-limit)])
 
 	(define (outstr port str)
-	  (if print-length-limit
+	  (if length-limit
 	      (let* ((len (##sys#size str))
-		     (cpl (fx+ current-print-length len)) )
-		(if (fx>= cpl print-length-limit)
+		     (cpp0 (cpp))
+		     (cpl (fx+ cpp0 len)) )
+		(if (fx>= cpl length-limit)
 		    (cond ((fx> len 3)
-			   (let ((n (fx- print-length-limit current-print-length)))
+			   (let ((n (fx- length-limit cpp0)))
 			     (when (fx> n 0) (outstr0 port (##sys#substring str 0 n)))
 			     (outstr0 port "...") ) )
 			  (else (outstr0 port str)) )
 		    (outstr0 port str) )
-		(set! current-print-length cpl) )
+		(cpp cpl) )
 	      (outstr0 port str) ) )
 	       
 	(define (outstr0 port str)
 	  ((##sys#slot (##sys#slot port 2) 3) port str) )
 
 	(define (outchr port chr)
-	  (set! current-print-length (fx+ current-print-length 1))
-	  (when (and print-length-limit (fx>= current-print-length print-length-limit))
-	    (outstr0 port "...")
-	    (##sys#print-exit #t) )
-	  ((##sys#slot (##sys#slot port 2) 2) port chr) )
+	  (let ((cpp0 (cpp)))
+	    (cpp (fx+ cpp0 1))
+	    (when (and length-limit (fx>= cpp0 length-limit))
+	      (outstr0 port "...")
+	      ((##sys#print-exit) #t) )
+	    ((##sys#slot (##sys#slot port 2) 2) port chr) ) )
 
 	(define (specialchar? chr)
 	  (let ([c (char->integer chr)])
@@ -2989,15 +2993,15 @@ EOF
 	      (##sys#print (##sys#slot x 6) #f port) ] )
 	   (##sys#print #\> #f port) ] ) ) )
 
-(define ##sys#with-print-length-limit	; this is not the least bit thread safe
+(define ##sys#with-print-length-limit
   (let ([call-with-current-continuation call-with-current-continuation])
     (lambda (limit thunk)
       (call-with-current-continuation
        (lambda (return)
-	 (fluid-let ((print-length-limit limit)
-		     (##sys#print-exit return) 
-		     (current-print-length 0) )
-	   (thunk) ) ) ) ) ) )
+	 (parameterize ((print-length-limit limit)
+			(##sys#print-exit return)
+			(current-print-length 0))
+	   (thunk)))))))
 
 
 ;;; Bitwise fixnum operations:
