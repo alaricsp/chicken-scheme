@@ -1,5 +1,7 @@
-3.0.1
+3.0.3
 
+- MSVC can now be used to build the system, when standard UNIX tools (like
+  MSYS) are available [Many thanks to Ashley]
 - unit library: added "flonum-print-precision" for changing the default of
   16
 - unit posix: added strftime format string support to "time->string"
