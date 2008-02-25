@@ -113,7 +113,7 @@
   '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script"
     "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
     "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir" "-revision"
-    "-host-extension") )
+    "-host-extension" "-build-prefix" "-download-dir") )
 
 (define-constant short-options
   '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
@@ -155,10 +155,16 @@
 (define (cross-chicken) (##sys#fudge 39))
 (define host-extension (make-parameter #f))
 
-(define setup-root-directory (make-parameter #f))
-(define setup-build-directory (make-parameter (current-directory)))
-(define setup-verbose-flag (make-parameter #f))
-(define setup-install-flag (make-parameter #t))
+(define setup-build-prefix
+  (make-parameter
+   (or (getenv "TEMP") (getenv "TMP")
+       ((lambda (x) (and x (make-pathname  x "chicken-build"))) (getenv "HOME"))
+       ".")))
+(define setup-download-directory  (make-parameter (conc (setup-build-prefix) "/downloads")))
+(define setup-root-directory      (make-parameter #f))
+(define setup-build-directory     (make-parameter #f))
+(define setup-verbose-flag        (make-parameter #f))
+(define setup-install-flag        (make-parameter #t))
 
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
@@ -166,8 +172,7 @@
 (define *gzip-program* 'gzip)
 (define *tar-program* 'tar)
 (define *fetch-only* #f)
-(define *temporary-directory* #f)
-(define *tmpdir-created* #f)
+(define *builddir-created* #f)
 (define *keep-stuff* #f)
 (define *csc-options* '())
 (define *abort-hook* #f)
@@ -211,6 +216,7 @@
 	(lambda (dir)
 	  (verb dir)
 	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
+
 
 
 ;;; Helper stuff
@@ -501,6 +507,11 @@ usage: chicken-setup [OPTION ...] FILENAME
       -local PATH                fetch extension from local filesystem
       -destdir PATH              specify alternative installation prefix
       -revision REV              specify SVN revision for checkout
+      -build-prefix PATH         location where chicken-setup will create egg build directories
+                                 (default: the value of environment variable TMP, TEMP, or 
+                                  {home directory}/chicken-build)
+      -download-dir PATH         location where chicken-setup will save downloaded files
+                                 (default: {build-prefix}/downloads)
   --                             ignore all following arguments
 
   Builds and installs extension libraries.
@@ -583,45 +594,49 @@ EOF
 	  (values `((exports ,@exports)) oinfo)
 	  (values '() oinfo) ) ) ) )
 
-(define (compute-tmpdir fname)
-  (if (equal? "egg-dir" (pathname-extension fname))
-      fname
-      (string-append fname "-dir") ) )
+(define (compute-builddir fname)
+  (if (equal? "egg-dir" (pathname-extension fname)) fname
+      (let loop ((num (random 10000)))
+	(let* ((buildname (string-append "build." (number->string num)))
+	       (path  (make-pathname (setup-build-prefix) buildname (string-append fname "-dir") )))
+	  (if (file-exists? path) (loop (random 10000))
+	      path)))))
+
 
 (define (chdir dir)
   (when (setup-verbose-flag) (printf "changing working directory to `~A'~%" dir))
   (change-directory dir) )
 
-(define (rmtmpdir)
+(define (clear-builddir)
   (unless (string=? (current-directory) *base-directory*)
     (chdir *base-directory*) )
-  (when *tmpdir-created*
-    (set! *tmpdir-created* #f)
+  (when *builddir-created*
+    (set! *builddir-created* #f)
     (unless *keep-stuff*
-      (when (setup-verbose-flag) (printf "removing temporary directory `~A'~%" *temporary-directory*))
+      (when (setup-verbose-flag) (printf "removing egg build directory `~A'~%" (setup-build-directory)))
       (handle-exceptions ex
-	  (warning "removal of temporary directory failed" *temporary-directory*)
-	(run (,*remove-command* ,(quotewrap *temporary-directory*))) )) ) )
+	  (warning "removal of egg build directory failed" (setup-build-directory))
+	(run (,*remove-command* ,(quotewrap (setup-build-directory))) )) ) ))
 
 (define (unpack/enter filename)
   (define (testgz fn)
     (with-input-from-file fn
       (lambda () (string=? "\x1f\x8b" (read-string 2))) ) )
-  (let ((tmpdir (compute-tmpdir filename)))
+  (let ((tmpdir (compute-builddir filename)))
     (cond ((file-exists? tmpdir) 
 	   (chdir tmpdir)
 	   (setup-build-directory (current-directory)) )
 	  (else
 	   (create-directory tmpdir)
-	   (set! *tmpdir-created* #t)
+	   (set! *builddir-created* #t)
 	   (chdir tmpdir)
 	   (setup-build-directory (current-directory))
-	   (let ((fn2 (string-append "../" filename))
+	   (let ((fn2 (make-pathname (setup-download-directory) filename))
 		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
 		 (run (,*gzip-program* -d -c ,fn2 |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
 		 (run (,*tar-program* ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
-    (set! *temporary-directory* tmpdir) ) )
+    ))
 
 (define (copy-file from to #!optional (err #t))
   (let ((from (if (pair? from) (car from) from))
@@ -960,9 +975,14 @@ EOF
 			(let ((data (with-progress-indicator (cut read-string #f i))))
 			  (close-input-port i)
 			  (close-output-port o)
-			  (with-output-to-file (pathname-strip-directory fname)
-			    (cut display data) 
-			    binary:) ) 
+			  (if (not (file-exists? (setup-download-directory)))
+			      (create-directory (setup-download-directory)))
+			  (let ((fpath (make-pathname (setup-download-directory) (pathname-strip-directory fname))))
+			    (with-output-to-file fpath
+			      (cut display data) 
+			      binary:) 
+			    (print "download-data: fpath = " fpath)
+			    fpath))
 			(loop) ) ) ) ) ) )
 	   (x (error "(internal) invalid host" x)) ) ) ) )
 
@@ -987,11 +1007,12 @@ EOF
 	      (printf "Warning: no repository index available, trying direct download...~%" ext)
 	      (set! *last-decent-host* (car *repository-hosts*))
 	      (set! *dont-ask* #t)
-	      (download-data
-	       *last-decent-host*
-	       (pathname-file ext)
-	       (pathname-replace-extension ext "egg") )
-	      #t)
+	      (let ((fpath 
+		     (download-data
+		      *last-decent-host*
+		      (pathname-file ext)
+		      (pathname-replace-extension ext "egg") )))
+		fpath))
 	     (else
 	      (download-repository-tree)
 	      (set! *dont-ask* #t)
@@ -1003,7 +1024,7 @@ EOF
 			     (for-each (cut download-data *last-decent-host* <>) reqs)
 			     (print "installing required extensions ...")
 			     (for-each (cut install <>) (map ->string reqs)) )
-			   (begin (download-data *last-decent-host* (first a)) #t) ) )
+			   (download-data *last-decent-host* (first a))) ) 
 		      (else
 		       (error "Extension does not exist in the repository" ext)) ) ) ) ) ) )
 
@@ -1015,25 +1036,28 @@ EOF
     (let loop ((filename filename))
       (cond ((and df (with-ext filename "setup")) => run-setup-script)
 	    ((or (with-ext filename "egg") (with-ext filename "egg-dir")) =>
-	     (lambda (f)
+	     (lambda (fpath)
+	       (let ((f (pathname-strip-directory fpath)))
+		 (when df
+		   (unpack/enter f)
+		   (let ((sfile (pathname-replace-extension f "setup")))
+		     (when (and (not (file-exists? sfile)) (file-exists? "tags") )
+		       (let ((ds (sort (directory "tags") string>=?)))
+			 (when (pair? ds) 
+			   (let ((d (make-pathname "tags" (car ds))))
+			     (chdir d) ) )  ) )
+		     (loop sfile)
+		     (clear-builddir) ) ) ) ))
+	    ((fetch-file filename) =>
+	     (lambda (fpath)
+	       (print "fpath = " fpath)
+	       (set! *fetched-eggs* 
+		     (append 
+		      *fetched-eggs* 
+		      (if fpath (list fpath) (list (make-pathname (current-directory) filename "egg")))))
+	       (print "*fetched-eggs* = " *fetched-eggs* )
 	       (when df
-		 (unpack/enter f)
-		 (let ((sfile (pathname-replace-extension f "setup")))
-		   (when (and (not (file-exists? sfile)) (file-exists? "tags") )
-		     (let ((ds (sort (directory "tags") string>=?)))
-		       (when (pair? ds) 
-			 (let ((d (make-pathname "tags" (car ds))))
-			   (chdir d)
-			   (setup-build-directory d) ) ) ) )
-		   (loop sfile)
-		   (rmtmpdir) ) ) ) )
-	    ((fetch-file filename) 
-	     (set! *fetched-eggs* 
-	       (append 
-		*fetched-eggs* 
-		(list (make-pathname (current-directory) filename "egg"))))
-	     (when df
-	       (loop (pathname-file filename))))))))
+		 (loop fpath))))))))
 
 
 ;;; Documentation index generation
@@ -1284,6 +1308,12 @@ EOF
 	 (set! *destdir* path) 
 	 (installation-prefix path)
 	 (loop more) )
+	(("-build-prefix" path . more)
+	 (setup-build-prefix path)
+	 (loop more) )
+	(("-download-dir" path . more)
+	 (setup-download-directory path)
+	 (loop more) )
 	(("-program-path" dir . more)
 	 (program-path dir)
 	 (loop more) )
@@ -1372,7 +1402,7 @@ EOF
 	 (host-extension #t)
 	 (loop more) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" 
-	      "-tree" "-local" "-svn" "-eval" "-create-tree"))
+	      "-tree" "-local" "-svn" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
 	 (cond ((and (> (string-length filename) 0) (char=? #\- (string-ref filename 0)))
@@ -1421,4 +1451,4 @@ EOF
      (set! *abort-hook* return)
      (main (append (string-split (or (getenv "CHICKEN_SETUP_OPTIONS") ""))
 		   (command-line-arguments) ) ) ) )
-  (rmtmpdir) )
+  (clear-builddir) )
