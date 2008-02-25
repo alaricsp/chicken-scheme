@@ -981,7 +981,6 @@ EOF
 			    (with-output-to-file fpath
 			      (cut display data) 
 			      binary:) 
-			    (print "download-data: fpath = " fpath)
 			    fpath))
 			(loop) ) ) ) ) ) )
 	   (x (error "(internal) invalid host" x)) ) ) ) )
@@ -1050,12 +1049,10 @@ EOF
 		     (clear-builddir) ) ) ) ))
 	    ((fetch-file filename) =>
 	     (lambda (fpath)
-	       (print "fpath = " fpath)
 	       (set! *fetched-eggs* 
 		     (append 
 		      *fetched-eggs* 
 		      (if fpath (list fpath) (list (make-pathname (current-directory) filename "egg")))))
-	       (print "*fetched-eggs* = " *fetched-eggs* )
 	       (when df
 		 (loop fpath))))))))
 
