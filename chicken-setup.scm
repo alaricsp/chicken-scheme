@@ -157,8 +157,10 @@
 
 (define setup-build-prefix
   (make-parameter
-   (or (getenv "TEMP") (getenv "TMP")
-       ((lambda (x) (and x (make-pathname  x "chicken-build"))) (getenv "HOME"))
+   (or (getenv "TMP") (getenv "TEMP") (getenv "TMPDIR") (getenv "TEMPDIR")
+       ((lambda (home user) 
+	  (and home user (make-pathname  home (conc "chicken-" *major-version* "-" user)))) 
+	(getenv "HOME") (getenv "USER"))
        ".")))
 (define setup-download-directory  (make-parameter (conc (setup-build-prefix) "/downloads")))
 (define setup-root-directory      (make-parameter #f))
