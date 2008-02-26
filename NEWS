@@ -1,4 +1,4 @@
-3.0.3
+3.0.4
 
 - MSVC can now be used to build the system, when standard UNIX tools (like
   MSYS) are available [Many thanks to Ashley]
@@ -15,6 +15,9 @@
 - unit extras: added "eq?-hash", "eqv?-hash", "equal?-hash", "number-hash",
   "symbol-hash", "keyword-hash", "##sys#number-hash-hook", and
   "hash-by-identity" as a synonym for "eq?-hash"
+- chicken-setup: eggs are downloaded to and compiled in a temporary
+  directory determined by TMP or TEMP environment variables, or by
+  -build-prefix and -download-dir options, respectively.
 
 3.0.0rc1
 
