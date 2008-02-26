@@ -127,10 +127,13 @@ EOF
 (define ##net#listen (foreign-lambda int "listen" int int))
 (define ##net#accept (foreign-lambda int "accept" int c-pointer c-pointer))
 (define ##net#close (foreign-lambda int "closesocket" int))
-(define ##net#send (foreign-lambda int "send" int scheme-pointer int int))
 (define ##net#recv (foreign-lambda int "recv" int scheme-pointer int int))
 (define ##net#shutdown (foreign-lambda int "shutdown" int int))
 (define ##net#connect (foreign-lambda int "connect" int scheme-pointer int))
+
+(define ##net#send
+  (foreign-lambda* int ((int s) (scheme-pointer msg) (int offset) (int len) (int flags))
+		   "return(send(s, (char *)msg+offset, len, flags));"))
 
 (define ##net#make-nonblocking
   (foreign-lambda* bool ((int fd))
@@ -450,10 +453,10 @@ EOF
 			      #!eof) ) ) ) ) ) )
 	     (output
 	      (lambda (s)
-		(let loop ((len (##sys#size s)) 
-			   (s s))
+		(let loop ((len (##sys#size s))
+			   (offset 0))
 		  (let* ((count (fxmin +output-chunk-size+ len))
-			 (n (##net#send fd s count 0)) )
+			 (n (##net#send fd s offset count 0)) )
 		    (cond ((eq? -1 n)
 			   (cond ((eq? errno _ewouldblock)
 				  (when tmw
@@ -466,7 +469,7 @@ EOF
 				    (##sys#signal-hook
 				     #:network-error
 				     "write operation timed out" fd) )
-				  (loop len s) )
+				  (loop len offset) )
 				 (else
 				  (##sys#update-errno)
 				  (##sys#signal-hook 
@@ -474,7 +477,7 @@ EOF
 				   (##sys#string-append "can not write to socket - " strerror) 
 				   fd) ) ) )
 			  ((fx< n len)
-			   (loop (fx- len n) (##sys#substring s n (##sys#size s))) ) ) ) ) ) )
+			   (loop (fx- len n) (fx+ offset n)) ) ) ) ) ) )
 	     (out
 	      (make-output-port
 	       (if outbuf
