@@ -8,7 +8,7 @@ exec csi -s $0 "$@"
 
 (use syntax-case)
 (use srfi-40)
-(use html-stream stream-ext stream-wiki utils srfi-13 url posix regex)
+(use html-stream stream-ext stream-wiki utils srfi-13 posix regex)
 (use matchable)
 
 (define s+ string-append)
