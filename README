@@ -273,11 +273,11 @@
 
 	    make PLATFORM=macosx ARCH=x86-64
 
- 	- On Windows, only mingw32 <http://mingw.sourceforge.net/> and
-  	  Cygwin is supported (Microsoft Visual Studio is
-  	  NOT). Makefiles for mingw under MSYS and Windows shell are
-  	  provided (`Makefile.mingw-msys' and `Makefile.mingw').
-	  
+ 	- On Windows, mingw32, <http://mingw.sourceforge.net/>,
+  	  Cygwin, and Visual C/C++ (PLATFORM=msvc) are supported.
+	  Makefiles for mingw under MSYS and Windows shell are provided
+	  (`Makefile.mingw-msys' and `Makefile.mingw').
+
 	- Cygwin will not be able to find the chicken shared libraries
           until Windows is rebooted.
 
@@ -289,6 +289,25 @@
 	  when compiling the system or compiled Scheme files. These
 	  warnings are bogus and can be ignored.
 
+	- The Visual C build requires GNU make and other POSIX
+	  utilities.  Both cygwin and msys (with the Developer's
+	  Toolkit) have the necessary utilities. When setting PREFIX,
+	  use forward slashes:
+
+	  make PLATFORM=msvc PREFIX=c:/development/chicken
+
+	  The build has been tested with Visual Studio 2003 and 2008.  If
+	  you are able to build Chicken with other versions, please let
+	  us know.
+
+	  The following additional issues apply when using Chicken with
+	  Visual C:
+
+	  - Add the /DPIC flag when compiling your source files.  Otherwise
+	    you will encounter undefined symbols when linking.  Note that csc
+	    does this automatically for dlls but NOT for programs.
+
+	  - csc generates dynamics libraries with a .so extension, not .dll.
 
  6. Emacs support:
 

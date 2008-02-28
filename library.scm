@@ -97,7 +97,7 @@ static C_word
 fast_read_string_from_file (C_word dest, C_word port, C_word len, C_word pos)
 {
   int n = C_unfix (len);
-  char * buf = (char *) (C_data_pointer (dest) + C_unfix (pos));
+  char * buf = ((char *)C_data_pointer (dest) + C_unfix (pos));
   C_FILEPTR fp = C_port_file (port);
 
   size_t m = fread (buf, sizeof (char), n, fp);
