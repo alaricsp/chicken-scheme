@@ -1,5 +1,5 @@
 .\" dummy line
-.TH CHICKEN-SETUP 1 "25 Jan 2004"
+.TH CHICKEN-SETUP 1 "28 Feb 2008"
 
 .SH NAME
 
@@ -49,8 +49,85 @@ manual for more information.
 
 .SH OPTIONS
 
+.TP
+.B \-h,\ \-help      
+Shows a summary of options and exits.
+
+.TP
+.B \-V,\ \-version
+Shows the version of 
+.I chicken-setup
+and exits.
+
+.TP
+.B \-release
+Shows release number of CHICKEN and exits.
+
+.TP
+.BI \-R,\ \-repository \ [PATH]         
+If 
+.B PATH
+is not given, prints the location of the extension repository.
+If
+.B PATH
+is given, specifies the location for the extension repository 
+The default repository path is the installation library directory (usually 
+.I /usr/local/lib/chicken
+, or (if set) the directory given in the environment variable 
+.I CHICKEN\_REPOSITORY
+
+.TP
+.B \-u,\ \-uninstall
+Removes the given extension from the repository.
+
+.TP
+.BI \-H,\ \-host \ HOSTNAME[:PORT]
+Specifies alternative host for downloading extensions. 
+.B PORT
+may be omitted and defaults to 80.
+
+.TP
+.BI \-p,\ \-proxy \ HOSTNAME[:PORT]
+Connects to server via proxy.
+.B PORT
+may be omitted and defaults to 80.
+
+.TP
+.B \-l,\ \-list
+Lists all installed extensions and exits, or show extension-information
+of extensions given on the command-line (following this option).
+
+.TP
+.BI \-r,\ \-run \ FILENAME
+Loads and executes given file.
+
+.TP
+.BI \-P,\ \-program\-path \ [PATH]
+If
+.B PATH
+is not given, prints the location where executable files will be installed.
+If
+.B PATH
+is given, specifies the location for installing executable files.
+
+.TP
+.BI  \-s,\ \-script \ FILENAME           
+Executes the given script with remaining arguments and exits.
+
+.TP
+.B \-f,\ \-fetch
+Only download, don't extract, build or install.
+
+.TP
+.B \-v,\ \-verbose
+Displays additional information (mainly for debugging).
+
+.TP
+.B \-k,\ \-keep
+Keeps intermediate files after building and installing.
+
 .TP 
-.BI \-csc\-option option
+.BI \-c,\ \-csc\-option \ option
 Passes 
 .B option
 as an extra argument to invocations of the compiler-driver (
@@ -61,116 +138,37 @@ is invoked as
 .I (run\ (csc\ ...))
 
 .TP
-.BI \-destdir\ pathname
-Specifies alternative installation prefix by setting the
-.B installation-prefix
-parameter.
+.B \-d,\ \-dont\-ask
+Does not ask the user before trying to download required extensions.
 
 .TP
-.B \-docindex
-Displays the path to the index-page of any installed extension-documentation. If the index page
-does not exist, it is created.
-
-.TP
-.B \-dont\-ask
-Do not ask the user before trying to download required extensions.
-
-.TP
-.BI \-eval\ expression
-Evaluates the given expression(s).
-
-.TP
-.B \-fetch
-Only download, don't extract, build or install.
-
-.TP
-.B \-fetch\-tree
-Downloads and prints the repository catalog to stdout.
-
-.TP
-.B \-help
-Show usage information and exit.
-
-.TP
-.BI \-host\ hostname:port
-Specifies alternative host for downloading extensions. 
-.B port
-may be omitted and defaults to 80.
-
-.TP
-.B \-keep
-Keep temporary files and directories.
-
-.TP
-.B \-list
-List all installed extensions and exit, or show extension-information of extensions given on the
-command-line (following this option).
-
-.TP
-.BI \-local\ path
-Fetch extension sources from local filesystem at
-.B path
-instead of downloading egg from egg server.
-
-.TP
-.B \-no\-install
-Do not install generated binaries and/or support files. Any invocations of
+.BI \-n,\ \-no\-install
+Does not install generated binaries and support files after building.
+Any invocations of
 .I install\-program
 ,
 .I install\-extension
-or
+,
 .I install\-script
-will be be no-ops.
+or
+.I copy\-file
+will be no-ops.
 
 .TP
-.B \-program\-path
-Display the path where executables are installed.
+.B \-i,\ \-docindex
+Displays the path to the index-page of any installed
+extension-documentation. If the index page does not exist, it is
+created.
 
 .TP
-.BI \-program\-path\ directory
-Sets the location where executables are installed.
+.BI \-e,\ \-eval \ EXPRESSION
+Evaluates the given expression(s).
 
 .TP
-.BI \-proxy\ hostname:port
-Connect to server via proxy.
-.B port
-may be omitted and defaults to 80.
-
-.TP
-.B \-repository
-Displays the name of the extension repository.
-
-.TP
-.BI \-repository\ directory
-Sets the location of the extension repository for all subsequent operations.
-The default repository path is the installation library directory (usually 
-.I \/usr\/local\/lib\/chicken
-, or (if set) the directory given in the environment variable 
-.I CHICKEN\_REPOSITORY
-
-.TP
-.BI \-revision\ revision
-Specifies the subversion revision that you want to check out (only useful in
-combination with the
-.B \-svn
-option).
-
-.TP
-.BI \-run\ filename
-Load and execute given file.
-
-.TP
-.BI \-script\ filename
-Executes the given Scheme source file with all remaining arguments and exit.
-
-.TP
-.BI \-svn\ url
-Fetch extension sources from Subversion (http://subversion.tigris.org) repository,
-instead of downloading egg from egg server.
-
-.TP
-.B \-test
-If the extension sources contain a directory named
+.BI \-t,\ \-test 
+If the 
+.B .egg
+extension archive contains a directory named
 .B tests
 and this directory includes a file named
 .B run\.scm
@@ -179,26 +177,81 @@ then this file is executed (with
 being the current working directory).
 
 .TP
-.BI \-tree\ filename
+.B \-host\-extension
+Compiles any extensions in "host" mode.
+
+.TP
+.BI \-ls \ EXTENSION
+Lists the installed files for the given extension.
+
+.TP
+.B \-fetch\-tree
+Downloads and prints the repository catalog to standard output.
+
+.TP
+.BI \-create\-tree \ PATH
+Creates repository catalog from SVN checkout.
+
+.TP
+.BI \-tree \ FILENAME
 Uses the repository catalog stored in
-.B filename
+.B FILENAME
 instead of downloading it.
 
-.TP
-.B \-uninstall
-Removes all following extensions from repository.
 
 .TP
-.B \-verbose
-Display additional information (mainly for debugging).
+.BI \-svn \ URL
+Fetches extension sources from an SVN repository instead of
+downloading egg from egg server.
 
 .TP
-.B \-version
-Display version and exit.
+.BI \-local \ PATH
+Fetches extension sources from the local filesystem at
+.B PATH
+instead of downloading egg from egg server.
+
+.TP
+.BI \-destdir \ PATH
+Specifies alternative installation prefix. This affects executable
+files, examples, and files installed with the
+.I copy-file
+procedure.
+
+.TP
+.BI \-revision \ REVISION
+Specifies the SVN revision that to check out (only useful in
+combination with the
+.B \-svn
+option).
+
+.TP
+.BI \-build\-prefix \ PATH
+Specifies the location where 
+.I chicken-setup
+will create build directories. The default location is the value
+of environment variable 
+.I CHICKEN_TMPDIR
+,
+.I TMPDIR
+or
+.I /tmp/chicken-{MAJOR-VERSION}-build-{USER}
+if none of those variables are found in the environment. If 
+.I /tmp
+does not exist or is not writeable, then the build directory is
+.I {HOME}/tmp/chicken-{MAJOR-VERSION}-build-{USER}
+.
+
+
+.TP
+.BI \-download\-dir \ PATH
+Specifies the location where chicken-setup will save downloaded files
+The default is 
+.I {BUILD-PREFIX}/downloads)
+
 
 .TP
 .B \-\-
-Ignore all further arguments.
+Ignores all further arguments.
 
 .SH ENVIRONMENT\ VARIABLES
 
@@ -220,6 +273,10 @@ path selected during configuration (usually
 A string with default options that should be passed to every invocation of
 .B chicken\-setup
 .
+
+.TP
+.B CHICKEN_TMPDIR
+The location where egg files will be unpacked and extensions compiled.
 
 .SH DOCUMENTATION
 

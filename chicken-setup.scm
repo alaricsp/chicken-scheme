@@ -157,7 +157,7 @@
 
 (define setup-build-prefix
   (make-parameter
-   (or (getenv "TMP") (getenv "TEMP") (getenv "TMPDIR") (getenv "TEMPDIR")
+   (or (getenv "CHICKEN_TMPDIR") (getenv "TMPDIR") 
        ((lambda (user) 
 	  (and user  (file-write-access? "/tmp") 
 	       (conc "/tmp/chicken-setup-" *major-version* "-" user))) 
@@ -171,6 +171,7 @@
 (define setup-build-directory     (make-parameter #f))
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
+
 
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
@@ -484,19 +485,19 @@
   (display #<<EOF
 usage: chicken-setup [OPTION ...] FILENAME
 
-  -h  -help                      show this text and exit
-  -V  -version                   show version of this program and exit
-      -release                   show release number and exit
+  -h  -help                      shows this text and exits
+  -V  -version                   shows version of this program and exits
+      -release                   shows release number and exits
   -R  -repository [PATH]         if PATH is not given, prints the location of the extension repository
                                  if PATH is given, specifies the location for the extension repository 
   -u  -uninstall                 removes the following extension from repository
   -H  -host HOSTNAME[:PORT]      specifies alternative host for downloading
   -p  -proxy HOSTNAME[:PORT]     connects via proxy
-  -l  -list [NAME ...]           lists installed extensions or show extension information
+  -l  -list [NAME ...]           lists installed extensions or shows extension information
   -r  -run FILENAME              loads and executes given file
   -P  -program-path [PATH]       if PATH is not given, prints the location where executables will be installed
                                  if PATH is given, specifies the location for installing executables
-  -s  -script FILENAME           executes script with remaining arguments and exit
+  -s  -script FILENAME           executes script with remaining arguments and exits
   -f  -fetch                     only download, don't extract, build or install
   -v  -verbose                   verbose mode
   -k  -keep                      keeps intermediate files after building and installing
@@ -521,7 +522,7 @@ usage: chicken-setup [OPTION ...] FILENAME
                                   in the environment)
       -download-dir PATH         location where chicken-setup will save downloaded files
                                  (default: {build-prefix}/downloads)
-  --                             ignore all following arguments
+  --                             ignores all following arguments
 
   Builds and installs extension libraries.
 
@@ -1164,7 +1165,7 @@ tr {
     background-color: white;
 }
 EOF
-			  )))
+    )))
     (with-output-to-file (doc-index)
       (lambda ()
 	(print "<html><head><title>Egg documentation index for " hn 
@@ -1198,7 +1199,6 @@ EOF
 		   (grep "^[^.].*\\.*$" (map pathname-file (directory rpath))) string=?)
 		  string<?) ) )
 	  (display "</tbody></table></body></font></html>\n") ) ) ) ) )
-
 
 ;;; Output stuff
 
