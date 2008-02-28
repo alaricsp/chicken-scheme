@@ -487,35 +487,38 @@ usage: chicken-setup [OPTION ...] FILENAME
   -h  -help                      show this text and exit
   -V  -version                   show version of this program and exit
       -release                   show release number and exit
-  -R  -repository [PATH]         prints the location of the extension repository
-  -u  -uninstall                 remove the following extension from repository
-  -H  -host HOSTNAME[:PORT]      specify alternative host for downloading
-  -p  -proxy HOSTNAME[:PORT]     connect via proxy
-  -l  -list [NAME ...]           list installed extensions or show extension information
-  -r  -run FILENAME              load and execute given file
-  -P  -program-path DIRECTORY    specify path for installing executables or scripts
-  -s  -script FILENAME           execute script with remaining arguments and exit
+  -R  -repository [PATH]         if PATH is not given, prints the location of the extension repository
+                                 if PATH is given, specifies the location for the extension repository 
+  -u  -uninstall                 removes the following extension from repository
+  -H  -host HOSTNAME[:PORT]      specifies alternative host for downloading
+  -p  -proxy HOSTNAME[:PORT]     connects via proxy
+  -l  -list [NAME ...]           lists installed extensions or show extension information
+  -r  -run FILENAME              loads and executes given file
+  -P  -program-path [PATH]       if PATH is not given, prints the location where executables will be installed
+                                 if PATH is given, specifies the location for installing executables
+  -s  -script FILENAME           executes script with remaining arguments and exit
   -f  -fetch                     only download, don't extract, build or install
-  -v  -verbose                   be verbose
-  -k  -keep                      don't delete intermediate files
-  -c  -csc-option OPTION         pass extra option to csc (if run with `(run (csc ...))')
+  -v  -verbose                   verbose mode
+  -k  -keep                      keeps intermediate files after building and installing
+  -c  -csc-option OPTION         passes extra option to csc (if run with `(run (csc ...))')
   -d  -dont-ask                  always download, if asked
-  -n  -no-install                don't install generated binaries and support files
-  -i  -docindex                  display path for documentation index
-  -e  -eval EXPRESSION           evaluate expression
-  -t  -test                      run test suite, if it exists
-      -host-extension            compile any extensions in "host" mode
-      -ls EXTENSION              list installed files for extension
-      -fetch-tree                download and show repository catalog
-      -create-tree DIRECTORY     create repository catalog from SVN checkout
-      -tree FILENAME             use repository catalog from given file
-      -svn URL                   fetch extension from subversion repository
-      -local PATH                fetch extension from local filesystem
-      -destdir PATH              specify alternative installation prefix
-      -revision REV              specify SVN revision for checkout
+  -n  -no-install                does not install generated binaries and support files
+  -i  -docindex                  displays path for documentation index
+  -e  -eval EXPRESSION           evaluates expression
+  -t  -test                      runs test suite, if it exists
+      -host-extension            compiles any extensions in "host" mode
+      -ls EXTENSION              lists installed files for extension
+      -fetch-tree                downloads and show repository catalog
+      -create-tree DIRECTORY     creates repository catalog from SVN checkout
+      -tree FILENAME             uses repository catalog from given file
+      -svn URL                   fetches extension from subversion repository
+      -local PATH                fetches extension from local filesystem
+      -destdir PATH              specifies alternative installation prefix
+      -revision REV              specifies SVN revision for checkout
       -build-prefix PATH         location where chicken-setup will create egg build directories
-                                 (default: the value of environment variable TMP, TEMP, or 
-                                  {home directory}/chicken-build)
+                                 (default: the value of environment variable TMP, TEMP, TMPDIR, TEMPDIR or 
+                                  {home directory}/chicken-build if none of those variables are found
+                                  in the environment)
       -download-dir PATH         location where chicken-setup will save downloaded files
                                  (default: {build-prefix}/downloads)
   --                             ignore all following arguments
