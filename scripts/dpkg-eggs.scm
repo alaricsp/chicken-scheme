@@ -107,7 +107,7 @@
 	  (run (rm -rf ,build-dir))
 	  (run (cp -R ,release ,build-dir))
 	  (run (cp -R ,debdir ,build-dir))
-	  (if (not (string-suffix? ".html" doc))
+	  (if (and doc (not (string-suffix? ".html" doc)))
 	      (let ((html-path (s+ "html/" name ".html")))
 		(run (csi -s ,(cond ((file-exists? (s+ start "/makehtml.scm")) => identity)
 				    (else 'makehtml.scm))
