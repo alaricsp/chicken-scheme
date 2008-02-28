@@ -609,7 +609,7 @@
 		(cond
                  (mingw
 		  (set! link-options
-		    (cons* "-lkernel32" "-luser32.lib" "-lgdi32" "-mwindows"
+		    (cons* "-lkernel32" "-luser32" "-lgdi32" "-mwindows"
 			   link-options))
 		  (set! compile-options (cons "-DC_WINDOWS_GUI" compile-options)))
                  (msvc
