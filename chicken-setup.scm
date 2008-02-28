@@ -517,11 +517,11 @@ usage: chicken-setup [OPTION ...] FILENAME
       -destdir PATH              specifies alternative installation prefix
       -revision REV              specifies SVN revision for checkout
       -build-prefix PATH         location where chicken-setup will create egg build directories
-                                 (default: the value of environment variable TMP, TEMP, TMPDIR, TEMPDIR or 
-                                  {home directory}/chicken-build if none of those variables are found
-                                  in the environment)
+                                 (default: the value of environment variable CHICKEN_TMPDIR, TMPDIR or 
+                                  /tmp/chicken-setup-{MAJOR-VERSION}-{USER} 
+				  if none of these variables are found in the environment)
       -download-dir PATH         location where chicken-setup will save downloaded files
-                                 (default: {build-prefix}/downloads)
+                                 (default: {BUILD-PREFIX}/downloads)
   --                             ignores all following arguments
 
   Builds and installs extension libraries.
