@@ -11,7 +11,7 @@
 
 (define extensions (make-hash-table))
 
-(load-extensions-from-file extensions "enscript.scm")
+(load-extensions-from-file extensions "enscript-texinfo.scm")
 
 (define wikipath (optional (command-line-arguments) "chicken-manual"))
 
