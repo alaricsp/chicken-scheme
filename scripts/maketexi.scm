@@ -61,9 +61,9 @@
 
 (write-stream
  (texi-page 
-  "Felix Winkelmann"
+  "Felix Winkelmann and the Chicken Team"
   "Chicken Scheme Reference Manual"
-  "Copyright 2007-2008 Felix Winkelmann"
+  "Copyright 2007-2008 Felix Winkelmann and the Chicken Team"
   "The User's Manual"
   (wiki->texi str
 	      stream-null ;; tail
