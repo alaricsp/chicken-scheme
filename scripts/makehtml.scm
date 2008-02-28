@@ -11,10 +11,12 @@ exec csi -s $0 "$@"
 (use html-stream stream-ext stream-wiki utils srfi-13 url posix regex)
 (use matchable)
 
+(define s+ string-append)
+
 (define (simple-args #!optional (args (command-line-arguments)) (error error))
   (define (assign var val)
     (##sys#setslot 
-     (string->symbol (string-append "*" var "*"))
+     (string->symbol (s+ "*" var "*"))
      0
      (if (string? val) 
 	 (or (string->number val) val)
@@ -48,7 +50,7 @@ exec csi -s $0 "$@"
 
 (define *pdf* #f)
 (define *extension-path* #f)
-(define *pages* (directory "manual"))
+(define *pages* (if (file-exists? "manual") (directory "manual") (list)))
 (define *only* #f)
 (define *wikipath* "~/eggs/wiki")
 (define *fetch-manual* #f)
@@ -61,9 +63,9 @@ exec csi -s $0 "$@"
 	 lnk)
 	((string-ci=? lnk +index-page+) "index.html")
 	((any (lambda (f) (string-ci=? f lnk)) *pages*)
-	 (string-append (hyphen (string-downcase lnk)) ".html|" lnk) )
+	 (s+ (hyphen (string-downcase lnk)) ".html|" lnk) )
 	((string-prefix? "http:" lnk) lnk)
-	(else (string-append "http://galinha.ucpel.tche.br/" lnk) ) ) )
+	(else (s+ "http://galinha.ucpel.tche.br/" lnk) ) ) )
 
 (define (convert-page page)
   (let ((data (read-all page)))
@@ -72,14 +74,11 @@ exec csi -s $0 "$@"
        (match (string-search-positions "\\[\\[([^]]+)\\]\\]" data i)
 	 (((s e) (ls le))
 	  (let ((lnk (substring data ls le)))
-	    (loop
-	     e
-	     (cons
-	      (string-append
-	       (substring data i (+ 2 s))
-	       (clean-link lnk)
-	       "]]")
-	      all) ) ) )
+	    (loop e (cons
+		(s+ (substring data i (+ 2 s))
+		    (clean-link lnk)
+		    "]]")
+		all) ) ) )
 	 (_ (reverse (cons (substring data i) all))) ) ) ) ) )
 
 ;; We need this to keep the order of chapters in the PDF file.
@@ -158,7 +157,9 @@ in `manual-wiki-files' can be found in `*pages*'."
             (if (string=? pagename +index-page+) "index" pagename) "html"))))
 
 (define (wiki-pagename pagename)
-  (make-pathname "manual" pagename) )
+  (if *only* 
+      (make-pathname *wikipath* pagename)
+      (make-pathname "manual" pagename) ))
 
 (define *loaded-extensions* (make-hash-table))
 
@@ -173,7 +174,9 @@ in `manual-wiki-files' can be found in `*pages*'."
 	 (print p " -> " po " ...")
 	 (with-output-to-file po
 	   (lambda ()
-	     (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename)
+	     (if *only*
+		 (printf "<html><head><title>~a</title></head><body>~%" pagename)
+		 (printf "<html><head><title>CHICKEN User's Manual - ~a</title></head><body>~%" pagename))
 	     (write-stream
 	      (wiki->html
 	       (string->stream (convert-page pw))
@@ -216,8 +219,6 @@ in `manual-wiki-files' can be found in `*pages*'."
    (unless (string-suffix? ".svn" f)
      (load-extensions-from-file *loaded-extensions* f)))
  (glob (conc *extension-path* "/*")) )
-(when *pdf*
-  (chapters-sanity-check))
+(when *pdf* (chapters-sanity-check))
 (wiki-files->html)
-(when *pdf*
-  (html-files->pdf))
+(when *pdf* (html-files->pdf))
