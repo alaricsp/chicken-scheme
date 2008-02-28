@@ -117,7 +117,8 @@
 		(run (cp ,html-path ,build-dir))))
 	  (cd build-dir)
 	  (run (chmod a+rx debian/rules))
-	  (run (,(s+ "EGG_TREE=\"" eggdir "\"") dpkg-buildpackage -us -uc)))
+	  (run (,(s+ "EGG_TREE=\"" eggdir "\"") dpkg-buildpackage -us -uc))
+	  (cd start))
 	(message "No debian subdirectory found in ~a" path))))
 
 (define (main options operands)
