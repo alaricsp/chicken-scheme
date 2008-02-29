@@ -1,4 +1,4 @@
-/* config.h.  From PCRE 7.4 config.h generated from config.h.in by configure.  */
+/* config.h.  From PCRE 7.6 config.h generated from config.h.in by configure.  */
 
 #if defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)
 # include "chicken-config.h"
@@ -94,13 +94,13 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 7.4"
+#define PACKAGE_STRING "PCRE 7.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.4"
+#define PACKAGE_VERSION "7.6"
 
 /* When calling PCRE via the POSIX interface, additional working storage is
    required for holding the pointers to capturing substrings because PCRE
@@ -130,7 +130,7 @@ Makefile (use --disable-stack-for-recursion). */
 #define SUPPORT_UTF8 
 
 /* Version number of package */
-#define VERSION "7.4"
+#define VERSION "7.6"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

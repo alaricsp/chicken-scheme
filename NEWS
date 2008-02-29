@@ -1,5 +1,6 @@
 3.0.4
 
+- unit regex: PCRE 7.6
 - unit tcp: use of offset into string rather than substring for faster
   socket write [Jim Ursetto]
 - MSVC can now be used to build the system, when standard UNIX tools (like
