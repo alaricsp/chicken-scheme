@@ -29,13 +29,13 @@
   (run-time-macros)
   (uses srfi-1 regex utils posix tcp match srfi-18 srfi-13)
   (export move-file run:execute make/proc uninstall-extension
-	  install-extension install-program install-script
-	  setup-verbose-flag setup-install-flag installation-prefix
-	  find-library find-header program-path remove-file* patch
-	  yes-or-no? setup-build-directory setup-root-directory
-	  create-directory test-compile try-compile copy-file run-verbose
-	  required-chicken-version required-extension-version
-	  cross-chicken ##sys#current-source-filename host-extension) )
+	  install-extension install-program install-script setup-verbose-flag
+	  setup-install-flag installation-prefix chicken-prefix find-library
+	  find-header program-path remove-file* patch yes-or-no?
+	  setup-build-directory setup-root-directory create-directory
+	  test-compile try-compile copy-file run-verbose
+	  required-chicken-version required-extension-version cross-chicken
+	  ##sys#current-source-filename host-extension) )
 
 
 ;;; Constants, variables and parameters
@@ -110,13 +110,16 @@
 
 
 (define-constant long-options
-  '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path" "-version" "-script"
-    "-fetch" "-host" "-proxy" "-keep" "-verbose" "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-    "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn" "-local" "-destdir" "-revision"
-    "-host-extension" "-build-prefix" "-download-dir") )
+'("-help" "-uninstall" "-list" "-run" "-repository" "-program-path"
+  "-version" "-script" "-fetch" "-host" "-proxy" "-keep" "-verbose"
+  "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
+  "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn"
+  "-local" "-revision" "-host-extension" "-build-prefix"
+  "-download-path" "-install-prefix") )
+
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
     #f) )
 
 (define *installed-executables* 
@@ -127,10 +130,6 @@
     ("chicken-setup" . ,(foreign-value "C_CHICKEN_SETUP_PROGRAM" c-string))
     ("chicken-bug" . ,(foreign-value "C_CHICKEN_BUG_PROGRAM" c-string))))
 
-(define *install-bin-path* 
-  (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
-	(make-pathname p "bin") )
-      (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
 (define *cc* (foreign-value "C_TARGET_CC" c-string))
 (define *cxx* (foreign-value "C_TARGET_CXX" c-string))
@@ -151,9 +150,24 @@
 
 (register-feature! 'chicken-setup)
 
-(define program-path (make-parameter *install-bin-path*))
-(define (cross-chicken) (##sys#fudge 39))
-(define host-extension (make-parameter #f))
+(define chicken-bin-path
+  (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
+	(make-pathname p "bin") )
+      (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
+
+(define chicken-prefix
+  (or (getenv "CHICKEN_PREFIX")
+      (match (string-match "(.*)/bin/?" chicken-bin-path)
+	     ((_ p) p)
+	     (_ "/usr/local") ) ) ) 
+
+(define example-path 
+  (make-parameter
+   (or (and-let* ((p chicken-prefix))
+	 (make-pathname p "/share/chicken/examples") )
+       "/usr/local/share/chicken/examples")))
+
+(define program-path (make-parameter chicken-bin-path))
 
 (define setup-build-prefix
   (make-parameter
@@ -172,6 +186,8 @@
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
 
+(define (cross-chicken) (##sys#fudge 39))
+(define host-extension (make-parameter #f))
 
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
@@ -189,14 +205,11 @@
 (define *last-decent-host* #f)
 (define *proxy-host* #f)
 (define *proxy-port* #f)
-(define *example-directory* (make-pathname (chicken-home) "examples"))
 (define *base-directory* (current-directory))
 (define *fetch-tree-only* #f)
 (define *svn-repository* #f)
 (define *local-repository* #f)
-(define *destdir* #f)
-(define *repository-hosts*
-  (list (list "www.call-with-current-continuation.org" *default-eggdir* 80)))
+(define *repository-hosts* (list (list "www.call-with-current-continuation.org" *default-eggdir* 80)))
 (define *revision* #f)
 (define *run-tests* #f)
 (define *fetched-eggs* '())
@@ -278,13 +291,13 @@
 	 (string-intersperse 
 	  (cons* (quotewrap 
 		  (make-pathname 
-		   *install-bin-path*
+		   chicken-bin-path
 		   (cdr (assoc prg *installed-executables*))))
 		 "-feature" "compiling-extension"
 		 *csc-options*) 
 	  " ") )
 	((assoc prg *installed-executables*) =>
-	 (lambda (a) (quotewrap (make-pathname *install-bin-path* (cdr a)))))
+	 (lambda (a) (quotewrap (make-pathname chicken-bin-path (cdr a)))))
 	(else prg) ) )
 
 (define (fixmaketarget file)
@@ -514,14 +527,14 @@ usage: chicken-setup [OPTION ...] FILENAME
       -tree FILENAME             uses repository catalog from given file
       -svn URL                   fetches extension from subversion repository
       -local PATH                fetches extension from local filesystem
-      -destdir PATH              specifies alternative installation prefix
       -revision REV              specifies SVN revision for checkout
       -build-prefix PATH         location where chicken-setup will create egg build directories
                                  (default: the value of environment variable CHICKEN_TMPDIR, TMPDIR or 
                                   /tmp/chicken-setup-{MAJOR-VERSION}-{USER} 
 				  if none of these variables are found in the environment)
-      -download-dir PATH         location where chicken-setup will save downloaded files
+      -download-path PATH         location where chicken-setup will save downloaded files
                                  (default: {BUILD-PREFIX}/downloads)
+      -install-prefix PATH       specifies alternative installation prefix
   --                             ignores all following arguments
 
   Builds and installs extension libraries.
@@ -537,11 +550,7 @@ EOF
   (make-pathname rpath fn setup-file-extension) )
 
 (define installation-prefix
-  (make-parameter
-   (or (getenv "CHICKEN_PREFIX")
-       (match (string-match "(.*)/bin/?" *install-bin-path*)
-	 ((_ p) p)
-	 (_ #f) ) ) ) )
+  (make-parameter (or (getenv "CHICKEN_INSTALL_PREFIX") #f)))
 
 (define (with-ext filename ext)
   (if (and (equal? (pathname-extension filename) ext)
@@ -650,7 +659,10 @@ EOF
 
 (define (copy-file from to #!optional (err #t))
   (let ((from (if (pair? from) (car from) from))
-	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
+	(to ((lambda (pre) (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
+			     (if (and pre (not (string-prefix? pre to-path)))
+				 (make-pathname pre to-path) to-path)))
+	     (installation-prefix))))
     (ensure-directory to)
     (cond ((or (glob? from) (file-exists? from))
 	   (run (,*copy-command* ,(quotewrap from) ,(quotewrap to))) )
@@ -658,8 +670,10 @@ EOF
 	  (else (warning "file does not exist" from)))))
 
 (define (move-file from to)
-  (let ((from (if (pair? from) (car from) from))
-	(to (if (pair? from) (make-pathname to (cadr from)) to)) )
+  (let ((from  (if (pair? from) (car from) from))
+	(to    (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
+		 (if (and pre (not (string-prefix? pre to-path)))
+		     (make-pathname pre to-path) to-path))))
     (ensure-directory to)
     (run (,*move-command* ,(quotewrap from) ,(quotewrap to)) ) ) )
 
@@ -724,14 +738,17 @@ EOF
 	  (newline)
 	  (set! *rebuild-doc-index* #t)) )
       (and-let* ((exs (assq 'examples info)))
-	(print "\n* Installing example files in " *example-directory* ":")
-	(for-each 
-	 (lambda (f)
-	   (copy-file f (make-pathname *example-directory* f) #f)
-	   (unless *windows-shell*
-	     (run (chmod a+rx ,*example-directory*))) )
-	 (cdr exs))
-	(newline) )
+	(let ((example-dest 
+	       ((lambda (pre) (if pre (list pre (example-path)) (list (example-path))))
+		(installation-prefix))))
+	  (print "\n* Installing example files in " example-dest ":")
+	  (for-each 
+	   (lambda (f)
+	     (copy-file f (make-pathname example-dest f) #f)
+	     (unless *windows-shell*
+	       (run (chmod a+rx ,example-dest))) )
+	   (cdr exs))
+	  (newline) ))
       (write-info id dests info) ) ) )
 
 (define (install-program id files #!optional (info '()))
@@ -741,7 +758,8 @@ EOF
      (if *windows-shell* "exe" #f) ) )
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
-	   (ppath (if *destdir* (make-pathname *destdir* "bin") (program-path)))
+	   (ppath ((lambda (pre) (if pre (make-pathname pre (program-path)) (program-path)))
+		   (installation-prefix)))
 	   (files (if *windows*
                       (map (lambda (f)
                              (if (list? f) 
@@ -762,7 +780,8 @@ EOF
 (define (install-script id files #!optional (info '()))
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
-	   (ppath (if *destdir* (make-pathname *destdir* "bin") (program-path)))
+	   (ppath ((lambda (pre) (if pre (make-pathname pre (program-path)) (program-path)))
+		   (installation-prefix)))
 	   (pfiles (map (lambda (f)
 			  (let ((from (if (pair? f) (car f) f))
 				(to (make-dest-pathname ppath f)) )
@@ -795,10 +814,8 @@ EOF
 ;;; More helper stuff
 
 (define (repo-path #!optional ddir?)
-  (let ((p (if (and ddir? *destdir*)
-	       (make-pathname 
-		(list *destdir* "lib/chicken") 
-		(pathname-file (repository-path))) ; we need the binary-compat. version
+  (let ((p (if (and ddir? (installation-prefix))
+	       (make-pathname (installation-prefix) (repository-path))
 	       (repository-path))) )
     (ensure-directory p)
     p) )
@@ -1088,7 +1105,7 @@ EOF
 (define (build-doc-index)
   (let ((rpath (repository-path))
 	(hn (get-host-name)))
-    (with-output-to-file (doc-stylesheet)
+    (with-output-to-file (doc-stylesheet #t)
       (lambda () (display #<<EOF
 body, html {
   color: #000;
@@ -1166,7 +1183,7 @@ tr {
 }
 EOF
     )))
-    (with-output-to-file (doc-index)
+    (with-output-to-file (doc-index #t)
       (lambda ()
 	(print "<html><head><title>Egg documentation index for " hn 
 	       "</title><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/></head>")
@@ -1309,15 +1326,13 @@ EOF
 	(("-program-path")
 	 (print (program-path))
 	 (exit) )
-	(("-destdir" path . more)
-	 (set! *example-directory* (make-pathname path "examples"))
-	 (set! *destdir* path) 
+	(("-install-prefix" path . more)
 	 (installation-prefix path)
 	 (loop more) )
 	(("-build-prefix" path . more)
 	 (setup-build-prefix path)
 	 (loop more) )
-	(("-download-dir" path . more)
+	(("-download-path" path . more)
 	 (setup-download-directory path)
 	 (loop more) )
 	(("-program-path" dir . more)
@@ -1375,7 +1390,7 @@ EOF
 	 (set! *keep-stuff* #t)
 	 (loop more) )
 	(("-docindex" . more)
-	 (let ((di (doc-index)))
+	 (let ((di (doc-index #t)))
 	   (unless (file-exists? di)
 	     (build-doc-index) )
 	   (print di) ) )
@@ -1407,7 +1422,7 @@ EOF
 	(("-host-extension" . more)
 	 (host-extension #t)
 	 (loop more) )
-	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-destdir" 
+	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-install-prefix" 
 	      "-tree" "-local" "-svn" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
