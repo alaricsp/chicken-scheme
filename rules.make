@@ -1034,8 +1034,8 @@ compiler-check:
 bootstrap:
 	gzip -d -c bootstrap.tar.gz | tar xvf -
 	touch *.c
-	$(MAKE) -f Makefile.$(PLATFORM) STATICBUILD=1 chicken
-	cp chicken chicken-boot
+	$(MAKE) -f Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
+	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 
 bootstrap.tar.gz:
