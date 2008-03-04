@@ -951,7 +951,7 @@ chicken-bug.c: chicken-bug.scm
 
 .PHONY: distfiles
 
-distfiles: library.c eval.c extras.c lolevel.c utils.c \
+distfiles: buildsvnrevision library.c eval.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
 	ulibrary.c ueval.c uextras.c ulolevel.c \

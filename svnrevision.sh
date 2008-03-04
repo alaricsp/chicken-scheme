@@ -27,7 +27,7 @@
 
 
 if test -d .svn; then
-    if test -x `which svn` ; then
+    if test -x "`which svn`" ; then
     	rev=`svn info | sed -n -e 's/Revision: \([0-9]*\)/\1/p'`
     else
     	rev=`cat .svn/entries | sed -n -e '4 s/^\([0-9]*\)$/\1/p'`
