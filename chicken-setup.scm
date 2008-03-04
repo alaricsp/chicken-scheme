@@ -119,7 +119,7 @@
 
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
     #f) )
 
 (define *installed-executables* 
