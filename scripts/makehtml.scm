@@ -84,6 +84,7 @@ exec csi -s $0 "$@"
 ;; We need this to keep the order of chapters in the PDF file.
 (define manual-wiki-files
   '("The User's Manual"
+    "Overview"
     "Basic mode of operation"
     "Using the compiler"
     "Using the interpreter"
@@ -126,7 +127,7 @@ exec csi -s $0 "$@"
     ))
 
 (define (chapters-sanity-check)
-  "Checks if there all the wiki files listed in `*pages*' are in
+  "Checks if all the wiki files listed in `*pages*' are in
 `manual-wiki-files', just in case we forget to update this
 variable when new chapters are added; and if all the files listed
 in `manual-wiki-files' can be found in `*pages*'."
