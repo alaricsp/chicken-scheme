@@ -17,6 +17,7 @@
 
 (define file-list (map (lambda (x) (make-pathname wikipath x))
 		       (list "The User's Manual"
+			     "Overview"
 			     "Basic mode of operation"
 			     "Using the compiler"
 			     "Using the interpreter"
