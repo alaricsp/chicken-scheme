@@ -1,5 +1,9 @@
 3.0.4
 
+- chicken-setup: eggs are downloaded to and compiled in a temporary
+  directory determined by CHICKEN_TMPDIR or TMPDIR environment
+  variables, or by -build-prefix and -download-dir options,
+  respectively; -destdir option is replaced with -install-prefix.
 - unit regex: PCRE 7.6
 - unit tcp: use of offset into string rather than substring for faster
   socket write [Jim Ursetto]
@@ -18,9 +22,6 @@
 - unit extras: added "eq?-hash", "eqv?-hash", "equal?-hash", "number-hash",
   "symbol-hash", "keyword-hash", "##sys#number-hash-hook", and
   "hash-by-identity" as a synonym for "eq?-hash"
-- chicken-setup: eggs are downloaded to and compiled in a temporary
-  directory determined by TMP or TEMP environment variables, or by
-  -build-prefix and -download-dir options, respectively.
 
 3.0.0rc1
 
