@@ -305,7 +305,7 @@ endif
 
 # main rule
 
-.PHONY: all buildsvnrevision
+.PHONY: all
 
 ifdef NO_UNIX_SHELL
 all: $(TARGETS)
