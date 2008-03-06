@@ -1346,18 +1346,7 @@
 
 ;;; Library-internal routine
 (define (%string-copy! to tstart from fstart fend)
-  (if (> fstart tstart)
-      ;; Might be better: (##core#inline "C_substring_copy" from to fstart fend tstart)
-      (do ((i fstart (+ i 1))
-	   (j tstart (+ j 1)))
-	  ((>= i fend))
-	(string-set! to j (string-ref from i)))
-
-      (do ((i (- fend 1)                    (- i 1))
-	   (j (+ -1 tstart (- fend fstart)) (- j 1)))
-	  ((< i fstart))
-	(string-set! to j (string-ref from i)))))
-
+  (##core#inline "C_substring_copy" from to fstart fend tstart))
 
 
 ;;; Returns starting-position in STRING or #f if not true.
