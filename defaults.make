@@ -305,15 +305,15 @@ endif
 
 # main rule
 
-.PHONY: all get-svn-revision
+.PHONY: all buildsvnrevision
 
 ifdef NO_UNIX_SHELL
 all: $(TARGETS)
 else
-all: get-svn-revision $(TARGETS)
+all: buildsvnrevision $(TARGETS)
 endif
 
-get-svn-revision:
+buildsvnrevision:
 	sh svnrevision.sh
 
 # generic part of chicken-config.h
