@@ -657,15 +657,17 @@ EOF
 		 (run (,*tar-program* ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
     ))
 
-(define (copy-file from to #!optional (err #t))
+(define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
   (let ((from (if (pair? from) (car from) from))
 	(to ((lambda (pre) (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
 			     (if (and pre (not (string-prefix? pre to-path)))
 				 (make-pathname pre to-path) to-path)))
-	     (installation-prefix))))
+	     prefix)))
     (ensure-directory to)
     (cond ((or (glob? from) (file-exists? from))
-	   (run (,*copy-command* ,(quotewrap from) ,(quotewrap to))) )
+	   (begin
+	     (run (,*copy-command* ,(quotewrap from) ,(quotewrap to))) 
+	     to))
 	  (err (error "file does not exist" from))
 	  (else (warning "file does not exist" from)))))
 
@@ -976,13 +978,18 @@ EOF
   (unless hostdata (set! hostdata (car *repository-hosts*)))
   (cond (*local-repository*
 	 (when (setup-verbose-flag) (printf "fetching from local directory ~a ...~%" *local-repository*))
-	 (let ((p (->string item)))
-	   (copy-file (make-pathname *local-repository* p) (make-pathname #f p "egg-dir")) ) )
+	 (let* ((p  (->string item))
+	       (fpath  (make-pathname (setup-download-directory) p "egg-dir")))
+	   (copy-file (make-pathname *local-repository* p) fpath #t #f)))
+
 	(*svn-repository*
 	 (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" *svn-repository*))
-	 (let ((p (->string item)))
+	 (let* ((p (->string item))
+	       (fpath (make-pathname (setup-download-directory) p "egg-dir")))
 	   (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
-		     ,(make-pathname *svn-repository* p) ,(make-pathname #f p "egg-dir"))) ) )
+		     ,(make-pathname *svn-repository* p) ,fpath))
+	   fpath))
+
 	(else
 	 (match hostdata
 	   ((host path port)
@@ -1033,12 +1040,11 @@ EOF
 	      (printf "Warning: no repository index available, trying direct download...~%" ext)
 	      (set! *last-decent-host* (car *repository-hosts*))
 	      (set! *dont-ask* #t)
-	      (let ((fpath 
-		     (download-data
-		      *last-decent-host*
-		      (pathname-file ext)
-		      (pathname-replace-extension ext "egg") )))
-		fpath))
+	      (download-data
+	       *last-decent-host*
+	       (pathname-file ext)
+	       (pathname-replace-extension ext "egg") ))
+
 	     (else
 	      (download-repository-tree)
 	      (set! *dont-ask* #t)
@@ -1065,7 +1071,7 @@ EOF
 	     (lambda (fpath)
 	       (let ((f (pathname-strip-directory fpath)))
 		 (when df
-		   (unpack/enter f)
+		   (unpack/enter fpath)
 		   (let ((sfile (pathname-replace-extension f "setup")))
 		     (when (and (not (file-exists? sfile)) (file-exists? "tags") )
 		       (let ((ds (sort (directory "tags") string>=?)))
