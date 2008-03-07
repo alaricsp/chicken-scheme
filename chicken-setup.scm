@@ -474,8 +474,8 @@
   (let ((eggs 
 	 (filter-map
 	  (lambda (d)
-	    (and-let* ((mf (or (file-exists? (make-pathname d d "meta"))
-			       (file-exists? (make-pathname (list d "trunk") d "meta")))))
+	    (and-let* ((mf (or (file-exists? (make-pathname (list eggdir d) d "meta"))
+			       (file-exists? (make-pathname (list eggdir d "trunk") d "meta")))))
 	      (display mf (current-error-port))
 	      (newline (current-error-port))
 	      (cons d (with-input-from-file mf read)) ) )
@@ -613,13 +613,14 @@ EOF
 	  (values `((exports ,@exports)) oinfo)
 	  (values '() oinfo) ) ) ) )
 
-(define (compute-builddir fname)
-  (if (equal? "egg-dir" (pathname-extension fname)) fname
-      (let loop ((num (random 10000)))
-	(let* ((buildname (string-append "build." (number->string num)))
-	       (path  (make-pathname (setup-build-prefix) buildname (string-append fname "-dir") )))
-	  (if (file-exists? path) (loop (random 10000))
-	      path)))))
+(define (compute-builddir fpath)
+  (if (equal? "egg-dir" (pathname-extension fpath)) fpath
+      (let ((fname (pathname-strip-directory fpath))) 
+	(let loop ((num (random 10000)))
+	  (let* ((buildname (string-append "build." (number->string num)))
+		 (path  (make-pathname (setup-build-prefix) buildname (string-append fname "-dir") )))
+	    (if (file-exists? path) (loop (random 10000))
+		path))))))
 
 
 (define (chdir dir)
@@ -650,7 +651,9 @@ EOF
 	   (set! *builddir-created* #t)
 	   (chdir tmpdir)
 	   (setup-build-directory (current-directory))
-	   (let ((fn2 (make-pathname (setup-download-directory) filename))
+	   (let ((fn2 (if (and *local-repository* (not (string-prefix? (setup-download-directory) filename)))
+			  (make-pathname (setup-download-directory) filename)
+			  filename))
 		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
 		 (run (,*gzip-program* -d -c ,fn2 |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
@@ -1014,7 +1017,7 @@ EOF
 			  (let ((fpath (make-pathname (setup-download-directory) (pathname-strip-directory fname))))
 			    (with-output-to-file fpath
 			      (cut display data) 
-			      binary:) 
+			      binary:)
 			    fpath))
 			(loop) ) ) ) ) ) )
 	   (x (error "(internal) invalid host" x)) ) ) ) )
