@@ -422,7 +422,7 @@ EOF
             (let ((t   (if (null? n)
                            (current-seconds)
                            (car n))))
-                (##sys#check-exact t 'random-seed)
+                (##sys#check-integer t 'random-seed)
                 (srand t)))))
 
 (define (random n)
