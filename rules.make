@@ -983,7 +983,7 @@ clean:
 	  $(MSVC_CHICKEN_EXPORT_FILES) chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) \
 	  $(CLEAN_MANIFESTS)
 confclean:
-	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h
+	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
 spotless: distclean
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c extras.c lolevel.c utils.c \
