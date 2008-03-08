@@ -792,27 +792,27 @@ EOF
 
 (define (stat-regular? fname)
     (##sys#check-string fname 'stat-regular?)
-    (##sys#stat fname #t 'stat-regular?)
+    (##sys#stat fname #f 'stat-regular?)
     (foreign-value "C_isreg" bool))
 
 (define (stat-directory? fname)
     (##sys#check-string fname 'stat-directory?)
-    (##sys#stat fname #t 'stat-directory?)
+    (##sys#stat fname #f 'stat-directory?)
     (foreign-value "C_isdir" bool))
 
 (define (stat-char-device? fname)
     (##sys#check-string fname 'stat-char-device?)
-    (##sys#stat fname #t 'stat-char-device?)
+    (##sys#stat fname #f 'stat-char-device?)
     (foreign-value "C_ischr" bool))
 
 (define (stat-block-device? fname)
     (##sys#check-string fname 'stat-block-device?)
-    (##sys#stat fname #t 'stat-block-device?)
+    (##sys#stat fname #f 'stat-block-device?)
     (foreign-value "C_isblk" bool))
 
 (define (stat-fifo? fname)
     (##sys#check-string fname 'stat-fifo?)
-    (##sys#stat fname #t 'stat-fifo?)
+    (##sys#stat fname #f 'stat-fifo?)
     (foreign-value "C_isfifo" bool))
 
 (define (stat-symlink? fname)
@@ -822,7 +822,7 @@ EOF
 
 (define (stat-socket? fname)
     (##sys#check-string fname 'stat-socket?)
-    (##sys#stat fname #t 'stat-socket?)
+    (##sys#stat fname #f 'stat-socket?)
     (foreign-value "C_issock" bool))
 
 (define set-file-position!              ; DEPRECATED
