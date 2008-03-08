@@ -1,4 +1,4 @@
-3.0.4
+3.0.5
 
 - chicken-setup: eggs are downloaded to and compiled in a temporary
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
@@ -11,6 +11,7 @@
   MSYS) are available [Many thanks to Ashley]
 - unit library: added "flonum-print-precision" for changing the default of
   16
+- unit posix: added stat- predicates for file types
 - unit posix: added strftime format string support to "time->string"
 - unit posix: added "string->time", which takes a strptime format string
   (Unix only)
