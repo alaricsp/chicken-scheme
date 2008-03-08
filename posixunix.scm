@@ -195,6 +195,15 @@ static C_TLS struct stat C_statbuf;
 
 #define C_islink            ((C_statbuf.st_mode & S_IFMT) == S_IFLNK)
 #define C_isreg             ((C_statbuf.st_mode & S_IFMT) == S_IFREG)
+#define C_isdir             ((C_statbuf.st_mode & S_IFMT) == S_IFDIR)
+#define C_ischr             ((C_statbuf.st_mode & S_IFMT) == S_IFCHR)
+#define C_isblk             ((C_statbuf.st_mode & S_IFMT) == S_IFBLK)
+#define C_isfifo            ((C_statbuf.st_mode & S_IFMT) == S_IFIFO)
+#ifdef S_IFSOCK
+#define C_issock            ((C_statbuf.st_mode & S_IFMT) == S_IFSOCK)
+#else
+#define C_issock            ((C_statbuf.st_mode & S_IFMT) == 0140000)
+#endif
 
 #ifdef C_GNU_ENV
 # define C_setenv(x, y)     C_fix(setenv((char *)C_data_pointer(x), (char *)C_data_pointer(y), 1))
@@ -780,6 +789,20 @@ EOF
   (##sys#check-string fname 'symbolic-link?)
   (##sys#stat fname #t 'symbolic-link?)
   (foreign-value "C_islink" bool) )
+
+(let ((stat-type
+         (lambda (name func)
+             (lambda (fname)
+                 (##sys#check-string fname name)
+                 (##sys#stat fname #t name)
+                 (foreign-value func bool)))))
+    (set! stat-regular? (stat-type 'stat-regular? "C_isreg"))
+    (set! stat-directory? (stat-type 'stat-directory? "C_isdir"))
+    (set! stat-char-device? (stat-type 'stat-char-device? "C_ischr"))
+    (set! stat-block-device? (stat-type 'stat-block-device? "C_isblk"))
+    (set! stat-fifo? (stat-type 'stat-fifo? "C_isfifo"))
+    (set! stat-symlink? (stat-type 'stat-symlink? "C_islink"))
+    (set! stat-socket? (stat-type 'stat-socket? "C_issock")))
 
 (define set-file-position!              ; DEPRECATED
   (lambda (port pos . whence)
