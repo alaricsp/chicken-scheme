@@ -1221,6 +1221,78 @@ EOF
 		(##sys#signal-hook #:file-error 'current-directory "cannot retrieve current directory") ) ) ) ) ) )
 
 
+(define canonical-path
+    (let ((null?      null?)
+          (char=?     char=?)
+          (string=?   string=?)
+          (alpha?     char-alphabetic?)
+          (sref       (cut ##core#inline "C_subchar" <> <>))
+          (ssplit     (cut string-split <> "/\\"))
+          (sappend    string-append)
+          (isperse    (cut string-intersperse <> "\\"))
+          (sep?       (lambda (c) (or (char=? #\/ c) (char=? #\\ c))))
+          (user       current-user-name)
+          (cwd        current-directory))
+        (lambda (path)
+            (##sys#check-string path 'canonical-path)
+            (let ((p   (cond ((fx= 0 (##sys#size path))
+                                 (sappend (cwd) "\\"))
+                             ((and (fx< (##sys#size path) 3)
+                                   (sep? (sref path 0)))
+                                 (sappend
+                                     (##sys#substring (cwd) 0 2)
+                                     path))
+                             ((fx= 1 (##sys#size path))
+                                 (sappend (cwd) "\\" path))
+                             ((and (char=? #\~ (sref path 0))
+                                   (sep? (sref path 1)))
+                                 (sappend
+                                     (##sys#substring (cwd) 0 3)
+                                     "Documents and Settings\\"
+                                     (user)
+                                     (##sys#substring path 1
+                                         (##sys#size path))))
+                             ((fx= 2 (##sys#size path))
+                                 (sappend (cwd) "\\" path))
+                             ((and (alpha? (sref path 0))
+                                   (char=? #\: (sref path 1))
+                                   (sep? (sref path 2)))
+                                 path)
+                             ((and (char=? #\/ (sref path 0))
+                                   (alpha? (sref path 1))
+                                   (char=? #\: (sref path 2)))
+                                 (sappend
+                                     (##sys#substring path 1 3)
+                                     "\\"
+                                     (##sys#substring path 3
+                                         (##sys#size path))))
+                             ((sep? (sref path 0))
+                                 (sappend
+                                     (##sys#substring (cwd) 0 2)
+                                     path))
+                             (else
+                                 (sappend (cwd) "\\" path)))))
+                (let loop ((l   (ssplit (##sys#substring p 3 (##sys#size p))))
+                           (r   '()))
+                    (if (null? l)
+                        (if (null? r)
+                            (##sys#substring p 0 3)
+                            (if (sep? (sref p (- (##sys#size p) 1)))
+                                (sappend
+                                    (##sys#substring p 0 3)
+                                    (isperse (reverse (cons "" r))))
+                                (sappend
+                                    (##sys#substring p 0 3)
+                                    (isperse (reverse r)))))
+                        (loop
+                            (cdr l)
+                            (if (string=? ".." (car l))
+                                (cdr r)
+                                (if (string=? "." (car l))
+                                    r
+                                    (cons (car l) r))))))))))
+                           
+
 ;;; Pipes:
 
 (let ()

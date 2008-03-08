@@ -414,6 +414,17 @@ EOF
 
 ;;; Random numbers:
 
+(define random-seed
+    (let ((srand   (foreign-lambda void "srand" unsigned-integer)))
+        (lambda n
+            (and (> (length n) 1)
+                 (##sys#error 'random-seed "too many arguments" (length n) 1))
+            (let ((t   (if (null? n)
+                           (current-seconds)
+                           (car n))))
+                (##sys#check-exact t 'random-seed)
+                (srand t)))))
+
 (define (random n)
   (##sys#check-exact n 'random)
   (if (eq? n 0)
