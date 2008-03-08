@@ -1120,6 +1120,19 @@ EOF
   (##sys#check-string fname 'symbolic-link?)
   #f)
 
+(let ((stat-type
+         (lambda (name func)
+             (lambda (fname)
+                 (##sys#check-string fname name)
+                 #f))))
+    (set! stat-regular? regular-file?)
+    (set! stat-directory? (stat-type 'stat-directory? "C_isdir"))
+    (set! stat-char-device? (stat-type 'stat-char-device? "C_ischr"))
+    (set! stat-block-device? (stat-type 'stat-block-device? "C_isblk"))
+    (set! stat-fifo? (stat-type 'stat-fifo? "C_isfifo"))
+    (set! stat-symlink? (stat-type 'stat-symlink? "C_islink"))
+    (set! stat-socket? (stat-type 'stat-socket? "C_issock")))
+
 (define file-position
   (lambda (port)
     (let ([pos (cond [(port? port)
