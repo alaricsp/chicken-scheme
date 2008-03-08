@@ -790,19 +790,40 @@ EOF
   (##sys#stat fname #t 'symbolic-link?)
   (foreign-value "C_islink" bool) )
 
-(let ((stat-type
-         (lambda (name func)
-             (lambda (fname)
-                 (##sys#check-string fname name)
-                 (##sys#stat fname #t name)
-                 (foreign-value func bool)))))
-    (set! stat-regular? (stat-type 'stat-regular? "C_isreg"))
-    (set! stat-directory? (stat-type 'stat-directory? "C_isdir"))
-    (set! stat-char-device? (stat-type 'stat-char-device? "C_ischr"))
-    (set! stat-block-device? (stat-type 'stat-block-device? "C_isblk"))
-    (set! stat-fifo? (stat-type 'stat-fifo? "C_isfifo"))
-    (set! stat-symlink? (stat-type 'stat-symlink? "C_islink"))
-    (set! stat-socket? (stat-type 'stat-socket? "C_issock")))
+(define (stat-regular? fname)
+    (##sys#check-string fname 'stat-regular?)
+    (##sys#stat fname #t 'stat-regular?)
+    (foreign-value "C_isreg" bool))
+
+(define (stat-directory? fname)
+    (##sys#check-string fname 'stat-directory?)
+    (##sys#stat fname #t 'stat-directory?)
+    (foreign-value "C_isdir" bool))
+
+(define (stat-char-device? fname)
+    (##sys#check-string fname 'stat-char-device?)
+    (##sys#stat fname #t 'stat-char-device?)
+    (foreign-value "C_ischr" bool))
+
+(define (stat-block-device? fname)
+    (##sys#check-string fname 'stat-block-device?)
+    (##sys#stat fname #t 'stat-block-device?)
+    (foreign-value "C_isblk" bool))
+
+(define (stat-fifo? fname)
+    (##sys#check-string fname 'stat-fifo?)
+    (##sys#stat fname #t 'stat-fifo?)
+    (foreign-value "C_isfifo" bool))
+
+(define (stat-symlink? fname)
+    (##sys#check-string fname 'stat-symlink?)
+    (##sys#stat fname #t 'stat-symlink?)
+    (foreign-value "C_islink" bool))
+
+(define (stat-socket? fname)
+    (##sys#check-string fname 'stat-socket?)
+    (##sys#stat fname #t 'stat-socket?)
+    (foreign-value "C_issock" bool))
 
 (define set-file-position!              ; DEPRECATED
   (lambda (port pos . whence)

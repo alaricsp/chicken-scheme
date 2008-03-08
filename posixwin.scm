@@ -1121,17 +1121,17 @@ EOF
   #f)
 
 (let ((stat-type
-         (lambda (name func)
+         (lambda (name)
              (lambda (fname)
                  (##sys#check-string fname name)
                  #f))))
     (set! stat-regular? regular-file?)
-    (set! stat-directory? (stat-type 'stat-directory? "C_isdir"))
-    (set! stat-char-device? (stat-type 'stat-char-device? "C_ischr"))
-    (set! stat-block-device? (stat-type 'stat-block-device? "C_isblk"))
-    (set! stat-fifo? (stat-type 'stat-fifo? "C_isfifo"))
-    (set! stat-symlink? (stat-type 'stat-symlink? "C_islink"))
-    (set! stat-socket? (stat-type 'stat-socket? "C_issock")))
+    (set! stat-directory? (stat-type 'stat-directory?))
+    (set! stat-char-device? (stat-type 'stat-char-device?))
+    (set! stat-block-device? (stat-type 'stat-block-device?))
+    (set! stat-fifo? (stat-type 'stat-fifo?))
+    (set! stat-symlink? (stat-type 'stat-symlink?))
+    (set! stat-socket? (stat-type 'stat-socket?)))
 
 (define file-position
   (lambda (port)
