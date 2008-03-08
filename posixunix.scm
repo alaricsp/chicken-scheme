@@ -880,7 +880,7 @@ EOF
           (char=?     char=?)
           (string=?   string=?)
           (alpha?     char-alphabetic?)
-          (sref       (cut ##core#inline "C_subchar" <> <>))
+          (sref       string-ref)
           (ssplit     (cut string-split <> "/\\"))
           (sappend    string-append)
           (isperse    (cut string-intersperse <> "/"))
