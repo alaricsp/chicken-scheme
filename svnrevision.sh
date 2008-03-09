@@ -36,6 +36,6 @@ else
     rev='0'
 fi
 
-if test "`cat buildsvnrevision`" != "$rev"; then
+if test ( ! -e buildsvnrevision ) -o ( "`cat buildsvnrevision`" != "$rev"); then
     echo "$rev" >buildsvnrevision
 fi
