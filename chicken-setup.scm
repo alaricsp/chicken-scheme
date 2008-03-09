@@ -750,9 +750,10 @@ EOF
 	  (print "\n* Installing example files in " example-dest ":")
 	  (for-each 
 	   (lambda (f)
-	     (copy-file f (make-pathname example-dest f) #f)
-	     (unless *windows-shell*
-	       (run (chmod a+rx ,example-dest))) )
+	     (let ((destf (make-pathname example-dest f)))
+	       (copy-file f (make-pathname example-dest f) #f)
+	       (unless *windows-shell*
+	         (run (chmod a+rx ,destf))) ) )
 	   (cdr exs))
 	  (newline) ))
       (write-info id dests info) ) ) )
