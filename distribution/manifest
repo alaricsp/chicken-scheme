@@ -257,5 +257,9 @@ Makefile.msvc
 rules.make
 defaults.make
 private-namespace.scm
-misc/makedist.scm
+scripts/makedist.scm
+scripts/makehtml.scm
+scripts/maketexi.scm
+scripts/enscript-texinfo.scm
+scripts/dpkg-eggs.scm
 svnrevision.sh
