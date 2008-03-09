@@ -751,7 +751,7 @@ EOF
 	  (for-each 
 	   (lambda (f)
 	     (let ((destf (make-pathname example-dest f)))
-	       (copy-file f (make-pathname example-dest f) #f)
+	       (copy-file f destf #f)
 	       (unless *windows-shell*
 	         (run (chmod a+rx ,destf))) ) )
 	   (cdr exs))
