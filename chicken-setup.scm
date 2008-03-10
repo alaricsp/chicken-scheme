@@ -745,7 +745,7 @@ EOF
 	  (set! *rebuild-doc-index* #t)) )
       (and-let* ((exs (assq 'examples info)))
 	(let ((example-dest 
-	       ((lambda (pre) (if pre (list pre (example-path)) (list (example-path))))
+	       ((lambda (pre) (if pre (make-pathname pre (example-path)) (example-path)))
 		(installation-prefix))))
 	  (print "\n* Installing example files in " example-dest ":")
 	  (for-each 
