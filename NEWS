@@ -1,4 +1,4 @@
-3.0.5
+3.0.6
 
 - chicken-setup: eggs are downloaded to and compiled in a temporary
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
