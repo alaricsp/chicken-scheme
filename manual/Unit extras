@@ -3,7 +3,7 @@
 
 == Unit extras
 
-This unit contains a collection of useful utility definitions.
+This unit contains a collection of useful utility definitions. 
 This unit is used by default, unless the program
 is compiled with the {{-explicit-use}} option.
 
@@ -227,11 +227,10 @@ When missing a ({{sprintf}}) is performed.
 
 
 
-=== Hash Tables
+=== Hash tables
 
-CHICKEN implements an extended SRFI-69. For more information,
-see [[http://srfi.schemers.org/srfi-69/srfi-69.html|SRFI-69]] and
-[[http://srfi.schemers.org/srfi-69/srfi-90.html|SRFI-90]].
+CHICKEN implements SRFI-69. For more information, 
+see [[http://srfi.schemers.org/srfi-69/srfi-69.html|SRFI-69]].
 
 A setter for {{hash-table-ref}} is defined, so
 
@@ -245,212 +244,15 @@ is equivalent to
 (hash-table-set! HT KEY VAL)
 </enscript>
 
-
-==== make-hash-table
-
- [procedure] (make-hash-table [TEST [HASH [SIZE]]] [#:TEST #:HASH #:SIZE #:INITIAL #:MIN-LOAD #:MAX-LOAD #:WEAK-KEYS #:WEAK-VALUES])
-
-The SRFI-69 procedure is extended:
-
-Returns a new {{HASH-TABLE}}, parameterized as follows:
-
-{{TEST}} is a procedure of one argument, {{(object -> boolean)}}; an equality
-predicate. The first argument is a {{KEY}}.
-
-{{HASH}} is a procedure of two arguments, {{(object (fixnum positive) ->
-(fixnum (<= 0 _ _2)))}}; a bounded hash function, where the returned hash value
-is in {{[0 BOUND)}}. The first argument is a {{KEY}} and the second argument is
-the {{BOUND}}.
-
-{{SIZE}} is a {{fixnum}}; the initial size of the hash-table.
-
-{{INITIAL}} is an {{object}}; the default initial value for any {{KEY}}.
-
-{{MIN-LOAD}} is a {{flonum}} in {{(0.0 1.0)}}; the lower bound for resizing the table.
-
-{{MAX-LOAD}} is a {{flonum}} in {{(0.0 1.0)}}; the upper bound for resizing the table.
-
-{{WEAK-KEYS}} is a {{boolean}}; always {{#f}} (until further notice).
-
-{{WEAK-VALUES}} is a {{boolean}}; always {{#f}} (until further notice).
-
-Keyword arguments take precedence over optional arguments when both are specified.
-
-
-==== hash-table-min-load
-
- [procedure] (hash-table-min-load HASH-TABLE)
-
-Returns the {{MIN-LOAD}} property of the {{HASH-TABLE}}.
-
-
-==== hash-table-max-load
-
- [procedure] (hash-table-max-load HASH-TABLE)
-
-Returns the {{MAX-LOAD}} property of the {{HASH-TABLE}}.
-
-
-==== hash-table-weak-keys
-
- [procedure] (hash-table-weak-keys HASH-TABLE)
-
-Returns the {{WEAK-KEYS}} property of the {{HASH-TABLE}}.
-
-
-==== hash-table-weak-values
-
- [procedure] (hash-table-weak-values HASH-TABLE)
-
-Returns the {{WEAK-VALUES}} property of the {{HASH-TABLE}}.
-
-
-==== hash-table-has-initial
-
- [procedure] (hash-table-has-initial HASH-TABLE)
-
-Does the {{HASH-TABLE}} have an {{INITIAL}} property.
-
-
-==== hash-table-initial
-
- [procedure] (hash-table-initial HASH-TABLE)
-
-Returns the {{INITIAL}} property of the {{HASH-TABLE}}.
-
-
-==== hash-table-update!
-
- [procedure] (hash-table-update! HASH-TABLE KEY [FUNCTION [THUNK]])
-
-The SRFI-69 procedure is extended:
-
-{{FUNCTION}} is optional. The default is {{identity}}.
-
-{{THUNK}} is optional. The default is {{(lambda () (hash-table-initial
-HASH-TABLE))}}; when the {{HASH-TABLE}} has no initial value an error is
-signaled.
-
-Returns the new value, after the update.
-
-
-==== hash-table-update!/default
-
- [procedure] (hash-table-update!/default HASH-TABLE KEY FUNCTION DEFAULT)
-
-The SRFI-69 procedure is extended:
-
-Returns the new value, after the update.
-
+As an extension to SRFI-69, {{hash-table-update!}} and {{hash-table-update!/default}} return
+the new value (after applying the update procedure).
 
 ==== hash-table-remove!
 
- [procedure] (hash-table-remove! HASH-TABLE PROC)
+ [procedure] (hash-table-remove! HASHTABLE PROC)
 
-Calls {{PROC}} for all entries in {{HASH-TABLE}} with the key and value of each
+Calls {{PROC}} for all entries in {{HASHTABLE}} with the key and value of each
 entry. If {{PROC}} returns true, then that entry is removed.
-
-
-==== hash-table-merge
-
- [procedure] (hash-table-merge HASH-TABLE-1 HASH-TABLE-2)
-
-Returns a new {{hash-table}}, the merged result of {{HASH-TABLE-1}} &
-{{HASH-TABLE-2}}.
-
-
-==== hash-table-map
-
- [procedure] (hash-table-map HASH-TABLE PROC)
-
-Calls {{PROC}} for all entries in {{HASH-TABLE}} with the key and value of each
-entry.
-
-{{PROC}} is a procedure of 2 arguments, {{(object object -> object)}}; the
-first argument is the {{KEY}}, and the second argument is the {{VALUE}}. The
-return value is collected in a list.
-
-Returns the list collection.
-
-
-==== hash-table-for-each
-
- [procedure] (hash-table-for-each HASH-TABLE PROC)
-
-Calls {{PROC}} for all entries in {{HASH-TABLE}} with the key and value of each
-entry.
-
-{{PROC}} is a procedure of 2 arguments, {{(object object -> unspecified)}}; the first
-argument is the {{KEY}}, and the second argument is the {{VALUE}}.
-
-No return value.
-
-A synonym for {{hash-table-walk}}.
-
-
-==== number-hash
-
- [procedure] (number-hash NUMBER [BOUND])
-
-Returns a hash value for the {{NUMBER}}, with optional {{BOUND}}.
-
-
-==== object-uid-hash
-
- [procedure] (object-uid-hash OBJECT [BOUND])
-
-Returns a hash value for the {{OBJECT}}, with optional {{BOUND}}.
-
-Currently this is a synonym for {{equal?-hash}}.
-
-
-==== symbol-hash
-
- [procedure] (symbol-hash SYMBOL [BOUND])
-
-Returns a hash value for the {{SYMBOL}}, with optional {{BOUND}}.
-
-
-==== keyword-hash
-
- [procedure] (keyword-hash KEYWORD [BOUND])
-
-Returns a hash value for the {{KEYWORD}}, with optional {{BOUND}}.
-
-
-==== eq?-hash
-
- [procedure] (eq?-hash OBJECT [BOUND])
-
-Returns a hash value for the {{OBJECT}}, with optional {{BOUND}}.
-
-For use with {{eq?}} as {{TEST}}.
-
-{{hash-by-identity}} is a synonym.
-
-Uses {{object-uid-hash}} for non-immediate, non-symbol objects.
-
-
-==== eqv?-hash
-
- [procedure] (eqv?-hash OBJECT [BOUND])
-
-Returns a hash value for the {{OBJECT}}, with optional {{BOUND}}.
-
-For use with {{eqv?}} as {{TEST}}.
-
-Uses {{object-uid-hash}} for non-immediate, non-number, non-symbol objects.
-
-
-==== equal?-hash
-
- [procedure] (equal?-hash OBJECT [BOUND])
-
-Returns a hash value for the {{OBJECT}}, with optional {{BOUND}}.
-
-For use with {{equal?}} as {{TEST}}.
-
-{{hash}} is a synonym.
 
 
 
@@ -579,6 +381,14 @@ Returns true if the list or vector {{SEQUENCE}} is already sorted.
 === Random numbers
 
 
+==== random-seed
+
+ [procedure] (random-seed [SEED])
+
+Seeds the random number generator with {{SEED}} (an exact integer) or 
+{{(current-seconds)}} if {{SEED}} is not given.
+
+
 ==== random
 
  [procedure] (random N)
@@ -659,7 +469,7 @@ Returns a list containing all toplevel expressions
 read from the file or port {{FILE-OR-PORT}}. If no argument is given,
 input is read from the port that is the current value of {{(current-input-port)}}.
 After all expressions are read, and if the argument is a port, then the port will
-not be closed. The {{READER}} argument specifies the procedure used to read
+not be closed. The {{READER}} argument specifies the procedure used to read 
 expressions from the given file or port and defaults to {{read}}. The reader
 procedure will be called with a single argument (an input port).
 If {{MAXCOUNT}} is given then only up to {{MAXCOUNT}} expressions will be read in.
@@ -696,7 +506,7 @@ a string naming a file. Returns a list of strings, each string representing a li
  [procedure] (write-string STRING [NUM [PORT]]
 
 Read or write {{NUM}} characters from/to {{PORT}}, which defaults to the
-value of {{(current-input-port)}} or {{(current-output-port)}}, respectively.
+value of {{(current-input-port)}} or {{(current-output-port)}}, respectively. 
 If {{NUM}} is {{#f}} or not given, then all data
 up to the end-of-file is read, or, in the case of {{write-string}} the whole
 string is written. If no more input is available, {{read-string}} returns the
@@ -754,6 +564,7 @@ together. {{conc}} could be implemented as
 (define (conc . args)
   (apply string-append (map ->string args)) )
 </enscript>
+
 
 
 ==== ->string
@@ -819,7 +630,7 @@ is equivalent to
  [procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
 
 Split string into substrings separated by the given delimiters. If
-no delimiters are specified, a string comprising the tab, newline and space characters
+no delimiters are specified, a string comprising the tab, newline and space characters 
 is assumed. If the
 parameter {{KEEPEMPTY}} is given and not {{#f}}, then empty
 substrings are retained:
@@ -856,7 +667,7 @@ the string {{MATCH}} in {{STRING}} will be replaced by the string
 (string-translate*
   "<h1>this is a \"string\"</h1>"
   '(("<" . "&lt;") (">" . "&gt;") ("\"" . "&quot;")) )
-=>  "&lt;h1&gt;this is a &quot;string&quot;&lt;/ht&gt;"
+=>  "&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"
 </enscript>
 
 
@@ -892,27 +703,6 @@ is a case-insensitive version of {{substring-index}}.
  [procedure] (any? X)
 
 Ignores its argument and always returns {{#t}}. This is actually useful sometimes.
-
-
-==== none?
-
- [procedure] (none? X)
-
-Ignores its argument and always returns {{#f}}. This is actually useful sometimes.
-
-
-==== always?
-
- [procedure] (always? X ...)
-
-Ignores its arguments and always returns {{#t}}. This is actually useful sometimes.
-
-
-==== never?
-
- [procedure] (never? X ...)
-
-Ignores its arguments and always returns {{#f}}. This is actually useful sometimes.
 
 
 ==== constantly
@@ -978,6 +768,7 @@ predicate {{PRED ...}}.
 </enscript>
 
 
+
 ==== each
 
  [procedure] (each PROC ...)
@@ -992,7 +783,7 @@ of the last procedure application. For example
 is equivalent to
 
 <enscript highlight=scheme>
-(lambda args
+(lambda args 
   (apply pp args)
   (apply eval args) )
 </enscript>
@@ -1053,28 +844,6 @@ Ignores it's arguments, does nothing and returns an unspecified value.
 
 A single value version of {{compose}} (slightly faster). {{(o)}} is equivalent
 to {{identity}}.
-
-
-==== left-section
-
- [procedure] (left-section PROC ARG ...)
-
-A left section partially applies arguments starting from the left.
-
-Returns a variadic procedure in which some prefix of its arguments,
-{{ARG ...}}, are partially applied to {{PROC}}.
-
-
-==== right-section
-
- [procedure] (right-section PROC ARG ...)
-
-A right section partially applies arguments starting from the right.
-
-Returns a variadic procedure in which some reversed suffix of its arguments,
-{{ARG ...}}, are partially applied to {{PROC}}.
-
-
 
 === Binary searching
 

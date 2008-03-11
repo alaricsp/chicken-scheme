@@ -255,14 +255,19 @@ If the keyword argument {{c++}} is given and true, then the code will be compile
 Creates the directory given in the string {{PATH}}, with all parent directories as needed.
 
 
+==== chicken-prefix
+
+ [parameter] chicken-prefix
+
+The installation prefix specified when CHICKEN was built.
+
 ==== installation-prefix
 
  [parameter] installation-prefix
 
-Holds the prefix under which CHICKEN executables and libraries have been installed (either
-the value of the environment variable {{CHICKEN_PREFIX}} or whatever prefix was
-specified at the time the system was built.
-
+An alternative installation prefix that will be prepended to extension
+installation paths if specified. It is set by the {{-install-prefix}}
+option or environment variable {{CHICKEN_INSTALL_PREFIX}}.
 
 ==== program-path
 
@@ -542,8 +547,10 @@ Available options:
 ; {{-svn URL}} : Fetch extension from [[http://subversion.tigris.org|Subversion]] repository
 ; {{-revision REV}} : Specifies SVN revision to check out
 ; {{-local PATHNAME}} : Fetch extension from local file
-; {{-destdir PATHNAME}} : Specify alternative installation prefix (for packaging)
+; {{-install-prefix PATHNAME}} : Specify alternative installation prefix (for packaging)
 ; {{-host-extension}} : Compile extension in "host" mode (sets the parameter {{host-extension}} to {{#f}})
+; {{-build-prefix PATHNAME}} : Location where chicken-setup will create egg build directories  (default: the value of environment variable CHICKEN_TMPDIR, or {{/tmp/chicken-{MAJOR-VERSION-build-{USER}}}})
+; {{-download-path PATHNAME}} : Location where chicken-setup will save downloaded files  (default: {{build-prefix/downloads}})
 ; {{--}} : Ignore all following arguments
 
 Note that the options are processed exactly in the order in which they appear in the command-line.

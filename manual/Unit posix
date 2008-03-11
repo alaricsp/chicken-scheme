@@ -118,6 +118,29 @@ Returns a list of the pathnames of all existing files matching
 file-patterns (with {{*}} matching zero or more characters and
 {{?}} matching zero or one character).
 
+==== canonical-path
+
+ [procedure] (canonical-path NAME)
+
+Returns a canonical path for {{NAME}}, which should be a string
+containing a path-or-filename.  The string returned by 
+{{canonical-path}} is OS dependent; it may be quoted and used in
+a shell on the calling machine. (Quoting is suggested as shell
+special characters, including space, are not escaped.)  However,
+all path separators and prefixes are handled in an OS independent
+fashion.  Any appearance of {{/}} below imply {{\\}} is also handled.
+
+The prefix for {{NAME}} determines what path to prepend.  If {{NAME}}
+begins with a {{"~/"}}, this prefix is stripped and the user's 
+home directory is added.  If beginning with {{/}} or a DRIVE-LETTER:\\
+combination, no additional path is added.  Otherwise, the current
+directory and separator are added.  All relative path elements and
+duplicate separators are processed and removed.  If {{NAME}} ends with
+a {{/}} or is empty, the appropriate slash is appended to the tail.
+
+No directories or files are actually tested for existence; this 
+procedure only canonicalises path syntax.
+
 ==== set-root-directory!
 
  [procedure] (set-root-directory! STRING)
@@ -425,6 +448,26 @@ values.  {{FILE}} may be a filename or a file-descriptor.
 
 These procedures return {{#t}} if the current user has read,
 write or execute permissions on the file named {{FILENAME}}.
+
+
+==== stat-regular?
+==== stat-directory?
+==== stat-char-device?
+==== stat-block-device?
+==== stat-fifo?
+==== stat-symlink?
+==== stat-socket?
+
+ [procedure] (stat-regular? FILENAME)
+ [procedure] (stat-directory? FILENAME)
+ [procedure] (stat-char-device? FILENAME)
+ [procedure] (stat-block-device? FILENAME)
+ [procedure] (stat-fifo? FILENAME)
+ [procedure] (stat-symlink? FILENAME)
+ [procedure] (stat-socket? FILENAME)
+
+These procedures return {{#t}} if the {{FILENAME}} given is of the 
+appropriate type.
 
 
 === Changing file attributes
@@ -957,27 +1000,12 @@ the number of seconds since the first of January, 1970 UTC.
 
 ==== time->string
 
- [procedure] (time->string VECTOR [FORMAT])
+ [procedure] (time->string VECTOR)
 
-Without a {{FORMAT}} string converts the broken out time represented in the 10
-element vector {{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
+Converts the broken down time represented in the 10 element vector
+{{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
 1991"}}.
 
-Otherwise returns the time as a string formatted per the {{FORMAT}} string.
-
-See the {{strftime}} C procedure for a specification of the {{FORMAT}} string.
-
-==== string->time
-
- [procedure] (string->time STRING [FORMAT])
-
-Returns the time string parsed per the {{FORMAT}} string as a broken out time
-10 element vector.
-
-The default {{FORMAT}} string is {{"%a %b %e %H:%M:%S %Z %Y"}}. (The default
-{{date}} command format.)
-
-See the {{strptime}} C procedure for a specification of the {{FORMAT}} string.
 
 === Raw exit
 
@@ -1086,170 +1114,86 @@ Returns the name of the terminal that is connected to {{PORT}}.
 Returns {{#t}} if {{PORT}} is connected to a terminal and
 {{#f}} otherwise.
 
-==== terminal-size
-
- [procedure] (terminal-size PORT)
-
-Returns two values: The height and width of the terminal connected to {{PORT}}.
 
 === How Scheme procedures relate to UNIX C functions
 
-<table>
-<tr><td> change-directory
-chdir
-</td></tr><tr><td> change-file-mode
-chmod
-</td></tr><tr><td> change-file-owner
-chown
-</td></tr><tr><td> create-directory
-mkdir
-</td></tr><tr><td> create-fifo
-mkfifo
-</td></tr><tr><td> create-pipe
-pipe
-</td></tr><tr><td> create-session
-setsid
-</td></tr><tr><td> create-symbolic-link
-link
-</td></tr><tr><td> current-directory
-curdir
-</td></tr><tr><td> current-effective-groupd-id
-getegid
-</td></tr><tr><td> current-effective-user-id
-geteuid
-</td></tr><tr><td> current-group-id
-getgid
-</td></tr><tr><td> current-parent-id
-getppid
-</td></tr><tr><td> current-process-id
-getpid
-</td></tr><tr><td> current-user-id
-getuid
-</td></tr><tr><td> delete-directory
-rmdir
-</td></tr><tr><td> duplicate-fileno
-dup/dup2
-</td></tr><tr><td> _exit
-_exit
-</td></tr><tr><td> file-close
-close
-</td></tr><tr><td> file-access-time
-stat
-</td></tr><tr><td> file-change-time
-stat
-</td></tr><tr><td> file-modification-time
-stat
-</td></tr><tr><td> file-execute-access?
-access
-</td></tr><tr><td> file-open
-open
-</td></tr><tr><td> file-lock
-fcntl
-</td></tr><tr><td> file-position
-ftell/lseek
-</td></tr><tr><td> file-read
-read
-</td></tr><tr><td> file-read-access?
-access
-</td></tr><tr><td> file-select
-select
-</td></tr><tr><td> file-control
-fcntl
-</td></tr><tr><td> file-stat
-stat
-</td></tr><tr><td> file-test-lock
-fcntl
-</td></tr><tr><td> file-truncate
-truncate/ftruncate
-</td></tr><tr><td> file-unlock
-fcntl
-</td></tr><tr><td> file-write
-write
-</td></tr><tr><td> file-write-access?
-access
-</td></tr><tr><td> get-groups
-getgroups
-</td></tr><tr><td> get-host-name
-gethostname
-</td></tr><tr><td> initialize-groups
-initgroups
-</td></tr><tr><td> local-time->seconds
-mktime
-</td></tr><tr><td> local-timezone-abbreviation
-localtime
-</td></tr><tr><td> map-file-to-memory
-mmap
-</td></tr><tr><td> open-input-file*
-fdopen
-</td></tr><tr><td> open-output-file*
-fdopen
-</td></tr><tr><td> open-input-pipe
-popen
-</td></tr><tr><td> open-output-pipe
-popen
-</td></tr><tr><td> port->fileno
-fileno
-</td></tr><tr><td> process-execute
-execvp
-</td></tr><tr><td> process-fork
-fork
-</td></tr><tr><td> process-group-id
-getpgid
-</td></tr><tr><td> process-signal
-kill
-</td></tr><tr><td> process-wait
-waitpid
-</td></tr><tr><td> close-input-pipe
-pclose
-</td></tr><tr><td> close-output-pipe
-pclose
-</td></tr><tr><td> read-symbolic-link
-readlink
-</td></tr><tr><td> seconds->local-time
-localtime
-</td></tr><tr><td> seconds->string
-ctime
-</td></tr><tr><td> seconds->utc-time
-gmtime
-</td></tr><tr><td> set-alarm!
-alarm
-</td></tr><tr><td> set-buffering-mode!
-setvbuf
-</td></tr><tr><td> set-file-position!
-fseek/seek
-</td></tr><tr><td> set-groups!
-setgroups
-</td></tr><tr><td> set-signal-mask!
-sigprocmask
-</td></tr><tr><td> set-group-id!
-setgid
-</td></tr><tr><td> set-process-group-id!
-setpgid
-</td></tr><tr><td> set-user-id!
-setuid
-</td></tr><tr><td> set-root-directory!
-chroot
-</td></tr><tr><td> setenv
-setenv/putenv
-</td></tr><tr><td> sleep
-sleep
-</td></tr><tr><td> system-information
-uname
-</td></tr><tr><td> terminal-name
-ttyname
-</td></tr><tr><td> terminal-port?
-isatty
-</td></tr><tr><td> time->string
-asctime
-</td></tr><tr><td> unsetenv
-putenv
-</td></tr><tr><td> unmap-file-from-memory
-munmap
-</td></tr><tr><td> user-information
-getpwnam/getpwuid
-</td></tr><tr><td> utc-time->seconds
-timegm
-</td></tr></table>
+; {{change-directory}} : {{chdir}}
+; {{change-file-mode}} : {{chmod}}
+; {{change-file-owner}} : {{chown}}
+; {{create-directory}} : {{mkdir}}
+; {{create-fifo}} : {{mkfifo}}
+; {{create-pipe}} : {{pipe}}
+; {{create-session}} : {{setsid}}
+; {{create-symbolic-link}} : {{link}}
+; {{current-directory}} : {{curdir}}
+; {{current-effective-groupd-id}} : {{getegid}}
+; {{current-effective-user-id}} : {{geteuid}}
+; {{current-group-id}} : {{getgid}}
+; {{current-parent-id}} : {{getppid}}
+; {{current-process-id}} : {{getpid}}
+; {{current-user-id}} : {{getuid}}
+; {{delete-directory}} : {{rmdir}}
+; {{duplicate-fileno}} : {{dup/dup2}}
+; {{_exit}} : {{_exit}}
+; {{file-close}} : {{close}}
+; {{file-access-time}} : {{stat}}
+; {{file-change-time}} : {{stat}}
+; {{file-modification-time}} : {{stat}}
+; {{file-execute-access?}} : {{access}}
+; {{file-open}} : {{open}}
+; {{file-lock}} : {{fcntl}}
+; {{file-position}} : {{ftell/lseek}}
+; {{file-read}} : {{read}}
+; {{file-read-access?}} : {{access}}
+; {{file-select}} : {{select}}
+; {{file-control}} : {{fcntl}}
+; {{file-stat}} : {{stat}}
+; {{file-test-lock}} : {{fcntl}}
+; {{file-truncate}} : {{truncate/ftruncate}}
+; {{file-unlock}} : {{fcntl}}
+; {{file-write}} : {{write}}
+; {{file-write-access?}} : {{access}}
+; {{get-groups}} : {{getgroups}}
+; {{get-host-name}} : {{gethostname}}
+; {{initialize-groups}} : {{initgroups}}
+; {{local-time->seconds}} : {{mktime}}
+; {{local-timezone-abbreviation}} : {{localtime}}
+; {{map-file-to-memory}} : {{mmap}}
+; {{open-input-file*}} : {{fdopen}}
+; {{open-output-file*}} : {{fdopen}}
+; {{open-input-pipe}} : {{popen}}
+; {{open-output-pipe}} : {{popen}}
+; {{port->fileno}} : {{fileno}}
+; {{process-execute}} : {{execvp}}
+; {{process-fork}} : {{fork}}
+; {{process-group-id}} : {{getpgid}}
+; {{process-signal}} : {{kill}}
+; {{process-wait}} : {{waitpid}}
+; {{close-input-pipe}} : {{pclose}}
+; {{close-output-pipe}} : {{pclose}}
+; {{read-symbolic-link}} : {{readlink}}
+; {{seconds->local-time}} : {{localtime}}
+; {{seconds->string}} : {{ctime}}
+; {{seconds->utc-time}} : {{gmtime}}
+; {{set-alarm!}} : {{alarm}}
+; {{set-buffering-mode!}} : {{setvbuf}}
+; {{set-file-position!}} : {{fseek/seek}}
+; {{set-groups!}} : {{setgroups}}
+; {{set-signal-mask!}} : {{sigprocmask}}
+; {{set-group-id!}} : {{setgid}}
+; {{set-process-group-id!}} : {{setpgid}}
+; {{set-user-id!}} : {{setuid}}
+; {{set-root-directory!}} : {{chroot}}
+; {{setenv}} : {{setenv/putenv}}
+; {{sleep}} : {{sleep}}
+; {{system-information}} : {{uname}}
+; {{terminal-name}} : {{ttyname}}
+; {{terminal-port?}} : {{isatty}}
+; {{time->string}} : {{asctime}}
+; {{unsetenv}} : {{putenv}}
+; {{unmap-file-from-memory}} : {{munmap}}
+; {{user-information}} : {{getpwnam/getpwuid}}
+; {{utc-time->seconds}} : {{timegm}}
 
 
 === Windows specific notes
@@ -1305,12 +1249,11 @@ Microsoft tools or with MinGW):
  map/...
  map-file-to-memory  unmap-file-from-memory  memory-mapped-file-pointer  memory-mapped-file?
  set-alarm!
- terminal-port?  terminal-name terminal-size
+ terminal-port?  terminal-name
  process-fork  process-signal
  parent-process-id
  set-root-directory!
  utc-time->seconds
- string->time
 
 ==== Additional Definitions
 

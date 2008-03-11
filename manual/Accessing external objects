@@ -137,7 +137,7 @@ an additional argument {{INDEX}} is required that specifies the index of an arra
 
 ==== TYPENAME-SLOTNAME-set!
  
- (TYPENAME-SLOTNAME-set! FOREIGN-RECORD-POINTER [INXDEX] VALUE)
+ (TYPENAME-SLOTNAME-set! FOREIGN-RECORD-POINTER [INDEX] VALUE)
 
 A procedure of two arguments (a pointer to a C structure) and a value, that
 sets the slot value of the slot {{SLOTNAME}} in the structure. If a {{SIZE}} has been given in

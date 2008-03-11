@@ -17,7 +17,7 @@ Stephen C. Gilardi, Joshua Griffith, Johannes Groedem, Damian Gryski,
 Mario Domenech Goulart, Andreas Gustafsson, Sven Hartrumpf, Jun-ichiro
 itojun Hagino, Ahdi Hargo, Matthias Heiler, Karl M. Hegbloom, William
 P. Heinemann, Bill Hoffman, Bruce Hoult, Hans Huebner, Markus
-Huelsmann, Goetz Isenmann, Andrei Ivushkin, Paulo Jabardo, David Janssens, Christian
+Huelsmann, Goetz Isenmann, Paulo Jabardo, David Janssens, Christian
 Jaeger, Dale Jordan, Valentin Kamyshenko, Daishi Kato, Peter Keller,
 Brad Kind, Ron Kneusel, Matthias Koeppe, Krysztof Kowa&#322;czyk,
 Andre Kuehne, Todd R. Kueny Sr, Goran Krampe, David Krentzlin, Ben
@@ -62,7 +62,7 @@ CHICKEN contains code from several people:
 ; Olin Shivers : implementation of {{let-optionals[*]}} and reference implementations of SRFI-1, SRFI-13 and SRFI-14.
 ; Andrew Wilcox : queues.
 ; Andrew Wright : pattern matcher.
-; [[Alex Shinn]] : {{scheme-complete.el}} emacs tab-completion
+; [[http://chicken.wiki.br/Alex Shinn|Alex Shinn]] : {{scheme-complete.el}} emacs tab-completion
 
 Previous: [[FAQ]]
 

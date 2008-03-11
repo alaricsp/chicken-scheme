@@ -26,9 +26,19 @@ for the existence of CHICKEN are:
 
 * As far as we know, CHICKEN is the first implementation of Scheme that uses Henry Baker's [[http://home.pipeline.com/~hbaker1/CheneyMTA.html|Cheney on the M.T.A]] concept.
 
+==== Why call it 'Chicken'?
+
+According to [[http://chicken.wiki.br/felix winkelmann|felix]]:
+
+> Well, it's pretty boring, really: when I started the project and needed some
+> name, the first thing that met my eyes was the "chicken" (actually a disguised penguin) 
+> from the Wallace + Gromit movie...
+> And then there is of course the ever occurring chicken-and-egg problem
+> with bootstrapped compilers.
+
 ==== What should I do if I find a bug?
 
-Send e-mail to chicken-janitors@nongnu.org (preferably using the {{chicken-bug(1)}} tool)
+Send e-mail to felix@call-with-current-continuation.org
 with some hints about the problem, like
 version/build of the compiler, platform, system configuration, code that
 causes the bug, etc.
@@ -94,7 +104,7 @@ numbers) are more than sufficient;
 - Dispatching of arithmetic operations is more efficient.
 
 There is an extension based on the GNU Multiprecision Package that implements most of the full
-numeric tower, see [[numbers]].
+numeric tower, see [[http://chicken.wiki.br/numbers|numbers]].
 
 
 ==== How can I specialize a generic function method to match instances of every class?

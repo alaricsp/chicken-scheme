@@ -97,14 +97,6 @@ in unsafe mode can crash the system.
 ; [procedure] (fp>= X Y)
 ; [procedure] (fp<= X Y)
 
-==== flonum-print-precision
-
- [procedure] (flonum-print-precision [PRECISION])
-
-Gets and sets the number of significant digits printed for a floating-point
-number. {{PRECISION}} must be a positive {{fixnum}}. Always returns
-the setting in effect at the moment of invocation.
-
 ==== signum
 
  [procedure] (signum N)
