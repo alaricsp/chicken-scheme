@@ -893,11 +893,12 @@
   (string-intersperse
    (append
     (if staticexts (nth-value 0 (static-extension-info)) '())
-    (cons
-     (if (or static static-libs) extra-libraries extra-shared-libraries)
-     (if (or static static-libs) 
-	 (if gui gui-library-files library-files)
-	 (if gui gui-shared-library-files shared-library-files) ) ) ) ) )
+    (if (or static static-libs)
+        (if gui gui-library-files library-files)
+        (if gui gui-shared-library-files shared-library-files))
+    (if (or static static-libs)
+        (list extra-libraries)
+        (list extra-shared-libraries)))))
 
 
 ;;; Helper procedures:

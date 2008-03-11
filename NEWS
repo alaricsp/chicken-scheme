@@ -1,3 +1,7 @@
+3.0.7pre
+
+- csc - fixed bug preventing static linking of executables (build order issues)
+
 3.0.6
 
 - unit regex: avoid string copy in regex matching [Jim Ursetto]
