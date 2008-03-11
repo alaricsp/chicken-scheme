@@ -63,55 +63,12 @@ This is the top node.
 @chapter The User's Manual
 
 
-@emph{(This document describes version 3.0.5)}
-
-@b{CHICKEN is a compiler that translates Scheme source files into C}, which in turn can be fed to a C-compiler to generate a standalone executable.  An interpreter is also available and can be used as a scripting environment or for testing programs before compilation.
-
-This package is distributed under the @b{BSD license} and as such is free to use and modify. 
-
-The method of compilation and the design of the runtime-system follow closely Henry Baker's @uref{http://home.pipeline.com/~hbaker1/CheneyMTA.html, CONS Should Not CONS Its Arguments, Part II: Cheney on the M.T.A.} paper and expose a number of interesting properties:
-
-@itemize
-@item Consing (creation of data on the heap) is relatively inexpensive, because a generational garbage collection scheme is used, in which short-lived data structures are reclaimed extremely quickly.
-
-@item Moreover, @code{call-with-current-continuation} is practically for free and CHICKEN does not suffer under any performance penalties if first-class continuations are used in complex ways.
-
-
-@end itemize
-The generated C code is fully tail-recursive.
-
-Some of the features supported by CHICKEN:
-
-@itemize
-@item SRFIs 0, 1, 2, 4, 6-19, 23, 25-31, 37-40, 42, 43, 45, 47, 55, 57, 60-63, 66, 69, 72, 78, 85 and 95.
-
-@item Lightweight threads based on first-class continuations
-
-@item Pattern matching with Andrew Wright's @code{match} package
-
-@item Record structures
-
-@item Extended comment- and string-literal syntaxes
-
-@item Libraries for regular expressions, string handling
-
-@item UNIX system calls and extended data structures
-
-@item Create interpreted or compiled shell scripts written in Scheme for UNIX or Windows
-
-@item Compiled C files can be easily distributed
-
-@item Allows the creation of fully self-contained statically linked executables
-
-@item On systems that support it, compiled code can be loaded dynamically
-
-
-@end itemize
-This manual is merely a reference for the CHICKEN system and assumes a working knowledge of Scheme.
-
-The manual is split in the following sections:
+This is the user's manual for the Chicken Scheme compiler, version 3.0.6.
 
 @table @b
+@item @ref{Overview, Overview}
+
+What is Chicken?
 @item @ref{Basic mode of operation, Basic mode of operation}
 
 Compiling Scheme files.
@@ -2976,7 +2933,6 @@ This unit contains basic Scheme definitions. This unit is used by default, unles
 * Unit library - Arithmetic - fixnum?::
 * Unit library - Arithmetic - Arithmetic fixnum operations::
 * Unit library - Arithmetic - Arithmetic floating-point operations::
-* Unit library - Arithmetic - flonum-print-precision::
 * Unit library - Arithmetic - signum::
 * Unit library - Arithmetic - finite?::
 
@@ -3110,7 +3066,7 @@ On division by zero, @code{fx/} and @code{fxmod} signal a condition of kind @cod
 
 
 @end table
-@node Unit library - Arithmetic - Arithmetic floating-point operations, Unit library - Arithmetic - flonum-print-precision, Unit library - Arithmetic - Arithmetic fixnum operations, Unit library - Arithmetic
+@node Unit library - Arithmetic - Arithmetic floating-point operations, Unit library - Arithmetic - signum, Unit library - Arithmetic - Arithmetic fixnum operations, Unit library - Arithmetic
 @subsection Arithmetic floating-point operations
 
 
@@ -3158,16 +3114,7 @@ In safe mode, these procedures throw a type error with non-float arguments (exce
 
 
 @end table
-@node Unit library - Arithmetic - flonum-print-precision, Unit library - Arithmetic - signum, Unit library - Arithmetic - Arithmetic floating-point operations, Unit library - Arithmetic
-@subsection flonum-print-precision
-
-
-@verbatim
-[procedure] (flonum-print-precision [PRECISION])
-@end verbatim
-Gets and sets the number of significant digits printed for a floating-point number. @code{PRECISION} must be a positive @code{fixnum}. Always returns the setting in effect at the moment of invocation.
-
-@node Unit library - Arithmetic - signum, Unit library - Arithmetic - finite?, Unit library - Arithmetic - flonum-print-precision, Unit library - Arithmetic
+@node Unit library - Arithmetic - signum, Unit library - Arithmetic - finite?, Unit library - Arithmetic - Arithmetic floating-point operations, Unit library - Arithmetic
 @subsection signum
 
 
@@ -4776,7 +4723,7 @@ Next: @ref{Unit extras, Unit extras}
 * Unit extras - Lists::
 * Unit extras - String-port extensions::
 * Unit extras - Formatted output::
-* Unit extras - Hash Tables::
+* Unit extras - Hash tables::
 * Unit extras - Queues::
 * Unit extras - Sorting::
 * Unit extras - Random numbers::
@@ -4788,7 +4735,7 @@ Next: @ref{Unit extras, Unit extras}
 @end menu
 
 
-This unit contains a collection of useful utility definitions. This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+This unit contains a collection of useful utility definitions.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
 
 @node Unit extras - Lists, Unit extras - String-port extensions,  , Unit extras
 @section Lists
@@ -4984,7 +4931,7 @@ Call procedure @code{THUNK} with the current input-port temporarily bound to an 
 @end verbatim
 Call procedure @code{THUNK} with the current output-port temporarily bound to a string-output-port and return the accumulated output string.
 
-@node Unit extras - Formatted output, Unit extras - Hash Tables, Unit extras - String-port extensions, Unit extras
+@node Unit extras - Formatted output, Unit extras - Hash tables, Unit extras - String-port extensions, Unit extras
 @section Formatted output
 
 @menu
@@ -5028,35 +4975,16 @@ The parameters  @code{FORMATSTRING} and @code{ARG ...} are as for (@code{printf}
 
 The optional @code{DESTINATION}, when supplied, performs a (@code{sprintf}) for a  @code{#f}, a (@code{printf}) for a @code{#t}, and a (@code{fprintf}) for an output-port. When missing a (@code{sprintf}) is performed.
 
-@node Unit extras - Hash Tables, Unit extras - Queues, Unit extras - Formatted output, Unit extras
-@section Hash Tables
+@node Unit extras - Hash tables, Unit extras - Queues, Unit extras - Formatted output, Unit extras
+@section Hash tables
 
 @menu
-* Unit extras - Hash Tables - make-hash-table::
-* Unit extras - Hash Tables - hash-table-min-load::
-* Unit extras - Hash Tables - hash-table-max-load::
-* Unit extras - Hash Tables - hash-table-weak-keys::
-* Unit extras - Hash Tables - hash-table-weak-values::
-* Unit extras - Hash Tables - hash-table-has-initial::
-* Unit extras - Hash Tables - hash-table-initial::
-* Unit extras - Hash Tables - hash-table-update!::
-* Unit extras - Hash Tables - hash-table-update!/default::
-* Unit extras - Hash Tables - hash-table-remove!::
-* Unit extras - Hash Tables - hash-table-merge::
-* Unit extras - Hash Tables - hash-table-map::
-* Unit extras - Hash Tables - hash-table-for-each::
-* Unit extras - Hash Tables - number-hash::
-* Unit extras - Hash Tables - object-uid-hash::
-* Unit extras - Hash Tables - symbol-hash::
-* Unit extras - Hash Tables - keyword-hash::
-* Unit extras - Hash Tables - eq?-hash::
-* Unit extras - Hash Tables - eqv?-hash::
-* Unit extras - Hash Tables - equal?-hash::
+* Unit extras - Hash tables - hash-table-remove!::
 
 @end menu
 
 
-CHICKEN implements an extended SRFI-69. For more information, see @uref{http://srfi.schemers.org/srfi-69/srfi-69.html, SRFI-69} and @uref{http://srfi.schemers.org/srfi-69/srfi-90.html, SRFI-90}.
+CHICKEN implements SRFI-69. For more information,  see @uref{http://srfi.schemers.org/srfi-69/srfi-69.html, SRFI-69}.
 
 A setter for @code{hash-table-ref} is defined, so
 
@@ -5068,241 +4996,18 @@ is equivalent to
 @example
 (hash-table-set! HT KEY VAL)
 @end example
-@node Unit extras - Hash Tables - make-hash-table, Unit extras - Hash Tables - hash-table-min-load,  , Unit extras - Hash Tables
-@subsection make-hash-table
+As an extension to SRFI-69, @code{hash-table-update!} and @code{hash-table-update!/default} return the new value (after applying the update procedure).
 
-
-@verbatim
-[procedure] (make-hash-table [TEST [HASH [SIZE]]] [#:TEST #:HASH #:SIZE #:INITIAL #:MIN-LOAD #:MAX-LOAD #:WEAK-KEYS #:WEAK-VALUES])
-@end verbatim
-The SRFI-69 procedure is extended:
-
-Returns a new @code{HASH-TABLE}, parameterized as follows:
-
-@code{TEST} is a procedure of one argument, @code{(object -> boolean)}; an equality predicate. The first argument is a @code{KEY}.
-
-@code{HASH} is a procedure of two arguments, @code{(object (fixnum positive) -> (fixnum (<= 0 _ _2)))}; a bounded hash function, where the returned hash value is in @code{[0 BOUND)}. The first argument is a @code{KEY} and the second argument is the @code{BOUND}.
-
-@code{SIZE} is a @code{fixnum}; the initial size of the hash-table.
-
-@code{INITIAL} is an @code{object}; the default initial value for any @code{KEY}.
-
-@code{MIN-LOAD} is a @code{flonum} in @code{(0.0 1.0)}; the lower bound for resizing the table.
-
-@code{MAX-LOAD} is a @code{flonum} in @code{(0.0 1.0)}; the upper bound for resizing the table.
-
-@code{WEAK-KEYS} is a @code{boolean}; always @code{#f} (until further notice).
-
-@code{WEAK-VALUES} is a @code{boolean}; always @code{#f} (until further notice).
-
-Keyword arguments take precedence over optional arguments when both are specified.
-
-@node Unit extras - Hash Tables - hash-table-min-load, Unit extras - Hash Tables - hash-table-max-load, Unit extras - Hash Tables - make-hash-table, Unit extras - Hash Tables
-@subsection hash-table-min-load
-
-
-@verbatim
-[procedure] (hash-table-min-load HASH-TABLE)
-@end verbatim
-Returns the @code{MIN-LOAD} property of the @code{HASH-TABLE}.
-
-@node Unit extras - Hash Tables - hash-table-max-load, Unit extras - Hash Tables - hash-table-weak-keys, Unit extras - Hash Tables - hash-table-min-load, Unit extras - Hash Tables
-@subsection hash-table-max-load
-
-
-@verbatim
-[procedure] (hash-table-max-load HASH-TABLE)
-@end verbatim
-Returns the @code{MAX-LOAD} property of the @code{HASH-TABLE}.
-
-@node Unit extras - Hash Tables - hash-table-weak-keys, Unit extras - Hash Tables - hash-table-weak-values, Unit extras - Hash Tables - hash-table-max-load, Unit extras - Hash Tables
-@subsection hash-table-weak-keys
-
-
-@verbatim
-[procedure] (hash-table-weak-keys HASH-TABLE)
-@end verbatim
-Returns the @code{WEAK-KEYS} property of the @code{HASH-TABLE}.
-
-@node Unit extras - Hash Tables - hash-table-weak-values, Unit extras - Hash Tables - hash-table-has-initial, Unit extras - Hash Tables - hash-table-weak-keys, Unit extras - Hash Tables
-@subsection hash-table-weak-values
-
-
-@verbatim
-[procedure] (hash-table-weak-values HASH-TABLE)
-@end verbatim
-Returns the @code{WEAK-VALUES} property of the @code{HASH-TABLE}.
-
-@node Unit extras - Hash Tables - hash-table-has-initial, Unit extras - Hash Tables - hash-table-initial, Unit extras - Hash Tables - hash-table-weak-values, Unit extras - Hash Tables
-@subsection hash-table-has-initial
-
-
-@verbatim
-[procedure] (hash-table-has-initial HASH-TABLE)
-@end verbatim
-Does the @code{HASH-TABLE} have an @code{INITIAL} property.
-
-@node Unit extras - Hash Tables - hash-table-initial, Unit extras - Hash Tables - hash-table-update!, Unit extras - Hash Tables - hash-table-has-initial, Unit extras - Hash Tables
-@subsection hash-table-initial
-
-
-@verbatim
-[procedure] (hash-table-initial HASH-TABLE)
-@end verbatim
-Returns the @code{INITIAL} property of the @code{HASH-TABLE}.
-
-@node Unit extras - Hash Tables - hash-table-update!, Unit extras - Hash Tables - hash-table-update!/default, Unit extras - Hash Tables - hash-table-initial, Unit extras - Hash Tables
-@subsection hash-table-update!
-
-
-@verbatim
-[procedure] (hash-table-update! HASH-TABLE KEY [FUNCTION [THUNK]])
-@end verbatim
-The SRFI-69 procedure is extended:
-
-@code{FUNCTION} is optional. The default is @code{identity}.
-
-@code{THUNK} is optional. The default is @code{(lambda () (hash-table-initial HASH-TABLE))}; when the @code{HASH-TABLE} has no initial value an error is signaled.
-
-Returns the new value, after the update.
-
-@node Unit extras - Hash Tables - hash-table-update!/default, Unit extras - Hash Tables - hash-table-remove!, Unit extras - Hash Tables - hash-table-update!, Unit extras - Hash Tables
-@subsection hash-table-update!/default
-
-
-@verbatim
-[procedure] (hash-table-update!/default HASH-TABLE KEY FUNCTION DEFAULT)
-@end verbatim
-The SRFI-69 procedure is extended:
-
-Returns the new value, after the update.
-
-@node Unit extras - Hash Tables - hash-table-remove!, Unit extras - Hash Tables - hash-table-merge, Unit extras - Hash Tables - hash-table-update!/default, Unit extras - Hash Tables
+@node Unit extras - Hash tables - hash-table-remove!,  ,  , Unit extras - Hash tables
 @subsection hash-table-remove!
 
 
 @verbatim
-[procedure] (hash-table-remove! HASH-TABLE PROC)
+[procedure] (hash-table-remove! HASHTABLE PROC)
 @end verbatim
-Calls @code{PROC} for all entries in @code{HASH-TABLE} with the key and value of each entry. If @code{PROC} returns true, then that entry is removed.
+Calls @code{PROC} for all entries in @code{HASHTABLE} with the key and value of each entry. If @code{PROC} returns true, then that entry is removed.
 
-@node Unit extras - Hash Tables - hash-table-merge, Unit extras - Hash Tables - hash-table-map, Unit extras - Hash Tables - hash-table-remove!, Unit extras - Hash Tables
-@subsection hash-table-merge
-
-
-@verbatim
-[procedure] (hash-table-merge HASH-TABLE-1 HASH-TABLE-2)
-@end verbatim
-Returns a new @code{hash-table}, the merged result of @code{HASH-TABLE-1} & @code{HASH-TABLE-2}.
-
-@node Unit extras - Hash Tables - hash-table-map, Unit extras - Hash Tables - hash-table-for-each, Unit extras - Hash Tables - hash-table-merge, Unit extras - Hash Tables
-@subsection hash-table-map
-
-
-@verbatim
-[procedure] (hash-table-map HASH-TABLE PROC)
-@end verbatim
-Calls @code{PROC} for all entries in @code{HASH-TABLE} with the key and value of each entry.
-
-@code{PROC} is a procedure of 2 arguments, @code{(object object -> object)}; the first argument is the @code{KEY}, and the second argument is the @code{VALUE}. The return value is collected in a list.
-
-Returns the list collection.
-
-@node Unit extras - Hash Tables - hash-table-for-each, Unit extras - Hash Tables - number-hash, Unit extras - Hash Tables - hash-table-map, Unit extras - Hash Tables
-@subsection hash-table-for-each
-
-
-@verbatim
-[procedure] (hash-table-for-each HASH-TABLE PROC)
-@end verbatim
-Calls @code{PROC} for all entries in @code{HASH-TABLE} with the key and value of each entry.
-
-@code{PROC} is a procedure of 2 arguments, @code{(object object -> unspecified)}; the first argument is the @code{KEY}, and the second argument is the @code{VALUE}.
-
-No return value.
-
-A synonym for @code{hash-table-walk}.
-
-@node Unit extras - Hash Tables - number-hash, Unit extras - Hash Tables - object-uid-hash, Unit extras - Hash Tables - hash-table-for-each, Unit extras - Hash Tables
-@subsection number-hash
-
-
-@verbatim
-[procedure] (number-hash NUMBER [BOUND])
-@end verbatim
-Returns a hash value for the @code{NUMBER}, with optional @code{BOUND}.
-
-@node Unit extras - Hash Tables - object-uid-hash, Unit extras - Hash Tables - symbol-hash, Unit extras - Hash Tables - number-hash, Unit extras - Hash Tables
-@subsection object-uid-hash
-
-
-@verbatim
-[procedure] (object-uid-hash OBJECT [BOUND])
-@end verbatim
-Returns a hash value for the @code{OBJECT}, with optional @code{BOUND}.
-
-Currently this is a synonym for @code{equal?-hash}.
-
-@node Unit extras - Hash Tables - symbol-hash, Unit extras - Hash Tables - keyword-hash, Unit extras - Hash Tables - object-uid-hash, Unit extras - Hash Tables
-@subsection symbol-hash
-
-
-@verbatim
-[procedure] (symbol-hash SYMBOL [BOUND])
-@end verbatim
-Returns a hash value for the @code{SYMBOL}, with optional @code{BOUND}.
-
-@node Unit extras - Hash Tables - keyword-hash, Unit extras - Hash Tables - eq?-hash, Unit extras - Hash Tables - symbol-hash, Unit extras - Hash Tables
-@subsection keyword-hash
-
-
-@verbatim
-[procedure] (keyword-hash KEYWORD [BOUND])
-@end verbatim
-Returns a hash value for the @code{KEYWORD}, with optional @code{BOUND}.
-
-@node Unit extras - Hash Tables - eq?-hash, Unit extras - Hash Tables - eqv?-hash, Unit extras - Hash Tables - keyword-hash, Unit extras - Hash Tables
-@subsection eq?-hash
-
-
-@verbatim
-[procedure] (eq?-hash OBJECT [BOUND])
-@end verbatim
-Returns a hash value for the @code{OBJECT}, with optional @code{BOUND}.
-
-For use with @code{eq?} as @code{TEST}.
-
-@code{hash-by-identity} is a synonym.
-
-Uses @code{object-uid-hash} for non-immediate, non-symbol objects.
-
-@node Unit extras - Hash Tables - eqv?-hash, Unit extras - Hash Tables - equal?-hash, Unit extras - Hash Tables - eq?-hash, Unit extras - Hash Tables
-@subsection eqv?-hash
-
-
-@verbatim
-[procedure] (eqv?-hash OBJECT [BOUND])
-@end verbatim
-Returns a hash value for the @code{OBJECT}, with optional @code{BOUND}.
-
-For use with @code{eqv?} as @code{TEST}.
-
-Uses @code{object-uid-hash} for non-immediate, non-number, non-symbol objects.
-
-@node Unit extras - Hash Tables - equal?-hash,  , Unit extras - Hash Tables - eqv?-hash, Unit extras - Hash Tables
-@subsection equal?-hash
-
-
-@verbatim
-[procedure] (equal?-hash OBJECT [BOUND])
-@end verbatim
-Returns a hash value for the @code{OBJECT}, with optional @code{BOUND}.
-
-For use with @code{equal?} as @code{TEST}.
-
-@code{hash} is a synonym.
-
-@node Unit extras - Queues, Unit extras - Sorting, Unit extras - Hash Tables, Unit extras
+@node Unit extras - Queues, Unit extras - Sorting, Unit extras - Hash tables, Unit extras
 @section Queues
 
 @menu
@@ -5464,13 +5169,23 @@ Returns true if the list or vector @code{SEQUENCE} is already sorted.
 @section Random numbers
 
 @menu
+* Unit extras - Random numbers - random-seed::
 * Unit extras - Random numbers - random::
 * Unit extras - Random numbers - randomize::
 
 @end menu
 
 
-@node Unit extras - Random numbers - random, Unit extras - Random numbers - randomize,  , Unit extras - Random numbers
+@node Unit extras - Random numbers - random-seed, Unit extras - Random numbers - random,  , Unit extras - Random numbers
+@subsection random-seed
+
+
+@verbatim
+[procedure] (random-seed [SEED])
+@end verbatim
+Seeds the random number generator with @code{SEED} (an exact integer) or  @code{(current-seconds)} if @code{SEED} is not given.
+
+@node Unit extras - Random numbers - random, Unit extras - Random numbers - randomize, Unit extras - Random numbers - random-seed, Unit extras - Random numbers
 @subsection random
 
 
@@ -5568,7 +5283,7 @@ Read/write a byte to the port given in @code{PORT}, which default to the values 
 @verbatim
 [procedure] (read-file [FILE-OR-PORT [READER [MAXCOUNT]]])
 @end verbatim
-Returns a list containing all toplevel expressions read from the file or port @code{FILE-OR-PORT}. If no argument is given, input is read from the port that is the current value of @code{(current-input-port)}. After all expressions are read, and if the argument is a port, then the port will not be closed. The @code{READER} argument specifies the procedure used to read expressions from the given file or port and defaults to @code{read}. The reader procedure will be called with a single argument (an input port). If @code{MAXCOUNT} is given then only up to @code{MAXCOUNT} expressions will be read in.
+Returns a list containing all toplevel expressions read from the file or port @code{FILE-OR-PORT}. If no argument is given, input is read from the port that is the current value of @code{(current-input-port)}. After all expressions are read, and if the argument is a port, then the port will not be closed. The @code{READER} argument specifies the procedure used to read  expressions from the given file or port and defaults to @code{read}. The reader procedure will be called with a single argument (an input port). If @code{MAXCOUNT} is given then only up to @code{MAXCOUNT} expressions will be read in.
 
 @node Unit extras - Input/Output extensions - read-line, Unit extras - Input/Output extensions - write-line, Unit extras - Input/Output extensions - read-file, Unit extras - Input/Output extensions
 @subsection read-line
@@ -5610,7 +5325,7 @@ Read @code{MAX} or fewer lines from @code{PORT}. @code{PORT} defaults to the val
 [procedure] (read-string! NUM STRING [PORT [START]])
 [procedure] (write-string STRING [NUM [PORT]]
 @end verbatim
-Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the value of @code{(current-input-port)} or @code{(current-output-port)}, respectively. If @code{NUM} is @code{#f} or not given, then all data up to the end-of-file is read, or, in the case of @code{write-string} the whole string is written. If no more input is available, @code{read-string} returns the empty string. @code{read-string!} reads destructively into the given @code{STRING} argument, but never more characters that would fit into @code{STRING}. If @code{START} is given, then the read characters are stored starting at that position. @code{read-string!} returns the actual number of characters read.
+Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the value of @code{(current-input-port)} or @code{(current-output-port)}, respectively.  If @code{NUM} is @code{#f} or not given, then all data up to the end-of-file is read, or, in the case of @code{write-string} the whole string is written. If no more input is available, @code{read-string} returns the empty string. @code{read-string!} reads destructively into the given @code{STRING} argument, but never more characters that would fit into @code{STRING}. If @code{START} is given, then the read characters are stored starting at that position. @code{read-string!} returns the actual number of characters read.
 
 @node Unit extras - Input/Output extensions - read-token, Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions - write-string, Unit extras - Input/Output extensions
 @subsection read-token
@@ -5744,7 +5459,7 @@ is equivalent to
 @verbatim
 [procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
 @end verbatim
-Split string into substrings separated by the given delimiters. If no delimiters are specified, a string comprising the tab, newline and space characters is assumed. If the parameter @code{KEEPEMPTY} is given and not @code{#f}, then empty substrings are retained:
+Split string into substrings separated by the given delimiters. If no delimiters are specified, a string comprising the tab, newline and space characters  is assumed. If the parameter @code{KEEPEMPTY} is given and not @code{#f}, then empty substrings are retained:
 
 @example
 (string-split @strong{"one  two  three"}) =@strong{=>} (@strong{"one"} @strong{"two"} @strong{"three"})
@@ -5772,7 +5487,7 @@ Substitutes elements of @code{STRING} according to @code{SMAP}. @code{SMAP} shou
 (string-translate*
   @strong{"<h1>this is a \"string\"</h1>"}
   '((@strong{"<"} . @strong{"&lt;"}) (@strong{">"} . @strong{"&gt;"}) (@strong{"\""} . @strong{"&quot;"})) )
-@strong{=>}  @strong{"&lt;h1&gt;this is a &quot;string&quot;&lt;/ht&gt;"}
+@strong{=>}  @strong{"&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"}
 @end example
 @node Unit extras - Strings - substring=?, Unit extras - Strings - substring-index, Unit extras - Strings - string-translate*, Unit extras - Strings
 @subsection substring=?
@@ -5799,9 +5514,6 @@ Searches for first index in string @code{WHERE} where string @code{WHICH} occurs
 
 @menu
 * Unit extras - Combinators - any?::
-* Unit extras - Combinators - none?::
-* Unit extras - Combinators - always?::
-* Unit extras - Combinators - never?::
 * Unit extras - Combinators - constantly::
 * Unit extras - Combinators - complement::
 * Unit extras - Combinators - compose::
@@ -5814,13 +5526,11 @@ Searches for first index in string @code{WHERE} where string @code{WHICH} occurs
 * Unit extras - Combinators - list-of::
 * Unit extras - Combinators - noop::
 * Unit extras - Combinators - o::
-* Unit extras - Combinators - left-section::
-* Unit extras - Combinators - right-section::
 
 @end menu
 
 
-@node Unit extras - Combinators - any?, Unit extras - Combinators - none?,  , Unit extras - Combinators
+@node Unit extras - Combinators - any?, Unit extras - Combinators - constantly,  , Unit extras - Combinators
 @subsection any?
 
 
@@ -5829,34 +5539,7 @@ Searches for first index in string @code{WHERE} where string @code{WHICH} occurs
 @end verbatim
 Ignores its argument and always returns @code{#t}. This is actually useful sometimes.
 
-@node Unit extras - Combinators - none?, Unit extras - Combinators - always?, Unit extras - Combinators - any?, Unit extras - Combinators
-@subsection none?
-
-
-@verbatim
-[procedure] (none? X)
-@end verbatim
-Ignores its argument and always returns @code{#f}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - always?, Unit extras - Combinators - never?, Unit extras - Combinators - none?, Unit extras - Combinators
-@subsection always?
-
-
-@verbatim
-[procedure] (always? X ...)
-@end verbatim
-Ignores its arguments and always returns @code{#t}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - never?, Unit extras - Combinators - constantly, Unit extras - Combinators - always?, Unit extras - Combinators
-@subsection never?
-
-
-@verbatim
-[procedure] (never? X ...)
-@end verbatim
-Ignores its arguments and always returns @code{#f}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - constantly, Unit extras - Combinators - complement, Unit extras - Combinators - never?, Unit extras - Combinators
+@node Unit extras - Combinators - constantly, Unit extras - Combinators - complement, Unit extras - Combinators - any?, Unit extras - Combinators
 @subsection constantly
 
 
@@ -5938,7 +5621,7 @@ Returns a procedure that applies @code{PROC ...} to its arguments, and returns t
 is equivalent to
 
 @example
-(@strong{lambda} args
+(@strong{lambda} args 
   (apply pp args)
   (apply eval args) )
 @end example
@@ -5996,7 +5679,7 @@ Returns a procedure of one argument that returns @code{#t} when applied to a lis
 @end verbatim
 Ignores it's arguments, does nothing and returns an unspecified value.
 
-@node Unit extras - Combinators - o, Unit extras - Combinators - left-section, Unit extras - Combinators - noop, Unit extras - Combinators
+@node Unit extras - Combinators - o,  , Unit extras - Combinators - noop, Unit extras - Combinators
 @subsection o
 
 
@@ -6004,28 +5687,6 @@ Ignores it's arguments, does nothing and returns an unspecified value.
 [procedure] (o PROC ...)
 @end verbatim
 A single value version of @code{compose} (slightly faster). @code{(o)} is equivalent to @code{identity}.
-
-@node Unit extras - Combinators - left-section, Unit extras - Combinators - right-section, Unit extras - Combinators - o, Unit extras - Combinators
-@subsection left-section
-
-
-@verbatim
-[procedure] (left-section PROC ARG ...)
-@end verbatim
-A left section partially applies arguments starting from the left.
-
-Returns a variadic procedure in which some prefix of its arguments, @code{ARG ...}, are partially applied to @code{PROC}.
-
-@node Unit extras - Combinators - right-section,  , Unit extras - Combinators - left-section, Unit extras - Combinators
-@subsection right-section
-
-
-@verbatim
-[procedure] (right-section PROC ARG ...)
-@end verbatim
-A right section partially applies arguments starting from the right.
-
-Returns a variadic procedure in which some reversed suffix of its arguments, @code{ARG ...}, are partially applied to @code{PROC}.
 
 @node Unit extras - Binary searching,  , Unit extras - Combinators, Unit extras
 @section Binary searching
@@ -6420,8 +6081,6 @@ Next: @ref{Unit regex, Unit regex}
 * Unit regex - grep::
 * Unit regex - glob->regexp::
 * Unit regex - glob?::
-* Unit regex - regex-chardef-table?::
-* Unit regex - regex-chardef-table::
 * Unit regex - regexp::
 * Unit regex - regexp*::
 * Unit regex - regexp?::
@@ -6439,13 +6098,13 @@ Next: @ref{Unit regex, Unit regex}
 @end menu
 
 
-This library unit provides support for regular expressions. The regular expression package used is @code{PCRE} (@emph{Perl Compatible Regular Expressions}) written by Philip Hazel. See @uref{http://www.pcre.org, http://www.pcre.org} for information about the particular regexp flavor and extensions provided by this library.
+This library unit provides support for regular expressions. The regular  expression package used is @code{PCRE} (@emph{Perl Compatible Regular Expressions})  written by Philip Hazel. See @uref{http://www.pcre.org, http://www.pcre.org} for information about the particular regexp flavor and extensions provided by this library.
 
 To test that PCRE support has been built into Chicken properly, try:
 
 @example
 (require 'regex)
-(test-feature? 'pcre) @strong{=>} #t
+(test-feature? 'pcre) @strong{=>} t
 @end example
 @node Unit regex - grep, Unit regex - glob->regexp,  , Unit regex
 @section grep
@@ -6482,7 +6141,7 @@ Converts the file-pattern @code{PATTERN} into a regular expression.
 [-C...]
 ?
 @end verbatim
-@node Unit regex - glob?, Unit regex - regex-chardef-table?, Unit regex - glob->regexp, Unit regex
+@node Unit regex - glob?, Unit regex - regexp, Unit regex - glob->regexp, Unit regex
 @section glob?
 
 
@@ -6493,25 +6152,7 @@ Does the @code{STRING} have any "glob" wildcards?
 
 A string without any "glob" wildcards does not meet the criteria, even though it technically is a valid "glob" file-pattern.
 
-@node Unit regex - regex-chardef-table?, Unit regex - regex-chardef-table, Unit regex - glob?, Unit regex
-@section regex-chardef-table?
-
-
-@verbatim
-[procedure] (regex-chardef-table? OBJECT)
-@end verbatim
-Returns @code{#t} if the @code{OBJECT} is a @code{character definitions table}, and @code{#f} otherwise.
-
-@node Unit regex - regex-chardef-table, Unit regex - regexp, Unit regex - regex-chardef-table?, Unit regex
-@section regex-chardef-table
-
-
-@verbatim
-[procedure] (regex-chardef-table)
-@end verbatim
-Returns a new @code{character definitions table}.
-
-@node Unit regex - regexp, Unit regex - regexp*, Unit regex - regex-chardef-table, Unit regex
+@node Unit regex - regexp, Unit regex - regexp*, Unit regex - glob?, Unit regex
 @section regexp
 
 
@@ -6523,20 +6164,13 @@ Returns a precompiled regular expression object for @code{string}. The optional 
 @node Unit regex - regexp*, Unit regex - regexp?, Unit regex - regexp, Unit regex
 @section regexp*
 
-@menu
-* Unit regex - regexp* - Option Symbols;::
-
-@end menu
-
 
 @verbatim
-[procedure] (regexp* STRING [OPTIONS [CHARDEFS-TABLE]])
+[procedure] (regexp* STRING [OPTIONS [TABLES]])
 @end verbatim
-Returns a precompiled regular expression object for @code{string}. The optional argument @code{OPTIONS} must be a list of option symbols. The optional argument @code{CHARDEFS-TABLE} must be a character definitions table.
+Returns a precompiled regular expression object for @code{string}. The optional argument @code{OPTIONS} must be a list of option symbols. The optional argument @code{TABLES} must be a character definitions table (not defined here).
 
-@node Unit regex - regexp* - Option Symbols;,  ,  , Unit regex - regexp*
-@subsection Option Symbols:
-
+Option Symbols:
 
 @table @b
 @item caseless
@@ -6637,6 +6271,7 @@ Returns @code{#t} if @code{X} is a precompiled regular expression, or @code{#f} 
 
 @verbatim
 [procedure] (regexp-optimize RX)
+
 @end verbatim
 Perform available optimizations for the precompiled regular expression @code{RX}. Returns @code{#t} when optimization performed, and @code{#f} otherwise.
 
@@ -6689,7 +6324,7 @@ Splits @code{STRING} into a list of fields according to @code{MODE}, where @code
   @strong{=>} (@strong{"this"} @strong{"is"} @strong{"a"} @strong{"string"} @strong{"1,"} @strong{"2,"} @strong{"3,"})
 
 (string-split-fields @strong{","} s #:suffix)
-
+ 
   @strong{=>} (@strong{"this is a string 1"} @strong{" 2"} @strong{" 3"})
 @end example
 @node Unit regex - string-substitute, Unit regex - string-substitute*, Unit regex - string-split-fields, Unit regex
@@ -6699,7 +6334,7 @@ Splits @code{STRING} into a list of fields according to @code{MODE}, where @code
 @verbatim
 [procedure] (string-substitute REGEXP SUBST STRING [MODE])
 @end verbatim
-Searches substrings in @code{STRING} that match @code{REGEXP} and substitutes them with the string @code{SUBST}. The substitution can contain references to subexpressions in @code{REGEXP} with the @code{\NUM} notation, where @code{NUM} refers to the NUMth parenthesized expression. The optional argument @code{MODE} defaults to 1 and specifies the number of the match to be substituted. Any non-numeric index specifies that all matches are to be substituted.
+Searches substrings in @code{STRING} that match @code{REGEXP} and substitutes them with the string @code{SUBST}. The substitution can contain references to subexpressions in  @code{REGEXP} with the @code{\NUM} notation, where @code{NUM} refers to the NUMth parenthesized expression. The optional argument @code{MODE} defaults to 1 and specifies the number of the match to be substituted. Any non-numeric index specifies that all matches are to be substituted.
 
 @example
 (string-substitute @strong{"([0-9]+) (eggs|chicks)"}
@@ -7150,6 +6785,7 @@ All errors related to failing file-operations will signal a condition of kind @c
 * Unit posix - Directories - directory::
 * Unit posix - Directories - directory?::
 * Unit posix - Directories - glob::
+* Unit posix - Directories - canonical-path::
 * Unit posix - Directories - set-root-directory!::
 
 @end menu
@@ -7209,7 +6845,7 @@ Returns a list with all files that are contained in the directory with the name 
 @end verbatim
 Returns @code{#t} if there exists a file with the name @code{NAME} and if that file is a directory, or @code{#f} otherwise.
 
-@node Unit posix - Directories - glob, Unit posix - Directories - set-root-directory!, Unit posix - Directories - directory?, Unit posix - Directories
+@node Unit posix - Directories - glob, Unit posix - Directories - canonical-path, Unit posix - Directories - directory?, Unit posix - Directories
 @subsection glob
 
 
@@ -7218,7 +6854,20 @@ Returns @code{#t} if there exists a file with the name @code{NAME} and if that f
 @end verbatim
 Returns a list of the pathnames of all existing files matching @code{PATTERN1 ...}, which should be strings containing the usual file-patterns (with @code{*} matching zero or more characters and @code{?} matching zero or one character).
 
-@node Unit posix - Directories - set-root-directory!,  , Unit posix - Directories - glob, Unit posix - Directories
+@node Unit posix - Directories - canonical-path, Unit posix - Directories - set-root-directory!, Unit posix - Directories - glob, Unit posix - Directories
+@subsection canonical-path
+
+
+@verbatim
+[procedure] (canonical-path NAME)
+@end verbatim
+Returns a canonical path for @code{NAME}, which should be a string containing a path-or-filename.  The string returned by  @code{canonical-path} is OS dependent; it may be quoted and used in a shell on the calling machine. (Quoting is suggested as shell special characters, including space, are not escaped.)  However, all path separators and prefixes are handled in an OS independent fashion.  Any appearance of @code{/} below imply @code{\\} is also handled.
+
+The prefix for @code{NAME} determines what path to prepend.  If @code{NAME} begins with a @code{"~/"}, this prefix is stripped and the user's  home directory is added.  If beginning with @code{/} or a DRIVE-LETTER:\\ combination, no additional path is added.  Otherwise, the current directory and separator are added.  All relative path elements and duplicate separators are processed and removed.  If @code{NAME} ends with a @code{/} or is empty, the appropriate slash is appended to the tail.
+
+No directories or files are actually tested for existence; this  procedure only canonicalises path syntax.
+
+@node Unit posix - Directories - set-root-directory!,  , Unit posix - Directories - canonical-path, Unit posix - Directories
 @subsection set-root-directory!
 
 
@@ -7506,6 +7155,13 @@ If @code{PORT} is a file- or tcp-port, then a file-descriptor is returned for th
 * Unit posix - Retrieving file attributes - file-read-access?::
 * Unit posix - Retrieving file attributes - file-write-access?::
 * Unit posix - Retrieving file attributes - file-execute-access?::
+* Unit posix - Retrieving file attributes - stat-regular?::
+* Unit posix - Retrieving file attributes - stat-directory?::
+* Unit posix - Retrieving file attributes - stat-char-device?::
+* Unit posix - Retrieving file attributes - stat-block-device?::
+* Unit posix - Retrieving file attributes - stat-fifo?::
+* Unit posix - Retrieving file attributes - stat-symlink?::
+* Unit posix - Retrieving file attributes - stat-socket?::
 
 @end menu
 
@@ -7591,7 +7247,7 @@ Returns the permission bits for @code{FILE}. You can test this value by performi
 @subsection file-write-access?
 
 
-@node Unit posix - Retrieving file attributes - file-execute-access?,  , Unit posix - Retrieving file attributes - file-write-access?, Unit posix - Retrieving file attributes
+@node Unit posix - Retrieving file attributes - file-execute-access?, Unit posix - Retrieving file attributes - stat-regular?, Unit posix - Retrieving file attributes - file-write-access?, Unit posix - Retrieving file attributes
 @subsection file-execute-access?
 
 
@@ -7601,6 +7257,45 @@ Returns the permission bits for @code{FILE}. You can test this value by performi
 [procedure] (file-execute-access? FILENAME)
 @end verbatim
 These procedures return @code{#t} if the current user has read, write or execute permissions on the file named @code{FILENAME}.
+
+@node Unit posix - Retrieving file attributes - stat-regular?, Unit posix - Retrieving file attributes - stat-directory?, Unit posix - Retrieving file attributes - file-execute-access?, Unit posix - Retrieving file attributes
+@subsection stat-regular?
+
+
+@node Unit posix - Retrieving file attributes - stat-directory?, Unit posix - Retrieving file attributes - stat-char-device?, Unit posix - Retrieving file attributes - stat-regular?, Unit posix - Retrieving file attributes
+@subsection stat-directory?
+
+
+@node Unit posix - Retrieving file attributes - stat-char-device?, Unit posix - Retrieving file attributes - stat-block-device?, Unit posix - Retrieving file attributes - stat-directory?, Unit posix - Retrieving file attributes
+@subsection stat-char-device?
+
+
+@node Unit posix - Retrieving file attributes - stat-block-device?, Unit posix - Retrieving file attributes - stat-fifo?, Unit posix - Retrieving file attributes - stat-char-device?, Unit posix - Retrieving file attributes
+@subsection stat-block-device?
+
+
+@node Unit posix - Retrieving file attributes - stat-fifo?, Unit posix - Retrieving file attributes - stat-symlink?, Unit posix - Retrieving file attributes - stat-block-device?, Unit posix - Retrieving file attributes
+@subsection stat-fifo?
+
+
+@node Unit posix - Retrieving file attributes - stat-symlink?, Unit posix - Retrieving file attributes - stat-socket?, Unit posix - Retrieving file attributes - stat-fifo?, Unit posix - Retrieving file attributes
+@subsection stat-symlink?
+
+
+@node Unit posix - Retrieving file attributes - stat-socket?,  , Unit posix - Retrieving file attributes - stat-symlink?, Unit posix - Retrieving file attributes
+@subsection stat-socket?
+
+
+@verbatim
+[procedure] (stat-regular? FILENAME)
+[procedure] (stat-directory? FILENAME)
+[procedure] (stat-char-device? FILENAME)
+[procedure] (stat-block-device? FILENAME)
+[procedure] (stat-fifo? FILENAME)
+[procedure] (stat-symlink? FILENAME)
+[procedure] (stat-socket? FILENAME)
+@end verbatim
+These procedures return @code{#t} if the @code{FILENAME} given is of the  appropriate type.
 
 @node Unit posix - Changing file attributes, Unit posix - Processes, Unit posix - Retrieving file attributes, Unit posix
 @section Changing file attributes
@@ -8344,7 +8039,6 @@ Unmaps the section of a file mapped to memory using the C function @code{munmap(
 * Unit posix - Date and time routines - seconds->utc-time::
 * Unit posix - Date and time routines - utc-time->seconds::
 * Unit posix - Date and time routines - time->string::
-* Unit posix - Date and time routines - string->time::
 
 @end menu
 
@@ -8436,31 +8130,14 @@ Similar to @code{seconds->local-time}, but interpretes @code{SECONDS} as UTC tim
 @end verbatim
 Converts the ten-element vector @code{VECTOR} representing the UTC time value into the number of seconds since the first of January, 1970 UTC.
 
-@node Unit posix - Date and time routines - time->string, Unit posix - Date and time routines - string->time, Unit posix - Date and time routines - utc-time->seconds, Unit posix - Date and time routines
+@node Unit posix - Date and time routines - time->string,  , Unit posix - Date and time routines - utc-time->seconds, Unit posix - Date and time routines
 @subsection time->string
 
 
 @verbatim
-[procedure] (time->string VECTOR [FORMAT])
+[procedure] (time->string VECTOR)
 @end verbatim
-Without a @code{FORMAT} string converts the broken out time represented in the 10 element vector @code{VECTOR} into a string of the form @code{"Tue May 21 13:46:22 1991"}.
-
-Otherwise returns the time as a string formatted per the @code{FORMAT} string.
-
-See the @code{strftime} C procedure for a specification of the @code{FORMAT} string.
-
-@node Unit posix - Date and time routines - string->time,  , Unit posix - Date and time routines - time->string, Unit posix - Date and time routines
-@subsection string->time
-
-
-@verbatim
-[procedure] (string->time STRING [FORMAT])
-@end verbatim
-Returns the time string parsed per the @code{FORMAT} string as a broken out time 10 element vector.
-
-The default @code{FORMAT} string is @code{"%a %b %e %H:%M:%S %Z %Y"}. (The default @code{date} command format.)
-
-See the @code{strptime} C procedure for a specification of the @code{FORMAT} string.
+Converts the broken down time represented in the 10 element vector @code{VECTOR} into a string of the form @code{"Tue May 21 13:46:22 1991"}.
 
 @node Unit posix - Raw exit, Unit posix - ERRNO values, Unit posix - Date and time routines, Unit posix
 @section Raw exit
@@ -8677,7 +8354,6 @@ Sets the buffering-mode for the file associated with @code{PORT} to @code{MODE},
 @menu
 * Unit posix - Terminal ports - terminal-name::
 * Unit posix - Terminal ports - terminal-port?::
-* Unit posix - Terminal ports - terminal-size::
 
 @end menu
 
@@ -8691,7 +8367,7 @@ Sets the buffering-mode for the file associated with @code{PORT} to @code{MODE},
 @end verbatim
 Returns the name of the terminal that is connected to @code{PORT}.
 
-@node Unit posix - Terminal ports - terminal-port?, Unit posix - Terminal ports - terminal-size, Unit posix - Terminal ports - terminal-name, Unit posix - Terminal ports
+@node Unit posix - Terminal ports - terminal-port?,  , Unit posix - Terminal ports - terminal-name, Unit posix - Terminal ports
 @subsection terminal-port?
 
 
@@ -8700,21 +8376,244 @@ Returns the name of the terminal that is connected to @code{PORT}.
 @end verbatim
 Returns @code{#t} if @code{PORT} is connected to a terminal and @code{#f} otherwise.
 
-@node Unit posix - Terminal ports - terminal-size,  , Unit posix - Terminal ports - terminal-port?, Unit posix - Terminal ports
-@subsection terminal-size
-
-
-@verbatim
-[procedure] (terminal-size PORT)
-@end verbatim
-Returns two values: The height and width of the terminal connected to @code{PORT}.
-
 @node Unit posix - How Scheme procedures relate to UNIX C functions, Unit posix - Windows specific notes, Unit posix - Terminal ports, Unit posix
 @section How Scheme procedures relate to UNIX C functions
 
 
-<table> <tr><td> change-directory chdir </td></tr><tr><td> change-file-mode chmod </td></tr><tr><td> change-file-owner chown </td></tr><tr><td> create-directory mkdir </td></tr><tr><td> create-fifo mkfifo </td></tr><tr><td> create-pipe pipe </td></tr><tr><td> create-session setsid </td></tr><tr><td> create-symbolic-link link </td></tr><tr><td> current-directory curdir </td></tr><tr><td> current-effective-groupd-id getegid </td></tr><tr><td> current-effective-user-id geteuid </td></tr><tr><td> current-group-id getgid </td></tr><tr><td> current-parent-id getppid </td></tr><tr><td> current-process-id getpid </td></tr><tr><td> current-user-id getuid </td></tr><tr><td> delete-directory rmdir </td></tr><tr><td> duplicate-fileno dup/dup2 </td></tr><tr><td> _exit _exit </td></tr><tr><td> file-close close </td></tr><tr><td> file-access-time stat </td></tr><tr><td> file-change-time stat </td></tr><tr><td> file-modification-time stat </td></tr><tr><td> file-execute-access? access </td></tr><tr><td> file-open open </td></tr><tr><td> file-lock fcntl </td></tr><tr><td> file-position ftell/lseek </td></tr><tr><td> file-read read </td></tr><tr><td> file-read-access? access </td></tr><tr><td> file-select select </td></tr><tr><td> file-control fcntl </td></tr><tr><td> file-stat stat </td></tr><tr><td> file-test-lock fcntl </td></tr><tr><td> file-truncate truncate/ftruncate </td></tr><tr><td> file-unlock fcntl </td></tr><tr><td> file-write write </td></tr><tr><td> file-write-access? access </td></tr><tr><td> get-groups getgroups </td></tr><tr><td> get-host-name gethostname </td></tr><tr><td> initialize-groups initgroups </td></tr><tr><td> local-time->seconds mktime </td></tr><tr><td> local-timezone-abbreviation localtime </td></tr><tr><td> map-file-to-memory mmap </td></tr><tr><td> open-input-file* fdopen </td></tr><tr><td> open-output-file* fdopen </td></tr><tr><td> open-input-pipe popen </td></tr><tr><td> open-output-pipe popen </td></tr><tr><td> port->fileno fileno </td></tr><tr><td> process-execute execvp </td></tr><tr><td> process-fork fork </td></tr><tr><td> process-group-id getpgid </td></tr><tr><td> process-signal kill </td></tr><tr><td> process-wait waitpid </td></tr><tr><td> close-input-pipe pclose </td></tr><tr><td> close-output-pipe pclose </td></tr><tr><td> read-symbolic-link readlink </td></tr><tr><td> seconds->local-time localtime </td></tr><tr><td> seconds->string ctime </td></tr><tr><td> seconds->utc-time gmtime </td></tr><tr><td> set-alarm! alarm </td></tr><tr><td> set-buffering-mode! setvbuf </td></tr><tr><td> set-file-position! fseek/seek </td></tr><tr><td> set-groups! setgroups </td></tr><tr><td> set-signal-mask! sigprocmask </td></tr><tr><td> set-group-id! setgid </td></tr><tr><td> set-process-group-id! setpgid </td></tr><tr><td> set-user-id! setuid </td></tr><tr><td> set-root-directory! chroot </td></tr><tr><td> setenv setenv/putenv </td></tr><tr><td> sleep sleep </td></tr><tr><td> system-information uname </td></tr><tr><td> terminal-name ttyname </td></tr><tr><td> terminal-port? isatty </td></tr><tr><td> time->string asctime </td></tr><tr><td> unsetenv putenv </td></tr><tr><td> unmap-file-from-memory munmap </td></tr><tr><td> user-information getpwnam/getpwuid </td></tr><tr><td> utc-time->seconds timegm </td></tr></table>
+@table @b
+@item @code{change-directory}
 
+@code{chdir}
+@item @code{change-file-mode}
+
+@code{chmod}
+@item @code{change-file-owner}
+
+@code{chown}
+@item @code{create-directory}
+
+@code{mkdir}
+@item @code{create-fifo}
+
+@code{mkfifo}
+@item @code{create-pipe}
+
+@code{pipe}
+@item @code{create-session}
+
+@code{setsid}
+@item @code{create-symbolic-link}
+
+@code{link}
+@item @code{current-directory}
+
+@code{curdir}
+@item @code{current-effective-groupd-id}
+
+@code{getegid}
+@item @code{current-effective-user-id}
+
+@code{geteuid}
+@item @code{current-group-id}
+
+@code{getgid}
+@item @code{current-parent-id}
+
+@code{getppid}
+@item @code{current-process-id}
+
+@code{getpid}
+@item @code{current-user-id}
+
+@code{getuid}
+@item @code{delete-directory}
+
+@code{rmdir}
+@item @code{duplicate-fileno}
+
+@code{dup/dup2}
+@item @code{_exit}
+
+@code{_exit}
+@item @code{file-close}
+
+@code{close}
+@item @code{file-access-time}
+
+@code{stat}
+@item @code{file-change-time}
+
+@code{stat}
+@item @code{file-modification-time}
+
+@code{stat}
+@item @code{file-execute-access?}
+
+@code{access}
+@item @code{file-open}
+
+@code{open}
+@item @code{file-lock}
+
+@code{fcntl}
+@item @code{file-position}
+
+@code{ftell/lseek}
+@item @code{file-read}
+
+@code{read}
+@item @code{file-read-access?}
+
+@code{access}
+@item @code{file-select}
+
+@code{select}
+@item @code{file-control}
+
+@code{fcntl}
+@item @code{file-stat}
+
+@code{stat}
+@item @code{file-test-lock}
+
+@code{fcntl}
+@item @code{file-truncate}
+
+@code{truncate/ftruncate}
+@item @code{file-unlock}
+
+@code{fcntl}
+@item @code{file-write}
+
+@code{write}
+@item @code{file-write-access?}
+
+@code{access}
+@item @code{get-groups}
+
+@code{getgroups}
+@item @code{get-host-name}
+
+@code{gethostname}
+@item @code{initialize-groups}
+
+@code{initgroups}
+@item @code{local-time->seconds}
+
+@code{mktime}
+@item @code{local-timezone-abbreviation}
+
+@code{localtime}
+@item @code{map-file-to-memory}
+
+@code{mmap}
+@item @code{open-input-file*}
+
+@code{fdopen}
+@item @code{open-output-file*}
+
+@code{fdopen}
+@item @code{open-input-pipe}
+
+@code{popen}
+@item @code{open-output-pipe}
+
+@code{popen}
+@item @code{port->fileno}
+
+@code{fileno}
+@item @code{process-execute}
+
+@code{execvp}
+@item @code{process-fork}
+
+@code{fork}
+@item @code{process-group-id}
+
+@code{getpgid}
+@item @code{process-signal}
+
+@code{kill}
+@item @code{process-wait}
+
+@code{waitpid}
+@item @code{close-input-pipe}
+
+@code{pclose}
+@item @code{close-output-pipe}
+
+@code{pclose}
+@item @code{read-symbolic-link}
+
+@code{readlink}
+@item @code{seconds->local-time}
+
+@code{localtime}
+@item @code{seconds->string}
+
+@code{ctime}
+@item @code{seconds->utc-time}
+
+@code{gmtime}
+@item @code{set-alarm!}
+
+@code{alarm}
+@item @code{set-buffering-mode!}
+
+@code{setvbuf}
+@item @code{set-file-position!}
+
+@code{fseek/seek}
+@item @code{set-groups!}
+
+@code{setgroups}
+@item @code{set-signal-mask!}
+
+@code{sigprocmask}
+@item @code{set-group-id!}
+
+@code{setgid}
+@item @code{set-process-group-id!}
+
+@code{setpgid}
+@item @code{set-user-id!}
+
+@code{setuid}
+@item @code{set-root-directory!}
+
+@code{chroot}
+@item @code{setenv}
+
+@code{setenv/putenv}
+@item @code{sleep}
+
+@code{sleep}
+@item @code{system-information}
+
+@code{uname}
+@item @code{terminal-name}
+
+@code{ttyname}
+@item @code{terminal-port?}
+
+@code{isatty}
+@item @code{time->string}
+
+@code{asctime}
+@item @code{unsetenv}
+
+@code{putenv}
+@item @code{unmap-file-from-memory}
+
+@code{munmap}
+@item @code{user-information}
+
+@code{getpwnam/getpwuid}
+@item @code{utc-time->seconds}
+
+@code{timegm}
+
+@end table
 @node Unit posix - Windows specific notes,  , Unit posix - How Scheme procedures relate to UNIX C functions, Unit posix
 @section Windows specific notes
 
@@ -8779,12 +8678,11 @@ prot/...
 map/...
 map-file-to-memory  unmap-file-from-memory  memory-mapped-file-pointer  memory-mapped-file?
 set-alarm!
-terminal-port?  terminal-name terminal-size
+terminal-port?  terminal-name
 process-fork  process-signal
 parent-process-id
 set-root-directory!
 utc-time->seconds
-string->time
 @end verbatim
 @node Unit posix - Windows specific notes - Additional Definitions, Unit posix - Windows specific notes - process-spawn, Unit posix - Windows specific notes - Unsupported Definitions, Unit posix - Windows specific notes
 @subsection Additional Definitions
@@ -10455,7 +10353,7 @@ A procedure of one argument (a pointer to a C structure), that returns the slot 
 
 @verbatim
 
-(TYPENAME-SLOTNAME-set! FOREIGN-RECORD-POINTER [INXDEX] VALUE)
+(TYPENAME-SLOTNAME-set! FOREIGN-RECORD-POINTER [INDEX] VALUE)
 @end verbatim
 A procedure of two arguments (a pointer to a C structure) and a value, that sets the slot value of the slot @code{SLOTNAME} in the structure. If a @code{SIZE} has been given in the slot definition, then an additional argument @code{INDEX} is required for the array index.
 
@@ -12001,6 +11899,7 @@ Extensions can be created by creating an (optionally gzipped) @code{tar} archive
 * chicken-setup - Procedures and macros available in setup scripts - find-header::
 * chicken-setup - Procedures and macros available in setup scripts - try-compile::
 * chicken-setup - Procedures and macros available in setup scripts - create-directory::
+* chicken-setup - Procedures and macros available in setup scripts - chicken-prefix::
 * chicken-setup - Procedures and macros available in setup scripts - installation-prefix::
 * chicken-setup - Procedures and macros available in setup scripts - program-path::
 * chicken-setup - Procedures and macros available in setup scripts - setup-root-directory::
@@ -12224,7 +12123,7 @@ Returns @code{#t} if a C include-file with the given name is available, or @code
 @end verbatim
 Returns @code{#t} if the C code in @code{CODE} compiles and links successfully, or @code{#f} otherwise. The keyword parameters @code{cc} (compiler name, defaults to the C compiler used to build this system), @code{cflags} and @code{ldflags} accept additional compilation and linking options. If @code{compile-only} is true, then no linking step takes place. If the keyword argument @code{c++} is given and true, then the code will be compiled in C++ mode.
 
-@node chicken-setup - Procedures and macros available in setup scripts - create-directory, chicken-setup - Procedures and macros available in setup scripts - installation-prefix, chicken-setup - Procedures and macros available in setup scripts - try-compile, chicken-setup - Procedures and macros available in setup scripts
+@node chicken-setup - Procedures and macros available in setup scripts - create-directory, chicken-setup - Procedures and macros available in setup scripts - chicken-prefix, chicken-setup - Procedures and macros available in setup scripts - try-compile, chicken-setup - Procedures and macros available in setup scripts
 @subsection create-directory
 
 
@@ -12233,14 +12132,23 @@ Returns @code{#t} if the C code in @code{CODE} compiles and links successfully, 
 @end verbatim
 Creates the directory given in the string @code{PATH}, with all parent directories as needed.
 
-@node chicken-setup - Procedures and macros available in setup scripts - installation-prefix, chicken-setup - Procedures and macros available in setup scripts - program-path, chicken-setup - Procedures and macros available in setup scripts - create-directory, chicken-setup - Procedures and macros available in setup scripts
+@node chicken-setup - Procedures and macros available in setup scripts - chicken-prefix, chicken-setup - Procedures and macros available in setup scripts - installation-prefix, chicken-setup - Procedures and macros available in setup scripts - create-directory, chicken-setup - Procedures and macros available in setup scripts
+@subsection chicken-prefix
+
+
+@verbatim
+[parameter] chicken-prefix
+@end verbatim
+The installation prefix specified when CHICKEN was built.
+
+@node chicken-setup - Procedures and macros available in setup scripts - installation-prefix, chicken-setup - Procedures and macros available in setup scripts - program-path, chicken-setup - Procedures and macros available in setup scripts - chicken-prefix, chicken-setup - Procedures and macros available in setup scripts
 @subsection installation-prefix
 
 
 @verbatim
 [parameter] installation-prefix
 @end verbatim
-Holds the prefix under which CHICKEN executables and libraries have been installed (either the value of the environment variable @code{CHICKEN_PREFIX} or whatever prefix was specified at the time the system was built.
+An alternative installation prefix that will be prepended to extension installation paths if specified. It is set by the @code{-install-prefix} option or environment variable @code{CHICKEN_INSTALL_PREFIX}.
 
 @node chicken-setup - Procedures and macros available in setup scripts - program-path, chicken-setup - Procedures and macros available in setup scripts - setup-root-directory, chicken-setup - Procedures and macros available in setup scripts - installation-prefix, chicken-setup - Procedures and macros available in setup scripts
 @subsection program-path
@@ -12548,12 +12456,18 @@ Specifies SVN revision to check out
 @item @code{-local PATHNAME}
 
 Fetch extension from local file
-@item @code{-destdir PATHNAME}
+@item @code{-install-prefix PATHNAME}
 
 Specify alternative installation prefix (for packaging)
 @item @code{-host-extension}
 
 Compile extension in "host" mode (sets the parameter @code{host-extension} to @code{#f})
+@item @code{-build-prefix PATHNAME}
+
+Location where chicken-setup will create egg build directories  (default: the value of environment variable CHICKEN_TMPDIR, or @code{/tmp/chicken-@{MAJOR-VERSION-build-@{USER}@}@})
+@item @code{-download-path PATHNAME}
+
+Location where chicken-setup will save downloaded files  (default: @code{build-prefix/downloads})
 @item @code{--}
 
 Ignore all following arguments
@@ -12763,6 +12677,7 @@ This is the list of Frequently Asked Questions about Chicken Scheme. If you have
 
 @menu
 * FAQ - General - Why yet another Scheme implementation?::
+* FAQ - General - Why call it 'Chicken'?::
 * FAQ - General - What should I do if I find a bug?::
 * FAQ - General - Why are values defined with define-foreign-variable or define-constant or define-inline not seen outside of the containing source file?::
 * FAQ - General - How does cond-expand know which features are registered in used units?::
@@ -12778,7 +12693,7 @@ This is the list of Frequently Asked Questions about Chicken Scheme. If you have
 @end menu
 
 
-@node FAQ - General - Why yet another Scheme implementation?, FAQ - General - What should I do if I find a bug?,  , FAQ - General
+@node FAQ - General - Why yet another Scheme implementation?, FAQ - General - Why call it 'Chicken'?,  , FAQ - General
 @subsection Why yet another Scheme implementation?
 
 
@@ -12797,11 +12712,22 @@ Since Scheme is a relatively simple language, a large number of implementations 
 
 
 @end itemize
-@node FAQ - General - What should I do if I find a bug?, FAQ - General - Why are values defined with define-foreign-variable or define-constant or define-inline not seen outside of the containing source file?, FAQ - General - Why yet another Scheme implementation?, FAQ - General
+@node FAQ - General - Why call it 'Chicken'?, FAQ - General - What should I do if I find a bug?, FAQ - General - Why yet another Scheme implementation?, FAQ - General
+@subsection Why call it 'Chicken'?
+
+
+According to @uref{http://chicken.wiki.br/felix winkelmann, felix}:
+
+@quotation
+Well, it's pretty boring, really: when I started the project and needed some name, the first thing that met my eyes was the "chicken" (actually a disguised penguin)  from the Wallace + Gromit movie... And then there is of course the ever occurring chicken-and-egg problem with bootstrapped compilers.
+
+
+@end quotation
+@node FAQ - General - What should I do if I find a bug?, FAQ - General - Why are values defined with define-foreign-variable or define-constant or define-inline not seen outside of the containing source file?, FAQ - General - Why call it 'Chicken'?, FAQ - General
 @subsection What should I do if I find a bug?
 
 
-Send e-mail to @uref{mailto:chicken-janitors@@nongnu.org, chicken-janitors@@nongnu.org} (preferably using the @code{chicken-bug(1)} tool) with some hints about the problem, like version/build of the compiler, platform, system configuration, code that causes the bug, etc.
+Send e-mail to @uref{mailto:felix@@call-with-current-continuation.org, felix@@call-with-current-continuation.org} with some hints about the problem, like version/build of the compiler, platform, system configuration, code that causes the bug, etc.
 
 @node FAQ - General - Why are values defined with define-foreign-variable or define-constant or define-inline not seen outside of the containing source file?, FAQ - General - How does cond-expand know which features are registered in used units?, FAQ - General - What should I do if I find a bug?, FAQ - General
 @subsection Why are values defined with @code{define-foreign-variable} or @code{define-constant} or @code{define-inline} not seen outside of the containing source file?
@@ -12858,7 +12784,7 @@ There are a number of reasons for this:
 
 - Dispatching of arithmetic operations is more efficient.
 
-There is an extension based on the GNU Multiprecision Package that implements most of the full numeric tower, see @uref{http://chicken.wiki.br/numbers, http://chicken.wiki.br/numbers}.
+There is an extension based on the GNU Multiprecision Package that implements most of the full numeric tower, see @uref{http://chicken.wiki.br/numbers, numbers}.
 
 @node FAQ - General - How can I specialize a generic function method to match instances of every class?, FAQ - General - Does CHICKEN support native threads?, FAQ - General - Why doesn't CHICKEN support the full numeric tower by default?, FAQ - General
 @subsection How can I specialize a generic function method to match instances of every class?
@@ -13357,7 +13283,7 @@ Next: @ref{Acknowledgements, Acknowledgements}
 @chapter Acknowledgements
 
 
-Many thanks to Nico Amtsberg, William Annis, Marc Baily, Peter Barabas, Jonah Beckford, Arto Bendiken, Peter Bex, Jean-Francois Bignolles, Alaric Blagrave-Snellpym, Dave Bodenstab, Fabian Boehlke, T. Kurt Bond, Ashley Bone, Dominique Boucher, Terence Brannon, Roy Bryant, Adam Buchbinder, Hans Bulfone, Category 5, Taylor Campbell, Naruto Canada, Esteban U. Caamano Castro, Franklin Chen, Thomas Chust, Gian Paolo Ciceri, John Cowan, Grzegorz Chrupa&#322;a, James Crippen, Tollef Fog Heen, Alejandro Forero Cuervo, Linh Dang, Brian Denheyer, dgym, Don, Chris Double, Jarod Eells, Petter Egesund, Steve Elkins, Daniel B. Faken, Will Farr, Graham Fawcett, Marc Feeley, Fizzie, Kimura Fuyuki, Tony Garnock-Jones, Martin Gasbichler, Joey Gibson, Stephen C. Gilardi, Joshua Griffith, Johannes Groedem, Damian Gryski, Mario Domenech Goulart, Andreas Gustafsson, Sven Hartrumpf, Jun-ichiro itojun Hagino, Ahdi Hargo, Matthias Heiler, Karl M. Hegbloom, William P. Heinemann, Bill Hoffman, Bruce Hoult, Hans Huebner, Markus Huelsmann, Goetz Isenmann, Andrei Ivushkin, Paulo Jabardo, David Janssens, Christian Jaeger, Dale Jordan, Valentin Kamyshenko, Daishi Kato, Peter Keller, Brad Kind, Ron Kneusel, Matthias Koeppe, Krysztof Kowa&#322;czyk, Andre Kuehne, Todd R. Kueny Sr, Goran Krampe, David Krentzlin, Ben Kurtz, Micky Latowicki, John Lenz, Kirill Lisovsky, Juergen Lorenz, Kon Lovett, Dennis Marti, Charles Martin, Bob McIsaac, Alain Mellan, Eric Merrit, Perry Metzger, Scott G. Miller, Mikael, Bruce Mitchener, Chris Moline, Eric E. Moore, Julian Morrison, Dan Muresan, Lars Nilsson, Ian Oversby, o.t., Gene Pavlovsky, Levi Pearson, Nicolas Pelletier, Carlos Pita, Robin Lee Powell, Pupeno, Davide Puricelli, Doug Quale, Eric Raible, Ivan Raikov, Joel Reymont, Eric Rochester, Andreas Rottman, David Rush, Lars Rustemeier, Daniel Sadilek, Oskar Schirmer, Burton Samograd, Reed Sheridan, Ronald Schroeder, Spencer Schumann, Alex Shinn, Ivan Shmakov, Shmul, Tony Sidaway, Jeffrey B. Siegal, Andrey Sidorenko, Michele Simionato, Volker Stolz, Jon Strait, Dorai Sitaram, Robert Skeels, Jason Songhurst, Clifford Stein, Sunnan, Zbigniew Szadkowski, Rick Taube, Mike Thomas, Minh Thu, Christian Tismer, Andre van Tonder, John Tobey, Henrik Tramberend, Vladimir Tsichevsky, Neil van Dyke, Sander Vesik, Jaques Vidrine, Panagiotis Vossos, Shawn Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas Weidner, Goeran Weinholt, Matthew Welland, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard Zidlicky and Houman Zolfaghari for bug-fixes, tips and suggestions.
+Many thanks to Nico Amtsberg, William Annis, Marc Baily, Peter Barabas, Jonah Beckford, Arto Bendiken, Peter Bex, Jean-Francois Bignolles, Alaric Blagrave-Snellpym, Dave Bodenstab, Fabian Boehlke, T. Kurt Bond, Ashley Bone, Dominique Boucher, Terence Brannon, Roy Bryant, Adam Buchbinder, Hans Bulfone, Category 5, Taylor Campbell, Naruto Canada, Esteban U. Caamano Castro, Franklin Chen, Thomas Chust, Gian Paolo Ciceri, John Cowan, Grzegorz Chrupa&#322;a, James Crippen, Tollef Fog Heen, Alejandro Forero Cuervo, Linh Dang, Brian Denheyer, dgym, Don, Chris Double, Jarod Eells, Petter Egesund, Steve Elkins, Daniel B. Faken, Will Farr, Graham Fawcett, Marc Feeley, Fizzie, Kimura Fuyuki, Tony Garnock-Jones, Martin Gasbichler, Joey Gibson, Stephen C. Gilardi, Joshua Griffith, Johannes Groedem, Damian Gryski, Mario Domenech Goulart, Andreas Gustafsson, Sven Hartrumpf, Jun-ichiro itojun Hagino, Ahdi Hargo, Matthias Heiler, Karl M. Hegbloom, William P. Heinemann, Bill Hoffman, Bruce Hoult, Hans Huebner, Markus Huelsmann, Goetz Isenmann, Paulo Jabardo, David Janssens, Christian Jaeger, Dale Jordan, Valentin Kamyshenko, Daishi Kato, Peter Keller, Brad Kind, Ron Kneusel, Matthias Koeppe, Krysztof Kowa&#322;czyk, Andre Kuehne, Todd R. Kueny Sr, Goran Krampe, David Krentzlin, Ben Kurtz, Micky Latowicki, John Lenz, Kirill Lisovsky, Juergen Lorenz, Kon Lovett, Dennis Marti, Charles Martin, Bob McIsaac, Alain Mellan, Eric Merrit, Perry Metzger, Scott G. Miller, Mikael, Bruce Mitchener, Chris Moline, Eric E. Moore, Julian Morrison, Dan Muresan, Lars Nilsson, Ian Oversby, o.t., Gene Pavlovsky, Levi Pearson, Nicolas Pelletier, Carlos Pita, Robin Lee Powell, Pupeno, Davide Puricelli, Doug Quale, Eric Raible, Ivan Raikov, Joel Reymont, Eric Rochester, Andreas Rottman, David Rush, Lars Rustemeier, Daniel Sadilek, Oskar Schirmer, Burton Samograd, Reed Sheridan, Ronald Schroeder, Spencer Schumann, Alex Shinn, Ivan Shmakov, Shmul, Tony Sidaway, Jeffrey B. Siegal, Andrey Sidorenko, Michele Simionato, Volker Stolz, Jon Strait, Dorai Sitaram, Robert Skeels, Jason Songhurst, Clifford Stein, Sunnan, Zbigniew Szadkowski, Rick Taube, Mike Thomas, Minh Thu, Christian Tismer, Andre van Tonder, John Tobey, Henrik Tramberend, Vladimir Tsichevsky, Neil van Dyke, Sander Vesik, Jaques Vidrine, Panagiotis Vossos, Shawn Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas Weidner, Goeran Weinholt, Matthew Welland, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard Zidlicky and Houman Zolfaghari for bug-fixes, tips and suggestions.
 
 CHICKEN uses the PCRE regular expression package (@uref{http://www.pcre.org, http://www.pcre.org}), which is written by Philip Hazel.
 
@@ -13394,7 +13320,7 @@ queues.
 @item Andrew Wright
 
 pattern matcher.
-@item Alex Shinn
+@item @uref{http://chicken.wiki.br/Alex Shinn, Alex Shinn}
 
 @code{scheme-complete.el} emacs tab-completion
 
