@@ -1,5 +1,6 @@
 3.0.6
 
+- unit regex: avoid string copy in regex matching [Jim Ursetto]
 - chicken-setup: eggs are downloaded to and compiled in a temporary
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
   variables, or by -build-prefix and -download-dir options,
