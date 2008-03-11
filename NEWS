@@ -1,5 +1,6 @@
 3.0.7pre
 
+- svnrevision.sh - cleaned logic to prevent invalid error message
 - csc - fixed bug preventing static linking of executables (build order issues)
 
 3.0.6

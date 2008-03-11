@@ -26,16 +26,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-if test -d .svn; then
-    if test -x "`which svn`" ; then
-    	rev=`svn info | sed -n -e 's/Revision: \([0-9]*\)/\1/p'`
+if test -d ".svn" ;
+then
+    if test -x "`which svn`" ;
+    then
+        rev="`svn info | sed -n -e 's/Revision: \([0-9]*\)/\1/p'`"
     else
-    	rev=`cat .svn/entries | sed -n -e '4 s/^\([0-9]*\)$/\1/p'`
+        rev="`cat .svn/entries | sed -n -e '4 s/^\([0-9]*\)$/\1/p'`"
     fi
 else
-    rev='0'
+    rev="0"
 fi
 
-if test ! "(" -e buildsvnrevision ")" -o "(" "`cat buildsvnrevision`" != "$rev" ")"; then
-    echo "$rev" >buildsvnrevision
+if test -e "buildsvnrevision" ;
+then
+    if test "`cat buildsvnrevision`" \!= "${rev}" ;
+    then
+        echo "${rev}" > buildsvnrevision
+    fi
+else
+    echo "${rev}" > buildsvnrevision
 fi
