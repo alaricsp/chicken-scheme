@@ -364,7 +364,7 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
 
 (define re-match
   (foreign-lambda* int (((const nonnull-pcre) code) ((const pcre_extra) extra)
-                        (scheme-pointer str) (int start) (int range)
+                        (nonnull-scheme-pointer str) (int start) (int range)
                         (unsigned-integer options))
     "return(pcre_exec(code, extra, str, start + range, start, options, C_regex_ovector, STATIC_OVECTOR_LEN * OVECTOR_LENGTH_MULTIPLE));") )
 
