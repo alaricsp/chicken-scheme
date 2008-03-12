@@ -1766,31 +1766,31 @@ EOF
 
 ;; Equal Hash:
 
-;XXX Be nice if these were paramters
+;XXX Be nice if these were parameters
 (define-constant recursive-hash-max-depth 4)
 (define-constant recursive-hash-max-length 4)
 
+(define-macro ($*list-hash ?obj)
+  `(fx+ (length ,?obj)
+	(recursive-atomic-hash (##sys#slot ,?obj 0) depth)) )
+
+(define-macro ($*pair-hash ?obj)
+  `(fx+ (fxshl (recursive-atomic-hash (##sys#slot ,?obj 0) depth) 16)
+	(recursive-atomic-hash (##sys#slot ,?obj 1) depth)) )
+
+(define-macro ($*port-hash ?obj)
+  `(fx+ (fxshl (##sys#peek-fixnum ,?obj 0) 4) ; Little extra "identity"
+	(if (input-port? ,?obj)
+	    input-port-hash-value
+	    output-port-hash-value)) )
+
+(define-macro ($*special-vector-hash ?obj)
+  `(vector-hash ,?obj (##sys#peek-fixnum ,?obj 0) depth 1) )
+
+(define-macro ($*regular-vector-hash ?obj)
+  `(vector-hash ,?obj 0 depth 0) )
+
 (define (%equal?-hash obj)
-
-  (define-macro ($*list-hash ?obj)
-    `(fx+ (length ,?obj)
-	  (recursive-atomic-hash (##sys#slot ,?obj 0) depth)) )
-
-  (define-macro ($*pair-hash ?obj)
-    `(fx+ (fxshl (recursive-atomic-hash (##sys#slot ,?obj 0) depth) 16)
-	  (recursive-atomic-hash (##sys#slot ,?obj 1) depth)) )
-
-  (define-macro ($*port-hash ?obj)
-    `(fx+ (fxshl (##sys#peek-fixnum ,?obj 0) 4) ; Little extra "identity"
-	  (if (input-port? ,?obj)
-	      input-port-hash-value
-	      output-port-hash-value)) )
-
-  (define-macro ($*special-vector-hash ?obj)
-    `(vector-hash ,?obj (##sys#peek-fixnum ,?obj 0) depth 1) )
-
-  (define-macro ($*regular-vector-hash ?obj)
-    `(vector-hash ,?obj 0 depth 0) )
 
   ; Recurse into some portion of the vector's slots 
   (define (vector-hash obj seed depth start)

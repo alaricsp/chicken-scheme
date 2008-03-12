@@ -1038,5 +1038,7 @@ bootstrap:
 	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 
-bootstrap.tar.gz:
-	tar cfz bootstrap.tar.gz $(LIBCHICKEN_OBJECTS_1:=.c) $(COMPILER_OBJECTS_1:=.c)
+bootstrap.tar.gz: posixunix.c posixwin.c
+	tar cfz bootstrap.tar.gz library.c eval.c extras.c lolevel.c utils.c tcp.c \
+	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c posixunix.c posixwin.c regex.c \
+	  scheduler.c profiler.c stub.c match.c $(COMPILER_OBJECTS_1:=.c)
