@@ -1,10 +1,7 @@
-3.0.7pre
+3.0.7
 
 - svnrevision.sh - cleaned logic to prevent invalid error message
 - csc - fixed bug preventing static linking of executables (build order issues)
-
-3.0.6
-
 - unit regex: avoid string copy in regex matching [Jim Ursetto]
 - chicken-setup: eggs are downloaded to and compiled in a temporary
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
