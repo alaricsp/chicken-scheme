@@ -179,7 +179,8 @@
        ((lambda (home user) 
 	  (and home user  (conc home "/tmp/chicken-setup-" *major-version* "-" user))) 
 	(getenv "HOME") (getenv "USER"))
-       ".")))
+       (current-directory))))
+
 (define setup-download-directory  (make-parameter (conc (setup-build-prefix) "/downloads")))
 (define setup-root-directory      (make-parameter #f))
 (define setup-build-directory     (make-parameter #f))
