@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pattern Matching Syntactic Extensions for Scheme
 ;;
-(define ##match#version "Version 1.18, July 17, 1995 (Chicken port)")
+#;(define ##match#version "Version 1.18, July 17, 1995 (Chicken port)")
 ;;
 ;; Report bugs to wright@research.nj.nec.com.  The most recent version of
 ;; this software can be obtained by anonymous FTP from ftp.nj.nec.com
@@ -122,8 +122,7 @@
  (unit match)
  (run-time-macros)
  (disable-interrupts)
- (usual-integrations) 
- (hide every))
+ (usual-integrations) )
 
 (cond-expand 
  [paranoia]
@@ -132,10 +131,12 @@
     (no-procedure-checks-for-usual-bindings)
     (no-bound-checks) ) ] )
 
+;;; Procedures
 
-(define (every fn lst)
+(define (##match#every fn lst)
   (or (null? lst)
-      (and (fn (car lst)) (every fn (cdr lst)))))
+      (and (fn (car lst))
+           (##match#every fn (cdr lst)))))
 
 
 ;;; Macros
@@ -145,7 +146,7 @@
   (cond
     ((and (list? args)
           (<= 1 (length args))
-          (every
+          (##match#every
             (lambda (y) (and (list? y) (<= 2 (length y))))
             (cdr args))) (let* ((exp (car args))
                                 (clauses (cdr args))
@@ -164,7 +165,7 @@
 (define-macro
   (match-lambda . args)
   (if (and (list? args)
-           (every
+           (##match#every
              (lambda (g126)
                (if (and (pair? g126) (list? (cdr g126)))
                    (pair? (cdr g126))
@@ -179,7 +180,7 @@
 (define-macro
   (match-lambda* . args)
   (if (and (list? args)
-           (every
+           (##match#every
              (lambda (g134)
                (if (and (pair? g134) (list? (cdr g134)))
                    (pair? (cdr g134))
@@ -214,7 +215,7 @@
                   (if (null? g162)
                       (if (and (list? (cddr args)) (pair? (cddr args)))
                           ((lambda (name pat exp body)
-                             (if (every
+                             (if (##match#every
                                    (cadddr ##match#expanders)
                                    pat)
                                  `(let ,@args)
@@ -235,7 +236,7 @@
                           (g146))))
                 (g146))
             (if (list? (car args))
-                (if (every
+                (if (##match#every
                       (lambda (g167)
                         (if (and (pair? g167)
                                  (g136 (car g167))
@@ -462,7 +463,7 @@
                  `(match-letrec ((,pat ,exp)) ,@body)))))
     (if (pair? args)
         (if (list? (car args))
-            (if (every
+            (if (##match#every
                   (lambda (g206)
                     (if (and (pair? g206)
                              (g200 (car g206))
@@ -828,7 +829,7 @@
                                     (and (<= 3 n)
                                          (memq (string-ref s 0) '(#\. #\_))
                                          (memq (string-ref s 1) '(#\. #\_))
-                                         (every
+                                         (##match#every
                                            char-numeric?
                                            (string->list
                                              (substring s 2 n)))
@@ -1404,7 +1405,7 @@
                              (permutation (lambda (p1 p2)
                                             (and (= (length p1)
                                                     (length p2))
-                                                 (every
+                                                 (##match#every
                                                    (lambda (x1)
                                                      (memq x1 p2))
                                                    p1)))))
@@ -1653,7 +1654,7 @@
                                                                                                             (car ptst)
                                                                                                             `(lambda (,eta)
                                                                                                                ,ptst))))
-                                                                                              (assm `(every
+                                                                                              (assm `(##match#every
                                                                                                        ,tst
                                                                                                        ,e)
                                                                                                     (kf sf)
@@ -2211,7 +2212,7 @@
 
 (define (match-error-procedure . proc)
   (if (pair? proc)
-    (##match#set-error (car proc))
-    ##sys#match-error) )
+      (##match#set-error (car proc))
+      ##sys#match-error) )
 
 (register-feature! 'match)
