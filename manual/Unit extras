@@ -705,6 +705,27 @@ is a case-insensitive version of {{substring-index}}.
 Ignores its argument and always returns {{#t}}. This is actually useful sometimes.
 
 
+==== none?
+
+ [procedure] (none? X)
+
+Ignores its argument and always returns {{#f}}. This is actually useful sometimes.
+
+
+==== always?
+
+ [procedure] (always? ...)
+
+Ignores its arguments and always returns {{#t}}. This is actually useful sometimes.
+
+
+==== never?
+
+ [procedure] (never? ...)
+
+Ignores its arguments and always returns {{#f}}. This is actually useful sometimes.
+
+
 ==== constantly
 
  [procedure] (constantly X ...)
@@ -766,7 +787,6 @@ predicate {{PRED ...}}.
 ((disjoin odd? positive?) 32)    ==>  #t
 ((disjoin odd? positive?) -32)   ==>  #f
 </enscript>
-
 
 
 ==== each
@@ -844,6 +864,23 @@ Ignores it's arguments, does nothing and returns an unspecified value.
 
 A single value version of {{compose}} (slightly faster). {{(o)}} is equivalent
 to {{identity}}.
+
+
+==== left-section
+
+ [procedure] (left-section PROC ARG0 ...)
+
+Returns an n-ary procedure that partially applies its' arguments {{ARG0 ...}}
+from the left (normal order). Sort of a n-ary curry.
+
+
+==== right-section
+
+ [procedure] (right-section PROC ARG0 ...)
+
+Returns an n-ary procedure that partially applies its' arguments {{ARG0 ...}}
+from the right (reverse order). Sort of a n-ary curry.
+
 
 === Binary searching
 

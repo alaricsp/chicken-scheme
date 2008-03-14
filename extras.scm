@@ -254,17 +254,16 @@ EOF
 
 (define (left-section proc . args)
   (##sys#check-closure proc 'left-section)
-  (lambda x
-    (##sys#apply proc (##sys#append args x)) ) )
+  (lambda xs
+    (##sys#apply proc (##sys#append args xs)) ) )
 
 (define right-section
   (let ([##sys#reverse reverse])
     (lambda (proc . args)
       (##sys#check-closure proc 'right-section)
-      (lambda x
-        (##sys#apply proc
-                     (##sys#reverse (##sys#append (##sys#reverse args)
-                                                  (##sys#reverse x)))) ) ) ) )
+      (let ([revdargs (##sys#reverse args)])
+        (lambda xs
+          (##sys#apply proc (##sys#reverse (##sys#append revdargs (##sys#reverse xs)))) ) ) ) ) )
 
 
 ;;; List operators:
