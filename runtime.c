@@ -8416,7 +8416,7 @@ void C_ccall C_software_version(C_word c, C_word closure, C_word k)
 
 void C_ccall C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc)
 {
-  if(C_immediatep(x)) C_kontinue(k, x );
+  if(C_immediatep(x)) C_kontinue(k, x);
 
   C_do_register_finalizer(x, proc);
   C_kontinue(k, x);
