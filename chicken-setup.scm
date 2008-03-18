@@ -171,7 +171,8 @@
 
 (define setup-build-prefix
   (make-parameter
-   (or (getenv "CHICKEN_TMPDIR") (getenv "TMPDIR") 
+   (or (getenv "CHICKEN_TMPDIR") (getenv "TMPDIR")
+       (getenv "TMP") (getenv "TEMP")
        ((lambda (user) 
 	  (and user  (file-write-access? "/tmp") 
 	       (conc "/tmp/chicken-setup-" *major-version* "-" user))) 
@@ -233,7 +234,8 @@
     (if *windows-shell*
 	(lambda (dir)
 	  (verb dir)
-	  (create-directory/parents dir) ) 
+          (system* "mkdir \"~a\"" (quotewrap dir)))
+	  ; (create-directory/parents dir) ) 
 	(lambda (dir)
 	  (verb dir)
 	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
