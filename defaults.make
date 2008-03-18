@@ -40,10 +40,14 @@ endif
 # directories
 
 DESTDIR =
+ifeq ($(PLATFORM),mingw-msys)
+PREFIX ?= c:/devtools
+else
 ifeq ($(PLATFORM),mingw)
 PREFIX ?= c:/devtools
 else
 PREFIX ?= /usr/local
+endif
 endif
 
 BINDIR = $(PREFIX)/bin

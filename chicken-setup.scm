@@ -590,7 +590,7 @@ EOF
 	    (setup-file (make-setup-info-pathname sid (repo-path #t)))
 	    (write-setup-info (with-output-to-file setup-file
 				(cut pp info))))
-	(unless *windows-shell* (run (chmod a+r ,setup-file)))
+	(unless *windows-shell* (run (chmod a+r ,(quotewrap setup-file))))
 	write-setup-info))))
 
 (define (fix-exports id info)
@@ -658,8 +658,8 @@ EOF
 			  filename))
 		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
-		 (run (,*gzip-program* -d -c ,fn2 |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
-		 (run (,*tar-program* ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
+		 (run (,*gzip-program* -d -c ,(quotewrap fn2) |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
+		 (run (,*tar-program* ,(if v 'xvf 'xf) ,(quotewrap fn2))) ) ) ) )
     ))
 
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
@@ -724,15 +724,15 @@ EOF
 			       (to (make-dest-pathname rpathd f)) )
 			   (when (and (not *windows*) 
 				      (equal? "so" (pathname-extension to)))
-			     (run (,*remove-command* ,to)) )
+			     (run (,*remove-command* ,(quotewrap to)) ))
 			   (copy-file from to)
 			   (unless *windows-shell*
-			     (run (chmod a+r ,to)))
+			     (run (chmod a+r ,(quotewrap to))))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) 
 					(equal? (pathname-extension to) "a"))
-			       (run (ranlib ,to)) ) )
+			       (run (ranlib ,(quotewrap to)) ) ))
 			   (make-dest-pathname rpath f)))
 		       files) ) )
       (and-let* ((docs (assq 'documentation info)))
@@ -754,7 +754,7 @@ EOF
 	     (let ((destf (make-pathname example-dest f)))
 	       (copy-file f destf #f)
 	       (unless *windows-shell*
-	         (run (chmod a+rx ,destf))) ) )
+	         (run (chmod a+rx ,(quotewrap destf))) ) ))
 	   (cdr exs))
 	  (newline) ))
       (write-info id dests info) ) ) )
@@ -780,7 +780,7 @@ EOF
 			       (to (make-dest-pathname ppath f)) )
 			   (copy-file from to) 
 			   (unless *windows-shell*
-				   (run (chmod a+r ,to)))
+				   (run (chmod a+r ,(quotewrap to))))
 			   to) )
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -795,7 +795,7 @@ EOF
 				(to (make-dest-pathname ppath f)) )
 			    (copy-file from to) 
 			    (unless *windows-shell*
-				    (run (chmod a+r ,to)))
+				    (run (chmod a+r ,(quotewrap to))))
 			    to) )
 			files) ) )
       (unless *windows-shell*
@@ -836,7 +836,7 @@ EOF
 	(begin
 	  (create-directory dir)
 	  (unless *windows-shell*
-		  (run (chmod a+x ,dir)))))))
+		  (run (chmod a+x ,(quotewrap dir))))))))
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
 		     (verb (setup-verbose-flag)) (compile-only #f))
@@ -993,7 +993,7 @@ EOF
 	 (let* ((p (->string item))
 	       (fpath (make-pathname (setup-download-directory) p "egg-dir")))
 	   (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
-		     ,(make-pathname *svn-repository* p) ,fpath))
+		     ,(make-pathname *svn-repository* p) ,(quotewrap fpath)))
 	   fpath))
 
 	(else
