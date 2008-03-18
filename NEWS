@@ -1,19 +1,21 @@
-3.0.9
+3.0.10
 
 - svnrevision.sh - cleaned logic to prevent invalid error message
 - csc - fixed bug preventing static linking of executables (build order issues)
+- unit regex: PCRE 7.6
 - unit regex: avoid string copy in regex matching [Jim Ursetto]
 - chicken-setup: eggs are downloaded to and compiled in a temporary
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
   variables, or by -build-prefix and -download-dir options,
   respectively; -destdir option is replaced with -install-prefix.
-- unit regex: PCRE 7.6
 - unit tcp: use of offset into string rather than substring for faster
   socket write [Jim Ursetto]
 - MSVC can now be used to build the system, when standard UNIX tools (like
   MSYS) are available [Many thanks to Ashley]
 - unit library: added "flonum-print-precision" for changing the default of
   16
+- unit posix: create-directory can now handle DOS drive letters 
+  in the given path
 - unit posix: added stat- predicates for file types
 - unit posix: added strftime format string support to "time->string"
 - unit posix: added "string->time", which takes a strptime format string
