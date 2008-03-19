@@ -182,7 +182,7 @@
 	(getenv "HOME") (getenv "USER"))
        (current-directory))))
 
-(define setup-download-directory  (make-parameter (conc (setup-build-prefix) "/downloads")))
+(define setup-download-directory  (make-parameter (make-pathname (setup-build-prefix) "downloads")))
 (define setup-root-directory      (make-parameter #f))
 (define setup-build-directory     (make-parameter #f))
 (define setup-verbose-flag        (make-parameter #f))
