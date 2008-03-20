@@ -531,7 +531,7 @@
 
 			((quote)
 			 (##sys#check-syntax 'quote x '(quote _))
-			 x)
+			 (list 'quote (##sys#strip-context (cadr x))) )
 
 			((##core#check)
 			 (if unsafe

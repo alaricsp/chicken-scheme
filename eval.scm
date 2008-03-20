@@ -27,6 +27,7 @@
 
 (declare
   (unit eval)
+  (uses expand)
   (disable-warning var)
   (hide ##sys#unregister-macro ##sys#split-at-separator
 	##sys#r4rs-environment ##sys#r5rs-environment 
@@ -272,16 +273,15 @@
 
 ;;; User-level macroexpansion
 
-(define (macroexpand exp . me)
-  (let ((me (if (pair? me) (car me) '())))
-    (let loop ([exp exp])
-      (let-values ([(exp2 m) (##sys#macroexpand-0 exp me)])
-	(if m
-	    (loop exp2)
-	    exp2) ) ) ) )
+(define (macroexpand exp #!optional (me '()))
+  (let loop ([exp exp])
+    (let-values ([(exp2 m) (##sys#macroexpand-0 exp me)])
+      (if m
+	  (loop exp2)
+	  exp2) ) ) )
 
-(define (macroexpand-1 exp . me)
-  (##sys#macroexpand-0 exp (if (pair? me) (car me) '())) )
+(define (macroexpand-1 exp #!optional (me '()))
+  (##sys#macroexpand-0 exp me) )
 
 
 ;;; Extended (DSSSL-style) lambda lists
@@ -620,7 +620,7 @@
 		(else (loop (##sys#slot lst 1) (fx+ i 1))) ) ) )
 
       (define (macroexpand-1-checked x e)
-	(let ([x2 (##sys#macroexpand-1-local x '())])
+	(let ([x2 (##sys#macroexpand-1-local x me)])
 	  (if (pair? x2)
 	      (let ([h (##sys#slot x2 0)])
 		(if (and (eq? h 'let) (not (defined? 'let e)))
@@ -693,7 +693,7 @@
 
 			     [(quote)
 			      (##sys#check-syntax 'quote x '(quote _) #f)
-			      (let* ([c (cadr x)])
+			      (let* ((c (##sys#strip-context (cadr x))))
 				(case c
 				  [(-1) (lambda v -1)]
 				  [(0) (lambda v 0)]
@@ -2212,24 +2212,27 @@
   (##sys#hash-table-set! ##sys#sharp-comma-reader-ctors spec proc) )
 
 (set! ##sys#user-read-hook
-  (let ([old ##sys#user-read-hook]
-	[read-char read-char]
-	[read read] )
+  (let ((old ##sys#user-read-hook)
+	(read-char read-char)
+	(read read) )
     (lambda (char port)
-      (cond [(char=? char #\,)
+      (cond ((char=? char #\,)
 	     (read-char port)
-	     (let* ([exp (read port)]
-		    [err (lambda () (##sys#read-error port "invalid sharp-comma external form" exp))] )
+	     (let* ((exp (read port))
+		    (err (lambda () (##sys#read-error port "invalid sharp-comma external form" exp))) )
 	       (if (or (null? exp) (not (list? exp)))
 		   (err)
 		   (let ([spec (##sys#slot exp 0)])
 		     (if (not (symbol? spec))
 			 (err) 
-			 (let ([ctor (##sys#hash-table-ref ##sys#sharp-comma-reader-ctors spec)])
+			 (let ((ctor (##sys#hash-table-ref ##sys#sharp-comma-reader-ctors spec)))
 			   (if ctor
 			       (apply ctor (##sys#slot exp 1))
-			       (##sys#read-error port "undefined sharp-comma constructor" spec) ) ) ) ) ) ) ]
-	    [else (old char port)] ) ) ) )
+			       (##sys#read-error port "undefined sharp-comma constructor" spec) ) ) ) ) ) ) )
+	    ((char=? char #\{)
+	     (let ((lst (read port)))
+	       (make-identifier (car lst) (cdr lst))))
+	    (else (old char port)) ) ) ) )
 
 
 ;;; Handy to have by default:
