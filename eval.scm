@@ -80,7 +80,7 @@
      port? ##sys#file-info ##sys#signal-hook ##sys#dload open-input-file close-input-port
      read write newline ##sys#eval-handler ##sys#set-dlopen-flags! cadadr ##sys#lookup-runtime-requirements
      map string->keyword ##sys#abort
-     ##sys#macroexpand-0 ##sys#macroexpand-1-local) ) ] )
+     ##sys#macroexpand-0 ##sys#macroexpand-1-local ##sys#hash-table-update!) ) ] )
 
 (cond-expand
  [unsafe
@@ -104,7 +104,8 @@
 (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
 (define ##sys#core-library-modules
-  '(extras lolevel utils tcp regex regex-extras posix match srfi-1 srfi-4 srfi-13 srfi-14 srfi-18))
+  '(extras lolevel utils tcp regex regex-extras posix match
+    srfi-1 srfi-4 srfi-13 srfi-14 srfi-18 srfi-69))
 
 (define ##sys#explicit-library-modules '())
 
@@ -126,7 +127,7 @@
 ; these are actually in unit extras, but that is used by default
 ; srfi-12 in unit library
 (define-constant builtin-features
-  '(chicken srfi-2 srfi-6 srfi-10 srfi-12 srfi-23 srfi-28 srfi-30 srfi-31 srfi-39 srfi-69) )
+  '(chicken srfi-2 srfi-6 srfi-10 srfi-12 srfi-23 srfi-28 srfi-30 srfi-31 srfi-39) )
 
 (define-constant builtin-features/compiled
   '(srfi-6 srfi-8 srfi-9 srfi-11 srfi-15 srfi-16 srfi-17 srfi-26 srfi-55) )
@@ -495,6 +496,11 @@
 
 ;;; Lo-level hashtable support:
 
+;; Note:
+;;
+;; - Keys are compared using 'eq?'.
+;; - The fixed "not found" value is #f. So booleans as values are suspect.
+
 (define ##sys#hash-symbol
   (let ([cache-s #f]
 	[cache-h #f] )
@@ -516,26 +522,27 @@
 		(##sys#slot b 1)
 		(loop (##sys#slot bucket 1)) ) ) ) ) ) )
 
-(define ##sys#hash-table-set! 
-  (lambda (ht key val)
-    (let* ((k (##sys#hash-symbol key (##core#inline "C_block_size" ht)))
-	   (bucket0 (##sys#slot ht k)) )
-      (let loop ((bucket bucket0))
-	(if (eq? bucket '())
-	    (##sys#setslot ht k (cons (cons key val) bucket0))
-	    (let ((b (##sys#slot bucket 0)))
-	      (if (eq? key (##sys#slot b 0))
-		  (##sys#setslot b 1 val)
-		  (loop (##sys#slot bucket 1)) ) ) ) ) ) ) )
+(define (##sys#hash-table-set! ht key val)
+  (let* ((k (##sys#hash-symbol key (##core#inline "C_block_size" ht)))
+         (bucket0 (##sys#slot ht k)) )
+    (let loop ((bucket bucket0))
+      (if (eq? bucket '())
+          (##sys#setslot ht k (cons (cons key val) bucket0))
+          (let ((b (##sys#slot bucket 0)))
+            (if (eq? key (##sys#slot b 0))
+		(##sys#setslot b 1 val)
+		(loop (##sys#slot bucket 1)) ) ) ) ) ) )
+
+(define (##sys#hash-table-update! ht key updtfunc valufunc)
+  (##sys#hash-table-set! ht key (updtfunc (or (##sys#hash-table-ref ht key) (valufunc)))) )
 
 (define (##sys#hash-table-for-each p ht)
   (let ((len (##core#inline "C_block_size" ht)))
     (do ((i 0 (fx+ i 1)))
 	((fx>= i len))
       (##sys#for-each (lambda (bucket) 
-		   (p (##sys#slot bucket 0)
-		      (##sys#slot bucket 1) ) )
-		 (##sys#slot ht i) ) ) ) )
+		        (p (##sys#slot bucket 0) (##sys#slot bucket 1) ) )
+		      (##sys#slot ht i) ) ) ) )
 
 (define ##sys#hash-table-location
   (let ([unbound (##sys#slot '##sys#arbitrary-unbound-symbol 0)])
@@ -1405,7 +1412,7 @@
     (lambda (id comp?)
       (define (add-req id)
 	(when comp?
-	  (hash-table-update! 		; assumes compiler has extras available - will break in the interpreter
+	  (##sys#hash-table-update!
 	   ##compiler#file-requirements
 	   'syntax-requirements
 	   (cut lset-adjoin eq? <> id) 

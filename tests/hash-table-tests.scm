@@ -1,5 +1,7 @@
 ;;;; hash-table-tests.scm
 
+(use srfi-69)
+
 (print "SRFI 69 procedures")
 (assert (eq? hash equal?-hash))
 (assert (eq? hash-by-identity eq?-hash))

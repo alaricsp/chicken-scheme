@@ -1,7 +1,7 @@
 ;;;; tools.scm
 
 
-(use (srfi 1) posix utils)
+(use (srfi 1) (srfi 69) posix utils)
 
 
 (define *verbose* (##sys#fudge 13))

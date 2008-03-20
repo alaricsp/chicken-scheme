@@ -320,6 +320,7 @@
 (define-constant default-line-number-database-size 997)
 (define-constant inline-table-size 301)
 (define-constant constant-table-size 301)
+(define-constant file-requirements-size 301)
 (define-constant real-name-table-size 997)
 (define-constant import-table-size 997)
 (define-constant default-inline-max-size 10)
@@ -434,7 +435,9 @@
       (set! constant-table (make-vector constant-table-size '())) )
   (set! profile-info-vector-name (make-random-name 'profile-info))
   (set! real-name-table (make-vector real-name-table-size '()))
-  (set! file-requirements (make-hash-table eq?))
+  (if file-requirements
+      (vector-fill! file-requirements '())
+      (set! file-requirements (make-vector file-requirements-size '())) )
   (if import-table
       (vector-fill! import-table '())
       (set! import-table (make-vector import-table-size '())) )
@@ -554,7 +557,7 @@
 			((##core#require-for-syntax)
 			 (let ([ids (map eval (cdr x))])
 			   (apply ##sys#require ids)
-			   (hash-table-update! 
+			   (##sys#hash-table-update! 
 			    file-requirements 'syntax-requirements (cut lset-union eq? <> ids)
 			    (lambda () ids) )
 			   '(##core#undefined) ) )
@@ -1020,7 +1023,7 @@
 	  (when use-import-table
 	    (for-each lookup-exports-file us) )
 	  (when (pair? us)
-	    (hash-table-update! file-requirements 'uses (cut lset-union eq? us <>) (lambda () us))
+	    (##sys#hash-table-update! file-requirements 'uses (cut lset-union eq? us <>) (lambda () us))
 	    (let ((units (map (lambda (u) (string->c-identifier (stringify u))) us)))
 	      (set! used-units (append used-units units)) ) ) ) )
        ((unit)

@@ -25,7 +25,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(declare (uses match))
+(declare (uses match srfi-69))
 
 (declare
   (usual-integrations)

@@ -27,7 +27,7 @@
 
 (declare
   (unit lolevel)
-  (uses extras)
+  (uses srfi-69)
   (usual-integrations)
   (disable-warning var redef)
   (hide ipc-hook-0 xproc-tag)

@@ -4,6 +4,7 @@
 
 (require-extension syntax-case)
 (require-extension srfi-1)
+(require-extension srfi-69)
 (require-extension posix)
 (require-extension utils)
 (require-extension stream-wiki)
@@ -39,6 +40,7 @@
 			     "Unit match"
 			     "Unit regex"
 			     "Unit srfi-18"
+			     "Unit srfi-69"
 			     "Unit posix"
 			     "Unit utils"
 			     "Unit tcp"

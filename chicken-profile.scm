@@ -29,6 +29,7 @@
   (block)
   (uses srfi-1
 	srfi-13
+	srfi-69
 	posix
 	utils))
 
