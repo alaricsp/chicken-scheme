@@ -2069,14 +2069,9 @@ C_regparm C_word C_fcall C_intern3(C_word **ptr, C_char *str, C_word value)
 
 C_regparm int C_fcall hash_string(int len, C_char *str, unsigned int m)
 {
-  unsigned int key = 0;
+  unsigned int key = 2166136261U;
 
-# if 0
-  /* Zbigniew's suggested change for extended significance & ^2 table sizes. */
-  while(len--) key += (key << 5) + *(str++);
-# else
-  while(len--) key = (key << 4) + *(str++);
-# endif
+  while(len--) key = ((key * 16777619U) + (*str++));
 
   return (int)(key % m);
 }
@@ -3821,11 +3816,11 @@ C_word C_fetch_trace(C_word starti, C_word buffer)
 
 C_regparm C_word C_fcall C_hash_string(C_word str)
 {
-  unsigned C_word key = 0;
+  unsigned C_word key = 2166136261U;
   int len = C_header_size(str);
   C_byte *ptr = C_data_pointer(str);
 
-  while(len--) key = (key << 4) + *(ptr++);
+  while(len--) key = ((key * 16777619U) + (*ptr++));
 
   return C_fix(key & C_MOST_POSITIVE_FIXNUM);
 }
@@ -3833,11 +3828,11 @@ C_regparm C_word C_fcall C_hash_string(C_word str)
 
 C_regparm C_word C_fcall C_hash_string_ci(C_word str)
 {
-  unsigned C_word key = 0;
+  unsigned C_word key = 2166136261U;
   int len = C_header_size(str);
   C_byte *ptr = C_data_pointer(str);
 
-  while(len--) key = (key << 4) + C_tolower(*(ptr++));
+  while(len--) key = ((key * 16777619U) + C_tolower(*ptr++));
 
   return C_fix(key & C_MOST_POSITIVE_FIXNUM);
 }
