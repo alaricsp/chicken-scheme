@@ -544,6 +544,19 @@
 		        (p (##sys#slot bucket 0) (##sys#slot bucket 1) ) )
 		      (##sys#slot ht i) ) ) ) )
 
+(define (##sys#hash-table->alist ht)
+  (let ([len (##core#inline "C_block_size" ht)] )
+    (let loop ([i 0] [lst '()])
+      (if (fx>= i len)
+	  lst
+	  (let loop2 ([bucket (##sys#slot vec i)]
+		      [lst lst])
+	    (if (null? bucket)
+		(loop (fx+ i 1) lst)
+		(loop2 (##sys#slot bucket 1)
+		       (let ([x (##sys#slot bucket 0)])
+			 (cons (cons (##sys#slot x 0) (##sys#slot x 1)) lst) ) ) ) ) ) ) ) )
+
 (define ##sys#hash-table-location
   (let ([unbound (##sys#slot '##sys#arbitrary-unbound-symbol 0)])
     (lambda (ht key addp)
