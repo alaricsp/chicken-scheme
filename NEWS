@@ -1,5 +1,6 @@
 3.0.11
 
+- unit srfi-69: added hash-table-clear!
 - unit srfi-69: new
 - unit extras: moved SRFI 69 to unit srfi-69
 
