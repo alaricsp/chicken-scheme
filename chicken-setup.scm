@@ -244,11 +244,15 @@
 
 ;;; Helper stuff
 
+(define (quotewrapped? str)
+  (and (string? str) (string-prefix? "\"" str) (string-suffix? "\"" str) ))
+
 (define (quotewrap str)
-  (if (or (string-any char-whitespace? str)
-          (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
-      (string-append "\"" str "\"") 
-      str) )
+  (cond ((quotewrapped? str) str)
+	((or (string-any char-whitespace? str)
+	     (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
+	 (string-append "\"" str "\""))
+	(else str)))
 
 (define (abort-setup)
   (*abort-hook* #f) )
