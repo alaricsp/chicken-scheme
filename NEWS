@@ -4,7 +4,7 @@
 - unit srfi-69: new
 - unit extras: moved SRFI 69 to unit srfi-69
 
-3.0.10
+3.1.0
 
 - svnrevision.sh - cleaned logic to prevent invalid error message
 - csc - fixed bug preventing static linking of executables (build order issues)
@@ -35,7 +35,7 @@
   "symbol-hash", "keyword-hash", "##sys#number-hash-hook", and
   "hash-by-identity" as a synonym for "eq?-hash"
 
-3.0.0rc1
+3.0.0
 
 - upgraded scheme-complete.el to version 0.6 [Thanks to Alex Shinn]
 - unit library: added "blob=?"
