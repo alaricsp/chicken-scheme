@@ -234,7 +234,7 @@
     (if *windows-shell*
 	(lambda (dir)
 	  (verb dir)
-          (system* "mkdir \"~a\"" (quotewrap dir)))
+          (system* "mkdir ~a" (quotewrap dir)))
 	  ; (create-directory/parents dir) ) 
 	(lambda (dir)
 	  (verb dir)
