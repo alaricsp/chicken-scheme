@@ -96,11 +96,12 @@
       (lambda (patt env) ; env is currently ignored
         (set! patt (makpat patt))
         (let ([ms '()])
-          (##sys#hash-table-for-each
-            (lambda (key val)
-              (when (string-search patt (symbol->string key))
-                (set! ms (cons key ms)) ) )
-            ##sys#macro-environment)
+          (for-each
+	   (lambda (a)
+	     (let ((key (car a)))
+	       (when (string-search patt (symbol->string key))
+		 (set! ms (cons key ms)) ) ) )
+	   ##sys#macro-environment)
           ms ) ) ) ) )
 
 (define (##sys#apropos patt env #!optional macf)

@@ -28,7 +28,7 @@
 # object files
 
 LIBCHICKEN_OBJECTS_1 = \
-       library eval extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       library eval extras expand lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 $(POSIXFILE) regex scheduler \
        profiler stub match runtime
 LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
@@ -42,7 +42,7 @@ LIBUCHICKEN_SHARED_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=$(O))
 LIBUCHICKEN_STATIC_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBCHICKENGUI_OBJECTS_1 = \
-       library eval extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       library eval extras expand lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 $(POSIXFILE) regex scheduler \
        profiler stub match gui-runtime
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
@@ -90,6 +90,10 @@ gui-runtime$(O): runtime.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_GUI_RUNTIME_OPTIONS) $< \
 	  $(C_COMPILER_OUTPUT)
 eval$(O): eval.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+expand$(O): expand.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -233,6 +237,10 @@ gui-runtime-static$(O): runtime.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_GUI_RUNTIME_OPTIONS) $< \
 	  $(C_COMPILER_OUTPUT)
 eval-static$(O): eval.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+expand-static$(O): expand.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -859,6 +867,8 @@ library.c: library.scm version.scm banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 eval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
+expand.c: expand.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 extras.c: extras.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 lolevel.c: lolevel.scm
@@ -951,7 +961,7 @@ chicken-bug.c: chicken-bug.scm
 
 .PHONY: distfiles
 
-distfiles: buildsvnrevision library.c eval.c extras.c lolevel.c utils.c \
+distfiles: buildsvnrevision library.c eval.c expand.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
 	ulibrary.c ueval.c uextras.c ulolevel.c \
@@ -986,7 +996,7 @@ confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
 spotless: distclean
-	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c extras.c lolevel.c utils.c \
+	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c extras.c expand.c lolevel.c utils.c \
 	  tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c \
 	  posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
 	  ulibrary.c ueval.c uextras.c ulolevel.c \
@@ -1039,6 +1049,6 @@ bootstrap:
 	touch *.scm
 
 bootstrap.tar.gz: posixunix.c posixwin.c
-	tar cfz bootstrap.tar.gz library.c eval.c extras.c lolevel.c utils.c tcp.c \
+	tar cfz bootstrap.tar.gz library.c eval.c expand.c extras.c lolevel.c utils.c tcp.c \
 	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c posixunix.c posixwin.c regex.c \
 	  scheduler.c profiler.c stub.c match.c $(COMPILER_OBJECTS_1:=.c)
