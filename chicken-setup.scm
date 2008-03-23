@@ -219,14 +219,6 @@
 
 ;;; File-system routines
 
-(define create-directory/parents
-  (let ([create-directory create-directory])
-    (lambda (dir)
-      (let loop ([dir dir])
-        (when (and dir (not (directory? dir)))
-          (loop (pathname-directory dir))
-          (create-directory dir))) ) ) )
-
 (define create-directory
   (let ()
     (define (verb dir)
@@ -235,7 +227,6 @@
 	(lambda (dir)
 	  (verb dir)
           (system* "mkdir ~a" (quotewrap dir)))
-	  ; (create-directory/parents dir) ) 
 	(lambda (dir)
 	  (verb dir)
 	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
