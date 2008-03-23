@@ -71,8 +71,6 @@
   (include "chicken-more-macros")
   (include "chicken-ffi-macros") )
 
-;;(##sys#provide 'extras 'srfi-1 'srfi-4)
-
 
 ;;; Prefix argument list with default options:
 
