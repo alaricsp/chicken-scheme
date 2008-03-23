@@ -46,6 +46,8 @@ all clean spotless distclean install uninstall:
 	@echo ""
 	@echo "For more information, consult the README file."
 	@exit 1
+dist:
+	csi -s scripts/makedist.scm
 else
 all:
 	$(MAKE) -f Makefile.$(PLATFORM) all
@@ -65,9 +67,6 @@ check:
 	$(MAKE) -f Makefile.$(PLATFORM) check
 fullcheck:
 	$(MAKE) -f Makefile.$(PLATFORM) fullcheck
-dist:
-	$(MAKE) -f Makefile.$(PLATFORM) distfiles
-	csi -s scripts/makedist.scm
 libs:
 	$(MAKE) -f Makefile.$(PLATFORM) libs
 install-libs:
