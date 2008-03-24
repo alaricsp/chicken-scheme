@@ -25,7 +25,8 @@
 
 
 (declare
-  (hide match-expression) )
+  (hide match-expression
+	lookup-identifier) )
 
 
 ;;; identifier objects
@@ -84,12 +85,18 @@
     (##sys#error y "bad argument type - not an identifier" x) ) )
 
 
-;;; Macro handling:
+;;; Syntactic environments
+
+(define (lookup-identifier id se)
+  (assq id se) )			; return (NAME SE HANDLER) or #f
+
+
+;;; Macro handling
 
 (define ##sys#macro-environment '())
 
 (define (##sys#register-macro-0 name se handler)
-  (cond ((assq name ##sys#macro-environment) =>
+  (cond ((lookup-identifier name ##sys#macro-environment) =>
 	 (lambda (a)
 	   (set-car! (cdr a) se)
 	   (set-car! (cddr a) handler) ) )
@@ -100,22 +107,22 @@
 (define (##sys#register-macro name handler)
   (##sys#register-macro-0 
    name '() 
-   (lambda (form) (apply handler (##sys#slot form 1))) ) )
+   (lambda (form se) (apply handler (##sys#slot form 1))) ) )
 
 (define (##sys#register-macro-2 name handler)
   (##sys#register-macro-0 
    name '() 
-   (lambda (form) (handler (##sys#slot form 1))) ) )
+   (lambda (form se) (handler (##sys#slot form 1))) ) )
 
 (define (##sys#copy-macro old new)
-  (let ((def (assq old ##sys#macro-environment)))
+  (let ((def (lookup-identifier old ##sys#macro-environment)))
     (apply ##sys#register-macro-0 def) ) )
 
 (define (macro? sym #!optional (senv '()))
   (##sys#check-identifier sym 'macro?)
   (##sys#check-pair? senv 'macro?)
-  (or (assq sym senv)
-      (and (assq sym ##sys#macro-environment) #t) ) )
+  (or (lookup-identifier sym senv)
+      (and (lookup-identfier sym ##sys#macro-environment) #t) ) )
 
 (define (##sys#unregister-macro name)
   (set! ##sys#macro-environment
@@ -134,9 +141,8 @@
 
 (define ##sys#macroexpand-0
   (let ([string-append string-append])
-    (lambda (exp me)
-
-      (define (call-handler name handler exp)
+    (lambda (exp se)
+      (define (call-handler name handler exp se)
 	(handle-exceptions ex
 	    (##sys#abort
 	     (if (and (##sys#structure? ex 'condition)
@@ -160,21 +166,16 @@
 				     (cdr r) ) )
 			      (copy r) ) ) ) ) )
 		 ex) )
-	  (handler exp) ) )
-				   
+	  (handler exp se) ) )				   
       (define (expand exp head)
-	(cond [(assq head me) => (lambda (mdef) (values ((##sys#slot mdef 1) exp) #t))]
-	      [(##sys#hash-table-ref ##sys#macro-environment head) 
-	       => (lambda (handler)
-		    (cond-expand
-		     [unsafe (values (call-handler head handler exp) #t)]
-		     [else
-		      (let scan ([x exp])
-			(cond [(null? x) (values (call-handler head handler exp) #t)]
-			      [(pair? x) (scan (##sys#slot x 1))]
-			      [else (##sys#syntax-error-hook "invalid syntax in macro form" exp)] ) ) ] ) ) ]
-	      [else (values exp #f)] ) )
-
+	(cond ((not (list? exp))
+	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
+	      ((or (lookup-identifier head se) 
+		   (lookup-identifier head ##sys#macro-environment) ) =>
+		   (lambda (mdef) 
+		     (values (call-handler head (caddr mdef) exp (cadr mdef))
+			     #t)))
+	      (else (values exp #f)) ) )
       (if (pair? exp)
 	  (let ([head (##sys#slot exp 0)]
 		[body (##sys#slot exp 1)] )
