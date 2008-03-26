@@ -26,68 +26,12 @@
 
 (declare
   (hide match-expression
-	lookup-identifier) )
-
-
-;;; identifier objects
-
-(define (make-identifier name context)
-  (##sys#make-structure 'identifier name context) )
-
-(define (identifier? x)
-  (or (symbol? x) (##sys#structure? x 'identifier)) )
-
-(define (identifier-name id)
-  (cond ((symbol? id) id)
-	(else
-	 (##sys#check-structure id 'identifier 'identifier-name)
-	 (##sys#slot id 1) ) ) )
-
-(define (identifier-context id)
-  (cond ((symbol? id) '())
-	(else
-	 (##sys#check-structure id 'identifier 'identifier-name)
-	 (##sys#slot id 2) ) ) )
-
-(define (bound-identifier=? id1 id2)
-  (and (eq? (identifier-name id1) (identifier-name id2))
-       (equal? (identifier-context id1) (identifier-context id2)) ) )
-
-(define (free-identifier=? id1 id2)
-  (eq? (identifier-name id1) (identifier-name id2)) )
-
-(define (##sys#strip-context exp)
-  (let walk ((x exp))
-    (cond ((##sys#structure? x 'identifier) (identifier-name x))
-	  ((pair? x) (cons (walk (car x)) (walk (cdr x))))
-	  ((vector? x) (list->vector (map walk (vector->list x))))
-	  (else x) ) ) )
-
-(define (##sys#decorate/context exp context)
-  (let walk ((x exp))
-    (cond ((symbol? x) (make-identifier x context))
-	  ((pair? x) (cons (walk (car x)) (walk (cdr x))))
-	  ((vector? x) (list->vector (map walk (vector->list x))))
-	  (else x) ) ) )
-
-(define-record-printer (identifier id port)
-  (display "#{" port)
-  (write (identifier-name id) port)
-  (for-each
-   (lambda (c)
-     (write-char #\space port)
-     (write c port) )
-   (identifier-context id) )
-  (write-char #\} port) )
-
-(define (##sys#check-identifier x #!optional y) 
-  (unless (identifier? x)
-    (##sys#error y "bad argument type - not an identifier" x) ) )
+	lookup) )
 
 
 ;;; Syntactic environments
 
-(define (lookup-identifier id se)
+(define (lookup id se)
   (assq id se) )			; return (NAME SE HANDLER) or #f
 
 
@@ -96,7 +40,7 @@
 (define ##sys#macro-environment '())
 
 (define (##sys#register-macro-0 name se handler)
-  (cond ((lookup-identifier name ##sys#macro-environment) =>
+  (cond ((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
 	   (set-car! (cdr a) se)
 	   (set-car! (cddr a) handler) ) )
@@ -115,14 +59,14 @@
    (lambda (form se) (handler (##sys#slot form 1))) ) )
 
 (define (##sys#copy-macro old new)
-  (let ((def (lookup-identifier old ##sys#macro-environment)))
+  (let ((def (lookup old ##sys#macro-environment)))
     (apply ##sys#register-macro-0 def) ) )
 
 (define (macro? sym #!optional (senv '()))
   (##sys#check-identifier sym 'macro?)
   (##sys#check-pair? senv 'macro?)
-  (or (lookup-identifier sym senv)
-      (and (lookup-identfier sym ##sys#macro-environment) #t) ) )
+  (or (lookup sym senv)
+      (and (lookup sym ##sys#macro-environment) #t) ) )
 
 (define (##sys#unregister-macro name)
   (set! ##sys#macro-environment
@@ -170,8 +114,8 @@
       (define (expand exp head)
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
-	      ((or (lookup-identifier head se) 
-		   (lookup-identifier head ##sys#macro-environment) ) =>
+	      ((or (lookup head se) 
+		   (lookup head ##sys#macro-environment) ) =>
 		   (lambda (mdef) 
 		     (values (call-handler head (caddr mdef) exp (cadr mdef))
 			     #t)))
@@ -456,6 +400,104 @@
       (list name exp) ) ) )
 
 
+;;; General syntax checking routine:
+
+(define ##sys#line-number-database #f)
+(define (##sys#syntax-error-hook . args) (apply ##sys#signal-hook #:syntax-error args))
+(define ##sys#syntax-error-culprit #f)
+
+(define syntax-error ##sys#syntax-error-hook)
+
+(define (get-line-number sexp)
+  (and ##sys#line-number-database
+       (pair? sexp)
+       (let ([head (##sys#slot sexp 0)])
+	 (and (symbol? head)
+	      (cond [(##sys#hash-table-ref ##sys#line-number-database head)
+		     => (lambda (pl)
+			  (let ([a (assq sexp pl)])
+			    (and a (##sys#slot a 1)) ) ) ]
+		    [else #f] ) ) ) ) )
+
+(define ##sys#check-syntax
+  (let ([string-append string-append]
+	[keyword? keyword?]
+	[get-line-number get-line-number]
+	[symbol->string symbol->string] )
+    (lambda (id exp pat . culprit)
+
+      (define (test x pred msg)
+	(unless (pred x) (err msg)) )
+
+      (define (err msg)
+	(let* ([sexp ##sys#syntax-error-culprit]
+	       [ln (get-line-number sexp)] )
+	  (##sys#syntax-error-hook
+	   (if ln 
+	       (string-append "(" (symbol->string id) ") in line " (number->string ln) " - " msg)
+	       (string-append "(" (symbol->string id) ") " msg) )
+	   exp) ) )
+
+      (define (lambda-list? x)
+	(or (##sys#extended-lambda-list? x)
+	    (let loop ((x x))
+	      (cond ((eq? x '()))
+		    ((not (##core#inline "C_blockp" x)) #f)
+		    ((symbol? x) (not (keyword? x)))
+		    ((##core#inline "C_pairp" x)
+		     (let ((s (##sys#slot x 0)))
+		       (if (or (not (##core#inline "C_blockp" s)) (not (##core#inline "C_symbolp" s)))
+			   #f
+			   (loop (##sys#slot x 1)) ) ) ) 
+		    (else #f) ) ) ) )
+
+      (define (proper-list? x)
+	(let loop ((x x))
+	  (cond ((eq? x '()))
+		((and (##core#inline "C_blockp" x) (##core#inline "C_pairp" x)) (loop (##sys#slot x 1)))
+		(else #f) ) ) )
+
+      (when (pair? culprit) (set! ##sys#syntax-error-culprit (car culprit)))
+      (let walk ((x exp) (p pat))
+	(cond ((and (##core#inline "C_blockp" p) (##core#inline "C_vectorp" p))
+	       (let* ((p2 (##sys#slot p 0))
+		      (vlen (##core#inline "C_block_size" p))
+		      (min (if (fx> vlen 1) 
+			       (##sys#slot p 1)
+			       0) )
+		      (max (cond ((eq? vlen 1) 1)
+				 ((fx> vlen 2) (##sys#slot p 2))
+				 (else 99999) ) ) )
+		 (do ((x x (##sys#slot x 1))
+		      (n 0 (fx+ n 1)) )
+		     ((eq? x '())
+		      (if (fx< n min)
+			  (err "not enough arguments") ) )
+		   (cond ((fx>= n max) 
+			  (err "too many arguments") )
+			 ((or (not (##core#inline "C_blockp" x)) (not (##core#inline "C_pairp" x)))
+			  (err "not a proper list") )
+			 (else (walk (##sys#slot x 0) p2) ) ) ) ) )
+	      ((not (##core#inline "C_blockp" p))
+	       (if (not (eq? p x)) (err "unexpected object")) )
+	      ((symbol? x)
+	       (case p
+		 ((_) #t)
+		 ((pair) (test x pair? "pair expected"))
+		 ((variable) (test x symbol? "identifier expected"))
+		 ((symbol) (test x symbol? "symbol expected"))
+		 ((list) (test x proper-list? "proper list expected"))
+		 ((number) (test x number? "number expected"))
+		 ((string) (test x string? "string expected"))
+		 ((lambda-list) (test x lambda-list? "lambda-list expected"))
+		 (else (test x (lambda (y) (eq? y p)) "missing keyword")) ) )
+	      ((or (not (##core#inline "C_blockp" x)) (not (##core#inline "C_pairp" x)))
+	       (err "incomplete form") )
+	      (else
+	       (walk (##sys#slot x 0) (##sys#slot p 0))
+	       (walk (##sys#slot x 1) (##sys#slot p 1)) ) ) ) ) ) )
+
+
 ;;; Macro definitions:
 
 (##sys#register-macro-2
@@ -714,4 +756,33 @@
 			    ((test id) `(begin ,@(##sys#slot clause 1)))
 			    (else (expand rclauses)) ) ) ) ) ) ) ) ) )
 
+(##sys#register-macro
+ 'define-macro
+ (lambda (head . body)
+   (define (expand name val)
+     (let ((m2 (and (pair? val) (eq? 'lambda (car val))
+		    (pair? (cdr val)) (symbol? (cadr val))) ))
+       `(,(if ##sys#enable-runtime-macros '##core#elaborationtimetoo '##core#elaborationtimeonly)
+	 ,(cond (m2 `(##sys#register-macro-2 ',name (lambda (,(cadr val)) ,@(cddr val))))
+		((symbol? val) `(##sys#copy-macro ',val ',name))
+		(else `(##sys#register-macro ',name ,val) ) ) ) ) )
+   (cond ((symbol? head)
+	  (##sys#check-syntax 'define-macro body '(_))
+	  (expand head (car body)) )
+	 (else
+	  (##sys#check-syntax 'define-macro head '(symbol . lambda-list))
+	  (##sys#check-syntax 'define-macro body '#(_ 1)) 
+	  (expand (car head) `(lambda ,(cdr head) ,@body))))))
 
+(##sys#register-macro
+ 'require-extension
+ (lambda ids
+   (##sys#check-syntax 'require-extension ids '#(_ 0))
+   `(##core#require-extension ,@(map (lambda (x) (list 'quote x)) ids) ) ) )
+
+(##sys#register-macro-0
+ 'define-syntax '()
+ (lambda (form se)
+   (##sys#check-syntax 'define-syntax form '(define-syntax variable _))
+   `(,(if ##sys#enable-runtime-macros '##core#elaborationtimetoo '##core#elaborationtimeonly)
+     (##sys#register-macro-0 ',name '() (caddr form)))))

@@ -47,7 +47,7 @@
  [paranoia]
  [else
   (declare
-    (no-bound-checks)
+    ;***(no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure 
      ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-string ##sys#load-library
@@ -244,32 +244,20 @@
 	[with-input-from-file with-input-from-file]
 	[unbound (##sys#slot '##sys#arbitrary-unbound-symbol 0)]
 	[display display] )
-    (lambda (exp env me . cntr)
+    (lambda (exp env se #!optional cntr)
 
-      (define (lookup var e)
-	(let loop ((envs e) (ei 0))
-	  (cond ((null? envs) (values #f var))
-		((posq var (##sys#slot envs 0)) => (lambda (p) (values ei p)))
-		(else (loop (##sys#slot envs 1) (fx+ ei 1))) ) ) )
+      (define (rename var se)
+	(cond ((assq var se) => cdr) (else var)))
 
-      (define (defined? var e)
-	(receive (i j) (lookup var e) i) )
+      (define (lookup var e se)
+	(let ((var (rename var se)))
+	  (let loop ((envs e) (ei 0))
+	    (cond ((null? envs) (values #f var))
+		  ((posq var (##sys#slot envs 0)) => (lambda (p) (values ei p)))
+		  (else (loop (##sys#slot envs 1) (fx+ ei 1))) ) ) ) )
 
-      (define (undefine vars e)
-	(let loop ([envs e])
-	  (if (null? envs)
-	      '()
-	      (let ([envi (##sys#slot envs 0)])
-		(cons
-		 (let delq ([ee envi])
-		   (if (null? ee)
-		       '()
-		       (let ([h (##sys#slot ee 0)]
-			     [r (##sys#slot ee 1)] )
-			 (if (memq h vars)
-			     r
-			     (cons h (delq r)) ) ) ) )
-		 (loop (##sys#slot envs 1)) ) ) ) ) )
+      (define (defined? var e se)
+	(receive (i j) (lookup var e se) i) )
 
       (define (posq x lst)
 	(let loop ((lst lst) (i 0))
@@ -277,14 +265,14 @@
 		((eq? x (##sys#slot lst 0)) i)
 		(else (loop (##sys#slot lst 1) (fx+ i 1))) ) ) )
 
-      (define (macroexpand-1-checked x e)
-	(let ([x2 (##sys#macroexpand-1-local x me)])
+      (define (macroexpand-1-checked x e se)
+	(let ([x2 (##sys#macroexpand-1-local x se)])
 	  (if (pair? x2)
 	      (let ([h (##sys#slot x2 0)])
-		(if (and (eq? h 'let) (not (defined? 'let e)))
+		(if (eq? (rename h se) 'let)
 		    (let ([next (##sys#slot x2 1)])
 		      (if (and (pair? next) (symbol? (##sys#slot next 0)))
-			  (macroexpand-1-checked x2 e)
+			  (macroexpand-1-checked x2 e se)
 			  x2) )
 		    x2) )
 	      x2) ) )
@@ -300,9 +288,9 @@
       (define (decorate p ll h cntr)
 	(##sys#eval-decorator p ll h cntr) )
 
-      (define (compile x e h tf cntr)
+      (define (compile x e h tf cntr se)
 	(cond [(symbol? x)
-	       (receive (i j) (lookup x e)
+	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
 			(let ((x (##sys#alias-global-hook x)))
 			  (if ##sys#eval-environment
@@ -342,299 +330,331 @@
 	      [(not (pair? x)) (##sys#syntax-error-hook "illegal non-atomic object" x)]
 	      [(symbol? (##sys#slot x 0))
 	       (emit-syntax-trace-info tf x cntr)
-	       (let ([head (##sys#slot x 0)])
-		 (if (defined? head e)
-		     (compile-call x e tf cntr)
-		     (let ([x2 (macroexpand-1-checked x e)])
-		       (if (eq? x2 x)
-			   (case head
+	       (let* ((head (rename (##sys#slot x 0) se))
+		      (x2 (macroexpand-1-checked x e se)))
+		 (if (eq? x2 x)
+		     (case head
 
-			     [(quote)
-			      (##sys#check-syntax 'quote x '(quote _) #f)
-			      (let* ((c (##sys#strip-context (cadr x))))
-				(case c
-				  [(-1) (lambda v -1)]
-				  [(0) (lambda v 0)]
-				  [(1) (lambda v 1)]
-				  [(2) (lambda v 2)]
-				  [(#t) (lambda v #t)]
-				  [(#f) (lambda v #f)]
-				  [(()) (lambda v '())]
-				  [else (lambda v c)] ) ) ]
+		       [(quote)
+			(##sys#check-syntax 'quote x '(quote _) #f)
+			(let* ((c (cadr x)))
+			  (case c
+			    [(-1) (lambda v -1)]
+			    [(0) (lambda v 0)]
+			    [(1) (lambda v 1)]
+			    [(2) (lambda v 2)]
+			    [(#t) (lambda v #t)]
+			    [(#f) (lambda v #f)]
+			    [(()) (lambda v '())]
+			    [else (lambda v c)] ) ) ]
 
-			     [(##core#global-ref)
-			      (let ([var (cadr x)])
-				(if ##sys#eval-environment
-				    (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
-				      (lambda v (##sys#slot loc 1)) )
-				    (lambda v (##core#inline "C_slot" var 0)) ) ) ]
+		       [(##core#global-ref)
+			(let ([var (cadr x)])
+			  (if ##sys#eval-environment
+			      (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
+				(lambda v (##sys#slot loc 1)) )
+			      (lambda v (##core#inline "C_slot" var 0)) ) ) ]
 
-			     [(##core#check)
-			      (compile (cadr x) e h tf cntr) ]
+		       [(##core#check)
+			(compile (cadr x) e h tf cntr se) ]
 
-			     [(##core#immutable)
-			      (compile (cadr x) e #f tf cntr) ]
+		       [(##core#immutable)
+			(compile (cadr x) e #f tf cntr se) ]
 		   
-			     [(##core#undefined) (lambda (v) (##core#undefined))]
+		       [(##core#undefined) (lambda (v) (##core#undefined))]
 
-			     [(if)
-			      (##sys#check-syntax 'if x '(if _ _ . #(_)) #f)
-			      (let* ([test (compile (cadr x) e #f tf cntr)]
-				     [cns (compile (caddr x) e #f tf cntr)]
-				     [alt (if (pair? (cdddr x))
-					      (compile (cadddr x) e #f tf cntr)
-					      (compile '(##core#undefined) e #f tf cntr) ) ] )
-				(lambda (v) (if (##core#app test v) (##core#app cns v) (##core#app alt v))) ) ]
+		       [(if)
+			(##sys#check-syntax 'if x '(if _ _ . #(_)) #f)
+			(let* ([test (compile (cadr x) e #f tf cntr se)]
+			       [cns (compile (caddr x) e #f tf cntr se)]
+			       [alt (if (pair? (cdddr x))
+					(compile (cadddr x) e #f tf cntr se)
+					(compile '(##core#undefined) e #f tf cntr se) ) ] )
+			  (lambda (v) (if (##core#app test v) (##core#app cns v) (##core#app alt v))) ) ]
 
-			     [(begin)
-			      (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
-			      (let* ([body (##sys#slot x 1)]
-				     [len (length body)] )
-				(case len
-				  [(0) (compile '(##core#undefined) e #f tf cntr)]
-				  [(1) (compile (##sys#slot body 0) e #f tf cntr)]
-				  [(2) (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr)]
-					      [x2 (compile (cadr body) e #f tf cntr)] )
-					 (lambda (v) (##core#app x1 v) (##core#app x2 v)) ) ]
-				  [else
-				   (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr)]
-					  [x2 (compile (cadr body) e #f tf cntr)] 
-					  [x3 (compile `(begin ,@(##sys#slot (##sys#slot body 1) 1)) e #f tf cntr)] )
-				     (lambda (v) (##core#app x1 v) (##core#app x2 v) (##core#app x3 v)) ) ] ) ) ]
+		       [(begin)
+			(##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
+			(let* ([body (##sys#slot x 1)]
+			       [len (length body)] )
+			  (case len
+			    [(0) (compile '(##core#undefined) e #f tf cntr se)]
+			    [(1) (compile (##sys#slot body 0) e #f tf cntr se)]
+			    [(2) (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr se)]
+					[x2 (compile (cadr body) e #f tf cntr se)] )
+				   (lambda (v) (##core#app x1 v) (##core#app x2 v)) ) ]
+			    [else
+			     (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr se)]
+				    [x2 (compile (cadr body) e #f tf cntr se)] 
+				    [x3 (compile `(,(rename 'begin se) ,@(##sys#slot (##sys#slot body 1) 1)) e #f tf cntr se)] )
+			       (lambda (v) (##core#app x1 v) (##core#app x2 v) (##core#app x3 v)) ) ] ) ) ]
 
-			     [(set! ##core#set!)
-			      (##sys#check-syntax 'set! x '(_ variable _) #f)
-			      (let ((var (cadr x)))
-				(receive (i j) (lookup var e)
-				  (let ((val (compile (caddr x) e var tf cntr)))
-				    (cond [(not i)
-					   (let ([var (##sys#alias-global-hook var)])
-					     (if ##sys#eval-environment
-						 (let ([loc (##sys#hash-table-location
-							     ##sys#eval-environment 
-							     var
-							     ##sys#environment-is-mutable) ] )
-						   (unless loc (##sys#error "assignment of undefined identifier" var))
-						   (if (##sys#slot loc 2)
-						       (lambda (v) (##sys#setslot loc 1 (##core#app val v)))
-						       (lambda v (##sys#error "assignment to immutable variable" var)) ) )
-						 (lambda (v)
-						   (##sys#setslot var 0 (##core#app val v))) ) ) ]
-					  [(zero? i) (lambda (v) (##sys#setslot (##sys#slot v 0) j (##core#app val v)))]
-					  [else
+		       [(set! ##core#set!)
+			(##sys#check-syntax 'set! x '(_ variable _) #f)
+			(let ((var (cadr x)))
+			  (receive (i j) (lookup var e se)
+			    (let ((val (compile (caddr x) e var tf cntr se)))
+			      (cond [(not i)
+				     (let ([var (##sys#alias-global-hook var)])
+				       (if ##sys#eval-environment
+					   (let ([loc (##sys#hash-table-location
+						       ##sys#eval-environment 
+						       var
+						       ##sys#environment-is-mutable) ] )
+					     (unless loc (##sys#error "assignment of undefined identifier" var))
+					     (if (##sys#slot loc 2)
+						 (lambda (v) (##sys#setslot loc 1 (##core#app val v)))
+						 (lambda v (##sys#error "assignment to immutable variable" var)) ) )
 					   (lambda (v)
-					     (##sys#setslot
-					      (##core#inline "C_u_i_list_ref" v i) j (##core#app val v)) ) ] ) ) ) ) ]
-
-			     [(let)
-			      (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f)
-			      (let* ([bindings (cadr x)]
-				     [n (length bindings)] 
-				     [vars (map (lambda (x) (car x)) bindings)] 
-				     [e2 (cons vars e)]
-				     [body (##sys#compile-to-closure
-					    (##sys#canonicalize-body (cddr x) (cut defined? <> e2) me cntr)
-					    e2
-					    me
-					    cntr) ] )
-				(case n
-				  [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr)])
-					 (lambda (v)
-					   (##core#app body (cons (vector (##core#app val v)) v)) ) ) ]
-				  [(2) (let ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
-					     [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] )
-					 (lambda (v)
-					   (##core#app body (cons (vector (##core#app val1 v) (##core#app val2 v)) v)) ) ) ]
-				  [(3) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
-					      [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] 
-					      [t (cddr bindings)]
-					      [val3 (compile (cadar t) e (caddr vars) tf cntr)] )
-					 (lambda (v)
-					   (##core#app 
-					    body
-					    (cons (vector (##core#app val1 v) (##core#app val2 v) (##core#app val3 v)) v)) ) ) ]
-				  [(4) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr)]
-					      [val2 (compile (cadadr bindings) e (cadr vars) tf cntr)] 
-					      [t (cddr bindings)]
-					      [val3 (compile (cadar t) e (caddr vars) tf cntr)] 
-					      [val4 (compile (cadadr t) e (cadddr vars) tf cntr)] )
-					 (lambda (v)
-					   (##core#app 
-					    body
-					    (cons (vector (##core#app val1 v)
-							  (##core#app val2 v)
-							  (##core#app val3 v)
-							  (##core#app val4 v))
-						  v)) ) ) ]
-				  [else
-				   (let ([vals (map (lambda (x) (compile (cadr x) e (car x) tf cntr)) bindings)])
+					     (##sys#setslot var 0 (##core#app val v))) ) ) ]
+				    [(zero? i) (lambda (v) (##sys#setslot (##sys#slot v 0) j (##core#app val v)))]
+				    [else
 				     (lambda (v)
-				       (let ([v2 (##sys#make-vector n)])
-					 (do ([i 0 (fx+ i 1)]
-					      [vlist vals (##sys#slot vlist 1)] )
-					     ((fx>= i n))
-					   (##sys#setslot v2 i (##core#app (##sys#slot vlist 0) v)) )
-					 (##core#app body (cons v2 v)) ) ) ) ] ) ) ]
+				       (##sys#setslot
+					(##core#inline "C_u_i_list_ref" v i) j (##core#app val v)) ) ] ) ) ) ) ]
 
-			     [(lambda)
-			      (##sys#check-syntax 'lambda x '(lambda lambda-list . #(_ 1)) #f)
-			      (let* ([llist (cadr x)]
-				     [body (cddr x)] 
-				     [info (cons (or h '?) llist)] )
-				(when (##sys#extended-lambda-list? llist)
-				  (set!-values 
-				   (llist body) 
-				   (##sys#expand-extended-lambda-list 
-				    llist body
-				    ##sys#syntax-error-hook) ) ) 
-				(##sys#decompose-lambda-list
-				 llist
-				 (lambda (vars argc rest)
-				   (let* ((e2 (cons vars e))
-					  (body 
-					   (##sys#compile-to-closure
-					    (##sys#canonicalize-body body (cut defined? <> e2) me (or h cntr))
-					    e2
-					    me
-					    (or h cntr) ) ) )
-				     (case argc
-				       [(0) (if rest
-						(lambda (v)
-						  (decorate
-						   (lambda r
-						     (##core#app body (cons (vector r) v)))
-						   info h cntr) )
-						(lambda (v)
-						  (decorate
-						   (lambda () (##core#app body (cons #f v)))
-						   info h cntr) ) ) ]
-				       [(1) (if rest
-						(lambda (v)
-						  (decorate
-						   (lambda (a1 . r)
-						     (##core#app body (cons (vector a1 r) v)))
-						   info h cntr) ) 
-						(lambda (v)
-						  (decorate 
-						   (lambda (a1)
-						     (##core#app body (cons (vector a1) v)))
-						   info h cntr) ) ) ]
-				       [(2) (if rest
-						(lambda (v) 
-						  (decorate
-						   (lambda (a1 a2 . r)
-						     (##core#app body (cons (vector a1 a2 r) v)))
-						   info h cntr) )
-						(lambda (v)
-						  (decorate
-						   (lambda (a1 a2)
-						     (##core#app body (cons (vector a1 a2) v)))
-						   info h cntr) ) ) ]
-				       [(3) (if rest
-						(lambda (v) 
-						  (decorate
-						   (lambda (a1 a2 a3 . r)
-						     (##core#app body (cons (vector a1 a2 a3 r) v)))
-						   info h cntr) )
-						(lambda (v)
-						  (decorate
-						   (lambda (a1 a2 a3)
-						     (##core#app body (cons (vector a1 a2 a3) v)))
-						   info h cntr) ) ) ]
-				       [(4) (if rest
-						(lambda (v)
-						  (decorate
-						   (lambda (a1 a2 a3 a4 . r)
-						     (##core#app body (cons (vector a1 a2 a3 a4 r) v)))
-						   info h cntr) )
-						(lambda (v)
-						  (decorate
-						   (lambda (a1 a2 a3 a4)
-						     (##core#app body (##sys#cons (##sys#vector a1 a2 a3 a4) v)))
-						   info h cntr) ) ) ]
-				       [else 
-					(if rest
-					    (lambda (v)
-					      (decorate
-					       (lambda as
-						 (##core#app
-						  body
-						  (##sys#cons (apply ##sys#vector (fudge-argument-list argc as)) v)) )
-					       info h cntr) )
-					    (lambda (v)
-					      (decorate
-					       (lambda as 
-						 (let ([len (length as)])
-						   (if (not (fx= len argc))
-						       (##sys#error "bad argument count" argc len)
-						       (##core#app body (##sys#cons (apply ##sys#vector as) v)))))
-					       info h cntr) ) ) ] ) ) ) ) ) ]
-				
-			     [(##core#loop-lambda)
-			      (compile `(lambda ,@(cdr x)) e #f tf cntr) ]
+		       [(let)
+			(##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f)
+			(let* ([bindings (cadr x)]
+			       [n (length bindings)] 
+			       [vars (map (lambda (x) (car x)) bindings)] 
+			       (aliases (map gensym vars))
+			       [e2 (cons aliases e)]
+			       (se2 (append (map cons vars aliases) se))
+			       [body (##sys#compile-to-closure
+				      (##sys#canonicalize-body (cddr x) se2 cntr)
+				      e2
+				      se2
+				      cntr) ] )
+--------------------------------------------------------------------------------
 
-			     [(##core#named-lambda)
-			      (compile `(lambda ,@(cddr x)) e (cadr x) tf cntr) ]
+- use "rename" for introduced identifiers
+- use se2 where appropriate
+- alpha-convert in "lambda"
 
-			     [(##core#require-for-syntax)
-			      (let ([ids (map (lambda (x) ((##sys#compile-to-closure x '() '()) '() #f)) (cdr x))])
-				(apply ##sys#require ids)
-				(let ([rs (##sys#lookup-runtime-requirements ids)])
-				  (compile
-				   (if (null? rs)
-				       '(##core#undefined)
-				       `(##sys#require ,@(map (lambda (x) `',x) rs)) )
-				   e #f tf cntr) ) ) ]
 
-			     [(##core#require-extension)
-			      (compile
-			       (let loop ([ids (cdr x)])
-				 (if (null? ids)
-				     '(##core#undefined)
-				     (let-values ([(exp _) (##sys#do-the-right-thing (cadar ids) #f)])
-				       `(begin ,exp ,(loop (cdr ids))) ) ) )
-			       e #f tf cntr) ]
+			  (case n
+			    [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr se)])
+				   (lambda (v)
+				     (##core#app body (cons (vector (##core#app val v)) v)) ) ) ]
+			    [(2) (let ([val1 (compile (cadar bindings) e (car vars) tf cntr se)]
+				       [val2 (compile (cadadr bindings) e (cadr vars) tf cntr se)] )
+				   (lambda (v)
+				     (##core#app body (cons (vector (##core#app val1 v) (##core#app val2 v)) v)) ) ) ]
+			    [(3) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr se)]
+					[val2 (compile (cadadr bindings) e (cadr vars) tf cntr se)] 
+					[t (cddr bindings)]
+					[val3 (compile (cadar t) e (caddr vars) tf cntr se)] )
+				   (lambda (v)
+				     (##core#app 
+				      body
+				      (cons (vector (##core#app val1 v) (##core#app val2 v) (##core#app val3 v)) v)) ) ) ]
+			    [(4) (let* ([val1 (compile (cadar bindings) e (car vars) tf cntr se)]
+					[val2 (compile (cadadr bindings) e (cadr vars) tf cntr se)] 
+					[t (cddr bindings)]
+					[val3 (compile (cadar t) e (caddr vars) tf cntr se)] 
+					[val4 (compile (cadadr t) e (cadddr vars) tf cntr se)] )
+				   (lambda (v)
+				     (##core#app 
+				      body
+				      (cons (vector (##core#app val1 v)
+						    (##core#app val2 v)
+						    (##core#app val3 v)
+						    (##core#app val4 v))
+					    v)) ) ) ]
+			    [else
+			     (let ([vals (map (lambda (x) (compile (cadr x) e (car x) tf cntr se)) bindings)])
+			       (lambda (v)
+				 (let ([v2 (##sys#make-vector n)])
+				   (do ([i 0 (fx+ i 1)]
+					[vlist vals (##sys#slot vlist 1)] )
+				       ((fx>= i n))
+				     (##sys#setslot v2 i (##core#app (##sys#slot vlist 0) v)) )
+				   (##core#app body (cons v2 v)) ) ) ) ] ) ) ]
 
-			     [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
-			      (##core#app (##sys#compile-to-closure (cadr x) '() '() #f) '())
-			      (compile '(##core#undefined) e #f tf cntr) ]
+		       [(lambda)
+			(##sys#check-syntax 'lambda x '(lambda lambda-list . #(_ 1)) #f)
+			(let* ([llist (cadr x)]
+			       [body (cddr x)] 
+			       [info (cons (or h '?) llist)] )
+			  (when (##sys#extended-lambda-list? llist)
+			    (set!-values 
+			     (llist body) 
+			     (##sys#expand-extended-lambda-list 
+			      llist body
+			      ##sys#syntax-error-hook) ) ) 
+			  (##sys#decompose-lambda-list
+			   llist
+			   (lambda (vars argc rest)
+			     (let* ((e2 (cons vars e))
+				    (body 
+				     (##sys#compile-to-closure
+				      (##sys#canonicalize-body body (cut defined? <> e2 se) se (or h cntr))
+				      e2
+				      se
+				      (or h cntr) ) ) )
+			       (case argc
+				 [(0) (if rest
+					  (lambda (v)
+					    (decorate
+					     (lambda r
+					       (##core#app body (cons (vector r) v)))
+					     info h cntr) )
+					  (lambda (v)
+					    (decorate
+					     (lambda () (##core#app body (cons #f v)))
+					     info h cntr) ) ) ]
+				 [(1) (if rest
+					  (lambda (v)
+					    (decorate
+					     (lambda (a1 . r)
+					       (##core#app body (cons (vector a1 r) v)))
+					     info h cntr) ) 
+					  (lambda (v)
+					    (decorate 
+					     (lambda (a1)
+					       (##core#app body (cons (vector a1) v)))
+					     info h cntr) ) ) ]
+				 [(2) (if rest
+					  (lambda (v) 
+					    (decorate
+					     (lambda (a1 a2 . r)
+					       (##core#app body (cons (vector a1 a2 r) v)))
+					     info h cntr) )
+					  (lambda (v)
+					    (decorate
+					     (lambda (a1 a2)
+					       (##core#app body (cons (vector a1 a2) v)))
+					     info h cntr) ) ) ]
+				 [(3) (if rest
+					  (lambda (v) 
+					    (decorate
+					     (lambda (a1 a2 a3 . r)
+					       (##core#app body (cons (vector a1 a2 a3 r) v)))
+					     info h cntr) )
+					  (lambda (v)
+					    (decorate
+					     (lambda (a1 a2 a3)
+					       (##core#app body (cons (vector a1 a2 a3) v)))
+					     info h cntr) ) ) ]
+				 [(4) (if rest
+					  (lambda (v)
+					    (decorate
+					     (lambda (a1 a2 a3 a4 . r)
+					       (##core#app body (cons (vector a1 a2 a3 a4 r) v)))
+					     info h cntr) )
+					  (lambda (v)
+					    (decorate
+					     (lambda (a1 a2 a3 a4)
+					       (##core#app body (##sys#cons (##sys#vector a1 a2 a3 a4) v)))
+					     info h cntr) ) ) ]
+				 [else 
+				  (if rest
+				      (lambda (v)
+					(decorate
+					 (lambda as
+					   (##core#app
+					    body
+					    (##sys#cons (apply ##sys#vector (fudge-argument-list argc as)) v)) )
+					 info h cntr) )
+				      (lambda (v)
+					(decorate
+					 (lambda as 
+					   (let ([len (length as)])
+					     (if (not (fx= len argc))
+						 (##sys#error "bad argument count" argc len)
+						 (##core#app body (##sys#cons (apply ##sys#vector as) v)))))
+					 info h cntr) ) ) ] ) ) ) ) ) ]
 
-			     [(##core#compiletimetoo)
-			      (compile (cadr x) e #f tf cntr) ]
+		       ((let-syntax)
+			(##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)))
+			(compile
+			 `(begin ,@(cddr x))
+			 e #f tf cntr
+			 (append
+			  (map (lambda (b)
+				 (cons 
+				  se
+				  ((##sys#compile-to-closure (cadr b) '() se) '())))
+			       (cadr x) ) 
+			  se) ) )
+			       
+		       ((letrec-syntax)
+			(##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)))
+			(compile
+			 `(begin ,@(cddr x))
+			 e #f tf cntr
+			 (let* ((ms (map (lambda (b)
+					   (cons #f ((##sys#compile-to-closure (cadr b) '() se) '())))
+					 (cadr x) )
+				    se) 
+				(se2 (append ms se2)) )
+			   (for-each (cut set-car! <> se2) ms) ) ) )
+			       
+		       [(##core#loop-lambda)
+			(compile `(lambda ,@(cdr x)) e #f tf cntr se) ]
 
-			     [(##core#compiletimeonly ##core#callunit) 
-			      (compile '(##core#undefined) e #f tf cntr) ]
+		       [(##core#named-lambda)
+			(compile `(lambda ,@(cddr x)) e (cadr x) tf cntr se) ]
 
-			     [(##core#declare)
-			      (if (memq #:compiling ##sys#features)
-				  (for-each (lambda (d) (##compiler#process-declaration (cadr d))) (cdr x)) 
-				  (##sys#warn "declarations are ignored in interpreted code" x) )
-			      (compile '(##core#undefined) e #f tf cntr) ]
+		       [(##core#require-for-syntax)
+			(let ([ids (map (lambda (x) ((##sys#compile-to-closure x '() se) '())) (cdr x))])
+			  (apply ##sys#require ids)
+			  (let ([rs (##sys#lookup-runtime-requirements ids)])
+			    (compile
+			     (if (null? rs)
+				 '(##core#undefined)
+				 `(##sys#require ,@(map (lambda (x) `',x) rs)) )
+			     e #f tf cntr se) ) ) ]
 
-			     [(##core#define-inline ##core#define-constant)
-			      (compile `(set! ,(cadadr x) ,@(cddr x)) e #f tf cntr) ]
+		       [(##core#require-extension)
+			(compile
+			 (let loop ([ids (cdr x)])
+			   (if (null? ids)
+			       '(##core#undefined)
+			       (let-values ([(exp _) (##sys#do-the-right-thing (cadar ids) #f)])
+				 `(begin ,exp ,(loop (cdr ids))) ) ) )
+			 e #f tf cntr se) ]
+
+		       [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
+			(##core#app (##sys#compile-to-closure (cadr x) '() se #f) '())
+			(compile '(##core#undefined) e #f tf cntr se) ]
+
+		       [(##core#compiletimetoo)
+			(compile (cadr x) e #f tf cntr se) ]
+
+		       [(##core#compiletimeonly ##core#callunit) 
+			(compile '(##core#undefined) e #f tf cntr se) ]
+
+		       [(##core#declare)
+			(if (memq #:compiling ##sys#features)
+			    (for-each (lambda (d) (##compiler#process-declaration (cadr d))) (cdr x)) 
+			    (##sys#warn "declarations are ignored in interpreted code" x) )
+			(compile '(##core#undefined) e #f tf cntr se) ]
+
+		       [(##core#define-inline ##core#define-constant)
+			(compile `(set! ,(cadadr x) ,@(cddr x)) e #f tf cntr se) ]
                    
-			     [(##core#primitive ##core#inline ##core#inline_allocate ##core#foreign-lambda 
-						##core#define-foreign-variable 
-						##core#define-external-variable ##core#let-location
-						##core#foreign-primitive
-						##core#foreign-lambda* ##core#define-foreign-type)
-			      (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
+		       [(##core#primitive ##core#inline ##core#inline_allocate ##core#foreign-lambda 
+					  ##core#define-foreign-variable 
+					  ##core#define-external-variable ##core#let-location
+					  ##core#foreign-primitive
+					  ##core#foreign-lambda* ##core#define-foreign-type)
+			(##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
 
-			     [(##core#app)
-			      (compile-call (cdr x) e tf cntr) ]
+		       [(##core#app)
+			(compile-call (cdr x) e tf cntr se) ]
 
-			     [else
-			      (cond [(eq? head 'location)
-				     (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
+		       [else
+			(cond [(eq? head 'location)
+			       (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
 
-				    [else (compile-call x e tf cntr)] ) ] )
+			      [else (compile-call x e tf cntr se)] ) ] )
 
-			   (compile x2 e h tf cntr) ) ) ) ) ]
+		     (compile x2 e h tf cntr se) ) ) ]
 
 	      [else
 	       (emit-syntax-trace-info tf x cntr)
-	       (compile-call x e tf cntr)] ) )
+	       (compile-call x e tf cntr se)] ) )
 
       (define (fudge-argument-list n alst)
 	(if (null? alst) 
@@ -652,8 +672,8 @@
 		[(pair? lst) (loop (##sys#slot lst 1) (fx+ n 1))]
 		[else #f] ) ) )
 
-      (define (compile-call x e tf cntr)
-	(let* ([fn (compile (##sys#slot x 0) e #f tf cntr)]
+      (define (compile-call x e tf cntr se)
+	(let* ([fn (compile (##sys#slot x 0) e #f tf cntr se)]
 	       [args (##sys#slot x 1)]
 	       [argc (checked-length args)]
 	       [info x] )
@@ -662,34 +682,34 @@
 	    [(0) (lambda (v)
 		   (emit-trace-info tf info cntr)
 		   ((fn v)))]
-	    [(1) (let ([a1 (compile (##sys#slot args 0) e #f tf cntr)])
+	    [(1) (let ([a1 (compile (##sys#slot args 0) e #f tf cntr se)])
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v))) ) ]
-	    [(2) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)] )
+	    [(2) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr se)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr se)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v))) ) ]
-	    [(3) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)]
-			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr)] )
+	    [(3) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr se)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr se)]
+			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr se)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v) (##core#app a3 v))) ) ]
-	    [(4) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr)]
-			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr)]
-			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr)] 
-			[a4 (compile (##core#inline "C_u_i_list_ref" args 3) e #f tf cntr)] )
+	    [(4) (let* ([a1 (compile (##sys#slot args 0) e #f tf cntr se)]
+			[a2 (compile (##core#inline "C_u_i_list_ref" args 1) e #f tf cntr se)]
+			[a3 (compile (##core#inline "C_u_i_list_ref" args 2) e #f tf cntr se)] 
+			[a4 (compile (##core#inline "C_u_i_list_ref" args 3) e #f tf cntr se)] )
 		   (lambda (v)
 		     (emit-trace-info tf info cntr)
 		     ((##core#app fn v) (##core#app a1 v) (##core#app a2 v) (##core#app a3 v) (##core#app a4 v))) ) ]
-	    [else (let ([as (##sys#map (lambda (a) (compile a e #f tf cntr)) args)])
+	    [else (let ([as (##sys#map (lambda (a) (compile a e #f tf cntr se)) args)])
 		    (lambda (v)
 		      (emit-trace-info tf info cntr)
 		      (apply (##core#app fn v) (##sys#map (lambda (a) (##core#app a v)) as))) ) ] ) ) )
 
-      (compile exp env #f (fx> ##sys#eval-debug-level 0) (:optional cntr #f)) ) ) )
+      (compile exp env #f (fx> ##sys#eval-debug-level 0) cntr se) ) ) )
 
 (define ##sys#eval-handler 
   (make-parameter
@@ -1373,104 +1393,6 @@
       (display " major GCs\n") ) ) )
 
 
-;;; General syntax checking routine:
-
-(define ##sys#line-number-database #f)
-(define (##sys#syntax-error-hook . args) (apply ##sys#signal-hook #:syntax-error args))
-(define ##sys#syntax-error-culprit #f)
-
-(define syntax-error ##sys#syntax-error-hook)
-
-(define (get-line-number sexp)
-  (and ##sys#line-number-database
-       (pair? sexp)
-       (let ([head (##sys#slot sexp 0)])
-	 (and (symbol? head)
-	      (cond [(##sys#hash-table-ref ##sys#line-number-database head)
-		     => (lambda (pl)
-			  (let ([a (assq sexp pl)])
-			    (and a (##sys#slot a 1)) ) ) ]
-		    [else #f] ) ) ) ) )
-
-(define ##sys#check-syntax
-  (let ([string-append string-append]
-	[keyword? keyword?]
-	[get-line-number get-line-number]
-	[symbol->string symbol->string] )
-    (lambda (id exp pat . culprit)
-
-      (define (test x pred msg)
-	(unless (pred x) (err msg)) )
-
-      (define (err msg)
-	(let* ([sexp ##sys#syntax-error-culprit]
-	       [ln (get-line-number sexp)] )
-	  (##sys#syntax-error-hook
-	   (if ln 
-	       (string-append "(" (symbol->string id) ") in line " (number->string ln) " - " msg)
-	       (string-append "(" (symbol->string id) ") " msg) )
-	   exp) ) )
-
-      (define (lambda-list? x)
-	(or (##sys#extended-lambda-list? x)
-	    (let loop ((x x))
-	      (cond ((eq? x '()))
-		    ((not (##core#inline "C_blockp" x)) #f)
-		    ((identfier? x) (not (keyword? x)))
-		    ((##core#inline "C_pairp" x)
-		     (let ((s (##sys#slot x 0)))
-		       (if (or (not (##core#inline "C_blockp" s)) (not (##core#inline "C_symbolp" s)))
-			   #f
-			   (loop (##sys#slot x 1)) ) ) ) 
-		    (else #f) ) ) ) )
-
-      (define (proper-list? x)
-	(let loop ((x x))
-	  (cond ((eq? x '()))
-		((and (##core#inline "C_blockp" x) (##core#inline "C_pairp" x)) (loop (##sys#slot x 1)))
-		(else #f) ) ) )
-
-      (when (pair? culprit) (set! ##sys#syntax-error-culprit (car culprit)))
-      (let walk ((x exp) (p pat))
-	(cond ((and (##core#inline "C_blockp" p) (##core#inline "C_vectorp" p))
-	       (let* ((p2 (##sys#slot p 0))
-		      (vlen (##core#inline "C_block_size" p))
-		      (min (if (fx> vlen 1) 
-			       (##sys#slot p 1)
-			       0) )
-		      (max (cond ((eq? vlen 1) 1)
-				 ((fx> vlen 2) (##sys#slot p 2))
-				 (else 99999) ) ) )
-		 (do ((x x (##sys#slot x 1))
-		      (n 0 (fx+ n 1)) )
-		     ((eq? x '())
-		      (if (fx< n min)
-			  (err "not enough arguments") ) )
-		   (cond ((fx>= n max) 
-			  (err "too many arguments") )
-			 ((or (not (##core#inline "C_blockp" x)) (not (##core#inline "C_pairp" x)))
-			  (err "not a proper list") )
-			 (else (walk (##sys#slot x 0) p2) ) ) ) ) )
-	      ((not (##core#inline "C_blockp" p))
-	       (if (not (eq? p x)) (err "unexpected object")) )
-	      ((symbol? x)
-	       (case p
-		 ((_) #t)
-		 ((pair) (test x pair? "pair expected"))
-		 ((variable) (test x identifier? "identifier expected"))
-		 ((symbol) (test x symbol? "symbol expected"))
-		 ((list) (test x proper-list? "proper list expected"))
-		 ((number) (test x number? "number expected"))
-		 ((string) (test x string? "string expected"))
-		 ((lambda-list) (test x lambda-list? "lambda-list expected"))
-		 (else (test x (lambda (y) (eq? y p)) "missing keyword")) ) )
-	      ((or (not (##core#inline "C_blockp" x)) (not (##core#inline "C_pairp" x)))
-	       (err "incomplete form") )
-	      (else
-	       (walk (##sys#slot x 0) (##sys#slot p 0))
-	       (walk (##sys#slot x 1) (##sys#slot p 1)) ) ) ) ) ) )
-
-
 ;;; SRFI-0 support code:
 
 (set! ##sys#features
@@ -1628,50 +1550,7 @@
 			   (if ctor
 			       (apply ctor (##sys#slot exp 1))
 			       (##sys#read-error port "undefined sharp-comma constructor" spec) ) ) ) ) ) ) )
-	    ((char=? char #\{)
-	     (let ((lst (read port)))
-	       (make-identifier (car lst) (cdr lst))))
 	    (else (old char port)) ) ) ) )
-
-
-;;; Handy to have by default:
-
-(##sys#register-macro
- 'define-macro
- (lambda (head . body)
-   (define (expand name val)
-     (let ((m2 (and (pair? val) (eq? 'lambda (car val))
-		    (pair? (cdr val)) (symbol? (cadr val))) ))
-       `(,(if ##sys#enable-runtime-macros '##core#elaborationtimetoo '##core#elaborationtimeonly)
-	 ,(cond (m2 `(##sys#register-macro-2 ',name (lambda (,(cadr val)) ,@(cddr val))))
-		((symbol? val) `(##sys#copy-macro ',val ',name))
-		(else `(##sys#register-macro ',name ,val) ) ) ) ) )
-   (cond ((symbol? head)
-	  (##sys#check-syntax 'define-macro body '(_))
-	  (expand head (car body)) )
-	 (else
-	  (##sys#check-syntax 'define-macro head '(symbol . lambda-list))
-	  (##sys#check-syntax 'define-macro body '#(_ 1)) 
-	  (expand (car head) `(lambda ,(cdr head) ,@body))))))
-
-(##sys#register-macro
- 'require-extension
- (lambda ids
-   (##sys#check-syntax 'require-extension ids '#(_ 0))
-   `(##core#require-extension ,@(map (lambda (x) (list 'quote x)) ids) ) ) )
-
-
-;;; To catch common errors:
-
-(##sys#register-macro-2
- 'define-syntax
- (lambda (form)
-   (##sys#syntax-error-hook 'define-syntax "highlevel macros are not supported")))
-
-(##sys#register-macro-2
- 'module
- (lambda (form)
-   (##sys#syntax-error-hook 'module "modules are not supported")))
 
 
 ;;; Simple invocation API:
