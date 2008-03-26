@@ -26,6 +26,8 @@
 
 (declare
   (unit expand)
+  (disable-interrupts)
+  (fixnum)
   (hide match-expression
 	macro-alias
 	lookup) )
@@ -34,7 +36,8 @@
 ;;; Syntactic environments
 
 (define (lookup id se)
-  (cond ((get id '##sys#macro-alias))
+  (cond ((get id '##sys#macro-alias) =>
+	 (lambda (a) (or (lookup a se) a)))
 	((assq id se) => cdr)
 	((assq id ##sys#macro-environment) => cdr)
 	(else #f)))
@@ -43,6 +46,18 @@
   (let ((alias (gensym var)))
     (put! alias '##sys#macro-alias var)
     alias) )
+
+(define (##sys#strip-syntax exp)
+  (let walk ((x exp))
+    (cond ((symbol? x) 
+	   (or (get x '##sys#macro-alias)
+	       x) )
+	  ((pair? x)
+	   (cons (walk (##sys#slot x 0))
+		 (walk (##sys#slot x 1))))
+	  ((vector? x)
+	   (list->vector (map walk (vector->list x))))
+	  (else x))))
 
 
 ;;; Macro handling
@@ -73,7 +88,7 @@
     (apply ##sys#register-macro-0 new def) ) )
 
 (define (macro? sym #!optional (senv '()))
-  (##sys#check-identifier sym 'macro?)
+  (##sys#check-symbol sym 'macro?)
   (##sys#check-pair? senv 'macro?)
   (or (lookup sym senv)
       (and (lookup sym ##sys#macro-environment) #t) ) )
@@ -87,7 +102,7 @@
 	    (else (cons (car me) (loop (cdr me))))))))
 
 (define (undefine-macro! name)
-  (##sys#check-identifier name 'undefine-macro!)
+  (##sys#check-symbol name 'undefine-macro!)
   (##sys#unregister-macro name) )
 
 
@@ -115,18 +130,22 @@
 			      (cons 
 			       '(exn . message)
 			       (cons (string-append
-				      "during expansion of (" (##sys#slot name 1) " ...) - "
+				      "during expansion of ("
+				      (##sys#slot name 1) 
+				      " ...) - "
 				      (car r) )
 				     (cdr r) ) )
 			      (copy r) ) ) ) ) )
 		 ex) )
 	  (handler exp se) ) )				   
       (define (expand head exp mdef)
+	(pp `(EXPAND: ,head ,exp ,mdef)) ;***
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
-	       (values (call-handler head (cadr mdef) exp (car mdef))
-		       #t))
+	       (values 
+		(call-handler head (cadr mdef) exp (car mdef))
+		#t))
 	      (else (values exp #f)) ) )
       (if (pair? exp)
 	  (let ((head (##sys#slot exp 0))
@@ -157,7 +176,7 @@
 				    (##sys#slot dest 1)
 				    (##sys#slot body 1) ) 
 			    #t) ) ]
-			[else (expand head2 exp head2)] ) )
+			[else (expand head exp head2)] ) )
 		(values exp #f) ) )
 	  (values exp #f) ) ) ) )
 
@@ -301,17 +320,19 @@
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body #!optional me container)
+    (lambda (body #!optional se container)
       (define (fini vars vals mvars mvals body)
 	(if (and (null? vars) (null? mvars))
 	    (let loop ([body2 body] [exps '()])
 	      (if (not (pair? body2)) 
-		  `(,(macro-alias 'begin)
-		    ,@body) ; no more defines, otherwise we would have called `expand'
+		  (cons 
+		   (macro-alias 'begin)
+		   body) ; no more defines, otherwise we would have called `expand'
 		  (let ([x (##sys#slot body2 0)])
 		    (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
-			`(,(macro-alias 'begin)
-			  . ,(##sys#append (reverse exps) (list (expand body2))))
+			(cons
+			 (macro-alias 'begin)
+			 (##sys#append (reverse exps) (list (expand body2))))
 			(loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
 	    (let ([vars (reverse vars)]
 		  (lam (macro-alias 'lambda)))
@@ -319,15 +340,15 @@
 		,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
 			    (apply ##sys#append vars mvars) )
 		,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
-		 ,@(map (lambda (vs x)
-			  (let ([tmps (##sys#map gensym vs)])
-			    `(##sys#call-with-values
-			      (,lam () ,x)
-			      (,lam ,tmps 
-			       ,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
-			(reverse mvars)
-			(reverse mvals) )
-		 ,@body) ) ) )
+		,@(map (lambda (vs x)
+			 (let ([tmps (##sys#map gensym vs)])
+			   `(##sys#call-with-values
+			     (,lam () ,x)
+			     (,lam ,tmps 
+				   ,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
+		       (reverse mvars)
+		       (reverse mvals) )
+		,@body) ) ) )
       (define (fini/syntax vars vals mvars mvals body)
 	(fini
 	 vars vals mvars mvals
@@ -347,7 +368,7 @@
 	      (fini vars vals mvars mvals body)
 	      (let* ([x (##sys#slot body 0)]
 		     [rest (##sys#slot body 1)] 
-		     [head (and (pair? x) (lookup (car x) me))])
+		     [head (and (pair? x) (lookup (car x) se))])
 		(cond [(not (symbol? head)) (fini vars vals mvars mvals body)]
 		      [(eq? 'define head)
 		       (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f se)
@@ -381,7 +402,7 @@
 		       (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
 		       (loop (##sys#append (##sys#slot x 1) rest) vars vals mvars mvals) ]
 		      [else
-		       (let ([x2 (##sys#macroexpand-0 x me)])
+		       (let ([x2 (##sys#macroexpand-0 x se)])
 			 (if (eq? x x2)
 			     (fini vars vals mvars mvals body)
 			     (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
@@ -511,7 +532,15 @@
 		 ((number) (test x number? "number expected"))
 		 ((string) (test x string? "string expected"))
 		 ((lambda-list) (test x lambda-list? "lambda-list expected"))
-		 (else (test x (lambda (y) (eq? y (or (lookup p se) p))) "missing keyword")) ) )
+		 (else (test
+			x
+			(lambda (y)
+			  (pp `(TEST: ,y ;***
+				      ,(lookup y se) 
+				      ,(symbol-plist y)
+				      ,p))
+			  (eq? (or (lookup y se) y) p))
+			"missing keyword")) ) )
 	      ((not (pair? p))
 	       (err "incomplete form") )
 	      (else

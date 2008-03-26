@@ -247,7 +247,8 @@
     (lambda (exp env se #!optional cntr)
 
       (define (rename var se)
-	(cond ((get var '##sys#macro-alias))
+	(cond ((get var '##sys#macro-alias) =>
+	       (lambda (a) (rename a se)))
 	      ((or (assq var se) 
 		   (assq var ##sys#macro-environment) ) => 
 		   (lambda (a) 
@@ -328,7 +329,7 @@
 
 		       [(quote)
 			(##sys#check-syntax 'quote x '(quote _) #f se)
-			(let* ((c (cadr x)))
+			(let* ((c (##sys#strip-syntax (cadr x))))
 			  (case c
 			    [(-1) (lambda v -1)]
 			    [(0) (lambda v 0)]

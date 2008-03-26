@@ -448,7 +448,8 @@
 (define (canonicalize-expression exp)
 
   (define (lookup id se)
-    (cond ((get id '##sys#macro-alias))
+    (cond ((get id '##sys#macro-alias) =>
+	   (lambda (a) (or (lookup a se) a)))
 	  ((assq id se) => cdr)
 	  ((assq id ##sys#macro-environment) => cdr)
 	  (else #f)))
@@ -470,7 +471,7 @@
     (if (and (list? x) 
 	     (= 2 (length x))
 	     (symbol? (car x))
-	     (eq? 'quote (lookup (car x) se)))
+	     (eq? 'quote (or (lookup (car x) se) (car x))))
 	(cadr x)
 	x) )
 
@@ -512,7 +513,7 @@
 	   (let* ([head (car x)]
 		  [rest (cdr x)]
 		  [ln (get-line x)]
-		  [name (lookup head se)] )
+		  [name (or (lookup head se) name)] )
 	     (emit-syntax-trace-info x #f)
 	     (unless (proper-list? x)
 	       (if ln
@@ -540,7 +541,7 @@
 
 			((quote)
 			 (##sys#check-syntax 'quote x '(quote _) #f se)
-			 x)
+			 `(quote ,(##sys#strip-syntax (cadr x))))
 
 			((##core#check)
 			 (if unsafe
@@ -633,16 +634,16 @@
 				     (l `(lambda ,llist2 ,body)) )
 				(set-real-names! aliases vars)
 				(cond ((or (not dest) 
-					   (not (eq? dest (lookup dest se)))) ; global?
+					   (not (lookup dest se))) ; global?
 				       l)
 				      ((and emit-profile (eq? 'lambda name))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (match body0
 					 (((? (lambda (s)
-						(eq? 'begin (lookup s se))) )
+						(eq? 'begin (or (lookup s se) s))))
 					   (or (? string? doc)
-					       ((? (lambda (s) (eq? 'quote (lookup s se))))
+					       ((? (lambda (s) (eq? 'quote (or (lookup s se) s))))
 						doc)) _ . more)
 					  (process-lambda-documentation
 					   dest doc l) )
@@ -666,7 +667,7 @@
 			((set! ##core#set!) 
 			 (##sys#check-syntax 'set! x '(_ variable _) #f se)
 			 (let* ([var0 (cadr x)]
-				[var (lookup var0 se)]
+				[var (or (lookup var0 se) var0)]
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
 			   (cond ((eq? var var0) ; global?
@@ -873,7 +874,9 @@
 			((##core#declare)
 			 (walk
 			  `(,(macro-alias 'begin)
-			     ,@(map (lambda (d) (process-declaration (second d) se))
+			     ,@(map (lambda (d)
+				      (process-declaration 
+				       (##sys#strip-syntax (second d))))
 				    (cdr x) ) )
 			  '() #f) )
 	     
@@ -964,7 +967,7 @@
 				  (##sys#check-syntax 'location x '(location _) #f se)
 				  (let ([sym (cadr x)])
 				    (if (symbol? sym)
-					(cond [(assq (lookup sym ae) location-pointer-map)
+					(cond [(assq (or (lookup sym se) sym) location-pointer-map)
 					       => (lambda (a)
 						    (walk
 						     `(##sys#make-locative ,(second a) 0 #f 'location)
@@ -1033,15 +1036,7 @@
    '() #f) )
 
 
-(define (process-declaration spec se)
-  (define (lookup id)
-    (cond ((get id '##sys#macro-alias))
-	  ((assq id se) =>
-	   (lambda (a)
-	     (if (symbol? (cdr a)) 
-		 (cdr a)
-		 id)))
-	  (else id)))
+(define (process-declaration spec)
   (define (check-decl spec minlen . maxlen)
     (let ([n (length (cdr spec))])
       (if (or (< n minlen) (> n (optional maxlen 99999)))
@@ -1050,9 +1045,9 @@
    (lambda (return)
      (unless (pair? spec)
        (syntax-error "invalid declaration specification" spec) )
-     (case (lookup (car spec))
+     (case (car spec)
        ((uses)
-	(let ((us (map lookup (cdr spec))))
+	(let ((us (cdr spec)))
 	  (apply register-feature! us)
 	  (when use-import-table
 	    (for-each lookup-exports-file us) )
@@ -1062,7 +1057,7 @@
 	      (set! used-units (append used-units units)) ) ) ) )
        ((unit)
 	(check-decl spec 1 1)
-	(let* ([u (lookup (cadr spec))]
+	(let* ([u (cadr spec)]
 	       [un (string->c-identifier (stringify u))] )
 	  (hash-table-set! file-requirements 'unit u)
 	  (when (and unit-name (not (string=? unit-name un)))
@@ -1071,22 +1066,22 @@
        ((standard-bindings)
 	(if (null? (cdr spec))
 	    (set! standard-bindings default-standard-bindings)
-	    (set! standard-bindings (append (map lookup (cdr spec)) standard-bindings)) ) )
+	    (set! standard-bindings (append (cdr spec) standard-bindings)) ) )
        ((extended-bindings)
 	(if (null? (cdr spec))
 	    (set! extended-bindings default-extended-bindings)
-	    (set! extended-bindings (append (map lookup (cdr spec)) extended-bindings)) ) )
+	    (set! extended-bindings (append (cdr spec) extended-bindings)) ) )
        ((usual-integrations)      
 	(cond [(null? (cdr spec))
 	       (set! standard-bindings default-standard-bindings)
 	       (set! extended-bindings default-extended-bindings) ]
 	      [else
-	       (let ([syms (map lookup (cdr spec))])
+	       (let ([syms (cdr spec)])
 		 (set! standard-bindings (lset-intersection eq? syms default-standard-bindings))
 		 (set! extended-bindings (lset-intersection eq? syms default-extended-bindings)) ) ] ) )
        ((number-type)
 	(check-decl spec 1 1)
-	(set! number-type (lookup (cadr spec))) )
+	(set! number-type (cadr spec)))
        ((fixnum fixnum-arithmetic) (set! number-type 'fixnum))
        ((generic) (set! number-type 'generic))
        ((unsafe)
@@ -1100,9 +1095,9 @@
        ((disable-interrupts) (set! insert-timer-checks #f))
        ((disable-warning)
 	(set! disabled-warnings
-	  (append (map lookup (cdr spec)) disabled-warnings)))
+	  (append (cdr spec) disabled-warnings)))
        ((always-bound) 
-	(set! always-bound (append (map lookup (cdr spec)) always-bound)))
+	(set! always-bound (append (cdr spec) always-bound)))
        ((safe-globals) (set! safe-globals-flag #t))
        ((no-procedure-checks-for-usual-bindings)
 	(set! always-bound-to-procedure
@@ -1110,7 +1105,7 @@
 	(set! always-bound
 	  (append default-standard-bindings default-extended-bindings always-bound)) )
        ((bound-to-procedure)
-	(let ((vars (map lookup (cdr spec))))
+	(let ((vars (cdr spec)))
 	  (set! always-bound-to-procedure (append vars always-bound-to-procedure))
 	  (set! always-bound (append vars always-bound)) ) )
        ((foreign-declare)
@@ -1134,7 +1129,7 @@
        ((separate) (set! block-compilation #f))
        ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
        ((unused)
-	(set! unused-variables (append (map lookup (cdr spec)) unused-variables)))
+	(set! unused-variables (append (cdr spec) unused-variables)))
        ((not)
 	(check-decl spec 1)
 	(case (second spec)
@@ -1143,29 +1138,29 @@
 	       (set! standard-bindings '())
 	       (set! standard-bindings
 		 (lset-difference eq? default-standard-bindings
-				  (map lookup (cddr spec)))) ) ]
+				  (cddr spec)))) ]
 	  [(extended-bindings)
 	   (if (null? (cddr spec))
 	       (set! extended-bindings '())
 	       (set! extended-bindings 
 		 (lset-difference eq? default-extended-bindings
-				  (map lookup (cddr spec))) )) ]
+				  (cddr spec)) )) ]
 	  [(inline)
 	   (if (null? (cddr spec))
 	       (set! inline-max-size -1)
 	       (set! not-inline-list (lset-union eq? not-inline-list
-						 (map lookup (cddr spec)))) ) ]
+						 (cddr spec))) ) ]
 	  [(usual-integrations)      
 	   (cond [(null? (cddr spec))
 		  (set! standard-bindings '())
 		  (set! extended-bindings '()) ]
 		 [else
-		  (let ([syms (map lookup (cddr spec))])
+		  (let ([syms (cddr spec)])
 		    (set! standard-bindings (lset-difference eq? default-standard-bindings syms))
 		    (set! extended-bindings (lset-difference eq? default-extended-bindings syms)) ) ] ) ]
 	  [else
 	   (check-decl spec 1 1)
-	   (let ((id (lookup (cadr spec))))
+	   (let ((id (cadr spec)))
 	     (case id
 	       [(interrupts-enabled) (set! insert-timer-checks #f)]
 	       [(safe) 
@@ -1174,12 +1169,12 @@
 	       [else (compiler-warning 'syntax "illegal declaration specifier `~s'" id)]))]))
        ((run-time-macros) (set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 
-	(let ([syms (map lookup (cdr spec))])
+	(let ([syms (cdr spec)])
 	  (when export-list 
 	    (set! export-list (lset-difference eq? export-list syms)) )
 	  (set! block-globals (lset-union eq? syms block-globals)) ) )
        ((export) 
-	(let ((syms (map lookup (cdr spec))))
+	(let ((syms (cdr spec)))
 	  (set! block-globals (lset-difference eq? block-globals syms))
 	  (set! export-list (lset-union eq? syms (or export-list '())))))
        ((emit-exports)
@@ -1194,7 +1189,7 @@
 	(if (null? (cdr spec))
 	    (unless (> inline-max-size -1)
 	      (set! inline-max-size default-inline-max-size) )
-	    (set! inline-list (lset-union eq? inline-list (map lookup (cdr spec)))) ) )
+	    (set! inline-list (lset-union eq? inline-list (cdr spec)))) ) 
        ((inline-limit)
 	(check-decl spec 1 1)
 	(set! inline-max-size
@@ -1203,7 +1198,7 @@
 		n
 		(quit "invalid argument to `inline-limit' declaration" spec) ) ) ) )
        ((constant)
-	(let ((syms (map lookup (cdr spec))))
+	(let ((syms (cdr spec)))
 	  (if (every symbol? syms)
 	      (set! constant-declarations (append syms constant-declarations))
 	      (quit "invalid arguments to `constant' declaration: ~S" spec)) ) )
@@ -1218,7 +1213,7 @@
 	  (set! use-import-table #t)
 	  (for-each 
 	   (cut ##sys#hash-table-set! import-table <> "<here>") 
-	   (map lookup syms))
+	   syms)
 	  (for-each lookup-exports-file strs) ) )
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
