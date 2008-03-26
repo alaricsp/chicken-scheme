@@ -484,13 +484,12 @@
       (define (lambda-list? x)
 	(or (##sys#extended-lambda-list? x)
 	    (let loop ((x x))
-	      (cond ((eq? x '()))
+	      (cond ((null? x))
 		    ((symbol? x) (not (keyword? x)))
 		    ((pair? x)
 		     (let ((s (##sys#slot x 0)))
-		       (if (not (symbol? x))
-			   #f
-			   (loop (##sys#slot x 1)) ) ) ) 
+		       (and (symbol? s)
+			    (loop (##sys#slot x 1)) ) ) )
 		    (else #f) ) ) ) )
 
       (define (proper-list? x)
@@ -535,10 +534,6 @@
 		 (else (test
 			x
 			(lambda (y)
-			  (pp `(TEST: ,y ;***
-				      ,(lookup y se) 
-				      ,(symbol-plist y)
-				      ,p))
 			  (eq? (or (lookup y se) y) p))
 			"missing keyword")) ) )
 	      ((not (pair? p))

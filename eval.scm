@@ -471,8 +471,8 @@
 			   llist
 			   (lambda (vars argc rest)
 			     (let* ((aliases (map gensym vars))
-				    (se2 (map cons vars aliases))
-				    (e2 (cons vars e))
+				    (se2 (append (map cons vars aliases) se))
+				    (e2 (cons aliases e))
 				    (body 
 				     (##sys#compile-to-closure
 				      (##sys#canonicalize-body body se2 (or h cntr))
