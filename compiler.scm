@@ -450,6 +450,7 @@
   (define (lookup id se)
     (cond ((get id '##sys#macro-alias))
 	  ((assq id se) => cdr)
+	  ((assq id ##sys#macro-environment) => cdr)
 	  (else #f)))
 
   (define (macro-alias var)
@@ -529,7 +530,7 @@
 		      (case name
 
 			((if)
-			 (##sys#check-syntax 'if x '(if _ _ . #(_)))
+			 (##sys#check-syntax 'if x '(if _ _ . #(_)) #f se)
 			 `(if
 			   ,(walk (cadr x) se #f)
 			   ,(walk (caddr x) se #f)
@@ -538,7 +539,7 @@
 				(walk (cadddr x) se #f) ) ) )
 
 			((quote)
-			 (##sys#check-syntax 'quote x '(quote _))
+			 (##sys#check-syntax 'quote x '(quote _) #f se)
 			 x)
 
 			((##core#check)
@@ -595,7 +596,7 @@
 			  se dest) )
 
 			((let)
-			 (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)))
+			 (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f se)
 			 (let* ([bindings (cadr x)]
 				[vars (unzip1 bindings)]
 				[aliases (map gensym vars)] 
@@ -609,7 +610,7 @@
 				    se2 dest) ) ) )
 
 			((lambda ##core#internal-lambda)
-			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)))
+			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)
 			 (let ([llist (cadr x)]
 			       [obody (cddr x)] )
 			   (when (##sys#extended-lambda-list? llist)
@@ -663,7 +664,7 @@
 			   `(lambda ,aliases ,body) ) )
 
 			((set! ##core#set!) 
-			 (##sys#check-syntax 'set! x '(_ variable _))
+			 (##sys#check-syntax 'set! x '(_ variable _) #f se)
 			 (let* ([var0 (cadr x)]
 				[var (lookup var0 se)]
 				[ln (get-line x)]
@@ -731,7 +732,7 @@
 			 '(##core#undefined) )
 
 			((begin) 
-			 (##sys#check-syntax 'begin x '(begin . #(_ 0)))
+			 (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
 			 (if (pair? (cdr x))
 			     (canonicalize-begin-body
 			      (let fold ([xs (cdr x)])
@@ -960,7 +961,7 @@
 				    x2) ) ] )
 
 			   (cond [(eq? 'location name)
-				  (##sys#check-syntax 'location x '(location _))
+				  (##sys#check-syntax 'location x '(location _) #f se)
 				  (let ([sym (cadr x)])
 				    (if (symbol? sym)
 					(cond [(assq (lookup sym ae) location-pointer-map)
@@ -999,7 +1000,7 @@
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
 	     (emit-syntax-trace-info x #f)
-	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)))
+	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)) #f se)
 	     (let ([llist (cadr lexp)])
 	       (if (and (proper-list? llist) (= (length llist) (length args)))
 		   (walk `(,(macro-alias 'let)

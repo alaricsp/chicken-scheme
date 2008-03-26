@@ -248,10 +248,11 @@
 
       (define (rename var se)
 	(cond ((get var '##sys#macro-alias))
-	      ((assq var se) => 
-	       (lambda (a) 
-		 (let ((x (cdr a)))
-		   (and (symbol? x) x))))
+	      ((or (assq var se) 
+		   (assq var ##sys#macro-environment) ) => 
+		   (lambda (a) 
+		     (let ((x (cdr a)))
+		       (and (symbol? x) x))))
 	      (else var)))
 
       (define (lookup var e se)
