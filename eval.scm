@@ -327,7 +327,7 @@
 		     (case head
 
 		       [(quote)
-			(##sys#check-syntax 'quote x '(quote _) #f)
+			(##sys#check-syntax 'quote x '(quote _) #f se)
 			(let* ((c (cadr x)))
 			  (case c
 			    [(-1) (lambda v -1)]
@@ -355,7 +355,7 @@
 		       [(##core#undefined) (lambda (v) (##core#undefined))]
 
 		       [(if)
-			(##sys#check-syntax 'if x '(if _ _ . #(_)) #f)
+			(##sys#check-syntax 'if x '(if _ _ . #(_)) #f se)
 			(let* ([test (compile (cadr x) e #f tf cntr se)]
 			       [cns (compile (caddr x) e #f tf cntr se)]
 			       [alt (if (pair? (cdddr x))
@@ -364,7 +364,7 @@
 			  (lambda (v) (if (##core#app test v) (##core#app cns v) (##core#app alt v))) ) ]
 
 		       [(begin)
-			(##sys#check-syntax 'begin x '(begin . #(_ 0)) #f)
+			(##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
 			(let* ([body (##sys#slot x 1)]
 			       [len (length body)] )
 			  (case len
@@ -380,7 +380,7 @@
 			       (lambda (v) (##core#app x1 v) (##core#app x2 v) (##core#app x3 v)) ) ] ) ) ]
 
 		       [(set! ##core#set!)
-			(##sys#check-syntax 'set! x '(_ variable _) #f)
+			(##sys#check-syntax 'set! x '(_ variable _) #f se)
 			(let ((var (cadr x)))
 			  (receive (i j) (lookup var e se)
 			    (let ((val (compile (caddr x) e var tf cntr se)))
@@ -404,7 +404,7 @@
 					(##core#inline "C_u_i_list_ref" v i) j (##core#app val v)) ) ] ) ) ) ) ]
 
 		       [(let)
-			(##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f)
+			(##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f se)
 			(let* ([bindings (cadr x)]
 			       [n (length bindings)] 
 			       [vars (map (lambda (x) (car x)) bindings)] 
@@ -456,7 +456,7 @@
 				   (##core#app body (cons v2 v)) ) ) ) ] ) ) ]
 
 		       [(lambda)
-			(##sys#check-syntax 'lambda x '(lambda lambda-list . #(_ 1)) #f)
+			(##sys#check-syntax 'lambda x '(lambda lambda-list . #(_ 1)) #f se)
 			(let* ([llist (cadr x)]
 			       [body (cddr x)] 
 			       [info (cons (or h '?) llist)] )
@@ -552,7 +552,7 @@
 					 info h cntr) ) ) ] ) ) ) ) ) ]
 
 		       ((let-syntax)
-			(##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)))
+			(##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)) #f se)
 			(compile
 			 `(,(rename 'begin se) ,@(cddr x))
 			 e #f tf cntr
@@ -565,7 +565,7 @@
 			  se) ) )
 			       
 		       ((letrec-syntax)
-			(##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)))
+			(##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)) #f se)
 			(compile
 			 `(,(rename 'begin se) ,@(cddr x))
 			 e #f tf cntr
