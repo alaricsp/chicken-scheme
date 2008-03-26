@@ -447,9 +447,15 @@
 
 (define (canonicalize-expression exp)
 
-  (define (resolve v ae)
-    (cond [(assq v ae) => cdr]
-	  [else v] ) )
+  (define (lookup id se)
+    (cond ((get id '##sys#macro-alias))
+	  ((assq id se) => cdr)
+	  (else #f)))
+
+  (define (macro-alias var)
+    (let ((alias (gensym var)))
+      (put! alias '##sys#macro-alias var)
+      alias) )
 
   (define (set-real-names! as ns)
     (for-each (lambda (a n) (set-real-name! a n)) as ns) )
@@ -459,17 +465,19 @@
       (write x out)
       (get-output-string out) ) )
 
-  (define unquotify 
-    (match-lambda 
-      [('quote x) x]
-      [x x] ) )
+  (define (unquotify x se)
+    (if (and (list? x) 
+	     (= 2 (length x))
+	     (symbol? (car x))
+	     (eq? 'quote (lookup (car x) se)))
+	(cadr x)
+	x) )
 
-  (define (resolve-atom x ae me dest)
+  (define (resolve-atom x se dest)
     (cond [(and constants-used (##sys#hash-table-ref constant-table x)) 
-	   => (lambda (val) (walk (car val) ae me dest)) ]
+	   => (lambda (val) (walk (car val) se dest)) ]
 	  [(and inline-table-used (##sys#hash-table-ref inline-table x))
-	   => (lambda (val)
-		(walk val ae me dest)) ]
+	   => (lambda (val) (walk val se dest)) ]
 	  [(assq x foreign-variables)
 	   => (lambda (fv) 
 		(let* ([t (second fv)]
@@ -486,48 +494,48 @@
 		  (foreign-type-convert-result
 		   (finish-foreign-result ft body)
 		   t) ) ) ]
-	  [else #f] ) )
+	  [else 
+	   (let ((x2 (lookup x se)))
+	     (if (symbol? x2)
+		 x2
+		 x))]))
 
-  (define (walk x ae me dest)
+  (define (walk x se dest)
     (cond ((symbol? x)
-	   (cond ((assq x ae) => 
-		  (lambda (a)
-		    (let ((alias (cdr a)))
-		      (or (resolve-atom alias ae me dest)
-			  alias) ) ) )
-		 ((resolve-atom x ae me dest))
-		 (else (##sys#alias-global-hook x))) )
-	  ((and (not-pair? x) (constant? x)) `(quote ,x))
-	  ((not-pair? x) (syntax-error "illegal atomic form" x))
+	   (##sys#alias-global-hook (resolve-atom x se dest)))
+	  ((not-pair? x)
+	   (if (constant? x)
+	       `(,(macro-alias 'quote) ,x)
+	       (syntax-error "illegal atomic form" x)))
 	  ((symbol? (car x))
 	   (let* ([head (car x)]
 		  [rest (cdr x)]
 		  [ln (get-line x)]
-		  [name (resolve head ae)] )
+		  [name (lookup head se)] )
 	     (emit-syntax-trace-info x #f)
 	     (unless (proper-list? x)
 	       (if ln
 		   (syntax-error (sprintf "(in line ~s) - malformed expression" ln) x)
 		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
-	     (let* ([x2 (cons name rest)]
-		    [xexpanded (##sys#macroexpand-1-local x2 me)] )
+	     (let ((xexpanded (##sys#macroexpand-0 x se)))
 	       (cond [(not (eq? x2 xexpanded))
 		      (when ln (update-line-number-database! xexpanded ln))
-		      (walk xexpanded ae me dest) ]
+		      (walk xexpanded se dest) ]
 		     [(and inline-table-used (##sys#hash-table-ref inline-table name))
 		      => (lambda (val)
-			   (walk (cons val (cdr x)) ae me dest)) ]
+			   (walk (cons val (cdr x)) se dest)) ]
 		     [else
 		      (case name
 
 			((if)
 			 (##sys#check-syntax 'if x '(if _ _ . #(_)))
-			 `(if ,(walk (cadr x) ae me #f)
-			      ,(walk (caddr x) ae me #f)
-			      ,(if (null? (cdddr x)) 
-				   '(##core#undefined)
-				   (walk (cadddr x) ae me #f) ) ) )
+			 `(if
+			   ,(walk (cadr x) se #f)
+			   ,(walk (caddr x) se #f)
+			   ,(if (null? (cdddr x)) 
+				'(##core#undefined)
+				(walk (cadddr x) se #f) ) ) )
 
 			((quote)
 			 (##sys#check-syntax 'quote x '(quote _))
@@ -536,7 +544,7 @@
 			((##core#check)
 			 (if unsafe
 			     ''#t
-			     (walk (cadr x) ae me dest) ) )
+			     (walk (cadr x) se dest) ) )
 
 			((##core#immutable)
 			 (let ((c (cadadr x)))
@@ -584,21 +592,21 @@
 						  #t)
 					  (lookup-exports-file id) ) )
 				    `(begin ,exp ,(loop (cdr ids))) ) ) ) )
-			  ae me dest) )
+			  se dest) )
 
 			((let)
 			 (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)))
 			 (let* ([bindings (cadr x)]
 				[vars (unzip1 bindings)]
 				[aliases (map gensym vars)] 
-				(ae2 (append (map cons vars aliases) ae)) )
+				(se2 (append (map cons vars aliases) se)) )
 			   (set-real-names! aliases vars)
-			   `(let ,(map (lambda (alias b)
-					 (list alias (walk (cadr b) ae me (car b))) )
-				       aliases bindings)
-			      ,(walk (##sys#canonicalize-body (cddr x) (cut assq <> ae2) me dest)
-				     ae2
-				     me dest) ) ) )
+			   `(let
+			     ,(map (lambda (alias b)
+				     (list alias (walk (cadr b) se (car b))) )
+				   aliases bindings)
+			     ,(walk (##sys#canonicalize-body (cddr x) se2 dest)
+				    se2 dest) ) ) )
 
 			((lambda ##core#internal-lambda)
 			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)))
@@ -614,9 +622,9 @@
 			    llist
 			    (lambda (vars argc rest)
 			      (let* ((aliases (map gensym vars))
-				     (ae2 (append (map cons vars aliases) ae))
-				     (body0 (##sys#canonicalize-body obody (cut assq <> ae2) me dest))
-				     (body (walk body0 ae2 me #f))
+				     (se2 (append (map cons vars aliases) se))
+				     (body0 (##sys#canonicalize-body obody se2 dest))
+				     (body (walk body0 se2 #f))
 				     (llist2 
 				      (build-lambda-list
 				       aliases argc
@@ -624,54 +632,60 @@
 				     (l `(lambda ,llist2 ,body)) )
 				(set-real-names! aliases vars)
 				(cond ((or (not dest) 
-					   (not (eq? dest (resolve dest ae)))) ; global?
+					   (not (eq? dest (lookup dest se)))) ; global?
 				       l)
 				      ((and emit-profile (eq? 'lambda name))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (match body0
-					 (('begin (or (? string? doc) ('quote doc)) _ . more)
+					 (((? (lambda (s)
+						(eq? 'begin (lookup s se))) )
+					   (or (? string? doc)
+					       ((? (lambda (s) (eq? 'quote (lookup s se))))
+						doc)) _ . more)
 					  (process-lambda-documentation
 					   dest doc l) )
 					 (_ l) ) ) ) ) ) ) ) )
 
 			((##core#named-lambda)
-			 (walk `(lambda ,@(cddr x)) ae me (cadr x)) )
+			 (walk `(lambda ,@(cddr x)) se (cadr x)) )
 
 			((##core#loop-lambda)
 			 (let* ([vars (cadr x)]
 				[obody (cddr x)]
 				[aliases (map gensym vars)]
-				(ae2 (append (map cons vars aliases) ae))
+				(se2 (append (map cons vars aliases) se))
 				[body 
 				 (walk 
-				  (##sys#canonicalize-body obody (cut assq <> ae2) me dest)
-				  ae2
-				  me #f) ] )
+				  (##sys#canonicalize-body obody se2 dest)
+				  se2 #f) ] )
 			   (set-real-names! aliases vars)
 			   `(lambda ,aliases ,body) ) )
 
 			((set! ##core#set!) 
 			 (##sys#check-syntax 'set! x '(_ variable _))
 			 (let* ([var0 (cadr x)]
-				[var (resolve var0 ae)]
+				[var (lookup var0 se)]
 				[ln (get-line x)]
-				[val (walk (caddr x) ae me var0)] )
-			   (when (eq? var var0) ; global?
-			     (set! var (##sys#alias-global-hook var))
-			     (when safe-globals-flag
-			       (set! always-bound-to-procedure
-				 (lset-adjoin eq? always-bound-to-procedure var))
-			       (set! always-bound (lset-adjoin eq? always-bound var)) )
-			     (when (macro? var)
-			       (compiler-warning 
-				'var "assigned global variable `~S' is a macro ~A"
-				var
-				(if ln (sprintf "in line ~S" ln) "") )
-			       (when undefine-shadowed-macros (undefine-macro! var) ) ) )
-			   (when (keyword? var)
-			     (compiler-warning 'syntax "assignment to keyword `~S'" var) )
-			   (cond [(assq var foreign-variables)
+				[val (walk (caddr x) se var0)] )
+			   (cond ((eq? var var0) ; global?
+				  (set! var (##sys#alias-global-hook var))
+				  (when safe-globals-flag
+				    (set! always-bound-to-procedure
+				      (lset-adjoin eq? always-bound-to-procedure var))
+				    (set! always-bound (lset-adjoin eq? always-bound var)) )
+				  (when (macro? var)
+				    (compiler-warning 
+				     'var "assigned global variable `~S' is a macro ~A"
+				     var
+				     (if ln (sprintf "in line ~S" ln) "") )
+				    (when undefine-shadowed-macros (undefine-macro! var) ) ) )
+				 ((keyword? var)
+				  (compiler-warning 'syntax "assignment to keyword `~S'" var) )
+				 ((pair? var) ; macro
+				  (syntax-error
+				   'set! "assignment to syntactic identifier" var))
+				 ((assq var foreign-variables)
 				  => (lambda (fv)
 				       (let ([type (second fv)]
 					     [tmp (gensym)] )
@@ -679,7 +693,7 @@
 					    (##core#inline_update 
 					     (,(third fv) ,type)
 					     ,(foreign-type-check tmp type) ) ) ) ) ]
-				 [(assq var location-pointer-map)
+				 ((assq var location-pointer-map)
 				  => (lambda (a)
 				       (let* ([type (third a)]
 					      [tmp (gensym)] )
@@ -687,30 +701,30 @@
 					    (##core#inline_loc_update 
 					     (,type)
 					     ,(second a)
-					     ,(foreign-type-check tmp type) ) ) ) ) ]
-				 [else `(set! ,var ,val)] ) ) )
+					     ,(foreign-type-check tmp type) ) ) ) ) )
+				 (else `(set! ,var ,val)))))
 
 			((##core#inline)
-			 `(##core#inline ,(unquotify (cadr x)) ,@(mapwalk (cddr x) ae me)))
+			 `(##core#inline ,(unquotify (cadr x)) ,@(mapwalk (cddr x) se)))
 
 			((##core#inline_allocate)
 			 `(##core#inline_allocate 
 			   ,(map unquotify (second x))
-			   ,@(mapwalk (cddr x) ae me)))
+			   ,@(mapwalk (cddr x) se)))
 
 			((##core#inline_update)
-			 `(##core#inline_update ,(cadr x) ,(walk (caddr x) ae me #f)) )
+			 `(##core#inline_update ,(cadr x) ,(walk (caddr x) se #f)) )
 
 			((##core#inline_loc_update)
 			 `(##core#inline_loc_update 
 			   ,(cadr x) 
-			   ,(walk (caddr x) ae me #f)
-			   ,(walk (cadddr x) ae me #f)) )
+			   ,(walk (caddr x) se #f)
+			   ,(walk (cadddr x) se #f)) )
 
 			((##core#compiletimetoo ##core#elaborationtimetoo)
 			 (let ((exp (cadr x)))
 			   (eval exp)
-			   (walk exp ae me dest) ) )
+			   (walk exp se dest) ) )
 
 			((##core#compiletimeonly ##core#elaborationtimeonly)
 			 (eval (cadr x))
@@ -724,24 +738,24 @@
 				(let ([x (car xs)]
 				      [r (cdr xs)] )
 				  (if (null? r)
-				      (list (walk x ae me dest))
-				      (cons (walk x ae me #f) (fold r)) ) ) ) )
+				      (list (walk x se dest))
+				      (cons (walk x se #f) (fold r)) ) ) ) )
 			     '(##core#undefined) ) )
 
 			((##core#foreign-lambda)
-			 (walk (expand-foreign-lambda x) ae me dest) )
+			 (walk (expand-foreign-lambda x) se dest) )
 
 			((##core#foreign-callback-lambda)
-			 (walk (expand-foreign-callback-lambda x) ae me dest) )
+			 (walk (expand-foreign-callback-lambda x) se dest) )
 
 			((##core#foreign-lambda*)
-			 (walk (expand-foreign-lambda* x) ae me dest) )
+			 (walk (expand-foreign-lambda* x) se dest) )
 
 			((##core#foreign-callback-lambda*)
-			 (walk (expand-foreign-callback-lambda* x) ae me dest) )
+			 (walk (expand-foreign-callback-lambda* x) se dest) )
 
 			((##core#foreign-primitive)
-			 (walk (expand-foreign-primitive x) ae me dest) )
+			 (walk (expand-foreign-primitive x) se dest) )
 
 			((##core#define-foreign-variable)
 			 (let* ([var (cadr (second x))]
@@ -770,7 +784,7 @@
 					(##core#set! 
 					 ,ret 
 					 ,(if (pair? (cdr conv)) (second conv) '##sys#values)) ) 
-				     ae me dest) ) ]
+				     se dest) ) ]
 				 [else
 				  (##sys#hash-table-set! foreign-type-table name type)
 				  '(##core#undefined) ] ) ) )
@@ -807,26 +821,28 @@
 					("C_a_i_bytevector" ,(+ 2 size))
 					',size)) ) )
 			      ,(walk
-				`(begin
+				`(,(macro-alias 'begin)
 				   ,@(if init
 					 `((##core#set! ,alias ,init))
 					 '() )
-				   ,(if init (fifth x) (fourth x)) )
-				(alist-cons var alias ae)
-				me dest) ) ) )
+				   ,(,(macro-alias 'if) init (fifth x) (fourth x)) )
+				(alist-cons var alias se)
+				dest) ) ) )
 
 			((##core#define-inline)
 			 (let* ([name (cadr (second x))]
 				[val (third x)] )
 			   (receive (val2 mlist)
 			       (extract-mutable-constants
-				(walk (cons '##core#internal-lambda (cdr val)) ae me name) )
+				(walk (cons '##core#internal-lambda (cdr val)) se name) )
 			     (##sys#hash-table-set! inline-table name val2)
 			     (set! always-bound (append (unzip1 mlist) always-bound))
 			     (set! inline-table-used #t)
 			     (walk
-			      `(begin ,@(map (lambda (m) `(##core#set! ,(car m) ',(cdr m))) mlist))
-			      ae me #f) ) ) )
+			      `(,(macro-alias 'begin)
+				,@(map (lambda (m)
+					 `(##core#set! ,(car m) ',(cdr m))) mlist))
+			      se #f) ) ) )
 
 			((##core#define-constant)
 			 (let* ([name (cadr (second x))]
@@ -837,7 +853,9 @@
 					       valexp name)
 				       (if (collapsable-literal? valexp)
 					   valexp
-					   (eval `(let ,defconstant-bindings ,valexp)) ) ) ] )
+					   (eval
+					    `(,(macro-alias 'let)
+					      ,defconstant-bindings ,valexp)) ) ) ] )
 			   (set! constants-used #t)
 			   (set! defconstant-bindings (cons (list name `',val) defconstant-bindings))
 			   (cond [(collapsable-literal? val)
@@ -849,14 +867,14 @@
 				    (set! mutable-constants (alist-cons var val mutable-constants))
 				    (set! block-globals (cons var block-globals))
 				    (set! always-bound (cons var always-bound))
-				    (walk `(##core#set! ,var ',val) ae me #f) ) ] ) ) )
+				    (walk `(##core#set! ,var ',val) se #f) ) ] ) ) )
 
 			((##core#declare)
 			 (walk
-			  `(begin
-			     ,@(map (lambda (d) (process-declaration (second d)))
+			  `(,(macro-alias 'begin)
+			     ,@(map (lambda (d) (process-declaration (second d) se))
 				    (cdr x) ) )
-			  '() me #f) )
+			  '() #f) )
 	     
 			((##core#foreign-callback-wrapper)
 			 (let-values ([(args lam) (split-at (cdr x) 4)])
@@ -877,29 +895,33 @@
 				"non-matching or invalid argument list to foreign callback-wrapper"
 				vars atypes) )
 			     `(##core#foreign-callback-wrapper
-			       ,@(mapwalk args ae me)
+			       ,@(mapwalk args se)
 			       ,(walk `(##core#internal-lambda 
 					,vars
-					(let ,(let loop ([vars vars] [types atypes])
-						(if (null? vars)
-						    '()
-						    (let ([var (car vars)]
-							  [type (car types)] )
-						      (cons 
-						       (list 
-							var
-							(foreign-type-convert-result
-							 (finish-foreign-result (final-foreign-type type) var)
-							 type) )
-						       (loop (cdr vars) (cdr types)) ) ) ) )
-					  ,(foreign-type-convert-argument
-					    `(let ()
+					(,(macro-alias 'let)
+					 ,(let loop ([vars vars] [types atypes])
+					    (if (null? vars)
+						'()
+						(let ([var (car vars)]
+						      [type (car types)] )
+						  (cons 
+						   (list 
+						    var
+						    (foreign-type-convert-result
+						     (finish-foreign-result (final-foreign-type type) var)
+						     type) )
+						   (loop (cdr vars) (cdr types)) ) ) ) )
+					 ,(foreign-type-convert-argument
+					   `(,(macro-alias 'let)
+					     ()
 					       ,@(match rtype
 						   ((or '(const nonnull-c-string) 
 							'(const nonnull-unsigned-c-string)
 							'nonnull-unsigned-c-string
 							'nonnull-c-string)
-						    `((##sys#make-c-string (let () ,@(cddr lam)))))
+						    `((##sys#make-c-string
+						       (,(macro-alias 'let)
+							() ,@(cddr lam)))))
 						   ((or '(const c-string*)
 							'(const unsigned-c-string*)
 							'unsigned-c-string*
@@ -914,16 +936,20 @@
 							'(const unsigned-c-string)
 							'unsigned-c-string
 							'(const c-string))
-						    `((let ((r (let () ,@(cddr lam))))
-							(and r (##sys#make-c-string r)) ) ) )
+						    `((,(macro-alias 'let)
+						       ((r (,(macro-alias 'let)
+							    () ,@(cddr lam))))
+						       (,(macro-alias 'and)
+							r 
+							(##sys#make-c-string r)) ) ) )
 						   (_ (cddr lam)) ) )
-					    rtype) ) )
-				      ae me #f) ) ) ) )
+					   rtype) ) )
+				      se #f) ) ) ) )
 
 			(else
 			 (let ([handle-call
 				(lambda ()
-				  (let* ([x2 (mapwalk x ae me)]
+				  (let* ([x2 (mapwalk x se)]
 					 [head2 (car x2)]
 					 [old (##sys#hash-table-ref line-number-database-2 head2)] )
 				    (when ln
@@ -937,18 +963,18 @@
 				  (##sys#check-syntax 'location x '(location _))
 				  (let ([sym (cadr x)])
 				    (if (symbol? sym)
-					(cond [(assq (resolve sym ae) location-pointer-map)
+					(cond [(assq (lookup sym ae) location-pointer-map)
 					       => (lambda (a)
 						    (walk
 						     `(##sys#make-locative ,(second a) 0 #f 'location)
-						     ae me #f) ) ]
+						     se #f) ) ]
 					      [(assq sym external-to-pointer) 
-					       => (lambda (a) (walk (cdr a) ae me #f)) ]
+					       => (lambda (a) (walk (cdr a) se #f)) ]
 					      [(memq sym callback-names)
 					       `(##core#inline_ref (,(symbol->string sym) c-pointer)) ]
 					      [else 
-					       (walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ] )
-					(walk `(##sys#make-locative ,sym 0 #f 'location) ae me #f) ) ) ]
+					       (walk `(##sys#make-locative ,sym 0 #f 'location) se #f) ] )
+					(walk `(##sys#make-locative ,sym 0 #f 'location) se #f) ) ) ]
 				 
 				 ((and compiler-macros-enabled
 				       compiler-macro-table
@@ -957,7 +983,7 @@
 				    (let ((cx (cm x)))
 				      (if (equal? cx x)
 					  (handle-call)
-					  (walk cx ae me dest)))))
+					  (walk cx se dest)))))
 
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
 
@@ -967,7 +993,7 @@
 	  ((constant? (car x))
 	   (emit-syntax-trace-info x #f)
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
-	   (mapwalk x ae me) )
+	   (mapwalk x se) )
 
 	  ((and (pair? (car x)) (eq? 'lambda (caar x)))
 	   (let ([lexp (car x)]
@@ -976,46 +1002,56 @@
 	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)))
 	     (let ([llist (cadr lexp)])
 	       (if (and (proper-list? llist) (= (length llist) (length args)))
-		   (walk `(let ,(map list llist args) ,@(cddr lexp)) ae me dest)
+		   (walk `(,(macro-alias 'let)
+			   ,(map list llist args) ,@(cddr lexp)) se dest)
 		   (let ((var (gensym 't)))
 		     (walk
-		      `(let ((,var ,(car x)))
-			 (,var ,@(cdr x)) )
-		      ae me dest) ) ) ) ) )
+		      `(,(macro-alias 'let)
+			((,var ,(car x)))
+			(,var ,@(cdr x)) )
+		      se dest) ) ) ) ) )
 	  
 	  (else
 	   (emit-syntax-trace-info x #f)
-	   (mapwalk x ae me)) ) )
+	   (mapwalk x se)) ) )
   
-  (define (mapwalk xs ae me)
-    (map (lambda (x) (walk x ae me #f)) xs) )
+  (define (mapwalk xs se)
+    (map (lambda (x) (walk x se #f)) xs) )
 
   (when (memq 'c debugging-chicken) (newline) (pretty-print exp))
   (##sys#clear-trace-buffer)
   ;; Process visited definitions and main expression:
   (walk 
-   `(begin
+   `(,(macro-alias 'begin)
       ,@(let ([p (reverse pending-canonicalizations)])
 	  (set! pending-canonicalizations '())
 	  p)
       ,(let ([exp (##sys#compiler-toplevel-macroexpand-hook exp)])
 	 (set! extended-bindings (append internal-bindings extended-bindings))
 	 exp) )
-   '() '() #f) )
+   '() #f) )
 
 
-(define (process-declaration spec)
+(define (process-declaration spec se)
+  (define (lookup id)
+    (cond ((get id '##sys#macro-alias))
+	  ((assq id se) =>
+	   (lambda (a)
+	     (if (symbol? (cdr a)) 
+		 (cdr a)
+		 id)))
+	  (else id)))
   (define (check-decl spec minlen . maxlen)
     (let ([n (length (cdr spec))])
-      (if (or (< n minlen) (> n (:optional maxlen 99999)))
+      (if (or (< n minlen) (> n (optional maxlen 99999)))
 	  (syntax-error "invalid declaration" spec) ) ) )  
   (call-with-current-continuation
    (lambda (return)
      (unless (pair? spec)
        (syntax-error "invalid declaration specification" spec) )
-     (case (car spec)
+     (case (lookup (car spec))
        ((uses)
-	(let ([us (cdr spec)])
+	(let ((us (map lookup (cdr spec))))
 	  (apply register-feature! us)
 	  (when use-import-table
 	    (for-each lookup-exports-file us) )
@@ -1025,7 +1061,7 @@
 	      (set! used-units (append used-units units)) ) ) ) )
        ((unit)
 	(check-decl spec 1 1)
-	(let* ([u (cadr spec)]
+	(let* ([u (lookup (cadr spec))]
 	       [un (string->c-identifier (stringify u))] )
 	  (hash-table-set! file-requirements 'unit u)
 	  (when (and unit-name (not (string=? unit-name un)))
@@ -1034,22 +1070,22 @@
        ((standard-bindings)
 	(if (null? (cdr spec))
 	    (set! standard-bindings default-standard-bindings)
-	    (set! standard-bindings (append (cdr spec) standard-bindings)) ) )
+	    (set! standard-bindings (append (map lookup (cdr spec)) standard-bindings)) ) )
        ((extended-bindings)
 	(if (null? (cdr spec))
 	    (set! extended-bindings default-extended-bindings)
-	    (set! extended-bindings (append (cdr spec) extended-bindings)) ) )
+	    (set! extended-bindings (append (map lookup (cdr spec)) extended-bindings)) ) )
        ((usual-integrations)      
 	(cond [(null? (cdr spec))
 	       (set! standard-bindings default-standard-bindings)
 	       (set! extended-bindings default-extended-bindings) ]
 	      [else
-	       (let ([syms (cdr spec)])
+	       (let ([syms (map lookup (cdr spec))])
 		 (set! standard-bindings (lset-intersection eq? syms default-standard-bindings))
 		 (set! extended-bindings (lset-intersection eq? syms default-extended-bindings)) ) ] ) )
        ((number-type)
 	(check-decl spec 1 1)
-	(set! number-type (cadr spec)) )
+	(set! number-type (lookup (cadr spec))) )
        ((fixnum fixnum-arithmetic) (set! number-type 'fixnum))
        ((generic) (set! number-type 'generic))
        ((unsafe)
@@ -1061,8 +1097,11 @@
        ((no-procedure-checks) (set! no-procedure-checks #t))
        ((interrupts-enabled) (set! insert-timer-checks #t))
        ((disable-interrupts) (set! insert-timer-checks #f))
-       ((disable-warning) (set! disabled-warnings (append (cdr spec) disabled-warnings)))
-       ((always-bound) (set! always-bound (append (cdr spec) always-bound)))
+       ((disable-warning)
+	(set! disabled-warnings
+	  (append (map lookup (cdr spec)) disabled-warnings)))
+       ((always-bound) 
+	(set! always-bound (append (map lookup (cdr spec)) always-bound)))
        ((safe-globals) (set! safe-globals-flag #t))
        ((no-procedure-checks-for-usual-bindings)
 	(set! always-bound-to-procedure
@@ -1070,8 +1109,9 @@
 	(set! always-bound
 	  (append default-standard-bindings default-extended-bindings always-bound)) )
        ((bound-to-procedure)
-	(set! always-bound-to-procedure (append (cdr spec) always-bound-to-procedure))
-	(set! always-bound (append (cdr spec) always-bound)) )
+	(let ((vars (map lookup (cdr spec))))
+	  (set! always-bound-to-procedure (append vars always-bound-to-procedure))
+	  (set! always-bound (append vars always-bound)) ) )
        ((foreign-declare)
 	(let ([fds (cdr spec)])
 	  (if (every string? fds)
@@ -1093,52 +1133,59 @@
        ((separate) (set! block-compilation #f))
        ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
        ((unused)
-	(set! unused-variables (append (cdr spec) unused-variables)))
+	(set! unused-variables (append (map lookup (cdr spec)) unused-variables)))
        ((not)
 	(check-decl spec 1)
 	(case (second spec)
 	  [(standard-bindings)
 	   (if (null? (cddr spec))
 	       (set! standard-bindings '())
-	       (set! standard-bindings (lset-difference eq? default-standard-bindings (cddr spec))) ) ]
+	       (set! standard-bindings
+		 (lset-difference eq? default-standard-bindings
+				  (map lookup (cddr spec)))) ) ]
 	  [(extended-bindings)
 	   (if (null? (cddr spec))
 	       (set! extended-bindings '())
-	       (set! extended-bindings (lset-difference eq? default-extended-bindings (cddr spec))) ) ]
+	       (set! extended-bindings 
+		 (lset-difference eq? default-extended-bindings
+				  (map lookup (cddr spec))) )) ]
 	  [(inline)
 	   (if (null? (cddr spec))
 	       (set! inline-max-size -1)
-	       (set! not-inline-list (lset-union eq? not-inline-list (cddr spec))) ) ]
+	       (set! not-inline-list (lset-union eq? not-inline-list
+						 (map lookup (cddr spec)))) ) ]
 	  [(usual-integrations)      
 	   (cond [(null? (cddr spec))
 		  (set! standard-bindings '())
 		  (set! extended-bindings '()) ]
 		 [else
-		  (let ([syms (cddr spec)])
+		  (let ([syms (map lookup (cddr spec))])
 		    (set! standard-bindings (lset-difference eq? default-standard-bindings syms))
 		    (set! extended-bindings (lset-difference eq? default-extended-bindings syms)) ) ] ) ]
 	  [else
 	   (check-decl spec 1 1)
-	   (case (cadr spec)
-	     [(interrupts-enabled) (set! insert-timer-checks #f)]
-	     [(safe) 
-	      (set! unsafe #t)
-	      (##match#set-error-control #:unspecified) ]
-	     [else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)] ) ] ) )
+	   (let ((id (lookup (cadr spec))))
+	     (case id
+	       [(interrupts-enabled) (set! insert-timer-checks #f)]
+	       [(safe) 
+		(set! unsafe #t)
+		(##match#set-error-control #:unspecified) ]
+	       [else (compiler-warning 'syntax "illegal declaration specifier `~s'" id)]))]))
        ((run-time-macros) (set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 
-	(let ([syms (cdr spec)])
+	(let ([syms (map lookup (cdr spec))])
 	  (when export-list 
 	    (set! export-list (lset-difference eq? export-list syms)) )
 	  (set! block-globals (lset-union eq? syms block-globals)) ) )
        ((export) 
-	(let ((syms (cdr spec)))
+	(let ((syms (map lookup (cdr spec))))
 	  (set! block-globals (lset-difference eq? block-globals syms))
 	  (set! export-list (lset-union eq? syms (or export-list '())))))
        ((emit-exports)
 	(cond ((null? (cdr spec))
 	       (quit "invalid `emit-exports' declaration" spec) )
-	      ((not export-file-name) (set! export-file-name (cadr spec))) ) )
+	      ((not export-file-name) 
+	       (set! export-file-name (cadr spec))) ) )
        ((emit-external-prototypes-first)
 	(set! external-protos-first #t) )
        ((lambda-lift) (set! do-lambda-lifting #t))
@@ -1146,7 +1193,7 @@
 	(if (null? (cdr spec))
 	    (unless (> inline-max-size -1)
 	      (set! inline-max-size default-inline-max-size) )
-	    (set! inline-list (lset-union eq? inline-list (cdr spec))) ) )
+	    (set! inline-list (lset-union eq? inline-list (map lookup (cdr spec)))) ) )
        ((inline-limit)
 	(check-decl spec 1 1)
 	(set! inline-max-size
@@ -1155,7 +1202,7 @@
 		n
 		(quit "invalid argument to `inline-limit' declaration" spec) ) ) ) )
        ((constant)
-	(let ((syms (cdr spec)))
+	(let ((syms (map lookup (cdr spec))))
 	  (if (every symbol? syms)
 	      (set! constant-declarations (append syms constant-declarations))
 	      (quit "invalid arguments to `constant' declaration: ~S" spec)) ) )
@@ -1168,7 +1215,9 @@
 			       (else (quit "argument to `import' declaration is not a string or symbol" x)) ) )
 		       (cdr spec) ) ) )
 	  (set! use-import-table #t)
-	  (for-each (cut ##sys#hash-table-set! import-table <> "<here>") syms)
+	  (for-each 
+	   (cut ##sys#hash-table-set! import-table <> "<here>") 
+	   (map lookup syms))
 	  (for-each lookup-exports-file strs) ) )
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )

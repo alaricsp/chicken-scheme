@@ -26,13 +26,21 @@
 
 (declare
   (hide match-expression
+	macro-alias
 	lookup) )
 
 
 ;;; Syntactic environments
 
 (define (lookup id se)
-  (assq id se) )			; return (NAME SE HANDLER) or #f
+  (cond ((get id '##sys#macro-alias))
+	((assq id se) => cdr)
+	(else #f)))
+
+(define (macro-alias var)
+  (let ((alias (gensym var)))
+    (put! alias '##sys#macro-alias var)
+    alias) )
 
 
 ;;; Macro handling
@@ -42,8 +50,8 @@
 (define (##sys#register-macro-0 name se handler)
   (cond ((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
-	   (set-car! (cdr a) se)
-	   (set-car! (cddr a) handler) ) )
+	   (set-car! a se)
+	   (set-car! (cdr a) handler) ) )
 	(else 
 	 (set! ##sys#macro-environment
 	   (cons (list name se handler) ##sys#macro-environment)))))
@@ -60,7 +68,7 @@
 
 (define (##sys#copy-macro old new)
   (let ((def (lookup old ##sys#macro-environment)))
-    (apply ##sys#register-macro-0 def) ) )
+    (apply ##sys#register-macro-0 new def) ) )
 
 (define (macro? sym #!optional (senv '()))
   (##sys#check-identifier sym 'macro?)
@@ -111,52 +119,51 @@
 			      (copy r) ) ) ) ) )
 		 ex) )
 	  (handler exp se) ) )				   
-      (define (expand exp head)
+      (define (expand head exp mdef)
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
-	      ((or (lookup head se) 
-		   (lookup head ##sys#macro-environment) ) =>
-		   (lambda (mdef) 
-		     (values (call-handler head (caddr mdef) exp (cadr mdef))
-			     #t)))
+	      (else 
+	       (values (call-handler head (cadr mdef) exp (car mdef))
+		       #t))
 	      (else (values exp #f)) ) )
       (if (pair? exp)
-	  (let ([head (##sys#slot exp 0)]
-		[body (##sys#slot exp 1)] )
+	  (let ((head (##sys#slot exp 0))
+		(body (##sys#slot exp 1)) )
 	    (if (symbol? head)
-		(cond [(eq? head 'let)
-		       (##sys#check-syntax 'let body '#(_ 2))
-		       (let ([bindings (car body)])
-			 (cond [(symbol? bindings)
-				(##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)))
-				(let ([bs (cadr body)])
-				  (values
-				   `(##core#app
-				     (letrec ([,bindings (##core#loop-lambda ,(map (lambda (b) (car b)) bs) ,@(cddr body))])
-				       ,bindings)
-				     ,@(##sys#map cadr bs) )
-				   #t) ) ]
-			       [else (values exp #f)] ) ) ]
-		      [(and (memq head '(set! ##core#set!))
-			    (pair? body)
-			    (pair? (##sys#slot body 0)) )
-		       (let ([dest (##sys#slot body 0)])
-			 (##sys#check-syntax 'set! body '(#(_ 1) _))
-			 (values
-			  (append (list (list '##sys#setter (##sys#slot dest 0)))
-				  (##sys#slot dest 1)
-				  (##sys#slot body 1) ) 
-			  #t) ) ]
-		      [else (expand exp head)] )
+		(let ((head2 (lookup head se)))
+		  (cond [(eq? head2 'let)
+			 (##sys#check-syntax 'let body '#(_ 2))
+			 (let ([bindings (car body)])
+			   (cond [(symbol? bindings)
+				  (##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)))
+				  (let ([bs (cadr body)])
+				    (values
+				     `(##core#app
+				       (,(macro-alias 'letrec)
+					([,bindings (##core#loop-lambda ,(map (lambda (b) (car b)) bs) ,@(cddr body))])
+					,bindings)
+				       ,@(##sys#map cadr bs) )
+				     #t) ) ]
+				 [else (values exp #f)] ) ) ]
+			[(and (memq head2 '(set! ##core#set!))
+			      (pair? body)
+			      (pair? (##sys#slot body 0)) )
+			 (let ([dest (##sys#slot body 0)])
+			   (##sys#check-syntax 'set! body '(#(_ 1) _))
+			   (values
+			    (append (list (list '##sys#setter (##sys#slot dest 0)))
+				    (##sys#slot dest 1)
+				    (##sys#slot body 1) ) 
+			    #t) ) ]
+			[else (expand head exp head2)] ) )
 		(values exp #f) ) )
-	  (values exp #f) ) ) ) )
+	  (values exp #f) ) ) )
 
 
 ;;; These are needed to hook other module/macro systems into the evaluator and compiler
 
 (define (##sys#compiler-toplevel-macroexpand-hook exp) exp)
 (define (##sys#interpreter-toplevel-macroexpand-hook exp) exp)
-(define (##sys#macroexpand-1-local exp me) (##sys#macroexpand-0 exp me))
 
 
 ;;; For the compiler
@@ -215,22 +222,29 @@
 		  (let ([body 
 			 (if (null? key)
 			     body
-			     `((let* ,(map (lambda (k)
-					     (let ([s (car k)])
-					       `[,s (##sys#get-keyword 
-						     ',(->keyword s) ,rvar
-						     ,@(if (pair? (cdr k)) 
-							   `((lambda () ,@(cdr k)))
-							   '() ) ) ] ) )
-					   (reverse key) )
-				 ,@body) ) ) ] )
+			     `((,(macro-alias 'let*)
+				,(map (lambda (k)
+					(let ([s (car k)])
+					  `[,s (##sys#get-keyword 
+						',(->keyword s) ,rvar
+						,@(if (pair? (cdr k)) 
+						      `((,(macro-alias 'lambda)
+							 () ,@(cdr k)))
+						      '() ) ) ] ) )
+				      (reverse key) )
+				,@body) ) ) ] )
 		    (cond [(null? opt) body]
 			  [(and (not hasrest) (null? key) (null? (cdr opt)))
-			   `((let ([,(caar opt) (:optional ,rvar ,(cadar opt))])
+			   `((,(macro-alias 'let)
+			      ([,(caar opt) (,(macro-alias 'optional)
+					     ,rvar ,(cadar opt))])
 			       ,@body) ) ]
-			  [(and (not hasrest) (null? key)) `((let-optionals ,rvar ,(reverse opt) ,@body))]
+			  [(and (not hasrest) (null? key))
+			   `((,(macro-alias 'let-optionals)
+			      ,rvar ,(reverse opt) ,@body))]
 			  [else 
-			   `((let-optionals* ,rvar ,(##sys#append (reverse opt) (list (or hasrest rvar))) 
+			   `((,(macro-alias 'let-optionals*)
+			      ,rvar ,(##sys#append (reverse opt) (list (or hasrest rvar))) 
 			      ,@body))] ) ) ) ]
 		[(symbol? llist) 
 		 (if (fx> mode 2)
@@ -242,7 +256,7 @@
 		[(not (pair? llist))
 		 (err "invalid lambda list syntax") ]
 		[else
-		 (let ([x (##sys#slot llist 0)]
+		 (let ([x (lookup (##sys#slot llist 0) se)]
 		       [r (##sys#slot llist 1)])
 		   (case x
 		     [(#!optional)
@@ -285,26 +299,30 @@
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body lookup #!optional me container)
+    (lambda (body #!optional me container)
       (define (fini vars vals mvars mvals body)
 	(if (and (null? vars) (null? mvars))
 	    (let loop ([body2 body] [exps '()])
 	      (if (not (pair? body2)) 
-		  `(begin ,@body) ; no more defines, otherwise we would have called `expand'
+		  `(,(macro-alias 'begin)
+		    ,@body) ; no more defines, otherwise we would have called `expand'
 		  (let ([x (##sys#slot body2 0)])
 		    (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
-			`(begin . ,(##sys#append (reverse exps) (list (expand body2))))
+			`(,(macro-alias 'begin)
+			  . ,(##sys#append (reverse exps) (list (expand body2))))
 			(loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
-	    (let ([vars (reverse vars)])
-	      `(let ,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
-				(apply ##sys#append vars mvars) )
-		 ,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
+	    (let ([vars (reverse vars)]
+		  (lam (macro-alias 'lambda)))
+	      `(,(macro-alias 'let)
+		,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
+			    (apply ##sys#append vars mvars) )
+		,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
 		 ,@(map (lambda (vs x)
 			  (let ([tmps (##sys#map gensym vs)])
 			    `(##sys#call-with-values
-			      (lambda () ,x)
-			      (lambda ,tmps 
-				,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
+			      (,lam () ,x)
+			      (,lam ,tmps 
+			       ,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
 			(reverse mvars)
 			(reverse mvals) )
 		 ,@body) ) ) )
@@ -312,11 +330,13 @@
 	(fini
 	 vars vals mvars mvals
 	 (let loop ((body body) (defs '()) (done #f))
-	   (cond (done `(letrec-syntax ,(map cdr (reverse defs)) ,@body) )
+	   (cond (done `(,(macro-alias 'letrec-syntax)
+			 ,(map cdr (reverse defs)) ,@body) )
 		 ((not (pair? body)) (loop body defs #t))
 		 ((and (list? (car body))
 		       (= 3 (length (car body))) 
-		       (eq? 'define-syntax (caar body)) )
+		       (symbol? (caar body))
+		       (eq? 'define-syntax (lookup (caar body) se)))
 		  (loop (cdr body) (cons (car body) defs)))
 		 (else (loop body defs #t))))))		       
       (define (expand body)
@@ -325,10 +345,9 @@
 	      (fini vars vals mvars mvals body)
 	      (let* ([x (##sys#slot body 0)]
 		     [rest (##sys#slot body 1)] 
-		     [head (and (pair? x) (##sys#slot x 0))] )
-		(cond [(not head) (fini vars vals mvars mvals body)]
-		      [(and (symbol? head) (lookup head))
-		       (fini vars vals mvars mvals body) ]
+		     [head (and (pair? x)
+				(lookup (##sys#slot x 0) me))])
+		(cond [(not (symbol? head)) (fini vars vals mvars mvals body)]
 		      [(eq? 'define head)
 		       (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f)
 		       (let loop2 ([x x])
@@ -389,13 +408,14 @@
 ;;; Expand "curried" lambda-list syntax for `define'
 
 (define (##sys#expand-curried-define head body)
-  (let* ([name #f])
+  (let* ([name #f]
+	 (lam (macro-alias 'lambda)))
     (define (loop head body)
       (if (symbol? (##sys#slot head 0))
 	  (begin
 	    (set! name (##sys#slot head 0))
-	    `(lambda ,(##sys#slot head 1) ,@body) )
-	  (loop (##sys#slot head 0) `((lambda ,(##sys#slot head 1) ,@body)) ) ))
+	    `(,lam ,(##sys#slot head 1) ,@body) )
+	  (loop (##sys#slot head 0) `((,lam ,(##sys#slot head 1) ,@body)) ) ))
     (let ([exp (loop head body)])
       (list name exp) ) ) )
 
@@ -498,7 +518,16 @@
 	       (walk (##sys#slot x 1) (##sys#slot p 1)) ) ) ) ) ) )
 
 
+;;; explicit-renaming expander
+
+(define ((##sys#er-transformer handler) form se)
+  (define (rename sym)
+    (cond ((lookup sym se) => cdr
+
+
 ;;; Macro definitions:
+
+;;*** need to be done hygienically
 
 (##sys#register-macro-2
  'define

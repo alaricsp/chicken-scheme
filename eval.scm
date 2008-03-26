@@ -81,7 +81,7 @@
      port? ##sys#file-info ##sys#signal-hook ##sys#dload open-input-file close-input-port
      read write newline ##sys#eval-handler ##sys#set-dlopen-flags! cadadr ##sys#lookup-runtime-requirements
      map string->keyword ##sys#abort
-     ##sys#macroexpand-0 ##sys#macroexpand-1-local) ) ] )
+     ##sys#macroexpand-0) ) ] )
 
 (cond-expand
  [unsafe
@@ -247,7 +247,12 @@
     (lambda (exp env se #!optional cntr)
 
       (define (rename var se)
-	(cond ((assq var se) => cdr) (else var)))
+	(cond ((get var '##sys#macro-alias))
+	      ((assq var se) => 
+	       (lambda (a) 
+		 (let ((x (cdr a)))
+		   (and (symbol? x) x))))
+	      (else var)))
 
       (define (lookup var e se)
 	(let ((var (rename var se)))
@@ -256,26 +261,11 @@
 		  ((posq var (##sys#slot envs 0)) => (lambda (p) (values ei p)))
 		  (else (loop (##sys#slot envs 1) (fx+ ei 1))) ) ) ) )
 
-      (define (defined? var e se)
-	(receive (i j) (lookup var e se) i) )
-
       (define (posq x lst)
 	(let loop ((lst lst) (i 0))
 	  (cond ((null? lst) #f)
 		((eq? x (##sys#slot lst 0)) i)
 		(else (loop (##sys#slot lst 1) (fx+ i 1))) ) ) )
-
-      (define (macroexpand-1-checked x e se)
-	(let ([x2 (##sys#macroexpand-1-local x se)])
-	  (if (pair? x2)
-	      (let ([h (##sys#slot x2 0)])
-		(if (eq? (rename h se) 'let)
-		    (let ([next (##sys#slot x2 1)])
-		      (if (and (pair? next) (symbol? (##sys#slot next 0)))
-			  (macroexpand-1-checked x2 e se)
-			  x2) )
-		    x2) )
-	      x2) ) )
 
       (define (emit-trace-info tf info cntr) 
 	(when tf
@@ -331,7 +321,7 @@
 	      [(symbol? (##sys#slot x 0))
 	       (emit-syntax-trace-info tf x cntr)
 	       (let* ((head (rename (##sys#slot x 0) se))
-		      (x2 (macroexpand-1-checked x e se)))
+		      (x2 (##sys#macroexpand-0 x se)))
 		 (if (eq? x2 x)
 		     (case head
 
@@ -425,13 +415,6 @@
 				      e2
 				      se2
 				      cntr) ] )
---------------------------------------------------------------------------------
-
-- use "rename" for introduced identifiers
-- use se2 where appropriate
-- alpha-convert in "lambda"
-
-
 			  (case n
 			    [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr se)])
 				   (lambda (v)
@@ -485,12 +468,14 @@
 			  (##sys#decompose-lambda-list
 			   llist
 			   (lambda (vars argc rest)
-			     (let* ((e2 (cons vars e))
+			     (let* ((aliases (map gensym vars))
+				    (se2 (map cons vars aliases))
+				    (e2 (cons vars e))
 				    (body 
 				     (##sys#compile-to-closure
-				      (##sys#canonicalize-body body (cut defined? <> e2 se) se (or h cntr))
+				      (##sys#canonicalize-body body se2 (or h cntr))
 				      e2
-				      se
+				      se2
 				      (or h cntr) ) ) )
 			       (case argc
 				 [(0) (if rest
@@ -568,7 +553,7 @@
 		       ((let-syntax)
 			(##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)))
 			(compile
-			 `(begin ,@(cddr x))
+			 `(,(rename 'begin se) ,@(cddr x))
 			 e #f tf cntr
 			 (append
 			  (map (lambda (b)
@@ -581,7 +566,7 @@
 		       ((letrec-syntax)
 			(##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)))
 			(compile
-			 `(begin ,@(cddr x))
+			 `(,(rename 'begin se) ,@(cddr x))
 			 e #f tf cntr
 			 (let* ((ms (map (lambda (b)
 					   (cons #f ((##sys#compile-to-closure (cadr b) '() se) '())))
@@ -591,10 +576,10 @@
 			   (for-each (cut set-car! <> se2) ms) ) ) )
 			       
 		       [(##core#loop-lambda)
-			(compile `(lambda ,@(cdr x)) e #f tf cntr se) ]
+			(compile `(,(rename 'lambda se) ,@(cdr x)) e #f tf cntr se) ]
 
 		       [(##core#named-lambda)
-			(compile `(lambda ,@(cddr x)) e (cadr x) tf cntr se) ]
+			(compile `(,(rename 'lambda se) ,@(cddr x)) e (cadr x) tf cntr se) ]
 
 		       [(##core#require-for-syntax)
 			(let ([ids (map (lambda (x) ((##sys#compile-to-closure x '() se) '())) (cdr x))])
@@ -612,7 +597,7 @@
 			   (if (null? ids)
 			       '(##core#undefined)
 			       (let-values ([(exp _) (##sys#do-the-right-thing (cadar ids) #f)])
-				 `(begin ,exp ,(loop (cdr ids))) ) ) )
+				 `(,(rename 'begin se) ,exp ,(loop (cdr ids))) ) ) )
 			 e #f tf cntr se) ]
 
 		       [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
@@ -632,7 +617,7 @@
 			(compile '(##core#undefined) e #f tf cntr se) ]
 
 		       [(##core#define-inline ##core#define-constant)
-			(compile `(set! ,(cadadr x) ,@(cddr x)) e #f tf cntr se) ]
+			(compile `(,(rename 'set! se) ,(cadadr x) ,@(cddr x)) e #f tf cntr se) ]
                    
 		       [(##core#primitive ##core#inline ##core#inline_allocate ##core#foreign-lambda 
 					  ##core#define-foreign-variable 
