@@ -25,6 +25,7 @@
 
 
 (declare
+  (unit expand)
   (hide match-expression
 	macro-alias
 	lookup) )
@@ -157,7 +158,7 @@
 			    #t) ) ]
 			[else (expand head exp head2)] ) )
 		(values exp #f) ) )
-	  (values exp #f) ) ) )
+	  (values exp #f) ) ) ) )
 
 
 ;;; These are needed to hook other module/macro systems into the evaluator and compiler
@@ -337,7 +338,7 @@
 		       (= 3 (length (car body))) 
 		       (symbol? (caar body))
 		       (eq? 'define-syntax (lookup (caar body) se)))
-		  (loop (cdr body) (cons (car body) defs)))
+		  (loop (cdr body) (cons (car body) defs) #f))
 		 (else (loop body defs #t))))))		       
       (define (expand body)
 	(let loop ([body body] [vars '()] [vals '()] [mvars '()] [mvals '()])
@@ -399,8 +400,8 @@
 		      #t)
 		     (else (eq? x p)) ) )
 	      ((not (pair? x))
-	      ((mwalk (##sys#slot x 0) (##sys#slot p 0))
-	       (mwalk (##sys#slot x 1) (##sys#slot p 1)) )
+	       ((mwalk (##sys#slot x 0) (##sys#slot p 0))
+		(mwalk (##sys#slot x 1) (##sys#slot p 1)) ) )
 	      (else #f) ) )
       (and (mwalk exp pat) env) ) ) )
 
@@ -522,7 +523,15 @@
 
 (define ((##sys#er-transformer handler) form se)
   (define (rename sym)
-    (cond ((lookup sym se) => cdr
+    (cond ((lookup sym se) => 
+	   (lambda (a)
+	     (if (symbol? a)
+		 a
+		 sym) ) )
+	  (else (macro-alias sym))))
+  (define (compare s1 s2)
+    (eq? (lookup s1 se) (lookup s2 se)))
+  (handler form rename compare) )
 
 
 ;;; Macro definitions:

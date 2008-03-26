@@ -570,8 +570,7 @@
 			 e #f tf cntr
 			 (let* ((ms (map (lambda (b)
 					   (cons #f ((##sys#compile-to-closure (cadr b) '() se) '())))
-					 (cadr x) )
-				    se) 
+					 (cadr x) ) )
 				(se2 (append ms se2)) )
 			   (for-each (cut set-car! <> se2) ms) ) ) )
 			       

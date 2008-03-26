@@ -692,7 +692,7 @@
 					 `(let ([,tmp ,(foreign-type-convert-argument val type)])
 					    (##core#inline_update 
 					     (,(third fv) ,type)
-					     ,(foreign-type-check tmp type) ) ) ) ) ]
+					     ,(foreign-type-check tmp type) ) ) ) ) )
 				 ((assq var location-pointer-map)
 				  => (lambda (a)
 				       (let* ([type (third a)]
@@ -705,11 +705,11 @@
 				 (else `(set! ,var ,val)))))
 
 			((##core#inline)
-			 `(##core#inline ,(unquotify (cadr x)) ,@(mapwalk (cddr x) se)))
+			 `(##core#inline ,(unquotify (cadr x) se) ,@(mapwalk (cddr x) se)))
 
 			((##core#inline_allocate)
 			 `(##core#inline_allocate 
-			   ,(map unquotify (second x))
+			   ,(map (cut unquotify <> se) (second x))
 			   ,@(mapwalk (cddr x) se)))
 
 			((##core#inline_update)

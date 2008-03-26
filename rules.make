@@ -35,7 +35,7 @@ LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
 LIBCHICKEN_STATIC_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBUCHICKEN_OBJECTS_1 = \
-       ulibrary ueval uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
+       ulibrary ueval uextras expand ulolevel uutils utcp usrfi-1 usrfi-4 \
        usrfi-13 usrfi-14 usrfi-18 u$(POSIXFILE) uregex scheduler \
        profiler stub match uruntime
 LIBUCHICKEN_SHARED_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=$(O))
