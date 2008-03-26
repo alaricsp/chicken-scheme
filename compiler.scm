@@ -282,7 +282,7 @@
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
-  location-pointer-map
+  location-pointer-map literal-rewrite-hook
   lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
@@ -419,6 +419,7 @@
 (define unused-variables '())
 (define compiler-macro-table #f)
 (define compiler-macros-enabled #t)
+(define literal-rewrite-hook #f)
 
 
 ;;; Initialize globals:
@@ -491,6 +492,11 @@
 		   t) ) ) ]
 	  [else #f] ) )
 
+  (define (walk-literal x ae me dest)
+    (if literal-rewrite-hook
+	(literal-rewrite-hook x (cut walk <> ae me dest))
+	`(quote ,x) ) )
+
   (define (walk x ae me dest)
     (cond ((symbol? x)
 	   (cond ((assq x ae) => 
@@ -500,7 +506,8 @@
 			  alias) ) ) )
 		 ((resolve-atom x ae me dest))
 		 (else (##sys#alias-global-hook x))) )
-	  ((and (not-pair? x) (constant? x)) `(quote ,x))
+	  ((and (not-pair? x) (constant? x)) 
+	   (walk-literal x ae me dest) )
 	  ((not-pair? x) (syntax-error "illegal atomic form" x))
 	  ((symbol? (car x))
 	   (let* ([head (car x)]
@@ -534,7 +541,7 @@
 
 			((quote)
 			 (##sys#check-syntax 'quote x '(quote _))
-			 x)
+			 (walk-literal (cadr x) ae me dest) )
 
 			((##core#check)
 			 (if unsafe
