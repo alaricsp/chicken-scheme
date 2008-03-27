@@ -229,7 +229,7 @@
                     (close-output-port o)
                     l)
                 (begin
-                    (condition-case (write-string d l o)
+                    (condition-case (write-string s d o)
                         (val ()
                             (close-input-port i)
                             (close-output-port o)
@@ -277,7 +277,7 @@
                                              origfile))))
                     l)
                 (begin
-                    (condition-case (write-string d l o)
+                    (condition-case (write-string s d o)
                         (val ()
                             (close-input-port i)
                             (close-output-port o)
