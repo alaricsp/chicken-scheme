@@ -452,7 +452,7 @@
 	   (lambda (a) (or (lookup a se) a)))
 	  ((assq id se) => cdr)
 	  ((assq id ##sys#macro-environment) => cdr)
-	  (else #f)))
+	  (else id)))
 
   (define (macro-alias var)
     (let ((alias (gensym var)))
@@ -471,7 +471,7 @@
     (if (and (list? x) 
 	     (= 2 (length x))
 	     (symbol? (car x))
-	     (eq? 'quote (or (lookup (car x) se) (car x))))
+	     (eq? 'quote (lookup (car x) se)))
 	(cadr x)
 	x) )
 
@@ -510,26 +510,25 @@
 	       `(,(macro-alias 'quote) ,x)
 	       (syntax-error "illegal atomic form" x)))
 	  ((symbol? (car x))
-	   (let* ([head (car x)]
-		  [rest (cdr x)]
-		  [ln (get-line x)]
-		  [name (or (lookup head se) name)] )
+	   (let ([ln (get-line x)])
 	     (emit-syntax-trace-info x #f)
 	     (unless (proper-list? x)
 	       (if ln
 		   (syntax-error (sprintf "(in line ~s) - malformed expression" ln) x)
 		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
-	     (let ((xexpanded (##sys#macroexpand-0 x se)))
-	       (cond [(not (eq? x2 xexpanded))
-		      (when ln (update-line-number-database! xexpanded ln))
-		      (walk xexpanded se dest) ]
+	     (let ((xexpanded (macroexpand x se)))
+	       (cond ((not (eq? x2 xexpanded))
+		      (walk expanded se dest))
+		     
 		     [(and inline-table-used (##sys#hash-table-ref inline-table name))
 		      => (lambda (val)
 			   (walk (cons val (cdr x)) se dest)) ]
+		     
 		     [else
+		      (when ln (update-line-number-database! xexpanded ln))
 		      (case name
-
+			
 			((if)
 			 (##sys#check-syntax 'if x '(if _ _ . #(_)) #f se)
 			 `(if
@@ -634,23 +633,60 @@
 				     (l `(lambda ,llist2 ,body)) )
 				(set-real-names! aliases vars)
 				(cond ((or (not dest) 
-					   (not (lookup dest se))) ; global?
+					   (not (assq dest se))) ; global?
 				       l)
 				      ((and emit-profile (eq? 'lambda name))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (match body0
 					 (((? (lambda (s)
-						(eq? 'begin (or (lookup s se) s))))
+						(eq? 'begin (lookup s se))))
 					   (or (? string? doc)
-					       ((? (lambda (s) (eq? 'quote (or (lookup s se) s))))
+					       ((? (lambda (s) (eq? 'quote (lookup s se))))
 						doc)) _ . more)
 					  (process-lambda-documentation
 					   dest doc l) )
 					 (_ l) ) ) ) ) ) ) ) )
-
+			
+			((let-syntax)
+			 (##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)) #f se)
+			 (walk
+			  `(,(macro-alias 'begin) ,@(cddr x))
+			  (append
+			   (map (lambda (b)
+				  (list
+				   (car b)
+				   se
+				   ((##sys#compile-to-closure
+				     `(##sys#er-transformer ,(cadr b))
+				     '() se) 
+				    '()) ) )
+				(cadr x) ) 
+			   se)
+			  dest) )
+			       
+		       ((letrec-syntax)
+			(##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)) #f se)
+			(walk
+			 `(,(macro-alias 'begin) ,@(cddr x))
+			 (let* ((ms (map (lambda (b)
+					   (list
+					    (car b)
+					    #f
+					    ((##sys#compile-to-closure
+					      `(##sys#er-transformer ,(cadr b))
+					      '() se) 
+					     '()) ) )
+					 (cadr x) ) )
+				(se2 (append ms se2)) )
+			   (for-each 
+			    (lambda (sb ms)
+			      (set-car! (cdr sb) se2) )
+			    ms)
+			   se2) ) )
+			       
 			((##core#named-lambda)
-			 (walk `(lambda ,@(cddr x)) se (cadr x)) )
+			 (walk `(,(macro-alias 'lambda) ,@(cddr x)) se (cadr x)) )
 
 			((##core#loop-lambda)
 			 (let* ([vars (cadr x)]
@@ -667,7 +703,7 @@
 			((set! ##core#set!) 
 			 (##sys#check-syntax 'set! x '(_ variable _) #f se)
 			 (let* ([var0 (cadr x)]
-				[var (or (lookup var0 se) var0)]
+				[var (lookup var0 se)]
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
 			   (cond ((eq? var var0) ; global?
@@ -781,7 +817,7 @@
 				    (set! always-bound (cons* arg ret always-bound))
 				    (set! block-globals (cons* arg ret block-globals))
 				    (walk
-				     `(begin
+				     `(,(macro-alias 'begin)
 					(##core#set! ,arg ,(first conv))
 					(##core#set! 
 					 ,ret 
@@ -967,7 +1003,7 @@
 				  (##sys#check-syntax 'location x '(location _) #f se)
 				  (let ([sym (cadr x)])
 				    (if (symbol? sym)
-					(cond [(assq (or (lookup sym se) sym) location-pointer-map)
+					(cond [(assq (lookup sym se) location-pointer-map)
 					       => (lambda (a)
 						    (walk
 						     `(##sys#make-locative ,(second a) 0 #f 'location)
@@ -988,7 +1024,7 @@
 				      (if (equal? cx x)
 					  (handle-call)
 					  (walk cx se dest)))))
-
+				 
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
 
 	  ((not (proper-list? x))

@@ -421,9 +421,9 @@
 		      (set! env (cons (cons p x) env))
 		      #t)
 		     (else (eq? x p)) ) )
-	      ((not (pair? x))
-	       ((mwalk (##sys#slot x 0) (##sys#slot p 0))
-		(mwalk (##sys#slot x 1) (##sys#slot p 1)) ) )
+	      ((pair? x)
+	       (and (mwalk (##sys#slot x 0) (##sys#slot p 0))
+		    (mwalk (##sys#slot x 1) (##sys#slot p 1)) ) )
 	      (else #f) ) )
       (and (mwalk exp pat) env) ) ) )
 
@@ -534,7 +534,8 @@
 		 (else (test
 			x
 			(lambda (y)
-			  (eq? (or (lookup y se) y) p))
+			  (let ((y2 (lookup y se)))
+			    (eq? (if (symbol? y2) y2 y) p)))
 			"missing keyword")) ) )
 	      ((not (pair? p))
 	       (err "incomplete form") )
@@ -846,6 +847,6 @@
 (##sys#register-macro-0
  'define-syntax '()
  (lambda (form se)
-   (##sys#check-syntax 'define-syntax form '(define-syntax variable _))
+   (##sys#check-syntax 'define-syntax form '(define-syntax variable _) #f se)
    `(,(if ##sys#enable-runtime-macros '##core#elaborationtimetoo '##core#elaborationtimeonly)
-     (##sys#register-macro-0 ',name '() (caddr form)))))
+     (##sys#register-macro-0 ',(cadr form) '() (##sys#er-transformer ,(caddr form))))))

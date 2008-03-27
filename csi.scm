@@ -632,10 +632,15 @@ EOF
 	     (fprintf out "symbol with name ~S~%" (##sys#symbol->string x))
 	     (let ((plist (##sys#slot x 2)))
 	       (unless (null? plist)
-		 (display "properties:\n" out)
+		 (display "  \nproperties:\n\n" out)
 		 (do ((plist plist (cddr plist)))
 		     ((null? plist))
-		   (fprintf out "  ~s\t~s~%" (car plist) (cadr plist))))) ]
+		   (fprintf out "  ~s\t" (car plist))
+		   (##sys#with-print-length-limit
+		    1000
+		    (lambda ()
+		      (write (cadr plist) out) ) )
+		   (newline out) ) ) ) ]
 	    [(list? x) (descseq "list" length list-ref 0)]
 	    [(pair? x) (fprintf out "pair with car ~S and cdr ~S~%" (car x) (cdr x))]
 	    [(procedure? x)
