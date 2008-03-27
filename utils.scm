@@ -195,9 +195,14 @@
       (and (file-exists? file) (delete-file file) #t) ) ) )
 
 ;;; file-copy and file-move : they do what you'd think.
-(define (file-copy origfile newfile #!optional (clobber #f))
+(define (file-copy origfile newfile #!optional (clobber #f) (blocksize 1024))
     (##sys#check-string origfile 'file-copy)
     (##sys#check-string newfile 'file-copy)
+    (##sys#check-number blocksize 'file-copy)
+    (or (and (integer? blocksize) (> blocksize 0))
+        (##sys#error (string-append
+                         "invalid blocksize given: not a positive integer - "
+                         (number->string blocksize))))
     (or (file-exists? origfile)
         (##sys#error (string-append "origfile does not exist - " origfile)))
     (and (file-exists? newfile)
@@ -214,27 +219,33 @@
                     (val ()
                         (##sys#error (string-append
                                          "could not open newfile for write - "
-                                         newfile))))))
-        (let loop ((b   (read-byte i))
+                                         newfile)))))
+           (s   (make-string blocksize)))
+        (let loop ((d   (read-string! blocksize s i))
                    (l   0))
-            (if (eof-object? b)
+            (if (= 0 d)
                 (begin
                     (close-input-port i)
                     (close-output-port o)
                     l)
                 (begin
-                    (condition-case (write-byte b o)
+                    (condition-case (write-string d l o)
                         (val ()
                             (close-input-port i)
                             (close-output-port o)
                             (##sys#error (string-append
-                                             "error writing to file at byte "
+                                             "error writing file starting at "
                                              (number->string l)))))
-                    (loop (read-byte i) (+ 1 l)))))))
+                    (loop (read-string! blocksize s i) (+ d l)))))))
 
-(define (file-move origfile newfile #!optional (clobber #f))
+(define (file-move origfile newfile #!optional (clobber #f) (blocksize 1024))
     (##sys#check-string origfile 'file-move)
     (##sys#check-string newfile 'file-move)
+    (##sys#check-number blocksize 'file-move)
+    (or (and (integer? blocksize) (> blocksize 0))
+        (##sys#error (string-append
+                         "invalid blocksize given: not a positive integer - "
+                         (number->string blocksize))))
     (or (file-exists? origfile)
         (##sys#error (string-append "origfile does not exist - " origfile)))
     (and (file-exists? newfile)
@@ -251,10 +262,11 @@
                     (val ()
                         (##sys#error (string-append
                                          "could not open newfile for write - "
-                                         newfile))))))
-        (let loop ((b   (read-byte i))
+                                         newfile)))))
+           (s   (make-string blocksize)))
+        (let loop ((d   (read-string! blocksize s i))
                    (l   0))
-            (if (eof-object? b)
+            (if (= 0 d)
                 (begin
                     (close-input-port i)
                     (close-output-port o)
@@ -265,14 +277,14 @@
                                              origfile))))
                     l)
                 (begin
-                    (condition-case (write-byte b o)
+                    (condition-case (write-string d l o)
                         (val ()
                             (close-input-port i)
                             (close-output-port o)
                             (##sys#error (string-append
-                                             "error writing to file at byte "
+                                             "error writing file starting at "
                                              (number->string l)))))
-                    (loop (read-byte i) (+ 1 l)))))))
+                    (loop (read-string! blocksize s i) (+ d l)))))))
 
 ;;; Pathname operations:
 
