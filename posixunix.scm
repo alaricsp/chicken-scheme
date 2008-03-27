@@ -855,11 +855,41 @@ EOF
 
 ;;; Directory stuff:
 
+(define-inline (create-directory-helper name)
+    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string name)))
+            (posix-error #:file-error 'create-directory
+                         "cannot create directory" name)))
+
+(define-inline (create-directory-check name)
+    (if (file-exists? name)
+        (if (fx< (##core#inline "C_stat" (##sys#make-c-string name)) 0)
+            (posix-error #:file-error 'create-directory
+                         "cannot stat file" name)
+            (or (foreign-value "C_isdir" bool)
+                (posix-error #:file-error 'create-directory
+                             "path segment is a file" name)))
+        #f))
+
+(define-inline (create-directory-helper-silent name)
+    (unless (create-directory-check name)
+            (create-directory-helper name)))
+
+(define-inline (create-directory-helper-parents name)
+    (let ((c   ""))
+        (for-each
+             (lambda (x)
+                 (set! c (string-append c "/" x))
+                 (create-directory-helper-silent c))
+             (string-split name "/"))))
+
 (define create-directory
-  (lambda (name)
+  (lambda (name #!optional parents?)
     (##sys#check-string name 'create-directory)
-    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
-      (posix-error #:file-error 'create-directory "cannot create directory" name) ) ) )
+    (if parents?
+        (create-directory-helper-parents (canonical-path name))
+        (create-directory-helper (canonical-path name)))))
+;    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
+;      (posix-error #:file-error 'create-directory "cannot create directory" name) ) ) )
 
 (define change-directory
   (lambda (name)
