@@ -1,3 +1,7 @@
+3.1.2
+
+- unit utils: added file-copy and file-move (request by the einit team)
+
 3.1.1
 
 - unit srfi-69: added hash-table-clear!

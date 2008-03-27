@@ -194,6 +194,85 @@
     (lambda (file)
       (and (file-exists? file) (delete-file file) #t) ) ) )
 
+;;; file-copy and file-move : they do what you'd think.
+(define (file-copy origfile newfile #!optional (clobber #f))
+    (##sys#check-string origfile 'file-copy)
+    (##sys#check-string newfile 'file-copy)
+    (or (file-exists? origfile)
+        (##sys#error (string-append "origfile does not exist - " origfile)))
+    (and (file-exists? newfile)
+         (or clobber
+             (##sys#error (string-append
+                              "newfile exists but clobber is false - "
+                              newfile))))
+    (let* ((i   (condition-case (open-input-file origfile)
+                    (val ()
+                        (##sys#error (string-append
+                                         "could not open origfile for read - "
+                                         origfile)))))
+           (o   (condition-case (open-output-file newfile)
+                    (val ()
+                        (##sys#error (string-append
+                                         "could not open newfile for write - "
+                                         newfile))))))
+        (let loop ((b   (read-byte i))
+                   (l   0))
+            (if (eof-object? b)
+                (begin
+                    (close-input-port i)
+                    (close-output-port o)
+                    l)
+                (begin
+                    (condition-case (write-byte b o)
+                        (val ()
+                            (close-input-port i)
+                            (close-output-port o)
+                            (##sys#error (string-append
+                                             "error writing to file at byte "
+                                             (number->string l)))))
+                    (loop (read-byte i) (+ 1 l)))))))
+
+(define (file-move origfile newfile #!optional (clobber #f))
+    (##sys#check-string origfile 'file-move)
+    (##sys#check-string newfile 'file-move)
+    (or (file-exists? origfile)
+        (##sys#error (string-append "origfile does not exist - " origfile)))
+    (and (file-exists? newfile)
+         (or clobber
+             (##sys#error (string-append
+                              "newfile exists but clobber is false - "
+                              newfile))))
+    (let* ((i   (condition-case (open-input-file origfile)
+                    (val ()
+                        (##sys#error (string-append
+                                         "could not open origfile for read - "
+                                         origfile)))))
+           (o   (condition-case (open-output-file newfile)
+                    (val ()
+                        (##sys#error (string-append
+                                         "could not open newfile for write - "
+                                         newfile))))))
+        (let loop ((b   (read-byte i))
+                   (l   0))
+            (if (eof-object? b)
+                (begin
+                    (close-input-port i)
+                    (close-output-port o)
+                    (condition-case (delete-file origfile)
+                        (val ()
+                            (##sys#error (string-append
+                                             "could not remove origfile - "
+                                             origfile))))
+                    l)
+                (begin
+                    (condition-case (write-byte b o)
+                        (val ()
+                            (close-input-port i)
+                            (close-output-port o)
+                            (##sys#error (string-append
+                                             "error writing to file at byte "
+                                             (number->string l)))))
+                    (loop (read-byte i) (+ 1 l)))))))
 
 ;;; Pathname operations:
 
