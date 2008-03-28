@@ -415,7 +415,7 @@
 				 [e2 (cons aliases e)]
 				 (se2 (append (map cons vars aliases) se))
 				 [body (##sys#compile-to-closure
-					(##sys#canonicalize-body (cddr x) se2 cntr)
+					(##sys#canonicalize-body (cddr x) se2)
 					e2
 					se2
 					cntr) ] )
@@ -476,7 +476,7 @@
 				      (e2 (cons aliases e))
 				      (body 
 				       (##sys#compile-to-closure
-					(##sys#canonicalize-body body se2 (or h cntr))
+					(##sys#canonicalize-body body se2)
 					e2
 					se2
 					(or h cntr) ) ) )
@@ -555,41 +555,40 @@
 
 			 ((let-syntax)
 			  (##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)) #f se)
-			  (compile
-			   `(,(rename 'begin se) ,@(cddr x))
-			   e #f tf cntr
-			   (append
-			    (map (lambda (b)
-				   (list
-				    (car b)
-				    se
-				    ((##sys#compile-to-closure
-				      `(##sys#er-transformer ,(cadr b))
-				      '() se) 
-				     '() ) ) )
-				 (cadr x) ) 
-			    se) ) )
-			       
-			 ((letrec-syntax)
-			  (##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)) #f se)
-			  (compile
-			   `(,(rename 'begin se) ,@(cddr x))
-			   e #f tf cntr
-			   (let* ((ms (map (lambda (b)
+			  (let ((se2 (append
+				      (map (lambda (b)
 					     (list
 					      (car b)
-					      #f
+					      se
 					      ((##sys#compile-to-closure
 						`(##sys#er-transformer ,(cadr b))
 						'() se) 
-					       '())))
-					   (cadr x) ) )
-				  (se2 (append ms se2)) )
-			     (for-each 
-			      (lambda (sb ms)
-				(set-car! (cdr sb) se2) )
-			      ms)
-			     se2)))
+					       '() ) ) )
+					   (cadr x) ) 
+				      se) ) )
+			    (compile
+			     (##sys#canonicalize-body (cddr x) se2)
+			     e #f tf cntr se2)))
+			       
+			 ((letrec-syntax)
+			  (##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)) #f se)
+			  (let* ((ms (map (lambda (b)
+					    (list
+					     (car b)
+					     #f
+					     ((##sys#compile-to-closure
+					       `(##sys#er-transformer ,(cadr b))
+					       '() se) 
+					      '())))
+					  (cadr x) ) )
+				 (se2 (append ms se2)) )
+			    (for-each 
+			     (lambda (sb ms)
+			       (set-car! (cdr sb) se2) )
+			     ms) 
+			    (compile
+			     (##sys#canonicalize-body (cddr x) se2)
+			     e #f tf cntr se2)))
 			       
 			 [(##core#loop-lambda)
 			  (compile `(,(rename 'lambda se) ,@(cdr x)) e #f tf cntr se) ]

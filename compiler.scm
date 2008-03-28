@@ -609,7 +609,7 @@
 			     ,(map (lambda (alias b)
 				     (list alias (walk (cadr b) se (car b))) )
 				   aliases bindings)
-			     ,(walk (##sys#canonicalize-body (cddr x) se2 dest)
+			     ,(walk (##sys#canonicalize-body (cddr x) se2)
 				    se2 dest) ) ) )
 
 			((lambda ##core#internal-lambda)
@@ -626,7 +626,7 @@
 			    (lambda (vars argc rest)
 			      (let* ((aliases (map gensym vars))
 				     (se2 (append (map cons vars aliases) se))
-				     (body0 (##sys#canonicalize-body obody se2 dest))
+				     (body0 (##sys#canonicalize-body obody se2))
 				     (body (walk body0 se2 #f))
 				     (llist2 
 				      (build-lambda-list
@@ -652,42 +652,43 @@
 			
 			((let-syntax)
 			 (##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)) #f se)
-			 (walk
-			  `(,(macro-alias 'begin se) ,@(cddr x))
-			  (append
-			   (map (lambda (b)
-				  (list
-				   (car b)
-				   se
-				   (##sys#er-transformer
-				    ((##sys#compile-to-closure
-				      (cadr b)
-				      '() se)
-				     '()) ) ) )
-				(cadr x) ) 
-			   se)
-			  dest) )
+			 (let ((se2 (append
+				     (map (lambda (b)
+					    (list
+					     (car b)
+					     se
+					     (##sys#er-transformer
+					      ((##sys#compile-to-closure
+						(cadr b)
+						'() se)
+					       '()) ) ) )
+					  (cadr x) )
+				     se) ) )
+			   (walk
+			    (##sys#canonicalize-body (cddr x) se2)
+			    se2
+			    dest) ) )
 			       
 		       ((letrec-syntax)
 			(##sys#check-syntax 'letrec-syntax x '(letrec-syntax #((variable _) 0) . #(_ 1)) #f se)
-			(walk
-			 `(,(macro-alias 'begin se) ,@(cddr x))
-			 (let* ((ms (map (lambda (b)
-					   (list
-					    (car b)
-					    #f
-					    (##sys#er-transformer
-					     ((##sys#compile-to-closure
-					       (cadr b)
-					       '() se)
-					      '()) ) ) )
-					 (cadr x) ) )
-				(se2 (append ms se2)) )
-			   (for-each 
-			    (lambda (sb ms)
-			      (set-car! (cdr sb) se2) )
-			    ms)
-			   se2) ) )
+			(let* ((ms (map (lambda (b)
+					  (list
+					   (car b)
+					   #f
+					   (##sys#er-transformer
+					    ((##sys#compile-to-closure
+					      (cadr b)
+					      '() se)
+					     '()) ) ) )
+					(cadr x) ) )
+			       (se2 (append ms se2)) )
+			  (for-each 
+			   (lambda (sb ms)
+			     (set-car! (cdr sb) se2) )
+			   ms)
+			  (walk
+			   (##sys#canonicalize-body (cddr x))
+			   se2 dest)))
 			       
 			((##core#named-lambda)
 			 (walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )
@@ -699,7 +700,7 @@
 				(se2 (append (map cons vars aliases) se))
 				[body 
 				 (walk 
-				  (##sys#canonicalize-body obody se2 dest)
+				  (##sys#canonicalize-body obody se2)
 				  se2 #f) ] )
 			   (set-real-names! aliases vars)
 			   `(lambda ,aliases ,body) ) )

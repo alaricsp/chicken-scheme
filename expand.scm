@@ -38,7 +38,6 @@
 (define (lookup id se)
   (cond ((get id '##sys#macro-alias))
 	((assq id se) => cdr)
-	((assq id ##sys#macro-environment) => cdr)
 	(else #f)))
 
 (define (macro-alias var se)
@@ -140,7 +139,9 @@
 	  (let ((head (##sys#slot exp 0))
 		(body (##sys#slot exp 1)) )
 	    (if (symbol? head)
-		(let ((head2 (or (lookup head se) head)))
+		(let ((head2 (or (lookup head se) 
+				 (lookup head ##sys#macro-environment)
+				 head)))
 		  (cond [(eq? head2 'let)
 			 (##sys#check-syntax 'let body '#(_ 2) #f se)
 			 (let ([bindings (car body)])
@@ -309,20 +310,24 @@
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body #!optional se container)
+    (lambda (body #!optional (se '()))
       (define (fini vars vals mvars mvals body)
+	(pp `(FINI: ,vars ,vals ,mvars ,mvals ,body)) ;***
 	(if (and (null? vars) (null? mvars))
 	    (let loop ([body2 body] [exps '()])
 	      (if (not (pair? body2)) 
 		  (cons 
 		   (macro-alias 'begin se)
 		   body) ; no more defines, otherwise we would have called `expand'
-		  (let ([x (##sys#slot body2 0)])
-		    (if (and (pair? x) (memq (##sys#slot x 0) `(define define-values)))
+		  (let ([x (car body2)])
+		    (if (and (pair? x) 
+			     (let ((d (car x)))
+			       (or (eq? (or (lookup d se) d) 'define)
+				   (eq? (or (lookup d se) d) 'define-values))))
 			(cons
 			 (macro-alias 'begin se)
 			 (##sys#append (reverse exps) (list (expand body2))))
-			(loop (##sys#slot body2 1) (cons x exps)) ) ) ) )
+			(loop (cdr body2) (cons x exps)) ) ) ) )
 	    (let ([vars (reverse vars)]
 		  (lam (macro-alias 'lambda se)))
 	      `(,(macro-alias 'let se)
@@ -355,9 +360,13 @@
 	(let loop ([body body] [vars '()] [vals '()] [mvars '()] [mvals '()])
 	  (if (not (pair? body))
 	      (fini vars vals mvars mvals body)
-	      (let* ([x (##sys#slot body 0)]
-		     [rest (##sys#slot body 1)] 
-		     [head (and (pair? x) (lookup (car x) se))])
+	      (let* ((x (car body))
+		     (rest (cdr body))
+		     (exp1 (and (pair? x) (car x)))
+		     (head (and exp1
+				(symbol? exp1)
+				(or (lookup exp1 se) exp1))))
+		(pp `(HEAD: ,exp1 ,head))	;***
 		(cond [(not (symbol? head)) (fini vars vals mvars mvals body)]
 		      [(eq? 'define head)
 		       (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f se)
@@ -389,7 +398,7 @@
 		       (loop rest vars vals (cons (cadr x) mvars) (cons (caddr x) mvals)) ]
 		      [(eq? 'begin head)
 		       (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
-		       (loop (##sys#append (##sys#slot x 1) rest) vars vals mvars mvals) ]
+		       (loop (##sys#append (cdr x) rest) vars vals mvars mvals) ]
 		      [else
 		       (let ([x2 (##sys#macroexpand-0 x se)])
 			 (if (eq? x x2)
@@ -718,10 +727,8 @@
  'quasiquote
  '()
  (##sys#lisp-transformer
-  (lambda form
-     
+  (lambda (form)
      (define (walk x n) (simplify (walk1 x n)))
-
      (define (walk1 x n)
        (if (##core#inline "C_blockp" x)
 	   (cond ((##core#inline "C_vectorp" x)
@@ -761,7 +768,6 @@
 				 `(##sys#cons ,(walk head n) ,(walk tail n)) ) )
 			   `(##sys#cons ,(walk head n) ,(walk tail n)) ) ) ) ) ) )
 	   `(quote ,x) ) )
-
      (define (simplify x)
        (cond ((match-expression x '(##sys#cons a '()) '(a))
 	      => (lambda (env) (simplify `(##sys#list ,(##sys#slot (assq 'a env) 1)))) )
@@ -775,7 +781,6 @@
 	     ((match-expression x '(##sys#append a '()) '(a))
 	      => (lambda (env) (##sys#slot (assq 'a env) 1)) )
 	     (else x) ) )
-     
      (walk form 0) ) ) )
 
 (##sys#extend-macro-environment

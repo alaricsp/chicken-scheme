@@ -1,0 +1,5 @@
+TODO for macro/module system					-*- Outline -*-
+
+* test hygiene
+* test local define{-values,-syntax,} expansion
+* test referential transparency
