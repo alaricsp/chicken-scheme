@@ -56,9 +56,9 @@
      ##sys#check-number ##sys#cons-flonum ##sys#copy-env-table
      ##sys#flonum-fraction ##sys#make-port ##sys#fetch-and-check-port-arg ##sys#print ##sys#check-structure 
      ##sys#make-structure ##sys#feature? ##sys#interpreter-toplevel-macroexpand-hook
-     ##sys#error-handler ##sys#hash-symbol ##sys#register-macro ##sys#check-syntax
+     ##sys#error-handler ##sys#hash-symbol ##sys#check-syntax
      ##sys#hash-table-ref ##sys#hash-table-set! ##sys#canonicalize-body ##sys#decompose-lambda-list
-     ##sys#make-c-string ##sys#resolve-include-filename ##sys#register-macro-2 
+     ##sys#make-c-string ##sys#resolve-include-filename
      ##sys#load ##sys#error ##sys#warn ##sys#hash-table-location ##sys#expand-home-path
      ##sys#make-flonum ##sys#make-pointer ##sys#null-pointer ##sys#address->pointer 
      ##sys#pointer->address ##sys#compile-to-closure ##sys#make-string ##sys#make-lambda-info
@@ -237,7 +237,6 @@
 (define ##sys#compile-to-closure
   (let ([macro? macro?]
 	[write write]
-	[cadadr cadadr]
 	[reverse reverse]
 	[open-output-string open-output-string]
 	[get-output-string get-output-string] 
@@ -247,22 +246,23 @@
 	[display display] )
     (lambda (exp env se #!optional cntr)
 
+      (define (find-id id se)		; ignores macro bindings
+	(cond ((null? se) #f)
+	      ((and (eq? id (caar se)) (symbol? (cdar se))) (cdar se))
+	      (else (find-id id (cdr se)))))
+
       (define (rename var se)
-	(cond ((get var '##sys#macro-alias) =>
-	       (lambda (a) (rename a se)))
-	      ((or (assq var se) 
-		   (assq var ##sys#macro-environment) ) => 
-		   (lambda (a) 
-		     (let ((x (cdr a)))
-		       (and (symbol? x) x))))
+	(cond ((get var '##sys#macro-alias))
+	      ((find-id var se))	;*** ignores global macro env - ok?
 	      (else var)))
 
       (define (lookup var e se)
+	(pp `(LOOKUP: ,var ,e ,se))	;***
 	(let ((var (rename var se)))
 	  (let loop ((envs e) (ei 0))
 	    (cond ((null? envs) (values #f var))
 		  ((posq var (##sys#slot envs 0)) => (lambda (p) (values ei p)))
-		  (else (loop (##sys#slot envs 1) (fx+ ei 1))) ) ) ) )
+		  (else (loop (##sys#slot envs 1) (fx+ ei 1))) ) ) ))
 
       (define (posq x lst)
 	(let loop ((lst lst) (i 0))
@@ -467,8 +467,7 @@
 			      (set!-values 
 			       (llist body) 
 			       (##sys#expand-extended-lambda-list 
-				llist body
-				##sys#syntax-error-hook) ) ) 
+				llist body ##sys#syntax-error-hook se) ) ) 
 			    (##sys#decompose-lambda-list
 			     llist
 			     (lambda (vars argc rest)
