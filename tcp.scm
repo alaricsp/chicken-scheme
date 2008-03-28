@@ -40,7 +40,7 @@
    ##sys#check-port ##sys#port-data ##sys#thread-block-for-i/o! make-string make-input-port make-output-port ##sys#substring
    substring ##sys#make-c-string ##sys#schedule
    ##net#close ##net#recv ##net#send ##net#select ##net#select-write ##net#gethostaddr ##net#io-ports ##sys#update-errno
-   ##sys#error ##sys#signal-hook ##net#getservbyname ##net#parse-host ##net#fresh-addr
+   ##sys#error ##sys#signal-hook ##net#getservbyname ##net#parse-host ##net#fresh-addr ##tcp#thread-block-for-i/o!
    ##net#bind-socket ##net#shutdown)
   (foreign-declare #<<EOF
 #include <errno.h>
@@ -103,6 +103,15 @@ EOF
     (define-macro (##sys#check-number x) '(##core#undefined))))
  (else
   (declare (emit-exports "tcp.exports"))) )
+
+(cond-expand
+    (windows
+        (define-inline (##tcp#thread-block-for-i/o! a b c)
+            #t))
+    (else
+        (define-inline (##tcp#thread-block-for-i/o! a b c)
+            (##sys#thread-block-for-i/o! a b c)))
+    )
 
 (define-foreign-variable errno int "errno")
 (define-foreign-variable strerror c-string "strerror(errno)")
@@ -366,7 +375,7 @@ EOF
 				    (##sys#thread-block-for-timeout! 
 				     ##sys#current-thread
 				     (fx+ (##sys#fudge 16) tmr) ) )
-				  (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
+		 		  (##tcp#thread-block-for-i/o! ##sys#current-thread fd #t)
 				  (yield)
 				  (when (##sys#slot ##sys#current-thread 13)
 				    (##sys#signal-hook
@@ -463,7 +472,7 @@ EOF
 				    (##sys#thread-block-for-timeout! 
 				     ##sys#current-thread
 				     (fx+ (##sys#fudge 16) tmw) ) )
-				  (##sys#thread-block-for-i/o! ##sys#current-thread fd #f)
+	 	                  (##tcp#thread-block-for-i/o! ##sys#current-thread fd #f)
 				  (yield) 
 				  (when (##sys#slot ##sys#current-thread 13)
 				    (##sys#signal-hook
@@ -531,7 +540,7 @@ EOF
 	      (##sys#thread-block-for-timeout! 
 	       ##sys#current-thread
 	       (fx+ (##sys#fudge 16) tma) ) )
-	    (##sys#thread-block-for-i/o! ##sys#current-thread fd #t)
+	    (##tcp#thread-block-for-i/o! ##sys#current-thread fd #t)
 	    (yield)
 	    (when (##sys#slot ##sys#current-thread 13)
 	      (##sys#signal-hook
@@ -594,7 +603,7 @@ EOF
 		    (##sys#thread-block-for-timeout!
 		     ##sys#current-thread
 		     (fx+ (##sys#fudge 16) tmc) ) )
-		  (##sys#thread-block-for-i/o! ##sys#current-thread s #:all)
+		  (##tcp#thread-block-for-i/o! ##sys#current-thread s #:all)
 		  (yield)
 		  (when (##sys#slot ##sys#current-thread 13)
 		    (##sys#signal-hook
