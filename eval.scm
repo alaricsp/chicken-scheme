@@ -235,8 +235,7 @@
 (define (##sys#alias-global-hook s) s)
 
 (define ##sys#compile-to-closure
-  (let ([macro? macro?]
-	[write write]
+  (let ([write write]
 	[reverse reverse]
 	[open-output-string open-output-string]
 	[get-output-string get-output-string] 
@@ -562,7 +561,7 @@
 					      se
 					      ((##sys#compile-to-closure
 						`(##sys#er-transformer ,(cadr b))
-						'() se) 
+						'() (##sys#current-meta-environment))
 					       '() ) ) )
 					   (cadr x) ) 
 				      se) ) )
@@ -578,7 +577,7 @@
 					     #f
 					     ((##sys#compile-to-closure
 					       `(##sys#er-transformer ,(cadr b))
-					       '() se) 
+					       '() (##sys#current-meta-environment))
 					      '())))
 					  (cadr x) ) )
 				 (se2 (append ms se2)) )
@@ -597,7 +596,12 @@
 			  (compile `(,(rename 'lambda se) ,@(cddr x)) e (cadr x) tf cntr se) ]
 
 			 [(##core#require-for-syntax)
-			  (let ([ids (map (lambda (x) ((##sys#compile-to-closure x '() se) '())) (cdr x))])
+			  (let ([ids (map (lambda (x)
+					    ((##sys#compile-to-closure
+					      x '()
+					      (##sys#current-meta-environment) )
+					     '()))
+					  (cdr x))])
 			    (apply ##sys#require ids)
 			    (let ([rs (##sys#lookup-runtime-requirements ids)])
 			      (compile
@@ -616,7 +620,11 @@
 			   e #f tf cntr se) ]
 
 			 [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
-			  (##core#app (##sys#compile-to-closure (cadr x) '() se #f) '())
+			  (##core#app 
+			   (##sys#compile-to-closure
+			    (cadr x) '()
+			    (##sys#current-meta-environment))
+			   '())
 			  (compile '(##core#undefined) e #f tf cntr se) ]
 
 			 [(##core#compiletimetoo)
@@ -722,7 +730,7 @@
 	     (set! mut (##sys#slot env 2)) ) ) )
        ((fluid-let ([##sys#environment-is-mutable mut]
 		    [##sys#eval-environment e] )
-	  (##sys#compile-to-closure x '() '()) )
+	  (##sys#compile-to-closure x '() (##sys#current-environment)) )
 	'() ) ) ) ) )
 
 (define eval-handler ##sys#eval-handler)
@@ -831,6 +839,8 @@
 	     (lambda (abrt)
 	       (fluid-let ([##sys#read-error-with-line-number #t]
 			   [##sys#current-source-filename fname]
+			   (##sys#current-environment ##sys#current-environment)
+			   (##sys#current-meta-environment ##sys#current-meta-environment)
 			   [##sys#current-load-path
 			    (and fname
 				 (let ((i (has-sep? fname)))

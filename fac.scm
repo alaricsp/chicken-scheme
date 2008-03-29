@@ -4,6 +4,7 @@
 		     (list (r 'sub1) (cadr n)))))
     (define (sub1 . _)
       (error "argh.") )
+    (set! sub1 99)
     (print "fac: " n)
     (if (zero? n)
 	1

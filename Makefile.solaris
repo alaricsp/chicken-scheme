@@ -84,7 +84,7 @@ endif
 ifdef NOAPPLYHOOK
 	echo "#define C_NO_APPLY_HOOK" >>$@
 endif
-ifdef HACKED_APPLY
+ifneq ($(HACKED_APPLY),)
 	echo "#define C_HACKED_APPLY" >>$@
 endif
 	cat chicken-defaults.h >>$@

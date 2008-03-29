@@ -255,7 +255,7 @@ endif
 
 # bootstrapping compiler
 
-CHICKEN = chicken$(EXE)
+CHICKEN ?= chicken$(EXE)
 
 # Scheme compiler flags
 

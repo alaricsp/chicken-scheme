@@ -3,3 +3,22 @@ TODO for macro/module system					-*- Outline -*-
 * test hygiene
 * test local define{-values,-syntax,} expansion
 * test referential transparency
+* test interaction of hygienic and non-hygienic macros
+* test pattern matching macros
+* test extended lambda-lists
+* test macro-expansions
+** quoted literals
+** keywords
+** qualified symbols
+** extended lambda-list markers
+
+* test r4rstest
+* test benchmarks
+
+* reimplement default macros hygienically
+* reimplement chicken-more-macros hygienically
+
+* integrate syntax-rules (synrules.scm)
+
+* add low-level support for modules
+* find suitable design for modules

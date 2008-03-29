@@ -453,13 +453,13 @@
 	  (else (find-id id (cdr se)))))
 
   (define (lookup id se)
-    (cond ((get id '##sys#macro-alias))
+    (cond ((##sys#get id '##sys#macro-alias))
 	  ((find-id id se))		;*** currently ignores global macro env - ok?
 	  (else id)))
 
   (define (macro-alias var se)
     (let ((alias (gensym var)))
-      (put! alias '##sys#macro-alias (lookup var se))
+      (##sys#put! alias '##sys#macro-alias (lookup var se))
       alias) )
 
   (define (set-real-names! as ns)
@@ -510,7 +510,7 @@
 	   (##sys#alias-global-hook (resolve-atom x se dest)))
 	  ((not-pair? x)
 	   (if (constant? x)
-	       `(,(macro-alias 'quote se) ,x)
+	       `(quote ,x)
 	       (syntax-error "illegal atomic form" x)))
 	  ((symbol? (car x))
 	   (let ([ln (get-line x)])
@@ -520,9 +520,10 @@
 		   (syntax-error (sprintf "(in line ~s) - malformed expression" ln) x)
 		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
-	     (let ((xexpanded (macroexpand x se)))
-	       (cond ((not (eq? x2 xexpanded))
-		      (walk expanded se dest))
+	     (let ((name (lookup (car x) se))
+		   (xexpanded (macroexpand x se)))
+	       (cond ((not (eq? x xexpanded))
+		      (walk xexpanded se dest))
 		     
 		     [(and inline-table-used (##sys#hash-table-ref inline-table name))
 		      => (lambda (val)
@@ -660,7 +661,7 @@
 					     (##sys#er-transformer
 					      ((##sys#compile-to-closure
 						(cadr b)
-						'() se)
+						'() (##sys#current-meta-environment))
 					       '()) ) ) )
 					  (cadr x) )
 				     se) ) )
@@ -687,7 +688,7 @@
 			     (set-car! (cdr sb) se2) )
 			   ms)
 			  (walk
-			   (##sys#canonicalize-body (cddr x))
+			   (##sys#canonicalize-body (cddr x) se2)
 			   se2 dest)))
 			       
 			((##core#named-lambda)
@@ -711,31 +712,31 @@
 				[var (lookup var0 se)]
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
-			   (cond ((eq? var var0) ; global?
-				  (set! var (##sys#alias-global-hook var))
-				  (when safe-globals-flag
-				    (set! always-bound-to-procedure
-				      (lset-adjoin eq? always-bound-to-procedure var))
-				    (set! always-bound (lset-adjoin eq? always-bound var)) )
-				  (when (macro? var)
-				    (compiler-warning 
-				     'var "assigned global variable `~S' is a macro ~A"
-				     var
-				     (if ln (sprintf "in line ~S" ln) "") )
-				    (when undefine-shadowed-macros (undefine-macro! var) ) ) )
-				 ((keyword? var)
-				  (compiler-warning 'syntax "assignment to keyword `~S'" var) )
-				 ((pair? var) ; macro
-				  (syntax-error
-				   'set! "assignment to syntactic identifier" var))
-				 ((assq var foreign-variables)
-				  => (lambda (fv)
-				       (let ([type (second fv)]
-					     [tmp (gensym)] )
-					 `(let ([,tmp ,(foreign-type-convert-argument val type)])
-					    (##core#inline_update 
-					     (,(third fv) ,type)
-					     ,(foreign-type-check tmp type) ) ) ) ) )
+			   (when (eq? var var0) ; global?
+			     (set! var (##sys#alias-global-hook var))
+			     (when safe-globals-flag
+			       (set! always-bound-to-procedure
+				 (lset-adjoin eq? always-bound-to-procedure var))
+			       (set! always-bound (lset-adjoin eq? always-bound var)) )
+			     (when (macro? var)
+			       (compiler-warning 
+				'var "assigned global variable `~S' is a macro ~A"
+				var
+				(if ln (sprintf "in line ~S" ln) "") )
+			       (when undefine-shadowed-macros (undefine-macro! var) ) ) )
+			   (when (keyword? var)
+			     (compiler-warning 'syntax "assignment to keyword `~S'" var) )
+			   (when (pair? var) ; macro
+			     (syntax-error
+			      'set! "assignment to syntactic identifier" var))
+			   (cond ((assq var foreign-variables)
+				   => (lambda (fv)
+					(let ([type (second fv)]
+					      [tmp (gensym)] )
+					  `(let ([,tmp ,(foreign-type-convert-argument val type)])
+					     (##core#inline_update 
+					      (,(third fv) ,type)
+					      ,(foreign-type-check tmp type) ) ) ) ) )
 				 ((assq var location-pointer-map)
 				  => (lambda (a)
 				       (let* ([type (third a)]

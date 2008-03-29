@@ -4686,7 +4686,7 @@ EOF
 
 ;;; Property lists
 
-(define (put! sym prop val)
+(define (##sys#put! sym prop val)
   (##sys#check-symbol sym 'put!)
   (let loop ((plist (##sys#slot sym 2)))
     (cond ((null? plist) (##sys#setslot sym 2 (cons prop (cons val (##sys#slot sym 2)))) )
@@ -4694,15 +4694,16 @@ EOF
 	  (else (loop (##sys#slot (##sys#slot plist 1) 1)))) )
   val)
 
-(define get
-  (getter-with-setter
-   (lambda (sym prop . default)
-     (##sys#check-symbol sym 'get)
-     (let loop ((plist (##sys#slot sym 2)))
-       (cond ((null? plist) (optional default #f))
-	     ((eq? (##sys#slot plist 0) prop) (##sys#slot (##sys#slot plist 1) 0))
-	     (else (loop (##sys#slot (##sys#slot plist 1) 1))))) )
-   put!) )
+(define put! ##sys#put!)
+
+(define (##sys#get sym prop . default)
+  (##sys#check-symbol sym 'get)
+  (let loop ((plist (##sys#slot sym 2)))
+    (cond ((null? plist) (optional default #f))
+	  ((eq? (##sys#slot plist 0) prop) (##sys#slot (##sys#slot plist 1) 0))
+	  (else (loop (##sys#slot (##sys#slot plist 1) 1))))) )
+
+(define get (getter-with-setter ##sys#get put!))
 
 (define (remprop! sym prop)
   (##sys#check-symbol sym 'remprop!)

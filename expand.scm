@@ -35,6 +35,9 @@
 
 ;;; Syntactic environments
 
+(define ##sys#current-environment (make-parameter '()))
+(define ##sys#current-meta-environment (make-parameter '()))
+
 (define (lookup id se)
   (cond ((get id '##sys#macro-alias))
 	((assq id se) => cdr)
@@ -75,9 +78,9 @@
   (let ((def (lookup old ##sys#macro-environment)))
     (apply ##sys#extend-macro-environment new def) ) )
 
-(define (macro? sym #!optional (senv '()))
+(define (macro? sym #!optional (senv (##sys#current-environment)))
   (##sys#check-symbol sym 'macro?)
-  (##sys#check-pair? senv 'macro?)
+  (##sys#check-list senv 'macro?)
   (or (lookup sym senv)
       (and (lookup sym ##sys#macro-environment) #t) ) )
 
@@ -184,14 +187,14 @@
 
 ;;; User-level macroexpansion
 
-(define (macroexpand exp #!optional (me '()))
+(define (macroexpand exp #!optional (me (##sys#current-environment)))
   (let loop ([exp exp])
     (let-values ([(exp2 m) (##sys#macroexpand-0 exp me)])
       (if m
 	  (loop exp2)
 	  exp2) ) ) )
 
-(define (macroexpand-1 exp #!optional (me '()))
+(define (macroexpand-1 exp #!optional (me (##sys#current-environment)))
   (##sys#macroexpand-0 exp me) )
 
 
@@ -310,7 +313,7 @@
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body #!optional (se '()))
+    (lambda (body #!optional (se (##sys#current-environment)))
       (define (fini vars vals mvars mvals body)
 	(pp `(FINI: ,vars ,vals ,mvars ,mvals ,body)) ;***
 	(if (and (null? vars) (null? mvars))
@@ -465,7 +468,7 @@
 	[keyword? keyword?]
 	[get-line-number get-line-number]
 	[symbol->string symbol->string] )
-    (lambda (id exp pat #!optional culprit (se '()))
+    (lambda (id exp pat #!optional culprit (se (##sys#current-environment)))
 
       (define (test x pred msg)
 	(unless (pred x) (err msg)) )
@@ -849,7 +852,8 @@
 	,(if (symbol? val)
 	     `(##sys#copy-macro ',val ',name)
 	     `(##sys#extend-macro-environment
-	       ',name '()
+	       ',name
+	       (##sys#current-environment)
 	       (##sys#lisp-transformer ,val)))))
     (cond ((symbol? head)
 	   (##sys#check-syntax 'define-macro body '(_))
@@ -873,7 +877,10 @@
  (lambda (form se)
    (##sys#check-syntax 'define-syntax form '(define-syntax variable _) #f se)
    `(,(if ##sys#enable-runtime-macros '##core#elaborationtimetoo '##core#elaborationtimeonly)
-     (##sys#extend-macro-environment ',(cadr form) '() (##sys#er-transformer ,(caddr form))))))
+     (##sys#extend-macro-environment
+      ',(cadr form)
+      (##sys#current-environment)
+      (##sys#er-transformer ,(caddr form))))))
 
 
 ;;;*** only for backwards compatibility (will break for high argument counts)
