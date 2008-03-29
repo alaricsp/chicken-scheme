@@ -8,7 +8,9 @@ exec csi -s "$0" "$@"
 (define buildversion (->string (car (read-file "buildversion"))))
 (define buildbinaryversion (car (read-file "buildbinaryversion")))
 
-(define files '("README" "manual/The User's Manual"))
+(define files 
+  '("README" 
+    "manual/The User's Manual"))
 
 (define (patch which rx subst)
   (match which

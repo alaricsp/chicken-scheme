@@ -2,9 +2,9 @@
 
 == The User's Manual
 
-This is the user's manual for the Chicken Scheme compiler, version 3.1.2
+This is the user's manual for the CHICKEN Scheme compiler, version 3.1.2
 
-; [[Overview]] : What is Chicken?
+; [[Getting started]] : What is CHICKEN and how do I use it?
 
 ; [[Basic mode of operation]] : Compiling Scheme files.
 
@@ -27,4 +27,3 @@ This is the user's manual for the Chicken Scheme compiler, version 3.1.2
 ; [[Acknowledgements]] : A list of some of the people that have contributed to make CHICKEN what it is.
 
 ; [[Bibliography]] : Links to documents that may be of interest.
-
