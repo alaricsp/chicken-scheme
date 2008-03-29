@@ -117,8 +117,14 @@ static C_TLS DIR *temphandle;
 static C_TLS struct passwd *C_user;
 #ifdef HAVE_GRP_H
 static C_TLS struct group *C_group;
-static C_TLS int C_pipefds[ 2 ];
+#else
+static C_TLS struct {
+  char *gr_name, gr_passwd;
+  int gr_gid;
+  char *gr_mem[ 1 ];
+} C_group = { "", "", 0, { "" } };
 #endif
+static C_TLS int C_pipefds[ 2 ];
 static C_TLS time_t C_secs;
 static C_TLS struct tm C_tm;
 static C_TLS fd_set C_fd_sets[ 2 ];
