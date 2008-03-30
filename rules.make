@@ -867,7 +867,7 @@ library.c: library.scm version.scm banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 eval.c: eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
-expand.c: expand.scm
+expand.c: expand.scm synrules.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 extras.c: extras.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm

@@ -453,8 +453,8 @@
 	  (else (find-id id (cdr se)))))
 
   (define (lookup id se)
-    (cond ((##sys#get id '##sys#macro-alias))
-	  ((find-id id se))		;*** currently ignores global macro env - ok?
+    (cond ((find-id id se))
+	  ((##sys#get id '##sys#macro-alias))
 	  (else id)))
 
   (define (macro-alias var se)
@@ -545,6 +545,9 @@
 			((quote)
 			 (##sys#check-syntax 'quote x '(quote _) #f se)
 			 `(quote ,(##sys#strip-syntax (cadr x))))
+
+			((##core#syntax)
+			 `(quote ,(cadr x)))
 
 			((##core#check)
 			 (if unsafe
@@ -918,7 +921,8 @@
 			  `(,(macro-alias 'begin se)
 			     ,@(map (lambda (d)
 				      (process-declaration 
-				       (##sys#strip-syntax (second d))))
+				       (##sys#strip-syntax (second d))
+				       se))
 				    (cdr x) ) )
 			  '() #f) )
 	     
@@ -1078,7 +1082,7 @@
    '() #f) )
 
 
-(define (process-declaration spec)
+(define (process-declaration spec se)	; se unused in the moment
   (define (check-decl spec minlen . maxlen)
     (let ([n (length (cdr spec))])
       (if (or (< n minlen) (> n (optional maxlen 99999)))

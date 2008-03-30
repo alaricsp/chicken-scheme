@@ -30,7 +30,15 @@
   (fixnum)
   (hide match-expression
 	macro-alias
+	d
 	lookup) )
+
+(define (d arg1 . more)
+  (if (null? more)
+      (pp arg1)
+      (apply print arg1 more)))
+
+;(define-macro (d . _) (void))
 
 
 ;;; Syntactic environments
@@ -39,20 +47,27 @@
 (define ##sys#current-meta-environment (make-parameter '()))
 
 (define (lookup id se)
-  (cond ((get id '##sys#macro-alias))
-	((assq id se) => cdr)
+  (cond ((assq id se) => cdr)
+	((##sys#get id '##sys#macro-alias))
 	(else #f)))
 
 (define (macro-alias var se)
-  (let ((alias (gensym var)))
-    (put! alias '##sys#macro-alias (or (lookup var se) var))
+  (let* ((alias (gensym var))
+	 (ua (or (lookup var se) var)))
+    (##sys#put! alias '##sys#macro-alias ua)
     alias) )
 
-(define (##sys#strip-syntax exp)
+(define (##sys#strip-syntax exp #!optional se)
+  ;; if se is given, retain bound vars
+  (d `(STRIP: ,exp ,se))
   (let walk ((x exp))
-    (cond ((symbol? x) 
-	   (or (get x '##sys#macro-alias)
-	       x) )
+    (cond ((symbol? x)
+	   (let ((x2 (if se 
+			 (lookup x se)
+			 (get x '##sys#macro-alias) ) ) )
+	     (cond ((not x2) x)
+		   ((pair? x2) x)
+		   (else x2))))
 	  ((pair? x)
 	   (cons (walk (##sys#slot x 0))
 		 (walk (##sys#slot x 1))))
@@ -103,6 +118,7 @@
   (let ([string-append string-append])
     (lambda (exp se)
       (define (call-handler name handler exp se)
+	(d "invoking macro: " name)
 	(handle-exceptions ex
 	    (##sys#abort
 	     (if (and (##sys#structure? ex 'condition)
@@ -128,23 +144,25 @@
 				     (cdr r) ) )
 			      (copy r) ) ) ) ) )
 		 ex) )
-	  (handler exp se) ) )				   
+	  (handler exp se)))
       (define (expand head exp mdef)
-	(pp `(EXPAND: ,head ,exp ,mdef)) ;***
+	(d `(EXPAND: ,head ,exp ,mdef))
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
 	       (values 
-		(call-handler head (cadr mdef) exp (car mdef))
+		;; if se is #f, then this is a lisp macro - force ref. opaqueness by 
+		;; passing dynamic se
+		(call-handler head (cadr mdef) exp (or (car mdef) se))
 		#t))
 	      (else (values exp #f)) ) )
       (if (pair? exp)
 	  (let ((head (##sys#slot exp 0))
 		(body (##sys#slot exp 1)) )
 	    (if (symbol? head)
-		(let ((head2 (or (lookup head se) 
-				 (lookup head ##sys#macro-environment)
-				 head)))
+		(let ((head2 (or (lookup head se) head)))
+		  (unless (pair? head2)
+		    (set! head2 (or (lookup head2 ##sys#macro-environment) head2)) )
 		  (cond [(eq? head2 'let)
 			 (##sys#check-syntax 'let body '#(_ 2) #f se)
 			 (let ([bindings (car body)])
@@ -161,13 +179,13 @@
 				 [else (values exp #f)] ) ) ]
 			[(and (memq head2 '(set! ##core#set!))
 			      (pair? body)
-			      (pair? (##sys#slot body 0)) )
-			 (let ([dest (##sys#slot body 0)])
+			      (pair? (car body)) )
+			 (let ([dest (car body)])
 			   (##sys#check-syntax 'set! body '(#(_ 1) _) #f se)
 			   (values
-			    (append (list (list '##sys#setter (##sys#slot dest 0)))
-				    (##sys#slot dest 1)
-				    (##sys#slot body 1) ) 
+			    (append (list (list '##sys#setter (car dest)))
+				    (cdr dest)
+				    (cdr body) ) 
 			    #t) ) ]
 			[else (expand head exp head2)] ) )
 		(values exp #f) ) )
@@ -315,7 +333,7 @@
 	[map map] )
     (lambda (body #!optional (se (##sys#current-environment)))
       (define (fini vars vals mvars mvals body)
-	(pp `(FINI: ,vars ,vals ,mvars ,mvals ,body)) ;***
+	(d `(FINI: ,vars ,vals ,mvars ,mvals ,body))
 	(if (and (null? vars) (null? mvars))
 	    (let loop ([body2 body] [exps '()])
 	      (if (not (pair? body2)) 
@@ -369,7 +387,6 @@
 		     (head (and exp1
 				(symbol? exp1)
 				(or (lookup exp1 se) exp1))))
-		(pp `(HEAD: ,exp1 ,head))	;***
 		(cond [(not (symbol? head)) (fini vars vals mvars mvals body)]
 		      [(eq? 'define head)
 		       (##sys#check-syntax 'define x '(define _ . #(_ 0)) #f se)
@@ -548,37 +565,40 @@
 ;;; explicit-renaming transformer
 
 (define ((##sys#er-transformer handler) form se)
-  (define (rename sym)
-    (cond ((lookup sym se) => 
-	   (lambda (a)
-	     (if (symbol? a)
-		 a
-		 sym) ) )
-	  (else (macro-alias sym se))))
-  (define (compare s1 s2)
-    (eq? (or (lookup s1 se) s1)
-	 (or (lookup s2 se) s2)))
-  (handler form rename compare) )
+  (let ((renv '()))			; keep rename-environment for this expansion
+    (define (rename sym)
+      (cond ((assq sym renv) => cdr)
+	    ((lookup sym se) => 
+	     (lambda (a)
+	       (if (symbol? a)
+		   a
+		   sym) ) )
+	    (else
+	     (let ((a (macro-alias sym se)))
+	       (set! renv (cons (cons sym a) renv))
+	       a))))
+    (define (compare s1 s2)
+      (eq? (or (lookup s1 se) s1)
+	   (or (lookup s2 se) s2)))
+    (handler form rename compare) ) )
 
 
 ;;; transformer for normal low-level macros
 
 (define (##sys#lisp-transformer handler #!optional manyargs) 
   (if manyargs
-      (lambda (form se) (handler (##sys#strip-syntax (cdr form))))
-      (lambda (form se) (apply handler (##sys#strip-syntax (cdr form)))) ) )
+      (lambda (form se) (handler (##sys#strip-syntax (cdr form) se)))
+      (lambda (form se) (apply handler (##sys#strip-syntax (cdr form) se))) ) )
 
 
 ;;; Macro definitions:
 
-;;*** need to be done hygienically
-
 (##sys#extend-macro-environment
  'define
  '()
- (##sys#lisp-transformer
-  (lambda form
-   (let loop ((form form))
+ (##sys#er-transformer
+  (lambda (form r c)
+   (let loop ((form (cdr form)))
      (let ((head (car form))
 	   (body (cdr form)) )
        (cond ((not (pair? head))
@@ -592,11 +612,15 @@
 	     (else
 	      (##sys#check-syntax 'define head '(symbol . lambda-list))
 	      (##sys#check-syntax 'define body '#(_ 1))
-	      `(##core#set! ,(car head) (lambda ,(cdr head) ,@body)) ) ) ) ) ) ))
+	      `(##core#set!
+		,(car head)
+		(,(r 'lambda) ,(cdr head) ,@body))) ) ) ) ) ) )
+
+;;*** need to be done hygienically
 
 (##sys#extend-macro-environment
  'and
- '()
+ #f
  (##sys#lisp-transformer
   (lambda body
     (if (eq? body '())
@@ -609,7 +633,7 @@
 
 (##sys#extend-macro-environment
  'or 
- '()
+ #f
  (##sys#lisp-transformer
    (lambda body
      (if (eq? body '())
@@ -624,9 +648,10 @@
 
 (##sys#extend-macro-environment
  'cond
- '()
+ #f
  (##sys#lisp-transformer
   (lambda body
+    (d `(COND: ,body))
      (let expand ((clauses body))
        (if (not (pair? clauses))
 	   '(##core#undefined)
@@ -655,7 +680,7 @@
 
 (##sys#extend-macro-environment
  'case
- '()
+ #f
  (##sys#lisp-transformer
   (lambda form
      (let ((exp (car form))
@@ -676,7 +701,7 @@
 
 (##sys#extend-macro-environment
  'let*
- '()
+ #f
  (##sys#lisp-transformer
   (lambda form
     (let ((bindings (car form))
@@ -690,7 +715,7 @@
 
 (##sys#extend-macro-environment
  'letrec
- '()
+ #f
  (##sys#lisp-transformer
   (lambda form
     (let ((bindings (car form))
@@ -703,7 +728,7 @@
 
 (##sys#extend-macro-environment
  'do
- '()
+ #f
  (##sys#lisp-transformer
    (lambda (bindings test . body)
      (##sys#check-syntax 'do bindings '#((symbol _ . #(_)) 0))
@@ -728,7 +753,7 @@
 
 (##sys#extend-macro-environment
  'quasiquote
- '()
+ #f
  (##sys#lisp-transformer
   (lambda (form)
      (define (walk x n) (simplify (walk1 x n)))
@@ -788,13 +813,13 @@
 
 (##sys#extend-macro-environment
  'delay
- '()
+ #f
  (##sys#lisp-transformer
   (lambda (x) `(##sys#make-promise (lambda () ,x))) ) )
 
 (##sys#extend-macro-environment
  'cond-expand
- '()
+ #f
  (##sys#lisp-transformer
    (lambda clauses
 
@@ -844,7 +869,7 @@
 
 (##sys#extend-macro-environment
  'define-macro
- '()
+ #f
  (##sys#lisp-transformer
   (lambda (head . body)
     (define (expand name val)
@@ -865,7 +890,7 @@
 
 (##sys#extend-macro-environment
  'require-extension
- '()
+ #f
  (##sys#lisp-transformer
   (lambda ids
     (##sys#check-syntax 'require-extension ids '#(_ 0))
@@ -895,3 +920,8 @@
    name '()
    (##sys#lisp-transformer
     (lambda body (h2 body)))))
+
+
+;;; syntax-rules
+
+(include "synrules.scm")

@@ -33,6 +33,13 @@
 	##sys#r4rs-environment ##sys#r5rs-environment 
 	##sys#interaction-environment pds pdss pxss) )
 
+(define (d arg1 . more)
+  (if (null? more)
+      (pp arg1)
+      (apply print arg1 more)))
+
+;(define-macro (d . _) (void))
+
 #>
 #ifndef C_INSTALL_EGG_HOME
 # define C_INSTALL_EGG_HOME    "."
@@ -251,13 +258,13 @@
 	      (else (find-id id (cdr se)))))
 
       (define (rename var se)
-	(cond ((get var '##sys#macro-alias))
-	      ((find-id var se))	;*** ignores global macro env - ok?
+	(cond ((find-id var se))
+	      ((##sys#get var '##sys#macro-alias))
 	      (else var)))
 
-      (define (lookup var e se)
-	(pp `(LOOKUP: ,var ,e ,se))	;***
-	(let ((var (rename var se)))
+      (define (lookup var0 e se)
+	(let ((var (rename var0 se)))
+	  (d `(LOOKUP/EVAL: ,var0 ,var ,e ,se))
 	  (let loop ((envs e) (ei 0))
 	    (cond ((null? envs) (values #f var))
 		  ((posq var (##sys#slot envs 0)) => (lambda (p) (values ei p)))
@@ -323,6 +330,7 @@
 	      [(symbol? (##sys#slot x 0))
 	       (emit-syntax-trace-info tf x cntr)
 	       (let ((x2 (macroexpand x se)))
+		 (d `(EVAL/EXPANDED: ,x2))
 		 (if (not (eq? x2 x))
 		     (compile x2 e h tf cntr se)
 		     (let ((head (rename (##sys#slot x 0) se)))
@@ -340,6 +348,10 @@
 			      [(#f) (lambda v #f)]
 			      [(()) (lambda v '())]
 			      [else (lambda v c)] ) ) ]
+
+			 ((##core#syntax)
+			  (let ((c (cadr x)))
+			    (lambda v c)))
 
 			 [(##core#global-ref)
 			  (let ([var (cadr x)])
@@ -418,6 +430,7 @@
 					e2
 					se2
 					cntr) ] )
+			    (d `(LET: ,vars ,se2))
 			    (case n
 			      [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr se)])
 				     (lambda (v)
@@ -479,6 +492,7 @@
 					e2
 					se2
 					(or h cntr) ) ) )
+				 (d `(LAMBDA: ,vars ,se2))
 				 (case argc
 				   [(0) (if rest
 					    (lambda (v)
