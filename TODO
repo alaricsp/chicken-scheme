@@ -1,8 +1,10 @@
 TODO for macro/module system					-*- Outline -*-
 
+* last test fails (binding syntactic keyword "=>" around a cond-expression)
+
 * reimplement default macros hygienically
 
-* test letrec-syntax
+* test user-defined ellipsis
 * test hygiene
 * test macros expanding into macro calls
 * test macros expanding into syntax-rules
@@ -34,7 +36,10 @@ TODO for macro/module system					-*- Outline -*-
 ** gauche
 
 * update manual
-** expand unit (move stuff from eval, document extensions)
+** expand unit (move stuff from eval)
+** document extensions
+*** user defined ellipsis
+** ack synrules authors
 
 * csi
 ** describe should print if symbol is interned

@@ -581,8 +581,8 @@
 	       (set! renv (cons (cons sym a) renv))
 	       a))))
     (define (compare s1 s2)
-      (eq? (or (lookup s1 se) s1)
-	   (or (lookup s2 se) s2)))
+      (eq? (if (symbol? s1) (or (lookup s1 se) s1) s1)
+	   (if (symbol? s2) (or (lookup s2 se) s2) s2)))
     (handler form rename compare) ) )
 
 
