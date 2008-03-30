@@ -33,12 +33,16 @@
 	d
 	lookup) )
 
+
+(set! ##sys#features
+  (append '(#:hygienic-macros #:syntax-rules) ##sys#features))
+
 (define (d arg1 . more)
   (if (null? more)
       (pp arg1)
       (apply print arg1 more)))
 
-;(define-macro (d . _) (void))
+(define-macro (d . _) '(void))
 
 
 ;;; Syntactic environments
@@ -59,7 +63,6 @@
 
 (define (##sys#strip-syntax exp #!optional se)
   ;; if se is given, retain bound vars
-  (d `(STRIP: ,exp ,se))
   (let walk ((x exp))
     (cond ((symbol? x)
 	   (let ((x2 (if se 
@@ -146,7 +149,7 @@
 		 ex) )
 	  (handler exp se)))
       (define (expand head exp mdef)
-	(d `(EXPAND: ,head ,exp ,mdef))
+	(d `(EXPAND: ,head ,exp ,(map car se)))
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
@@ -196,21 +199,19 @@
 
 (define (##sys#compiler-toplevel-macroexpand-hook exp) exp)
 (define (##sys#interpreter-toplevel-macroexpand-hook exp) exp)
-
-
-;;; For the compiler
-
 (define ##sys#enable-runtime-macros #f)
 
 
 ;;; User-level macroexpansion
 
-(define (macroexpand exp #!optional (me (##sys#current-environment)))
-  (let loop ([exp exp])
-    (let-values ([(exp2 m) (##sys#macroexpand-0 exp me)])
+(define (##sys#expand exp #!optional (me (##sys#current-environment)))
+  (let loop ((exp exp))
+    (let-values (((exp2 m) (##sys#macroexpand-0 exp me)))
       (if m
 	  (loop exp2)
 	  exp2) ) ) )
+
+(define macroexpand ##sys#expand)
 
 (define (macroexpand-1 exp #!optional (me (##sys#current-environment)))
   (##sys#macroexpand-0 exp me) )
@@ -333,7 +334,6 @@
 	[map map] )
     (lambda (body #!optional (se (##sys#current-environment)))
       (define (fini vars vals mvars mvals body)
-	(d `(FINI: ,vars ,vals ,mvars ,mvals ,body))
 	(if (and (null? vars) (null? mvars))
 	    (let loop ([body2 body] [exps '()])
 	      (if (not (pair? body2)) 
@@ -452,11 +452,11 @@
   (let* ([name #f]
 	 (lam (macro-alias 'lambda se)))
     (define (loop head body)
-      (if (symbol? (##sys#slot head 0))
+      (if (symbol? (car head))
 	  (begin
-	    (set! name (##sys#slot head 0))
-	    `(,lam ,(##sys#slot head 1) ,@body) )
-	  (loop (##sys#slot head 0) `((,lam ,(##sys#slot head 1) ,@body)) ) ))
+	    (set! name (car head))
+	    `(,lam ,(cdr head) ,@body) )
+	  (loop (car head) `((,lam ,(cdr head) ,@body)) ) ))
     (let ([exp (loop head body)])
       (list name exp) ) ) )
 
@@ -464,20 +464,23 @@
 ;;; General syntax checking routine:
 
 (define ##sys#line-number-database #f)
-(define (##sys#syntax-error-hook . args) (apply ##sys#signal-hook #:syntax-error args))
 (define ##sys#syntax-error-culprit #f)
+
+(define (##sys#syntax-error-hook . args)
+  (apply ##sys#signal-hook #:syntax-error
+	 (##sys#strip-syntax args)))
 
 (define syntax-error ##sys#syntax-error-hook)
 
 (define (get-line-number sexp)
   (and ##sys#line-number-database
        (pair? sexp)
-       (let ([head (##sys#slot sexp 0)])
+       (let ([head (car sexp)])
 	 (and (symbol? head)
 	      (cond [(##sys#hash-table-ref ##sys#line-number-database head)
 		     => (lambda (pl)
 			  (let ([a (assq sexp pl)])
-			    (and a (##sys#slot a 1)) ) ) ]
+			    (and a (cdr a)) ) ) ]
 		    [else #f] ) ) ) ) )
 
 (define ##sys#check-syntax
@@ -651,7 +654,6 @@
  #f
  (##sys#lisp-transformer
   (lambda body
-    (d `(COND: ,body))
      (let expand ((clauses body))
        (if (not (pair? clauses))
 	   '(##core#undefined)

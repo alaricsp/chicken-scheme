@@ -38,7 +38,7 @@
       (pp arg1)
       (apply print arg1 more)))
 
-;(define-macro (d . _) (void))
+(define-macro (d . _) '(void))
 
 #>
 #ifndef C_INSTALL_EGG_HOME
@@ -248,7 +248,6 @@
 	[get-output-string get-output-string] 
 	[with-input-from-file with-input-from-file]
 	[unbound (##sys#slot '##sys#arbitrary-unbound-symbol 0)]
-	(macroexpand macroexpand)
 	[display display] )
     (lambda (exp env se #!optional cntr)
 
@@ -264,7 +263,7 @@
 
       (define (lookup var0 e se)
 	(let ((var (rename var0 se)))
-	  (d `(LOOKUP/EVAL: ,var0 ,var ,e ,se))
+	  (d `(LOOKUP/EVAL: ,var0 ,var ,e ,(map car se)))
 	  (let loop ((envs e) (ei 0))
 	    (cond ((null? envs) (values #f var))
 		  ((posq var (##sys#slot envs 0)) => (lambda (p) (values ei p)))
@@ -329,7 +328,7 @@
 	      [(not (pair? x)) (##sys#syntax-error-hook "illegal non-atomic object" x)]
 	      [(symbol? (##sys#slot x 0))
 	       (emit-syntax-trace-info tf x cntr)
-	       (let ((x2 (macroexpand x se)))
+	       (let ((x2 (##sys#expand x se)))
 		 (d `(EVAL/EXPANDED: ,x2))
 		 (if (not (eq? x2 x))
 		     (compile x2 e h tf cntr se)
@@ -430,7 +429,6 @@
 					e2
 					se2
 					cntr) ] )
-			    (d `(LET: ,vars ,se2))
 			    (case n
 			      [(1) (let ([val (compile (cadar bindings) e (car vars) tf cntr se)])
 				     (lambda (v)
@@ -492,7 +490,6 @@
 					e2
 					se2
 					(or h cntr) ) ) )
-				 (d `(LAMBDA: ,vars ,se2))
 				 (case argc
 				   [(0) (if rest
 					    (lambda (v)
@@ -594,9 +591,9 @@
 					       '() (##sys#current-meta-environment))
 					      '())))
 					  (cadr x) ) )
-				 (se2 (append ms se2)) )
+				 (se2 (append ms se)) )
 			    (for-each 
-			     (lambda (sb ms)
+			     (lambda (sb)
 			       (set-car! (cdr sb) se2) )
 			     ms) 
 			    (compile

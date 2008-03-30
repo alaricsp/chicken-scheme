@@ -3301,7 +3301,8 @@ EOF
 	    [(symbol? x)  (string->keyword (##sys#symbol->string x))]
 	    [else         (err x)] ) ) ) )
 
-(define ##sys#features '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
+(define ##sys#features '
+  (#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
 
 ;; Add system features:
 

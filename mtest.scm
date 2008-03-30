@@ -1,6 +1,27 @@
 ;;;; mtest.scm - various macro tests
 
 
+(define-syntax t
+  (syntax-rules ()
+    ((_ r x)
+     (let ((tmp x))
+       (if (not (equal? r tmp))
+	   (error "test failed" r tmp 'x)
+	   (pp tmp))))))
+
+(define-syntax f
+  (syntax-rules ()
+    ((_ x)
+     (handle-exceptions ex (void)
+       x
+       (error "test returned, but should have failed" 'x) ))))
+
+(t 3 3)
+
+(f abc)
+
+(f (t 3 4))
+
 ;; test syntax-rules
 
 (define-syntax test
@@ -11,7 +32,7 @@
 	   form
 	   (error "not a number" tmp))))))
 
-(test 2 (print "ok."))
+(t 100 (test 2 100))
 
 ;; some basic contrived testing
 
@@ -26,4 +47,80 @@
 	1
 	(* n (fac (m1 n))))))
 
-(pp (fac 10))
+(t 3628800 (fac 10))
+
+;; letrec-syntax
+
+(t 34
+(letrec-syntax ((foo (syntax-rules () ((_ x) (bar x))))
+		(bar (syntax-rules () ((_ x) (+ x 1)))))
+  (foo 33))
+)
+
+;; from r5rs:
+
+(t 45
+(let ((x 5))
+  (define foo (lambda (y) (bar x y)))
+  (define bar (lambda (a b) (+ (* a b) a)))
+  (foo (+ x 3)))
+)
+
+;; an error, according to r5rs - here it treats foo as defining a toplevel binding
+
+#;(let-syntax
+  ((foo (syntax-rules ()
+          ((foo (proc args ...) body ...)
+           (define proc
+             (lambda (args ...)
+               body ...))))))
+  (let ((x 3))
+    (foo (plus x y) (+ x y))
+    (define foo x)
+    (print (plus foo x))))
+
+(t 'now
+(let-syntax ((when (syntax-rules ()
+                     ((when test stmt1 stmt2 ...)
+                      (if test
+                          (begin stmt1
+                                 stmt2 ...))))))
+  (let ((if #t))
+    (when if (set! if 'now))
+    if))
+)
+
+(t 'outer
+(let ((x 'outer))
+  (let-syntax ((m (syntax-rules () ((m) x))))
+    (let ((x 'inner))
+      (m))))       
+)
+
+(t 7
+(letrec-syntax
+  ((my-or (syntax-rules ()
+            ((my-or) #f)
+            ((my-or e) e)
+            ((my-or e1 e2 ...)
+             (let ((temp e1))
+               (if temp
+                   temp
+                   (my-or e2 ...)))))))
+  (let ((x #f)
+        (y 7)
+        (temp 8)
+        (let odd?)
+        (if even?))
+    (my-or x
+           (let temp)
+           (if y)
+           y)))
+)
+
+(t 'ok
+(let ((=> #f))
+  (cond (#t => 'ok)))
+)
+
+

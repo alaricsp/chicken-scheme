@@ -46,12 +46,19 @@
  '()
  (##sys#er-transformer
   (lambda (exp r c)
+    (##sys#check-syntax 'syntax-rules exp '#(_ 2))
     (let ((subkeywords (cadr exp))
-	  (rules (cddr exp)))
-      (##sys#process-syntax-rules rules subkeywords r c)))))
+	  (rules (cddr exp))
+	  (ellipsis '...))
+      (when (symbol? subkeywords)
+	(##sys#check-syntax 'syntax-rules exp '(_ _ list . #(_ 0)))
+	(set! ellipsis subkeywords)
+	(set! subkeywords (car rules))
+	(set! rules (cdr rules)))
+      (##sys#process-syntax-rules ellipsis rules subkeywords r c)))))
 
 
-(define (##sys#process-syntax-rules rules subkeywords r c)
+(define (##sys#process-syntax-rules ellipsis rules subkeywords r c)
 
   (define %append (r 'append))
   (define %apply (r 'apply))
@@ -163,7 +170,7 @@
 	     (if probe
 		 (if (<= (cdr probe) dim)
 		     template
-		     (syntax-error "template dimension error (too few ...'s?)"
+		     (syntax-error "template dimension error (too few ellipses?)"
 				   template))
 		 `(,%rename (##core#syntax ,template)))))
 	  ((segment-template? template)
@@ -172,7 +179,7 @@
 		  (vars
 		   (free-meta-variables (car template) seg-dim env '())))
 	     (if (null? vars)
-		 (syntax-error "too many ...'s" template)
+		 (syntax-error "too many ellipses" template)
 		 (let* ((x (process-template (car template)
 					     seg-dim
 					     env))
@@ -240,21 +247,21 @@
   (define (segment-template? pattern)
     (and (pair? pattern)
 	 (pair? (cdr pattern))
-	 (memq (cadr pattern) '(...))))
+	 (eq? (cadr pattern) ellipsis)))
 
-					; Count the number of `...'s in PATTERN.
+  ;; Count the number of `...'s in PATTERN.
 
   (define (segment-depth pattern)
     (if (segment-template? pattern)
 	(+ 1 (segment-depth (cdr pattern)))
 	0))
 
-					; Get whatever is after the `...'s in PATTERN.
+  ;; Get whatever is after the `...'s in PATTERN.
 
   (define (segment-tail pattern)
     (let loop ((pattern (cdr pattern)))
       (if (and (pair? pattern)
-	       (memq (car pattern) '(...)))
+	       (eq? (car pattern) ellipsis))
 	  (loop (cdr pattern))
 	  pattern)))
 

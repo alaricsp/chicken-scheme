@@ -1,19 +1,15 @@
 TODO for macro/module system					-*- Outline -*-
 
-* bugs
-** macro-aliases for bound vars
-   if a macro-aliased id is used in binding form, later references to it still
-   resolve to the original variable and so are resolved during canonicalization
-   to the original, not the new binding.
-   possible solution: update alias to a-converted new var?
+* reimplement default macros hygienically
 
+* test letrec-syntax
 * test hygiene
 * test macros expanding into macro calls
 * test macros expanding into syntax-rules
 * test local define{-values,-syntax,} expansion
 * test referential transparency
 * test interaction of hygienic and non-hygienic macros
-* test pattern matching macros
+* test pattern matching macros and interaction with hygienic macros
 * test extended lambda-lists
 * test examples from r5rs spec
 * test macro-expansions
@@ -21,11 +17,11 @@ TODO for macro/module system					-*- Outline -*-
 ** keywords
 ** qualified symbols
 ** extended lambda-list markers
+** local definitions
 
 * test r4rstest
 * test benchmarks
 
-* reimplement default macros hygienically
 * reimplement chicken-more-macros hygienically
 
 * integrate syntax-rules (synrules.scm)
@@ -34,6 +30,8 @@ TODO for macro/module system					-*- Outline -*-
 
 * add low-level support for modules
 * find suitable design for modules
+** s48
+** gauche
 
 * update manual
 ** expand unit (move stuff from eval, document extensions)
@@ -42,3 +40,10 @@ TODO for macro/module system					-*- Outline -*-
 ** describe should print if symbol is interned
 
 * put mtest into "tests" directory and run on "make check"
+
+* eggs to be adapted
+** syntax-case (eval/expand integration?)
+** codewalk
+   must probably go... influences modules, crunch
+** remove
+   modules

@@ -521,7 +521,7 @@
 		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
 	     (let ((name (lookup (car x) se))
-		   (xexpanded (macroexpand x se)))
+		   (xexpanded (##sys#expand x se)))
 	       (cond ((not (eq? x xexpanded))
 		      (walk xexpanded se dest))
 		     
@@ -685,9 +685,9 @@
 					      '() se)
 					     '()) ) ) )
 					(cadr x) ) )
-			       (se2 (append ms se2)) )
+			       (se2 (append ms se)) )
 			  (for-each 
-			   (lambda (sb ms)
+			   (lambda (sb)
 			     (set-car! (cdr sb) se2) )
 			   ms)
 			  (walk
