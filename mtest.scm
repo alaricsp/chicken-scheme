@@ -118,6 +118,17 @@
            y)))
 )
 
+(define-syntax kw
+  (syntax-rules (baz)
+    ((_ baz) "baz")
+    ((_ any) "no baz")))
+
+(t "baz" (kw baz))
+(t "no baz" (kw xxx))
+
+(let ((baz 100))
+  (t "no baz" (kw baz)))
+
 (define-syntax cond
   (syntax-rules (else =>)
     ((cond (else result1 result2 ...))
@@ -143,6 +154,11 @@
      (if test
          (begin result1 result2 ...)
          (cond clause1 clause2 ...)))))
+
+(t 1 (cond (else 1)))
+(t 1 (cond (#t 1) (#t 2)))
+(t 2 (cond (#f 1) (* 2)))
+(t '(ok) (cond ('ok => list)))
 
 (t 3
 (cond (#f 1)

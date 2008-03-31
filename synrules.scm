@@ -113,7 +113,7 @@
 				       (meta-variables pattern 0 '())))))
 	(syntax-error "ill-formed syntax rule" rule)))
 
-					; Generate code to test whether input expression matches pattern
+  ;; Generate code to test whether input expression matches pattern
 
   (define (process-match input pattern)
     (cond ((symbol? pattern)
@@ -141,8 +141,8 @@
 			 (,%and (,%pair? ,%l)
 				(,%loop (,%cdr ,%l)))))))))
 
-					; Generate code to take apart the input expression
-					; This is pretty bad, but it seems to work (can't say why).
+  ;; Generate code to take apart the input expression
+  ;; This is pretty bad, but it seems to work (can't say why).
 
   (define (process-pattern pattern path mapit)
     (cond ((symbol? pattern)
@@ -162,7 +162,7 @@
 		   (process-pattern (cdr pattern) `(,%cdr ,path) mapit)))
 	  (else '())))
 
-					; Generate code to compose the output expression according to template
+  ;; Generate code to compose the output expression according to template
 
   (define (process-template template dim env)
     (cond ((symbol? template)
@@ -204,7 +204,7 @@
 	  (else
 	   `(,%quote ,template))))
 
-					; Return an association list of (var . dim)
+  ;; Return an association list of (var . dim)
 
   (define (meta-variables pattern dim vars)
     (cond ((symbol? pattern)
@@ -218,7 +218,7 @@
 			   (meta-variables (cdr pattern) dim vars)))
 	  (else vars)))
 
-					; Return a list of meta-variables of given higher dim
+  ;; Return a list of meta-variables of given higher dim
 
   (define (free-meta-variables template dim env free)
     (cond ((symbol? template)

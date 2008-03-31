@@ -1,7 +1,5 @@
 TODO for macro/module system					-*- Outline -*-
 
-* last test fails (binding syntactic keyword "=>" around a cond-expression)
-
 * reimplement default macros hygienically
 
 * test user-defined ellipsis
