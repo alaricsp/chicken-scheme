@@ -129,43 +129,6 @@
 (let ((baz 100))
   (t "no baz" (kw baz)))
 
-(define-syntax cond
-  (syntax-rules (else =>)
-    ((cond (else result1 result2 ...))
-     (begin result1 result2 ...))
-    ((cond (test => result))
-     (let ((temp test))
-       (if temp (result temp))))
-    ((cond (test => result) clause1 clause2 ...)
-     (let ((temp test))
-       (if temp
-           (result temp)
-           (cond clause1 clause2 ...))))
-    ((cond (test)) test)
-    ((cond (test) clause1 clause2 ...)
-     (let ((temp test))
-       (if temp
-           temp
-           (cond clause1 clause2 ...))))
-    ((cond (test result1 result2 ...))
-     (if test (begin result1 result2 ...)))
-    ((cond (test result1 result2 ...)
-           clause1 clause2 ...)
-     (if test
-         (begin result1 result2 ...)
-         (cond clause1 clause2 ...)))))
-
-(t 1 (cond (else 1)))
-(t 1 (cond (#t 1) (#t 2)))
-(t 2 (cond (#f 1) (* 2)))
-(t '(ok) (cond ('ok => list)))
-
-(t 3
-(cond (#f 1)
-      (#t 3)
-      (else 9))
-)
-
 (t 'ok
 (let ((=> #f))
   (cond (#t => 'ok)))
@@ -176,4 +139,49 @@
   (let-syntax ((bar (syntax-rules () ((_ x) (list foo x)))))
     (let ((foo 4))
       (bar foo))))
+)
+
+(define-syntax foo
+  (syntax-rules 
+      ___ () 
+      ((_ vals ___) (list '... vals ___))))
+
+(t '(... 1 2 3)
+   (foo 1 2 3)
+)
+
+(define-syntax usetmp
+  (syntax-rules ()
+    ((_ var) 
+     (list var))))
+
+(define-syntax withtmp
+  (syntax-rules ()
+    ((_ val exp)
+     (let ((tmp val))
+       (exp tmp)))))
+
+(t '(99)
+   (withtmp 99 usetmp)
+)
+
+(t 7
+(letrec-syntax
+    ((my-or (syntax-rules ()
+	      ((my-or) #f)
+	      ((my-or e) e)
+	      ((my-or e1 e2 ...)
+	       (let ((temp e1))
+		 (if temp
+		     temp
+		     (my-or e2 ...)))))))
+  (let ((x #f)
+        (y 7)
+        (temp 8)
+        (let odd?)
+        (if even?))
+    (my-or x
+           (let temp)
+           (if y)
+           y)))
 )

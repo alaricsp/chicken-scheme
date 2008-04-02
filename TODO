@@ -1,20 +1,23 @@
 TODO for macro/module system					-*- Outline -*-
 
-* reimplement default macros hygienically
+* reimplement all default macros hygienically
 
-* test user-defined ellipsis
+* test interaction of hygienic and non-hygienic macros
+* fix problem of using lowlevel macros with hygienically introduced bindings
+  (define-syntax foo
+    (syntax-rules ()
+      ((_ x) (let ((tmp x)) (assert tmp "fail")))))   ; "tmp" not seen when 
+      	     	  	    	    		      ; expanding assert
+
 * test hygiene
 * test macros expanding into macro calls
 * test macros expanding into syntax-rules
 * test local define{-values,-syntax,} expansion
-* test referential transparency
-* test interaction of hygienic and non-hygienic macros
 * test pattern matching macros and interaction with hygienic macros
 * test extended lambda-lists
 * test examples from r5rs spec
 * test macro-expansions
 ** quoted literals
-** keywords
 ** qualified symbols
 ** extended lambda-list markers
 ** local definitions
@@ -23,10 +26,6 @@ TODO for macro/module system					-*- Outline -*-
 * test benchmarks
 
 * reimplement chicken-more-macros hygienically
-
-* integrate syntax-rules (synrules.scm)
-** needs some form of syntax-quote?
-** test macros expanding into syntax-rules with literals
 
 * add low-level support for modules
 * find suitable design for modules
@@ -43,10 +42,13 @@ TODO for macro/module system					-*- Outline -*-
 ** describe should print if symbol is interned
 
 * put mtest into "tests" directory and run on "make check"
+** rename to "syntax-tests.scm"
 
-* eggs to be adapted
+* eggs to be adapted/obsoleted
 ** syntax-case (eval/expand integration?)
 ** codewalk
    must probably go... influences modules, crunch
 ** remove
    modules
+** syntactic-closures?
+** simple-macros

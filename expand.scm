@@ -625,66 +625,77 @@
 		,(car head)
 		(,(r 'lambda) ,(cdr head) ,@body))) ) ) ) ) ) )
 
-;;*** need to be done hygienically
-
 (##sys#extend-macro-environment
  'and
- #f
- (##sys#lisp-transformer
-  (lambda body
-    (if (eq? body '())
-	#t
-	(let ((rbody (##sys#slot body 1))
-	      (hbody (##sys#slot body 0)) )
-	  (if (eq? rbody '())
-	      hbody
-	      `(if ,hbody (and ,@rbody) #f) ) ) ) ) ) )
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((body (cdr form)))
+      (if (null? body)
+	  #t
+	  (let ((rbody (cdr body))
+		(hbody (car body)) )
+	    (if (null? rbody)
+		hbody
+		`(,(r 'if) ,hbody (,(r 'and) ,@rbody) #f) ) ) ) ) ) ) )
 
 (##sys#extend-macro-environment
  'or 
- #f
- (##sys#lisp-transformer
-   (lambda body
-     (if (eq? body '())
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((body (cdr form)))
+     (if (null? body)
 	 #f
-	 (let ((rbody (##sys#slot body 1))
-	       (hbody (##sys#slot body 0)) )
-	   (if (eq? rbody '())
+	 (let ((rbody (cdr body))
+	       (hbody (car body)))
+	   (if (null? rbody)
 	       hbody
-	       (let ((tmp (gensym)))
-		 `(let ((,tmp ,hbody))
-		    (if ,tmp ,tmp (or ,@rbody)) ) ) ) ) ) ) ) )
+	       (let ((tmp (r 'tmp)))
+		 `(,(r 'let) ((,tmp ,hbody))
+		    (,(r 'if) ,tmp ,tmp (,(r 'or) ,@rbody)) ) ) ) ) ) ) ) ) )
 
 (##sys#extend-macro-environment
  'cond
- #f
- (##sys#lisp-transformer
-  (lambda body
-     (let expand ((clauses body))
-       (if (not (pair? clauses))
-	   '(##core#undefined)
-	   (let ((clause (##sys#slot clauses 0))
-		 (rclauses (##sys#slot clauses 1)) )
-	     (##sys#check-syntax 'cond clause '#(_ 1))
-	     (cond ((eq? 'else (car clause)) `(begin ,@(cdr clause)))
-		   ((eq? (cdr clause) '()) `(or ,(car clause) ,(expand rclauses)))
-		   ((eq? '=> (cadr clause))
-		    (let ((tmp (gensym)))
-		      `(let ((,tmp ,(car clause)))
-			 (if ,tmp
-			     (,(caddr clause) ,tmp)
-			     ,(expand rclauses) ) ) ) )
-		   ((and (list? clause) (fx= (length clause) 4) (eq? '=> (caddr clause)))
-		    (let ((tmp (gensym)))
-		      `(##sys#call-with-values
-			(lambda () ,(car clause))
-			(lambda ,tmp
-			  (if (##sys#apply ,(cadr clause) ,tmp)
-			      (##sys#apply ,(cadddr clause) ,tmp)
-			      ,(expand rclauses) ) ) ) ) )
-		   (else `(if ,(car clause) 
-			      (begin ,@(cdr clause))
-			      ,(expand rclauses) ) ) ) ) ) ) ) ) )
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((body (cdr form))
+	  (%begin (r 'begin))
+	  (%let (r 'let))
+	  (%if (r 'if))
+	  (%=> (r '=>))
+	  (%or (r 'or))
+	  (%else (r 'else))
+	  (%lambda (r 'lambda)))
+      (let expand ((clauses body))
+	(if (not (pair? clauses))
+	    '(##core#undefined)
+	    (let ((clause (car clauses))
+		  (rclauses (cdr clauses)) )
+	      (##sys#check-syntax 'cond clause '#(_ 1))
+	      (cond ((c %else (car clause)) `(,%begin ,@(cdr clause)))
+		    ((null? (cdr clause)) `(,%or ,(car clause) ,(expand rclauses)))
+		    ((c %=> (cadr clause))
+		     (let ((tmp (r 'tmp)))
+		       `(,%let ((,tmp ,(car clause)))
+			       (,%if ,tmp
+				     (,(caddr clause) ,tmp)
+				     ,(expand rclauses) ) ) ) )
+		    ((and (list? clause) (fx= (length clause) 4)
+			  (c %=> (caddr clause)))
+		     (let ((tmp (r 'tmp)))
+		       `(##sys#call-with-values
+			 (,%lambda () ,(car clause))
+			 (,%lambda ,tmp
+				   (if (##sys#apply ,(cadr clause) ,tmp)
+				       (##sys#apply ,(cadddr clause) ,tmp)
+				       ,(expand rclauses) ) ) ) ) )
+		    (else `(,%if ,(car clause) 
+				 (,%begin ,@(cdr clause))
+				 ,(expand rclauses) ) ) ) ) ) ) ) ) ))
+
+;;*** need to be done hygienically
 
 (##sys#extend-macro-environment
  'case
@@ -830,10 +841,8 @@
  #f
  (##sys#lisp-transformer
    (lambda clauses
-
      (define (err x) 
        (##sys#error "syntax error in `cond-expand' form" x (cons 'cond-expand clauses)) )
-
      (define (test fx)
        (cond ((symbol? fx) (##sys#feature? fx))
 	     ((not (pair? fx)) (err fx))
@@ -854,7 +863,6 @@
 			    (err fx) ) ) )
 		  ((not) (not (test (cadr fx))))
 		  (else (err fx)) ) ) ) ) )
-
      (let expand ((cls clauses))
        (cond ((eq? cls '())
 	      (##sys#apply
@@ -898,11 +906,14 @@
 
 (##sys#extend-macro-environment
  'require-extension
- #f
- (##sys#lisp-transformer
-  (lambda ids
-    (##sys#check-syntax 'require-extension ids '#(_ 0))
-    `(##core#require-extension ,@(map (lambda (x) (list 'quote x)) ids) ) ) ) )
+ '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (let ((ids (cdr x))
+	  (%quote (r 'quote)))
+      (##sys#check-syntax 'require-extension ids '#(_ 0))
+      `(##core#require-extension 
+	,@(map (lambda (x) (list %quote x)) ids) ) ) ) ))
 
 (##sys#extend-macro-environment
  'define-syntax
