@@ -12,13 +12,14 @@
 
 (define extensions (make-hash-table))
 
-(load-extensions-from-file extensions "enscript-texinfo.scm")
+(load-extensions-from-file extensions (or (file-exists? "enscript-texinfo.scm")
+					  (file-exists? "scripts/enscript-texinfo.scm")))
 
-(define wikipath (optional (command-line-arguments) "chicken-manual"))
+(define wikipath (optional (command-line-arguments) "manual"))
 
 (define file-list (map (lambda (x) (make-pathname wikipath x))
 		       (list "The User's Manual"
-			     "Overview"
+			     "Getting started"
 			     "Basic mode of operation"
 			     "Using the compiler"
 			     "Using the interpreter"

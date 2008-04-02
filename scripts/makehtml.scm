@@ -84,7 +84,7 @@ exec csi -s $0 "$@"
 ;; We need this to keep the order of chapters in the PDF file.
 (define manual-wiki-files
   '("The User's Manual"
-    "Overview"
+    "Getting started"
     "Basic mode of operation"
     "Using the compiler"
     "Using the interpreter"
