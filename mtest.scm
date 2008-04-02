@@ -170,3 +170,10 @@
 (let ((=> #f))
   (cond (#t => 'ok)))
 )
+
+(t '(3 4)
+(let ((foo 3))
+  (let-syntax ((bar (syntax-rules () ((_ x) (list foo x)))))
+    (let ((foo 4))
+      (bar foo))))
+)

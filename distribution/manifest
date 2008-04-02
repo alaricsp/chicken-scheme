@@ -263,3 +263,5 @@ scripts/maketexi.scm
 scripts/enscript-texinfo.scm
 scripts/dpkg-eggs.scm
 svnrevision.sh
+synrules.scm
+expand.scm

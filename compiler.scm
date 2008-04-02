@@ -115,6 +115,7 @@
 ; (##core#require-for-syntax <exp> ...)
 ; (##core#require-extension '<id> ...)
 ; (##core#app <exp> {<exp>})
+; (##coresyntax <exp>)
 ; (<exp> {<exp>})
 ;
 ; - Core language:
