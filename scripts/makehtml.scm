@@ -195,8 +195,8 @@ in `manual-wiki-files' can be found in `*pages*'."
    (if *only* (list *only*) *pages*) ) )
 
 (define (usage code)
-  (print "makedoc --fetch-manual")
-  (print "makedoc --extension-path=EXTPATH [--pdf] [--wikipath=PATH] [--only=PAGENAME]") 
+  (print "makehtml --fetch-manual")
+  (print "makehtml --extension-path=EXTPATH [--pdf] [--wikipath=PATH] [--only=PAGENAME]") 
   (exit code) )
 
 (simple-args)
