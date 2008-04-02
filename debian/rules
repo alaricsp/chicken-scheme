@@ -23,6 +23,7 @@ build-stamp:
 #	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
 	$(MAKE) \
 	    MAKEINFO_PROGRAM_OPTIONS="" \
+            USE_HOST_PCRE=1 \
 	    CFLAGS="$(CFLAGS)" \
 	    PREFIX="$(PREFIX)" \
 	    MANDIR="$(PREFIX)/share/man" \
