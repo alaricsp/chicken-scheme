@@ -1,4 +1,4 @@
-== Getting started with CHICKEN
+== Getting started 
 
 Chicken is a compiler that translates Scheme source files into
 C, which in turn can be fed to a C compiler to generate a
@@ -258,10 +258,10 @@ more information on the installation process.
 
 The simplest development environment is a text editor and terminal
 window (Windows: Command Prompt, OSX: Terminal, Linux/Unix: xterm) for
-using the interpreter and/or calling the compiler. If
-you [[readline#examples|install the {{readline}} egg]], you have all the
-benefits of command history in the interpreter, Emacs or vi-compatible line
-editing, and customization.
+using the interpreter and/or calling the compiler. If you
+[[http://chicken.wiki.br/readline|install the {{readline}} egg]], you
+have all the benefits of command history in the interpreter, Emacs or
+vi-compatible line editing, and customization.
 
 You will need a text editor that knows Scheme; it's just too painful
 with editors that don't do parenthesis matching and proper
@@ -368,7 +368,7 @@ convenient.
 
 The REPL also supports debugging commands: 
 input lines beginning with a {{,}} (comma) are treated as special
-commands. (See the [[Using the interpreter#toplevel-commands|full list]].) We can
+commands. (See the [[Using the interpreter#Toplevel commands|full list]].) We can
 '''trace''' {{fact}} to see how it works. 
 
  #;5> ,tr fact
@@ -404,7 +404,7 @@ replacement string.
 
 The {{-ss}} option sets several options that work smoothly together to
 execute a script. You can make the command directly executable from
-the shell by inserting a `[[Using the interpreter#writing-scheme-scripts|shebang line]]' at the beginning of the
+the shell by inserting a `[[Using the interpreter#Writing Scheme scripts|shebang line]]' at the beginning of the
 program.
 
 {{regex}}, the regular expression library, is one of the libraries
