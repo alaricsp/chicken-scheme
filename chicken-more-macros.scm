@@ -202,69 +202,108 @@
 				 ids old-tmps)
 			  (##sys#void) ) ) ) ) )))
 
-;*** translate to hygienic
+(##sys#extend-macro-environment
+ 'eval-when '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'eval-when form '#(_ 2))
+    (let* ((situations (cadr form))
+	   (%body (r 'begin))
+	   (body `(,%begin ,@(cddr form)))
+	   (e #f)
+	   (c #f)
+	   (l #f))
+      (let loop ([ss situations])
+	(if (pair? ss)
+	    (begin
+	      (case (##sys#slot ss 0)
+		[(eval) (set! e #t)]
+		[(load run-time) (set! l #t)]
+		[(compile compile-time) (set! c #t)]
+		[else (##sys#error "invalid situation specifier" (##sys#slot ss 0))] )
+	      (loop (##sys#slot ss 1)) ) ) )
+      (if (memq '#:compiling ##sys#features)
+	  (cond [(and c l) `(##core#compiletimetoo ,body)]
+		[c `(##core#compiletimeonly ,body)]
+		[l body]
+		[else '(##core#undefined)] )
+	  (if e 
+	      body
+	      '(##core#undefined) ) ) ) ) ) )
 
-(define-macro (eval-when situations . body)
-   (let ([e #f]
-	 [c #f]
-	 [l #f] 
-	 [body `(begin ,@body)] )
-     (let loop ([ss situations])
-       (if (pair? ss)
-	   (begin
-	     (case (##sys#slot ss 0)
-	       [(eval) (set! e #t)]
-	       [(load run-time) (set! l #t)]
-	       [(compile compile-time) (set! c #t)]
-	       [else (##sys#error "invalid situation specifier" (##sys#slot ss 0))] )
-	     (loop (##sys#slot ss 1)) ) ) )
-     (if (memq '#:compiling ##sys#features)
-	 (cond [(and c l) `(##core#compiletimetoo ,body)]
-	       [c `(##core#compiletimeonly ,body)]
-	       [l body]
-	       [else '(##core#undefined)] )
-	 (if e 
-	     body
-	     '(##core#undefined) ) ) ) )
-
-(define-macro (parameterize bindings . body)
-     (##sys#check-syntax 'parameterize bindings '#((_ _) 0))
-     (let* ([swap (gensym)]
+(##sys#extend-macro-environment
+ 'parameterize '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'parameterize form '#(_ 2))
+     (let* ((bindings (cadr form))
+	    (body (cddr form))
+	    (swap (r 'swap))
+	    (%let (r 'let))
+	    (%lambda (r 'lambda))
 	    [params (##sys#map car bindings)]
 	    [vals (##sys#map cadr bindings)]
-	    [aliases (##sys#map (lambda (z) (gensym)) params)]
-	    [aliases2 (##sys#map (lambda (z) (gensym)) params)] )
-       `(let ,(##sys#append (map ##sys#list aliases params) (map ##sys#list aliases2 vals))
-	  (let ((,swap (lambda ()
-			 ,@(map (lambda (a a2) `(let ((t (,a))) (,a ,a2) (##core#set! ,a2 t)))
-				aliases aliases2) ) ) )
-	    (##sys#dynamic-wind 
-		,swap
-		(lambda () ,@body)
-		,swap) ) ) ) )
+	    [aliases (##sys#map (lambda (z) (r (gensym))) params)]
+	    [aliases2 (##sys#map (lambda (z) (r (gensym))) params)] )
+       `(,%let ,(##sys#append (map ##sys#list aliases params) (map ##sys#list aliases2 vals))
+	  (,%let ((,swap (,%lambda ()
+				   ,@(map (lambda (a a2)
+					    `(,%let ((t (,a))) (,a ,a2)
+						    (##core#set! ,a2 t)))
+					  aliases aliases2) ) ) )
+		 (##sys#dynamic-wind 
+		  ,swap
+		  (,%lambda () ,@body)
+		  ,swap) ) ) ) )))
 
-(define-macro (when test . body)
-   `(if ,test (begin ,@body)) )
+(##sys#extend-macro-environment
+ 'when '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'when form '#(_ 2))
+    `(,(r 'if) ,(cadr form)
+      (,(r 'begin) ,@(cddr form))))))
 
-(define-macro (unless test . body)
-   `(if ,test (##core#undefined) (begin ,@body)) )
+(##sys#extend-macro-environment
+ 'unless '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'unless form '#(_ 2))
+    `(,(r 'if) ,(cadr form)
+      (##core#undefined)
+      (,(r 'begin) ,@(cddr form))))))
 
-(define-macro (set!-values vars exp)
-  (##sys#check-syntax 'set!-values/define-values vars '#(symbol 0))
-  (cond ((null? vars)
-	 ;; may this be simply "exp"?
-	 `(##sys#call-with-values (lambda () ,exp) (lambda () (##core#undefined))) )
-	((null? (cdr vars))
-	 `(##core#set! ,(car vars) ,exp)) 
-	(else
-	 (let ([aliases (map gensym vars)])
-	   `(##sys#call-with-values
-	     (lambda () ,exp)
-	     (lambda ,aliases
-	       ,@(map (lambda (v a) `(##core#set! ,v ,a)) vars aliases) ) ) ) ) ) )
+(##sys#extend-macro-environment
+ 'set!-values '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'set!-values form '(_ #(symbol 0) _))
+    (let ((vars (cadr form))
+	  (exp (caddr form))
+	  (%lambda (r 'lambda)))
+      (cond ((null? vars)
+	     ;; may this be simply "exp"?
+	     `(##sys#call-with-values
+	       (,%lambda () ,exp)
+	       (,%lambda () (##core#undefined))) )
+	    ((null? (cdr vars))
+	     `(##core#set! ,(car vars) ,exp)) 
+	    (else
+	     (let ([aliases (map gensym vars)])
+	       `(##sys#call-with-values
+		 (,%lambda () ,exp)
+		 (,%lambda ,aliases
+			   ,@(map (lambda (v a)
+				    `(##core#set! ,v ,a))
+				  vars aliases) ) ) ) ) ) ))))
 
-(define-macro (define-values vars exp)
-  `(set!-values ,vars ,exp) )
+(##sys#extend-macro-environment
+ 'define-values '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    `(,(r 'set!-values) ,@(cdr form)))))
+
+;*** translate to hygienic
 
 (define-macro (let-values vbindings . body)
   (letrec ((append* (lambda (il l)
