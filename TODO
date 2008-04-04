@@ -15,7 +15,6 @@ TODO for macro/module system					-*- Outline -*-
 ** extended lambda-list markers
 ** local definitions
 
-* test r4rstest
 * test benchmarks
 
 * reimplement chicken-more-macros hygienically

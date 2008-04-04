@@ -170,7 +170,7 @@
 			 (##sys#check-syntax 'let body '#(_ 2) #f dse)
 			 (let ([bindings (car body)])
 			   (cond [(symbol? bindings)
-				  (##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)) #f se)
+				  (##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)) #f dse)
 				  (let ([bs (cadr body)])
 				    (values
 				     `(##core#app
@@ -743,7 +743,7 @@
  '()
  (##sys#er-transformer
   (lambda (form r c)
-    (##sys#check-syntax 'letrec _ '(_ #((symbol _) 0) . #(_ 1)))
+    (##sys#check-syntax 'letrec form '(_ #((symbol _) 0) . #(_ 1)))
     (let ((bindings (cadr form))
 	  (body (cddr form)) 
 	  (%let (r 'let)) )
