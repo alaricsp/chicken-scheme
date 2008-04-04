@@ -248,7 +248,7 @@ EOF
 		      (case cmd
 			((x)
 			 (let ([x (read)])
-			   (pretty-print (macroexpand x))
+			   (pretty-print (##sys#strip-syntax (macroexpand x)))
 			   (##sys#void) ) )
 			((p)
 			 (let* ([x (read)]

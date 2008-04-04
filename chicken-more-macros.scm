@@ -147,44 +147,62 @@
 		   (cdr msg-and-args)
 		   '() ) ) ) ) )) )
 
+(##sys#extend-macro-environment
+ 'ensure
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'ensure form '#(_ 3))
+    (let ((pred (cadr form))
+	  (exp (caddr form))
+	  (args (cdddr form))
+	  (tmp (r 'tmp))
+	  (%let (r 'let))
+	  (%if (r 'if)) )
+      `(,%let ([,tmp ,exp])
+	      (,%if (##core#check (,pred ,tmp))
+		    ,tmp
+		    (##sys#signal-hook
+		     #:type-error
+		     ,@(if (pair? args)
+			   args
+			   `((##core#immutable '"argument has incorrect type")
+			     ,tmp ',pred) ) ) ) ) ) ) ) )
+
+(##sys#extend-macro-environment
+ 'fluid-let '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'fluid-let form '(_ #((symbol _) 0) . _))
+     (let* ((clauses (cadr form))
+	   (body (cddr form))
+	   (ids (##sys#map car clauses))
+	   (new-tmps (##sys#map (lambda (x) (r (gensym))) clauses))
+	   (old-tmps (##sys#map (lambda (x) (r (gensym))) clauses))
+	   (%let (r 'let))
+	   (%lambda (r 'lambda)))
+       `(,%let (,@(map ##sys#list new-tmps (##sys#map cadr clauses))
+		,@(map ##sys#list old-tmps
+		       (let loop ((n (length clauses)))
+			 (if (eq? n 0)
+			     '()
+			     (cons #f (loop (fx- n 1))) ) ) ) )
+	       (##sys#dynamic-wind
+		(,%lambda ()
+			  ,@(map (lambda (ot id) `(##core#set! ,ot ,id))
+				 old-tmps ids)
+			  ,@(map (lambda (id nt) `(##core#set! ,id ,nt))
+				 ids new-tmps)
+			  (##sys#void) )
+		(,%lambda () ,@body)
+		(,%lambda ()
+			  ,@(map (lambda (nt id) `(##core#set! ,nt ,id))
+				 new-tmps ids)
+			  ,@(map (lambda (id ot) `(##core#set! ,id ,ot))
+				 ids old-tmps)
+			  (##sys#void) ) ) ) ) )))
+
 ;*** translate to hygienic
-
-(define-macro (ensure pred exp . args)
-   (let ([tmp (gensym)])
-     `(let ([,tmp ,exp])
-	(if (##core#check (,pred ,tmp))
-	    ,tmp
-	    (##sys#signal-hook
-	     #:type-error
-	     ,@(if (pair? args)
-		   args
-		   `((##core#immutable '"argument has incorrect type") ,tmp ',pred) ) ) ) ) ) )
-
-(define-macro (fluid-let clauses . body)
-     (##sys#check-syntax 'fluid-let clauses '#((symbol _) 0))
-     (let ((ids (##sys#map car clauses))
-	   (new-tmps (##sys#map (lambda (x) (gensym)) clauses))
-	   (old-tmps (##sys#map (lambda (x) (gensym)) clauses)))
-       `(let (,@(map ##sys#list new-tmps (##sys#map cadr clauses))
-	      ,@(map ##sys#list old-tmps
-		     (let loop ((n (length clauses)))
-		       (if (eq? n 0)
-			   '()
-			   (cons #f (loop (fx- n 1))) ) ) ) )
-	  (##sys#dynamic-wind
-	      (lambda ()
-		,@(map (lambda (ot id) `(##core#set! ,ot ,id))
-		       old-tmps ids)
-		,@(map (lambda (id nt) `(##core#set! ,id ,nt))
-		       ids new-tmps)
-		(##sys#void) )
-	      (lambda () ,@body)
-	      (lambda ()
-		,@(map (lambda (nt id) `(##core#set! ,nt ,id))
-		       new-tmps ids)
-		,@(map (lambda (id ot) `(##core#set! ,id ,ot))
-		       ids old-tmps)
-		(##sys#void) ) ) ) ) )
 
 (define-macro (eval-when situations . body)
    (let ([e #f]

@@ -1,13 +1,6 @@
 TODO for macro/module system					-*- Outline -*-
 
-* reimplement all default macros hygienically
-
-* test interaction of hygienic and non-hygienic macros
-* fix problem of using lowlevel macros with hygienically introduced bindings
-  (define-syntax foo
-    (syntax-rules ()
-      ((_ x) (let ((tmp x)) (assert tmp "fail")))))   ; "tmp" not seen when 
-      	     	  	    	    		      ; expanding assert
+* reimplement macros from chicken-more-macros hygienically
 
 * test hygiene
 * test macros expanding into macro calls

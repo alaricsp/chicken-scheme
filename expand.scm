@@ -343,8 +343,9 @@
 		  (let ([x (car body2)])
 		    (if (and (pair? x) 
 			     (let ((d (car x)))
-			       (or (eq? (or (lookup d se) d) 'define)
-				   (eq? (or (lookup d se) d) 'define-values))))
+			       (and (symbol? d)
+				    (or (eq? (or (lookup d se) d) 'define)
+					(eq? (or (lookup d se) d) 'define-values)))) )
 			(cons
 			 (macro-alias 'begin se)
 			 (##sys#append (reverse exps) (list (expand body2))))
