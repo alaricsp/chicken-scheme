@@ -485,10 +485,12 @@
 
 ;; Note: much of this stuff will be overridden by the inline-definitions in "tweaks.scm".
 
-(define-record node
-  class					; symbol
-  parameters				; (value...)
-  subexpressions)			; (node...)
+(define-record-type node
+  (make-node class parameters subexpressions)
+  node?
+  (class node-class node-class-set!)	; symbol
+  (parameters node-parameters node-parameters-set!) ; (value...)
+  (subexpressions node-subexpressions node-subexpressions-set!)) ; (node...)
 
 (define (make-node c p s)
   (##sys#make-structure 'node c p s) ) ; this kludge is for allowing the inlined `make-node'
@@ -1322,8 +1324,10 @@ EOF
 
 ;;; Special block-variable literal type:
 
-(define-record block-variable-literal 
-  name)					; symbol
+(define-record-type block-variable-literal 
+  (make-block-variable-literal name)
+  block-variable-literal?
+  (name block-variable-literal-name))	; symbol
 
 
 ;;; Generation of random names:

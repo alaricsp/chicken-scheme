@@ -794,7 +794,6 @@
 	(cond ((vector? x)
 	       `(##sys#list->vector ,(walk (vector->list x) n)) )
 	      ((not (pair? x)) `(,%quote ,x))
-	      ((##sys#immediate? x) `(,%quote ,x))
 	      (else
 	       (let ((head (car x))
 		     (tail (cdr x)))
@@ -809,7 +808,7 @@
 		       ((c %quasiquote head)
 			(if (pair? tail)
 			    `(##sys#list (,%quote ,%quasiquote) 
-					 ,(walk (cdr tail) (fx+ n 1)) ) 
+					 ,(walk (car tail) (fx+ n 1)) ) 
 			    (list '##sys#cons (list %quote %quasiquote) 
 				  (walk tail n)) ) )
 		       ((pair? head)
@@ -839,7 +838,8 @@
 	      ((match-expression x '(##sys#append a '()) '(a))
 	       => (lambda (env) (##sys#slot (assq 'a env) 1)) )
 	      (else x) ) )
-      (walk form 0) ) ) ) )
+      (##sys#check-syntax 'quasiquote form '(_ _))
+      (walk (cadr form) 0) ) ) ) )
 
 (##sys#extend-macro-environment
  'delay

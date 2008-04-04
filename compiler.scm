@@ -1268,15 +1268,17 @@
 
 ;;; Expand "foreign-lambda"/"foreign-callback-lambda" forms and add item to stub-list:
 
-(define-record foreign-stub
-  id					; symbol
-  return-type				; type-specifier
-  name					; string or #f
-  argument-types			; (type-specifier...)
-  argument-names			; #f or (symbol ...)
-  body					; #f or string
-  cps					; boolean
-  callback)				; boolean
+(define-record-type foreign-stub
+  (make-foreign-stub id return-type name argument-types argument-names body cps callback)
+  foreign-stub?
+  (id foreign-stub-id)			; symbol
+  (return-type foreign-stub-return-type)	  ; type-specifier
+  (name foreign-stub-name)			  ; string or #f
+  (argument-types foreign-stub-argument-types) ; (type-specifier...)
+  (argument-names foreign-stub-argument-names) ; #f or (symbol ...)
+  (body foreign-stub-body)		       ; #f or string
+  (cps foreign-stub-cps)		       ; boolean
+  (callback foreign-stub-callback))	       ; boolean
 
 (define (create-foreign-stub rtype sname argtypes argnames body callback cps)
   (let* ([params (list-tabulate (length argtypes) (lambda (x) (gensym 'a)))]
@@ -1484,12 +1486,14 @@
 
 ;;; Foreign callback stub type:
 
-(define-record foreign-callback-stub
-  id					; symbol
-  name					; string
-  qualifiers				; string
-  return-type				; type-specifier
-  argument-types)			; (type-specifier ...)
+(define-record-type foreign-callback-stub
+  (make-foreign-callback-stub id name qualifiers return-type argument-types)
+  foreign-callback-stub?
+  (id foreign-callback-stub-id)		; symbol
+  (name foreign-callback-stub-name)	; string
+  (qualifiers foreign-callback-stub-qualifiers)	; string
+  (return-type foreign-callback-stub-return-type) ; type-specifier
+  (argument-types foreign-callback-stub-argument-types)) ; (type-specifier ...)
 
 
 ;;; Perform source-code analysis:
@@ -2123,22 +2127,26 @@
 
 ;;; Do some preparations before code-generation can commence:
 
-(define-record lambda-literal
-  id					; symbol
-  external                              ; boolean
-  arguments				; (symbol...)
-  argument-count			; integer
-  rest-argument				; symbol | #f
-  temporaries				; integer
-  callee-signatures			; (integer...)
-  allocated				; integer
-  directly-called			; boolean
-  closure-size				; integer
-  looping				; boolean
-  customizable				; boolean
-  rest-argument-mode			; #f | LIST | VECTOR | UNUSED
-  body					; expression
-  direct)				; boolean
+(define-record-type lambda-literal
+  (make-lambda-literal id external arguments argument-count rest-argument temporaries
+		       callee-signatures allocated directly-called closure-size
+		       looping customizable rest-argument-mode body direct)
+  lambda-literal?
+  (id lambda-literal-id)			       ; symbol
+  (external lambda-literal-external)		       ; boolean
+  (arguments lambda-literal-arguments)		       ; (symbol...)
+  (argument-count lambda-literal-argument-count)       ; integer
+  (rest-argument lambda-literal-rest-argument)	       ; symbol | #f
+  (temporaries lambda-literal-temporaries)	       ; integer
+  (callee-signatures lambda-literal-callee-signatures) ; (integer...)
+  (allocated lambda-literal-allocated)		       ; integer
+  (directly-called lambda-literal-directly-called)     ; boolean
+  (closure-size lambda-literal-closure-size)	       ; integer
+  (looping lambda-literal-looping)		       ; boolean
+  (customizable lambda-literal-customizable)	       ; boolean
+  (rest-argument-mode lambda-literal-rest-argument-mode) ; #f | LIST | VECTOR | UNUSED
+  (body lambda-literal-body)				 ; expression
+  (direct lambda-literal-direct))			 ; boolean
   
 (define (prepare-for-code-generation node db)
   (let ([literals '()]

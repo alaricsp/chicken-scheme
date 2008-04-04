@@ -30,7 +30,7 @@
 
 ;;; Non-standard macros:
 
-(define-macro (define-record name . slots)
+#;(define-macro (define-record name . slots)
   (##sys#check-syntax 'define-record name 'symbol)
   (##sys#check-syntax 'define-record slots '#(symbol 0))
   (let ([prefix (symbol->string name)]
@@ -65,54 +65,89 @@
 			       (##sys#block-ref x ,i) ) ) ) )
 		  (mapslots (##sys#slot slots 1) (fx+ i 1)) ) ) ) ) ) ) )
 
-(define-macro (receive vars . rest)
-  (if (null? rest)
-       `(##sys#call-with-values (lambda () ,vars) ##sys#list)
-       (begin
-	 (##sys#check-syntax 'receive vars 'lambda-list)
-	 (##sys#check-syntax 'receive rest '(_ . _))
-	 (if (and (pair? vars) (null? (cdr vars)))
-	     `(let ((,(car vars) ,(car rest)))
-		,@(cdr rest))
-	     `(##sys#call-with-values 
-	       (lambda () ,(car rest))
-	       (lambda ,vars ,@(cdr rest)) ) ) ) ) )
+(##sys#extend-macro-environment
+ 'receive
+ '()
+ (##sys#er-transformer
+ (lambda (form r c)
+   (let ((%lambda (r 'lambda))
+	 (%let (r 'let)))
+     (##sys#check-syntax 'receive form '(_ _ . #(_ 1)))
+     (cond ((null? (cdr form))
+	    `(##sys#call-with-values (,%lambda () ,@(cdr form)) ##sys#list) )
+	   (else
+	    (##sys#check-syntax 'receive form '(_ lambda-list exp . _))
+	    (let ((vars (cadr form))
+		  (rest (cddr form)))
+	      (if (and (pair? vars) (null? (cdr vars)))
+		  `(,%let (,(car vars) ,(car rest))
+			  ,@(cddr rest))
+		  `(##sys#call-with-values 
+		    (,%lambda () ,(car rest))
+		    (,%lambda ,vars ,@(cdr rest)) ) ) ) ) )))) )
 
-(define-macro (time . exps)
-  (let ((rvar (gensym 't)))
-    `(begin
+(##sys#extend-macro-environment
+ 'time '()
+ (##sys#er-transformer
+ (lambda (form r c)
+   (let ((rvar (r 't))
+	 (%begin (r 'begin))
+	 (%lambda (r 'lambda)))
+    `(,%begin
        (##sys#start-timer)
        (##sys#call-with-values 
-	(lambda () ,@exps)
-	(lambda ,rvar
-	  (##sys#display-times (##sys#stop-timer))
-	  (##sys#apply ##sys#values ,rvar) ) ) ) ) )
+	(,%lambda () ,@(cdr form))
+	(,%lambda ,rvar
+		  (##sys#display-times (##sys#stop-timer))
+		  (##sys#apply ##sys#values ,rvar) ) ) ) ) ) ) )
 
-(define-macro (declare . specs)
-  ;; hides specifiers from macroexpand (only for psyntax, because it idiotically quotes all literals)
-  `(##core#declare ,@(##sys#map (lambda (x) `(quote ,x)) specs)) )
+(##sys#extend-macro-environment
+ 'declare '()
+ (##sys#er-transformer
+ (lambda (form r c)
+   (let ((%quote (r 'quote)))
+     ;; hides specifiers from macro-expansion (only for psyntax, because it idiotically quotes all literals)
+     `(##core#declare ,@(##sys#map (lambda (x) `(,%quote ,x)) specs)) ))) )
 
-(define-macro (include filename)
-  (let ((path (##sys#resolve-include-filename filename #t)))
-    (when (load-verbose) (print "; including " path " ..."))
-    `(begin
+(##sys#extend-macro-environment
+ 'include '()
+ (##sys#er-transformer
+ (lambda (form r c)
+   (##sys#check-syntax 'include form '(_ string))
+   (let ((path (##sys#resolve-include-filename (cadr form) #t))
+	 (%begin (r 'begin)))
+     (when (load-verbose) (print "; including " path " ..."))
+     `(,%begin
        ,@(with-input-from-file path
 	   (lambda ()
 	     (fluid-let ((##sys#current-source-filename path))
 	       (do ([x (read) (read)]
 		    [xs '() (cons x xs)] )
 		   ((eof-object? x) 
-		    (reverse xs))) ) ) ) ) ) )
+		    (reverse xs))) ) ) ) ) ) ) ) )
 
-(define-macro (assert exp . msg-and-args)
-   (let ((msg (if (eq? '() msg-and-args)
-		  `(##core#immutable '"assertion failed")
-		  (##sys#slot msg-and-args 0) ) ) )
-     `(if (##core#check ,exp)
-	  (##core#undefined)
-	  (##sys#error ,msg ',exp ,@(if (fx> (length msg-and-args) 1)
-				  (##sys#slot msg-and-args 1)
-				  '() ) ) ) ) )
+(##sys#extend-macro-environment
+ 'assert '()
+ (##sys#er-transformer
+ (lambda (form r c)
+   (##sys#check-syntax 'assert form '#(_ 1))
+   (let* ((exp (cadr form))
+	  (msg-and-args (cddr form))
+	  (%if (r 'if))
+	  (%quote (r 'quote))
+	  (msg (if (eq? '() msg-and-args)
+		   `(##core#immutable '"assertion failed")
+		   (car msg-and-args) ) ) )
+     `(,%if (##core#check ,exp)
+	    (##core#undefined)
+	    (##sys#error 
+	     ,msg 
+	     (,%quote ,exp)
+	     ,@(if (fx> (length msg-and-args) 1)
+		   (cdr msg-and-args)
+		   '() ) ) ) ) )) )
+
+;*** translate to hygienic
 
 (define-macro (ensure pred exp . args)
    (let ([tmp (gensym)])
