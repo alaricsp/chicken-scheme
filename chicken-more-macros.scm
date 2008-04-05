@@ -303,50 +303,58 @@
   (lambda (form r c)
     `(,(r 'set!-values) ,@(cdr form)))))
 
-;*** translate to hygienic
-
-(define-macro (let-values vbindings . body)
-  (letrec ((append* (lambda (il l)
-		      (if (not (pair? il))
-			  (cons il l)
-			  (cons (car il)
-				(append* (cdr il) l)))))
-	   (map* (lambda (proc l)
-		   (cond ((null? l) '())
-			 ((not (pair? l)) (proc l))
-			 (else (cons (proc (car l)) (map* proc (cdr l))))))))
-     (let* ([llists (map car vbindings)]
-	    [vars (let loop ((llists llists) (acc '()))
-		    (if (null? llists)
-			acc
-			(let* ((llist (car llists))
-			       (new-acc
-				(cond ((list? llist) (append llist acc))
-				      ((pair? llist) (append* llist acc))
-				      (else (cons llist acc)))))
-			  (loop (cdr llists) new-acc))))]
-	    [aliases (map (lambda (v) (cons v (gensym v))) vars)]
-	    [lookup (lambda (v) (cdr (assq v aliases)))]
-	    [llists2 (let loop ((llists llists) (acc '()))
+(##sys#extend-macro-environment
+ 'let-values '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'let-values form '(_ list . _))
+    (let ((vbindings (cadr form))
+	  (body (cddr form))
+	  (%let (r 'let))
+	  (%lambda (r 'lambda)))
+      (letrec ((append* (lambda (il l)
+			  (if (not (pair? il))
+			      (cons il l)
+			      (cons (car il)
+				    (append* (cdr il) l)))))
+	       (map* (lambda (proc l)
+		       (cond ((null? l) '())
+			     ((not (pair? l)) (proc l))
+			     (else (cons (proc (car l)) (map* proc (cdr l))))))))
+	(let* ([llists (map car vbindings)]
+	       [vars (let loop ((llists llists) (acc '()))
 		       (if (null? llists)
-			   (reverse acc)
+			   acc
 			   (let* ((llist (car llists))
 				  (new-acc
-				   (cond ((not (pair? llist)) (cons (lookup llist) acc))
-					 (else (cons (map* lookup llist) acc)))))
-			     (loop (cdr llists) new-acc))))])
-       (let fold ([llists llists]
-		  [exps (map (lambda (x) (cadr x)) vbindings)]
-		  [llists2 llists2] )
-	 (cond ((null? llists)
-		`(let ,(map (lambda (v) (##sys#list v (lookup v))) vars) ,@body) )
-	       ((and (pair? (car llists2)) (null? (cdar llists2)))
-		`(let ((,(caar llists2) ,(car exps)))
-		   ,(fold (cdr llists) (cdr exps) (cdr llists2)) ) )
-	       (else
-		`(##sys#call-with-values
-		  (lambda () ,(car exps))
-		  (lambda ,(car llists2) ,(fold (cdr llists) (cdr exps) (cdr llists2))) ) ) ) ) ) ) )
+				   (cond ((list? llist) (append llist acc))
+					 ((pair? llist) (append* llist acc))
+					 (else (cons llist acc)))))
+			     (loop (cdr llists) new-acc))))]
+	       [aliases (map (lambda (v) (cons v (r (gensym v)))) vars)]
+	       [lookup (lambda (v) (cdr (assq v aliases)))]
+	       [llists2 (let loop ((llists llists) (acc '()))
+			  (if (null? llists)
+			      (reverse acc)
+			      (let* ((llist (car llists))
+				     (new-acc
+				      (cond ((not (pair? llist)) (cons (lookup llist) acc))
+					    (else (cons (map* lookup llist) acc)))))
+				(loop (cdr llists) new-acc))))])
+	  (let fold ([llists llists]
+		     [exps (map (lambda (x) (cadr x)) vbindings)]
+		     [llists2 llists2] )
+	    (cond ((null? llists)
+		   `(,%let ,(map (lambda (v) (##sys#list v (lookup v))) vars) ,@body) )
+		  ((and (pair? (car llists2)) (null? (cdar llists2)))
+		   `(,%let ((,(caar llists2) ,(car exps)))
+			   ,(fold (cdr llists) (cdr exps) (cdr llists2)) ) )
+		  (else
+		   `(##sys#call-with-values
+		     (,%lambda () ,(car exps))
+		     (,%lambda ,(car llists2) ,(fold (cdr llists) (cdr exps) (cdr llists2))) ) ) ) ) ) ) ) ) ) )
+
+;*** translate to hygienic
 
 (define-macro (let*-values vbindings . body)
   (let fold ([vbindings vbindings])
