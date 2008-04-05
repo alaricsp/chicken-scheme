@@ -1162,6 +1162,11 @@ EOF
 	     [i (split str len)] )
 	(and i (##sys#substring str 0 i)) ) ) ) )
 
+(define (##sys#qualified-symbol? s)
+  (let ((str (##sys#slot s 1)))
+    (and (fx> (##sys#size str) 0)
+	 (fx<= (##sys#byte str 0) namespace-max-id-len))))
+
 (define ##sys#string->qualified-symbol
   (lambda (prefix str)
     (##sys#string->symbol

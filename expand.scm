@@ -78,13 +78,33 @@
 	   (list->vector (map walk (vector->list x))))
 	  (else x))))
 
+(define (##sys#alias-global-hook s) s)
+
+(define (##sys#rename-global id se)
+  (cond ((##sys#qualified-symbol? id) id)
+	((##sys#current-module) =>
+	 (lambda (m)
+	   (let ((id2 (##sys#string->symbol 
+		       (string-append
+			(##sys#slot (car m) 1)
+			"$$"
+			(##sys#slot id 1)))))
+	     id2) ) )
+	(else (##sys#alias-global-hook id) ) ) )
+
 
 ;;; Macro handling
 
 (define ##sys#macro-environment '())
 
 (define (##sys#extend-macro-environment name se handler)
-  (cond ((lookup name ##sys#macro-environment) =>
+  (cond ((##sys#current-module) =>
+	 (lambda (m)
+	   ;; fixup exports
+	   (cond ((assq name (cadr m))	=> (cut set-cdr! <> (list se handler))))
+	   (##sys#current-environment
+	    (cons (list name se handler) (##sys#current-environment)))))
+	((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
 	   (set-car! a se)
 	   (set-car! (cdr a) handler) ) )
@@ -243,7 +263,13 @@
       (define (err msg) (errh msg llist0))
       (define (->keyword s) (string->keyword (##sys#slot s 1)))
       (let ([rvar #f]
-	    [hasrest #f] )
+	    [hasrest #f] 
+	    (%let* (macro-alias 'let* se))
+	    (%lambda (macro-alias 'lambda se))
+	    (%opt (macro-alias 'optional se))
+	    (%let-optionals (macro-alias 'let-optionals se))
+	    (%let-optionals* (macro-alias 'let-optionals* se))
+	    (%let (macro-alias 'let se)))
 	(let loop ([mode 0]		; req, opt, rest, key, end
 		   [req '()]
 		   [opt '()]
@@ -255,28 +281,26 @@
 		  (let ([body 
 			 (if (null? key)
 			     body
-			     `((,(macro-alias 'let* se)
+			     `((,%let*
 				,(map (lambda (k)
 					(let ([s (car k)])
 					  `[,s (##sys#get-keyword 
 						',(->keyword s) ,rvar
 						,@(if (pair? (cdr k)) 
-						      `((,(macro-alias 'lambda se)
-							 () ,@(cdr k)))
-						      '() ) ) ] ) )
+						      `(,%lambda () ,@(cdr k)))
+						'() ) ] ) )
 				      (reverse key) )
 				,@body) ) ) ] )
 		    (cond [(null? opt) body]
 			  [(and (not hasrest) (null? key) (null? (cdr opt)))
-			   `((,(macro-alias 'let se)
-			      ([,(caar opt) (,(macro-alias 'optional se)
-					     ,rvar ,(cadar opt))])
-			       ,@body) ) ]
+			   `((,%let
+			      ([,(caar opt) (,%opt ,rvar ,(cadar opt))])
+			      ,@body) ) ]
 			  [(and (not hasrest) (null? key))
-			   `((,(macro-alias 'let-optionals se)
+			   `((,%let-optionals
 			      ,rvar ,(reverse opt) ,@body))]
 			  [else 
-			   `((,(macro-alias 'let-optionals* se)
+			   `((,%let-optionals*
 			      ,rvar ,(##sys#append (reverse opt) (list (or hasrest rvar))) 
 			      ,@body))] ) ) ) ]
 		[(symbol? llist) 
@@ -289,11 +313,12 @@
 		[(not (pair? llist))
 		 (err "invalid lambda list syntax") ]
 		[else
-		 (let ([x (or (lookup (car llist) se) (car llist))]
-		       [r (##sys#slot llist 1)])
+		 (let* ((var (car llist))
+			(x (or (and (symbol? var) (lookup var se)) var))
+			(r (##sys#slot llist 1)))
 		   (case x
 		     [(#!optional)
-		      (if (not rvar) (set! rvar (gensym)))
+		      (if (not rvar) (set! rvar (macro-alias 'tmp se)))
 		      (if (eq? mode 0)
 			  (loop 1 req '() '() r)
 			  (err "`#!optional' argument marker in wrong context") ) ]
@@ -307,7 +332,7 @@
 			      (err "invalid syntax of `#!rest' argument") ) 
 			  (err "`#!rest' argument marker in wrong context") ) ]
 		     [(#!key)
-		      (if (not rvar) (set! rvar (gensym)))
+		      (if (not rvar) (set! rvar (macro-alias 'tmp se)))
 		      (if (fx<= mode 3)
 			  (loop 3 req opt '() r)
 			  (err "`#!key' argument marker in wrong context") ) ]
@@ -599,6 +624,49 @@
   (if manyargs
       (lambda (form se dse) (handler (##sys#strip-syntax (cdr form) se)))
       (lambda (form se dse) (apply handler (##sys#strip-syntax (cdr form) se))) ) )
+
+
+;;; lowlevel module support
+
+(define ##sys#current-module (make-parameter #f))
+(define ##sys#module-table '())
+
+(define (##sys#register-module name module)
+  (cond ((assq name ##sys#module-table) =>
+	 (lambda (entry)
+	   (set-cdr! entry (cdr module))
+	   entry))
+	(else
+	 (set! ##sys#module-table (cons module ##sys#module-table))
+	 module) ) )
+
+(define (##sys#make-module name exports exprename imports)
+  (let ((prefix (##sys#string-append (##sys#slot name 1) "$$")))
+    (let loop ((se '()) (imports imports))
+      (cond ((null? imports)
+	     (let ((exps
+		     (map (lambda (ex)
+			    (cons (exprename ex)
+				  (cond ((assq ex se) => cdr) ; already imported?
+					(else
+					 (##sys#string->symbol
+					  (##sys#string-append prefix (##sys#slot ex 1)))))))
+			  exports) ) )
+	       (cons name (cons exps se))))
+	    ((assq (caar imports) ##sys#module-table) =>
+	     (lambda (m)
+	       (let ((imprename (cdar imports)))
+		 (loop (let filter ((exps (cadr m)))
+			 (cond ((null? exps) se)
+			       ((imprename (caar exps)) =>
+				(lambda (r)
+				  (cons 
+				   (cons r (cdar exps) )
+				   (filter (cdr exps)))))
+			       (else (filter (cdr exps)))))
+		       (cdr imports)))))
+	    (else
+	     (syntax-error "importing unknown module" (car imports) name))))))
 
 
 ;;; Macro definitions:

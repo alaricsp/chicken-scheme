@@ -239,7 +239,6 @@
 
 (define ##sys#unbound-in-eval #f)
 (define ##sys#eval-debug-level 1)
-(define (##sys#alias-global-hook s) s)
 
 (define ##sys#compile-to-closure
   (let ([write write]
@@ -290,9 +289,9 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
-			(let ((x (##sys#alias-global-hook j)))
+			(let ((x (##sys#rename-global j se)))
 			  (if ##sys#eval-environment
-			      (let ([loc (##sys#hash-table-location ##sys#eval-environment j #t)])
+			      (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
 				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" j))
 				(cond-expand 
 				 [unsafe (lambda v (##sys#slot loc 1))]
@@ -303,11 +302,11 @@
 					  (##sys#error "unbound variable" j)
 					  val) ) ) ] ) )
 			      (cond-expand
-			       [unsafe (lambda v (##core#inline "C_slot" j 0))]
+			       [unsafe (lambda v (##core#inline "C_slot" x 0))]
 			       [else
-				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? j)))
-				  (set! ##sys#unbound-in-eval (cons (cons j cntr) ##sys#unbound-in-eval)) )
-				(lambda v (##core#inline "C_retrieve" j))] ) ) ) ]
+				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
+				  (set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
+				(lambda v (##core#inline "C_retrieve" x))] ) ) ) ]
 		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
 		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
 	      [(##sys#number? x)
@@ -398,7 +397,7 @@
 			    (receive (i j) (lookup var e se)
 			      (let ((val (compile (caddr x) e var tf cntr se)))
 				(cond [(not i)
-				       (let ([var (##sys#alias-global-hook var)])
+				       (let ([var (##sys#rename-global var se)])
 					 (if ##sys#eval-environment
 					     (let ([loc (##sys#hash-table-location
 							 ##sys#eval-environment 
@@ -662,6 +661,45 @@
 
 			 [(##core#app)
 			  (compile-call (cdr x) e tf cntr se) ]
+
+			 ((##core#environment)
+			  (let* ((name (cadr x))
+				(imports (caddr x))
+				(exports (cadddr x))
+				(exprename 
+				 ((##sys#compile-to-closure
+				   (car (cddddr x))
+				   '()
+				   (##sys#current-meta-environment))
+				  '()))
+				(body (cdr (cddddr x)))
+				(module
+				    (##sys#register-module
+				     name
+				     (##sys#make-module
+				      name
+				      exports
+				      exprename
+				      (map (lambda (imp)
+					     (cons 
+					      (car imp)
+					      ((##sys#compile-to-closure
+						(cadr imp)
+						'()
+						(##sys#current-meta-environment))
+					       '())))
+					   imports) ) ) ) )
+			    (parameterize ((##sys#current-module module)
+					   (##sys#current-environment (cddr module)))
+			      (pp (##sys#current-module))
+			      (let ((forms
+				     (map (lambda (x)
+					    (compile x e #f tf cntr (##sys#current-environment)) )
+					  body) ) )
+				(lambda (v)
+				  (for-each 
+				   (lambda (x) (##core#app x v))
+				   forms))))))
 
 			 [else
 			  (cond [(eq? head 'location)

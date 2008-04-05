@@ -479,7 +479,7 @@
 	(cadr x)
 	x) )
 
-  (define (resolve-atom x se dest)
+  (define (resolve-variable x se dest)
     (cond [(and constants-used (##sys#hash-table-ref constant-table x)) 
 	   => (lambda (val) (walk (car val) se dest)) ]
 	  [(and inline-table-used (##sys#hash-table-ref inline-table x))
@@ -504,11 +504,11 @@
 	   (let ((x2 (lookup x se)))
 	     (if (symbol? x2)
 		 x2
-		 x))]))
+		 (##sys#rename-global x se)))]))
 
   (define (walk x se dest)
     (cond ((symbol? x)
-	   (##sys#alias-global-hook (resolve-atom x se dest)))
+	   (resolve-variable x se dest))
 	  ((not-pair? x)
 	   (if (constant? x)
 	       `(quote ,x)
@@ -543,12 +543,9 @@
 				'(##core#undefined)
 				(walk (cadddr x) se #f) ) ) )
 
-			((quote)
-			 (##sys#check-syntax 'quote x '(quote _) #f se)
+			((quote ##core#syntax)
+			 (##sys#check-syntax 'quote x '(_ _) #f se)
 			 `(quote ,(##sys#strip-syntax (cadr x))))
-
-			((##core#syntax)
-			 `(quote ,(cadr x)))
 
 			((##core#check)
 			 (if unsafe
@@ -717,7 +714,7 @@
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
 			   (when (eq? var var0) ; global?
-			     (set! var (##sys#alias-global-hook var))
+			     (set! var (##sys#rename-global var se))
 			     (when safe-globals-flag
 			       (set! always-bound-to-procedure
 				 (lset-adjoin eq? always-bound-to-procedure var))

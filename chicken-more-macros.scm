@@ -210,17 +210,19 @@
     (let* ((situations (cadr form))
 	   (%body (r 'begin))
 	   (body `(,%begin ,@(cddr form)))
+	   (%eval (r 'eval))
+	   (%compile (r 'compile))
+	   (%load (r 'load))
 	   (e #f)
 	   (c #f)
 	   (l #f))
       (let loop ([ss situations])
 	(if (pair? ss)
-	    (begin
-	      (case (##sys#slot ss 0)
-		[(eval) (set! e #t)]
-		[(load run-time) (set! l #t)]
-		[(compile compile-time) (set! c #t)]
-		[else (##sys#error "invalid situation specifier" (##sys#slot ss 0))] )
+	    (let ((s (car ss)))
+	      (cond ((c s %eval) (set! e #t))
+		    ((c s %load) (set! l #t))
+		    ((c s %compile) (set! c #t))
+		    (else (##sys#error "invalid situation specifier" (car ss)) ))
 	      (loop (##sys#slot ss 1)) ) ) )
       (if (memq '#:compiling ##sys#features)
 	  (cond [(and c l) `(##core#compiletimetoo ,body)]
@@ -354,80 +356,127 @@
 		     (,%lambda () ,(car exps))
 		     (,%lambda ,(car llists2) ,(fold (cdr llists) (cdr exps) (cdr llists2))) ) ) ) ) ) ) ) ) ) )
 
-;*** translate to hygienic
+(##sys#extend-macro-environment
+ 'let*-values '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'let*-values form '(_ list . _))
+    (let ((vbindings (cadr form))
+	  (body (cddr form))
+	  (%let (r 'let))
+	  (%let-values (r 'let-values)) )
+      (let fold ([vbindings vbindings])
+	(if (null? vbindings)
+	    `(,%let () ,@body)
+	    `(,%let-values (,(car vbindings))
+			   ,(fold (cdr vbindings))) ) ) ))))
 
-(define-macro (let*-values vbindings . body)
-  (let fold ([vbindings vbindings])
-    (if (null? vbindings)
-	`(let () ,@body)
-	`(let-values (,(car vbindings))
-	   ,(fold (cdr vbindings))) ) ) )
+(##sys#extend-macro-environment
+ 'letrec-values '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'letrec-values form '(_ list . _))
+    (let ((vbindings (cadr form))
+	  (body (cddr form))
+	  (%let (r 'let))
+	  (%lambda (r 'lambda)))
+      (let* ([vars (apply ##sys#append (map (lambda (x) (car x)) vbindings))] 
+	     [aliases (map (lambda (v) (cons v (r (gensym v)))) vars)] 
+	     [lookup (lambda (v) (cdr (assq v aliases)))] )
+	`(,%let ,(map (lambda (v) (##sys#list v '(##core#undefined))) vars)
+		,@(map (lambda (vb)
+			 `(##sys#call-with-values 
+			   (,%lambda () ,(cadr vb))
+			   (,%lambda ,(map lookup (car vb))
+				     ,@(map (lambda (v) `(##core#set! ,v ,(lookup v))) (car vb)) ) ) )
+		       vbindings)
+		,@body) ) ) ) ) )
 
-(define-macro (letrec-values vbindings . body)
-  (let* ([vars (apply ##sys#append (map (lambda (x) (car x)) vbindings))] 
-	 [aliases (map (lambda (v) (cons v (gensym v))) vars)] 
-	 [lookup (lambda (v) (cdr (assq v aliases)))] )
-    `(let ,(map (lambda (v) (##sys#list v '(##core#undefined))) vars)
-	,@(map (lambda (vb)
-		 `(##sys#call-with-values (lambda () ,(cadr vb))
-		    (lambda ,(map lookup (car vb))
-		      ,@(map (lambda (v) `(##core#set! ,v ,(lookup v))) (car vb)) ) ) )
-	       vbindings)
-	,@body) ) )
+(##sys#extend-macro-environment
+ 'nth-value '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'nth-value form '(_ _ _))
+    (let ((v (r 'tmp))
+	  (%list-ref (r 'list-ref))
+	  (%lambda (r 'lambda)))
+      `(##sys#call-with-values
+	(,%lambda () ,exp)
+	(,%lambda ,v (,%list-ref ,v ,i)) ) ) ) ) )
 
-(define-macro (nth-value i exp)
-   (let ([v (gensym)])
-     `(##sys#call-with-values
-       (lambda () ,exp)
-       (lambda ,v (list-ref ,v ,i)) ) ) )
+(##sys#extend-macro-environment
+ 'define-inline '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((%lambda (r 'lambda)))
+      (letrec ([quotify-proc 
+		(lambda (xs id)
+		  (##sys#check-syntax id xs '#(_ 1))
+		  (let* ([head (car xs)]
+			 [name (if (pair? head) (car head) head)]
+			 [val (if (pair? head)
+				  `(,%lambda ,(cdr head) ,@(cdr xs))
+				  (cadr xs) ) ] )
+		    (when (or (not (pair? val)) (not (c %lambda (car val))))
+		      (syntax-error 
+		       'define-inline "invalid substitution form - must be lambda"
+		       name) )
+		    (list (list (r 'quote) name) val) ) ) ] )
+	`(##core#define-inline ,@(quotify-proc args 'define-inline)))) ) ) )
 
-(define-macro (define-inline . args)
-  (letrec ([quotify-proc 
-	    (lambda (xs id)
-	      (##sys#check-syntax id xs '#(_ 1))
-	      (let* ([head (car xs)]
-		     [name (if (pair? head) (car head) head)]
-		     [val (if (pair? head)
-			      `(lambda ,(cdr head) ,@(cdr xs))
-			      (cadr xs) ) ] )
-		(when (or (not (pair? val)) (not (eq? 'lambda (car val))))
-		  (syntax-error 
-		   'define-inline "invalid substitution form - must be lambda"
-		   name) )
-		(list (list 'quote name) val) ) ) ] )
-    `(##core#define-inline ,@(quotify-proc args 'define-inline))))
+(##sys#extend-macro-environment
+ 'define-constant '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-constant form '(_ variable _))
+    `(##core#define-constant (,(r 'quote) ,(cadr form)) ,(caddr form)))))
 
-(define-macro (define-constant var val)
-  `(##core#define-constant ',var ,val) )
+(##sys#extend-macro-environment
+ 'and-let* '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'and-let* form '(_ #((_ _) 0) . _))
+    (let ((bindings (cadr form))
+	  (body (cddr form))
+	  (%if (r 'if)))
+      (let fold ([bs bindings])
+	(if (null? bs)
+	    `(,(r 'begin) ,@body)
+	    (let ([b (##sys#slot bs 0)]
+		  [bs2 (##sys#slot bs 1)] )
+	      (cond [(not-pair? b) `(,%if ,b ,(fold bs2) #f)]
+		    [(null? (##sys#slot b 1)) `(,%if ,(##sys#slot b 0) ,(fold bs2) #f)]
+		    [else
+		     (let ([var (##sys#slot b 0)])
+		       `(,(r 'let) ((,var ,(cadr b)))
+			 (,%if ,var ,(fold bs2) #f) ) ) ] ) ) ) ) ) ) ) )
 
-(define-macro (and-let* bindings . body)
-  (let fold ([bs bindings])
-    (if (null? bs)
-	`(begin ,@body)
-	(let ([b (##sys#slot bs 0)]
-	      [bs2 (##sys#slot bs 1)] )
-	  (cond [(not-pair? b) `(if ,b ,(fold bs2) #f)]
-		[(null? (##sys#slot b 1)) `(if ,(##sys#slot b 0) ,(fold bs2) #f)]
-		[else
-		 (let ([var (##sys#slot b 0)])
-		   `(let ((,var ,(cadr b)))
-		      (if ,var ,(fold bs2) #f) ) ) ] ) ) ) ) )
-
-(define-macro (select exp . body)
-  (let ((tmp (gensym)))
-    `(let ((,tmp ,exp))
-       ,(let expand ((clauses body))
-	  (if (not (pair? clauses))
-	      '(##core#undefined)
-	      (let ((clause (##sys#slot clauses 0))
-		    (rclauses (##sys#slot clauses 1)) )
-		(##sys#check-syntax 'select clause '#(_ 1))
-		(if (eq? 'else (car clause))
-		    `(begin ,@(cdr clause))
-		    `(if (or ,@(map (lambda (x) `(eqv? ,tmp ,x)) 
-				    (car clause) ) )
-			 (begin ,@(cdr clause)) 
-			 ,(expand rclauses) ) ) ) ) ) ) ) )
+(##sys#extend-macro-environment
+ 'select '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'select form '(_ _ . _))
+    (let ((exp (cadr form))
+	  (body (cddr form))
+	  (tmp (r 'tmp))
+	  (%if (r 'if))
+	  (%else (r 'else))
+	  (%or (r 'or))
+	  (%eqv? (r 'eqv?))
+	  (%begin (r 'begin)))
+      `(,(r 'let) ((,tmp ,exp))
+	,(let expand ((clauses body))
+	   (if (not (pair? clauses))
+	       '(##core#undefined)
+	       (let ((clause (##sys#slot clauses 0))
+		     (rclauses (##sys#slot clauses 1)) )
+		 (##sys#check-syntax 'select clause '#(_ 1))
+		 (if (c %else (car clause))
+		     `(,%begin ,@(cdr clause))
+		     `(,%if (,%or ,@(map (lambda (x) `(,%eqv? ,tmp ,x)) 
+					 (car clause) ) )
+			    (,%begin ,@(cdr clause)) 
+			    ,(expand rclauses) ) ) ) ) ) ) ) ) ) )
 
 
 ;;; Optional argument handling:
@@ -506,74 +555,90 @@
 
 ;;; (LET-OPTIONALS args ((var1 default1) ...) body1 ...)
 
-(define-macro (let-optionals arg-list var/defs . body)
+(##sys#extend-macro-environment
+ 'let-optionals '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'let-optionals form '(_ _ . _))
+    (let ((arg-list (cadr form))
+	  (var/defs (caddr form))
+	  (body (cdddr form))
+	  (%null? (r 'null?))
+	  (%if (r 'if))
+	  (%let (r 'let))
+	  (%car (r 'car))
+	  (%cdr (r 'cdr))
+	  (%lambda (r 'lambda)))
 
-  ;; This guy makes the END-DEF, START-DEF, PORT-DEF definitions above.
-  ;; I wish I had a reasonable loop macro.
+      ;; This guy makes the END-DEF, START-DEF, PORT-DEF definitions above.
+      ;; I wish I had a reasonable loop macro.
 
-  (define (make-default-procs vars body-proc defaulter-names defs rename)
-    (let recur ((vars (reverse vars))
-		(defaulter-names (reverse defaulter-names))
-		(defs (reverse defs))
-		(next-guy body-proc))
-      (if (null? vars) '()
-	  (let ((vars (cdr vars)))
-	    `((,(car defaulter-names)
-	       (lambda ,(reverse vars)
-		 (,next-guy ,@(reverse vars) ,(car defs))))
-	      . ,(recur vars
-			(cdr defaulter-names)
-			(cdr defs)
-			(car defaulter-names)))))))
+      (define (make-default-procs vars body-proc defaulter-names defs rename)
+	(let recur ((vars (reverse vars))
+		    (defaulter-names (reverse defaulter-names))
+		    (defs (reverse defs))
+		    (next-guy body-proc))
+	  (if (null? vars) '()
+	      (let ((vars (cdr vars)))
+		`((,(car defaulter-names)
+		   (,%lambda ,(reverse vars)
+			     (,next-guy ,@(reverse vars) ,(car defs))))
+		  . ,(recur vars
+			    (cdr defaulter-names)
+			    (cdr defs)
+			    (car defaulter-names)))))))
 
 
-    ;; This guy makes the (IF (NULL? REST) (PORT-DEF) ...) tree above.
+      ;; This guy makes the (IF (NULL? REST) (PORT-DEF) ...) tree above.
 
-  (define (make-if-tree vars defaulters body-proc rest rename)
-    (let recur ((vars vars) (defaulters defaulters) (non-defaults '()))
-      (if (null? vars)
-	  `(if (##core#check (null? ,rest))
-	       (,body-proc . ,(reverse non-defaults))
-	       (##sys#error (##core#immutable '"too many optional arguments") ,rest))
-	  (let ((v (car vars)))
-	    `(if (null? ,rest)
-		 (,(car defaulters) . ,(reverse non-defaults))
-		 (let ((,v (car ,rest))
-		       (,rest (cdr ,rest)))
-		   ,(recur (cdr vars)
-			   (cdr defaulters)
-			   (cons v non-defaults))))))))
+      (define (make-if-tree vars defaulters body-proc rest rename)
+	(let recur ((vars vars) (defaulters defaulters) (non-defaults '()))
+	  (if (null? vars)
+	      `(,%if (##core#check (,%null? ,rest))
+		     (,body-proc . ,(reverse non-defaults))
+		     (##sys#error (##core#immutable '"too many optional arguments") ,rest))
+	      (let ((v (car vars)))
+		`(,%if (null? ,rest)
+		       (,(car defaulters) . ,(reverse non-defaults))
+		       (,%let ((,v (,%car ,rest))
+			       (,rest (,%cdr ,rest)))
+			      ,(recur (cdr vars)
+				      (cdr defaulters)
+				      (cons v non-defaults))))))))
 
-  (##sys#check-syntax 'let-optionals var/defs '#((symbol _) 0))
-  (##sys#check-syntax 'let-optionals body '#(_ 1))
-  (let* ((vars (map car var/defs))
-	 (prefix-sym (lambda (prefix sym)
-		       (string->symbol (string-append prefix (symbol->string sym)))))
+      (##sys#check-syntax 'let-optionals var/defs '#((variable _) 0))
+      (##sys#check-syntax 'let-optionals body '#(_ 1))
+      (let* ((vars (map car var/defs))
+	     (prefix-sym (lambda (prefix sym)
+			   (string->symbol (string-append prefix (symbol->string sym)))))
 
-	 ;; Private vars, one for each user var.
-	 ;; We prefix the % to help keep macro-expanded code from being
-	 ;; too confusing.
-	 (vars2 (map (lambda (v) (gensym (prefix-sym "%" v)))
-		     vars))
+	     ;; Private vars, one for each user var.
+	     ;; We prefix the % to help keep macro-expanded code from being
+	     ;; too confusing.
+	     (vars2 (map (lambda (v) (r (prefix-sym "%" v)))
+			 vars))
 
-	 (defs (map cadr var/defs))
-	 (body-proc (gensym 'body))
+	     (defs (map cadr var/defs))
+	     (body-proc (r 'body))
 
-	 ;; A private var, bound to the value of the ARG-LIST expression.
-	 (rest-var (gensym '%rest))
+	     ;; A private var, bound to the value of the ARG-LIST expression.
+	     (rest-var (r '%rest))
 
-	 (defaulter-names (map (lambda (var) (gensym (prefix-sym "def-" var)))
-			       vars))
+	     (defaulter-names (map (lambda (var) (r (prefix-sym "def-" var)))
+				   vars))
 
-	 (defaulters (make-default-procs vars2 body-proc
-					 defaulter-names defs gensym))
-	 (if-tree (make-if-tree vars2 defaulter-names body-proc
-				rest-var gensym)))
+	     (defaulters (make-default-procs vars2 body-proc
+					     defaulter-names defs gensym))
+	     (if-tree (make-if-tree vars2 defaulter-names body-proc
+				    rest-var gensym)))
 
-    `(let* ((,rest-var ,arg-list)
-	    (,body-proc (lambda ,vars . ,body))
-	    . ,defaulters)
-       ,if-tree) ) )
+	`(,(r 'let*) ((,rest-var ,arg-list)
+		      (,body-proc (,%lambda ,vars . ,body))
+		      . ,defaulters)
+	  ,if-tree) ) ))))
+
+
+;;;*** make hygienic
 
 
 ;;; (:optional rest-arg default-exp)
