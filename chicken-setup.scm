@@ -1103,7 +1103,7 @@ EOF
 		   (unpack/enter fpath)
 		   (let ((sfile (pathname-replace-extension f "setup")))
 		     (when (and (not (file-exists? sfile)) (file-exists? "tags") )
-		       (let ((ds (sort (directory "tags") version-numbers>)))
+		       (let ((ds (sort (map version-string->numbers (directory "tags")) version-numbers>)))
 			 (when (pair? ds) 
 			   (let ((d (make-pathname "tags" (car ds))))
 			     (chdir d) ) )  ) )
