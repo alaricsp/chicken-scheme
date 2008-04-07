@@ -88,25 +88,25 @@ EOF
 	  (define (next-number)
 	    (let ((n (string->number (next-arg))))
 	      (if (and n (> n 0)) n (error "invalid argument to option" arg))))
-	  (match arg
-	    [(or "-h" "-help" "--help") (print-usage)]
-	    [(or "-v" "-version") 
-	     (print "chicken-profile - Version " (chicken-version))
-	     (exit) ]
-	    ["-release" 
-	     (print (chicken-version))
-	     (exit) ]
-	    ["-no-unused" (set! no-unused #t)]
-	    ["-top" (set! top (next-number))]
-	    ["-sort-by-calls" (set! sort-by sort-by-calls)]
-	    ["-sort-by-time" (set! sort-by sort-by-time)]
-	    ["-sort-by-avg" (set! sort-by sort-by-avg)]
-	    ["-sort-by-name" (set! sort-by sort-by-name)]
-	    ["-decimals" (set-decimals (next-arg))]
-	    [_ (cond [(and (> (string-length arg) 1) (char=? #\- (string-ref arg 0)))
-		      (error "invalid option" arg) ]
-		     [file (print-usage)]
-		     [else (set! file arg)] ) ] )
+	  (cond 
+	   [(member arg '("-h" "-help" "--help")) (print-usage)]
+	   [(member arg '("-v" "-version"))
+	    (print "chicken-profile - Version " (chicken-version))
+	    (exit) ]
+	   [(string=? arg "-release")
+	    (print (chicken-version))
+	    (exit) ]
+	   [(string=? arg "-no-unused") (set! no-unused #t)]
+	   [(string=? arg "-top") (set! top (next-number))]
+	   [(string=? arg "-sort-by-calls") (set! sort-by sort-by-calls)]
+	   [(string=? arg "-sort-by-time") (set! sort-by sort-by-time)]
+	   [(string=? arg "-sort-by-avg") (set! sort-by sort-by-avg)]
+	   [(string=? arg "-sort-by-name") (set! sort-by sort-by-name)]
+	   [(string=? arg "-decimals") (set-decimals (next-arg))]
+	   [(and (> (string-length arg) 1) (char=? #\- (string-ref arg 0)))
+	    (error "invalid option" arg) ]
+	   [file (print-usage)]
+	   [else (set! file arg)] )
 	  (loop rest) ) ) ) )
 
 (define (sort-by-calls x y)

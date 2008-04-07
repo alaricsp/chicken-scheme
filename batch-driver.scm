@@ -234,8 +234,7 @@
       (set! ##sys#warnings-enabled #f) )
     (when (memq 'optimize-leaf-routines options) (set! optimize-leaf-routines #t))
     (when (memq 'unsafe options) 
-      (set! unsafe #t)
-      (##match#set-error-control #:fail) )
+      (set! unsafe #t) )
     (when (and dynamic (memq 'unsafe-libraries options))
       (set! emit-unsafe-marker #t) )
     (when (memq 'disable-interrupts options) (set! insert-timer-checks #f))
@@ -291,8 +290,6 @@
     (set! ##sys#features (delete #:compiler-extension ##sys#features eq?))
 
     (set! ##sys#features (cons '#:compiling ##sys#features))
-    (set! ##sys#features (cons #:match ##sys#features))
-    (##sys#provide 'match) 
     (set! upap (user-post-analysis-pass))
 
     ;; Insert postponed initforms:
