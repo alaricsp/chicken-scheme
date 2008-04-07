@@ -264,3 +264,4 @@ scripts/dpkg-eggs.scm
 svnrevision.sh
 synrules.scm
 expand.scm
+expand.c
