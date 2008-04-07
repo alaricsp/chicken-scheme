@@ -1,17 +1,18 @@
 TODO for macro/module system					-*- Outline -*-
 
+* merge trunk into branch
+
 * current module approach problems
 ** fixup of module export-list in ##sys#extend-macro-environment
    not done for static se's of global macros
 
-* reimplement macros from chicken-more-macros hygienically
+* reimplement macros from chicken-ffi-macros hygienically
 
 * test hygiene
 * test macros expanding into macro calls
 * test macros expanding into syntax-rules
 * test local define{-values,-syntax,} expansion
 * test extended lambda-lists
-* test examples from r5rs spec
 * test macro-expansions
 ** quoted literals
 ** qualified symbols
@@ -21,23 +22,17 @@ TODO for macro/module system					-*- Outline -*-
 
 * test benchmarks
 
-* reimplement chicken-more-macros hygienically
-
 * remove define-macro and ##sys#lisp-transformer, once all macros are converted
 
 * add low-level support for modules
 * find suitable design for modules
-** s48
-** gauche
 
-* update manual
+* update manual/NEWS
 ** expand unit (move stuff from eval)
 ** document extensions
 *** user defined ellipsis
 ** ack synrules authors
 ** removals
-   define-macro
-   define-record
    run-time and compile-time situations for eval-when
 
 * csi
@@ -48,9 +43,11 @@ TODO for macro/module system					-*- Outline -*-
 
 * eggs to be adapted/obsoleted
 ** syntax-case (eval/expand integration?)
+*** sxml-match
 ** codewalk
    must probably go... influences modules, crunch
 ** remove
    modules
 ** syntactic-closures?
 ** simple-macros
+** alexpander

@@ -333,28 +333,6 @@ Scheme namespace and can be lexically shadowed.  This construct is
 equivalent to {{define}} when evaluated or interpreted. Inline
 definitions should only appear at toplevel.
 
-==== define-macro
-
- [syntax] (define-macro (NAME VAR ... [. VAR]) EXP1 ...)
- [syntax] (define-macro NAME (lambda (VAR ... [. VAR]) EXP1 ...))
- [syntax] (define-macro NAME1 NAME2)
-
-Define a globally visible macro special form. The macro is available
-as soon as it is defined, i.e. it is registered at compile-time. If
-the file containing this definition invokes {{eval}} and the
-declaration {{run-time-macros}} (or the command line option
-{{-run-time-macros}}) has been used, then the
-macro is visible in evaluated expressions during runtime. The second
-possible syntax for {{define-macro}} is allowed for portability
-purposes only. In this case the second argument '''must''' be a
-lambda-expression or a macro name.  Only global macros can be defined using this form.
-{{(define-macro NAME1 NAME2)}} simply copies the macro definition
-from {{NAME2}} to {{NAME1}}, creating an alias.
-
-Extended lambda list syntax ({{#!optional}}, etc.) can be used but note
-that arguments are source expressions and thus default values for optional
-or keyword arguments should take this into consideration.
-
 ==== define-for-syntax
 
  [syntax] (define-for-syntax (NAME VAR ... [. VAR]) EXP1 ...)
