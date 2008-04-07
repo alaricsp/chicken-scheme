@@ -217,6 +217,32 @@
 (define *fetched-eggs* '())
 
 
+; Convert a string with a version (such as "1.22.0") to a list of the
+; numbers (such as (1 22 0)). If one of the version components cannot
+; be converted to a number, then it is kept as a string.
+
+(define (version-string->numbers string)
+  (map (lambda (x) (or (string->number x) (->string x))) 
+       (string-split string ".")))
+
+(define (numbers->version-string numbers)
+  (string-intersperse (map ->string numbers) "."))
+
+; Given two lists with numbers corresponding to a software version (as returned
+; by version-string->numbers), check if the first is greater than the second.
+
+(define (version-numbers> a b)
+  (match (list a b)
+	 ((() _)   #f)
+	 ((_  ())  #t)
+	 (((a1 . an) (b1 . bn))
+	  (cond ((and (number? a1) (number? b1))
+		 (cond ((> a1 b1) #t) ((= a1 b1) (version-numbers> an bn)) (else #f)))
+		((and (string? a1) (string? b1))  
+		 (cond ((string> a1 b1) #t) ((string= a1 b1) (version-numbers> an bn)) (else #f)))
+		(else (version-numbers> (cons (->string a1) an) (cons (->string b1) bn)))))
+	 (else (error 'version-numbers> "invalid revisions: " a b))))
+
 ;;; File-system routines
 
 (define create-directory
@@ -1077,7 +1103,7 @@ EOF
 		   (unpack/enter fpath)
 		   (let ((sfile (pathname-replace-extension f "setup")))
 		     (when (and (not (file-exists? sfile)) (file-exists? "tags") )
-		       (let ((ds (sort (directory "tags") string>=?)))
+		       (let ((ds (sort (directory "tags") version-numbers>)))
 			 (when (pair? ds) 
 			   (let ((d (make-pathname "tags" (car ds))))
 			     (chdir d) ) )  ) )
