@@ -14,6 +14,10 @@ $compile test-gc-hooks.scm && ./a.out
 echo "======================================== library tests ..."
 ../csi -w -s library-tests.scm
 
+echo "======================================== syntax tests ..."
+../csi -w -s syntax-tests.scm
+../csi -w matchable.scm -s match-tests.scm
+
 echo "======================================== hash-table tests ..."
 ../csi -w -s hash-table-tests.scm
 

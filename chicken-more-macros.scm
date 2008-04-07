@@ -638,9 +638,6 @@
 	  ,if-tree) ) ))))
 
 
-;;;*** make hygienic
-
-
 ;;; (:optional rest-arg default-exp)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; This form is for evaluating optional arguments and their defaults
@@ -653,17 +650,22 @@
 ;;; - If REST-ARG has 1 element, return that element.
 ;;; - If REST-ARG has >1 element, error.
 
-(define-macro (optional rest default-exp)
-  (let ([var (gensym)])
-    `(let ((,var ,rest))
-       (if (null? ,var) 
-	   ,default-exp
-	   (if (##core#check (null? (cdr ,var)))
-	       (car ,var)
-	       (##sys#error (##core#immutable '"too many optional arguments") ,var))))))
-
-(define-macro (:optional . args)	; DEPRECATED to avoid conflicts with keyword-style prefix
-  `(optional ,@args) )
+(##sys#extend-macro-environment
+ 'optional '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'optional form '(_ _ . #(_ 0 1)))
+    (let ((var (r 'tmp))
+	  (%null? (r 'null?))
+	  (%if (r 'if)))
+      `(,(r 'let) ((,var ,(cadr form)))
+	(,%if (,%null? ,var) 
+	      ,(optional (cddr form) #f)
+	      (,%if (##core#check (,%null? (,(r 'cdr) ,var)))
+		    (,(r 'car) ,var)
+		    (##sys#error
+		     (##core#immutable '"too many optional arguments") 
+		     ,var))))))))
 
 
 ;;; (LET-OPTIONALS* args ((var1 default1) ... [rest]) body1 ...)
@@ -681,161 +683,223 @@
 ;;; - If there is no REST variable, then it is an error to have excess
 ;;;   values in the ARGS list.
 
-(define-macro (let-optionals* args var/defs . body)
-  (##sys#check-syntax 'let-optionals* var/defs '#(_ 0))
-  (##sys#check-syntax 'let-optionals* body '#(_ 1))
-  (let ([rvar (gensym)])
-    `(let ((,rvar ,args))
-       ,(let loop ([args rvar] [vardefs var/defs])
-	  (if (null? vardefs)
-	      `(if (##core#check (null? ,args))
-		   (let () ,@body)
-		   (##sys#error (##core#immutable '"too many optional arguments") ,args) )
-	      (let ([head (car vardefs)])
-		(if (pair? head)
-		    (let ([rvar2 (gensym)])
-		      `(let ((,(car head) (if (null? ,args) ,(cadr head) (car ,args)))
-			     (,rvar2 (if (null? ,args) '() (cdr ,args))) )
-			 ,(loop rvar2 (cdr vardefs)) ) )
-		    `(let ((,head ,args)) ,@body) ) ) ) ) ) ) )
+(##sys#extend-macro-environment
+ 'let-optional' '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'let-optionals* form '(_ _ list . _))
+    (let ((args (cadr form))
+	  (var/defs (caddr form))
+	  (body (cdddr form))
+	  (%let (r 'let))
+	  (%if (r 'if))
+	  (%null? (r 'null?))
+	  (%car (r 'car))
+	  (%cdr (r 'cdr)))
+      (let ((rvar (r 'tmp)))
+	`(,%let ((,rvar ,args))
+		,(let loop ([args rvar] [vardefs var/defs])
+		   (if (null? vardefs)
+		       `(,%if (##core#check (,%null? ,args))
+			      (,%let () ,@body)
+			      (##sys#error 
+			       (##core#immutable '"too many optional arguments") 
+			       ,args) )
+		       (let ([head (car vardefs)])
+			 (if (pair? head)
+			     (let ((rvar2 (r 'tmp2)))
+			       `(,%let ((,(car head) (,%if (,%null? ,args)
+							   ,(cadr head)
+							   (,%car ,args)))
+					(,rvar2 (,%if (,%null? ,args) 
+						      '()
+						      (,%cdr ,args))) )
+				       ,(loop rvar2 (cdr vardefs)) ) )
+			     `(,%let ((,head ,args)) ,@body) ) ) ) ) ) ) ))))
 
 
 ;;; case-lambda (SRFI-16):
 
-(define-macro (case-lambda . clauses)
-  (define (genvars n)
-    (let loop ([i 0])
-      (if (fx>= i n)
-	  '()
-	  (cons (gensym) (loop (fx+ i 1))) ) ) )
-  (##sys#check-syntax 'case-lambda clauses '#(_ 0))
-  (require 'srfi-1)			; Urgh...
-  (let* ((mincount (apply min (map (lambda (c)
-				     (##sys#decompose-lambda-list 
-				      (car c)
-				      (lambda (vars argc rest) argc) ) )
-				   clauses) ) ) 
-	 (minvars (genvars mincount))
-	 (rvar (gensym)) 
-	 (lvar (gensym)) )
-    `(lambda ,(append minvars rvar)
-       (let ((,lvar (length ,rvar)))
-	 ,(fold-right
-	   (lambda (c body)
-	     (##sys#decompose-lambda-list
-	      (car c)
-	      (lambda (vars argc rest)
-		(##sys#check-syntax 'case-lambda (car c) 'lambda-list)
-		`(if ,(let ([a2 (fx- argc mincount)])
-			(if rest
-			    (if (zero? a2)
-				#t
-				`(fx>= ,lvar ,a2) )
-			    `(fx= ,lvar ,a2) ) )
-		     ,(receive
-		       (vars1 vars2) (split-at! (take vars argc) mincount)
-		       (let ((bindings
-			      (let build ((vars2 vars2) (vrest rvar))
-				(if (null? vars2)
-				    (cond (rest `(let ((,rest ,vrest)) ,@(cdr c)))
-					  ((null? (cddr c)) (cadr c))
-					  (else `(let () ,@(cdr c))) )
-				    (let ((vrest2 (gensym)))
-				      `(let ((,(car vars2) (car ,vrest))
-					     (,vrest2 (cdr ,vrest)) )
-					 ,(if (pair? (cdr vars2))
-					      (build (cdr vars2) vrest2)
-					      (build '() vrest2) ) ) ) ) ) ) )
-			 (if (null? vars1)
-			     bindings
-			     `(let ,(map list vars1 minvars) ,bindings) ) ) )
-		     ,body) ) ) )
-	   '(##core#check (##sys#error (##core#immutable '"no matching clause in call to 'case-lambda' form")))
-	   clauses) ) ) ) )
+(##sys#extend-macro-environment
+ 'case-lambda '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'case-lambda form '(_ . _))
+    (define (genvars n)
+      (let loop ([i 0])
+	(if (fx>= i n)
+	    '()
+	    (cons (r (gensym)) (loop (fx+ i 1))) ) ) )
+    (require 'srfi-1)			; Urgh...
+    (let* ((mincount (apply min (map (lambda (c)
+				       (##sys#decompose-lambda-list 
+					(car c)
+					(lambda (vars argc rest) argc) ) )
+				     clauses) ) ) 
+	   (minvars (genvars mincount))
+	   (rvar (r 'rvar))
+	   (lvar (r 'lvar))
+	   (%lambda (r 'lambda))
+	   (%let (r 'let))
+	   (%if (r 'if)))
+      `(,%lambda ,(append minvars rvar)
+		 (,%let ((,lvar (length ,rvar)))
+			,(fold-right
+			  (lambda (c body)
+			    (##sys#decompose-lambda-list
+			     (car c)
+			     (lambda (vars argc rest)
+			       (##sys#check-syntax 'case-lambda (car c) 'lambda-list)
+			       `(,%if ,(let ([a2 (fx- argc mincount)])
+					 (if rest
+					     (if (zero? a2)
+						 #t
+						 `(,(r 'fx>=) ,lvar ,a2) )
+					     `(,(r 'fx=) ,lvar ,a2) ) )
+				      ,(receive (vars1 vars2)
+					   (split-at! (take vars argc) mincount)
+					 (let ((bindings
+						(let build ((vars2 vars2) (vrest rvar))
+						  (if (null? vars2)
+						      (cond (rest `(,%let ((,rest ,vrest)) ,@(cdr c)))
+							    ((null? (cddr c)) (cadr c))
+							    (else `(,%let () ,@(cdr c))) )
+						      (let ((vrest2 (r (gensym))))
+							`(,%let ((,(car vars2) (,(r 'car) ,vrest))
+								 (,vrest2 (,(r 'cdr) ,vrest)) )
+								,(if (pair? (cdr vars2))
+								     (build (cdr vars2) vrest2)
+								     (build '() vrest2) ) ) ) ) ) ) )
+					   (if (null? vars1)
+					       bindings
+					       `(,%let ,(map list vars1 minvars) ,bindings) ) ) )
+				      ,body) ) ) )
+			  '(##core#check (##sys#error (##core#immutable '"no matching clause in call to 'case-lambda' form")))
+			  (cdr form))))))))
 
 
 ;;; Record printing:
 
-(define-macro (define-record-printer head . body)
-  (cond [(pair? head)
-	 (##sys#check-syntax 'define-record-printer (cons head body) '((symbol symbol symbol) . #(_ 1)))
-	 `(##sys#register-record-printer ',(##sys#slot head 0) (lambda ,(##sys#slot head 1) ,@body)) ]
-	[else
-	 (##sys#check-syntax 'define-record-printer (cons head body) '(symbol _))
-	 `(##sys#register-record-printer ',head ,@body) ] ) )
+(##sys#extend-macro-environment
+ 'define-record-printer '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-record-printer form '(_ . _))
+    (cond [(pair? head)
+	   (##sys#check-syntax 
+	    'define-record-printer (cons head body)
+	    '((symbol symbol symbol) . #(_ 1)))
+	   `(##sys#register-record-printer 
+	     ',(##sys#slot head 0)
+	     (,(r 'lambda) ,(##sys#slot head 1) ,@body)) ]
+	  [else
+	   (##sys#check-syntax 'define-record-printer (cons head body) '(symbol _))
+	   `(##sys#register-record-printer ',head ,@body) ] ) )))
 
 
 ;;; Exceptions:
 
-(define-macro (handle-exceptions var handler . body)
-  (let ([k (gensym)]
-	[args (gensym)] )
-    `((call-with-current-continuation
-       (lambda (,k)
-	 (with-exception-handler
-	  (lambda (,var) (,k (lambda () ,handler)))
-	  (lambda ()
+(##sys#extend-macro-environment
+ 'handle-exceptions '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'handle-exceptions form '(_ variable _ . _))
+  (let ((k (r 'k))
+	(args (r 'args))
+	(%lambda (r 'lambda)))
+    `((,(r 'call-with-current-continuation)
+       (,%lambda (,k)
+	 (,(r 'with-exception-handler)
+	  (,%lambda (,(cadr form)) (,k (,%lambda () ,(caddr form))))
+	  (,%lambda ()
 	    (##sys#call-with-values
-	     (lambda () ,@body)
-	     (lambda ,args (,k (lambda () (##sys#apply ##sys#values ,args)))) ) ) ) ) ) ) ) )
+	     (,%lambda () ,@(cdddr form))
+	     (,%lambda 
+	      ,args 
+	      (,k (lambda () (##sys#apply ##sys#values ,args)))) ) ) ) ) ) ) ) ) ) )
 
-(define-macro (condition-case exp . clauses)
-  (let ([exvar (gensym)]
-	[kvar (gensym)] )
-    (define (parse-clause c)
-      (let* ([var (and (symbol? (car c)) (car c))]
-	     [kinds (if var (cadr c) (car c))]
-	     [body (if var (cddr c) (cdr c))] )
-	(if (null? kinds)
-	    `(else 
-	      ,(if var
-		   `(let ([,var ,exvar]) ,@body)
-		   `(let () ,@body) ) )
-	    `((and ,kvar ,@(map (lambda (k) `(memv ',k ,kvar)) kinds))
-	      ,(if var
-		   `(let ([,var ,exvar]) ,@body)
-		   `(let () ,@body) ) ) ) ) )
-    `(handle-exceptions ,exvar
-	 (let ([,kvar (and (##sys#structure? ,exvar 'condition) (##sys#slot ,exvar 1))])
-	   (cond ,@(map parse-clause clauses)
-		 (else (##sys#signal ,exvar)) ) )
-       ,exp) ) )
+(##sys#extend-macro-environment
+ 'condition-case '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'condition-case form '(_ _ . _))
+    (let ((exvar (r 'exvar))
+	  (kvar (r 'kvar))
+	  (%and (r 'and))
+	  (%let (r 'let))
+	  (%memv (r 'memv))
+	  (%else (r 'else)))
+      (define (parse-clause c)
+	(let* ([var (and (symbol? (car c)) (car c))]
+	       [kinds (if var (cadr c) (car c))]
+	       [body (if var (cddr c) (cdr c))] )
+	  (if (null? kinds)
+	      `(,%else 
+		,(if var
+		     `(,%let ([,var ,exvar]) ,@body)
+		     `(,%let () ,@body) ) )
+	      `((,%and ,kvar ,@(map (lambda (k) `(,%memv ',k ,kvar)) kinds))
+		,(if var
+		     `(,%let ([,var ,exvar]) ,@body)
+		     `(,%let () ,@body) ) ) ) ) )
+      `(,(r 'handle-exceptions) ,exvar
+	(,%let ([,kvar (,%and (##sys#structure? ,exvar 'condition) 
+			      (##sys#slot ,exvar 1))])
+	       (,(r 'cond) ,@(map parse-clause (cddr form))
+		(,%else (##sys#signal ,exvar)) ) )
+	,(cadr form))))))
 
 
 ;;; SRFI-9:
 
-(define-macro (define-record-type t conser pred . slots)
-  (let ([vars (cdr conser)]
-	[slotnames (map car slots)] )
-    `(begin
-       (define ,conser
-	 (##sys#make-structure 
-	  ',t 
-	  ,@(map (lambda (sname)
-		   (if (memq sname vars)
-		       sname
-		       '(##sys#void) ) )
-		 slotnames) ) )
-       (define (,pred x) (##sys#structure? x ',t))
-       ,@(let loop ([slots slots] [i 1])
-	   (if (null? slots)
-	       '()
-	       (let* ([slot (car slots)]
-		      (setters (memq #:record-setters ##sys#features))
-		      (setr? (pair? (cddr slot))) 
-		      (getr `(lambda (x)
-			       (##core#check (##sys#check-structure x ',t))
-			       (##sys#block-ref x ,i) ) ) )
-		 `(,@(if setr?
-			 `((define (,(caddr slot) x y)
-			     (##core#check (##sys#check-structure x ',t))
-			     (##sys#block-set! x ,i y)) )
-			 '() )
-		   (define ,(cadr slot) 
-		     ,(if (and setr? setters)
-			  `(getter-with-setter ,getr ,(caddr slot))
-			  getr) )
-		   ,@(loop (cdr slots) (add1 i)) ) ) ) ) ) ) )
+(##sys#extend-macro-environment
+ 'define-recorcd-type '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-record-type form '(_ variable #(variable 1) variable . _)) 
+    (let* ((t (cadr form))
+	  (conser (caddr form))
+	  (pred (cadddr form))
+	  (slots (cddddr form))
+	  (%begin (r 'begin))
+	  (%define (r 'define))
+	  (vars (cdr conser))
+	  (x (r 'x))
+	  (y (r 'y))
+	  (%getter-with-setter (r 'getter-with-setter))
+	  (slotnames (map car slots)))
+      `(,%begin
+	(,%define ,conser
+		  (##sys#make-structure 
+		   ',t 
+		   ,@(map (lambda (sname)
+			    (if (memq sname vars)
+				sname
+				'(##sys#void) ) )
+			  slotnames) ) )
+	(,%define (,pred ,x) (##sys#structure? ,x ',t))
+	,@(let loop ([slots slots] [i 1])
+	    (if (null? slots)
+		'()
+		(let* ([slot (car slots)]
+		       (setters (memq #:record-setters ##sys#features))
+		       (setr? (pair? (cddr slot))) 
+		       (getr `(,%lambda (,x)
+					(##core#check (##sys#check-structure ,x ',t))
+					(##sys#block-ref ,x ,i) ) ) )
+		  `(,@(if setr?
+			  `((,%define (,(caddr slot) ,x ,y)
+				      (##core#check (##sys#check-structure ,x ',t))
+				      (##sys#block-set! ,x ,i ,y)) )
+			  '() )
+		    (,%define ,(cadr slot) 
+			      ,(if (and setr? setters)
+				   `(,%getter-with-setter ,getr ,(caddr slot))
+				   getr) )
+		    ,@(loop (cdr slots) (add1 i)) ) ) ) ) ) ) ) ) )
+
+
+;;;*** convert to er
 
 
 ;;; Compile-time `require':

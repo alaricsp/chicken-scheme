@@ -65,6 +65,15 @@
   (define %and (r 'and))
   (define %car (r 'car))
   (define %cdr (r 'cdr))
+  (define %vector? (r 'vector?))
+  (define %vector-length (r 'vector-length))
+  (define %vector-ref (r 'vector-ref))
+  (define %vector->list (r 'vector->list))
+  (define %list->vector (r 'list->vector))
+  (define %>= (r '>=))
+  (define %= (r '=))
+  (define %+ (r '+))
+  (define %i (r 'i))
   (define %compare (r 'compare))
   (define %cond (r 'cond))
   (define %cons (r 'cons))
@@ -127,6 +136,8 @@
 		    (,%and (,%pair? ,%temp)
 			   ,@(process-match `(,%car ,%temp) (car pattern))
 			   ,@(process-match `(,%cdr ,%temp) (cdr pattern))))))
+	  ((vector? pattern)
+	   (process-vector-match input pattern))
 	  ((or (null? pattern) (boolean? pattern) (char? pattern))
 	   `((,%eq? ,input ',pattern)))
 	  (else
@@ -141,6 +152,32 @@
 			 (,%and (,%pair? ,%l)
 				(,%loop (,%cdr ,%l)))))))))
 
+   (define (process-vector-match input pattern)
+     (let* ((len (vector-length pattern))
+            (segment? (and (>= len 2)
+                           (eq? (vector-ref pattern (- len 1))
+				ellipsis))))
+       `((,%let ((,%temp ,input))
+          (,%and (,%vector? ,%temp)
+                 ,(if segment?
+                      `(,%>= (,%vector-length ,%temp) ,(- len 2))
+                      `(,%= (,%vector-length ,%temp) ,len))
+                 ,@(let lp ((i 0))
+                     (cond
+                      ((>= i len)
+                       '())
+                      ((and (= i (- len 2)) segment?)
+                       `((,%let ,%loop ((,%i ,i))
+                            (,%or (,%>= ,%i ,len)
+                                  (,%and ,@(process-match
+                                            `(,%vector-ref ,%temp ,%i)
+                                            (vector-ref pattern (- len 2)))
+                                         (,%loop (,%+ ,%i 1)))))))
+                      (else
+                       (append (process-match `(,%vector-ref ,%temp ,i)
+                                              (vector-ref pattern i))
+                               (lp (+ i 1)))))))))))
+ 
   ;; Generate code to take apart the input expression
   ;; This is pretty bad, but it seems to work (can't say why).
 
@@ -160,6 +197,24 @@
 	  ((pair? pattern)
 	   (append (process-pattern (car pattern) `(,%car ,path) mapit)
 		   (process-pattern (cdr pattern) `(,%cdr ,path) mapit)))
+          ((vector? pattern)
+           (let* ((len (vector-length pattern))
+                  (segment? (and (>= len 2)
+                                 (eq? (vector-ref pattern (- len 1))
+				      ellipsis))))
+             (if segment?
+                 (process-pattern (vector->list pattern) 
+                                  `(,%vector->list ,path)
+                                  mapit)
+                 (let lp ((i 0))
+                   (cond
+                    ((>= i len)
+                     '())
+                    (else
+                     (append (process-pattern (vector-ref pattern i)
+                                              `(,%vector-ref ,path ,i)
+                                              mapit)
+                             (lp (+ i 1)))))))))
 	  (else '())))
 
   ;; Generate code to compose the output expression according to template
@@ -201,6 +256,9 @@
 	  ((pair? template)
 	   `(,%cons ,(process-template (car template) dim env)
 		    ,(process-template (cdr template) dim env)))
+	  ((vector? template)
+	   `(,%list->vector
+	     ,(process-template (vector->list template) dim env)))
 	  (else
 	   `(,%quote ,template))))
 
@@ -216,6 +274,8 @@
 	  ((pair? pattern)
 	   (meta-variables (car pattern) dim
 			   (meta-variables (cdr pattern) dim vars)))
+	  ((vector? pattern)
+	   (meta-variables (vector->list pattern) dim vars))
 	  (else vars)))
 
   ;; Return a list of meta-variables of given higher dim
@@ -237,6 +297,8 @@
 				dim env
 				(free-meta-variables (cdr template)
 						     dim env free)))
+	  ((vector? template)
+	   (free-meta-variables (vector->list template) dim env free))
 	  (else free)))
 
   (define (segment-pattern? pattern)

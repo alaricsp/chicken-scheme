@@ -185,3 +185,11 @@
            (if y)
            y)))
 )
+
+(define-syntax foo
+  (syntax-rules ()
+    ((_ #(a ...)) (list a ...))))
+
+(t '(1 2 3)
+   (foo #(1 2 3))
+)

@@ -888,8 +888,6 @@
 	     (lambda (abrt)
 	       (fluid-let ([##sys#read-error-with-line-number #t]
 			   [##sys#current-source-filename fname]
-			   (##sys#current-environment ##sys#current-environment)
-			   (##sys#current-meta-environment ##sys#current-meta-environment)
 			   [##sys#current-load-path
 			    (and fname
 				 (let ((i (has-sep? fname)))

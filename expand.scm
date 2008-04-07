@@ -81,7 +81,11 @@
 (define (##sys#alias-global-hook s) s)
 
 (define (##sys#rename-global id se)
-  (cond ((##sys#qualified-symbol? id) id)
+  (cond ((or (##sys#qualified-symbol? id) 
+	     (let ((s (##sys#slot id 1)))
+	       (and (fx> (##sys#size s) 0)
+		    (char=? #\ (string-ref s 0)))))
+	 id)
 	((##sys#current-module) =>
 	 (lambda (m)
 	   (let ((id2 (##sys#string->symbol 

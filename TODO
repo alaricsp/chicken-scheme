@@ -10,7 +10,6 @@ TODO for macro/module system					-*- Outline -*-
 * test macros expanding into macro calls
 * test macros expanding into syntax-rules
 * test local define{-values,-syntax,} expansion
-* test pattern matching macros and interaction with hygienic macros
 * test extended lambda-lists
 * test examples from r5rs spec
 * test macro-expansions
