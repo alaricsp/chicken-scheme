@@ -642,15 +642,18 @@
 				      ((and emit-profile (eq? 'lambda name))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
-				       (match body0
-					 (((? (lambda (s)
-						(eq? 'begin (lookup s se))))
-					   (or (? string? doc)
-					       ((? (lambda (s) (eq? 'quote (lookup s se))))
-						doc)) _ . more)
-					  (process-lambda-documentation
-					   dest doc l) )
-					 (_ l) ) ) ) ) ) ) ) )
+				       (if (and (> (length body0) 1)
+						(symbol? (car body0))
+						(eq? 'begin (lookup (car body0) se))
+						(let ((x1 (cadr body0)))
+						  (or (string? x1)
+						      (and (list? x1)
+							   (= (length x1) 2)
+							   (symbol? (car x1))
+							   (eq? 'quote (lookup (car x1) se))))))
+					   (process-lambda-documentation
+					    dest (cadr body) l) 
+					   l))))))))
 			
 			((let-syntax)
 			 (##sys#check-syntax 'let-syntax x '(let-syntax #((variable _) 0) . #(_ 1)) #f se)
@@ -962,35 +965,41 @@
 					 ,(foreign-type-convert-argument
 					   `(,(macro-alias 'let se)
 					     ()
-					       ,@(match rtype
-						   ((or '(const nonnull-c-string) 
-							'(const nonnull-unsigned-c-string)
-							'nonnull-unsigned-c-string
-							'nonnull-c-string)
-						    `((##sys#make-c-string
-						       (,(macro-alias 'let se)
-							() ,@(cddr lam)))))
-						   ((or '(const c-string*)
-							'(const unsigned-c-string*)
-							'unsigned-c-string*
-							'c-string*
-							'c-string-list
-							'c-string-list*)
-						    (syntax-error
-						     "not a valid result type for callback procedures"
-						     rtype
-						     name) )
-						   ((or 'c-string
-							'(const unsigned-c-string)
-							'unsigned-c-string
-							'(const c-string))
-						    `((,(macro-alias 'let se)
-						       ((r (,(macro-alias 'let se)
-							    () ,@(cddr lam))))
-						       (,(macro-alias 'and se)
-							r 
-							(##sys#make-c-string r)) ) ) )
-						   (_ (cddr lam)) ) )
+					       ,@(cond
+						  ((member 
+						    rtype
+						    '((const nonnull-c-string) 
+						      (const nonnull-unsigned-c-string)
+						      nonnull-unsigned-c-string
+						      nonnull-c-string))
+						   `((##sys#make-c-string
+						      (,(macro-alias 'let se)
+						       () ,@(cddr lam)))))
+						  ((member 
+						    rtype
+						    '((const c-string*)
+						      (const unsigned-c-string*)
+						      unsigned-c-string*
+						      c-string*
+						      c-string-list
+						      c-string-list*))
+						   (syntax-error
+						    "not a valid result type for callback procedures"
+						    rtype
+						    name) )
+						  ((member 
+						    rtype
+						    c-string
+						    (const unsigned-c-string)
+						    unsigned-c-string
+						    (const c-string))
+						   `((,(macro-alias 'let se)
+						      ((r (,(macro-alias 'let se)
+							   () ,@(cddr lam))))
+						      (,(macro-alias 'and se)
+						       r 
+						       (##sys#make-c-string r)) ) ) )
+						  (else (cddr lam)) ) )
 					   rtype) ) )
 				      se #f) ) ) ) )
 
@@ -1129,8 +1138,7 @@
        ((fixnum fixnum-arithmetic) (set! number-type 'fixnum))
        ((generic) (set! number-type 'generic))
        ((unsafe)
-	(set! unsafe #t)
-	(##match#set-error-control #:unspecified) )
+	(set! unsafe #t))
        ((safe) (set! unsafe #f))
        ((no-bound-checks) (set! no-bound-checks #t))
        ((no-argc-checks) (set! no-argc-checks #t))
@@ -1208,8 +1216,7 @@
 	     (case id
 	       [(interrupts-enabled) (set! insert-timer-checks #f)]
 	       [(safe) 
-		(set! unsafe #t)
-		(##match#set-error-control #:unspecified) ]
+		(set! unsafe #t)]
 	       [else (compiler-warning 'syntax "illegal declaration specifier `~s'" id)]))]))
        ((run-time-macros) (set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 

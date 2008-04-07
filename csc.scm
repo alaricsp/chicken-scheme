@@ -786,14 +786,17 @@
 	     (lambda ()
 	       (read-line)
 	       (for-each
-		(match-lambda
- 		  [('post-process commands ...)
- 		   (for-each $system commands) ]
- 		  [('c-options opts ...)
- 		   (set! compile-options (append compile-options opts)) ]
- 		  [('link-options opts ...)
- 		   (set! link-options (append link-options opts)) ]
-		  [x (error "invalid entry in csc control file" x)] )
+		(lambda (cmd)
+		  (unless (list? cmd)
+		    (error "invalid entry in csc control file" cmd))
+		  (case (car cmd)
+		    ((post-process)
+		     (for-each $system (cdr cmd)))
+		    ((c-options)
+		     (set! compile-options (append compile-options (cdr cmd))))
+		    ((link-options)
+		     (set! link-options (append link-options (cdr cmd))))
+		    (else (error "invalid entry in csc control file" cmd))))
 		(read-file) ) ) )
 	   ($delete-file cscf) ) ) ) )
    scheme-files)

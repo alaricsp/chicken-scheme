@@ -3637,7 +3637,6 @@ EOF
 	   (case mode
 	     [(#:type-error) '(exn type)]
 	     [(#:syntax-error) '(exn syntax)]
-	     [(#:match-error) '(exn match)]
 	     [(#:bounds-error) '(exn bounds)]
 	     [(#:arithmetic-error) '(exn arithmetic)]
 	     [(#:file-error) '(exn i/o file)]
@@ -4350,19 +4349,6 @@ EOF
 	 (let ([lists (cons first rest)])
 	   (or (apply f (map (lambda (x) (car x)) lists))
 	       (apply ormap f (map (lambda (x) (cdr x)) lists)) ) ) ) ) )
-
-
-;;; Support code for macro libraries (match):
-
-(define ##sys#match-error
-  (lambda (val . args)
-    (##sys#print "\nFailed match:\n" #f ##sys#standard-error)
-    (for-each
-     (lambda (x)
-       (##sys#print x #t ##sys#standard-error)
-       (##sys#write-char-0 #\newline ##sys#standard-error) )
-     args)
-    (##sys#signal-hook #:match-error "no matching clause for " val)))
 
 
 ;;; Internal string-reader:

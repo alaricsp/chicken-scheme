@@ -304,6 +304,6 @@ expressions are evaluated before A's.  Furthermore, the used symbols
 are registered as features during compile-time, so {{cond-expand}}
 knows about them.
 
-Previous: [[Pattern matching]]
+Previous: [[Non-standard macros and special forms]]
 
 Next: [[Parameters]]

@@ -112,7 +112,7 @@
 (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
 (define ##sys#core-library-modules
-  '(extras lolevel utils tcp regex regex-extras posix match srfi-1 srfi-4 srfi-13 srfi-14 srfi-18))
+  '(extras lolevel utils tcp regex regex-extras posix srfi-1 srfi-4 srfi-13 srfi-14 srfi-18))
 
 (define ##sys#explicit-library-modules '())
 
@@ -1250,14 +1250,13 @@
 	   ((symbol? x) (##sys#slot x 1))
 	   ((number? x) (##sys#number->string x))
 	   (else (error "invalid extension version" x)) ) )
-   (match spec
-     (('version id v)
-      (let* ((info (extension-information id))
-	     (vv (and info (assq 'version info))) )
-	(unless (and vv (string>=? (->string (car vv)) (->string v)))
-	  (error "installed extension does not match required version" id vv v) )
-	id) )
-     (_ (syntax-error 'require-extension "invalid version specification" spec)) ) ) )
+   (if (and (list spec) (fx= 3 (length spec)))
+       (let* ((info (extension-information (cadr spec)))
+	      (vv (and info (assq 'version info))) )
+	 (unless (and vv (string>=? (->string (car vv)) (->string (caddr spec))))
+	   (error "installed extension does not match required version" id vv (caddr spec)))
+	 id) 
+       (syntax-error 'require-extension "invalid version specification" spec)) ) )
 
 
 ;;; Convert string into valid C-identifier:

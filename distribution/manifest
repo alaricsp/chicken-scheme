@@ -60,7 +60,6 @@ library.c
 library.exports
 lolevel.c
 lolevel.exports
-match.c
 optimizer.c
 regex.c
 regex.exports
@@ -154,13 +153,11 @@ html/non-standard-macros-and-special-forms.html
 html/non-standard-read-syntax.html
 html/other-support-procedures.html
 html/parameters.html
-html/pattern-matching.html
 html/supported-language.html
 html/unit-eval.html
 html/unit-extras.html
 html/unit-library.html
 html/unit-lolevel.html
-html/unit-match.html
 html/unit-posix.html
 html/unit-regex.html
 html/unit-srfi-1.html
@@ -174,7 +171,6 @@ html/using-the-compiler.html
 html/using-the-interpreter.html
 library.scm
 lolevel.scm
-match.scm
 optimizer.scm
 regex.scm
 posixunix.scm

@@ -589,13 +589,19 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
                       (cons
                        #\[
                        (let loop2 ((rest rest))
-                         (match rest
-                           [(#\] . more)        (cons #\] (loop more))]
-                           [(#\- c . more)      `(#\- ,c ,@(loop2 more))]
-                           [(c1 #\- c2 . more)  `(,c1 #\- ,c2 ,@(loop2 more))]
-                           [(c . more)          (cons c (loop2 more))]
-                           [()
-                            (error 'glob->regexp "unexpected end of character class" s)] ) ) ) ]
+                         (if (pair? rest)
+			     (cond ((char=? #\] (car rest))
+				    (cons #\] (loop (cdr rest))))
+				   ((and (char=? #\- (car rest)) (pair? (cdr rest)))
+				    `(#\- ,(cadr rest) ,@(loop2 (cddr rest))))
+				   ((and (pair? (cdr rest)) (pair? (cddr rest))
+					 (char=? #\- (cadr rest)) )
+				    `(,(car rest) #\- ,(caddr rest)
+				      ,@(loop2 (cdddr rest))))
+				   ((pair? rest)
+				    (cons (car rest) (loop2 (cdr rest))))
+				   ((null? rest)
+				    (error 'glob->regexp "unexpected end of character class" s))))))]
                      [(or (char-alphabetic? c) (char-numeric? c)) (cons c (loop rest))]
                      [else `(#\\ ,c ,@(loop rest))] ) ) ) ) ) ) ) )
 

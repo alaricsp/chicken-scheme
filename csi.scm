@@ -25,8 +25,6 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(declare (uses match))
-
 (declare
   (usual-integrations)
   (disable-interrupts)
@@ -909,8 +907,6 @@ EOF
 		 ##sys#include-pathnames
 		 ipath)
 	 string=?) )
-      (set! ##sys#features (cons #:match ##sys#features))
-      (provide 'match)
       (when kwstyle
 	(cond [(not (pair? (cdr kwstyle)))
 	       (##sys#error "missing argument to `-keyword-style' option") ]

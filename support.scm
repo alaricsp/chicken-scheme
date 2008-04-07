@@ -283,26 +283,33 @@
 (define (extract-mutable-constants exp)
   (let ([mlist '()])
     (define (walk x)
-      (match x
-	[(? not-pair? x) x]
-	[`(quote ,c)
+      (cond
+       [(not-pair? x) x]
+       [(and (= 2 (length x)) (eq? 'quote (car x)))
+	(let ((c (cadr x)))
 	 (if (not (collapsable-literal? c))
 	     (let ([var (make-random-name)])
 	       (set! mlist (alist-cons var c mlist))
 	       var)
-	     x) ]
-	[`(let ((,vars ,vals) ...) . ,body)
-	 `(let ,(map (lambda (var val) (list var (walk val))) vars vals) ,@(map walk body)) ]
-	[(op . args)
-	 (case op
-	   [(##core#include ##core#declare ##core#immutable ##core#undefined ##core#primitive ##core#inline_ref) x]
-	   [(##core#set! set! lambda ##core#inline ##core#inline_allocate ##core#inline_update ##core#inline_loc_ref
-			 ##core#inline_loc_update)
-	    (cons* op (first args) (map walk (cdr args))) ]
-	   [(if ##core#compiletimeonly ##core#compiletimetoo)
-	    (cons op (map walk args)) ]
-	   [else (map walk x)] ) ]
-	[_ x] ) ) 
+	     x) ) ]
+       [(and (> (length x) 2) (eq? 'let (car x)))
+	(let ((bindings (cadr x))
+	      (body (cddr x))
+	      (vars (map car bindings))
+	      (vals (map cadr bindings)))
+	  `(let ,(map (lambda (var val) (list var (walk val))) vars vals) ,@(map walk body)) ) ]
+       [else
+	(let ((op (car x))
+	      (args (cdr x)))
+	(case op
+	  [(##core#include ##core#declare ##core#immutable ##core#undefined ##core#primitive ##core#inline_ref) x]
+	  [(##core#set! set! lambda ##core#inline ##core#inline_allocate ##core#inline_update ##core#inline_loc_ref
+			##core#inline_loc_update)
+	   (cons* op (first args) (map walk (cdr args))) ]
+	  [(if ##core#compiletimeonly ##core#compiletimetoo)
+	   (cons op (map walk args)) ]
+	  [else (map walk x)] ) ) ]
+       [else x]))
     (let ([exp2 (walk exp)])
       (values exp2 mlist) ) ) )
 
@@ -971,27 +978,27 @@
 		     => (lambda (t)
 			  (next (if (vector? t) (vector-ref t 0) t)) ) ]
 		    [(pair? t)
-		     (match t
-		       [((or 'ref 'pointer 'function 'c-pointer) . _)
+		     (case (car t)
+		       [(ref pointer function c-pointer)
 			(let ([tmp (gensym)])
 			  `(let ([,tmp ,param])
 			     (if ,tmp
 				 (##sys#foreign-pointer-argument ,tmp)
 				 '#f) ) )  ]
-		       [((or 'instance 'instance-ref) . _)
+		       [(instance instance-ref)
 			(let ([tmp (gensym)])
 			  `(let ([,tmp ,param])
 			     (if ,tmp
 				 (slot-ref ,param 'this)
 				 '#f) ) ) ]
-		       [('nonnull-instance . _)
+		       [(nonnull-instance)
 			`(slot-ref ,param 'this) ]
-		       [('const t) (repeat t)]
-		       [('enum _) 
+		       [(const) (repeat (cadr t))]
+		       [(enum)
 			(if unsafe param `(##sys#foreign-integer-argument ,param))]
-		       [((or 'nonnull-pointer 'nonnull-c-pointer) . _)
+		       [(nonnull-pointer nonnull-c-pointer)
 			`(##sys#foreign-pointer-argument ,param) ]
-		       [_ param] ) ]
+		       [else param] ) ]
 		    [else param] ) ] ) ) )
        (lambda () (quit "foreign type `~S' refers to itself" type)) ) ) ) )
 
@@ -1092,12 +1099,13 @@
     [(c-string-list) `(##sys#peek-c-string-list ,body '#f)]
     [(c-string-list*) `(##sys#peek-and-free-c-string-list ,body '#f)]
     [else
-     (match type
-       [((or 'instance 'instance-ref) cname sname)
-	`(##tinyclos#make-instance-from-pointer ,body ,sname) ] ;XXX eggified, needs better treatment...
-       [('nonnull-instance cname sname)
-	`(make ,sname 'this ,body) ]
-       [_ body] ) ] ) )
+     (cond 
+       [(and (list? type) (= 3 (length type)) 
+	     (memq (car type) '(instance instance-ref)))
+	`(##tinyclos#make-instance-from-pointer ,body ,(caddr type)) ] ;XXX eggified, needs better treatment...
+       [(and (list? type) (= 3 (length type)) (eq? 'nonnull-instance (car type)))
+	`(make ,(caddr type) 'this ,body) ]
+       [else body] ) ] ) )
 
 
 ;;; Scan expression-node for variable usage:
@@ -1383,11 +1391,13 @@ EOF
    real-name-table) )
 
 (define (source-info->string info)
-  (match info
-    ((file ln name)
-     (let ((lns (->string ln)))
-       (conc file ": " lns (make-string (max 0 (- 4 (string-length lns))) #\space) " " name) ) )
-    (_ (and info (->string info))) ) )
+  (if (list? info)
+      (let ((file (car info))
+	    (ln (cadr info))
+	    (name (caddr info)))
+	(let ((lns (->string ln)))
+	  (conc file ": " lns (make-string (max 0 (- 4 (string-length lns))) #\space) " " name) ) )
+      (and info (->string info))) )
 
 
 ;;; We need this for constant folding:

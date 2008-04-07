@@ -77,7 +77,7 @@
      ##sys#standard-input ##sys#standard-output ##sys#standard-error)
     (bound-to-procedure
      ##sys#for-each ##sys#map ##sys#print ##sys#setter
-     ##sys#setslot ##sys#dynamic-wind ##sys#call-with-values ##sys#match-error
+     ##sys#setslot ##sys#dynamic-wind ##sys#call-with-values
      ##sys#start-timer ##sys#stop-timer ##sys#gcd ##sys#lcm ##sys#make-promise ##sys#structure? ##sys#slot 
      ##sys#allocate-vector ##sys#list->vector ##sys#block-ref ##sys#block-set!
      ##sys#list ##sys#cons ##sys#append ##sys#vector ##sys#foreign-char-argument ##sys#foreign-fixnum-argument
@@ -613,7 +613,7 @@
 (rewrite 'char>=? 2 2 "C_fixnum_greater_or_equal_p" #t #f)
 (rewrite 'char<=? 2 2 "C_fixnum_less_or_equal_p" #t #f)
 (rewrite '##sys#slot 2 2 "C_slot" #t #f)		; consider as safe, the primitive is unsafe anyway.
-(rewrite '##sys#block-ref 2 2 "C_i_block_ref" #t #f) ; must be safe for pattern matcher
+(rewrite '##sys#block-ref 2 2 "C_i_block_ref" #t #f) ;*** must be safe for pattern matcher (anymore?)
 (rewrite '##sys#size 2 1 "C_block_size" #t #f)
 (rewrite 'fxnot 2 1 "C_fixnum_not" #t #f)
 (rewrite 'fx* 2 2 "C_fixnum_times" #t #f)
