@@ -853,7 +853,7 @@
 ;;; SRFI-9:
 
 (##sys#extend-macro-environment
- 'define-recorcd-type '()
+ 'define-record-type '()
  (##sys#er-transformer
   (lambda (form r c)
     (##sys#check-syntax 'define-record-type form '(_ variable #(variable 1) variable . _)) 
@@ -899,121 +899,187 @@
 		    ,@(loop (cdr slots) (add1 i)) ) ) ) ) ) ) ) ) )
 
 
-;;;*** convert to er
-
-
 ;;; Compile-time `require':
 
-(define-macro (require-for-syntax . names)
-  (##sys#check-syntax 'require-for-syntax names '#(_ 0))
-  `(##core#require-for-syntax ,@names) )
+(##sys#extend-macro-environment
+ 'require-for-syntax '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    `(##core#require-for-syntax ,@(cdr form)))))
 
-(define-macro (require-extension . ids)
-  (##sys#check-syntax 'require-extension ids '#(_ 0))
-  `(##core#require-extension ,@(map (lambda (x) (list 'quote x)) ids) ) )
-
-(define-macro (use . ids)
-  (##sys#check-syntax 'use ids '#(_ 0))
-  `(##core#require-extension ,@(map (lambda (x) (list 'quote x)) ids) ) )
+(##sys#extend-macro-environment
+ 'use '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((%quote (r 'quote)))
+      `(##core#require-extension 
+	,@(map (lambda (x) (list %quote x)) ids) ) ) )))
 
 
 ;;; SRFI-26:
 
-(define-macro (cut . more)
-  (let loop ([xs more] [vars '()] [vals '()] [rest #f])
-    (if (null? xs)
-	(let ([rvars (reverse vars)]
-	      [rvals (reverse vals)] )
-	  (if rest
-	      (let ([rv (gensym)])
-		`(lambda (,@rvars . ,rv)
-		   (apply ,(car rvals) ,@(cdr rvals) ,rv) ) )
-	      `(lambda ,rvars ((begin ,(car rvals)) ,@(cdr rvals)) ) ) )
-	(case (car xs)
-	  [(<>)
-	   (let ([v (gensym)])
-	     (loop (cdr xs) (cons v vars) (cons v vals) #f) ) ]
-	  [(<...>) (loop '() vars vals #t)]
-	  [else (loop (cdr xs) vars (cons (car xs) vals) #f)] ) ) ) )
+(##sys#extend-macro-environment
+ 'cut '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((%<> (r '<>))
+	  (%<...> (r '<...>))
+	  (%apply (r 'apply))
+	  (%begin (r 'begin))
+	  (%lambda (r 'lambda)))
+      (let loop ([xs (cdr form)] [vars '()] [vals '()] [rest #f])
+	(if (null? xs)
+	    (let ([rvars (reverse vars)]
+		  [rvals (reverse vals)] )
+	      (if rest
+		  (let ([rv (r (gensym))])
+		    `(,%lambda (,@rvars . ,rv)
+			       (,%apply ,(car rvals) ,@(cdr rvals) ,rv) ) )
+		  `(,%lambda ,rvars ((,%begin ,(car rvals)) ,@(cdr rvals)) ) ) )
+	    (cond ((c %<> (car xs))
+		   (let ([v (r (gensym))])
+		     (loop (cdr xs) (cons v vars) (cons v vals) #f) ) )
+		  ((c %<...> (car xs)) (loop '() vars vals #t))
+		  (else (loop (cdr xs) vars (cons (car xs) vals) #f)) ) ) ) ) )))
 
-(define-macro (cute . more)
-  (let loop ([xs more] [vars '()] [bs '()] [vals '()] [rest #f])
-    (if (null? xs)
-	(let ([rvars (reverse vars)]
-	      [rvals (reverse vals)] )
-	  (if rest
-	      (let ([rv (gensym)])
-		`(let ,bs
-		   (lambda (,@rvars . ,rv)
-		     (apply ,(car rvals) ,@(cdr rvals) ,rv) ) ) )
-	      `(let ,bs
-		 (lambda ,rvars (,(car rvals) ,@(cdr rvals)) ) ) ) )
-	(case (car xs)
-	  [(<>)
-	   (let ([v (gensym)])
-	     (loop (cdr xs) (cons v vars) bs (cons v vals) #f) ) ]
-	  [(<...>) (loop '() vars bs vals #t)]
-	  [else 
-	   (let ([v (gensym)])
-	     (loop (cdr xs) vars (cons (list v (car xs)) bs) (cons v vals) #f) ) ] ) ) ) )
+(##sys#extend-macro-environment
+ 'cute '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let ((%let (r 'let))
+	  (%lambda (r 'lambda))
+	  (%<> (r '<>))
+	  (%<...> (r '<...>))
+	  (%apply (r 'apply)))
+      (let loop ([xs (cdr form)] [vars '()] [bs '()] [vals '()] [rest #f])
+	(if (null? xs)
+	    (let ([rvars (reverse vars)]
+		  [rvals (reverse vals)] )
+	      (if rest
+		  (let ([rv (r (gensym))])
+		    `(,%let 
+		      ,bs
+		      (,%lambda (,@rvars . ,rv)
+				(,%apply ,(car rvals) ,@(cdr rvals) ,rv) ) ) )
+		  `(,%let ,bs
+			  (,%lambda ,rvars (,(car rvals) ,@(cdr rvals)) ) ) ) )
+	    (cond ((c %<> (car xs))
+		   (let ([v (r (gensym))])
+		     (loop (cdr xs) (cons v vars) bs (cons v vals) #f) ) )
+		  ((c %<...> (car xs)) (loop '() vars bs vals #t))
+		  (else 
+		   (let ([v (r (gensym))])
+		     (loop (cdr xs) 
+			   vars
+			   (cons (list v (car xs)) bs)
+			   (cons v vals) #f) ) ))))))))
 
 
 ;;; SRFI-13:
 
-(define-macro (let-string-start+end s-e-r proc s-exp args-exp . body)
-  (if (pair? (cddr s-e-r))
-      `(receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
-	   (string-parse-start+end ,proc ,s-exp ,args-exp)
-	 ,@body)
-      `(receive ,s-e-r
-	   (string-parse-final-start+end ,proc ,s-exp ,args-exp)
-	 ,@body) ) )
+(##sys#extend-macro-environment
+ 'let-string-start+end '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'let-string-start+end form '(_ _ _ _ _ . _))
+    (let ((s-e-r (cadr form))
+	  (proc (caddr form))
+	  (s-expr (cadddr form))
+	  (args-exp (car (cddddr form)))
+	  (body (cdr (cddddr form)))
+	  (%receive (r 'receive))
+	  (%string-parse-start+end (r 'string-parse-start+end)))
+      (if (pair? (cddr s-e-r))
+	  `(,%receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
+		      (,%string-parse-start+end ,proc ,s-exp ,args-exp)
+		      ,@body)
+	  `(,%receive ,s-e-r
+		      (,%string-parse-final-start+end ,proc ,s-exp ,args-exp)
+		      ,@body) ) ))))
 
 
 ;;; Extension helper:
 
-(define-macro (define-extension name . clauses)
-  (let loop ((s '()) (d '()) (cs clauses) (exports #f))
-    (cond ((null? cs)
-	   (let ((exps (if exports `(declare (export ,@exports)) '(begin))))
-	     `(cond-expand
-	       (chicken-compile-shared ,exps ,@d)
-	       ((not compiling) ,@d)
-	       (else 
-		(declare (unit ,name))
-		,exps
-		(provide ',name) 
-		,@s) ) ) )
-	  ((and (pair? cs) (pair? (car cs)))
-	   (let ((t (caar cs))
-		 (next (cdr cs)) )
-	     (cond ((eq? 'static t) (loop (cons `(begin ,@(cdar cs)) s) d next exports))
-		   ((eq? 'dynamic t) (loop s (cons `(begin ,@(cdar cs)) d) next exports))
-		   ((eq? 'export t) (loop s d next (append (or exports '()) (cdar cs))))
-		   (else (syntax-error 'define-extension "invalid clause specifier" (caar cs))) ) ) )
-	  (else (syntax-error 'define-extension "invalid clause syntax" cs)) ) ) )
+(##sys#extend-macro-environment
+ 'define-extension '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-extension form '(_ symbol . _))
+    (let ((%declare (r 'declare))
+	  (%begin (r 'begin))
+	  (%static (r 'static))
+	  (%dynamic (r 'dynamic))
+	  (%export (r 'export)))
+      (let loop ((s '()) (d '()) (cs (cddr form)) (exports #f))
+	(cond ((null? cs)
+	       (let ((exps (if exports
+			       `(,%declare (,%export ,@exports))
+			       '(,%begin))))
+		 `(,(r 'cond-expand)
+		   (chicken-compile-shared ,exps ,@d)
+		   ((,(r 'not) compiling) ,@d)
+		   (,(r 'else)
+		    (,%declare (unit ,name))
+		    ,exps
+		    (,(r 'provide) (,(r 'quote) ,name))
+		    ,@s) ) ) )
+	      ((and (pair? cs) (pair? (car cs)))
+	       (let ((t (caar cs))
+		     (next (cdr cs)) )
+		 (cond ((c %static t)
+			(loop (cons `(,%begin ,@(cdar cs)) s) d next exports))
+		       ((c %dynamic t) 
+			(loop s (cons `(,%begin ,@(cdar cs)) d) next exports))
+		       ((c %export t)
+			(loop s d next (append (or exports '()) (cdar cs))))
+		       (else
+			(syntax-error 'define-extension "invalid clause specifier" (caar cs))) ) ) )
+	      (else
+	       (syntax-error
+		'define-extension
+		"invalid clause syntax" cs)) ) ) ))))
 
 
 ;;; SRFI-31
 
-(define-macro (rec head . args)
-  (if (pair? head)
-      `(letrec ((,(car head) (lambda ,(cdr head) ,@args))) ,(car head))
-      `(letrec ((,head ,@args)) ,head)))
+(##sys#extend-macro-environment
+ 'rec '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'rec form '(_ _ . _))
+    (let ((head (cadr form))
+	  (%letrec (r 'letrec)))
+      (if (pair? head)
+	  `(,%letrec ((,(car head) 
+		       (,(r 'lambda) ,(cdr head)
+			,@(cddr form))))
+		     ,(car head))
+	  `(,%letrec ((,head ,@(cddr form))) ,head))))))
 
 
 ;;; Definitions available at macroexpansion-time:
 
-(define-macro (define-for-syntax head . body)
-  (let* ((body (if (null? body) '((void)) body))
-	 (name (if (pair? head) (car head) head)) 
-	 (body (if (pair? head) `(lambda ,(cdr head) ,@body) (car body))))
-    (if (symbol? name)
-	(##sys#setslot name 0 (eval body))
-	(syntax-error 'define-for-syntax "invalid identifier" name) )
-    (if ##sys#enable-runtime-macros
-	`(define ,name ,body)
-	'(begin) ) ) )
+;*** incomplete: must always be compiled in module scope and
+;    must be added to module exports
+
+(##sys#extend-macro-environment
+ 'define-for-syntax '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-for-syntax form '(_ _ . _))
+    (let ((head (cadr form))
+	  (body (cddr form)))
+      (let* ((body (if (null? body) '((##sys#void)) body))
+	     (name (if (pair? head) (car head) head)) 
+	     (body (if (pair? head)
+		       `(,(r 'lambda) ,(cdr head) ,@body)
+		       (car body))))
+	(if (symbol? name)
+	    (##sys#setslot name 0 (eval body))
+	    (syntax-error 'define-for-syntax "invalid identifier" name) )
+	(if ##sys#enable-runtime-macros
+	    `(,(r 'define) ,name ,body)
+	    '(,(r 'begin)) ) ) ))))
 
 
 ;;; Register features provided by this file

@@ -104,17 +104,23 @@
 (define (##sys#extend-macro-environment name se handler)
   (cond ((##sys#current-module) =>
 	 (lambda (m)
-	   ;; fixup exports
-	   (cond ((assq name (cadr m))	=> (cut set-cdr! <> (list se handler))))
-	   (##sys#current-environment
-	    (cons (list name se handler) (##sys#current-environment)))))
+	   ;; include macro in it's own static se (circular)
+	   (let* ((n (list name #f handler))
+		  (se2 (cons n se)))
+	     (set-car! (cdr n) se2)
+	     ;; fixup exports
+	     (cond ((assq name (cadr m)) =>
+		    (cut set-cdr! <> (list name se2 handler))))
+	     (##sys#current-environment
+	      (cons (list name se2) (##sys#current-environment))))))
 	((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
 	   (set-car! a se)
 	   (set-car! (cdr a) handler) ) )
 	(else 
 	 (set! ##sys#macro-environment
-	   (cons (list name se handler) ##sys#macro-environment)))))
+	   (cons (list name se handler)
+		 ##sys#macro-environment)))))
 
 (define (##sys#copy-macro old new)
   (let ((def (lookup old ##sys#macro-environment)))
@@ -1011,7 +1017,6 @@
   (lambda (x r c)
     (let ((ids (cdr x))
 	  (%quote (r 'quote)))
-      (##sys#check-syntax 'require-extension ids '#(_ 0))
       `(##core#require-extension 
 	,@(map (lambda (x) (list %quote x)) ids) ) ) ) ))
 

@@ -285,6 +285,14 @@
       (define (decorate p ll h cntr)
 	(##sys#eval-decorator p ll h cntr) )
 
+      (define (eval/meta form)
+	(parameterize ((##sys#current-module #f))
+	  ((##sys#compile-to-closure
+	    form
+	    '() 
+	    (##sys#current-meta-environment))
+	   '() ) ) )
+
       (define (compile x e h tf cntr se)
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
@@ -569,10 +577,8 @@
 					     (list
 					      (car b)
 					      se
-					      ((##sys#compile-to-closure
-						`(##sys#er-transformer ,(cadr b))
-						'() (##sys#current-meta-environment))
-					       '() ) ) )
+					      (##sys#er-transformer
+					       (eval/meta (cadr b)))))
 					   (cadr x) ) 
 				      se) ) )
 			    (compile
@@ -585,10 +591,8 @@
 					    (list
 					     (car b)
 					     #f
-					     ((##sys#compile-to-closure
-					       `(##sys#er-transformer ,(cadr b))
-					       '() (##sys#current-meta-environment))
-					      '())))
+					     (##sys#er-transformer
+					      (eval/meta (cadr b)))))
 					  (cadr x) ) )
 				 (se2 (append ms se)) )
 			    (for-each 
@@ -607,10 +611,7 @@
 
 			 [(##core#require-for-syntax)
 			  (let ([ids (map (lambda (x)
-					    ((##sys#compile-to-closure
-					      x '()
-					      (##sys#current-meta-environment) )
-					     '()))
+					    (eval/meta x))
 					  (cdr x))])
 			    (apply ##sys#require ids)
 			    (let ([rs (##sys#lookup-runtime-requirements ids)])
@@ -630,11 +631,7 @@
 			   e #f tf cntr se) ]
 
 			 [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
-			  (##core#app 
-			   (##sys#compile-to-closure
-			    (cadr x) '()
-			    (##sys#current-meta-environment))
-			   '())
+			  (eval/meta (cadr x))
 			  (compile '(##core#undefined) e #f tf cntr se) ]
 
 			 [(##core#compiletimetoo)
@@ -664,16 +661,11 @@
 
 			 ((##core#environment)
 			  (let* ((name (cadr x))
-				(imports (caddr x))
-				(exports (cadddr x))
-				(exprename 
-				 ((##sys#compile-to-closure
-				   (car (cddddr x))
-				   '()
-				   (##sys#current-meta-environment))
-				  '()))
-				(body (cdr (cddddr x)))
-				(module
+				 (imports (caddr x))
+				 (exports (cadddr x))
+				 (exprename (eval/meta (car (cddddr x))))
+				 (body (cdr (cddddr x)))
+				 (module
 				    (##sys#register-module
 				     name
 				     (##sys#make-module
@@ -683,12 +675,12 @@
 				      (map (lambda (imp)
 					     (cons 
 					      (car imp)
-					      ((##sys#compile-to-closure
-						(cadr imp)
-						'()
-						(##sys#current-meta-environment))
-					       '())))
+					      (eval/meta (cadr imp))))
 					   imports) ) ) ) )
+			    (when (##sys#current-module)
+			      (##sys#syntax-error-hook 
+			       "nested modules are not supported"
+			       name) )
 			    (parameterize ((##sys#current-module module)
 					   (##sys#current-environment (cddr module)))
 			      (pp (##sys#current-module))

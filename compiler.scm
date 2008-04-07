@@ -505,6 +505,14 @@
 	     (if (symbol? x2)
 		 x2
 		 (##sys#rename-global x se)))]))
+  
+  (define (eval/meta form)
+    (parameterize ((##sys#current-module #f))
+      ((##sys#compile-to-closure
+	form
+	'() 
+	(##sys#current-meta-environment))
+       '() ) ) )
 
   (define (walk x se dest)
     (cond ((symbol? x)
@@ -663,10 +671,7 @@
 					     (car b)
 					     se
 					     (##sys#er-transformer
-					      ((##sys#compile-to-closure
-						(cadr b)
-						'() (##sys#current-meta-environment))
-					       '()) ) ) )
+					      (eval/meta (cadr b)))))
 					  (cadr x) )
 				     se) ) )
 			   (walk
@@ -681,10 +686,7 @@
 					   (car b)
 					   #f
 					   (##sys#er-transformer
-					    ((##sys#compile-to-closure
-					      (cadr b)
-					      '() se)
-					     '()) ) ) )
+					    (eval/meta (cadr b)))))
 					(cadr x) ) )
 			       (se2 (append ms se)) )
 			  (for-each 
