@@ -900,15 +900,17 @@ EOF
       (() #f)
       ((ext version . more)
        (let ((info (extension-information ext))
-	     (version (->string version)) )
+	     (required-version (->string version)) )
 	 (if info
 	     (let ((ver (and (assq 'version info) (cadr (assq 'version info)))))
 	       (cond ((not ver) (upgrade-message ext "has no associated version information"))
-		     ((string-ci<? (->string ver) version)
+		     ((version-numbers>
+		       (version-string->numbers required-version) 
+		       (version-string->numbers (->string ver))) 
 		      (upgrade-message 
 		       ext
 		       (sprintf "is older than ~a, which is what this extension requires"
-				version) ) )
+				required-version) ) )
 		     (else (loop more)) ) ) 
 	     (upgrade-message ext "is not installed") ) ) )
       (_ (error 'required-extension-information "bad argument format" args)) ) ) )
