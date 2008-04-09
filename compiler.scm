@@ -75,13 +75,13 @@
 ;
 ; <variable>
 ; <constant>
-; (##core#declare {(quote <spec>)})
+; (##core#declare {<spec>})
 ; (##core#immutable <exp>)
 ; (##core#global-ref <variable>)
 ; (quote <exp>)
 ; (if <exp> <exp> [<exp>])
 ; (let ({(<variable> <exp>)}) <body>)
-; (##core#let-location (quote <symbol>) (quote <type>) [<init>] <exp>)
+; (##core#let-location <symbol> <type> [<init>] <exp>)
 ; (lambda <variable> <body>)
 ; (lambda ({<variable>}+ [. <variable>]) <body>)
 ; (set! <variable> <exp>)
@@ -100,16 +100,16 @@
 ; (##core#compiletimeonly <exp>)
 ; (##core#elaborationtimetoo <exp>)
 ; (##core#elaborationtimeonly <exp>)
-; (##core#define-foreign-variable (quote <symbol>) (quote <type>) [(quote <string>)])
-; (##core#define-foreign-type (quote <symbol>) (quote <type>) [<proc1> [<proc2>]])
-; (##core#foreign-lambda (quote <type>) (quote <string>) {(quote <type>)})
-; (##core#foreign-lambda* (quote <type>) (quote ({(<type> <var>)})) {(quote <string>)})
-; (##core#foreign-callback-lambda (quote <type>) (quote <string>) {(quote <type>)})
-; (##core#foreign-callback-lambda* (quote <type>) (quote ({(<type> <var>)})) {(quote <string>)})
-; (##core#foreign-primitive (quote <type>) (quote ({(<type> <var>)})) {(quote <string>)})
+; (define-foreign-variable <symbol> <type> [<string>])
+; (define-foreign-type <symbol> <type> [<proc1> [<proc2>]])
+; (foreign-lambda <type> <string> {<type>})
+; (foreign-lambda* <type> ({(<type> <var>)})) {<string>})
+; (foreign-safe-lambda <type> <string> {<type>})
+; (foreign-safe-lambda* <type> ({(<type> <var>)})) {<string>})
+; (foreign-primitive <type> ({(<type> <var>)}) {<string>})
 ; (##core#define-inline (quote <name>) <exp>)
 ; (##core#define-constant (quote <name>) <exp>)
-; (##core#foreign-callback-wrapper (quote <name>) (quote <qualifiers>) (quote <type>) (quote {<type>}) <exp>)
+; (##core#foreign-callback-wrapper <name> <qualifiers> <type> ({<type>}) <exp>)
 ; (##core#define-external-variable (quote <name>) (quote <type>) (quote <bool>))
 ; (##core#check <exp>)
 ; (##core#require-for-syntax <exp> ...)
@@ -792,19 +792,19 @@
 				      (cons (walk x se #f) (fold r)) ) ) ) )
 			     '(##core#undefined) ) )
 
-			((##core#foreign-lambda)
+			((foreign-lambda)
 			 (walk (expand-foreign-lambda x) se dest) )
 
-			((##core#foreign-callback-lambda)
+			((foreign-safe-lambda)
 			 (walk (expand-foreign-callback-lambda x) se dest) )
 
-			((##core#foreign-lambda*)
+			((foreign-lambda*)
 			 (walk (expand-foreign-lambda* x) se dest) )
 
-			((##core#foreign-callback-lambda*)
+			((foreign-safe-lambda*)
 			 (walk (expand-foreign-callback-lambda* x) se dest) )
 
-			((##core#foreign-primitive)
+			((foreign-primitive)
 			 (walk (expand-foreign-primitive x) se dest) )
 
 			((##core#define-foreign-variable)
@@ -818,9 +818,9 @@
 				   foreign-variables))
 			   '(##core#undefined) ) )
 
-			((##core#define-foreign-type)
-			 (let ([name (cadr (second x))]
-			       [type (cadr (third x))] 
+			((define-foreign-type)
+			 (let ([name (second x)]
+			       [type (third x)] 
 			       [conv (cdddr x)] )
 			   (cond [(pair? conv)
 				  (let ([arg (gensym)]
@@ -839,13 +839,13 @@
 				  (##sys#hash-table-set! foreign-type-table name type)
 				  '(##core#undefined) ] ) ) )
 
-			((##core#define-external-variable)
-			 (let* ([sym (cadr (second x))]
+			((define-external-variable)
+			 (let* ([sym (second x)]
 				[name (symbol->string sym)]
-				[type (cadr (third x))] 
-				[exported (cadr (fourth x))]
+				[type (third x)] 
+				[exported (fourth x)]
 				[rname (make-random-name)] )
-			   (unless exported (set! name (symbol->string (cadr (fifth x)))))
+			   (unless exported (set! name (symbol->string (fifth x))))
 			   (set! external-variables (cons (vector name type exported) external-variables))
 			   (set! foreign-variables
 			     (cons (list rname 'c-pointer (string-append "&" name))
@@ -854,8 +854,8 @@
 			   '(##core#undefined) ) )
 
 			((##core#let-location)
-			 (let* ([var (cadr (second x))]
-				[type (cadr (third x))]
+			 (let* ([var (second x)]
+				[type (third x)]
 				[alias (gensym)]
 				[store (gensym)] 
 				[init (and (pair? (cddddr x)) (fourth x))] )
@@ -924,7 +924,7 @@
 			  `(,(macro-alias 'begin se)
 			     ,@(map (lambda (d)
 				      (process-declaration 
-				       (##sys#strip-syntax (second d))
+				       (##sys#strip-syntax d)
 				       se))
 				    (cdr x) ) )
 			  '() #f) )
@@ -933,10 +933,9 @@
 			 (let-values ([(args lam) (split-at (cdr x) 4)])
 			   (let* ([lam (car lam)]
 				  [name (first args)]
-				  [rtype (cadr (third args))]
-				  [atypes (cadr (fourth args))]
+				  [rtype (third args)]
+				  [atypes (fourth args)]
 				  [vars (second lam)] )
-			     (let ([name (cadr name)])
 			       (if (valid-c-identifier? name)
 				   (set! callback-names (cons name callback-names))
 				   (quit "name `~S' of external definition is not a valid C identifier"
@@ -1085,7 +1084,7 @@
       ,@(let ([p (reverse pending-canonicalizations)])
 	  (set! pending-canonicalizations '())
 	  p)
-      ,(let ([exp (##sys#compiler-toplevel-macroexpand-hook exp)])
+      ,(begin
 	 (set! extended-bindings (append internal-bindings extended-bindings))
 	 exp) )
    '() #f) )
@@ -1313,44 +1312,44 @@
 		     rtype) ) ) ) ) ) ) )
 
 (define (expand-foreign-lambda exp)
-  (let* ([name (cadr (third exp))]
+  (let* ([name (third exp)]
 	 [sname (cond ((symbol? name) (symbol->string name))
 		      ((string? name) name)
 		      (else (quit "name `~s' of foreign procedure has wrong type" name)) ) ]
-	 [rtype (cadr (second exp))]
+	 [rtype (second exp)]
 	 [argtypes (map second (cdddr exp))] )
     (create-foreign-stub rtype sname argtypes #f #f #f #f) ) )
 
 (define (expand-foreign-callback-lambda exp)
-  (let* ([name (cadr (third exp))]
+  (let* ([name (third exp)]
 	 [sname (cond ((symbol? name) (symbol->string name))
 		      ((string? name) name)
 		      (else (quit "name `~s' of foreign procedure has wrong type" name)) ) ]
-	 [rtype (cadr (second exp))]
+	 [rtype (second exp)]
 	 [argtypes (map second (cdddr exp))] )
     (create-foreign-stub rtype sname argtypes #f #f #t #t) ) )
 
 (define (expand-foreign-lambda* exp)
   (let* ([rtype (cadr (second exp))]
 	 [args (cadr (third exp))]
-	 [body (apply string-append (map cadr (cdddr exp)))]
+	 [body (apply string-append (cdddr exp))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
     (create-foreign-stub rtype #f argtypes argnames body #f #f) ) )
 
 (define (expand-foreign-callback-lambda* exp)
-  (let* ([rtype (cadr (second exp))]
-	 [args (cadr (third exp))]
-	 [body (apply string-append (map cadr (cdddr exp)))]
+  (let* ([rtype (second exp)]
+	 [args (third exp)]
+	 [body (apply string-append (cdddr exp))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
     (create-foreign-stub rtype #f argtypes argnames body #t #t) ) )
 
 (define (expand-foreign-primitive exp)
-  (let* ([hasrtype (and (pair? (cddr exp)) (not (string? (cadr (caddr exp)))))]
-	 [rtype (if hasrtype (cadr (second exp)) 'void)]
-	 [args (if hasrtype (cadr (third exp)) (cadr (second exp)))]
-	 [body (apply string-append (map cadr (if hasrtype (cdddr exp) (cddr exp))))]
+  (let* ([hasrtype (and (pair? (cddr exp)) (not (string? (caddr exp))))]
+	 [rtype (if hasrtype (second exp) 'void)]
+	 [args (if hasrtype (third exp) (second exp))]
+	 [body (apply string-append (if hasrtype (cdddr exp) (cddr exp)))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )
     (create-foreign-stub rtype #f argtypes argnames body #f #t) ) )

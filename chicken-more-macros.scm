@@ -105,9 +105,7 @@
  'declare '()
  (##sys#er-transformer
  (lambda (form r c)
-   (let ((%quote (r 'quote)))
-     ;; hides specifiers from macro-expansion (only for psyntax, because it idiotically quotes all literals)
-     `(##core#declare ,@(##sys#map (lambda (x) `(,%quote ,x)) specs)) ))) )
+   `(##core#declare ,@specs))))
 
 (##sys#extend-macro-environment
  'include '()

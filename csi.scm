@@ -216,7 +216,6 @@ EOF
       (hash-table-set! command-table name (cons proc help)) ) ) )
 
 (set! ##sys#repl-eval-hook
-  ;; `macroexpand' is intentionally not shadowed (psyntax redefines it).
   (let ((eval eval)
 	(load-noisily load-noisily)
 	(read read)
@@ -229,6 +228,7 @@ EOF
 	(write write)
 	(string-split string-split)
 	(printf printf)
+	(expand expand)
 	(pretty-print pretty-print)
 	(integer? integer?)
 	(values values) )
@@ -246,7 +246,7 @@ EOF
 		      (case cmd
 			((x)
 			 (let ([x (read)])
-			   (pretty-print (##sys#strip-syntax (macroexpand x)))
+			   (pretty-print (##sys#strip-syntax (expand x)))
 			   (##sys#void) ) )
 			((p)
 			 (let* ([x (read)]
@@ -341,7 +341,7 @@ EOF
  ,step EXPR        Execute EXPR in single-stepping mode
  ,exn              Describe last exception
  ,t EXP            Evaluate form and print elapsed time
- ,x EXP            Pretty print macroexpanded expression EXP\n")
+ ,x EXP            Pretty print expanded expression EXP\n")
 			 (hash-table-walk
 			  command-table
 			  (lambda (k v) 
@@ -409,7 +409,7 @@ EOF
 	(for-each (lambda (a) (print (car a))) traced-procedures) 
 	(for-each
 	 (lambda (s)
-	   (let ((s (macroexpand s)))
+	   (let ((s (expand s)))
 	     (cond ((assq s traced-procedures)
 		    (##sys#warn "procedure already traced" s) )
 		   ((assq s broken-procedures)
@@ -433,7 +433,7 @@ EOF
   (lambda (names)
     (for-each
      (lambda (s)
-       (let* ((s (macroexpand s))
+       (let* ((s (expand s))
 	      (p (assq s traced-procedures)) )
 	 (cond ((not p) (##sys#warn "procedure not traced" s))
 	       (else
@@ -447,7 +447,7 @@ EOF
 	(for-each (lambda (b) (print (car a))) broken-procedures) 
 	(for-each
 	 (lambda (s)
-	   (let* ((s (macroexpand s))
+	   (let* ((s (expand s))
 		  (a (assq s traced-procedures)))
 	     (when a
 	       (##sys#warn "un-tracing procedure" s)
@@ -468,7 +468,7 @@ EOF
   (lambda (names)
     (for-each
      (lambda (s)
-       (let* ((s (macroexpand s))
+       (let* ((s (expand s))
 	      (p (assq s broken-procedures)) )
 	 (cond ((not p) (##sys#warn "procedure has no breakpoint" s))
 	       (else

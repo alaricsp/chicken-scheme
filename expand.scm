@@ -147,7 +147,7 @@
 
 ;; The basic macro-expander
 
-(define ##sys#macroexpand-0
+(define ##sys#expand-0
   (let ([string-append string-append])
     (lambda (exp dse)
       (define (call-handler name handler exp se)
@@ -224,11 +224,6 @@
 		(values exp #f) ) )
 	  (values exp #f) ) ) ) )
 
-
-;;; These are needed to hook other module/macro systems into the evaluator and compiler
-
-(define (##sys#compiler-toplevel-macroexpand-hook exp) exp)
-(define (##sys#interpreter-toplevel-macroexpand-hook exp) exp)
 (define ##sys#enable-runtime-macros #f)
 
 
@@ -236,15 +231,15 @@
 
 (define (##sys#expand exp #!optional (me (##sys#current-environment)))
   (let loop ((exp exp))
-    (let-values (((exp2 m) (##sys#macroexpand-0 exp me)))
+    (let-values (((exp2 m) (##sys#expand-0 exp me)))
       (if m
 	  (loop exp2)
 	  exp2) ) ) )
 
-(define macroexpand ##sys#expand)
+(define expand ##sys#expand)
 
-(define (macroexpand-1 exp #!optional (me (##sys#current-environment)))
-  (##sys#macroexpand-0 exp me) )
+(define (expand* exp #!optional (me (##sys#current-environment)))
+  (##sys#expand-0 exp me) )
 
 
 ;;; Extended (DSSSL-style) lambda lists
@@ -456,7 +451,7 @@
 		       (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
 		       (loop (##sys#append (cdr x) rest) vars vals mvars mvals) ]
 		      [else
-		       (let ([x2 (##sys#macroexpand-0 x se)])
+		       (let ([x2 (##sys#expand-0 x se)])
 			 (if (eq? x x2)
 			     (fini vars vals mvars mvals body)
 			     (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
@@ -626,14 +621,6 @@
 		   s2) )
 	  (eq? s1 s2)))
     (handler form rename compare) ) )
-
-
-;;; transformer for normal low-level macros
-
-(define (##sys#lisp-transformer handler #!optional manyargs) 
-  (if manyargs
-      (lambda (form se dse) (handler (##sys#strip-syntax (cdr form) se)))
-      (lambda (form se dse) (apply handler (##sys#strip-syntax (cdr form) se))) ) )
 
 
 ;;; lowlevel module support
@@ -983,33 +970,6 @@
 			     ((test id) `(,%begin ,@(cdr clause)))
 			     (else (expand rclauses)) ) ) ) ) ) ) ) ) ) ) )
 
-(##sys#extend-macro-environment		;*** keep this?
- 'define-macro
- '()
- (##sys#er-transformer
-  (lambda (form r c)
-    (##sys#check-syntax 'define-macro form '(_ . #(_ 1)))
-    (let ((head (cadr form))
-	  (body (cddr form))
-	  (%lambda (r 'lambda)))
-      (define (expand name val)
-	`(,(if ##sys#enable-runtime-macros
-	       '##core#elaborationtimetoo 
-	       '##core#elaborationtimeonly)
-	  ,(if (symbol? val)
-	       `(##sys#copy-macro ',val ',name)
-	       `(##sys#extend-macro-environment
-		 ',name
-		 (##sys#current-environment)
-		 (##sys#lisp-transformer ,val)))))
-      (cond ((symbol? head)
-	     (##sys#check-syntax 'define-macro body '(_))
-	     (expand head (car body)) )
-	    (else
-	     (##sys#check-syntax 'define-macro head '(symbol . lambda-list))
-	     (##sys#check-syntax 'define-macro body '#(_ 1)) 
-	     (expand (car head) `(,%lambda ,(cdr head) ,@body))))))))
-
 (##sys#extend-macro-environment
  'require-extension
  '()
@@ -1030,20 +990,6 @@
       ',(cadr form)
       (##sys#current-environment)
       (##sys#er-transformer ,(caddr form))))))
-
-
-;;;*** only for backwards compatibility (will break for high argument counts)
-
-(define (##sys#register-macro name h)
-  (##sys#extend-macro-environment
-   name '() 
-   (##sys#lisp-transformer h) ) )
-
-(define (##sys#register-macro-2 name h2)
-  (##sys#extend-macro-environment
-   name '()
-   (##sys#lisp-transformer
-    (lambda body (h2 body)))))
 
 
 ;;; syntax-rules

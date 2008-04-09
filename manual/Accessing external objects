@@ -103,67 +103,6 @@ ghi                               ==> 5
 </enscript>
 
 
-=== define-foreign-enum
-
- [syntax] (define-foreign-enum TYPESPEC [USE-ALIASES] ENUMSPEC ...)
-
-Defines a foreign type (as with {{define-foreign-type}}) that maps the elements
-of a C/C++ enum (or a enum-like list of constants) to and from a set of
-symbols.
-
-{{TYPESPEC}} specifies a foreign type that converts a symbol argument from the
-set {{ENUMSPEC ...}} into the appropriate enum value when passed as an argument to
-a foreign function.
-
-A list of symbols passed as an argument will be combined using {{bitwise-ior}}.
-An empty list will be passed as 0 (zero). Results of the enum type are
-automatically converted into a scheme value (note that combinations are not
-supported in this case).
-
-{{TYPESPEC}} maybe a TYPENAME symbol or a list of the form {{(SCHEMENAME
-REALTYPE [DEFAULT-SCHEME-VALUE])}}, where {{REALTYPE}} designates the native
-type used. The default type specification is {{(TYPENAME TYPENAME)}}. The
-{{DEFAULT-SCHEME-VALUE}} overrides the default result of mapping from the
-native type; i.e. when no such mapping exists. When supplied the form is used
-unquoted, otherwise the result is {{'()}}.
-
-{{ENUMSPEC}} is a TYPENAME symbol or a list of the form {{(SCHEMENAME REALTYPE
-[SCHEME-VALUE])}}, where {{REALTYPE}} designates the native type used. The
-default enum specification is {{(TYPENAME TYPENAME)}}. The {{SCHEME-VALUE}}
-overrides the result of mapping from the native type. When supplied the form is
-used unquoted, otherwise the {{SCHEMENAME}} symbol is returned.
-
-{{USE-ALIASES}} is an optional boolean flag that determines whether an alias or
-the {{SCHEMENAME}} is used as the defined foreign variable name. The default
-is {{#t}}.
-
-Additionally two procedures are defined named {{SCHEMENAME->number}} and
-{{number->SCHEMENAME}}. {{SCHEMENAME->number}} takes one argument and converts
-a symbol (or a list of symbols) into its numeric value.  {{number->SCHEMENAME}}
-takes one argument and converts a numeric value into its scheme value.
-
-Note that the specification of a scheme value override ({{SCHEME-VALUE}}) means
-the mapping may not be closed! {{(number->SCHEMENAME (SCHEMENAME->number
-SCHEMENAME))}} may not equal {{SCHEMENAME}}.
-
-Here a heavily contrived example:
-
-<enscript highlight=scheme>
-#>
-enum foo { a_foo = 4, b_foo, c_foo };
-enum foo bar(enum foo x) { printf("%d\n", x); return b_foo; }
-<#
-
-(define-foreign-enum (foo (enum "foo")) a_foo b_foo (c c_foo))
-
-(define bar (foreign-lambda foo bar foo))
-
-(pp (bar '()))
-(pp (bar 'a_foo))
-(pp (bar '(b_foo c)))
-</enscript>
-
-
 === foreign-lambda
 
  [syntax] (foreign-lambda RETURNTYPE NAME ARGTYPE ...)

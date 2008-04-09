@@ -22,8 +22,6 @@ TODO for macro/module system					-*- Outline -*-
 
 * test benchmarks
 
-* remove define-macro and ##sys#lisp-transformer, once all macros are converted
-
 * add low-level support for modules
 * find suitable design for modules
 
@@ -34,6 +32,10 @@ TODO for macro/module system					-*- Outline -*-
 ** ack synrules authors
 ** removals
    run-time and compile-time situations for eval-when
+   define-foreign-record
+   define-foreign-enum
+   define-record
+   define-macro
 
 * csi
 ** describe should print if symbol is interned

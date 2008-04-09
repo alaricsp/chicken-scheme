@@ -128,16 +128,16 @@ expressions is only available in the compiler.
 
 Returns {{#t}} if there exists a macro-definition for {{SYMBOL}}.
 
-==== macroexpand
+==== expand
 
- [procedure] (macroexpand X)
+ [procedure] (expand X)
 
 If {{X}} is a macro-form, expand the macro (and repeat expansion
 until expression is a non-macro form).  Returns the resulting expression.
 
-==== macroexpand-1
+==== expand*
 
- [procedure] (macroexpand-1 X)
+ [procedure] (expand* X)
 
 If {{X}} is a macro-form, expand the macro.  Returns the resulting
 expression.

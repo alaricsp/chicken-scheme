@@ -62,7 +62,7 @@
      ##sys#check-symbol ##sys#check-vector ##sys#floor ##sys#ceiling ##sys#truncate ##sys#round 
      ##sys#check-number ##sys#cons-flonum ##sys#copy-env-table
      ##sys#flonum-fraction ##sys#make-port ##sys#fetch-and-check-port-arg ##sys#print ##sys#check-structure 
-     ##sys#make-structure ##sys#feature? ##sys#interpreter-toplevel-macroexpand-hook
+     ##sys#make-structure ##sys#feature?
      ##sys#error-handler ##sys#hash-symbol ##sys#check-syntax
      ##sys#hash-table-ref ##sys#hash-table-set! ##sys#canonicalize-body ##sys#decompose-lambda-list
      ##sys#make-c-string ##sys#resolve-include-filename
@@ -88,7 +88,7 @@
      port? ##sys#file-info ##sys#signal-hook ##sys#dload open-input-file close-input-port
      read write newline ##sys#eval-handler ##sys#set-dlopen-flags! cadadr ##sys#lookup-runtime-requirements
      map string->keyword ##sys#abort
-     ##sys#macroexpand-0) ) ] )
+     ##sys#expand-0) ) ] )
 
 (cond-expand
  [unsafe
@@ -778,7 +778,7 @@
 
 (define (eval x . env)
   (apply (##sys#eval-handler) 
-	 (##sys#interpreter-toplevel-macroexpand-hook x)
+	 x
 	 env) )
 
 ;;; Split lambda-list into its parts:
