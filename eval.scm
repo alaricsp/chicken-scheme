@@ -683,7 +683,7 @@
 			       name) )
 			    (parameterize ((##sys#current-module module)
 					   (##sys#current-environment (cddr module)))
-			      (pp (##sys#current-module))
+			      (pp (##sys#current-module)) ;***
 			      (let ((forms
 				     (map (lambda (x)
 					    (compile x e #f tf cntr (##sys#current-environment)) )

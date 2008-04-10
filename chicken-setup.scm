@@ -26,7 +26,7 @@
 
 
 (declare
-  (run-time-macros)
+  (run-time-macros)			;*** later: compile-syntax
   (uses srfi-1 regex utils posix tcp srfi-18 srfi-13)
   (export move-file run:execute make/proc uninstall-extension
 	  install-extension install-program install-script setup-verbose-flag

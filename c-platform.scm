@@ -117,7 +117,7 @@
     check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
     profile inline keep-shadowed-macros
     fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
-    lambda-lift run-time-macros tag-pointers accumulate-profile
+    lambda-lift compile-syntax tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first release disable-compiler-macros
     analyze-only dynamic extension) )

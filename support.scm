@@ -1261,7 +1261,7 @@ Usage: chicken FILENAME OPTION ...
 
     -case-insensitive           don't preserve case of read symbols
     -keyword-style STYLE        allow alternative keyword syntax (none, prefix or suffix)
-    -run-time-macros            macros are made available at run-time
+    -compile-syntax             macros are made available at run-time
 
   Translation options:
 

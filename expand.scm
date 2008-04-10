@@ -102,8 +102,10 @@
 (define ##sys#macro-environment '())
 
 (define (##sys#extend-macro-environment name se handler)
+  (print "macro def: " name)		;***
   (cond ((##sys#current-module) =>
 	 (lambda (m)
+	   (print "module macro def (" m "): " name) ;***
 	   ;; include macro in it's own static se (circular)
 	   (let* ((n (list name #f handler))
 		  (se2 (cons n se)))
@@ -115,9 +117,11 @@
 	      (cons (list name se2) (##sys#current-environment))))))
 	((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
+	   (print "macro def (found): " name) ;***
 	   (set-car! a se)
 	   (set-car! (cdr a) handler) ) )
 	(else 
+	 (print "macro def (new): " name) ;***
 	 (set! ##sys#macro-environment
 	   (cons (list name se handler)
 		 ##sys#macro-environment)))))

@@ -173,7 +173,7 @@
 (define-constant simple-options
   '(-explicit-use -no-trace -no-warnings -no-usual-integrations -optimize-leaf-routines -unsafe
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
-    -check-syntax -case-insensitive -benchmark-mode -shared -run-time-macros -no-lambda-info
+    -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info -check-imports
     -emit-external-prototypes-first -inline -extension -release -static-extensions
     -analyze-only -keep-shadowed-macros -disable-compiler-macros) )
@@ -348,7 +348,7 @@
 
     -i -case-insensitive        don't preserve case of read symbols    
     -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
-    -run-time-macros            macros are made available at run-time
+    -compile-syntax             macros are made available at run-time
 
   Translation options:
 

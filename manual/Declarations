@@ -224,9 +224,9 @@ may be {{fixnum}} or {{generic}} (which is
 the default).
 
 
-=== run-time-macros
+=== compile-syntax
 
- [declaration specifier] (run-time-macros)
+ [declaration specifier] (compile-syntax)
 
 Equivalent to the compiler option of the same name - macros defined in the compiled code are also made available at
 runtime.

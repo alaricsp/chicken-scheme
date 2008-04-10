@@ -317,7 +317,7 @@
       (set! initforms
 	(append initforms (map (lambda (r) `(##core#require-extension ',r)) ids)) ) )
 
-    (when (memq 'run-time-macros options)
+    (when (memq 'compile-syntax options)
       (set! ##sys#enable-runtime-macros #t) )
     (set! target-heap-size
       (if hsize

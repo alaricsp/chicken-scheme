@@ -29,7 +29,7 @@
   (usual-integrations)
   (disable-interrupts)
   (disable-warning var)
-  (run-time-macros)
+  (run-time-macros)			;*** later: compile-syntax
   (foreign-declare #<<EOF
 #if (defined(_MSC_VER) && defined(_WIN32)) || defined(HAVE_DIRECT_H)
 # include <direct.h>
@@ -315,6 +315,15 @@ EOF
 				(r (system str)) )
 			   (history-add (list r))
 			   r) )
+			((in)
+			 (let* ((name (read))
+				(m (assq name ##sys#module-table)))
+			   (cond ((not name) 
+				  (##sys#current-module #f)
+				  (##sys#current-environment '()))
+				 (m (##sys#current-module m)
+				    (##sys#current-environment (cddr m)))
+				 (else (printf "no such module: ~s~%" name)))))
 			((?)
 			 (display 
 			  "Toplevel commands:
@@ -340,6 +349,7 @@ EOF
  ,info             List traced procedures and breakpoints
  ,step EXPR        Execute EXPR in single-stepping mode
  ,exn              Describe last exception
+ ,in MODULE        Switch context to MODULE
  ,t EXP            Evaluate form and print elapsed time
  ,x EXP            Pretty print expanded expression EXP\n")
 			 (hash-table-walk

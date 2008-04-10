@@ -27,7 +27,7 @@
 
 (declare
   (uses srfi-1 srfi-4 utils support compiler optimizer driver platform backend)
-  (run-time-macros) )
+  (run-time-macros) )			;*** later: compile-syntax
 
 
 (private compiler

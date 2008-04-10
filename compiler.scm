@@ -58,7 +58,8 @@
 ; (foreign-declare {<string>})
 ; (block)
 ; (separate)
-; (run-time-macros)
+; (compile-syntax)
+; (run-time-macros)       DEPRECATED
 ; (export {<name>})
 ; (safe-globals)
 ; (custom-declare (<tag> <name> <filename> <arg> ...) <string> ...)
@@ -1219,7 +1220,8 @@
 	       [(safe) 
 		(set! unsafe #t)]
 	       [else (compiler-warning 'syntax "illegal declaration specifier `~s'" id)]))]))
-       ((run-time-macros) (set! ##sys#enable-runtime-macros #t))
+       ((run-time-macros compile-syntax) ;*** run-time-macros is DEPRECATED
+	(set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 
 	(let ([syms (cdr spec)])
 	  (when export-list 

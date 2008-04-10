@@ -40,9 +40,6 @@ TODO for macro/module system					-*- Outline -*-
 * csi
 ** describe should print if symbol is interned
 
-* put mtest into "tests" directory and run on "make check"
-** rename to "syntax-tests.scm"
-
 * eggs to be adapted/obsoleted
 ** syntax-case (eval/expand integration?)
 *** sxml-match
