@@ -3,11 +3,15 @@ TODO for macro/module system					-*- Outline -*-
 * merge trunk into branch
 
 * compiler
-** define-syntax special form
+** define-syntax special form (+ compile-syntax handling)
+** ##core#environment
+** handling of module-level define-syntax and define-for-syntax
 
 * modules
 ** fixup of module export-list in ##sys#extend-macro-environment
-   not done for static se's of global macros (still relevant?)
+*** not done for static se's of global macros (still relevant?)
+*** current example (mtest) shows that imported a is not visible when using c
+** lookup before ##sys#rename-global in eval/canon. is suboptimal
 
 * reimplement macros from chicken-ffi-macros hygienically
 

@@ -503,7 +503,7 @@
 		   t) ) ) ]
 	  [else 
 	   (let ((x2 (lookup x se)))
-	     (if (symbol? x2)
+	     (if (and (symbol? x2) (assq x2 se)) ;*** suboptimal (see eval)
 		 x2
 		 (##sys#rename-global x se)))]))
   
@@ -720,7 +720,8 @@
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
 			   (when (eq? var var0) ; global?
-			     (set! var (##sys#rename-global var se))
+			     (unless (assq var0 se) ;*** s.a.
+			       (set! var (##sys#rename-global var se)))
 			     (when safe-globals-flag
 			       (set! always-bound-to-procedure
 				 (lset-adjoin eq? always-bound-to-procedure var))

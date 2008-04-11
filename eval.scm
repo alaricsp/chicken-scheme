@@ -38,7 +38,7 @@
       (pp arg1)
       (apply print arg1 more)))
 
-(define-macro (d . _) '(void))
+;(define-macro (d . _) '(void))
 
 #>
 #ifndef C_INSTALL_EGG_HOME
@@ -287,7 +287,7 @@
 
       (define (eval/meta form)
 	(parameterize ((##sys#current-module #f))
-	  (pp `(EVAL/META: ,form))	;***
+	  (d `(EVAL/META: ,form))
 	  ((##sys#compile-to-closure
 	    form
 	    '() 
@@ -295,7 +295,7 @@
 	   '() ) ) )
 
       (define (eval/elab form)
-	(pp `(EVAL/ELAB: ,form))	;***
+	(d `(EVAL/ELAB: ,form))
 	((##sys#compile-to-closure
 	  form
 	  '() 
@@ -306,24 +306,24 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
-			(let ((x (##sys#rename-global j se)))
+			(let ((var (if (assq x se) j (##sys#rename-global j se)))) ;*** suboptimal
 			  (if ##sys#eval-environment
-			      (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
-				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" j))
+			      (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
+				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" var))
 				(cond-expand 
 				 [unsafe (lambda v (##sys#slot loc 1))]
 				 [else
 				  (lambda v 
 				    (let ([val (##sys#slot loc 1)])
 				      (if (eq? unbound val)
-					  (##sys#error "unbound variable" j)
+					  (##sys#error "unbound variable" var)
 					  val) ) ) ] ) )
 			      (cond-expand
-			       [unsafe (lambda v (##core#inline "C_slot" x 0))]
+			       [unsafe (lambda v (##core#inline "C_slot" var 0))]
 			       [else
-				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
-				  (set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
-				(lambda v (##core#inline "C_retrieve" x))] ) ) ) ]
+				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? var)))
+				  (set! ##sys#unbound-in-eval (cons (cons var cntr) ##sys#unbound-in-eval)) )
+				(lambda v (##core#inline "C_retrieve" var))] ) ) ) ]
 		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
 		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
 	      [(##sys#number? x)
@@ -414,7 +414,7 @@
 			    (receive (i j) (lookup var e se)
 			      (let ((val (compile (caddr x) e var tf cntr se)))
 				(cond [(not i)
-				       (let ([var (##sys#rename-global var se)])
+				       (let ((var (if (assq var se) j (##sys#rename-global j se)))) ;*** s.a.
 					 (if ##sys#eval-environment
 					     (let ([loc (##sys#hash-table-location
 							 ##sys#eval-environment 
