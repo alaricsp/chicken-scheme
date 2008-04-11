@@ -102,26 +102,26 @@
 (define ##sys#macro-environment '())
 
 (define (##sys#extend-macro-environment name se handler)
-  (print "macro def: " name)		;***
   (cond ((##sys#current-module) =>
 	 (lambda (m)
-	   (print "module macro def (" m "): " name) ;***
 	   ;; include macro in it's own static se (circular)
 	   (let* ((n (list name #f handler))
 		  (se2 (cons n se)))
 	     (set-car! (cdr n) se2)
 	     ;; fixup exports
 	     (cond ((assq name (cadr m)) =>
-		    (cut set-cdr! <> (list name se2 handler))))
+		    (lambda (a)
+		      (set-cdr! a (list se2 handler)))))
+	     ;; extend module se
+	     (set-cdr! (cdr m) (cons (list name se2 handler) (cddr m)))
+	     ;; extend current env
 	     (##sys#current-environment
-	      (cons (list name se2) (##sys#current-environment))))))
+	      (cons (list name se2 handler) (##sys#current-environment))))))
 	((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
-	   (print "macro def (found): " name) ;***
 	   (set-car! a se)
 	   (set-car! (cdr a) handler) ) )
 	(else 
-	 (print "macro def (new): " name) ;***
 	 (set! ##sys#macro-environment
 	   (cons (list name se handler)
 		 ##sys#macro-environment)))))
@@ -188,9 +188,8 @@
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
 	       (values 
-		;; if stored se is #f, then this is a lisp macro,
 		;; force ref. opaqueness by passing dynamic se
-		(call-handler head (cadr mdef) exp (or (car mdef) dse))
+		(call-handler head (cadr mdef) exp (car mdef))
 		#t))
 	      (else (values exp #f)) ) )
       (if (pair? exp)
@@ -983,17 +982,6 @@
 	  (%quote (r 'quote)))
       `(##core#require-extension 
 	,@(map (lambda (x) (list %quote x)) ids) ) ) ) ))
-
-(##sys#extend-macro-environment
- 'define-syntax
- '()
- (lambda (form se dse)
-   (##sys#check-syntax 'define-syntax form '(define-syntax variable _) #f se)
-   `(,(if ##sys#enable-runtime-macros '##core#elaborationtimetoo '##core#elaborationtimeonly)
-     (##sys#extend-macro-environment
-      ',(cadr form)
-      (##sys#current-environment)
-      (##sys#er-transformer ,(caddr form))))))
 
 
 ;;; syntax-rules

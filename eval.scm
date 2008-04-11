@@ -287,11 +287,20 @@
 
       (define (eval/meta form)
 	(parameterize ((##sys#current-module #f))
+	  (pp `(EVAL/META: ,form))	;***
 	  ((##sys#compile-to-closure
 	    form
 	    '() 
 	    (##sys#current-meta-environment))
 	   '() ) ) )
+
+      (define (eval/elab form)
+	(pp `(EVAL/ELAB: ,form))	;***
+	((##sys#compile-to-closure
+	  form
+	  '() 
+	  (##sys#current-environment))
+	 '() ) )
 
       (define (compile x e h tf cntr se)
 	(cond [(symbol? x)
@@ -603,6 +612,15 @@
 			     (##sys#canonicalize-body (cddr x) se2)
 			     e #f tf cntr se2)))
 			       
+			 ((define-syntax)
+			  (##sys#check-syntax 'define-syntax x '(define-syntax variable _) #f se)
+			  (##sys#extend-macro-environment
+			   (rename (cadr x) se)
+			   (##sys#current-environment)
+			   (##sys#er-transformer
+			    (eval/meta (caddr x))))
+			  (compile '(##core#undefined) e #f tf cntr se) )
+
 			 [(##core#loop-lambda)
 			  (compile `(,(rename 'lambda se) ,@(cdr x)) e #f tf cntr se) ]
 
@@ -631,7 +649,7 @@
 			   e #f tf cntr se) ]
 
 			 [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
-			  (eval/meta (cadr x))
+			  (eval/elab (cadr x))
 			  (compile '(##core#undefined) e #f tf cntr se) ]
 
 			 [(##core#compiletimetoo)
@@ -683,7 +701,6 @@
 			       name) )
 			    (parameterize ((##sys#current-module module)
 					   (##sys#current-environment (cddr module)))
-			      (pp (##sys#current-module)) ;***
 			      (let ((forms
 				     (map (lambda (x)
 					    (compile x e #f tf cntr (##sys#current-environment)) )

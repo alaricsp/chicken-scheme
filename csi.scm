@@ -322,7 +322,8 @@ EOF
 				  (##sys#current-module #f)
 				  (##sys#current-environment '()))
 				 (m (##sys#current-module m)
-				    (##sys#current-environment (cddr m)))
+				    (##sys#current-environment (cddr m))
+				    (pp (map car (cddr m)))) ;***
 				 (else (printf "no such module: ~s~%" name)))))
 			((?)
 			 (display 

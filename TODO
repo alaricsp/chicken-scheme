@@ -2,9 +2,12 @@ TODO for macro/module system					-*- Outline -*-
 
 * merge trunk into branch
 
-* current module approach problems
+* compiler
+** define-syntax special form
+
+* modules
 ** fixup of module export-list in ##sys#extend-macro-environment
-   not done for static se's of global macros
+   not done for static se's of global macros (still relevant?)
 
 * reimplement macros from chicken-ffi-macros hygienically
 

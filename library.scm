@@ -3281,7 +3281,7 @@ EOF
 	     ""
 	     (string-append "\t[" spec " ]") )
 	 (if (not (zero? rev)) 
-	     (##sys#string-append 
+	     (string-append 
 	      "\nSVN rev. " (number->string rev) "\t")
 	     "\n")
 	 +build-tag+))
