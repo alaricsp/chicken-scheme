@@ -71,7 +71,7 @@
      ##sys#pointer->address ##sys#compile-to-closure ##sys#make-string ##sys#make-lambda-info
      ##sys#number? ##sys#symbol->qualified-string ##sys#decorate-lambda ##sys#string-append
      ##sys#ensure-heap-reserve ##sys#syntax-error-hook ##sys#read-prompt-hook
-     ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator ##sys#alias-global-hook
+     ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator
      open-output-string get-output-string make-parameter software-type software-version machine-type
      build-platform getenv set-extensions-specifier! ##sys#string->symbol list->vector
      extension-information syntax-error ->string chicken-home ##sys#expand-curried-define
@@ -286,16 +286,13 @@
 	(##sys#eval-decorator p ll h cntr) )
 
       (define (eval/meta form)
-	(parameterize ((##sys#current-module #f))
-	  (d `(EVAL/META: ,form))
-	  ((##sys#compile-to-closure
-	    form
-	    '() 
-	    (##sys#current-meta-environment))
-	   '() ) ) )
+	((##sys#compile-to-closure
+	  form
+	  '() 
+	  (##sys#current-meta-environment))
+	 '() ) )
 
       (define (eval/elab form)
-	(d `(EVAL/ELAB: ,form))
 	((##sys#compile-to-closure
 	  form
 	  '() 
@@ -306,7 +303,7 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
-			(let ((var (if (assq x se) j (##sys#rename-global j se)))) ;*** suboptimal
+			(let ((var (##sys#alias-global-hook j)))
 			  (if ##sys#eval-environment
 			      (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
 				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" var))
@@ -414,7 +411,7 @@
 			    (receive (i j) (lookup var e se)
 			      (let ((val (compile (caddr x) e var tf cntr se)))
 				(cond [(not i)
-				       (let ((var (if (assq var se) j (##sys#rename-global j se)))) ;*** s.a.
+				       (let ((var (##sys#alias-global-hook j)))
 					 (if ##sys#eval-environment
 					     (let ([loc (##sys#hash-table-location
 							 ##sys#eval-environment 
@@ -644,7 +641,7 @@
 			   (let loop ([ids (cdr x)])
 			     (if (null? ids)
 				 '(##core#undefined)
-				 (let-values ([(exp _) (##sys#do-the-right-thing (cadar ids) #f)])
+				 (let-values ([(exp _) (##sys#do-the-right-thing (car ids) #f)])
 				   `(,(rename 'begin se) ,exp ,(loop (cdr ids))) ) ) )
 			   e #f tf cntr se) ]
 
@@ -676,39 +673,6 @@
 
 			 [(##core#app)
 			  (compile-call (cdr x) e tf cntr se) ]
-
-			 ((##core#environment)
-			  (let* ((name (cadr x))
-				 (imports (caddr x))
-				 (exports (cadddr x))
-				 (exprename (eval/meta (car (cddddr x))))
-				 (body (cdr (cddddr x)))
-				 (module
-				    (##sys#register-module
-				     name
-				     (##sys#make-module
-				      name
-				      exports
-				      exprename
-				      (map (lambda (imp)
-					     (cons 
-					      (car imp)
-					      (eval/meta (cadr imp))))
-					   imports) ) ) ) )
-			    (when (##sys#current-module)
-			      (##sys#syntax-error-hook 
-			       "nested modules are not supported"
-			       name) )
-			    (parameterize ((##sys#current-module module)
-					   (##sys#current-environment (cddr module)))
-			      (let ((forms
-				     (map (lambda (x)
-					    (compile x e #f tf cntr (##sys#current-environment)) )
-					  body) ) )
-				(lambda (v)
-				  (for-each 
-				   (lambda (x) (##core#app x v))
-				   forms))))))
 
 			 [else
 			  (cond [(eq? head 'location)

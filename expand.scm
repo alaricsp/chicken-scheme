@@ -78,46 +78,13 @@
 	   (list->vector (map walk (vector->list x))))
 	  (else x))))
 
-(define (##sys#alias-global-hook s) s)
-
-(define (##sys#rename-global id se)
-  (cond ((or (##sys#qualified-symbol? id) 
-	     (let ((s (##sys#slot id 1)))
-	       (and (fx> (##sys#size s) 0)
-		    (char=? #\ (string-ref s 0)))))
-	 id)
-	((##sys#current-module) =>
-	 (lambda (m)
-	   (let ((id2 (##sys#string->symbol 
-		       (string-append
-			(##sys#slot (car m) 1)
-			"$$"
-			(##sys#slot id 1)))))
-	     id2) ) )
-	(else (##sys#alias-global-hook id) ) ) )
-
 
 ;;; Macro handling
 
 (define ##sys#macro-environment '())
 
 (define (##sys#extend-macro-environment name se handler)
-  (cond ((##sys#current-module) =>
-	 (lambda (m)
-	   ;; include macro in it's own static se (circular)
-	   (let* ((n (list name #f handler))
-		  (se2 (cons n se)))
-	     (set-car! (cdr n) se2)
-	     ;; fixup exports
-	     (cond ((assq name (cadr m)) =>
-		    (lambda (a)
-		      (set-cdr! a (list se2 handler)))))
-	     ;; extend module se
-	     (set-cdr! (cdr m) (cons (list name se2 handler) (cddr m)))
-	     ;; extend current env
-	     (##sys#current-environment
-	      (cons (list name se2 handler) (##sys#current-environment))))))
-	((lookup name ##sys#macro-environment) =>
+  (cond ((lookup name ##sys#macro-environment) =>
 	 (lambda (a)
 	   (set-car! a se)
 	   (set-car! (cdr a) handler) ) )
@@ -228,6 +195,7 @@
 	  (values exp #f) ) ) ) )
 
 (define ##sys#enable-runtime-macros #f)
+(define (##sys#alias-global-hook sym) sym)
 
 
 ;;; User-level macroexpansion
@@ -624,49 +592,6 @@
 		   s2) )
 	  (eq? s1 s2)))
     (handler form rename compare) ) )
-
-
-;;; lowlevel module support
-
-(define ##sys#current-module (make-parameter #f))
-(define ##sys#module-table '())
-
-(define (##sys#register-module name module)
-  (cond ((assq name ##sys#module-table) =>
-	 (lambda (entry)
-	   (set-cdr! entry (cdr module))
-	   entry))
-	(else
-	 (set! ##sys#module-table (cons module ##sys#module-table))
-	 module) ) )
-
-(define (##sys#make-module name exports exprename imports)
-  (let ((prefix (##sys#string-append (##sys#slot name 1) "$$")))
-    (let loop ((se '()) (imports imports))
-      (cond ((null? imports)
-	     (let ((exps
-		     (map (lambda (ex)
-			    (cons (exprename ex)
-				  (cond ((assq ex se) => cdr) ; already imported?
-					(else
-					 (##sys#string->symbol
-					  (##sys#string-append prefix (##sys#slot ex 1)))))))
-			  exports) ) )
-	       (cons name (cons exps se))))
-	    ((assq (caar imports) ##sys#module-table) =>
-	     (lambda (m)
-	       (let ((imprename (cdar imports)))
-		 (loop (let filter ((exps (cadr m)))
-			 (cond ((null? exps) se)
-			       ((imprename (caar exps)) =>
-				(lambda (r)
-				  (cons 
-				   (cons r (cdar exps) )
-				   (filter (cdr exps)))))
-			       (else (filter (cdr exps)))))
-		       (cdr imports)))))
-	    (else
-	     (syntax-error "importing unknown module" (car imports) name))))))
 
 
 ;;; Macro definitions:

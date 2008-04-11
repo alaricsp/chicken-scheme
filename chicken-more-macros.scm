@@ -105,7 +105,7 @@
  'declare '()
  (##sys#er-transformer
  (lambda (form r c)
-   `(##core#declare ,@specs))))
+   `(##core#declare ,@(cdr form)))))
 
 (##sys#extend-macro-environment
  'include '()
@@ -909,9 +909,7 @@
  'use '()
  (##sys#er-transformer
   (lambda (form r c)
-    (let ((%quote (r 'quote)))
-      `(##core#require-extension 
-	,@(map (lambda (x) (list %quote x)) ids) ) ) )))
+    `(##core#require-extension ,@(cdr form)))))
 
 
 ;;; SRFI-26:
@@ -1056,9 +1054,6 @@
 
 
 ;;; Definitions available at macroexpansion-time:
-
-;*** incomplete: must always be compiled in module scope and
-;    must be added to module exports
 
 (##sys#extend-macro-environment
  'define-for-syntax '()

@@ -503,17 +503,16 @@
 		   t) ) ) ]
 	  [else 
 	   (let ((x2 (lookup x se)))
-	     (if (and (symbol? x2) (assq x2 se)) ;*** suboptimal (see eval)
-		 x2
-		 (##sys#rename-global x se)))]))
+	     (if (symbol? x2) 
+		 x2 
+		 (##sys#alias-global-hook x)) ) ]))
   
   (define (eval/meta form)
-    (parameterize ((##sys#current-module #f))
-      ((##sys#compile-to-closure
-	form
-	'() 
-	(##sys#current-meta-environment))
-       '() ) ) )
+    ((##sys#compile-to-closure
+      form
+      '() 
+      (##sys#current-meta-environment))
+     '() ) )
 
   (define (walk x se dest)
     (cond ((symbol? x)
@@ -587,7 +586,7 @@
 			  (let loop ([ids (cdr x)])
 			    (if (null? ids)
 				'(##core#undefined)
-				(let ([id (cadar ids)])
+				(let ([id (car ids)])
 				  (let-values ([(exp f) (##sys#do-the-right-thing id #t)])
 				    (if (not (or f 
 						 (and (symbol? id)
@@ -729,8 +728,7 @@
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
 			   (when (eq? var var0) ; global?
-			     (unless (assq var0 se) ;*** s.a.
-			       (set! var (##sys#rename-global var se)))
+			     (set! var (##sys#alias-global-hook var))
 			     (when safe-globals-flag
 			       (set! always-bound-to-procedure
 				 (lset-adjoin eq? always-bound-to-procedure var))
@@ -818,11 +816,11 @@
 			((foreign-primitive)
 			 (walk (expand-foreign-primitive x) se dest) )
 
-			((##core#define-foreign-variable)
-			 (let* ([var (cadr (second x))]
-				[type (cadr (third x))]
+			((define-foreign-variable)
+			 (let* ([var (second x)]
+				[type (third x)]
 				[name (if (pair? (cdddr x))
-					  (cadr (fourth x))
+					  (fourth x)
 					  (symbol->string var) ) ] )
 			   (set! foreign-variables
 			     (cons (list var type (if (string? name) name (symbol->string name)))
