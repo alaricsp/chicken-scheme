@@ -9,10 +9,6 @@ TODO for macro/module system					-*- Outline -*-
 *** also, unexported ids used in exported syntax are not handled
 ** lookup before ##sys#rename-global in eval/canon. is suboptimal
 
-* test hygiene
-* test macros expanding into macro calls
-* test macros expanding into syntax-rules
-* test local define{-values,-syntax,} expansion
 * test extended lambda-lists
 * test macro-expansions
 ** quoted literals

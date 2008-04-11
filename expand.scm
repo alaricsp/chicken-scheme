@@ -56,10 +56,16 @@
 	(else #f)))
 
 (define (macro-alias var se)
-  (let* ((alias (gensym var))
-	 (ua (or (lookup var se) var)))
-    (##sys#put! alias '##sys#macro-alias ua)
-    alias) )
+  (if (or (##sys#qualified-symbol? var)
+	  (let* ((str (##sys#slot var 1))
+		 (len (##sys#size str)))
+	    (and (fx> len 0)
+		 (char=? #\# (##core#inline "C_subchar" str 0)))))
+      var
+      (let* ((alias (gensym var))
+	     (ua (or (lookup var se) var)))
+	(##sys#put! alias '##sys#macro-alias ua)
+	alias) ) )
 
 (define (##sys#strip-syntax exp #!optional se)
   ;; if se is given, retain bound vars
