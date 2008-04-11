@@ -38,7 +38,7 @@
       (pp arg1)
       (apply print arg1 more)))
 
-;(define-macro (d . _) '(void))
+(define-macro (d . _) '(void))
 
 #>
 #ifndef C_INSTALL_EGG_HOME

@@ -698,8 +698,17 @@
 			   (##sys#canonicalize-body (cddr x) se2)
 			   se2 dest)))
 			       
-			((##core#named-lambda)
-			 (walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )
+		       ((define-syntax)
+			(##sys#check-syntax 'define-syntax x '(define-syntax variable _) #f se)
+			(##sys#extend-macro-environment
+			 (lookup (cadr x) se)
+			 (##sys#current-environment)
+			 (##sys#er-transformer
+			  (eval/meta (caddr x))))
+			(walk '(##core#undefined) se dest))
+
+		       ((##core#named-lambda)
+			(walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )
 
 			((##core#loop-lambda)
 			 (let* ([vars (cadr x)]
@@ -1004,7 +1013,7 @@
 						       (##sys#make-c-string r)) ) ) )
 						  (else (cddr lam)) ) )
 					   rtype) ) )
-				      se #f) ) ) ) )
+				      se #f) ) ) )
 
 			(else
 			 (let ([handle-call

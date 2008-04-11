@@ -71,7 +71,7 @@
     (##sys#check-syntax 'define-location form '(_ variable _ . #(_ 0 1)))
     (let ((var (cadr form))
 	  (type (caddr form))
-	  (init (optional (cdddr form)))
+	  (init (optional (cdddr form) #f))
 	  (name (r (gensym))))
       `(,(r 'begin)
 	(,(r 'define-foreign-variable) ,var ,type ,(symbol->string name))

@@ -93,12 +93,11 @@
   (initialize-compiler)
   (set! explicit-use-flag (memq 'explicit-use options))
   (let ([initforms `((##core#declare
-		      ,@(map (lambda (x) `(quote ,x))
-			     (append 
-			      default-declarations
-			      (if explicit-use-flag
-				  '()
-				  `((uses ,@units-used-by-default)) ) ) ) ) ) ]
+		      ,@(append 
+			 default-declarations
+			 (if explicit-use-flag
+			     '()
+			     `((uses ,@units-used-by-default)) ) ) ) ) ]
         [verbose (memq 'verbose options)]
 	[outfile (cond [(memq 'output-file options) 
 			=> (lambda (node)
