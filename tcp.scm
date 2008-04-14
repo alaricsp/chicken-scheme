@@ -86,23 +86,14 @@ static char addr_buffer[ 20 ];
 EOF
 ) )
 
+(include "unsafe-declarations.scm")
+
 (register-feature! 'tcp)
 
 (cond-expand
- (unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure x y . _) '(##core#undefined))
-    (define-macro (##sys#check-range x y z) '(##core#undefined))
-    (define-macro (##sys#check-pair x) '(##core#undefined))
-    (define-macro (##sys#check-list x) '(##core#undefined))
-    (define-macro (##sys#check-symbol x) '(##core#undefined))
-    (define-macro (##sys#check-string x) '(##core#undefined))
-    (define-macro (##sys#check-char x) '(##core#undefined))
-    (define-macro (##sys#check-exact x . _) '(##core#undefined))
-    (define-macro (##sys#check-port x . _) '(##core#undefined))
-    (define-macro (##sys#check-number x) '(##core#undefined))))
- (else
-  (declare (emit-exports "tcp.exports"))) )
+ ((not unsafe)
+  (declare (emit-exports "tcp.exports")))
+ (else))
 
 (define-foreign-variable errno int "errno")
 (define-foreign-variable strerror c-string "strerror(errno)")

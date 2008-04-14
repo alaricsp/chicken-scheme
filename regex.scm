@@ -67,25 +67,10 @@
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings) ) ] )
 
+(include "unsafe-declarations.scm")
+
 (cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-chardef-table . _) '(##core#undefined))
-    (define-macro (##sys#check-integer . _) '(##core#undefined))
-    (define-macro (##sys#check-blob . _) '(##core#undefined))
-    (define-macro (##sys#check-vector . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
+ ((not unsafe)
   (define (##sys#check-chardef-table x loc)
     (unless (regex-chardef-table? x)
       (##sys#error loc "invalid character definition tables structure" x) ) )
@@ -96,7 +81,8 @@
       ##sys#check-structure ##sys#check-symbol ##sys#check-blob ##sys#check-integer )
     (export
       ##sys#check-chardef-table )
-    (emit-exports "regex.exports") ) ] )
+    (emit-exports "regex.exports") ) )
+ (else))
 
 
 ;;;

@@ -108,8 +108,8 @@
 ; (foreign-safe-lambda <type> <string> {<type>})
 ; (foreign-safe-lambda* <type> ({(<type> <var>)})) {<string>})
 ; (foreign-primitive <type> ({(<type> <var>)}) {<string>})
-; (##core#define-inline (quote <name>) <exp>)
-; (##core#define-constant (quote <name>) <exp>)
+; (define-inline <name> <exp>)
+; (define-constant <name> <exp>)
 ; (##core#foreign-callback-wrapper <name> <qualifiers> <type> ({<type>}) <exp>)
 ; (##core#define-external-variable (quote <name>) (quote <type>) (quote <bool>))
 ; (##core#check <exp>)
@@ -704,7 +704,15 @@
 			 (##sys#current-environment)
 			 (##sys#er-transformer
 			  (eval/meta (caddr x))))
-			(walk '(##core#undefined) se dest))
+			(walk
+			 (if ##sys#enable-runtime-macros
+			     `(##sys#extend-macro-environment
+			       ',(cadr x)
+			       (##sys#current-environment)
+			       (##sys#er-transformer
+				,(caddr x))) ;*** possibly wrong se?
+			     '(##core#undefined) )
+			 se dest))
 
 		       ((##core#named-lambda)
 			(walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )
@@ -888,8 +896,8 @@
 				(alist-cons var alias se)
 				dest) ) ) )
 
-			((##core#define-inline)
-			 (let* ([name (cadr (second x))]
+			((define-inline)
+			 (let* ([name (second x)]
 				[val (third x)] )
 			   (receive (val2 mlist)
 			       (extract-mutable-constants
@@ -903,8 +911,8 @@
 					 `(##core#set! ,(car m) ',(cdr m))) mlist))
 			      se #f) ) ) )
 
-			((##core#define-constant)
-			 (let* ([name (cadr (second x))]
+			((define-constant)
+			 (let* ([name (second x)]
 				[valexp (third x)]
 				[val (handle-exceptions ex
 					 ;; could show line number here

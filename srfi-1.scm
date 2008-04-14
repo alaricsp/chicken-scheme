@@ -40,32 +40,14 @@
      reduce-right last-pair drop)
     (no-bound-checks) ) ] )
 
+(include "unsafe-declarations.scm")
+
 (cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "srfi-1.exports"))] )
+ ((not unsafe)
+  (declare (emit-exports "srfi-1.exports")))
+ (else))
 
 (register-feature! 'srfi-1)
-
-(eval-when (compile eval)
-  (define-macro (:optional arg default)
-    (let ([var (gensym)])
-      `(let ((,var ,arg))
-	 (if (null? ,var)
-	     ,default
-	     (car ,var) ) ) ) ) )
 
 
 ;;; SRFI-1 list-processing library 			-*- Scheme -*-
@@ -336,10 +318,8 @@
 ;  (check-arg integer? count iota)
   (##sys#check-number count 'iota)
   (if (< count 0) (##sys#error 'iota "Negative step count" iota count))
-  (let ((start (:optional maybe-start+step 0))
-	(step (if (pair? maybe-start+step)
-		  (:optional (cdr maybe-start+step) 1)
-		  1) ) )
+  (let-optionals maybe-start+step ((start 0) ; Olin, I'm tired of fixing your stupid bugs - why didn't
+				   (step 1) ) ; you use your own macros, then?
     (##sys#check-number start 'iota)
     (##sys#check-number step 'iota)
 ;    (check-arg number? start iota)
@@ -877,7 +857,7 @@
 ;  (check-arg procedure? p unfold-right)
 ;  (check-arg procedure? f unfold-right)
 ;  (check-arg procedure? g unfold-right)
-  (let lp ((seed seed) (ans (:optional maybe-tail '())))
+  (let lp ((seed seed) (ans (optional maybe-tail '())))
     (if (p seed) ans
 	(lp (g seed)
 	    (cons (f seed) ans)))))
@@ -1275,16 +1255,16 @@
 ;;; alist-delete key alist [=]	Alist-delete by key comparison
 
 (define (delete x lis . maybe-=) 
-  (let ((= (:optional maybe-= equal?)))
+  (let ((= (optional maybe-= equal?)))
     (filter (lambda (y) (not (= x y))) lis)))
 
 (define (delete! x lis . maybe-=)
-  (let ((= (:optional maybe-= equal?)))
+  (let ((= (optional maybe-= equal?)))
     (filter! (lambda (y) (not (= x y))) lis)))
 
 ;;; Extended from R4RS to take an optional comparison argument.
 (define (member x lis . maybe-=)
-  (let ((= (:optional maybe-= equal?)))
+  (let ((= (optional maybe-= equal?)))
     (find-tail (lambda (y) (= x y)) lis)))
 
 ;;; R4RS, hence we don't bother to define.
@@ -1304,7 +1284,7 @@
 ;;; element-marking. The former gives you O(n lg n), the latter is linear.
 
 (define (delete-duplicates lis . maybe-=)
-  (let ((elt= (:optional maybe-= equal?)))
+  (let ((elt= (optional maybe-= equal?)))
 ;    (check-arg procedure? elt= delete-duplicates)
     (let recur ((lis lis))
       (if (null-list? lis) lis
@@ -1314,7 +1294,7 @@
 	    (if (eq? tail new-tail) lis (cons x new-tail)))))))
 
 (define (delete-duplicates! lis . maybe-=)
-  (let ((elt= (:optional maybe-= equal?)))
+  (let ((elt= (optional maybe-= equal?)))
 ;    (check-arg procedure? elt= delete-duplicates!)
     (let recur ((lis lis))
       (if (null-list? lis) lis
@@ -1329,7 +1309,7 @@
 
 ;;; Extended from R4RS to take an optional comparison argument.
 (define (assoc x lis . maybe-=)
-  (let ((= (:optional maybe-= equal?)))
+  (let ((= (optional maybe-= equal?)))
     (find (lambda (entry) (= x (car entry))) lis)))
 
 (define (alist-cons key datum alist) (cons (cons key datum) alist))
@@ -1339,11 +1319,11 @@
        alist))
 
 (define (alist-delete key alist . maybe-=)
-  (let ((= (:optional maybe-= equal?)))
+  (let ((= (optional maybe-= equal?)))
     (filter (lambda (elt) (not (= key (car elt)))) alist)))
 
 (define (alist-delete! key alist . maybe-=)
-  (let ((= (:optional maybe-= equal?)))
+  (let ((= (optional maybe-= equal?)))
     (filter! (lambda (elt) (not (= key (car elt)))) alist)))
 
 

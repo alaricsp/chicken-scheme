@@ -38,7 +38,11 @@
       (pp arg1)
       (apply print arg1 more)))
 
-(define-macro (d . _) '(void))
+(cond-expand 
+ (hygienic-macros
+  (define-syntax d (syntax-rules () ((_ . _) (void)))) )
+ (else
+  (define-macro (d . _) '(void))))	;*** remove later
 
 #>
 #ifndef C_INSTALL_EGG_HOME
@@ -90,23 +94,11 @@
      map string->keyword ##sys#abort
      ##sys#expand-0) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "eval.exports"))])
+(include "unsafe-declarations.scm")
 
+(cond-expand 
+ ((not unsafe) (declare (emit-exports "eval.exports")))
+ (else))
 
 (define-foreign-variable install-egg-home c-string "C_INSTALL_EGG_HOME")
 (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
@@ -661,8 +653,8 @@
 			      (##sys#warn "declarations are ignored in interpreted code" x) )
 			  (compile '(##core#undefined) e #f tf cntr se) ]
 
-			 [(##core#define-inline ##core#define-constant)
-			  (compile `(,(rename 'set! se) ,(cadadr x) ,@(cddr x)) e #f tf cntr se) ]
+			 [(define-inline define-constant)
+			  (compile `(,(rename 'define se) ,@(cdr x)) e #f tf cntr se) ]
                    
 			 [(##core#primitive ##core#inline ##core#inline_allocate ##core#foreign-lambda 
 					    ##core#define-foreign-variable 
@@ -1131,7 +1123,7 @@
 	      ((memq id ##sys#core-library-modules)
 	       (values
 		(if comp?
-		    `(##core#declare '(uses ,id))
+		    `(##core#declare (uses ,id))
 		    `(load-library ',id) )
 		#t) )
 	      ((memq id ##sys#explicit-library-modules)
@@ -1141,7 +1133,7 @@
 		  `(begin
 		     ,@(if s `((##core#require-for-syntax ',id)) '())
 		     ,(if comp?
-			  `(##core#declare '(uses ,id)) 
+			  `(##core#declare (uses ,id)) 
 			  `(load-library ',id) ) )
 		  #t) ) )
 	      (else

@@ -61,7 +61,6 @@ CHICKEN contains code from several people:
 ; Richard O'Keefe : sorting routines.
 ; Olin Shivers : implementation of {{let-optionals[*]}} and reference implementations of SRFI-1, SRFI-13 and SRFI-14.
 ; Andrew Wilcox : queues.
-; Andrew Wright : pattern matcher.
 ; [[http://chicken.wiki.br/Alex Shinn|Alex Shinn]] : {{scheme-complete.el}} emacs tab-completion
 
 Previous: [[FAQ]]

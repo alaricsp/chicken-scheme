@@ -42,7 +42,10 @@
       (pp arg1)
       (apply print arg1 more)))
 
-(define-macro (d . _) '(void))
+(cond-expand
+ (hygienic-macros
+  (define-syntax d (syntax-rules () ((_ . _) (void)))))
+ (else (define-macro (d . _) '(void))))	;***
 
 
 ;;; Syntactic environments

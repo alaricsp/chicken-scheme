@@ -815,8 +815,6 @@ endif
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) README $(DESTDIR)$(IDOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) LICENSE $(DESTDIR)$(IDOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-ffi-macros.scm $(DESTDIR)$(IDATADIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-sys-macros.scm $(DESTDIR)$(IDATADIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) *.exports $(DESTDIR)$(IDATADIR)
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.info $(DESTDIR)$(IINFODIR)
 	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(DESTDIR)$(IINFODIR) chicken.info
@@ -892,33 +890,33 @@ profiler.c: profiler.scm
 stub.c: stub.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 
-ulibrary.c: library.scm version.scm banner.scm
+ulibrary.c: library.scm version.scm banner.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-ueval.c: eval.scm
+ueval.c: eval.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uextras.c: extras.scm private-namespace.scm
+uextras.c: extras.scm private-namespace.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
-ulolevel.c: lolevel.scm
+ulolevel.c: lolevel.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-utcp.c: tcp.scm
+utcp.c: tcp.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-usrfi-1.c: srfi-1.scm
+usrfi-1.c: srfi-1.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-usrfi-4.c: srfi-4.scm
+usrfi-4.c: srfi-4.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-usrfi-13.c: srfi-13.scm
+usrfi-13.c: srfi-13.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-usrfi-14.c: srfi-14.scm
+usrfi-14.c: srfi-14.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-usrfi-18.c: srfi-18.scm
+usrfi-18.c: srfi-18.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uutils.c: utils.scm
+uutils.c: utils.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uposixunix.c: posixunix.scm
+uposixunix.c: posixunix.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uposixwin.c: posixwin.scm
+uposixwin.c: posixwin.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
-uregex.c: regex.scm
+uregex.c: regex.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_PCRE_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 
 chicken.c: chicken.scm chicken-more-macros.scm chicken-ffi-macros.scm private-namespace.scm
@@ -1002,7 +1000,7 @@ distclean: clean confclean
 
 .PHONY: check fullcheck compiler-check
 
-check: all
+check: $(CHICKEN_SHARED_EXECUTABLE)$(EXE) $(CSI_SHARED_EXECUTABLE)$(EXE) $(CSC_PROGRAM)$(EXE)
 	cd tests; sh runtests.sh
 
 # Only for UNIX, yet:

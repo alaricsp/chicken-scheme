@@ -1,5 +1,7 @@
 (use utils)
-(define-macro (test x) `(printf "~s\t=> ~s~%" ',x ,x))
+(define-syntax test
+  (syntax-rules ()
+    ((_ x) `(printf "~s\t=> ~s~%" ',x ,x))))
 (test (pathname-directory "/"))
 (test (pathname-directory "/abc"))
 (test (pathname-directory "abc/"))

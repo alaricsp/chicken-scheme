@@ -317,12 +317,20 @@
      (system* "~a" cmd) )
    (map smooth explist) ) )
 
-(define-macro (run . explist)
-  `(run:execute (list ,@(map (lambda (x) (list 'quasiquote x)) explist))) )
+(cond-expand
+ (hygienic-macros
 
-(define-macro (compile . explist)
-  `(run (csc ,@explist) ) )
+(define-syntax run
+  (syntax-rules ()
+    ((_ exp ...)
+     (run:execute (list `exp ...)))))
 
+(define-syntax compile
+  (syntax-rules ()
+    ((_ exp ...)
+     (run (csc exp ...)))))
+
+)(else))					;*** deliberately not included before bootstrap
 
 ;;; "make" functionality
 
@@ -445,29 +453,40 @@
 	 (vector->list argv)
 	 argv) ) ) ) )
 
-(define-macro (make spec #!optional (argv ''()))
-  (let ((form-error (lambda (s . p) (apply error s spec p))))
-    (and (or (list? spec) (form-error "illegal specification (not a sequence)"))
-	 (or (pair? spec) (form-error "empty specification"))
-	 (every
-	  (lambda (line)
-	    (and (or (and (list? line) (>= (length line) 2))
-		     (form-error "clause does not have at least 2 parts" line))
-		 (let ((name (car line)))
-		   (or (list? (cadr line))
-		       (make:line-error "second part of clause is not a sequence" (cadr line) name)))))
-	  spec))
-    `(make/proc (list ,@(map (lambda (line)
-			       `(list ,(car line)
-				      (list ,@(cadr line))
-				      ,@(let ((l (cddr line)))
-					  (if (null? l)
-					      '()
-					      `((lambda ()
-						  ,@l))))))
-			     spec))
-		,argv)))
+(cond-expand
+ (hygienic-macros
 
+(define-syntax make
+  (lambda (form r c)
+    (##sys#check-syntax 'make form '(_ spec . #(_ 0 1)))
+    (let ((spec (cadr form))
+	  (argv (optional argv ''()))
+	  (%list (r 'list))
+	  (%lambda (r 'lambda)))
+      (let ((form-error (lambda (s . p) (apply error s spec p))))
+	(and (or (list? spec) (form-error "illegal specification (not a sequence)"))
+	     (or (pair? spec) (form-error "empty specification"))
+	     (every
+	      (lambda (line)
+		(and (or (and (list? line) (>= (length line) 2))
+			 (form-error "clause does not have at least 2 parts" line))
+		     (let ((name (car line)))
+		       (or (list? (cadr line))
+			   (make:line-error "second part of clause is not a sequence" (cadr line) name)))))
+	      spec))
+	`(,(r 'make/proc)
+	  (list ,@(map (lambda (line)
+			 `(,%list ,(car line)
+				  (,%list ,@(cadr line))
+				  ,@(let ((l (cddr line)))
+				      (if (null? l)
+					  '()
+					  `((,%lambda ()
+						      ,@l))))))
+		       spec))
+	  ,argv)))))
+
+)(else))					;*** s.a.
 
 ;;; Create new repository file
 

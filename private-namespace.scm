@@ -25,21 +25,40 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(define-macro (private . args)
-  (let ((namespace (car args))
-	(vars (cdr args)))
-    (##sys#check-symbol namespace 'private)
-    (let* ((str (symbol->string namespace))
-	   (prefix (string-append 
-		    (string (integer->char (string-length str)))
-		    (symbol->string namespace))))
-      (for-each
-       (lambda (var)
-	 (put! 
-	  var 'c:namespace
-	  (##sys#string->qualified-symbol prefix (symbol->string var))))
-       vars)
-      '(void) ) ) )
+(cond-expand
+ (hygienic-macros
+  (define-syntax private
+    (lambda (form r c)
+      (let ((namespace (cadr form))
+	    (vars (cddr args)))
+	(##sys#check-symbol namespace 'private)
+	(let* ((str (symbol->string namespace)) ; somewhat questionable (renaming)
+	       (prefix (string-append 
+			(string (integer->char (string-length str)))
+			(symbol->string namespace))))
+	  (for-each
+	   (lambda (var)
+	     (put! 
+	      var 'c:namespace
+	      (##sys#string->qualified-symbol prefix (symbol->string var))))
+	   vars)
+	  '(##sys#void) ) ) ) ) )
+ (else
+  (define-macro (private . args)
+    (let ((namespace (car args))
+	  (vars (cdr args)))
+      (##sys#check-symbol namespace 'private)
+      (let* ((str (symbol->string namespace))
+	     (prefix (string-append 
+		      (string (integer->char (string-length str)))
+		      (symbol->string namespace))))
+	(for-each
+	 (lambda (var)
+	   (put! 
+	    var 'c:namespace
+	    (##sys#string->qualified-symbol prefix (symbol->string var))))
+	 vars)
+	'(void) ) ) ) ) )
 
 (set! ##sys#alias-global-hook
   (lambda (var)

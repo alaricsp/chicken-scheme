@@ -30,41 +30,6 @@
 
 ;;; Non-standard macros:
 
-#;(define-macro (define-record name . slots)
-  (##sys#check-syntax 'define-record name 'symbol)
-  (##sys#check-syntax 'define-record slots '#(symbol 0))
-  (let ([prefix (symbol->string name)]
-	[setters (memq #:record-setters ##sys#features)]
-	[nsprefix (##sys#qualified-symbol-prefix name)] )
-    `(begin
-       (define ,(##sys#string->qualified-symbol nsprefix (string-append "make-" prefix))
-	 (lambda ,slots (##sys#make-structure ',name ,@slots)) )
-       (define ,(##sys#string->qualified-symbol nsprefix (string-append prefix "?"))
-	 (lambda (x) (##sys#structure? x ',name)) )
-       ,@(let mapslots ((slots slots) (i 1))
-	   (if (eq? slots '())
-	       slots
-	       (let* ((slotname (symbol->string (##sys#slot slots 0)))
-		      (setr (##sys#string->qualified-symbol nsprefix (string-append prefix "-" slotname "-set!")))
-		      (getr (##sys#string->qualified-symbol nsprefix (string-append prefix "-" slotname)) ) )
-		 (cons
-		  `(begin
-		     (define ,setr
-		       (lambda (x val)
-			 (##core#check (##sys#check-structure x ',name))
-			 (##sys#block-set! x ,i val) ) )
-		     (define ,getr
-		       ,(if setters
-			    `(getter-with-setter
-			      (lambda (x) 
-				(##core#check (##sys#check-structure x ',name))
-				(##sys#block-ref x ,i) )
-			      ,setr)
-			    `(lambda (x)
-			       (##core#check (##sys#check-structure x ',name))
-			       (##sys#block-ref x ,i) ) ) ) )
-		  (mapslots (##sys#slot slots 1) (fx+ i 1)) ) ) ) ) ) ) )
-
 (##sys#extend-macro-environment
  'receive
  '()
@@ -73,18 +38,18 @@
    (let ((%lambda (r 'lambda))
 	 (%let (r 'let)))
      (##sys#check-syntax 'receive form '(_ _ . #(_ 1)))
-     (cond ((null? (cdr form))
+     (cond ((null? (cddr form))
 	    `(##sys#call-with-values (,%lambda () ,@(cdr form)) ##sys#list) )
 	   (else
 	    (##sys#check-syntax 'receive form '(_ lambda-list exp . _))
 	    (let ((vars (cadr form))
-		  (rest (cddr form)))
+		  (exp (caddr form))
+		  (rest (cdddr form)))
 	      (if (and (pair? vars) (null? (cdr vars)))
-		  `(,%let (,(car vars) ,(car rest))
-			  ,@(cddr rest))
+		  `(,%let ((,(car vars) ,exp)) ,@rest)
 		  `(##sys#call-with-values 
-		    (,%lambda () ,(car rest))
-		    (,%lambda ,vars ,@(cdr rest)) ) ) ) ) )))) )
+		    (,%lambda () ,exp)
+		    (,%lambda ,vars ,@rest)) ) ) ) ) ))))
 
 (##sys#extend-macro-environment
  'time '()
@@ -419,15 +384,8 @@
 		      (syntax-error 
 		       'define-inline "invalid substitution form - must be lambda"
 		       name) )
-		    (list (list (r 'quote) name) val) ) ) ] )
+		    (list name val) ) ) ] )
 	`(##core#define-inline ,@(quotify-proc args 'define-inline)))) ) ) )
-
-(##sys#extend-macro-environment
- 'define-constant '()
- (##sys#er-transformer
-  (lambda (form r c)
-    (##sys#check-syntax 'define-constant form '(_ variable _))
-    `(##core#define-constant (,(r 'quote) ,(cadr form)) ,(caddr form)))))
 
 (##sys#extend-macro-environment
  'and-let* '()
@@ -1072,7 +1030,7 @@
 	    (syntax-error 'define-for-syntax "invalid identifier" name) )
 	(if ##sys#enable-runtime-macros
 	    `(,(r 'define) ,name ,body)
-	    '(,(r 'begin)) ) ) ))))
+	    '(##sys#void)))))))
 
 
 ;;; Register features provided by this file

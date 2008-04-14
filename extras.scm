@@ -80,72 +80,58 @@ EOF
     %hash-table-for-each %hash-table-fold
     hash-table-canonical-length hash-table-rehash) )
 
+(include "unsafe-declarations.scm")
+
 (cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-closure . _) '(##core#undefined))
-    (define-macro (##sys#check-inexact . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "extras.exports")) ] )
+ ((not unsafe)
+  (declare (emit-exports "extras.exports")) ) 
+ (else))
 
 (register-feature! 'extras)
 
 
 ;;; Unbound Value:
 
-;; This only works because of '(no-bound-checks)'
-
-(define-macro ($unbound-value)
- '(##sys#slot '##sys#arbitrary-unbound-symbol 0) )
+(define-inline ($unbound-value)
+  (##sys#slot '##sys#arbitrary-unbound-symbol 0))
 
 (define unbound-value-thunk (lambda () ($unbound-value)))
 
-(define-macro ($unbound? ?val)
-  `(eq? ($unbound-value) ,?val) )
+(define-inline ($unbound? ?val)
+  (eq? ($unbound-value) ?val) )
 
 
 ;;; Core Inlines:
 
-(define-macro ($quick-flonum-truncate ?flo)
-  `(##core#inline "C_quickflonumtruncate" ,?flo) )
+(define-inline ($quick-flonum-truncate ?flo)
+  (##core#inline "C_quickflonumtruncate" ?flo) )
 
-(define-macro ($fix ?wrd)
-  `(##core#inline "C_fix" ,?wrd) )
+(define-inline ($fix ?wrd)
+  (##core#inline "C_fix" ?wrd) )
 
-(define-macro ($block? ?obj)
-  `(##core#inline "C_blockp" ,?obj) )
+(define-inline ($block? ?obj)
+  (##core#inline "C_blockp" ?obj) )
 
-(define-macro ($special? ?obj)
-  `(##core#inline "C_specialp" ,?obj) )
+(define-inline ($special? ?obj)
+  (##core#inline "C_specialp" ?obj) )
 
-(define-macro ($port? ?obj)
-  `(##core#inline "C_portp" ,?obj) )
+(define-inline ($port? ?obj)
+  (##core#inline "C_portp" ?obj) )
 
-(define-macro ($byte-block? ?obj)
-  `(##core#inline "C_byteblockp" ,?obj) )
+(define-inline ($byte-block? ?obj)
+  (##core#inline "C_byteblockp" ?obj) )
 
-(define-macro ($hash-string ?str)
-  `(##core#inline "C_hash_string" ,?str) )
+(define-inline ($hash-string ?str)
+  (##core#inline "C_hash_string" ?str) )
 
-(define-macro ($hash-string-ci ?str)
-  `(##core#inline "C_hash_string_ci" ,?str) )
+(define-inline ($hash-string-ci ?str)
+  (##core#inline "C_hash_string_ci" ?str) )
 
 
 ;;;
 
-(define-macro ($immediate? ?obj)
-  `(not ($block? ,?obj)) )
+(define-inline ($immediate? ?obj)
+  (not ($block? ?obj)) )
 
 
 ;;; Read expressions from file:

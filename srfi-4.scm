@@ -79,22 +79,12 @@ EOF
      ##sys#check-range ##sys#error ##sys#signal-hook
      ##sys#not-a-proper-list-error ##sys#print ##sys#allocate-vector) ) ] )
 
+(include "unsafe-declarations.scm")
+
 (cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-bytevector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "srfi-4.exports"))] )
+ ((not unsafe)
+  (declare (emit-exports "srfi-4.exports")))
+ (else))
 
 
 ;;; Helper routines:
