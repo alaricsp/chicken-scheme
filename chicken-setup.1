@@ -1,5 +1,5 @@
 .\" dummy line
-.TH CHICKEN-SETUP 1 "28 Feb 2008"
+.TH CHICKEN-SETUP 1 "14 Apr 2008"
 
 .SH NAME
 
@@ -203,6 +203,12 @@ instead of downloading it.
 .BI \-svn \ URL
 Fetches extension sources from an SVN repository instead of
 downloading egg from egg server.
+
+.TP
+.BI \-svn-trunk \ URL
+Fetches extension sources from an SVN repository instead of
+downloading egg from egg server. If subdirectory trunk exists in the
+SVN repository, the egg sources are fetched from that location.
 
 .TP
 .BI \-local \ PATH

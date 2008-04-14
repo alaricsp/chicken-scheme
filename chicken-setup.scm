@@ -113,14 +113,14 @@
 '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path"
   "-version" "-script" "-fetch" "-host" "-proxy" "-keep" "-verbose"
   "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-  "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn"
-  "-local" "-revision" "-host-extension" "-build-prefix"
-  "-download-path" "-install-prefix") )
+  "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" 
+  "-svn" "-svn-trunk" "-local" "-revision" "-host-extension" 
+  "-build-prefix" "-download-path" "-install-prefix") )
 
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
-    #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t 
+	#f #f #f #f #f #f #f #f) )
 
 (define *installed-executables* 
   `(("chicken" . ,(foreign-value "C_CHICKEN_PROGRAM" c-string))
@@ -210,6 +210,7 @@
 (define *base-directory* (current-directory))
 (define *fetch-tree-only* #f)
 (define *svn-repository* #f)
+(define *svn-trunk* #f)
 (define *local-repository* #f)
 (define *repository-hosts* (list (list "www.call-with-current-continuation.org" *default-eggdir* 80)))
 (define *revision* #f)
@@ -550,6 +551,7 @@ usage: chicken-setup [OPTION ...] FILENAME
       -create-tree DIRECTORY     creates repository catalog from SVN checkout
       -tree FILENAME             uses repository catalog from given file
       -svn URL                   fetches extension from subversion repository
+      -svn-trunk URL             fetches extension from trunk in subversion repository
       -local PATH                fetches extension from local filesystem
       -revision REV              specifies SVN revision for checkout
       -build-prefix PATH         location where chicken-setup will create egg build directories
@@ -1013,13 +1015,14 @@ EOF
 	       (fpath  (make-pathname (setup-download-directory) p "egg-dir")))
 	   (copy-file (make-pathname *local-repository* p) fpath #t #f)))
 
-	(*svn-repository*
-	 (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" *svn-repository*))
-	 (let* ((p (->string item))
-	       (fpath (make-pathname (setup-download-directory) p "egg-dir")))
-	   (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
-		     ,(make-pathname *svn-repository* p) ,(quotewrap fpath)))
-	   fpath))
+	((or *svn-trunk* *svn-repository* ) =>
+	 (lambda (url)
+	   (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" url))
+	   (let* ((p (->string item))
+		  (fpath (make-pathname (setup-download-directory) p "egg-dir")))
+	     (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
+		       ,(make-pathname url p) ,(quotewrap fpath)))
+	     fpath)))
 
 	(else
 	 (match hostdata
@@ -1104,11 +1107,17 @@ EOF
 		 (when df
 		   (unpack/enter fpath)
 		   (let ((sfile (pathname-replace-extension f "setup")))
-		     (when (and (not (file-exists? sfile)) (file-exists? "tags") )
-		       (let ((ds (sort (map version-string->numbers (directory "tags")) version-numbers>)))
-			 (when (pair? ds) 
-			   (let ((d (make-pathname "tags" (car ds))))
-			     (chdir d) ) )  ) )
+		     (when (not (file-exists? sfile))
+		       (cond
+			(*svn-trunk* 
+			 (when (file-exists? "trunk") (chdir "trunk")))
+
+			((and (not *svn-trunk*) (file-exists? "tags") )
+			 (let ((ds (sort (map version-string->numbers (directory "tags")) version-numbers>)))
+			   (when (pair? ds) 
+			     (let ((d (make-pathname "tags" (car ds))))
+			       (chdir d)))) )
+			))
 		     (loop sfile)
 		     (clear-builddir) ) ) ) ))
 	    ((fetch-file filename) =>
@@ -1441,6 +1450,10 @@ EOF
 	 (set! *svn-repository* url)
 	 (set! *dont-ask* #t)
 	 (loop more) )
+	(("-svn-trunk" url . more)
+	 (set! *svn-trunk* url)
+	 (set! *dont-ask* #t)
+	 (loop more) )
 	(("-test" . more)
 	 (set! *run-tests* #t)
 	 (loop more) )
@@ -1460,7 +1473,7 @@ EOF
 	 (host-extension #t)
 	 (loop more) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-install-prefix" 
-	      "-tree" "-local" "-svn" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
+	      "-tree" "-local" "-svn" "-svn-trunk" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
 	 (cond ((and (> (string-length filename) 0) (char=? #\- (string-ref filename 0)))
