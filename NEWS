@@ -1,4 +1,4 @@
-3.1.4
+3.1.5
 
 - unit library: symbol->string now copies its argument
 
