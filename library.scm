@@ -1141,7 +1141,7 @@ EOF
 
   (set! ##sys#symbol->string
     (lambda (s)
-      (let* ([str (string-copy (##sys#slot s 1))]
+      (let* ([str (##sys#slot s 1)]
 	     [len (##sys#size str)]
 	     [i (split str len)] )
 	(if i (##sys#substring str i len) str) ) ) )
@@ -1171,7 +1171,7 @@ EOF
 
 (define (symbol->string s)
   (##sys#check-symbol s 'symbol->string)
-  (##sys#symbol->string s) )
+  (string-copy (##sys#symbol->string s) ) )
 
 (define string->symbol
   (let ([string-copy string-copy])
