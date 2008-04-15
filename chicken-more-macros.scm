@@ -41,7 +41,7 @@
      (cond ((null? (cddr form))
 	    `(##sys#call-with-values (,%lambda () ,@(cdr form)) ##sys#list) )
 	   (else
-	    (##sys#check-syntax 'receive form '(_ lambda-list exp . _))
+	    (##sys#check-syntax 'receive form '(_ lambda-list exp . #(_ 1)))
 	    (let ((vars (cadr form))
 		  (exp (caddr form))
 		  (rest (cdddr form)))
@@ -398,12 +398,12 @@
       (let fold ([bs bindings])
 	(if (null? bs)
 	    `(,(r 'begin) ,@body)
-	    (let ([b (##sys#slot bs 0)]
-		  [bs2 (##sys#slot bs 1)] )
+	    (let ([b (car bs)]
+		  [bs2 (cdr bs)] )
 	      (cond [(not-pair? b) `(,%if ,b ,(fold bs2) #f)]
-		    [(null? (##sys#slot b 1)) `(,%if ,(##sys#slot b 0) ,(fold bs2) #f)]
+		    [(null? (cdr b)) `(,%if ,(car b) ,(fold bs2) #f)]
 		    [else
-		     (let ([var (##sys#slot b 0)])
+		     (let ([var (car b)])
 		       `(,(r 'let) ((,var ,(cadr b)))
 			 (,%if ,var ,(fold bs2) #f) ) ) ] ) ) ) ) ) ) ) )
 
@@ -691,7 +691,7 @@
 				       (##sys#decompose-lambda-list 
 					(car c)
 					(lambda (vars argc rest) argc) ) )
-				     clauses) ) ) 
+				     (cdr form))))
 	   (minvars (genvars mincount))
 	   (rvar (r 'rvar))
 	   (lvar (r 'lvar))

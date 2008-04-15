@@ -2,13 +2,6 @@ TODO for macro/module system					-*- Outline -*-
 
 * merge trunk into branch
 
-* modules
-** fixup of module export-list in ##sys#extend-macro-environment
-*** not done for static se's of global macros (still relevant?)
-*** current example (mtest) shows that imported a is not visible when using c
-*** also, unexported ids used in exported syntax are not handled
-** lookup before ##sys#rename-global in eval/canon. is suboptimal
-
 * test extended lambda-lists
 * test macro-expansions
 ** quoted literals

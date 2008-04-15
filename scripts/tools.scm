@@ -173,8 +173,10 @@
 	   (quit (sprintf "invocation of command failed with non-zero exit-status ~a: ~a~%" s cmd) s) ) ) ) )
    exps) )
 
-(define-macro (run . explist)
-  `(execute (list ,@(map (lambda (x) (list 'quasiquote x)) explist))))
+(define-syntax run
+  (syntax-rules ()
+    ((_ exp ...)
+     (execute (list `exp ...)))))
 
 
 ;;; String and path helper functions
@@ -263,8 +265,9 @@
 	 wdeps))
       (let loop ()
 	(make/proc
-	 (map (match-lambda 
-		((target . deps)
+	 (map (lambda (dep)
+		(let ((target (car dep))
+		      (deps (cdr dep)))
 		 (list target deps
 		       (eval
 			`(lambda ()
@@ -421,17 +424,18 @@
 	   (lambda (m)
 	     (let*-values (((next) (cdr args))
 			   ((var val)
-			    (match m
-			      ((_ _ opt "=" val)
-			       (cond (val (values opt val))
-				     (else 
-				      (when (null? next)
-					(error "missing argument for option" (car args)) )
-				      (let ((x (car next)))
-					(set! next (cdr next))
-					(values opt x)))))
-			      ((_ (? string?) opt #f #f) (values opt #t))
-			      (_ (values #f #f)) ) ) )
+			    (cond ((equal? "=" (fourth m))
+				   (let ((opt (third m))
+					 (val (fifth m)))
+				     (cond (val (values opt val))
+					   (else 
+					    (when (null? next)
+					      (error "missing argument for option" (car args)) )
+					    (let ((x (car next)))
+					      (set! next (cdr next))
+					      (values opt x))))) )
+				  ((string? (second m)) (values opt #t))
+				  (else (values #f #f)) ) ) )
 	       (cond (var 
 		      (assign var val)
 		      (loop next vals) )
@@ -439,7 +443,7 @@
 	  (else (loop (cdr args) (cons (car args) vals))))))
 
 (define (yes-or-no? str . default)
-  (let ((def (:optional default #f)))
+  (let ((def (optional default #f)))
     (let loop ()
       (printf "~%~A (yes/no) " str)
       (when def (printf "[~A] " def))

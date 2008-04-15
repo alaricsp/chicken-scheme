@@ -82,7 +82,7 @@
 		   (else x2))))
 	  ((pair? x)
 	   (cons (walk (##sys#slot x 0))
-		 (walk (##sys#slot x 1))))
+		 (walk (cdr x))))
 	  ((vector? x)
 	   (list->vector (map walk (vector->list x))))
 	  (else x))))
@@ -170,7 +170,7 @@
 	      (else (values exp #f)) ) )
       (if (pair? exp)
 	  (let ((head (##sys#slot exp 0))
-		(body (##sys#slot exp 1)) )
+		(body (cdr exp)) )
 	    (if (symbol? head)
 		(let ((head2 (or (lookup head dse) head)))
 		  (unless (pair? head2)
@@ -239,7 +239,7 @@
     (and (pair? llist)
 	 (case (##sys#slot llist 0)
 	   [(#!rest #!optional #!key) #t]
-	   [else (loop (##sys#slot llist 1))] ) ) ) )
+	   [else (loop (cdr llist))] ) ) ) )
 
 (define ##sys#expand-extended-lambda-list
   (let ([reverse reverse]
@@ -269,11 +269,11 @@
 			     `((,%let*
 				,(map (lambda (k)
 					(let ([s (car k)])
-					  `[,s (##sys#get-keyword 
+					  `(,s (##sys#get-keyword 
 						',(->keyword s) ,rvar
 						,@(if (pair? (cdr k)) 
-						      `(,%lambda () ,@(cdr k)))
-						'() ) ] ) )
+						      `((,%lambda () ,@(cdr k)))
+						      '() ) ) ) ) )
 				      (reverse key) )
 				,@body) ) ) ] )
 		    (cond [(null? opt) body]
@@ -300,7 +300,7 @@
 		[else
 		 (let* ((var (car llist))
 			(x (or (and (symbol? var) (lookup var se)) var))
-			(r (##sys#slot llist 1)))
+			(r (cdr llist)))
 		   (case x
 		     [(#!optional)
 		      (if (not rvar) (set! rvar (macro-alias 'tmp se)))
@@ -309,11 +309,11 @@
 			  (err "`#!optional' argument marker in wrong context") ) ]
 		     [(#!rest)
 		      (if (fx<= mode 1)
-			  (if (and (pair? r) (symbol? (##sys#slot r 0)))
+			  (if (and (pair? r) (symbol? (car r)))
 			      (begin
-				(if (not rvar) (set! rvar (##sys#slot r 0)))
-				(set! hasrest (##sys#slot r 0))
-				(loop 2 req opt '() (##sys#slot r 1)) )
+				(if (not rvar) (set! rvar (car r)))
+				(set! hasrest (car r))
+				(loop 2 req opt '() (cdr r)) )
 			      (err "invalid syntax of `#!rest' argument") ) 
 			  (err "`#!rest' argument marker in wrong context") ) ]
 		     [(#!key)
@@ -411,15 +411,15 @@
 						  '(##sys#void) )
 					      vals)
 					mvars mvals) ]
-				 [(pair? (##sys#slot head 0))
+				 [(pair? (car head))
 				  (##sys#check-syntax 'define x '(define (_ . lambda-list) . #(_ 1)) #f se)
 				  (loop2 (cons (macro-alias 'define se)
 					       (##sys#expand-curried-define head (cddr x) se))) ]
 				 [else
 				  (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f se)
 				  (loop rest
-					(cons (##sys#slot head 0) vars)
-					(cons `(,(macro-alias 'lambda se) ,(##sys#slot head 1) ,@(cddr x)) vals)
+					(cons (car head) vars)
+					(cons `(,(macro-alias 'lambda se) ,(cdr head) ,@(cddr x)) vals)
 					mvars mvals) ] ) ) ) ]
 		      ((eq? 'define-syntax head)
 		       (##sys#check-syntax 'define-syntax x '(define-syntax variable _) se)
@@ -445,14 +445,14 @@
     (let ((env '()))
       (define (mwalk x p)
 	(cond ((not (pair? p))
-	       (cond ((assq p env) => (lambda (a) (equal? x (##sys#slot a 1))))
+	       (cond ((assq p env) => (lambda (a) (equal? x (cdr a))))
 		     ((memq p vars)
 		      (set! env (cons (cons p x) env))
 		      #t)
 		     (else (eq? x p)) ) )
 	      ((pair? x)
-	       (and (mwalk (##sys#slot x 0) (##sys#slot p 0))
-		    (mwalk (##sys#slot x 1) (##sys#slot p 1)) ) )
+	       (and (mwalk (car x) (car p))
+		    (mwalk (cdr x) (cdr p)) ) )
 	      (else #f) ) )
       (and (mwalk exp pat) env) ) ) )
 
@@ -519,38 +519,38 @@
 	      (cond ((null? x))
 		    ((symbol? x) (not (keyword? x)))
 		    ((pair? x)
-		     (let ((s (##sys#slot x 0)))
+		     (let ((s (car x)))
 		       (and (symbol? s)
-			    (loop (##sys#slot x 1)) ) ) )
+			    (loop (cdr x)) ) ) )
 		    (else #f) ) ) ) )
 
       (define (proper-list? x)
 	(let loop ((x x))
 	  (cond ((eq? x '()))
-		((pair? x) (loop (##sys#slot x 1)))
+		((pair? x) (loop (cdr x)))
 		(else #f) ) ) )
 
       (when culprit (set! ##sys#syntax-error-culprit culprit))
       (let walk ((x exp) (p pat))
 	(cond ((vector? p)
-	       (let* ((p2 (##sys#slot p 0))
+	       (let* ((p2 (vector-ref p 0))
 		      (vlen (##sys#size p))
 		      (min (if (fx> vlen 1) 
-			       (##sys#slot p 1)
+			       (vector-ref p 1)
 			       0) )
 		      (max (cond ((eq? vlen 1) 1)
-				 ((fx> vlen 2) (##sys#slot p 2))
+				 ((fx> vlen 2) (vector-ref p 2))
 				 (else 99999) ) ) )
-		 (do ((x x (##sys#slot x 1))
+		 (do ((x x (cdr x))
 		      (n 0 (fx+ n 1)) )
 		     ((eq? x '())
 		      (if (fx< n min)
 			  (err "not enough arguments") ) )
 		   (cond ((fx>= n max) 
 			  (err "too many arguments") )
-			 ((or (not (##core#inline "C_blockp" x)) (not (##core#inline "C_pairp" x)))
+			 ((not (pair? x))
 			  (err "not a proper list") )
-			 (else (walk (##sys#slot x 0) p2) ) ) ) ) )
+			 (else (walk (car x) p2) ) ) ) ) )
 	      ((##sys#immediate? p)
 	       (if (not (eq? p x)) (err "unexpected object")) )
 	      ((symbol? p)
@@ -563,17 +563,18 @@
 		 ((number) (test x number? "number expected"))
 		 ((string) (test x string? "string expected"))
 		 ((lambda-list) (test x lambda-list? "lambda-list expected"))
-		 (else (test
-			x
-			(lambda (y)
-			  (let ((y2 (lookup y se)))
-			    (eq? (if (symbol? y2) y2 y) p)))
-			"missing keyword")) ) )
+		 (else
+		  (test
+		   x
+		   (lambda (y)
+		     (let ((y2 (and (symbol? y) (lookup y se))))
+		       (eq? (if (symbol? y2) y2 y) p)))
+		   "missing keyword")) ) )
 	      ((not (pair? p))
 	       (err "incomplete form") )
 	      (else
-	       (walk (##sys#slot x 0) (##sys#slot p 0))
-	       (walk (##sys#slot x 1) (##sys#slot p 1)) ) ) ) ) ) )
+	       (walk (car x) (car p))
+	       (walk (cdr x) (cdr p)) ) ) ) ) ) )
 
 
 ;;; explicit-renaming transformer
@@ -617,7 +618,7 @@
 	      (##sys#check-syntax 'define head 'symbol)
 	      (##sys#check-syntax 'define body '#(_ 0 1))
 	      `(##core#set! ,head ,(if (pair? body) (car body) '(##sys#void))) )
-	     ((pair? (##sys#slot head 0))
+	     ((pair? (car head))
 	      (##sys#check-syntax 'define head '(_ . lambda-list))
 	      (##sys#check-syntax 'define body '#(_ 1))
 	      (loop (##sys#expand-curried-define head body '())) ) ;*** '() should be se
@@ -836,7 +837,7 @@
 		    (let ([bxs (assq 'b env)])
 		      (if (fx< (length bxs) 32)
 			  (simplify `(##sys#list ,(##sys#slot (assq 'a env) 1)
-						 ,@(##sys#slot bxs 1) ) ) 
+						 ,@(cdr bxs) ) ) 
 			  x) ) ) )
 	      ((match-expression x '(##sys#append a '()) '(a))
 	       => (lambda (env) (##sys#slot (assq 'a env) 1)) )
@@ -914,8 +915,7 @@
   (lambda (x r c)
     (let ((ids (cdr x))
 	  (%quote (r 'quote)))
-      `(##core#require-extension 
-	,@(map (lambda (x) (list %quote x)) ids) ) ) ) ))
+      `(##core#require-extension ,@ids) ) ) ) )
 
 
 ;;; syntax-rules
