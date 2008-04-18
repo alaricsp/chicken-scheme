@@ -1,3 +1,8 @@
+3.1.6
+
+- unit extras: moved lists, queues, strings to data-structures
+- new unit data-structures
+
 3.1.5
 
 - unit library: symbol->string now copies its argument

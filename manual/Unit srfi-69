@@ -363,6 +363,6 @@ Synonym for {{equal?-hash}}.
 
 Synonym for {{eq?-hash}}.
 
-Previous: [[Unit srfi-18]]
+Previous: [[Unit srfi-14]]
+Next: [[Unit match]]
 
-Next: [[Unit posix]]
