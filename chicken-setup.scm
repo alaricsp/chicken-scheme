@@ -253,7 +253,7 @@
   (*abort-hook* #f) )
 
 (define (yes-or-no? str . default)
-  (let ((def (:optional default #f)))
+  (let ((def (optional default #f)))
     (let loop ()
       (printf "~%~A (yes/no/abort) " str)
       (when def (printf "[~A] " def))

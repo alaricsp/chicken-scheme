@@ -30,7 +30,7 @@
   (define-syntax private
     (lambda (form r c)
       (let ((namespace (cadr form))
-	    (vars (cddr args)))
+	    (vars (cddr form)))
 	(##sys#check-symbol namespace 'private)
 	(let* ((str (symbol->string namespace)) ; somewhat questionable (renaming)
 	       (prefix (string-append 

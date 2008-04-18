@@ -293,10 +293,10 @@
 	       var)
 	     x) ) ]
        [(and (> (length x) 2) (eq? 'let (car x)))
-	(let ((bindings (cadr x))
-	      (body (cddr x))
-	      (vars (map car bindings))
-	      (vals (map cadr bindings)))
+	(let* ((bindings (cadr x))
+	       (body (cddr x))
+	       (vars (map car bindings))
+	       (vals (map cadr bindings)))
 	  `(let ,(map (lambda (var val) (list var (walk val))) vars vals) ,@(map walk body)) ) ]
        [else
 	(let ((op (car x))
@@ -1343,7 +1343,7 @@ EOF
 (define (make-random-name . prefix)
   (string->symbol
    (sprintf "~A-~A~A"
-	    (:optional prefix (gensym))
+	    (optional prefix (gensym))
 	    (current-seconds)
 	    (random 1000) ) ) )
 

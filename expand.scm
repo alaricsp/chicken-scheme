@@ -572,6 +572,7 @@
 		   "missing keyword")) ) )
 	      ((not (pair? p))
 	       (err "incomplete form") )
+	      ((not (pair? x)) (err "pair expected"))
 	      (else
 	       (walk (car x) (car p))
 	       (walk (cdr x) (cdr p)) ) ) ) ) ) )

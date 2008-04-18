@@ -264,3 +264,4 @@ svnrevision.sh
 synrules.scm
 expand.scm
 expand.c
+unsafe-declarations.scm

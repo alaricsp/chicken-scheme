@@ -108,16 +108,18 @@
 ; (foreign-safe-lambda <type> <string> {<type>})
 ; (foreign-safe-lambda* <type> ({(<type> <var>)})) {<string>})
 ; (foreign-primitive <type> ({(<type> <var>)}) {<string>})
-; (define-inline <name> <exp>)
+; (##core#define-inline <name> <exp>)
 ; (define-constant <name> <exp>)
-; (##core#foreign-callback-wrapper <name> <qualifiers> <type> ({<type>}) <exp>)
+; (##core#foreign-callback-wrapper '<name> <qualifiers> '<type> '({<type>}) <exp>)
 ; (##core#define-external-variable (quote <name>) (quote <type>) (quote <bool>))
 ; (##core#check <exp>)
 ; (##core#require-for-syntax <exp> ...)
-; (##core#require-extension '<id> ...)
+; (##core#require-extension <id> ...)
 ; (##core#app <exp> {<exp>})
 ; (##coresyntax <exp>)
 ; (<exp> {<exp>})
+; (define-syntax <symbol> <ewxo>)
+; (define-compiled-syntax <symbol> <ewxo>)
 ;
 ; - Core language:
 ;
@@ -290,9 +292,6 @@
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
   big-fixnum?)
-
-(eval-when (compile eval)
-  (match-error-control #:fail) )
 
 
 (include "tweaks")
@@ -504,8 +503,8 @@
 	  [else 
 	   (let ((x2 (lookup x se)))
 	     (if (symbol? x2) 
-		 x2 
-		 (##sys#alias-global-hook x)) ) ]))
+		 (##sys#alias-global-hook x2)
+		 x))]))
   
   (define (eval/meta form)
     ((##sys#compile-to-closure
@@ -714,6 +713,21 @@
 			     '(##core#undefined) )
 			 se dest))
 
+		       ((define-compiled-syntax)
+			(##sys#check-syntax 'define-compiled-syntax x '(_ variable _) #f se)
+			(##sys#extend-macro-environment
+			 (lookup (cadr x) se)
+			 (##sys#current-environment)
+			 (##sys#er-transformer
+			  (eval/meta (caddr x))))
+			(walk
+			 `(##sys#extend-macro-environment
+			   ',(cadr x)
+			   (##sys#current-environment)
+			   (##sys#er-transformer
+			    ,(caddr x))) ;*** possibly wrong se?
+			 se dest))
+
 		       ((##core#named-lambda)
 			(walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )
 
@@ -892,11 +906,11 @@
 				   ,@(if init
 					 `((##core#set! ,alias ,init))
 					 '() )
-				   ,(,(macro-alias 'if se) init (fifth x) (fourth x)) )
+				   ,(if init (fifth x) (fourth x)) )
 				(alist-cons var alias se)
 				dest) ) ) )
 
-			((define-inline)
+			((##core#define-inline)
 			 (let* ([name (second x)]
 				[val (third x)] )
 			   (receive (val2 mlist)
@@ -949,14 +963,14 @@
 			((##core#foreign-callback-wrapper)
 			 (let-values ([(args lam) (split-at (cdr x) 4)])
 			   (let* ([lam (car lam)]
-				  [name (first args)]
-				  [rtype (third args)]
-				  [atypes (fourth args)]
+				  [name (cadr (first args))]
+				  [rtype (cadr (third args))]
+				  [atypes (cadr (fourth args))]
 				  [vars (second lam)] )
-			       (if (valid-c-identifier? name)
-				   (set! callback-names (cons name callback-names))
-				   (quit "name `~S' of external definition is not a valid C identifier"
-					 name) ) )
+			     (if (valid-c-identifier? name)
+				 (set! callback-names (cons name callback-names))
+				 (quit "name `~S' of external definition is not a valid C identifier"
+				       name) )
 			     (when (or (not (proper-list? vars)) 
 				       (not (proper-list? atypes))
 				       (not (= (length vars) (length atypes))) )
@@ -983,43 +997,43 @@
 					 ,(foreign-type-convert-argument
 					   `(,(macro-alias 'let se)
 					     ()
-					       ,@(cond
-						  ((member 
-						    rtype
-						    '((const nonnull-c-string) 
-						      (const nonnull-unsigned-c-string)
-						      nonnull-unsigned-c-string
-						      nonnull-c-string))
-						   `((##sys#make-c-string
-						      (,(macro-alias 'let se)
-						       () ,@(cddr lam)))))
-						  ((member 
-						    rtype
-						    '((const c-string*)
-						      (const unsigned-c-string*)
-						      unsigned-c-string*
-						      c-string*
-						      c-string-list
-						      c-string-list*))
-						   (syntax-error
-						    "not a valid result type for callback procedures"
-						    rtype
-						    name) )
-						  ((member 
-						    rtype
-						    c-string
+					     ,@(cond
+						((member 
+						  rtype
+						  '((const nonnull-c-string) 
+						    (const nonnull-unsigned-c-string)
+						    nonnull-unsigned-c-string
+						    nonnull-c-string))
+						 `((##sys#make-c-string
+						    (,(macro-alias 'let se)
+						     () ,@(cddr lam)))))
+						((member 
+						  rtype
+						  '((const c-string*)
+						    (const unsigned-c-string*)
+						    unsigned-c-string*
+						    c-string*
+						    c-string-list
+						    c-string-list*))
+						 (syntax-error
+						  "not a valid result type for callback procedures"
+						  rtype
+						  name) )
+						((member 
+						  rtype
+						  '(c-string
 						    (const unsigned-c-string)
 						    unsigned-c-string
-						    (const c-string))
-						   `((,(macro-alias 'let se)
-						      ((r (,(macro-alias 'let se)
-							   () ,@(cddr lam))))
-						      (,(macro-alias 'and se)
-						       r 
-						       (##sys#make-c-string r)) ) ) )
-						  (else (cddr lam)) ) )
+						    (const c-string)) )
+						 `((,(macro-alias 'let se)
+						    ((r (,(macro-alias 'let se)
+							 () ,@(cddr lam))))
+						    (,(macro-alias 'and se)
+						     r 
+						     (##sys#make-c-string r)) ) ) )
+						(else (cddr lam)) ) )
 					   rtype) ) )
-				      se #f) ) ) )
+				      se #f) ) ) ) )
 
 			(else
 			 (let ([handle-call
@@ -1335,7 +1349,7 @@
 		      ((string? name) name)
 		      (else (quit "name `~s' of foreign procedure has wrong type" name)) ) ]
 	 [rtype (second exp)]
-	 [argtypes (map second (cdddr exp))] )
+	 [argtypes (cdddr exp)] )
     (create-foreign-stub rtype sname argtypes #f #f #f #f) ) )
 
 (define (expand-foreign-callback-lambda exp)
@@ -1344,12 +1358,12 @@
 		      ((string? name) name)
 		      (else (quit "name `~s' of foreign procedure has wrong type" name)) ) ]
 	 [rtype (second exp)]
-	 [argtypes (map second (cdddr exp))] )
+	 [argtypes (cdddr exp)] )
     (create-foreign-stub rtype sname argtypes #f #f #t #t) ) )
 
 (define (expand-foreign-lambda* exp)
-  (let* ([rtype (cadr (second exp))]
-	 [args (cadr (third exp))]
+  (let* ([rtype (second exp)]
+	 [args (third exp)]
 	 [body (apply string-append (cdddr exp))]
  	 [argtypes (map car args)]
 	 [argnames (map cadr args)] )

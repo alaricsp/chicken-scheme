@@ -643,10 +643,10 @@ EOF
 ;;; locatives:
 
 (define (make-locative obj . index)
-  (##sys#make-locative obj (:optional index 0) #f 'make-locative) )
+  (##sys#make-locative obj (optional index 0) #f 'make-locative) )
 
 (define (make-weak-locative obj . index)
-  (##sys#make-locative obj (:optional index 0) #t 'make-weak-locative) )
+  (##sys#make-locative obj (optional index 0) #t 'make-weak-locative) )
 
 (define (locative-set! x y) (##core#inline "C_i_locative_set" x y))
 (define locative-ref (getter-with-setter (##core#primitive "C_locative_ref") locative-set!))

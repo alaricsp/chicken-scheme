@@ -32,8 +32,8 @@
   (lambda (form r c)
     (let* ((form (cdr form))
 	   (%quote (r 'quote))
-	   [quals (and (pair? form) (string? (car form)))]
-	   [var (and (not quals) (pair? form) (symbol? (car form)))] )
+	   (quals (and (pair? form) (string? (car form))))
+	   (var (and (not quals) (pair? form) (symbol? (car form)))) )
       (cond [var
 	     (##sys#check-syntax 'define-external form '(symbol _ . #(_ 0 1)))
 	     (let ([var (car form)])
@@ -51,10 +51,10 @@
 		    [args (cdr head)] )
 	       `(,(r 'define) ,(car head)
 		 (##core#foreign-callback-wrapper
-		  ,(car head)
+		  ',(car head)
 		  ,(if quals (car form) "")
-		  ,(if quals (caddr form) (cadr form))
-		  ,(map (lambda (a) (car a)) args)
+		  ',(if quals (caddr form) (cadr form))
+		  ',(map (lambda (a) (car a)) args)
 		  (,(r 'lambda) 
 		   ,(map (lambda (a) (cadr a)) args)
 		   ,@(if quals (cdddr form) (cddr form)) ) ) ) ) ] ) ) ) ) )
@@ -85,7 +85,7 @@
  '()
  (##sys#er-transformer
   (lambda (form r c)
-    (##sys#check-syntax 'let-location form '(_ #((variable _) 0) . _))
+    (##sys#check-syntax 'let-location form '(_ #((variable _ . #(_ 0 1)) 0) . _))
     (let* ((bindings (cadr form))
 	   (body (cddr form))
 	   (%let (r 'let))

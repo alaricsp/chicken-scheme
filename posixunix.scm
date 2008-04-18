@@ -756,7 +756,7 @@ EOF
       (posix-error #:file-error loc "cannot access file" file) ) ) )
 
 (define (file-stat f . link)
-  (##sys#stat f (:optional link #f) 'file-stat)
+  (##sys#stat f (optional link #f) 'file-stat)
   (vector _stat_st_ino _stat_st_mode _stat_st_nlink
           _stat_st_uid _stat_st_gid _stat_st_size
           _stat_st_atime _stat_st_ctime _stat_st_mtime

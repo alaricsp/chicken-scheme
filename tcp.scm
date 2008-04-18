@@ -552,7 +552,7 @@ EOF
 (define general-strerror (foreign-lambda c-string "strerror" int))
 
 (define (tcp-connect host . more)
-  (let ((port (:optional more #f))
+  (let ((port (optional more #f))
 	(tmc (tcp-connect-timeout)))
     (##sys#check-string host)
     (unless port

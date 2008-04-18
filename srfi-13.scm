@@ -175,7 +175,8 @@
 ;;; Support for START/END substring specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(eval-when (compile eval)
+(cond-expand
+ ((not hygienic-macros)
   (define-macro (let-string-start+end2 s-e proc s1 s2 args . body)
     (let ([procv (gensym)]
 	  [rest (gensym)] )
@@ -185,6 +186,16 @@
 	  (let-string-start+end 
 	   ,(cddr s-e) ,procv ,s2 ,rest
 	   ,@body) ) ) ) ) )
+ (else
+  (define-syntax let-string-start+end2
+    (syntax-rules ()
+      ((_ (s-e1 s-e2 s-e3 s-e4) proc s1 s2 args . body)
+       (let ((procv proc))
+	 (let-string-start+end 
+	  (s-e1 s-e2 rest) procv s1 args
+	  (let-string-start+end 
+	   (s-e3 s-e4) procv s2 rest
+	   . body) ) ) ) ) ) ) )
 
 
 ;;; Returns three values: rest start end
@@ -262,7 +273,7 @@
   (let ((slen (string-length s)))
 ;    (check-arg (lambda (start) (and (integer? start) (exact? start) (<= 0 start)))
 ;	       start substring/shared)
-    (let ([n (:optional maybe-end slen)])
+    (let ([n (optional maybe-end slen)])
       (##sys#check-exact n 'substring/shared)
       (check-substring-spec 'substring/shared s start n)
       (%substring/shared s start n) ) ) )

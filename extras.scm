@@ -52,7 +52,7 @@ EOF
       ##sys#print ##sys#check-structure ##sys#make-structure make-parameter
       ##sys#flush-output ##sys#write-char-0 ##sys#number->string
       ##sys#fragments->string ##sys#symbol->qualified-string
-      ##extras#reverse-string-append ##sys#number? ##sys#procedure->string
+      reverse-string-append ##sys#number? ##sys#procedure->string
       ##sys#pointer->string ##sys#user-print-hook ##sys#peek-char-0
       ##sys#read-char-0 ##sys#write-char ##sys#string-append ##sys#gcd ##sys#lcm
       ##sys#fudge ##sys#check-list ##sys#user-read-hook ##sys#check-closure ##sys#check-inexact
@@ -62,19 +62,10 @@ EOF
       make-string string pretty-print-width newline char-name read random
       open-input-string make-string call-with-input-file read-line reverse ) ) ] )
 
-(private extras
-  reverse-string-append
-  fprintf0 generic-write
-  unbound-value-thunk
-  %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
-  %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
-  %hash-table-for-each %hash-table-fold
-  hash-table-canonical-length hash-table-rehash )
-
 (declare
   (hide
     fprintf0 generic-write
-    unbound-value-thunk
+    unbound-value-thunk reverse-string-append
     %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
     %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
     %hash-table-for-each %hash-table-fold
@@ -554,7 +545,7 @@ EOF
   (let ([open-output-string open-output-string]
 	[get-output-string get-output-string] )
     (lambda (pred . port)
-      (let ([port (:optional port ##sys#standard-input)])
+      (let ([port (optional port ##sys#standard-input)])
 	(##sys#check-port port 'read-token)
 	(let ([out (open-output-string)])
 	  (let loop ()
@@ -1606,13 +1597,13 @@ EOF
 
 ;; Force Hash to Bounded Fixnum:
 
-(define-macro ($fxabs ?fxn)
-  `(let ([_fxn ,?fxn]) (if (fx< _fxn 0) (fxneg _fxn) _fxn ) ) )
+(define-inline ($fxabs ?fxn)
+  (let ([_fxn ?fxn]) (if (fx< _fxn 0) (fxneg _fxn) _fxn ) ) )
 
-(define-macro ($hash/limit ?hsh ?lim)
-  `(fxmod (fxand (foreign-value "C_MOST_POSITIVE_FIXNUM" int)
-		 ($fxabs ,?hsh))
-	  ,?lim) )
+(define-inline ($hash/limit ?hsh ?lim)
+  (fxmod (fxand (foreign-value "C_MOST_POSITIVE_FIXNUM" int)
+		($fxabs ?hsh))
+	 ?lim) )
 
 ;; Number Hash:
 
@@ -1631,19 +1622,19 @@ EOF
 		      (fxshl ,(loop (fx- idx 1)) 1))))) )
 |#
 
-(define-macro ($hash-flonum ?flo)
-  `(fx* flonum-magic ($quick-flonum-truncate ,?flo)) )
+(define-inline ($hash-flonum ?flo)
+  (fx* flonum-magic ($quick-flonum-truncate ?flo)) )
 
 (define (##sys#number-hash-hook obj)
   (%equal?-hash obj) )
 
-(define-macro ($non-fixnum-number-hash ?obj)
-  `(cond [(flonum? obj)	($hash-flonum ,?obj)]
-	 [else		($fix (##sys#number-hash-hook ,?obj))] ) )
+(define-inline ($non-fixnum-number-hash ?obj)
+  (cond [(flonum? obj)	($hash-flonum ?obj)]
+	 [else		($fix (##sys#number-hash-hook ?obj))] ) )
 
-(define-macro ($number-hash ?obj)
-  `(cond [(fixnum? obj)	,?obj]
-	 [else		($non-fixnum-number-hash ?obj)] ) )
+(define-inline ($number-hash ?obj)
+  (cond [(fixnum? obj)	?obj]
+	[else		($non-fixnum-number-hash ?obj)] ) )
 
 (define (number-hash obj #!optional (bound hash-default-bound))
   (unless (number? obj)
@@ -1670,8 +1661,8 @@ EOF
 (define-macro ($symbol-hash ?obj)
   `(##sys#slot ,?obj INDEX-OF-UNIQUE-HASH-VALUE-COMPUTED-DURING-SYMBOL-CREATION) )
 
-(define-macro ($symbol-hash ?obj)
-  `($hash-string (##sys#slot ,?obj 1)) )
+(define-inline ($symbol-hash ?obj)
+  ($hash-string (##sys#slot ?obj 1)) )
 
 (define (symbol-hash obj #!optional (bound hash-default-bound))
   (##sys#check-symbol obj 'symbol-hash)
@@ -1690,8 +1681,8 @@ EOF
 (define-macro ($keyword-hash ?obj)
   `(##sys#slot ,?obj INDEX-OF-UNIQUE-HASH-VALUE-COMPUTED-DURING-KEYWORD-CREATION) )
 
-(define-macro ($keyword-hash ?obj)
-  `($hash-string (##sys#slot ,?obj 1)) )
+(define-inline ($keyword-hash ?obj)
+  ($hash-string (##sys#slot ?obj 1)) )
 
 (define (keyword-hash obj #!optional (bound hash-default-bound))
   (##sys#check-keyword obj 'keyword-hash)
@@ -1700,11 +1691,11 @@ EOF
 
 ;; Eq Hash:
 
-(define-macro ($eq?-hash-object? ?obj)
-  `(or ($immediate? ,?obj)
-       (symbol? ,?obj)
+(define-inline ($eq?-hash-object? ?obj)
+  (or ($immediate? ?obj)
+       (symbol? ?obj)
        #; ;NOT YET (no keyword vs. symbol issue)
-       (keyword? ,?obj) ) )
+       (keyword? ?obj) ) )
 
 (define (%eq?-hash obj)
   (cond [(fixnum? obj)		obj]
@@ -1727,9 +1718,9 @@ EOF
 
 ;; Eqv Hash:
 
-(define-macro ($eqv?-hash-object? ?obj)
-  `(or ($eq?-hash-object? ,?obj)
-       (number? ,?obj)) )
+(define-inline ($eqv?-hash-object? ?obj)
+  (or ($eq?-hash-object? ?obj)
+      (number? ?obj)) )
 
 (define (%eqv?-hash obj)
   (cond [(fixnum? obj)		obj]
@@ -1755,25 +1746,25 @@ EOF
 (define-constant recursive-hash-max-depth 4)
 (define-constant recursive-hash-max-length 4)
 
-(define-macro ($*list-hash ?obj)
-  `(fx+ (length ,?obj)
-	(recursive-atomic-hash (##sys#slot ,?obj 0) depth)) )
+(define-inline ($*list-hash ?obj)
+  (fx+ (length ?obj)
+       (recursive-atomic-hash (##sys#slot ?obj 0) depth)) )
 
-(define-macro ($*pair-hash ?obj)
-  `(fx+ (fxshl (recursive-atomic-hash (##sys#slot ,?obj 0) depth) 16)
-	(recursive-atomic-hash (##sys#slot ,?obj 1) depth)) )
+(define-inline ($*pair-hash ?obj)
+  (fx+ (fxshl (recursive-atomic-hash (##sys#slot ?obj 0) depth) 16)
+	(recursive-atomic-hash (##sys#slot ?obj 1) depth)) )
 
-(define-macro ($*port-hash ?obj)
-  `(fx+ (fxshl (##sys#peek-fixnum ,?obj 0) 4) ; Little extra "identity"
-	(if (input-port? ,?obj)
+(define-inline ($*port-hash ?obj)
+  (fx+ (fxshl (##sys#peek-fixnum ?obj 0) 4) ; Little extra "identity"
+	(if (input-port? ?obj)
 	    input-port-hash-value
 	    output-port-hash-value)) )
 
-(define-macro ($*special-vector-hash ?obj)
-  `(vector-hash ,?obj (##sys#peek-fixnum ,?obj 0) depth 1) )
+(define-inline ($*special-vector-hash ?obj)
+  (vector-hash ?obj (##sys#peek-fixnum ?obj 0) depth 1) )
 
-(define-macro ($*regular-vector-hash ?obj)
-  `(vector-hash ,?obj 0 depth 0) )
+(define-inline ($*regular-vector-hash ?obj)
+  (vector-hash ?obj 0 depth 0) )
 
 (define (%equal?-hash obj)
 
@@ -2540,9 +2531,9 @@ EOF
 ; Pushes the items in item-list back onto the queue,
 ; so that (car item-list) becomes the next removable item.
 
-(define-macro (last-pair lst0)
-  `(do ((lst ,lst0 (##sys#slot lst 1)))
-       ((eq? (##sys#slot lst 1) '()) lst)))
+(define-inline (last-pair lst0)
+  (do ((lst lst0 (##sys#slot lst 1)))
+      ((eq? (##sys#slot lst 1) '()) lst)))
 
 (define (queue-push-back-list! q itemlist)
   (##sys#check-structure q 'queue 'queue-push-back-list!)

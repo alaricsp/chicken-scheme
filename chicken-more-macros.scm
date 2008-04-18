@@ -37,11 +37,11 @@
  (lambda (form r c)
    (let ((%lambda (r 'lambda))
 	 (%let (r 'let)))
-     (##sys#check-syntax 'receive form '(_ _ . #(_ 1)))
+     (##sys#check-syntax 'receive form '(_ _ . #(_ 0)))
      (cond ((null? (cddr form))
 	    `(##sys#call-with-values (,%lambda () ,@(cdr form)) ##sys#list) )
 	   (else
-	    (##sys#check-syntax 'receive form '(_ lambda-list exp . #(_ 1)))
+	    (##sys#check-syntax 'receive form '(_ lambda-list _ . #(_ 1)))
 	    (let ((vars (cadr form))
 		  (exp (caddr form))
 		  (rest (cdddr form)))
@@ -171,25 +171,25 @@
   (lambda (form r c)
     (##sys#check-syntax 'eval-when form '#(_ 2))
     (let* ((situations (cadr form))
-	   (%body (r 'begin))
+	   (%begin (r 'begin))
 	   (body `(,%begin ,@(cddr form)))
 	   (%eval (r 'eval))
 	   (%compile (r 'compile))
 	   (%load (r 'load))
 	   (e #f)
-	   (c #f)
+	   (co #f)
 	   (l #f))
       (let loop ([ss situations])
 	(if (pair? ss)
 	    (let ((s (car ss)))
 	      (cond ((c s %eval) (set! e #t))
 		    ((c s %load) (set! l #t))
-		    ((c s %compile) (set! c #t))
+		    ((c s %compile) (set! co #t))
 		    (else (##sys#error "invalid situation specifier" (car ss)) ))
 	      (loop (##sys#slot ss 1)) ) ) )
       (if (memq '#:compiling ##sys#features)
-	  (cond [(and c l) `(##core#compiletimetoo ,body)]
-		[c `(##core#compiletimeonly ,body)]
+	  (cond [(and co l) `(##core#compiletimetoo ,body)]
+		[co `(##core#compiletimeonly ,body)]
 		[l body]
 		[else '(##core#undefined)] )
 	  (if e 
@@ -364,8 +364,8 @@
 	  (%list-ref (r 'list-ref))
 	  (%lambda (r 'lambda)))
       `(##sys#call-with-values
-	(,%lambda () ,exp)
-	(,%lambda ,v (,%list-ref ,v ,i)) ) ) ) ) )
+	(,%lambda () ,(caddr form))
+	(,%lambda ,v (,%list-ref ,v ,(cadr form))))))))
 
 (##sys#extend-macro-environment
  'define-inline '()
@@ -385,26 +385,27 @@
 		       'define-inline "invalid substitution form - must be lambda"
 		       name) )
 		    (list name val) ) ) ] )
-	`(##core#define-inline ,@(quotify-proc args 'define-inline)))) ) ) )
+	`(##core#define-inline ,@(quotify-proc (cdr form) 'define-inline)))) ) ) )
 
 (##sys#extend-macro-environment
  'and-let* '()
  (##sys#er-transformer
   (lambda (form r c)
-    (##sys#check-syntax 'and-let* form '(_ #((_ _) 0) . _))
+    (##sys#check-syntax 'and-let* form '(_ #(_ 0) . _))
     (let ((bindings (cadr form))
 	  (body (cddr form))
-	  (%if (r 'if)))
+	  (%if (r 'if))
+	  (%let (r 'let)))
       (let fold ([bs bindings])
 	(if (null? bs)
 	    `(,(r 'begin) ,@body)
 	    (let ([b (car bs)]
 		  [bs2 (cdr bs)] )
-	      (cond [(not-pair? b) `(,%if ,b ,(fold bs2) #f)]
+	      (cond [(not (pair? b)) `(,%if ,b ,(fold bs2) #f)]
 		    [(null? (cdr b)) `(,%if ,(car b) ,(fold bs2) #f)]
 		    [else
-		     (let ([var (car b)])
-		       `(,(r 'let) ((,var ,(cadr b)))
+		     (let ((var (car b)))
+		       `(,%let ((,var ,(cadr b)))
 			 (,%if ,var ,(fold bs2) #f) ) ) ] ) ) ) ) ) ) ) )
 
 (##sys#extend-macro-environment
@@ -594,7 +595,7 @@
 	  ,if-tree) ) ))))
 
 
-;;; (:optional rest-arg default-exp)
+;;; (optional rest-arg default-exp)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; This form is for evaluating optional arguments and their defaults
 ;;; in simple procedures that take a *single* optional argument. It is
@@ -818,6 +819,7 @@
 	  (pred (cadddr form))
 	  (slots (cddddr form))
 	  (%begin (r 'begin))
+	  (%lambda (r 'lambda))
 	  (%define (r 'define))
 	  (vars (cdr conser))
 	  (x (r 'x))
@@ -938,11 +940,12 @@
     (##sys#check-syntax 'let-string-start+end form '(_ _ _ _ _ . _))
     (let ((s-e-r (cadr form))
 	  (proc (caddr form))
-	  (s-expr (cadddr form))
+	  (s-exp (cadddr form))
 	  (args-exp (car (cddddr form)))
 	  (body (cdr (cddddr form)))
 	  (%receive (r 'receive))
-	  (%string-parse-start+end (r 'string-parse-start+end)))
+	  (%string-parse-start+end (r 'string-parse-start+end))
+	  (%string-parse-final-start+end (r 'string-parse-final-start+end)))
       (if (pair? (cddr s-e-r))
 	  `(,%receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
 		      (,%string-parse-start+end ,proc ,s-exp ,args-exp)

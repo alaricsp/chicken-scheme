@@ -482,7 +482,7 @@
     (set! translate-options (append translate-options os)) )
 
   (define (check o r . n)
-    (unless (>= (length r) (:optional n 1))
+    (unless (>= (length r) (optional n 1))
       (quit "not enough arguments to option `~A'" o) ) )
 
   (define (shared-build lib)

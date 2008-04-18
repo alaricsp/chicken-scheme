@@ -410,7 +410,7 @@
 ;;; Read file as string from given filename or port:
 
 (define (read-all . file)
-  (let ([file (:optional file ##sys#standard-input)])
+  (let ([file (optional file ##sys#standard-input)])
     (if (port? file)
 	(read-string #f file)
 	(with-input-from-file file (cut read-string #f)) ) ) )

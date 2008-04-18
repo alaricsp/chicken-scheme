@@ -212,7 +212,7 @@
 ;;; and everything will be copacetic.
 
 (define (char-set-hash cs . maybe-bound)
-  (let ((bound (:optional maybe-bound 4194304)))
+  (let ((bound (optional maybe-bound 4194304)))
     (if (zero? bound) (set! bound 4194304))
     (##sys#check-exact bound 'char-set-hash)
     (let* ((s (%char-set:s/check cs 'char-set-hash))

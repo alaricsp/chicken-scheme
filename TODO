@@ -2,6 +2,9 @@ TODO for macro/module system					-*- Outline -*-
 
 * merge trunk into branch
 
+* new version
+* test makedist
+
 * test extended lambda-lists
 * test macro-expansions
 ** quoted literals
@@ -19,6 +22,7 @@ TODO for macro/module system					-*- Outline -*-
 ** expand unit (move stuff from eval)
 ** document extensions
 *** user defined ellipsis
+*** define-compiled-syntax
 ** ack synrules authors
 ** removals
    run-time and compile-time situations for eval-when
@@ -29,6 +33,9 @@ TODO for macro/module system					-*- Outline -*-
 
 * csi
 ** describe should print if symbol is interned
+
+* compiler
+** warn if encountering global ref to "unquote[-splicing]"
 
 * eggs to be adapted/obsoleted
 ** syntax-case (eval/expand integration?)

@@ -601,8 +601,8 @@
 			     (##sys#canonicalize-body (cddr x) se2)
 			     e #f tf cntr se2)))
 			       
-			 ((define-syntax)
-			  (##sys#check-syntax 'define-syntax x '(define-syntax variable _) #f se)
+			 ((define-syntax define-compiled-syntax)
+			  (##sys#check-syntax 'define-syntax x '(_ variable _) #f se)
 			  (##sys#extend-macro-environment
 			   (rename (cadr x) se)
 			   (##sys#current-environment)
@@ -885,14 +885,14 @@
 	(##core#undefined) ) ) )
   (set! load
     (lambda (filename . evaluator)
-      (##sys#load filename (:optional evaluator #f) #f) ) )
+      (##sys#load filename (optional evaluator #f) #f) ) )
   (set! load-relative
     (lambda (filename . evaluator)
       (##sys#load
        (if (memq (string-ref filename 0) '(#\\ #\/))
 	   filename
 	   (##sys#string-append ##sys#current-load-path filename) )
-       (:optional evaluator #f) #f) ) )
+       (optional evaluator #f) #f) ) )
   (set! load-noisily
     (lambda (filename #!key (evaluator #f) (time #f) (printer #f))
       (##sys#load filename evaluator #t time printer) ) ) )
@@ -1042,7 +1042,7 @@
 			(##sys#load id2 #f #f)
 			(set! ##sys#loaded-extensions (cons p ##sys#loaded-extensions)) 
 			#t)
-		       ((:optional err? #t) (##sys#error loc "can not load extension" id))
+		       ((optional err? #t) (##sys#error loc "can not load extension" id))
 		       (else #f) ) ) ) ) ) ) ) )
 
 (define (##sys#provide . ids)
