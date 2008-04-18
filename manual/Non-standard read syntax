@@ -14,8 +14,7 @@ A multiline ''block'' comment. May be nested. Implements [[http://srfi.schemers.
 
  #;EXPRESSION
 
-Treats {{EXPRESSION}} as a comment.
-
+Treats {{EXPRESSION}} as a comment.  That is, the comment runs through the whole S-expression, regardless of newlines, which saves you from having to comment out every line, or add a newline in the middle of your parens to make the commenting of the last line work, or other things like that.
 === External Representation
 
  #,(CONSTRUCTORNAME DATUM ...)

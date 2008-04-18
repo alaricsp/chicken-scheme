@@ -63,11 +63,6 @@ moves those objects around, so it is very bad idea to assign pointers
 to heap-data. If you have to do so, then copy the data object into
 statically allocated memory (for example by using {{object-evict}}).
 
-{{define-external}} forms should only be defined at top-level, they
-do not obey lexical scoping, as the bodies of external procedures
-are called without a dynamic environment: the call from C just passes
-the normal arguments and no environment information.
-
 Results of type {{scheme-object}} returned by {{define-external}}
 are always allocated in the secondary heap, that is, not in the stack.
 === C_callback

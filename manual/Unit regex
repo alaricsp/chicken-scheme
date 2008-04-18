@@ -12,7 +12,7 @@ To test that PCRE support has been built into Chicken properly, try:
 
 <enscript highlight=scheme>
 (require 'regex)
-(test-feature? 'pcre) => t
+(feature? 'pcre) => #t
 </enscript>
 
 

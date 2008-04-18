@@ -135,6 +135,32 @@ is returned.  If the file does not exist, nothing happens and {{#f}}
 is returned.
 
 
+=== File move/copy
+
+==== file-copy
+
+ [procedure] (file-copy ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+
+Copies {{ORIGFILE}} (a string denoting some filename) to {{NEWFILE}}, 
+{{BLOCKSIZE}} bytes at a time.  {{BLOCKSIZE}} defaults to 1024, and must be
+a positive integer.  Returns the number of bytes copied on success, or errors
+on failure.  {{CLOBBER}} determines the behaviour of {{file-copy}} when
+{{NEWFILE}} is already extant.  When set to {{#f}} (default), an error is
+signalled.  When set to any other value, {{NEWFILE}} is overwritten.
+{{file-copy}} will work across filesystems and devices and is not
+platform-dependent.
+
+==== file-move
+
+ [procedure] (file-move ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+
+Moves {{ORIGFILE}} (a string denoting some filename) to {{NEWFILE}}, with
+the same semantics as {{file-copy}}, above.  {{file-move}} is safe across
+filesystems and devices (unlike {{file-rename}}).  It is possible for an
+error to be signalled despite partial success if {{NEWFILE}} could be created
+and fully written but removing {{ORIGFILE}} fails.
+
+
 === Iterating over input lines and files
 
 ==== for-each-line

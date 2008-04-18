@@ -545,6 +545,7 @@ Available options:
 ; {{-t  -test}} : If the extension sources contain a directory named {{tests}} and this directory includes a file named {{run.scm}} then this file is executed (with {{tests}} being the current working directory)
 ; {{-tree FILENAME}} : Download and show the repository catalog
 ; {{-svn URL}} : Fetch extension from [[http://subversion.tigris.org|Subversion]] repository
+; {{-svn-trunk URL}} : Fetch extension from trunk in [[http://subversion.tigris.org|Subversion]] repository
 ; {{-revision REV}} : Specifies SVN revision to check out
 ; {{-local PATHNAME}} : Fetch extension from local file
 ; {{-install-prefix PATHNAME}} : Specify alternative installation prefix (for packaging)

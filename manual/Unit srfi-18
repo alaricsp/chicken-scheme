@@ -84,7 +84,19 @@ for input or output, respectively.
 Converts a time object (as created via {{current-time}}) into an exact integer representing
 the number of milliseconds since process startup.
 
+=== milliseconds->time
+
+ [procedure] (milliseconds->time ms)
+
+Converts into a time object an exact integer representing
+the number of milliseconds since process startup.
+
+This procedure may be useful in combination with {{thread-sleep!}} when your compilation unit is using {{(declare fixnum-arithmetic)}}.  In that case you won't be able to pass an inexact value to {{thread-sleep!}}, but you can do the following:
+
+ (define (thread-sleep!/ms ms)
+   (thread-sleep!
+    (milliseconds->time (+ ms (current-milliseconds)))))
 
 Previous: [[Unit regex]]
 
-Next: [[Unit srfi-69]]
+Next: [[Unit posix]]

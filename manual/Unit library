@@ -104,21 +104,13 @@ in unsafe mode can crash the system.
 Returns {{1}} if {{N}} is positive, {{-1}} if {{N}}
 is negative or {{0}} if {{N}} is zero. {{signum}} is exactness preserving.
 
+
 ==== finite?
 
  [procedure] (finite? N)
 
 Returns {{#f}} if {{N}} is negative or positive infinity, and {{#t}} otherwise.
 
-==== flonum-print-precision
-
- [procedure] (flonum-print-precision [PRECISION])
-
-Returns the existing number of digits after the decimal place used in printing
-a {{flonum}}.
-
-The optional {{non-negative-fixnum}} {{PRECISION}} sets the current print
-precision.
 
 
 === File Input/Output

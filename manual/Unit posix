@@ -83,9 +83,10 @@ then {{(current-directory DIR)}} is equivalent to {{(change-directory DIR)}}.
 
 ==== create-directory
 
- [procedure] (create-directory NAME)
+ [procedure] (create-directory NAME #!optional PARENTS?)
 
-Creates a directory with the pathname {{NAME}}.
+Creates a directory with the pathname {{NAME}}.  If the {{PARENTS?}} argument
+is given and not false, any nonextant parent directories are also created.
 
 ==== delete-directory
 
@@ -113,17 +114,14 @@ and if that file is a directory, or {{#f}} otherwise.
 
  [procedure] (glob PATTERN1 ...)
 
-Returns a list of the pathnames of all existing files matching
-{{PATTERN1 ...}}, which should be strings containing the usual
-file-patterns (with {{*}} matching zero or more characters and
-{{?}} matching zero or one character).
+Returns a list of the pathnames of all existing files matching {{PATTERN1 ...}}, which should be strings containing the usual file-patterns (with {{*}} matching zero or more characters and {{?}} matching zero or one character).  Bug: wildcard characters are only recognized in the rightmost portion of the pattern.
 
 ==== canonical-path
 
  [procedure] (canonical-path NAME)
 
 Returns a canonical path for {{NAME}}, which should be a string
-containing a path-or-filename.  The string returned by
+containing a path-or-filename.  The string returned by 
 {{canonical-path}} is OS dependent; it may be quoted and used in
 a shell on the calling machine. (Quoting is suggested as shell
 special characters, including space, are not escaped.)  However,
@@ -131,14 +129,14 @@ all path separators and prefixes are handled in an OS independent
 fashion.  Any appearance of {{/}} below imply {{\\}} is also handled.
 
 The prefix for {{NAME}} determines what path to prepend.  If {{NAME}}
-begins with a {{"~/"}}, this prefix is stripped and the user's
+begins with a {{"~/"}}, this prefix is stripped and the user's 
 home directory is added.  If beginning with {{/}} or a DRIVE-LETTER:\\
 combination, no additional path is added.  Otherwise, the current
 directory and separator are added.  All relative path elements and
 duplicate separators are processed and removed.  If {{NAME}} ends with
 a {{/}} or is empty, the appropriate slash is appended to the tail.
 
-No directories or files are actually tested for existence; this
+No directories or files are actually tested for existence; this 
 procedure only canonicalises path syntax.
 
 ==== set-root-directory!
@@ -466,7 +464,7 @@ write or execute permissions on the file named {{FILENAME}}.
  [procedure] (stat-symlink? FILENAME)
  [procedure] (stat-socket? FILENAME)
 
-These procedures return {{#t}} if the {{FILENAME}} given is of the
+These procedures return {{#t}} if the {{FILENAME}} given is of the 
 appropriate type.
 
 
@@ -801,7 +799,7 @@ after {{SECONDS}} are elapsed.  You can use the
 Establishes the procedure of one argument {{PROC}} as the handler
 for the signal with the code {{SIGNUM}}. {{PROC}} is called
 with the signal number as its sole argument. If the argument {{PROC}} is {{#f}}
-then any signal handler will be removed.
+then any signal handler will be removed, and the corresponding signal set to {{SIG_IGN}}.
 
 Note that is is unspecified in which thread of execution the signal handler will be invoked.
 
@@ -948,9 +946,9 @@ defaults to the complete length given when the file was mapped.
 
  [procedure] (seconds->local-time SECONDS)
 
-Converts the time value represented in {{SECONDS}} into a ten-element vector
-({{TIME-VECTOR}}) of the form {{#(seconds minutes hours mday month year wday
-yday dstflag timezone)}}, in the following format:
+Breaks down the time value represented in {{SECONDS}} into a 10
+element vector of the form {{#(seconds minutes hours mday month
+year wday yday dstflag timezone)}}, in the following format:
 
 ; seconds (0) : the number of seconds after the minute (0 - 59)
 ; minutes (1) : the number of minutes after the hour (0 - 59)
@@ -965,11 +963,11 @@ yday dstflag timezone)}}, in the following format:
 
 ==== local-time->seconds
 
- [procedure] (local-time->seconds TIME-VECTOR)
+ [procedure] (local-time->seconds VECTOR)
 
-Converts the {{TIME-VECTOR}} representing the time value relative to the
-current timezone into the number of seconds since the first of January, 1970
-UTC.
+Converts the ten-element vector {{VECTOR}} representing the time value relative to
+the current timezone into
+the number of seconds since the first of January, 1970 UTC.
 
 ==== local-timezone-abbreviation
 
@@ -981,40 +979,30 @@ Returns the abbreviation for the local timezone as a string.
 
  [procedure] (seconds->string SECONDS)
 
-Converts the local time represented in {{SECONDS}} into a string of the form
-{{"Tue May 21 13:46:22 1991"}}.
+Converts the local time represented in {{SECONDS}} into a string
+of the form {{"Tue May 21 13:46:22 1991"}}.
 
 ==== seconds->utc-time
 
  [procedure] (seconds->utc-time SECONDS)
 
-Similar to {{seconds->local-time}}, but interprets {{SECONDS}} as UTC time.
+Similar to {{seconds->local-time}}, but interpretes {{SECONDS}}
+as UTC time.
 
 ==== utc-time->seconds
 
- [procedure] (utc-time->seconds TIME-VECTOR)
+ [procedure] (utc-time->seconds VECTOR)
 
-Converts the {{TIME-VECTOR}} representing the UTC time value into the number of
-seconds since the first of January, 1970 UTC.
+Converts the ten-element vector {{VECTOR}} representing the UTC time value into
+the number of seconds since the first of January, 1970 UTC.
 
 ==== time->string
 
- [procedure] (time->string TIME-VECTOR [FORMAT-STRING])
+ [procedure] (time->string VECTOR)
 
-Converts the {{TIME-VECTOR}} into a string of the form {{"Tue May 21 13:46:22
+Converts the broken down time represented in the 10 element vector
+{{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
 1991"}}.
-
-When the optional {{FORMAT-STRING}} is supplied the time is formatted using
-the C library routine {{strftime}}.
-
-==== string->time
-
- [procedure] (string->time TIME-STRING [FORMAT-STRING])
-
-Parse the {{TIME-STRING}} using the C library routine {{strptime}} and return a
-{{TIME-VECTOR}}.
-
-Not available for the ''Windows'' platform.
 
 
 === Raw exit
@@ -1264,7 +1252,6 @@ Microsoft tools or with MinGW):
  parent-process-id
  set-root-directory!
  utc-time->seconds
- string->time
 
 ==== Additional Definitions
 

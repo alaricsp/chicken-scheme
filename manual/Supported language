@@ -10,21 +10,22 @@
 * [[Pattern matching]]
 * [[Declarations]]                
 * [[Parameters]]                  
-* [[Unit library]] Basic Scheme definitions
-* [[Unit eval]] Evaluation and macro-handling
-* [[Unit extras]] Useful utility definitions
-* [[Unit srfi-1]] List library
-* [[Unit srfi-4]] Homogeneous numeric vectors
-* [[Unit srfi-13]] String library
-* [[Unit srfi-14]] Character set library              
-* [[Unit match]] Pattern matching runtime-support
-* [[Unit regex]] Regular expressions
-* [[Unit srfi-18]] Multithreading
-* [[Unit srfi-69]] Hash tables
+* [[Unit library]] basic Scheme definitions
+* [[Unit eval]] evaluation and macro-handling
+* [[Unit data-structures]] data structures
+* [[Unit extras]] useful utility definitions
+* [[Unit srfi-1]] list library
+* [[Unit srfi-4]] homogeneous numeric vectors
+* [[Unit srfi-13]] string library
+* [[Unit srfi-14]] character set library              
+* [[Unit srfi-69]] hash tables              
+* [[Unit match]] pattern matching runtime-support
+* [[Unit regex]] regular expressions
+* [[Unit srfi-18]] multithreading
 * [[Unit posix]] Unix-like services
 * [[Unit utils]] Shell scripting and file operations
-* [[Unit tcp]] Basic TCP-sockets
-* [[Unit lolevel]] Low-level operations
+* [[Unit tcp]] basic TCP-sockets
+* [[Unit lolevel]] low-level operations
 
 Previous: [[Using the interpreter]]
 
