@@ -32,15 +32,16 @@ This is the top node.
 * Parameters::
 * Unit library::
 * Unit eval::
+* Unit data-structures::
 * Unit extras::
 * Unit srfi-1::
 * Unit srfi-4::
 * Unit srfi-13::
 * Unit srfi-14::
+* Unit srfi-69::
 * Unit match::
 * Unit regex::
 * Unit srfi-18::
-* Unit srfi-69::
 * Unit posix::
 * Unit utils::
 * Unit tcp::
@@ -64,7 +65,7 @@ This is the top node.
 @chapter The User's Manual
 
 
-This is the user's manual for the CHICKEN Scheme compiler, version 3.1.2
+This is the user's manual for the Chicken Scheme compiler, version 3.1.6.
 
 @table @b
 @item @ref{Getting started, Getting started}
@@ -607,7 +608,7 @@ $ ./fib-user
 @end verbatim
 Those who are interfacing to substantial C libraries should consider using the  easyffi egg, or SWIG. 
 
-Back to @ref{The User's Manual, The User's Manual} Next: @ref{Using the compiler, Using the compiler} 
+Back to @ref{The User's Manual, The User's Manual} Next: @ref{Basic mode of operation, Basic mode of operation} 
 
 @node Basic mode of operation, Using the compiler, Getting started, Top
 @chapter Basic mode of operation
@@ -1520,35 +1521,37 @@ Next: @ref{Supported language, Supported language}
 
 @item @ref{Parameters, Parameters}
 
-@item @ref{Unit library, Unit library} Basic Scheme definitions
+@item @ref{Unit library, Unit library} basic Scheme definitions
 
-@item @ref{Unit eval, Unit eval} Evaluation and macro-handling
+@item @ref{Unit eval, Unit eval} evaluation and macro-handling
 
-@item @ref{Unit extras, Unit extras} Useful utility definitions
+@item @ref{Unit data-structures, Unit data-structures} data structures
 
-@item @ref{Unit srfi-1, Unit srfi-1} List library
+@item @ref{Unit extras, Unit extras} useful utility definitions
 
-@item @ref{Unit srfi-4, Unit srfi-4} Homogeneous numeric vectors
+@item @ref{Unit srfi-1, Unit srfi-1} list library
 
-@item @ref{Unit srfi-13, Unit srfi-13} String library
+@item @ref{Unit srfi-4, Unit srfi-4} homogeneous numeric vectors
 
-@item @ref{Unit srfi-14, Unit srfi-14} Character set library
+@item @ref{Unit srfi-13, Unit srfi-13} string library
 
-@item @ref{Unit match, Unit match} Pattern matching runtime-support
+@item @ref{Unit srfi-14, Unit srfi-14} character set library
 
-@item @ref{Unit regex, Unit regex} Regular expressions
+@item @ref{Unit srfi-69, Unit srfi-69} hash tables
 
-@item @ref{Unit srfi-18, Unit srfi-18} Multithreading
+@item @ref{Unit match, Unit match} pattern matching runtime-support
 
-@item @ref{Unit srfi-69, Unit srfi-69} Hash tables
+@item @ref{Unit regex, Unit regex} regular expressions
+
+@item @ref{Unit srfi-18, Unit srfi-18} multithreading
 
 @item @ref{Unit posix, Unit posix} Unix-like services
 
 @item @ref{Unit utils, Unit utils} Shell scripting and file operations
 
-@item @ref{Unit tcp, Unit tcp} Basic TCP-sockets
+@item @ref{Unit tcp, Unit tcp} basic TCP-sockets
 
-@item @ref{Unit lolevel, Unit lolevel} Low-level operations
+@item @ref{Unit lolevel, Unit lolevel} low-level operations
 
 
 @end itemize
@@ -1771,7 +1774,7 @@ A multiline @emph{block} comment. May be nested. Implements @uref{http://srfi.sc
 @verbatim
 #;EXPRESSION
 @end verbatim
-Treats @code{EXPRESSION} as a comment.
+Treats @code{EXPRESSION} as a comment.  That is, the comment runs through the whole S-expression, regardless of newlines, which saves you from having to comment out every line, or add a newline in the middle of your parens to make the commenting of the last line work, or other things like that.
 
 @node Non-standard read syntax - External Representation, Non-standard read syntax - Syntax Expression, Non-standard read syntax - Expression Comment, Non-standard read syntax
 @section External Representation
@@ -3383,7 +3386,6 @@ This unit contains basic Scheme definitions. This unit is used by default, unles
 * Unit library - Arithmetic - Arithmetic floating-point operations::
 * Unit library - Arithmetic - signum::
 * Unit library - Arithmetic - finite?::
-* Unit library - Arithmetic - flonum-print-precision::
 
 @end menu
 
@@ -3572,7 +3574,7 @@ In safe mode, these procedures throw a type error with non-float arguments (exce
 @end verbatim
 Returns @code{1} if @code{N} is positive, @code{-1} if @code{N} is negative or @code{0} if @code{N} is zero. @code{signum} is exactness preserving.
 
-@node Unit library - Arithmetic - finite?, Unit library - Arithmetic - flonum-print-precision, Unit library - Arithmetic - signum, Unit library - Arithmetic
+@node Unit library - Arithmetic - finite?,  , Unit library - Arithmetic - signum, Unit library - Arithmetic
 @subsection finite?
 
 
@@ -3580,17 +3582,6 @@ Returns @code{1} if @code{N} is positive, @code{-1} if @code{N} is negative or @
 [procedure] (finite? N)
 @end verbatim
 Returns @code{#f} if @code{N} is negative or positive infinity, and @code{#t} otherwise.
-
-@node Unit library - Arithmetic - flonum-print-precision,  , Unit library - Arithmetic - finite?, Unit library - Arithmetic
-@subsection flonum-print-precision
-
-
-@verbatim
-[procedure] (flonum-print-precision [PRECISION])
-@end verbatim
-Returns the existing number of digits after the decimal place used in printing a @code{flonum}.
-
-The optional @code{non-negative-fixnum} @code{PRECISION} sets the current print precision.
 
 @node Unit library - File Input/Output, Unit library - Files, Unit library - Arithmetic, Unit library
 @section File Input/Output
@@ -4837,7 +4828,7 @@ Previous: @ref{Parameters, Parameters}
 
 Next: @ref{Unit eval, Unit eval}  
 
-@node Unit eval, Unit extras, Unit library, Top
+@node Unit eval, Unit data-structures, Unit library, Top
 @chapter Unit eval
 
 @menu
@@ -5176,47 +5167,44 @@ Previous: @ref{Unit library, Unit library}
 
 Next: @ref{Unit extras, Unit extras}  
 
-@node Unit extras, Unit srfi-1, Unit eval, Top
-@chapter Unit extras
+@node Unit data-structures, Unit extras, Unit eval, Top
+@chapter Unit data-structures
 
 @menu
-* Unit extras - Lists::
-* Unit extras - String-port extensions::
-* Unit extras - Formatted output::
-* Unit extras - Queues::
-* Unit extras - Sorting::
-* Unit extras - Random numbers::
-* Unit extras - Input/Output extensions::
-* Unit extras - Strings::
-* Unit extras - Combinators::
-* Unit extras - Binary searching::
+* Unit data-structures - Lists::
+* Unit data-structures - Queues::
+* Unit data-structures - Sorting::
+* Unit data-structures - Random numbers::
+* Unit data-structures - Strings::
+* Unit data-structures - Combinators::
+* Unit data-structures - Binary searching::
 
 @end menu
 
 
-This unit contains a collection of useful utility definitions. This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+This unit contains a collection of procedures related to data structures.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
 
-@node Unit extras - Lists, Unit extras - String-port extensions,  , Unit extras
+@node Unit data-structures - Lists, Unit data-structures - Queues,  , Unit data-structures
 @section Lists
 
 @menu
-* Unit extras - Lists - alist-ref::
-* Unit extras - Lists - alist-update!::
-* Unit extras - Lists - atom?::
-* Unit extras - Lists - rassoc::
-* Unit extras - Lists - butlast::
-* Unit extras - Lists - chop::
-* Unit extras - Lists - compress::
-* Unit extras - Lists - flatten::
-* Unit extras - Lists - intersperse::
-* Unit extras - Lists - join::
-* Unit extras - Lists - shuffle::
-* Unit extras - Lists - tail?::
+* Unit data-structures - Lists - alist-ref::
+* Unit data-structures - Lists - alist-update!::
+* Unit data-structures - Lists - atom?::
+* Unit data-structures - Lists - rassoc::
+* Unit data-structures - Lists - butlast::
+* Unit data-structures - Lists - chop::
+* Unit data-structures - Lists - compress::
+* Unit data-structures - Lists - flatten::
+* Unit data-structures - Lists - intersperse::
+* Unit data-structures - Lists - join::
+* Unit data-structures - Lists - shuffle::
+* Unit data-structures - Lists - tail?::
 
 @end menu
 
 
-@node Unit extras - Lists - alist-ref, Unit extras - Lists - alist-update!,  , Unit extras - Lists
+@node Unit data-structures - Lists - alist-ref, Unit data-structures - Lists - alist-update!,  , Unit data-structures - Lists
 @subsection alist-ref
 
 
@@ -5225,7 +5213,7 @@ This unit contains a collection of useful utility definitions. This unit is used
 @end verbatim
 Looks up @code{KEY} in @code{ALIST} using @code{TEST} as the comparison function (or @code{eqv?} if no test was given) and returns the cdr of the found pair, or @code{DEFAULT} (which defaults to @code{#f}).
 
-@node Unit extras - Lists - alist-update!, Unit extras - Lists - atom?, Unit extras - Lists - alist-ref, Unit extras - Lists
+@node Unit data-structures - Lists - alist-update!, Unit data-structures - Lists - atom?, Unit data-structures - Lists - alist-ref, Unit data-structures - Lists
 @subsection alist-update!
 
 
@@ -5234,7 +5222,7 @@ Looks up @code{KEY} in @code{ALIST} using @code{TEST} as the comparison function
 @end verbatim
 If the list @code{ALIST} contains a pair of the form @code{(KEY . X)}, then this procedure replaces @code{X} with @code{VALUE} and returns @code{ALIST}. If @code{ALIST} contains no such item, then @code{alist-update!} returns @code{((KEY . VALUE) . ALIST)}. The optional argument @code{TEST} specifies the comparison procedure to search a matching pair in @code{ALIST} and defaults to @code{eqv?}.
 
-@node Unit extras - Lists - atom?, Unit extras - Lists - rassoc, Unit extras - Lists - alist-update!, Unit extras - Lists
+@node Unit data-structures - Lists - atom?, Unit data-structures - Lists - rassoc, Unit data-structures - Lists - alist-update!, Unit data-structures - Lists
 @subsection atom?
 
 
@@ -5243,7 +5231,7 @@ If the list @code{ALIST} contains a pair of the form @code{(KEY . X)}, then this
 @end verbatim
 Returns @code{#t} if @code{X} is not a pair. This is identical to @code{not-pair?} from @ref{Unit srfi-1, Unit srfi-1} but kept for historical reasons.
 
-@node Unit extras - Lists - rassoc, Unit extras - Lists - butlast, Unit extras - Lists - atom?, Unit extras - Lists
+@node Unit data-structures - Lists - rassoc, Unit data-structures - Lists - butlast, Unit data-structures - Lists - atom?, Unit data-structures - Lists
 @subsection rassoc
 
 
@@ -5252,7 +5240,7 @@ Returns @code{#t} if @code{X} is not a pair. This is identical to @code{not-pair
 @end verbatim
 Similar to @code{assoc}, but compares @code{KEY} with the @code{cdr} of each pair in @code{LIST} using @code{TEST} as the comparison procedures (which defaults to @code{eqv?}.
 
-@node Unit extras - Lists - butlast, Unit extras - Lists - chop, Unit extras - Lists - rassoc, Unit extras - Lists
+@node Unit data-structures - Lists - butlast, Unit data-structures - Lists - chop, Unit data-structures - Lists - rassoc, Unit data-structures - Lists
 @subsection butlast
 
 
@@ -5261,7 +5249,7 @@ Similar to @code{assoc}, but compares @code{KEY} with the @code{cdr} of each pai
 @end verbatim
 Returns a fresh list with all elements but the last of @code{LIST}.
 
-@node Unit extras - Lists - chop, Unit extras - Lists - compress, Unit extras - Lists - butlast, Unit extras - Lists
+@node Unit data-structures - Lists - chop, Unit data-structures - Lists - compress, Unit data-structures - Lists - butlast, Unit data-structures - Lists
 @subsection chop
 
 
@@ -5274,7 +5262,7 @@ Returns a new list of sublists, where each sublist contains @code{N} elements of
 (chop '(1 2 3 4 5 6) 2) =@strong{=>} ((1 2) (3 4) (5 6))
 (chop '(a b c d) 3)     =@strong{=>} ((a b c) (d))
 @end example
-@node Unit extras - Lists - compress, Unit extras - Lists - flatten, Unit extras - Lists - chop, Unit extras - Lists
+@node Unit data-structures - Lists - compress, Unit data-structures - Lists - flatten, Unit data-structures - Lists - chop, Unit data-structures - Lists
 @subsection compress
 
 
@@ -5287,7 +5275,7 @@ Returns a new list with elements taken from @code{LIST} with corresponding true 
 (@strong{define} @strong{nums} '(99 100 110 401 1234))
 (compress (map odd? nums) nums)      =@strong{=>} (99 401)
 @end example
-@node Unit extras - Lists - flatten, Unit extras - Lists - intersperse, Unit extras - Lists - compress, Unit extras - Lists
+@node Unit data-structures - Lists - flatten, Unit data-structures - Lists - intersperse, Unit data-structures - Lists - compress, Unit data-structures - Lists
 @subsection flatten
 
 
@@ -5296,7 +5284,7 @@ Returns a new list with elements taken from @code{LIST} with corresponding true 
 @end verbatim
 Returns @code{LIST1 ...} concatenated together, with nested lists removed (flattened).
 
-@node Unit extras - Lists - intersperse, Unit extras - Lists - join, Unit extras - Lists - flatten, Unit extras - Lists
+@node Unit data-structures - Lists - intersperse, Unit data-structures - Lists - join, Unit data-structures - Lists - flatten, Unit data-structures - Lists
 @subsection intersperse
 
 
@@ -5305,7 +5293,7 @@ Returns @code{LIST1 ...} concatenated together, with nested lists removed (flatt
 @end verbatim
 Returns a new list with @code{X} placed between each element.
 
-@node Unit extras - Lists - join, Unit extras - Lists - shuffle, Unit extras - Lists - intersperse, Unit extras - Lists
+@node Unit data-structures - Lists - join, Unit data-structures - Lists - shuffle, Unit data-structures - Lists - intersperse, Unit data-structures - Lists
 @subsection join
 
 
@@ -5324,16 +5312,16 @@ Concatenates the lists in @code{LISTOFLISTS} with @code{LIST} placed between eac
 (@strong{define} (@strong{join} lstoflsts #!optional (lst '()))
   (apply append (intersperse lstoflists lst)) )
 @end example
-@node Unit extras - Lists - shuffle, Unit extras - Lists - tail?, Unit extras - Lists - join, Unit extras - Lists
+@node Unit data-structures - Lists - shuffle, Unit data-structures - Lists - tail?, Unit data-structures - Lists - join, Unit data-structures - Lists
 @subsection shuffle
 
 
 @verbatim
-[procedure] (shuffle LIST)
+[procedure] (shuffle LIST RANDOM)
 @end verbatim
-Returns @code{LIST} with its elements sorted in a random order.
+Returns @code{LIST} with its elements sorted in a random order given by procedure RANDOM. 
 
-@node Unit extras - Lists - tail?,  , Unit extras - Lists - shuffle, Unit extras - Lists
+@node Unit data-structures - Lists - tail?,  , Unit data-structures - Lists - shuffle, Unit data-structures - Lists
 @subsection tail?
 
 
@@ -5342,7 +5330,544 @@ Returns @code{LIST} with its elements sorted in a random order.
 @end verbatim
 Returns true if @code{X} is one of the tails (cdr's) of @code{LIST}.
 
-@node Unit extras - String-port extensions, Unit extras - Formatted output, Unit extras - Lists, Unit extras
+@node Unit data-structures - Queues, Unit data-structures - Sorting, Unit data-structures - Lists, Unit data-structures
+@section Queues
+
+@menu
+* Unit data-structures - Queues - list->queue::
+* Unit data-structures - Queues - make-queue::
+* Unit data-structures - Queues - queue?::
+* Unit data-structures - Queues - queue->list::
+* Unit data-structures - Queues - queue-add!::
+* Unit data-structures - Queues - queue-empty?::
+* Unit data-structures - Queues - queue-first::
+* Unit data-structures - Queues - queue-last::
+* Unit data-structures - Queues - queue-remove!::
+* Unit data-structures - Queues - queue-push-back!::
+* Unit data-structures - Queues - queue-push-back-list!::
+
+@end menu
+
+
+@node Unit data-structures - Queues - list->queue, Unit data-structures - Queues - make-queue,  , Unit data-structures - Queues
+@subsection list->queue
+
+
+@verbatim
+[procedure] (list->queue LIST)
+@end verbatim
+Returns @code{LIST} converted into a queue, where the first element of the list is the same as the first element of the queue. The resulting queue may share memory with the list and the list should not be modified after this operation.
+
+@node Unit data-structures - Queues - make-queue, Unit data-structures - Queues - queue?, Unit data-structures - Queues - list->queue, Unit data-structures - Queues
+@subsection make-queue
+
+
+@verbatim
+[procedure] (make-queue)
+@end verbatim
+Returns a newly created queue.
+
+@node Unit data-structures - Queues - queue?, Unit data-structures - Queues - queue->list, Unit data-structures - Queues - make-queue, Unit data-structures - Queues
+@subsection queue?
+
+
+@verbatim
+[procedure] (queue? X)
+@end verbatim
+Returns @code{#t} if @code{X} is a queue, or @code{#f} otherwise.
+
+@node Unit data-structures - Queues - queue->list, Unit data-structures - Queues - queue-add!, Unit data-structures - Queues - queue?, Unit data-structures - Queues
+@subsection queue->list
+
+
+@verbatim
+[procedure] (queue->list QUEUE)
+@end verbatim
+Returns @code{QUEUE} converted into a list, where the first element of the list is the same as the first element of the queue. The resulting list may share memory with the queue object and should not be modified.
+
+@node Unit data-structures - Queues - queue-add!, Unit data-structures - Queues - queue-empty?, Unit data-structures - Queues - queue->list, Unit data-structures - Queues
+@subsection queue-add!
+
+
+@verbatim
+[procedure] (queue-add! QUEUE X)
+@end verbatim
+Adds @code{X} to the rear of @code{QUEUE}.
+
+@node Unit data-structures - Queues - queue-empty?, Unit data-structures - Queues - queue-first, Unit data-structures - Queues - queue-add!, Unit data-structures - Queues
+@subsection queue-empty?
+
+
+@verbatim
+[procedure] (queue-empty? QUEUE)
+@end verbatim
+Returns @code{#t} if @code{QUEUE} is empty, or @code{#f} otherwise.
+
+@node Unit data-structures - Queues - queue-first, Unit data-structures - Queues - queue-last, Unit data-structures - Queues - queue-empty?, Unit data-structures - Queues
+@subsection queue-first
+
+
+@verbatim
+[procedure] (queue-first QUEUE)
+@end verbatim
+Returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
+
+@node Unit data-structures - Queues - queue-last, Unit data-structures - Queues - queue-remove!, Unit data-structures - Queues - queue-first, Unit data-structures - Queues
+@subsection queue-last
+
+
+@verbatim
+[procedure] (queue-last QUEUE)
+@end verbatim
+Returns the last element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
+
+@node Unit data-structures - Queues - queue-remove!, Unit data-structures - Queues - queue-push-back!, Unit data-structures - Queues - queue-last, Unit data-structures - Queues
+@subsection queue-remove!
+
+
+@verbatim
+[procedure] (queue-remove! QUEUE)
+@end verbatim
+Removes and returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
+
+@node Unit data-structures - Queues - queue-push-back!, Unit data-structures - Queues - queue-push-back-list!, Unit data-structures - Queues - queue-remove!, Unit data-structures - Queues
+@subsection queue-push-back!
+
+
+@verbatim
+[procedure] (queue-push-back! QUEUE ITEM)
+@end verbatim
+Pushes an item into the first position of a queue, i.e. the next @code{queue-remove!} will return @code{ITEM}.
+
+@node Unit data-structures - Queues - queue-push-back-list!,  , Unit data-structures - Queues - queue-push-back!, Unit data-structures - Queues
+@subsection queue-push-back-list!
+
+
+@verbatim
+[procedure] (queue-push-back-list! QUEUE LIST)
+@end verbatim
+Pushes the items in item-list back onto the queue, so that @code{(car LIST)} becomes the next removable item.
+
+@node Unit data-structures - Sorting, Unit data-structures - Random numbers, Unit data-structures - Queues, Unit data-structures
+@section Sorting
+
+@menu
+* Unit data-structures - Sorting - merge::
+* Unit data-structures - Sorting - sort::
+* Unit data-structures - Sorting - sorted?::
+
+@end menu
+
+
+@node Unit data-structures - Sorting - merge, Unit data-structures - Sorting - sort,  , Unit data-structures - Sorting
+@subsection merge
+
+
+@verbatim
+[procedure] (merge LIST1 LIST2 LESS?)
+[procedure] (merge! LIST1 LIST2 LESS?)
+@end verbatim
+Joins two lists in sorted order. @code{merge!} is the destructive version of merge. @code{LESS?  } should be a procedure of two arguments, that returns true if the first argument is to be ordered before the second argument.
+
+@node Unit data-structures - Sorting - sort, Unit data-structures - Sorting - sorted?, Unit data-structures - Sorting - merge, Unit data-structures - Sorting
+@subsection sort
+
+
+@verbatim
+[procedure] (sort SEQUENCE LESS?)
+[procedure] (sort! SEQUENCE LESS?)
+@end verbatim
+Sort @code{SEQUENCE}, which should be a list or a vector. @code{sort!} is the destructive version of sort.
+
+@node Unit data-structures - Sorting - sorted?,  , Unit data-structures - Sorting - sort, Unit data-structures - Sorting
+@subsection sorted?
+
+
+@verbatim
+[procedure] (sorted? SEQUENCE LESS?)
+@end verbatim
+Returns true if the list or vector @code{SEQUENCE} is already sorted.
+
+@node Unit data-structures - Random numbers, Unit data-structures - Strings, Unit data-structures - Sorting, Unit data-structures
+@section Random numbers
+
+@menu
+* Unit data-structures - Random numbers - random-seed::
+
+@end menu
+
+
+@node Unit data-structures - Random numbers - random-seed,  ,  , Unit data-structures - Random numbers
+@subsection random-seed
+
+
+@verbatim
+[procedure] (random-seed [SEED])
+@end verbatim
+Seeds the random number generator with @code{SEED} (an exact integer) or  @code{(current-seconds)} if @code{SEED} is not given.
+
+@node Unit data-structures - Strings, Unit data-structures - Combinators, Unit data-structures - Random numbers, Unit data-structures
+@section Strings
+
+@menu
+* Unit data-structures - Strings - conc::
+* Unit data-structures - Strings - ->string::
+* Unit data-structures - Strings - string-chop::
+* Unit data-structures - Strings - string-chomp::
+* Unit data-structures - Strings - string-compare3::
+* Unit data-structures - Strings - string-intersperse::
+* Unit data-structures - Strings - string-split::
+* Unit data-structures - Strings - string-translate::
+* Unit data-structures - Strings - string-translate*::
+* Unit data-structures - Strings - substring=?::
+* Unit data-structures - Strings - substring-index::
+
+@end menu
+
+
+@node Unit data-structures - Strings - conc, Unit data-structures - Strings - ->string,  , Unit data-structures - Strings
+@subsection conc
+
+
+@verbatim
+[procedure] (conc X ...)
+@end verbatim
+Returns a string with the string-represenation of all arguments concatenated together. @code{conc} could be implemented as
+
+@example
+(@strong{define} (@strong{conc} . args)
+  (apply string-append (map ->string args)) )
+@end example
+@node Unit data-structures - Strings - ->string, Unit data-structures - Strings - string-chop, Unit data-structures - Strings - conc, Unit data-structures - Strings
+@subsection ->string
+
+
+@verbatim
+[procedure] (->string X)
+@end verbatim
+Returns a string-representation of @code{X}.
+
+@node Unit data-structures - Strings - string-chop, Unit data-structures - Strings - string-chomp, Unit data-structures - Strings - ->string, Unit data-structures - Strings
+@subsection string-chop
+
+
+@verbatim
+[procedure] (string-chop STRING LENGTH)
+@end verbatim
+Returns a list of substrings taken by @emph{chopping} @code{STRING} every @code{LENGTH} characters:
+
+@example
+(string-chop @strong{"one two three"} 4)  =@strong{=>}  (@strong{"one "} @strong{"two "} @strong{"thre"} @strong{"e"})
+@end example
+@node Unit data-structures - Strings - string-chomp, Unit data-structures - Strings - string-compare3, Unit data-structures - Strings - string-chop, Unit data-structures - Strings
+@subsection string-chomp
+
+
+@verbatim
+[procedure] (string-chomp STRING [SUFFIX])
+@end verbatim
+If @code{STRING} ends with @code{SUFFIX}, then this procedure returns a copy of its first argument with the suffix removed, otherwise returns @code{STRING} unchanged. @code{SUFFIX} defaults to @code{"\n"}.
+
+@node Unit data-structures - Strings - string-compare3, Unit data-structures - Strings - string-intersperse, Unit data-structures - Strings - string-chomp, Unit data-structures - Strings
+@subsection string-compare3
+
+
+@verbatim
+[procedure] (string-compare3 STRING1 STRING2)
+[procedure] (string-compare3-ci STRING1 STRING2)
+@end verbatim
+Perform a three-way comparison between the @code{STRING1} and @code{STRING2}, returning either @code{-1} if @code{STRING1} is lexicographically less than @code{STRING2}, @code{0} if it is equal, or @code{1} if it s greater. @code{string-compare3-ci} performs a case-insensitive comparison.
+
+@node Unit data-structures - Strings - string-intersperse, Unit data-structures - Strings - string-split, Unit data-structures - Strings - string-compare3, Unit data-structures - Strings
+@subsection string-intersperse
+
+
+@verbatim
+[procedure] (string-intersperse LIST [STRING])
+@end verbatim
+Returns a string that contains all strings in @code{LIST} concatenated together.  @code{STRING} is placed between each concatenated string and defaults to @code{" "}.
+
+@example
+(string-intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"})
+@end example
+is equivalent to
+
+@example
+(apply string-append (intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"}))
+@end example
+@node Unit data-structures - Strings - string-split, Unit data-structures - Strings - string-translate, Unit data-structures - Strings - string-intersperse, Unit data-structures - Strings
+@subsection string-split
+
+
+@verbatim
+[procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
+@end verbatim
+Split string into substrings separated by the given delimiters. If no delimiters are specified, a string comprising the tab, newline and space characters  is assumed. If the parameter @code{KEEPEMPTY} is given and not @code{#f}, then empty substrings are retained:
+
+@example
+(string-split @strong{"one  two  three"}) =@strong{=>} (@strong{"one"} @strong{"two"} @strong{"three"})
+(string-split @strong{"foo:bar::baz:"} @strong{":"} #t) =@strong{=>} (@strong{"foo"} @strong{"bar"} @strong{""} @strong{"baz"} @strong{""})
+@end example
+@node Unit data-structures - Strings - string-translate, Unit data-structures - Strings - string-translate*, Unit data-structures - Strings - string-split, Unit data-structures - Strings
+@subsection string-translate
+
+
+@verbatim
+[procedure] (string-translate STRING FROM [TO])
+@end verbatim
+Returns a fresh copy of @code{STRING} with characters matching @code{FROM} translated to @code{TO}.  If @code{TO} is omitted, then matching characters are removed. @code{FROM} and @code{TO} may be a character, a string or a list. If both @code{FROM} and @code{TO} are strings, then the character at the same position in @code{TO} as the matching character in @code{FROM} is substituted.
+
+@node Unit data-structures - Strings - string-translate*, Unit data-structures - Strings - substring=?, Unit data-structures - Strings - string-translate, Unit data-structures - Strings
+@subsection string-translate*
+
+
+@verbatim
+[procedure] (string-translate* STRING SMAP)
+@end verbatim
+Substitutes elements of @code{STRING} according to @code{SMAP}. @code{SMAP} should be an association-list where each element of the list is a pair of the form @code{(MATCH \. REPLACEMENT)}. Every occurrence of the string @code{MATCH} in @code{STRING} will be replaced by the string @code{REPLACEMENT}:
+
+@example
+(string-translate*
+  @strong{"<h1>this is a \"string\"</h1>"}
+  '((@strong{"<"} . @strong{"&lt;"}) (@strong{">"} . @strong{"&gt;"}) (@strong{"\""} . @strong{"&quot;"})) )
+@strong{=>}  @strong{"&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"}
+@end example
+@node Unit data-structures - Strings - substring=?, Unit data-structures - Strings - substring-index, Unit data-structures - Strings - string-translate*, Unit data-structures - Strings
+@subsection substring=?
+
+
+@verbatim
+[procedure] (substring=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
+[procedure] (substring-ci=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
+@end verbatim
+Returns @code{#t} if the strings @code{STRING1} and @code{STRING2} are equal, or @code{#f} otherwise. The comparison starts at the positions @code{START1} and @code{START2} (which default to 0), comparing @code{LENGTH} characters (which defaults to the minimum of the remaining length of both strings).
+
+@node Unit data-structures - Strings - substring-index,  , Unit data-structures - Strings - substring=?, Unit data-structures - Strings
+@subsection substring-index
+
+
+@verbatim
+[procedure] (substring-index WHICH WHERE [START])
+[procedure] (substring-index-ci WHICH WHERE [START])
+@end verbatim
+Searches for first index in string @code{WHERE} where string @code{WHICH} occurs.  If the optional argument @code{START} is given, then the search starts at that index.  @code{substring-index-ci} is a case-insensitive version of @code{substring-index}.
+
+@node Unit data-structures - Combinators, Unit data-structures - Binary searching, Unit data-structures - Strings, Unit data-structures
+@section Combinators
+
+@menu
+* Unit data-structures - Combinators - any?::
+* Unit data-structures - Combinators - constantly::
+* Unit data-structures - Combinators - complement::
+* Unit data-structures - Combinators - compose::
+* Unit data-structures - Combinators - conjoin::
+* Unit data-structures - Combinators - disjoin::
+* Unit data-structures - Combinators - each::
+* Unit data-structures - Combinators - flip::
+* Unit data-structures - Combinators - identity::
+* Unit data-structures - Combinators - project::
+* Unit data-structures - Combinators - list-of::
+* Unit data-structures - Combinators - noop::
+* Unit data-structures - Combinators - o::
+
+@end menu
+
+
+@node Unit data-structures - Combinators - any?, Unit data-structures - Combinators - constantly,  , Unit data-structures - Combinators
+@subsection any?
+
+
+@verbatim
+[procedure] (any? X)
+@end verbatim
+Ignores its argument and always returns @code{#t}. This is actually useful sometimes.
+
+@node Unit data-structures - Combinators - constantly, Unit data-structures - Combinators - complement, Unit data-structures - Combinators - any?, Unit data-structures - Combinators
+@subsection constantly
+
+
+@verbatim
+[procedure] (constantly X ...)
+@end verbatim
+Returns a procedure that always returns the values @code{X ...} regardless of the number and value of its arguments.
+
+@example
+(constantly X) <@strong{=>} (@strong{lambda} args X)
+@end example
+@node Unit data-structures - Combinators - complement, Unit data-structures - Combinators - compose, Unit data-structures - Combinators - constantly, Unit data-structures - Combinators
+@subsection complement
+
+
+@verbatim
+[procedure] (complement PROC)
+@end verbatim
+Returns a procedure that returns the boolean inverse of @code{PROC}.
+
+@example
+(complement PROC) <@strong{=>} (@strong{lambda} (x) (not (PROC x)))
+@end example
+@node Unit data-structures - Combinators - compose, Unit data-structures - Combinators - conjoin, Unit data-structures - Combinators - complement, Unit data-structures - Combinators
+@subsection compose
+
+
+@verbatim
+[procedure] (compose PROC1 PROC2 ...)
+@end verbatim
+Returns a procedure that represents the composition of the argument-procedures @code{PROC1 PROC2 ...}.
+
+@example
+(compose F G) <@strong{=>} (@strong{lambda} args
+                      (call-with-values
+                         (@strong{lambda} () (apply G args))
+                         F))
+@end example
+@code{(compose)} is equivalent to @code{values}.
+
+@node Unit data-structures - Combinators - conjoin, Unit data-structures - Combinators - disjoin, Unit data-structures - Combinators - compose, Unit data-structures - Combinators
+@subsection conjoin
+
+
+@verbatim
+[procedure] (conjoin PRED ...)
+@end verbatim
+Returns a procedure that returns @code{#t} if its argument satisfies the predicates @code{PRED ...}. @example
+((conjoin odd? positive?) 33)   =@strong{=>}  #t
+((conjoin odd? positive?) -33)  =@strong{=>}  #f
+@end example
+
+
+@node Unit data-structures - Combinators - disjoin, Unit data-structures - Combinators - each, Unit data-structures - Combinators - conjoin, Unit data-structures - Combinators
+@subsection disjoin
+
+
+@verbatim
+[procedure] (disjoin PRED ...)
+@end verbatim
+Returns a procedure that returns @code{#t} if its argument satisfies any predicate @code{PRED ...}. @example
+((disjoin odd? positive?) 32)    =@strong{=>}  #t
+((disjoin odd? positive?) -32)   =@strong{=>}  #f
+@end example
+
+
+@node Unit data-structures - Combinators - each, Unit data-structures - Combinators - flip, Unit data-structures - Combinators - disjoin, Unit data-structures - Combinators
+@subsection each
+
+
+@verbatim
+[procedure] (each PROC ...)
+@end verbatim
+Returns a procedure that applies @code{PROC ...} to its arguments, and returns the result(s) of the last procedure application. For example
+
+@example
+(each pp eval)
+@end example
+is equivalent to
+
+@example
+(@strong{lambda} args 
+  (apply pp args)
+  (apply eval args) )
+@end example
+@code{(each PROC)} is equivalent to @code{PROC} and @code{(each)} is equivalent to @code{noop}.
+
+@node Unit data-structures - Combinators - flip, Unit data-structures - Combinators - identity, Unit data-structures - Combinators - each, Unit data-structures - Combinators
+@subsection flip
+
+
+@verbatim
+[procedure] (flip PROC)
+@end verbatim
+Returns a two-argument procedure that calls @code{PROC} with its arguments swapped: @example
+(flip PROC) <@strong{=>} (@strong{lambda} (x y) (PROC y x))
+@end example
+
+
+@node Unit data-structures - Combinators - identity, Unit data-structures - Combinators - project, Unit data-structures - Combinators - flip, Unit data-structures - Combinators
+@subsection identity
+
+
+@verbatim
+[procedure] (identity X)
+@end verbatim
+Returns its sole argument @code{X}.
+
+@node Unit data-structures - Combinators - project, Unit data-structures - Combinators - list-of, Unit data-structures - Combinators - identity, Unit data-structures - Combinators
+@subsection project
+
+
+@verbatim
+[procedure] (project N)
+@end verbatim
+Returns a procedure that returns its @code{N}th argument (starting from 0).
+
+@node Unit data-structures - Combinators - list-of, Unit data-structures - Combinators - noop, Unit data-structures - Combinators - project, Unit data-structures - Combinators
+@subsection list-of
+
+
+@verbatim
+[procedure] (list-of PRED)
+@end verbatim
+Returns a procedure of one argument that returns @code{#t} when applied to a list of elements that all satisfy the predicate procedure @code{PRED}, or @code{#f} otherwise.
+
+@example
+((list-of even?) '(1 2 3))   =@strong{=>} #f
+((list-of number?) '(1 2 3)) =@strong{=>} #t
+@end example
+@node Unit data-structures - Combinators - noop, Unit data-structures - Combinators - o, Unit data-structures - Combinators - list-of, Unit data-structures - Combinators
+@subsection noop
+
+
+@verbatim
+[procedure] (noop X ...)
+@end verbatim
+Ignores it's arguments, does nothing and returns an unspecified value.
+
+@node Unit data-structures - Combinators - o,  , Unit data-structures - Combinators - noop, Unit data-structures - Combinators
+@subsection o
+
+
+@verbatim
+[procedure] (o PROC ...)
+@end verbatim
+A single value version of @code{compose} (slightly faster). @code{(o)} is equivalent to @code{identity}.
+
+@node Unit data-structures - Binary searching,  , Unit data-structures - Combinators, Unit data-structures
+@section Binary searching
+
+@menu
+* Unit data-structures - Binary searching - binary-search::
+
+@end menu
+
+
+@node Unit data-structures - Binary searching - binary-search,  ,  , Unit data-structures - Binary searching
+@subsection binary-search
+
+
+@verbatim
+[procedure] (binary-search SEQUENCE PROC)
+@end verbatim
+Performs a binary search in @code{SEQUENCE}, which should be a sorted list or vector.  @code{PROC} is called to compare items in the sequence, should accept a single argument and return an exact integer: zero if the searched value is equal to the current item, negative if the searched value is @emph{less} than the current item, and positive otherwise. Returns the index of the found value or @code{#f} otherwise.
+
+Previous: @ref{Unit eval, Unit eval}
+
+Next: @ref{Unit extras, Unit extras}  
+
+@node Unit extras, Unit srfi-1, Unit data-structures, Top
+@chapter Unit extras
+
+@menu
+* Unit extras - String-port extensions::
+* Unit extras - Formatted output::
+* Unit extras - Random numbers::
+* Unit extras - Input/Output extensions::
+
+@end menu
+
+
+This unit contains a collection of useful utility definitions.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+
+@node Unit extras - String-port extensions, Unit extras - Formatted output,  , Unit extras
 @section String-port extensions
 
 @menu
@@ -5390,7 +5915,7 @@ Call procedure @code{THUNK} with the current input-port temporarily bound to an 
 @end verbatim
 Call procedure @code{THUNK} with the current output-port temporarily bound to a string-output-port and return the accumulated output string.
 
-@node Unit extras - Formatted output, Unit extras - Queues, Unit extras - String-port extensions, Unit extras
+@node Unit extras - Formatted output, Unit extras - Random numbers, Unit extras - String-port extensions, Unit extras
 @section Formatted output
 
 @menu
@@ -5434,165 +5959,7 @@ The parameters  @code{FORMATSTRING} and @code{ARG ...} are as for (@code{printf}
 
 The optional @code{DESTINATION}, when supplied, performs a (@code{sprintf}) for a  @code{#f}, a (@code{printf}) for a @code{#t}, and a (@code{fprintf}) for an output-port. When missing a (@code{sprintf}) is performed.
 
-@node Unit extras - Queues, Unit extras - Sorting, Unit extras - Formatted output, Unit extras
-@section Queues
-
-@menu
-* Unit extras - Queues - list->queue::
-* Unit extras - Queues - make-queue::
-* Unit extras - Queues - queue?::
-* Unit extras - Queues - queue->list::
-* Unit extras - Queues - queue-add!::
-* Unit extras - Queues - queue-empty?::
-* Unit extras - Queues - queue-first::
-* Unit extras - Queues - queue-last::
-* Unit extras - Queues - queue-remove!::
-* Unit extras - Queues - queue-push-back!::
-* Unit extras - Queues - queue-push-back-list!::
-
-@end menu
-
-
-@node Unit extras - Queues - list->queue, Unit extras - Queues - make-queue,  , Unit extras - Queues
-@subsection list->queue
-
-
-@verbatim
-[procedure] (list->queue LIST)
-@end verbatim
-Returns @code{LIST} converted into a queue, where the first element of the list is the same as the first element of the queue. The resulting queue may share memory with the list and the list should not be modified after this operation.
-
-@node Unit extras - Queues - make-queue, Unit extras - Queues - queue?, Unit extras - Queues - list->queue, Unit extras - Queues
-@subsection make-queue
-
-
-@verbatim
-[procedure] (make-queue)
-@end verbatim
-Returns a newly created queue.
-
-@node Unit extras - Queues - queue?, Unit extras - Queues - queue->list, Unit extras - Queues - make-queue, Unit extras - Queues
-@subsection queue?
-
-
-@verbatim
-[procedure] (queue? X)
-@end verbatim
-Returns @code{#t} if @code{X} is a queue, or @code{#f} otherwise.
-
-@node Unit extras - Queues - queue->list, Unit extras - Queues - queue-add!, Unit extras - Queues - queue?, Unit extras - Queues
-@subsection queue->list
-
-
-@verbatim
-[procedure] (queue->list QUEUE)
-@end verbatim
-Returns @code{QUEUE} converted into a list, where the first element of the list is the same as the first element of the queue. The resulting list may share memory with the queue object and should not be modified.
-
-@node Unit extras - Queues - queue-add!, Unit extras - Queues - queue-empty?, Unit extras - Queues - queue->list, Unit extras - Queues
-@subsection queue-add!
-
-
-@verbatim
-[procedure] (queue-add! QUEUE X)
-@end verbatim
-Adds @code{X} to the rear of @code{QUEUE}.
-
-@node Unit extras - Queues - queue-empty?, Unit extras - Queues - queue-first, Unit extras - Queues - queue-add!, Unit extras - Queues
-@subsection queue-empty?
-
-
-@verbatim
-[procedure] (queue-empty? QUEUE)
-@end verbatim
-Returns @code{#t} if @code{QUEUE} is empty, or @code{#f} otherwise.
-
-@node Unit extras - Queues - queue-first, Unit extras - Queues - queue-last, Unit extras - Queues - queue-empty?, Unit extras - Queues
-@subsection queue-first
-
-
-@verbatim
-[procedure] (queue-first QUEUE)
-@end verbatim
-Returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
-
-@node Unit extras - Queues - queue-last, Unit extras - Queues - queue-remove!, Unit extras - Queues - queue-first, Unit extras - Queues
-@subsection queue-last
-
-
-@verbatim
-[procedure] (queue-last QUEUE)
-@end verbatim
-Returns the last element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
-
-@node Unit extras - Queues - queue-remove!, Unit extras - Queues - queue-push-back!, Unit extras - Queues - queue-last, Unit extras - Queues
-@subsection queue-remove!
-
-
-@verbatim
-[procedure] (queue-remove! QUEUE)
-@end verbatim
-Removes and returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
-
-@node Unit extras - Queues - queue-push-back!, Unit extras - Queues - queue-push-back-list!, Unit extras - Queues - queue-remove!, Unit extras - Queues
-@subsection queue-push-back!
-
-
-@verbatim
-[procedure] (queue-push-back! QUEUE ITEM)
-@end verbatim
-Pushes an item into the first position of a queue, i.e. the next @code{queue-remove!} will return @code{ITEM}.
-
-@node Unit extras - Queues - queue-push-back-list!,  , Unit extras - Queues - queue-push-back!, Unit extras - Queues
-@subsection queue-push-back-list!
-
-
-@verbatim
-[procedure] (queue-push-back-list! QUEUE LIST)
-@end verbatim
-Pushes the items in item-list back onto the queue, so that @code{(car LIST)} becomes the next removable item.
-
-@node Unit extras - Sorting, Unit extras - Random numbers, Unit extras - Queues, Unit extras
-@section Sorting
-
-@menu
-* Unit extras - Sorting - merge::
-* Unit extras - Sorting - sort::
-* Unit extras - Sorting - sorted?::
-
-@end menu
-
-
-@node Unit extras - Sorting - merge, Unit extras - Sorting - sort,  , Unit extras - Sorting
-@subsection merge
-
-
-@verbatim
-[procedure] (merge LIST1 LIST2 LESS?)
-[procedure] (merge! LIST1 LIST2 LESS?)
-@end verbatim
-Joins two lists in sorted order. @code{merge!} is the destructive version of merge. @code{LESS?  } should be a procedure of two arguments, that returns true if the first argument is to be ordered before the second argument.
-
-@node Unit extras - Sorting - sort, Unit extras - Sorting - sorted?, Unit extras - Sorting - merge, Unit extras - Sorting
-@subsection sort
-
-
-@verbatim
-[procedure] (sort SEQUENCE LESS?)
-[procedure] (sort! SEQUENCE LESS?)
-@end verbatim
-Sort @code{SEQUENCE}, which should be a list or a vector. @code{sort!} is the destructive version of sort.
-
-@node Unit extras - Sorting - sorted?,  , Unit extras - Sorting - sort, Unit extras - Sorting
-@subsection sorted?
-
-
-@verbatim
-[procedure] (sorted? SEQUENCE LESS?)
-@end verbatim
-Returns true if the list or vector @code{SEQUENCE} is already sorted.
-
-@node Unit extras - Random numbers, Unit extras - Input/Output extensions, Unit extras - Sorting, Unit extras
+@node Unit extras - Random numbers, Unit extras - Input/Output extensions, Unit extras - Formatted output, Unit extras
 @section Random numbers
 
 @menu
@@ -5610,7 +5977,7 @@ Returns true if the list or vector @code{SEQUENCE} is already sorted.
 @verbatim
 [procedure] (random-seed [SEED])
 @end verbatim
-Seeds the random number generator with @code{SEED} (an exact integer) or @code{(current-seconds)} if @code{SEED} is not given.
+Seeds the random number generator with @code{SEED} (an exact integer) or  @code{(current-seconds)} if @code{SEED} is not given.
 
 @node Unit extras - Random numbers - random, Unit extras - Random numbers - randomize, Unit extras - Random numbers - random-seed, Unit extras - Random numbers
 @subsection random
@@ -5630,7 +5997,7 @@ Returns an exact random integer from 0 to @code{N}-1.
 @end verbatim
 Set random-number seed. If @code{X} is not supplied, the current time is used. On startup (when the @code{extras} unit is initialized), the random number generator is initialized with the current time.
 
-@node Unit extras - Input/Output extensions, Unit extras - Strings, Unit extras - Random numbers, Unit extras
+@node Unit extras - Input/Output extensions,  , Unit extras - Random numbers, Unit extras
 @section Input/Output extensions
 
 @menu
@@ -5710,7 +6077,7 @@ Read/write a byte to the port given in @code{PORT}, which default to the values 
 @verbatim
 [procedure] (read-file [FILE-OR-PORT [READER [MAXCOUNT]]])
 @end verbatim
-Returns a list containing all toplevel expressions read from the file or port @code{FILE-OR-PORT}. If no argument is given, input is read from the port that is the current value of @code{(current-input-port)}. After all expressions are read, and if the argument is a port, then the port will not be closed. The @code{READER} argument specifies the procedure used to read expressions from the given file or port and defaults to @code{read}. The reader procedure will be called with a single argument (an input port). If @code{MAXCOUNT} is given then only up to @code{MAXCOUNT} expressions will be read in.
+Returns a list containing all toplevel expressions read from the file or port @code{FILE-OR-PORT}. If no argument is given, input is read from the port that is the current value of @code{(current-input-port)}. After all expressions are read, and if the argument is a port, then the port will not be closed. The @code{READER} argument specifies the procedure used to read  expressions from the given file or port and defaults to @code{read}. The reader procedure will be called with a single argument (an input port). If @code{MAXCOUNT} is given then only up to @code{MAXCOUNT} expressions will be read in.
 
 @node Unit extras - Input/Output extensions - read-line, Unit extras - Input/Output extensions - write-line, Unit extras - Input/Output extensions - read-file, Unit extras - Input/Output extensions
 @subsection read-line
@@ -5752,7 +6119,7 @@ Read @code{MAX} or fewer lines from @code{PORT}. @code{PORT} defaults to the val
 [procedure] (read-string! NUM STRING [PORT [START]])
 [procedure] (write-string STRING [NUM [PORT]]
 @end verbatim
-Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the value of @code{(current-input-port)} or @code{(current-output-port)}, respectively. If @code{NUM} is @code{#f} or not given, then all data up to the end-of-file is read, or, in the case of @code{write-string} the whole string is written. If no more input is available, @code{read-string} returns the empty string. @code{read-string!} reads destructively into the given @code{STRING} argument, but never more characters that would fit into @code{STRING}. If @code{START} is given, then the read characters are stored starting at that position. @code{read-string!} returns the actual number of characters read.
+Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the value of @code{(current-input-port)} or @code{(current-output-port)}, respectively.  If @code{NUM} is @code{#f} or not given, then all data up to the end-of-file is read, or, in the case of @code{write-string} the whole string is written. If no more input is available, @code{read-string} returns the empty string. @code{read-string!} reads destructively into the given @code{STRING} argument, but never more characters that would fit into @code{STRING}. If @code{START} is given, then the read characters are stored starting at that position. @code{read-string!} returns the actual number of characters read.
 
 @node Unit extras - Input/Output extensions - read-token, Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions - write-string, Unit extras - Input/Output extensions
 @subsection read-token
@@ -5790,400 +6157,7 @@ Call procedure @code{THUNK} with the current input-port temporarily bound to @co
 @end verbatim
 Call procedure @code{THUNK} with the current output-port temporarily bound to @code{PORT}.
 
-@node Unit extras - Strings, Unit extras - Combinators, Unit extras - Input/Output extensions, Unit extras
-@section Strings
-
-@menu
-* Unit extras - Strings - conc::
-* Unit extras - Strings - ->string::
-* Unit extras - Strings - string-chop::
-* Unit extras - Strings - string-chomp::
-* Unit extras - Strings - string-compare3::
-* Unit extras - Strings - string-intersperse::
-* Unit extras - Strings - string-split::
-* Unit extras - Strings - string-translate::
-* Unit extras - Strings - string-translate*::
-* Unit extras - Strings - substring=?::
-* Unit extras - Strings - substring-index::
-
-@end menu
-
-
-@node Unit extras - Strings - conc, Unit extras - Strings - ->string,  , Unit extras - Strings
-@subsection conc
-
-
-@verbatim
-[procedure] (conc X ...)
-@end verbatim
-Returns a string with the string-represenation of all arguments concatenated together. @code{conc} could be implemented as
-
-@example
-(@strong{define} (@strong{conc} . args)
-  (apply string-append (map ->string args)) )
-@end example
-@node Unit extras - Strings - ->string, Unit extras - Strings - string-chop, Unit extras - Strings - conc, Unit extras - Strings
-@subsection ->string
-
-
-@verbatim
-[procedure] (->string X)
-@end verbatim
-Returns a string-representation of @code{X}.
-
-@node Unit extras - Strings - string-chop, Unit extras - Strings - string-chomp, Unit extras - Strings - ->string, Unit extras - Strings
-@subsection string-chop
-
-
-@verbatim
-[procedure] (string-chop STRING LENGTH)
-@end verbatim
-Returns a list of substrings taken by @emph{chopping} @code{STRING} every @code{LENGTH} characters:
-
-@example
-(string-chop @strong{"one two three"} 4)  =@strong{=>}  (@strong{"one "} @strong{"two "} @strong{"thre"} @strong{"e"})
-@end example
-@node Unit extras - Strings - string-chomp, Unit extras - Strings - string-compare3, Unit extras - Strings - string-chop, Unit extras - Strings
-@subsection string-chomp
-
-
-@verbatim
-[procedure] (string-chomp STRING [SUFFIX])
-@end verbatim
-If @code{STRING} ends with @code{SUFFIX}, then this procedure returns a copy of its first argument with the suffix removed, otherwise returns @code{STRING} unchanged. @code{SUFFIX} defaults to @code{"\n"}.
-
-@node Unit extras - Strings - string-compare3, Unit extras - Strings - string-intersperse, Unit extras - Strings - string-chomp, Unit extras - Strings
-@subsection string-compare3
-
-
-@verbatim
-[procedure] (string-compare3 STRING1 STRING2)
-[procedure] (string-compare3-ci STRING1 STRING2)
-@end verbatim
-Perform a three-way comparison between the @code{STRING1} and @code{STRING2}, returning either @code{-1} if @code{STRING1} is lexicographically less than @code{STRING2}, @code{0} if it is equal, or @code{1} if it s greater. @code{string-compare3-ci} performs a case-insensitive comparison.
-
-@node Unit extras - Strings - string-intersperse, Unit extras - Strings - string-split, Unit extras - Strings - string-compare3, Unit extras - Strings
-@subsection string-intersperse
-
-
-@verbatim
-[procedure] (string-intersperse LIST [STRING])
-@end verbatim
-Returns a string that contains all strings in @code{LIST} concatenated together.  @code{STRING} is placed between each concatenated string and defaults to @code{" "}.
-
-@example
-(string-intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"})
-@end example
-is equivalent to
-
-@example
-(apply string-append (intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"}))
-@end example
-@node Unit extras - Strings - string-split, Unit extras - Strings - string-translate, Unit extras - Strings - string-intersperse, Unit extras - Strings
-@subsection string-split
-
-
-@verbatim
-[procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
-@end verbatim
-Split string into substrings separated by the given delimiters. If no delimiters are specified, a string comprising the tab, newline and space characters is assumed. If the parameter @code{KEEPEMPTY} is given and not @code{#f}, then empty substrings are retained:
-
-@example
-(string-split @strong{"one  two  three"}) =@strong{=>} (@strong{"one"} @strong{"two"} @strong{"three"})
-(string-split @strong{"foo:bar::baz:"} @strong{":"} #t) =@strong{=>} (@strong{"foo"} @strong{"bar"} @strong{""} @strong{"baz"} @strong{""})
-@end example
-@node Unit extras - Strings - string-translate, Unit extras - Strings - string-translate*, Unit extras - Strings - string-split, Unit extras - Strings
-@subsection string-translate
-
-
-@verbatim
-[procedure] (string-translate STRING FROM [TO])
-@end verbatim
-Returns a fresh copy of @code{STRING} with characters matching @code{FROM} translated to @code{TO}.  If @code{TO} is omitted, then matching characters are removed. @code{FROM} and @code{TO} may be a character, a string or a list. If both @code{FROM} and @code{TO} are strings, then the character at the same position in @code{TO} as the matching character in @code{FROM} is substituted.
-
-@node Unit extras - Strings - string-translate*, Unit extras - Strings - substring=?, Unit extras - Strings - string-translate, Unit extras - Strings
-@subsection string-translate*
-
-
-@verbatim
-[procedure] (string-translate* STRING SMAP)
-@end verbatim
-Substitutes elements of @code{STRING} according to @code{SMAP}. @code{SMAP} should be an association-list where each element of the list is a pair of the form @code{(MATCH \. REPLACEMENT)}. Every occurrence of the string @code{MATCH} in @code{STRING} will be replaced by the string @code{REPLACEMENT}:
-
-@example
-(string-translate*
-  @strong{"<h1>this is a \"string\"</h1>"}
-  '((@strong{"<"} . @strong{"&lt;"}) (@strong{">"} . @strong{"&gt;"}) (@strong{"\""} . @strong{"&quot;"})) )
-@strong{=>}  @strong{"&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"}
-@end example
-@node Unit extras - Strings - substring=?, Unit extras - Strings - substring-index, Unit extras - Strings - string-translate*, Unit extras - Strings
-@subsection substring=?
-
-
-@verbatim
-[procedure] (substring=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
-[procedure] (substring-ci=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
-@end verbatim
-Returns @code{#t} if the strings @code{STRING1} and @code{STRING2} are equal, or @code{#f} otherwise. The comparison starts at the positions @code{START1} and @code{START2} (which default to 0), comparing @code{LENGTH} characters (which defaults to the minimum of the remaining length of both strings).
-
-@node Unit extras - Strings - substring-index,  , Unit extras - Strings - substring=?, Unit extras - Strings
-@subsection substring-index
-
-
-@verbatim
-[procedure] (substring-index WHICH WHERE [START])
-[procedure] (substring-index-ci WHICH WHERE [START])
-@end verbatim
-Searches for first index in string @code{WHERE} where string @code{WHICH} occurs.  If the optional argument @code{START} is given, then the search starts at that index.  @code{substring-index-ci} is a case-insensitive version of @code{substring-index}.
-
-@node Unit extras - Combinators, Unit extras - Binary searching, Unit extras - Strings, Unit extras
-@section Combinators
-
-@menu
-* Unit extras - Combinators - any?::
-* Unit extras - Combinators - none?::
-* Unit extras - Combinators - always?::
-* Unit extras - Combinators - never?::
-* Unit extras - Combinators - constantly::
-* Unit extras - Combinators - complement::
-* Unit extras - Combinators - compose::
-* Unit extras - Combinators - conjoin::
-* Unit extras - Combinators - disjoin::
-* Unit extras - Combinators - each::
-* Unit extras - Combinators - flip::
-* Unit extras - Combinators - identity::
-* Unit extras - Combinators - project::
-* Unit extras - Combinators - list-of::
-* Unit extras - Combinators - noop::
-* Unit extras - Combinators - o::
-* Unit extras - Combinators - left-section::
-* Unit extras - Combinators - right-section::
-
-@end menu
-
-
-@node Unit extras - Combinators - any?, Unit extras - Combinators - none?,  , Unit extras - Combinators
-@subsection any?
-
-
-@verbatim
-[procedure] (any? X)
-@end verbatim
-Ignores its argument and always returns @code{#t}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - none?, Unit extras - Combinators - always?, Unit extras - Combinators - any?, Unit extras - Combinators
-@subsection none?
-
-
-@verbatim
-[procedure] (none? X)
-@end verbatim
-Ignores its argument and always returns @code{#f}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - always?, Unit extras - Combinators - never?, Unit extras - Combinators - none?, Unit extras - Combinators
-@subsection always?
-
-
-@verbatim
-[procedure] (always? ...)
-@end verbatim
-Ignores its arguments and always returns @code{#t}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - never?, Unit extras - Combinators - constantly, Unit extras - Combinators - always?, Unit extras - Combinators
-@subsection never?
-
-
-@verbatim
-[procedure] (never? ...)
-@end verbatim
-Ignores its arguments and always returns @code{#f}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - constantly, Unit extras - Combinators - complement, Unit extras - Combinators - never?, Unit extras - Combinators
-@subsection constantly
-
-
-@verbatim
-[procedure] (constantly X ...)
-@end verbatim
-Returns a procedure that always returns the values @code{X ...} regardless of the number and value of its arguments.
-
-@example
-(constantly X) <@strong{=>} (@strong{lambda} args X)
-@end example
-@node Unit extras - Combinators - complement, Unit extras - Combinators - compose, Unit extras - Combinators - constantly, Unit extras - Combinators
-@subsection complement
-
-
-@verbatim
-[procedure] (complement PROC)
-@end verbatim
-Returns a procedure that returns the boolean inverse of @code{PROC}.
-
-@example
-(complement PROC) <@strong{=>} (@strong{lambda} (x) (not (PROC x)))
-@end example
-@node Unit extras - Combinators - compose, Unit extras - Combinators - conjoin, Unit extras - Combinators - complement, Unit extras - Combinators
-@subsection compose
-
-
-@verbatim
-[procedure] (compose PROC1 PROC2 ...)
-@end verbatim
-Returns a procedure that represents the composition of the argument-procedures @code{PROC1 PROC2 ...}.
-
-@example
-(compose F G) <@strong{=>} (@strong{lambda} args
-                      (call-with-values
-                         (@strong{lambda} () (apply G args))
-                         F))
-@end example
-@code{(compose)} is equivalent to @code{values}.
-
-@node Unit extras - Combinators - conjoin, Unit extras - Combinators - disjoin, Unit extras - Combinators - compose, Unit extras - Combinators
-@subsection conjoin
-
-
-@verbatim
-[procedure] (conjoin PRED ...)
-@end verbatim
-Returns a procedure that returns @code{#t} if its argument satisfies the predicates @code{PRED ...}. @example
-((conjoin odd? positive?) 33)   =@strong{=>}  #t
-((conjoin odd? positive?) -33)  =@strong{=>}  #f
-@end example
-
-
-@node Unit extras - Combinators - disjoin, Unit extras - Combinators - each, Unit extras - Combinators - conjoin, Unit extras - Combinators
-@subsection disjoin
-
-
-@verbatim
-[procedure] (disjoin PRED ...)
-@end verbatim
-Returns a procedure that returns @code{#t} if its argument satisfies any predicate @code{PRED ...}. @example
-((disjoin odd? positive?) 32)    =@strong{=>}  #t
-((disjoin odd? positive?) -32)   =@strong{=>}  #f
-@end example
-
-
-@node Unit extras - Combinators - each, Unit extras - Combinators - flip, Unit extras - Combinators - disjoin, Unit extras - Combinators
-@subsection each
-
-
-@verbatim
-[procedure] (each PROC ...)
-@end verbatim
-Returns a procedure that applies @code{PROC ...} to its arguments, and returns the result(s) of the last procedure application. For example
-
-@example
-(each pp eval)
-@end example
-is equivalent to
-
-@example
-(@strong{lambda} args
-  (apply pp args)
-  (apply eval args) )
-@end example
-@code{(each PROC)} is equivalent to @code{PROC} and @code{(each)} is equivalent to @code{noop}.
-
-@node Unit extras - Combinators - flip, Unit extras - Combinators - identity, Unit extras - Combinators - each, Unit extras - Combinators
-@subsection flip
-
-
-@verbatim
-[procedure] (flip PROC)
-@end verbatim
-Returns a two-argument procedure that calls @code{PROC} with its arguments swapped: @example
-(flip PROC) <@strong{=>} (@strong{lambda} (x y) (PROC y x))
-@end example
-
-
-@node Unit extras - Combinators - identity, Unit extras - Combinators - project, Unit extras - Combinators - flip, Unit extras - Combinators
-@subsection identity
-
-
-@verbatim
-[procedure] (identity X)
-@end verbatim
-Returns its sole argument @code{X}.
-
-@node Unit extras - Combinators - project, Unit extras - Combinators - list-of, Unit extras - Combinators - identity, Unit extras - Combinators
-@subsection project
-
-
-@verbatim
-[procedure] (project N)
-@end verbatim
-Returns a procedure that returns its @code{N}th argument (starting from 0).
-
-@node Unit extras - Combinators - list-of, Unit extras - Combinators - noop, Unit extras - Combinators - project, Unit extras - Combinators
-@subsection list-of
-
-
-@verbatim
-[procedure] (list-of PRED)
-@end verbatim
-Returns a procedure of one argument that returns @code{#t} when applied to a list of elements that all satisfy the predicate procedure @code{PRED}, or @code{#f} otherwise.
-
-@example
-((list-of even?) '(1 2 3))   =@strong{=>} #f
-((list-of number?) '(1 2 3)) =@strong{=>} #t
-@end example
-@node Unit extras - Combinators - noop, Unit extras - Combinators - o, Unit extras - Combinators - list-of, Unit extras - Combinators
-@subsection noop
-
-
-@verbatim
-[procedure] (noop X ...)
-@end verbatim
-Ignores it's arguments, does nothing and returns an unspecified value.
-
-@node Unit extras - Combinators - o, Unit extras - Combinators - left-section, Unit extras - Combinators - noop, Unit extras - Combinators
-@subsection o
-
-
-@verbatim
-[procedure] (o PROC ...)
-@end verbatim
-A single value version of @code{compose} (slightly faster). @code{(o)} is equivalent to @code{identity}.
-
-@node Unit extras - Combinators - left-section, Unit extras - Combinators - right-section, Unit extras - Combinators - o, Unit extras - Combinators
-@subsection left-section
-
-
-@verbatim
-[procedure] (left-section PROC ARG0 ...)
-@end verbatim
-Returns an n-ary procedure that partially applies its' arguments @code{ARG0 ...} from the left (normal order). Sort of a n-ary curry.
-
-@node Unit extras - Combinators - right-section,  , Unit extras - Combinators - left-section, Unit extras - Combinators
-@subsection right-section
-
-
-@verbatim
-[procedure] (right-section PROC ARG0 ...)
-@end verbatim
-Returns an n-ary procedure that partially applies its' arguments @code{ARG0 ...} from the right (reverse order). Sort of a n-ary curry.
-
-@node Unit extras - Binary searching,  , Unit extras - Combinators, Unit extras
-@section Binary searching
-
-@menu
-* Unit extras - Binary searching - binary-search::
-
-@end menu
-
-
-@node Unit extras - Binary searching - binary-search,  ,  , Unit extras - Binary searching
-@subsection binary-search
-
-
-@verbatim
-[procedure] (binary-search SEQUENCE PROC)
-@end verbatim
-Performs a binary search in @code{SEQUENCE}, which should be a sorted list or vector.  @code{PROC} is called to compare items in the sequence, should accept a single argument and return an exact integer: zero if the searched value is equal to the current item, negative if the searched value is @emph{less} than the current item, and positive otherwise. Returns the index of the found value or @code{#f} otherwise.
-
-Previous: @ref{Unit eval, Unit eval}
+Previous: @ref{Unit data-structures, Unit data-structures}
 
 Next: @ref{Unit srfi-1, Unit srfi-1} 
 
@@ -6524,7 +6498,7 @@ Previous: @ref{Unit srfi-4, Unit srfi-4}
 
 Next: @ref{Unit srfi-14, Unit srfi-14} 
 
-@node Unit srfi-14, Unit match, Unit srfi-13, Top
+@node Unit srfi-14, Unit srfi-69, Unit srfi-13, Top
 @chapter Unit srfi-14
 
 
@@ -6539,447 +6513,9 @@ This library provides only the Latin-1 character set.
 
 Previous: @ref{Unit srfi-13, Unit srfi-13}
 
-Next: @ref{Unit match, Unit match} 
-
-@node Unit match, Unit regex, Unit srfi-14, Top
-@chapter Unit match
-
-
-The runtime-support code for the @uref{http://chicken.wiki.br/Pattern%20matching, Pattern Matching} extensions. Note that to use the macros in normal compiled code it is not required to declare this unit as used. It is only necessary to do so if forms containing these macros are to be expanded at runtime. 
-
-Previous: @ref{Unit srfi-14, Unit srfi-14}
-
-Next: @ref{Unit regex, Unit regex}  
-
-@node Unit regex, Unit srfi-18, Unit match, Top
-@chapter Unit regex
-
-@menu
-* Unit regex - grep::
-* Unit regex - glob->regexp::
-* Unit regex - glob?::
-* Unit regex - regexp::
-* Unit regex - regexp*::
-* Unit regex - regexp?::
-* Unit regex - regexp-optimize::
-* Unit regex - string-match::
-* Unit regex - string-match-positions::
-* Unit regex - string-search::
-* Unit regex - string-search-positions::
-* Unit regex - string-split-fields::
-* Unit regex - string-substitute::
-* Unit regex - string-substitute*::
-* Unit regex - regexp-escape::
-* Unit regex - make-anchored-pattern::
-
-@end menu
-
-
-This library unit provides support for regular expressions. The regular  expression package used is @code{PCRE} (@emph{Perl Compatible Regular Expressions})  written by Philip Hazel. See @uref{http://www.pcre.org, http://www.pcre.org} for information about the particular regexp flavor and extensions provided by this library.
-
-To test that PCRE support has been built into Chicken properly, try:
-
-@example
-(require 'regex)
-(test-feature? 'pcre) @strong{=>} t
-@end example
-@node Unit regex - grep, Unit regex - glob->regexp,  , Unit regex
-@section grep
-
-
-@verbatim
-[procedure] (grep REGEX LIST)
-@end verbatim
-Returns all items of @code{LIST} that match the regular expression @code{REGEX}.  This procedure could be defined as follows:
-
-@example
-(@strong{define} (@strong{grep} regex lst)
-  (filter (@strong{lambda} (x) (string-search regex x)) lst) )
-@end example
-@node Unit regex - glob->regexp, Unit regex - glob?, Unit regex - grep, Unit regex
-@section glob->regexp
-
-
-@verbatim
-[procedure] (glob->regexp PATTERN)
-@end verbatim
-Converts the file-pattern @code{PATTERN} into a regular expression.
-
-@example
-(glob->regexp @strong{"foo.*"})
-@strong{=>} @strong{"foo\..*"}
-@end example
-@code{PATTERN} should follow "glob" syntax. Allowed wildcards are
-
-@verbatim
-*
-[C...]
-[C1-C2]
-[-C...]
-?
-@end verbatim
-@node Unit regex - glob?, Unit regex - regexp, Unit regex - glob->regexp, Unit regex
-@section glob?
-
-
-@verbatim
-[procedure] (glob? STRING)
-@end verbatim
-Does the @code{STRING} have any "glob" wildcards?
-
-A string without any "glob" wildcards does not meet the criteria, even though it technically is a valid "glob" file-pattern.
-
-@node Unit regex - regexp, Unit regex - regexp*, Unit regex - glob?, Unit regex
-@section regexp
-
-
-@verbatim
-[procedure] (regexp STRING [IGNORECASE [IGNORESPACE [UTF8]]])
-@end verbatim
-Returns a precompiled regular expression object for @code{string}. The optional arguments @code{IGNORECASE}, @code{IGNORESPACE} and @code{UTF8} specify whether the regular expression should be matched with case- or whitespace-differences ignored, or whether the string should be treated as containing UTF-8 encoded characters, respectively.
-
-@node Unit regex - regexp*, Unit regex - regexp?, Unit regex - regexp, Unit regex
-@section regexp*
-
-
-@verbatim
-[procedure] (regexp* STRING [OPTIONS [TABLES]])
-@end verbatim
-Returns a precompiled regular expression object for @code{string}. The optional argument @code{OPTIONS} must be a list of option symbols. The optional argument @code{TABLES} must be a character definitions table (not defined here).
-
-Option Symbols:
-
-@table @b
-@item caseless
-
-Character case insensitive match
-@item multiline
-
-Equivalent to Perl's /m option
-@item dotall
-
-Equivalent to Perl's /s option
-@item extended
-
-Ignore whitespace
-@item anchored
-
-Anchor pattern match
-@item dollar-endonly
-
-`$' metacharacter in the pattern matches only at the end of the subject string
-@item extra
-
-Currently of very little use
-@item notbol
-
-First character of the string is not the beginning of a line
-@item noteol
-
-End of the string is not the end of a line
-@item ungreedy
-
-Inverts the "greediness" of the quantifiers so that they are not greedy by default
-@item notempty
-
-The empty string is not considered to be a valid match
-@item utf8
-
-UTF-8 encoded characters
-@item no-auto-capture
-
-Disables the use of numbered capturing parentheses
-@item no-utf8-check
-
-Skip valid UTF-8 sequence check
-@item auto-callout
-
-Automatically inserts callout items (not defined here)
-@item partial
-
-Partial match ok
-@item firstline
-
-An unanchored pattern is required to match before or at the first newline
-@item dupnames
-
-Names used to identify capturing subpatterns need not be unique
-@item newline-cr
-
-Newline definition is `\r'
-@item newline-lf
-
-Newline definition is `\n'
-@item newline-crlf
-
-Newline definition is `\r\n'
-@item newline-anycrlf
-
-Newline definition is any of `\r', `\n', or `\r\n'
-@item newline-any
-
-Newline definition is any Unicode newline sequence
-@item bsr-anycrlf
-
-`\R' escape sequence matches only CR, LF, or CRLF
-@item bsr-unicode
-
-`\R' escape sequence matches only Unicode newline sequence
-@item dfa-shortest
-
-Currently unused
-@item dfa-restart
-
-Currently unused
-
-@end table
-@node Unit regex - regexp?, Unit regex - regexp-optimize, Unit regex - regexp*, Unit regex
-@section regexp?
-
-
-@verbatim
-[procedure] (regexp? X)
-@end verbatim
-Returns @code{#t} if @code{X} is a precompiled regular expression, or @code{#f} otherwise.
-
-@node Unit regex - regexp-optimize, Unit regex - string-match, Unit regex - regexp?, Unit regex
-@section regexp-optimize
-
-
-@verbatim
-[procedure] (regexp-optimize RX)
-
-@end verbatim
-Perform available optimizations for the precompiled regular expression @code{RX}. Returns @code{#t} when optimization performed, and @code{#f} otherwise.
-
-@node Unit regex - string-match, Unit regex - string-match-positions, Unit regex - regexp-optimize, Unit regex
-@section string-match
-
-
-@node Unit regex - string-match-positions, Unit regex - string-search, Unit regex - string-match, Unit regex
-@section string-match-positions
-
-
-@verbatim
-[procedure] (string-match REGEXP STRING [START])
-[procedure] (string-match-positions REGEXP STRING [START])
-@end verbatim
-Matches the regular expression in @code{REGEXP} (a string or a precompiled regular expression) with @code{STRING} and returns either @code{#f} if the match failed, or a list of matching groups, where the first element is the complete match. If the optional argument @code{START} is supplied, it specifies the starting position in @code{STRING}.  For each matching group the result-list contains either: @code{#f} for a non-matching but optional group; a list of start- and end-position of the match in @code{STRING} (in the case of @code{string-match-positions}); or the matching substring (in the case of @code{string-match}). Note that the exact string is matched. For searching a pattern inside a string, see below. Note also that @code{string-match} is implemented by calling @code{string-search} with the regular expression wrapped in @code{^ ... $}. If invoked with a precompiled regular expression argument (by using @code{regexp}), @code{string-match} is identical to @code{string-search}.
-
-@node Unit regex - string-search, Unit regex - string-search-positions, Unit regex - string-match-positions, Unit regex
-@section string-search
-
-
-@node Unit regex - string-search-positions, Unit regex - string-split-fields, Unit regex - string-search, Unit regex
-@section string-search-positions
-
-
-@verbatim
-[procedure] (string-search REGEXP STRING [START [RANGE]])
-[procedure] (string-search-positions REGEXP STRING [START [RANGE]])
-@end verbatim
-Searches for the first match of the regular expression in @code{REGEXP} with @code{STRING}. The search can be limited to @code{RANGE} characters.
-
-@node Unit regex - string-split-fields, Unit regex - string-substitute, Unit regex - string-search-positions, Unit regex
-@section string-split-fields
-
-
-@verbatim
-[procedure] (string-split-fields REGEXP STRING [MODE [START]])
-@end verbatim
-Splits @code{STRING} into a list of fields according to @code{MODE}, where @code{MODE} can be the keyword @code{#:infix} (@code{REGEXP} matches field separator), the keyword @code{#:suffix} (@code{REGEXP} matches field terminator) or @code{#t} (@code{REGEXP} matches field), which is the default.
-
-@example
-(@strong{define} @strong{s} @strong{"this is a string 1, 2, 3,"})
-
-(string-split-fields @strong{"[^ ]+"} s)
-
-  @strong{=>} (@strong{"this"} @strong{"is"} @strong{"a"} @strong{"string"} @strong{"1,"} @strong{"2,"} @strong{"3,"})
-
-(string-split-fields @strong{" "} s #:infix)
-
-  @strong{=>} (@strong{"this"} @strong{"is"} @strong{"a"} @strong{"string"} @strong{"1,"} @strong{"2,"} @strong{"3,"})
-
-(string-split-fields @strong{","} s #:suffix)
- 
-  @strong{=>} (@strong{"this is a string 1"} @strong{" 2"} @strong{" 3"})
-@end example
-@node Unit regex - string-substitute, Unit regex - string-substitute*, Unit regex - string-split-fields, Unit regex
-@section string-substitute
-
-
-@verbatim
-[procedure] (string-substitute REGEXP SUBST STRING [MODE])
-@end verbatim
-Searches substrings in @code{STRING} that match @code{REGEXP} and substitutes them with the string @code{SUBST}. The substitution can contain references to subexpressions in  @code{REGEXP} with the @code{\NUM} notation, where @code{NUM} refers to the NUMth parenthesized expression. The optional argument @code{MODE} defaults to 1 and specifies the number of the match to be substituted. Any non-numeric index specifies that all matches are to be substituted.
-
-@example
-(string-substitute @strong{"([0-9]+) (eggs|chicks)"}
-                   @strong{"\\2 (\\1)"} @strong{"99 eggs or 99 chicks"} 2)
-@strong{=>} @strong{"99 eggs or chicks (99)"}
-@end example
-Note that a regular expression that matches an empty string will signal an error.
-
-@node Unit regex - string-substitute*, Unit regex - regexp-escape, Unit regex - string-substitute, Unit regex
-@section string-substitute*
-
-
-@verbatim
-[procedure] (string-substitute* STRING SMAP [MODE])
-@end verbatim
-Substitutes elements of @code{STRING} with @code{string-substitute} according to @code{SMAP}. @code{SMAP} should be an association-list where each element of the list is a pair of the form @code{(MATCH . REPLACEMENT)}. Every occurrence of the regular expression @code{MATCH} in @code{STRING} will be replaced by the string @code{REPLACEMENT}
-
-@example
-(string-substitute* @strong{"<h1>Hello, world!</h1>"}
-                    '((@strong{"<[/A-Za-z0-9]+>"} . @strong{""})))
-
-@strong{=>}  @strong{"Hello, world!"}
-@end example
-@node Unit regex - regexp-escape, Unit regex - make-anchored-pattern, Unit regex - string-substitute*, Unit regex
-@section regexp-escape
-
-
-@verbatim
-[procedure] (regexp-escape STRING)
-@end verbatim
-Escapes all special characters in @code{STRING} with @code{\}, so that the string can be embedded into a regular expression.
-
-@example
-(regexp-escape @strong{"^[0-9]+:.*$"})
-@strong{=>}  @strong{"\\^\\[0-9\\]\\+:.\n.\\*\\$"}
-@end example
-@node Unit regex - make-anchored-pattern,  , Unit regex - regexp-escape, Unit regex
-@section make-anchored-pattern
-
-
-@verbatim
-[procedure] (make-anchored-pattern REGEXP [WITHOUT-BOL [WITHOUT-EOL]])
-@end verbatim
-Makes an anchored pattern from @code{REGEXP} (a string or a precompiled regular expression) and returns the updated pattern. When @code{WITHOUT-BOL} is @code{#t} the beginning-of-line anchor is not added. When @code{WITHOUT-EOL} is @code{#t} the end-of-line anchor is not added.
-
-The @code{WITHOUT-BOL} and @{WITHOUT-EOL@}@} arguments are ignored for a precompiled regular expression.
-
-Previous: @ref{Unit match, Unit match}
-
-Next: @ref{Unit srfi-18, Unit srfi-18} 
-
-@node Unit srfi-18, Unit srfi-69, Unit regex, Top
-@chapter Unit srfi-18
-
-@menu
-* Unit srfi-18 - thread-signal!::
-* Unit srfi-18 - thread-quantum::
-* Unit srfi-18 - thread-quantum-set!::
-* Unit srfi-18 - thread-suspend!::
-* Unit srfi-18 - thread-resume!::
-* Unit srfi-18 - thread-wait-for-i/o!::
-* Unit srfi-18 - time->milliseconds::
-
-@end menu
-
-
-A simple multithreading package. This threading package follows largely the specification of SRFI-18. For more information see the documentation for @uref{http://srfi.schemers.org/srfi-18/srfi-18.html, SRFI-18}.
-
-@b{Notes:}
-
-@itemize
-@item @code{thread-start!} accepts a thunk (a zero argument procedure) as argument, which is equivalent to @code{(thread-start! (make-thread THUNK))}.
-
-@item @code{thread-sleep!} accepts a seconds real number value in addition to a time object.
-
-@item When an uncaught exception (i.e. an error) is signalled in a thread other than the primordial thread and warnings are enabled (see: @code{enable-warnings}, then a warning message is written to the port that is the value of @code{(current-error-port)}.
-
-@item Blocking I/O will block all threads, except for some socket operations (see the section about the @code{tcp} unit). An exception is the read-eval-print loop on UNIX platforms: waiting for input will not block other threads, provided the current input port reads input from a console.
-
-@item It is generally not a good idea for one thread to call a continuation created by another thread, if @code{dynamic-wind} is involved.
-
-@item When more than one thread compete for the current time-slice, the thread that was waiting first will become the next runnable thread.
-
-@item The dynamic environment of a thread consists of the following state:@itemize
-@item The current input-, output- and error-port
-
-@item The current exception handler
-
-@item The values of all current parameters (created by @code{make-parameter})
-
-@item Any pending @code{dynamic-wind} thunks.
-
-
-@end itemize
-
-
-
-@end itemize
-The following procedures are provided, in addition to the procedures defined in SRFI-18:
-
-@node Unit srfi-18 - thread-signal!, Unit srfi-18 - thread-quantum,  , Unit srfi-18
-@section thread-signal!
-
-
-@verbatim
-[procedure] (thread-signal! THREAD X)
-@end verbatim
-This will cause @code{THREAD} to signal the condition @code{X} once it is scheduled for execution. After signalling the condition, the thread continues with its normal execution.
-
-@node Unit srfi-18 - thread-quantum, Unit srfi-18 - thread-quantum-set!, Unit srfi-18 - thread-signal!, Unit srfi-18
-@section thread-quantum
-
-
-@verbatim
-[procedure] (thread-quantum THREAD)
-@end verbatim
-Returns the quantum of @code{THREAD}, which is an exact integer specifying the approximate time-slice of the thread in milliseconds.
-
-@node Unit srfi-18 - thread-quantum-set!, Unit srfi-18 - thread-suspend!, Unit srfi-18 - thread-quantum, Unit srfi-18
-@section thread-quantum-set!
-
-
-@verbatim
-[procedure] (thread-quantum-set! THREAD QUANTUM)
-@end verbatim
-Sets the quantum of @code{THREAD} to @code{QUANTUM}.
-
-@node Unit srfi-18 - thread-suspend!, Unit srfi-18 - thread-resume!, Unit srfi-18 - thread-quantum-set!, Unit srfi-18
-@section thread-suspend!
-
-
-@verbatim
-[procedure] (thread-suspend! THREAD)
-@end verbatim
-Suspends the execution of @code{THREAD} until resumed.
-
-@node Unit srfi-18 - thread-resume!, Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18 - thread-suspend!, Unit srfi-18
-@section thread-resume!
-
-
-@verbatim
-[procedure] (thread-resume! THREAD)
-@end verbatim
-Readies the suspended thread @code{THREAD}.
-
-@node Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18 - time->milliseconds, Unit srfi-18 - thread-resume!, Unit srfi-18
-@section thread-wait-for-i/o!
-
-
-@verbatim
-[procedure] (thread-wait-for-i/o! FD [MODE])
-@end verbatim
-Suspends the current thread until input (@code{MODE} is @code{#:input}), output (@code{MODE} is @code{#:output}) or both (@code{MODE} is @code{#:all}) is available. @code{FD} should be a file-descriptor (not a port!) open for input or output, respectively.
-
-@node Unit srfi-18 - time->milliseconds,  , Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18
-@section time->milliseconds
-
-
-@verbatim
-[procedure] (time->milliseconds TIME)
-@end verbatim
-Converts a time object (as created via @code{current-time}) into an exact integer representing the number of milliseconds since process startup.
-
-Previous: @ref{Unit regex, Unit regex}
-
 Next: @ref{Unit srfi-69, Unit srfi-69}  
 
-@node Unit srfi-69, Unit posix, Unit srfi-18, Top
+@node Unit srfi-69, Unit match, Unit srfi-14, Top
 @chapter Unit srfi-69
 
 @menu
@@ -7486,11 +7022,464 @@ Synonym for @code{equal?-hash}.
 @end verbatim
 Synonym for @code{eq?-hash}.
 
-Previous: @ref{Unit srfi-18, Unit srfi-18}
+Previous: @ref{Unit srfi-14, Unit srfi-14} Next: @ref{Unit match, Unit match}
+
+@node Unit match, Unit regex, Unit srfi-69, Top
+@chapter Unit match
+
+
+The runtime-support code for the @uref{http://chicken.wiki.br/Pattern%20matching, Pattern Matching} extensions. Note that to use the macros in normal compiled code it is not required to declare this unit as used. It is only necessary to do so if forms containing these macros are to be expanded at runtime. 
+
+Previous: @ref{Unit srfi-14, Unit srfi-14}
+
+Next: @ref{Unit regex, Unit regex}  
+
+@node Unit regex, Unit srfi-18, Unit match, Top
+@chapter Unit regex
+
+@menu
+* Unit regex - grep::
+* Unit regex - glob->regexp::
+* Unit regex - glob?::
+* Unit regex - regexp::
+* Unit regex - regexp*::
+* Unit regex - regexp?::
+* Unit regex - regexp-optimize::
+* Unit regex - string-match::
+* Unit regex - string-match-positions::
+* Unit regex - string-search::
+* Unit regex - string-search-positions::
+* Unit regex - string-split-fields::
+* Unit regex - string-substitute::
+* Unit regex - string-substitute*::
+* Unit regex - regexp-escape::
+* Unit regex - make-anchored-pattern::
+
+@end menu
+
+
+This library unit provides support for regular expressions. The regular  expression package used is @code{PCRE} (@emph{Perl Compatible Regular Expressions})  written by Philip Hazel. See @uref{http://www.pcre.org, http://www.pcre.org} for information about the particular regexp flavor and extensions provided by this library.
+
+To test that PCRE support has been built into Chicken properly, try:
+
+@example
+(require 'regex)
+(feature? 'pcre) @strong{=>} #t
+@end example
+@node Unit regex - grep, Unit regex - glob->regexp,  , Unit regex
+@section grep
+
+
+@verbatim
+[procedure] (grep REGEX LIST)
+@end verbatim
+Returns all items of @code{LIST} that match the regular expression @code{REGEX}.  This procedure could be defined as follows:
+
+@example
+(@strong{define} (@strong{grep} regex lst)
+  (filter (@strong{lambda} (x) (string-search regex x)) lst) )
+@end example
+@node Unit regex - glob->regexp, Unit regex - glob?, Unit regex - grep, Unit regex
+@section glob->regexp
+
+
+@verbatim
+[procedure] (glob->regexp PATTERN)
+@end verbatim
+Converts the file-pattern @code{PATTERN} into a regular expression.
+
+@example
+(glob->regexp @strong{"foo.*"})
+@strong{=>} @strong{"foo\..*"}
+@end example
+@code{PATTERN} should follow "glob" syntax. Allowed wildcards are
+
+@verbatim
+*
+[C...]
+[C1-C2]
+[-C...]
+?
+@end verbatim
+@node Unit regex - glob?, Unit regex - regexp, Unit regex - glob->regexp, Unit regex
+@section glob?
+
+
+@verbatim
+[procedure] (glob? STRING)
+@end verbatim
+Does the @code{STRING} have any "glob" wildcards?
+
+A string without any "glob" wildcards does not meet the criteria, even though it technically is a valid "glob" file-pattern.
+
+@node Unit regex - regexp, Unit regex - regexp*, Unit regex - glob?, Unit regex
+@section regexp
+
+
+@verbatim
+[procedure] (regexp STRING [IGNORECASE [IGNORESPACE [UTF8]]])
+@end verbatim
+Returns a precompiled regular expression object for @code{string}. The optional arguments @code{IGNORECASE}, @code{IGNORESPACE} and @code{UTF8} specify whether the regular expression should be matched with case- or whitespace-differences ignored, or whether the string should be treated as containing UTF-8 encoded characters, respectively.
+
+@node Unit regex - regexp*, Unit regex - regexp?, Unit regex - regexp, Unit regex
+@section regexp*
+
+
+@verbatim
+[procedure] (regexp* STRING [OPTIONS [TABLES]])
+@end verbatim
+Returns a precompiled regular expression object for @code{string}. The optional argument @code{OPTIONS} must be a list of option symbols. The optional argument @code{TABLES} must be a character definitions table (not defined here).
+
+Option Symbols:
+
+@table @b
+@item caseless
+
+Character case insensitive match
+@item multiline
+
+Equivalent to Perl's /m option
+@item dotall
+
+Equivalent to Perl's /s option
+@item extended
+
+Ignore whitespace
+@item anchored
+
+Anchor pattern match
+@item dollar-endonly
+
+`$' metacharacter in the pattern matches only at the end of the subject string
+@item extra
+
+Currently of very little use
+@item notbol
+
+First character of the string is not the beginning of a line
+@item noteol
+
+End of the string is not the end of a line
+@item ungreedy
+
+Inverts the "greediness" of the quantifiers so that they are not greedy by default
+@item notempty
+
+The empty string is not considered to be a valid match
+@item utf8
+
+UTF-8 encoded characters
+@item no-auto-capture
+
+Disables the use of numbered capturing parentheses
+@item no-utf8-check
+
+Skip valid UTF-8 sequence check
+@item auto-callout
+
+Automatically inserts callout items (not defined here)
+@item partial
+
+Partial match ok
+@item firstline
+
+An unanchored pattern is required to match before or at the first newline
+@item dupnames
+
+Names used to identify capturing subpatterns need not be unique
+@item newline-cr
+
+Newline definition is `\r'
+@item newline-lf
+
+Newline definition is `\n'
+@item newline-crlf
+
+Newline definition is `\r\n'
+@item newline-anycrlf
+
+Newline definition is any of `\r', `\n', or `\r\n'
+@item newline-any
+
+Newline definition is any Unicode newline sequence
+@item bsr-anycrlf
+
+`\R' escape sequence matches only CR, LF, or CRLF
+@item bsr-unicode
+
+`\R' escape sequence matches only Unicode newline sequence
+@item dfa-shortest
+
+Currently unused
+@item dfa-restart
+
+Currently unused
+
+@end table
+@node Unit regex - regexp?, Unit regex - regexp-optimize, Unit regex - regexp*, Unit regex
+@section regexp?
+
+
+@verbatim
+[procedure] (regexp? X)
+@end verbatim
+Returns @code{#t} if @code{X} is a precompiled regular expression, or @code{#f} otherwise.
+
+@node Unit regex - regexp-optimize, Unit regex - string-match, Unit regex - regexp?, Unit regex
+@section regexp-optimize
+
+
+@verbatim
+[procedure] (regexp-optimize RX)
+
+@end verbatim
+Perform available optimizations for the precompiled regular expression @code{RX}. Returns @code{#t} when optimization performed, and @code{#f} otherwise.
+
+@node Unit regex - string-match, Unit regex - string-match-positions, Unit regex - regexp-optimize, Unit regex
+@section string-match
+
+
+@node Unit regex - string-match-positions, Unit regex - string-search, Unit regex - string-match, Unit regex
+@section string-match-positions
+
+
+@verbatim
+[procedure] (string-match REGEXP STRING [START])
+[procedure] (string-match-positions REGEXP STRING [START])
+@end verbatim
+Matches the regular expression in @code{REGEXP} (a string or a precompiled regular expression) with @code{STRING} and returns either @code{#f} if the match failed, or a list of matching groups, where the first element is the complete match. If the optional argument @code{START} is supplied, it specifies the starting position in @code{STRING}.  For each matching group the result-list contains either: @code{#f} for a non-matching but optional group; a list of start- and end-position of the match in @code{STRING} (in the case of @code{string-match-positions}); or the matching substring (in the case of @code{string-match}). Note that the exact string is matched. For searching a pattern inside a string, see below. Note also that @code{string-match} is implemented by calling @code{string-search} with the regular expression wrapped in @code{^ ... $}. If invoked with a precompiled regular expression argument (by using @code{regexp}), @code{string-match} is identical to @code{string-search}.
+
+@node Unit regex - string-search, Unit regex - string-search-positions, Unit regex - string-match-positions, Unit regex
+@section string-search
+
+
+@node Unit regex - string-search-positions, Unit regex - string-split-fields, Unit regex - string-search, Unit regex
+@section string-search-positions
+
+
+@verbatim
+[procedure] (string-search REGEXP STRING [START [RANGE]])
+[procedure] (string-search-positions REGEXP STRING [START [RANGE]])
+@end verbatim
+Searches for the first match of the regular expression in @code{REGEXP} with @code{STRING}. The search can be limited to @code{RANGE} characters.
+
+@node Unit regex - string-split-fields, Unit regex - string-substitute, Unit regex - string-search-positions, Unit regex
+@section string-split-fields
+
+
+@verbatim
+[procedure] (string-split-fields REGEXP STRING [MODE [START]])
+@end verbatim
+Splits @code{STRING} into a list of fields according to @code{MODE}, where @code{MODE} can be the keyword @code{#:infix} (@code{REGEXP} matches field separator), the keyword @code{#:suffix} (@code{REGEXP} matches field terminator) or @code{#t} (@code{REGEXP} matches field), which is the default.
+
+@example
+(@strong{define} @strong{s} @strong{"this is a string 1, 2, 3,"})
+
+(string-split-fields @strong{"[^ ]+"} s)
+
+  @strong{=>} (@strong{"this"} @strong{"is"} @strong{"a"} @strong{"string"} @strong{"1,"} @strong{"2,"} @strong{"3,"})
+
+(string-split-fields @strong{" "} s #:infix)
+
+  @strong{=>} (@strong{"this"} @strong{"is"} @strong{"a"} @strong{"string"} @strong{"1,"} @strong{"2,"} @strong{"3,"})
+
+(string-split-fields @strong{","} s #:suffix)
+ 
+  @strong{=>} (@strong{"this is a string 1"} @strong{" 2"} @strong{" 3"})
+@end example
+@node Unit regex - string-substitute, Unit regex - string-substitute*, Unit regex - string-split-fields, Unit regex
+@section string-substitute
+
+
+@verbatim
+[procedure] (string-substitute REGEXP SUBST STRING [MODE])
+@end verbatim
+Searches substrings in @code{STRING} that match @code{REGEXP} and substitutes them with the string @code{SUBST}. The substitution can contain references to subexpressions in  @code{REGEXP} with the @code{\NUM} notation, where @code{NUM} refers to the NUMth parenthesized expression. The optional argument @code{MODE} defaults to 1 and specifies the number of the match to be substituted. Any non-numeric index specifies that all matches are to be substituted.
+
+@example
+(string-substitute @strong{"([0-9]+) (eggs|chicks)"}
+                   @strong{"\\2 (\\1)"} @strong{"99 eggs or 99 chicks"} 2)
+@strong{=>} @strong{"99 eggs or chicks (99)"}
+@end example
+Note that a regular expression that matches an empty string will signal an error.
+
+@node Unit regex - string-substitute*, Unit regex - regexp-escape, Unit regex - string-substitute, Unit regex
+@section string-substitute*
+
+
+@verbatim
+[procedure] (string-substitute* STRING SMAP [MODE])
+@end verbatim
+Substitutes elements of @code{STRING} with @code{string-substitute} according to @code{SMAP}. @code{SMAP} should be an association-list where each element of the list is a pair of the form @code{(MATCH . REPLACEMENT)}. Every occurrence of the regular expression @code{MATCH} in @code{STRING} will be replaced by the string @code{REPLACEMENT}
+
+@example
+(string-substitute* @strong{"<h1>Hello, world!</h1>"}
+                    '((@strong{"<[/A-Za-z0-9]+>"} . @strong{""})))
+
+@strong{=>}  @strong{"Hello, world!"}
+@end example
+@node Unit regex - regexp-escape, Unit regex - make-anchored-pattern, Unit regex - string-substitute*, Unit regex
+@section regexp-escape
+
+
+@verbatim
+[procedure] (regexp-escape STRING)
+@end verbatim
+Escapes all special characters in @code{STRING} with @code{\}, so that the string can be embedded into a regular expression.
+
+@example
+(regexp-escape @strong{"^[0-9]+:.*$"})
+@strong{=>}  @strong{"\\^\\[0-9\\]\\+:.\n.\\*\\$"}
+@end example
+@node Unit regex - make-anchored-pattern,  , Unit regex - regexp-escape, Unit regex
+@section make-anchored-pattern
+
+
+@verbatim
+[procedure] (make-anchored-pattern REGEXP [WITHOUT-BOL [WITHOUT-EOL]])
+@end verbatim
+Makes an anchored pattern from @code{REGEXP} (a string or a precompiled regular expression) and returns the updated pattern. When @code{WITHOUT-BOL} is @code{#t} the beginning-of-line anchor is not added. When @code{WITHOUT-EOL} is @code{#t} the end-of-line anchor is not added.
+
+The @code{WITHOUT-BOL} and @{WITHOUT-EOL@}@} arguments are ignored for a precompiled regular expression.
+
+Previous: @ref{Unit match, Unit match}
+
+Next: @ref{Unit srfi-18, Unit srfi-18} 
+
+@node Unit srfi-18, Unit posix, Unit regex, Top
+@chapter Unit srfi-18
+
+@menu
+* Unit srfi-18 - thread-signal!::
+* Unit srfi-18 - thread-quantum::
+* Unit srfi-18 - thread-quantum-set!::
+* Unit srfi-18 - thread-suspend!::
+* Unit srfi-18 - thread-resume!::
+* Unit srfi-18 - thread-wait-for-i/o!::
+* Unit srfi-18 - time->milliseconds::
+* Unit srfi-18 - milliseconds->time::
+
+@end menu
+
+
+A simple multithreading package. This threading package follows largely the specification of SRFI-18. For more information see the documentation for @uref{http://srfi.schemers.org/srfi-18/srfi-18.html, SRFI-18}.
+
+@b{Notes:}
+
+@itemize
+@item @code{thread-start!} accepts a thunk (a zero argument procedure) as argument, which is equivalent to @code{(thread-start! (make-thread THUNK))}.
+
+@item @code{thread-sleep!} accepts a seconds real number value in addition to a time object.
+
+@item When an uncaught exception (i.e. an error) is signalled in a thread other than the primordial thread and warnings are enabled (see: @code{enable-warnings}, then a warning message is written to the port that is the value of @code{(current-error-port)}.
+
+@item Blocking I/O will block all threads, except for some socket operations (see the section about the @code{tcp} unit). An exception is the read-eval-print loop on UNIX platforms: waiting for input will not block other threads, provided the current input port reads input from a console.
+
+@item It is generally not a good idea for one thread to call a continuation created by another thread, if @code{dynamic-wind} is involved.
+
+@item When more than one thread compete for the current time-slice, the thread that was waiting first will become the next runnable thread.
+
+@item The dynamic environment of a thread consists of the following state:@itemize
+@item The current input-, output- and error-port
+
+@item The current exception handler
+
+@item The values of all current parameters (created by @code{make-parameter})
+
+@item Any pending @code{dynamic-wind} thunks.
+
+
+@end itemize
+
+
+
+@end itemize
+The following procedures are provided, in addition to the procedures defined in SRFI-18:
+
+@node Unit srfi-18 - thread-signal!, Unit srfi-18 - thread-quantum,  , Unit srfi-18
+@section thread-signal!
+
+
+@verbatim
+[procedure] (thread-signal! THREAD X)
+@end verbatim
+This will cause @code{THREAD} to signal the condition @code{X} once it is scheduled for execution. After signalling the condition, the thread continues with its normal execution.
+
+@node Unit srfi-18 - thread-quantum, Unit srfi-18 - thread-quantum-set!, Unit srfi-18 - thread-signal!, Unit srfi-18
+@section thread-quantum
+
+
+@verbatim
+[procedure] (thread-quantum THREAD)
+@end verbatim
+Returns the quantum of @code{THREAD}, which is an exact integer specifying the approximate time-slice of the thread in milliseconds.
+
+@node Unit srfi-18 - thread-quantum-set!, Unit srfi-18 - thread-suspend!, Unit srfi-18 - thread-quantum, Unit srfi-18
+@section thread-quantum-set!
+
+
+@verbatim
+[procedure] (thread-quantum-set! THREAD QUANTUM)
+@end verbatim
+Sets the quantum of @code{THREAD} to @code{QUANTUM}.
+
+@node Unit srfi-18 - thread-suspend!, Unit srfi-18 - thread-resume!, Unit srfi-18 - thread-quantum-set!, Unit srfi-18
+@section thread-suspend!
+
+
+@verbatim
+[procedure] (thread-suspend! THREAD)
+@end verbatim
+Suspends the execution of @code{THREAD} until resumed.
+
+@node Unit srfi-18 - thread-resume!, Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18 - thread-suspend!, Unit srfi-18
+@section thread-resume!
+
+
+@verbatim
+[procedure] (thread-resume! THREAD)
+@end verbatim
+Readies the suspended thread @code{THREAD}.
+
+@node Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18 - time->milliseconds, Unit srfi-18 - thread-resume!, Unit srfi-18
+@section thread-wait-for-i/o!
+
+
+@verbatim
+[procedure] (thread-wait-for-i/o! FD [MODE])
+@end verbatim
+Suspends the current thread until input (@code{MODE} is @code{#:input}), output (@code{MODE} is @code{#:output}) or both (@code{MODE} is @code{#:all}) is available. @code{FD} should be a file-descriptor (not a port!) open for input or output, respectively.
+
+@node Unit srfi-18 - time->milliseconds, Unit srfi-18 - milliseconds->time, Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18
+@section time->milliseconds
+
+
+@verbatim
+[procedure] (time->milliseconds TIME)
+@end verbatim
+Converts a time object (as created via @code{current-time}) into an exact integer representing the number of milliseconds since process startup.
+
+@node Unit srfi-18 - milliseconds->time,  , Unit srfi-18 - time->milliseconds, Unit srfi-18
+@section milliseconds->time
+
+
+@verbatim
+[procedure] (milliseconds->time ms)
+@end verbatim
+Converts into a time object an exact integer representing the number of milliseconds since process startup.
+
+This procedure may be useful in combination with @code{thread-sleep!} when your compilation unit is using @code{(declare fixnum-arithmetic)}.  In that case you won't be able to pass an inexact value to @code{thread-sleep!}, but you can do the following:
+
+@verbatim
+(define (thread-sleep!/ms ms)
+  (thread-sleep!
+   (milliseconds->time (+ ms (current-milliseconds)))))
+@end verbatim
+Previous: @ref{Unit regex, Unit regex}
 
 Next: @ref{Unit posix, Unit posix}  
 
-@node Unit posix, Unit utils, Unit srfi-69, Top
+@node Unit posix, Unit utils, Unit srfi-18, Top
 @chapter Unit posix
 
 @menu
@@ -7802,9 +7791,9 @@ Returns the name of the current working directory. If the optional argument @cod
 
 
 @verbatim
-[procedure] (create-directory NAME)
+[procedure] (create-directory NAME #!optional PARENTS?)
 @end verbatim
-Creates a directory with the pathname @code{NAME}.
+Creates a directory with the pathname @code{NAME}.  If the @code{PARENTS?} argument is given and not false, any nonextant parent directories are also created.
 
 @node Unit posix - Directories - delete-directory, Unit posix - Directories - directory, Unit posix - Directories - create-directory, Unit posix - Directories
 @subsection delete-directory
@@ -7840,7 +7829,7 @@ Returns @code{#t} if there exists a file with the name @code{NAME} and if that f
 @verbatim
 [procedure] (glob PATTERN1 ...)
 @end verbatim
-Returns a list of the pathnames of all existing files matching @code{PATTERN1 ...}, which should be strings containing the usual file-patterns (with @code{*} matching zero or more characters and @code{?} matching zero or one character).
+Returns a list of the pathnames of all existing files matching @code{PATTERN1 ...}, which should be strings containing the usual file-patterns (with @code{*} matching zero or more characters and @code{?} matching zero or one character).  Bug: wildcard characters are only recognized in the rightmost portion of the pattern.
 
 @node Unit posix - Directories - canonical-path, Unit posix - Directories - set-root-directory!, Unit posix - Directories - glob, Unit posix - Directories
 @subsection canonical-path
@@ -7849,11 +7838,11 @@ Returns a list of the pathnames of all existing files matching @code{PATTERN1 ..
 @verbatim
 [procedure] (canonical-path NAME)
 @end verbatim
-Returns a canonical path for @code{NAME}, which should be a string containing a path-or-filename.  The string returned by @code{canonical-path} is OS dependent; it may be quoted and used in a shell on the calling machine. (Quoting is suggested as shell special characters, including space, are not escaped.)  However, all path separators and prefixes are handled in an OS independent fashion.  Any appearance of @code{/} below imply @code{\\} is also handled.
+Returns a canonical path for @code{NAME}, which should be a string containing a path-or-filename.  The string returned by  @code{canonical-path} is OS dependent; it may be quoted and used in a shell on the calling machine. (Quoting is suggested as shell special characters, including space, are not escaped.)  However, all path separators and prefixes are handled in an OS independent fashion.  Any appearance of @code{/} below imply @code{\\} is also handled.
 
-The prefix for @code{NAME} determines what path to prepend.  If @code{NAME} begins with a @code{"~/"}, this prefix is stripped and the user's home directory is added.  If beginning with @code{/} or a DRIVE-LETTER:\\ combination, no additional path is added.  Otherwise, the current directory and separator are added.  All relative path elements and duplicate separators are processed and removed.  If @code{NAME} ends with a @code{/} or is empty, the appropriate slash is appended to the tail.
+The prefix for @code{NAME} determines what path to prepend.  If @code{NAME} begins with a @code{"~/"}, this prefix is stripped and the user's  home directory is added.  If beginning with @code{/} or a DRIVE-LETTER:\\ combination, no additional path is added.  Otherwise, the current directory and separator are added.  All relative path elements and duplicate separators are processed and removed.  If @code{NAME} ends with a @code{/} or is empty, the appropriate slash is appended to the tail.
 
-No directories or files are actually tested for existence; this procedure only canonicalises path syntax.
+No directories or files are actually tested for existence; this  procedure only canonicalises path syntax.
 
 @node Unit posix - Directories - set-root-directory!,  , Unit posix - Directories - canonical-path, Unit posix - Directories
 @subsection set-root-directory!
@@ -8283,7 +8272,7 @@ These procedures return @code{#t} if the current user has read, write or execute
 [procedure] (stat-symlink? FILENAME)
 [procedure] (stat-socket? FILENAME)
 @end verbatim
-These procedures return @code{#t} if the @code{FILENAME} given is of the appropriate type.
+These procedures return @code{#t} if the @code{FILENAME} given is of the  appropriate type.
 
 @node Unit posix - Changing file attributes, Unit posix - Processes, Unit posix - Retrieving file attributes, Unit posix
 @section Changing file attributes
@@ -8770,7 +8759,7 @@ Sets an internal timer to raise the @code{signal/alrm} after @code{SECONDS} are 
 @verbatim
 [procedure] (set-signal-handler! SIGNUM PROC)
 @end verbatim
-Establishes the procedure of one argument @code{PROC} as the handler for the signal with the code @code{SIGNUM}. @code{PROC} is called with the signal number as its sole argument. If the argument @code{PROC} is @code{#f} then any signal handler will be removed.
+Establishes the procedure of one argument @code{PROC} as the handler for the signal with the code @code{SIGNUM}. @code{PROC} is called with the signal number as its sole argument. If the argument @code{PROC} is @code{#f} then any signal handler will be removed, and the corresponding signal set to @code{SIG_IGN}.
 
 Note that is is unspecified in which thread of execution the signal handler will be invoked.
 
@@ -9027,7 +9016,6 @@ Unmaps the section of a file mapped to memory using the C function @code{munmap(
 * Unit posix - Date and time routines - seconds->utc-time::
 * Unit posix - Date and time routines - utc-time->seconds::
 * Unit posix - Date and time routines - time->string::
-* Unit posix - Date and time routines - string->time::
 
 @end menu
 
@@ -9039,7 +9027,7 @@ Unmaps the section of a file mapped to memory using the C function @code{munmap(
 @verbatim
 [procedure] (seconds->local-time SECONDS)
 @end verbatim
-Converts the time value represented in @code{SECONDS} into a ten-element vector (@code{TIME-VECTOR}) of the form @code{#(seconds minutes hours mday month year wday yday dstflag timezone)}, in the following format:
+Breaks down the time value represented in @code{SECONDS} into a 10 element vector of the form @code{#(seconds minutes hours mday month year wday yday dstflag timezone)}, in the following format:
 
 @table @b
 @item seconds (0)
@@ -9079,9 +9067,9 @@ the difference between UTC and the latest local standard time, in seconds west o
 
 
 @verbatim
-[procedure] (local-time->seconds TIME-VECTOR)
+[procedure] (local-time->seconds VECTOR)
 @end verbatim
-Converts the @code{TIME-VECTOR} representing the time value relative to the current timezone into the number of seconds since the first of January, 1970 UTC.
+Converts the ten-element vector @code{VECTOR} representing the time value relative to the current timezone into the number of seconds since the first of January, 1970 UTC.
 
 @node Unit posix - Date and time routines - local-timezone-abbreviation, Unit posix - Date and time routines - seconds->string, Unit posix - Date and time routines - local-time->seconds, Unit posix - Date and time routines
 @subsection local-timezone-abbreviation
@@ -9108,38 +9096,25 @@ Converts the local time represented in @code{SECONDS} into a string of the form 
 @verbatim
 [procedure] (seconds->utc-time SECONDS)
 @end verbatim
-Similar to @code{seconds->local-time}, but interprets @code{SECONDS} as UTC time.
+Similar to @code{seconds->local-time}, but interpretes @code{SECONDS} as UTC time.
 
 @node Unit posix - Date and time routines - utc-time->seconds, Unit posix - Date and time routines - time->string, Unit posix - Date and time routines - seconds->utc-time, Unit posix - Date and time routines
 @subsection utc-time->seconds
 
 
 @verbatim
-[procedure] (utc-time->seconds TIME-VECTOR)
+[procedure] (utc-time->seconds VECTOR)
 @end verbatim
-Converts the @code{TIME-VECTOR} representing the UTC time value into the number of seconds since the first of January, 1970 UTC.
+Converts the ten-element vector @code{VECTOR} representing the UTC time value into the number of seconds since the first of January, 1970 UTC.
 
-@node Unit posix - Date and time routines - time->string, Unit posix - Date and time routines - string->time, Unit posix - Date and time routines - utc-time->seconds, Unit posix - Date and time routines
+@node Unit posix - Date and time routines - time->string,  , Unit posix - Date and time routines - utc-time->seconds, Unit posix - Date and time routines
 @subsection time->string
 
 
 @verbatim
-[procedure] (time->string TIME-VECTOR [FORMAT-STRING])
+[procedure] (time->string VECTOR)
 @end verbatim
-Converts the @code{TIME-VECTOR} into a string of the form @code{"Tue May 21 13:46:22 1991"}.
-
-When the optional @code{FORMAT-STRING} is supplied the time is formatted using the C library routine @code{strftime}.
-
-@node Unit posix - Date and time routines - string->time,  , Unit posix - Date and time routines - time->string, Unit posix - Date and time routines
-@subsection string->time
-
-
-@verbatim
-[procedure] (string->time TIME-STRING [FORMAT-STRING])
-@end verbatim
-Parse the @code{TIME-STRING} using the C library routine @code{strptime} and return a @code{TIME-VECTOR}.
-
-Not available for the @emph{Windows} platform.
+Converts the broken down time represented in the 10 element vector @code{VECTOR} into a string of the form @code{"Tue May 21 13:46:22 1991"}.
 
 @node Unit posix - Raw exit, Unit posix - ERRNO values, Unit posix - Date and time routines, Unit posix
 @section Raw exit
@@ -9685,7 +9660,6 @@ process-fork  process-signal
 parent-process-id
 set-root-directory!
 utc-time->seconds
-string->time
 @end verbatim
 @node Unit posix - Windows specific notes - Additional Definitions, Unit posix - Windows specific notes - process-spawn, Unit posix - Windows specific notes - Unsupported Definitions, Unit posix - Windows specific notes
 @subsection Additional Definitions
@@ -9749,6 +9723,7 @@ Next: @ref{Unit utils, Unit utils}
 * Unit utils - Pathname operations::
 * Unit utils - Temporary files::
 * Unit utils - Deleting a file without signalling an error::
+* Unit utils - File move/copy::
 * Unit utils - Iterating over input lines and files::
 * Unit utils - Executing shell commands with formatstring and error checking::
 * Unit utils - Reading a file's contents::
@@ -9946,7 +9921,7 @@ Does the @code{DIRECTORY} consist only of path separators and the period?
 @end verbatim
 Creates an empty temporary file and returns its pathname. If @code{EXTENSION} is not given, then @code{.tmp} is used. If the environment variable @code{TMPDIR, TEMP} or @code{TMP} is set, then the pathname names a file in that directory.
 
-@node Unit utils - Deleting a file without signalling an error, Unit utils - Iterating over input lines and files, Unit utils - Temporary files, Unit utils
+@node Unit utils - Deleting a file without signalling an error, Unit utils - File move/copy, Unit utils - Temporary files, Unit utils
 @section Deleting a file without signalling an error
 
 @menu
@@ -9964,7 +9939,35 @@ Creates an empty temporary file and returns its pathname. If @code{EXTENSION} is
 @end verbatim
 If the file @code{FILENAME} exists, it is deleted and @code{#t} is returned.  If the file does not exist, nothing happens and @code{#f} is returned.
 
-@node Unit utils - Iterating over input lines and files, Unit utils - Executing shell commands with formatstring and error checking, Unit utils - Deleting a file without signalling an error, Unit utils
+@node Unit utils - File move/copy, Unit utils - Iterating over input lines and files, Unit utils - Deleting a file without signalling an error, Unit utils
+@section File move/copy
+
+@menu
+* Unit utils - File move/copy - file-copy::
+* Unit utils - File move/copy - file-move::
+
+@end menu
+
+
+@node Unit utils - File move/copy - file-copy, Unit utils - File move/copy - file-move,  , Unit utils - File move/copy
+@subsection file-copy
+
+
+@verbatim
+[procedure] (file-copy ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+@end verbatim
+Copies @code{ORIGFILE} (a string denoting some filename) to @code{NEWFILE},  @code{BLOCKSIZE} bytes at a time.  @code{BLOCKSIZE} defaults to 1024, and must be a positive integer.  Returns the number of bytes copied on success, or errors on failure.  @code{CLOBBER} determines the behaviour of @code{file-copy} when @code{NEWFILE} is already extant.  When set to @code{#f} (default), an error is signalled.  When set to any other value, @code{NEWFILE} is overwritten. @code{file-copy} will work across filesystems and devices and is not platform-dependent.
+
+@node Unit utils - File move/copy - file-move,  , Unit utils - File move/copy - file-copy, Unit utils - File move/copy
+@subsection file-move
+
+
+@verbatim
+[procedure] (file-move ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+@end verbatim
+Moves @code{ORIGFILE} (a string denoting some filename) to @code{NEWFILE}, with the same semantics as @code{file-copy}, above.  @code{file-move} is safe across filesystems and devices (unlike @code{file-rename}).  It is possible for an error to be signalled despite partial success if @code{NEWFILE} could be created and fully written but removing @code{ORIGFILE} fails.
+
+@node Unit utils - Iterating over input lines and files, Unit utils - Executing shell commands with formatstring and error checking, Unit utils - File move/copy, Unit utils
 @section Iterating over input lines and files
 
 @menu
@@ -12214,8 +12217,6 @@ The second form of @code{define-external} can be used to define variables that a
 @end example
 @b{Note:} don't be tempted to assign strings or bytevectors to external variables. Garbage collection moves those objects around, so it is very bad idea to assign pointers to heap-data. If you have to do so, then copy the data object into statically allocated memory (for example by using @code{object-evict}).
 
-@code{define-external} forms should only be defined at top-level, they do not obey lexical scoping, as the bodies of external procedures are called without a dynamic environment: the call from C just passes the normal arguments and no environment information.
-
 Results of type @code{scheme-object} returned by @code{define-external} are always allocated in the secondary heap, that is, not in the stack.
 
 @node Callbacks - C_callback, Callbacks - C_callback_adjust_stack, Callbacks - define-external, Callbacks
@@ -13455,6 +13456,9 @@ Download and show the repository catalog
 @item @code{-svn URL}
 
 Fetch extension from @uref{http://subversion.tigris.org, Subversion} repository
+@item @code{-svn-trunk URL}
+
+Fetch extension from trunk in @uref{http://subversion.tigris.org, Subversion} repository
 @item @code{-revision REV}
 
 Specifies SVN revision to check out

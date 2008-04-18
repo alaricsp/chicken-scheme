@@ -624,4 +624,4 @@ Those who are interfacing to substantial C libraries should consider
 using the  easyffi egg, or SWIG. 
 
 Back to [[The User's Manual]]
-Next: [[Using the compiler]]
+Next: [[Basic mode of operation]]
