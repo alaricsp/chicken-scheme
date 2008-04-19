@@ -27,7 +27,7 @@
 
 (declare
   (unit tcp)
-  (uses extras scheduler)
+  (uses data-structures extras scheduler)
   (usual-integrations)
   (fixnum-arithmetic)
   (no-bound-checks)

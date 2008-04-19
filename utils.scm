@@ -27,7 +27,7 @@
 
 (declare
   (unit utils)
-  (uses regex extras)
+  (uses regex data-structures extras)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)
