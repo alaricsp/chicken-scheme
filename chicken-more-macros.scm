@@ -641,7 +641,7 @@
 ;;;   values in the ARGS list.
 
 (##sys#extend-macro-environment
- 'let-optional' '()
+ 'let-optionals* '()
  (##sys#er-transformer
   (lambda (form r c)
     (##sys#check-syntax 'let-optionals* form '(_ _ list . _))

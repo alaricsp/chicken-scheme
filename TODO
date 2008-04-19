@@ -2,23 +2,13 @@ TODO for macro/module system					-*- Outline -*-
 
 * merge trunk into branch
 
-* new version
-* test makedist
-
-* test extended lambda-lists
-* test macro-expansions
-** quoted literals
-** qualified symbols
-** extended lambda-list markers
-** local definitions
 * test line-number retention over macro-expansion
-
-* test benchmarks
 
 * add low-level support for modules
 * find suitable design for modules
 
 * update manual/NEWS
+** hygienic macros
 ** expand unit (move stuff from eval)
 ** document extensions
 *** user defined ellipsis
