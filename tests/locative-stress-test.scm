@@ -39,7 +39,7 @@ long fill_10(long i, long *o0, long *o1, long *o2, long *o3, long *o4,
 (let* ((el 1)
        (expected (make-list 10 el)))
   (let loop
-      ((i (string->number (:optional (command-line-arguments) "100000"))))
+      ((i (string->number (optional (command-line-arguments) "100000"))))
     (unless (eq? i 0)
       (let-location ((o0 long) (o1 long) (o2 long) (o3 long) (o4 long)
 		     (o5 long) (o6 long) (o7 long) (o8 long) (o9 long))

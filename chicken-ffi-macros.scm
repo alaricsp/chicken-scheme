@@ -120,7 +120,7 @@
  (##sys#er-transformer
   (lambda (form r c)
     (##sys#check-syntax 'foreign-code form '(_ . #(string 0)))
-    (let ([tmp (r 'code_)])
+    (let ([tmp (gensym 'code_)])
       `(,(r 'begin)
 	 (,(r 'declare)
 	  (foreign-declare
@@ -135,7 +135,7 @@
  (##sys#er-transformer
   (lambda (form r c)
     (##sys#check-syntax 'foreign-value form '(_ string _))
-    (let ([tmp (r 'code_)])
+    (let ([tmp (gensym 'code_)])
       `(,(r 'begin)
 	(,(r 'define-foreign-variable) ,tmp ,(caddr form) ,(cadr form))
 	,tmp) ) ) ) )

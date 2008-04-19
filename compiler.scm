@@ -479,32 +479,30 @@
 	(cadr x)
 	x) )
 
-  (define (resolve-variable x se dest)
-    (cond [(and constants-used (##sys#hash-table-ref constant-table x)) 
-	   => (lambda (val) (walk (car val) se dest)) ]
-	  [(and inline-table-used (##sys#hash-table-ref inline-table x))
-	   => (lambda (val) (walk val se dest)) ]
-	  [(assq x foreign-variables)
-	   => (lambda (fv) 
-		(let* ([t (second fv)]
-		       [ft (final-foreign-type t)] 
-		       [body `(##core#inline_ref (,(third fv) ,t))] )
-		  (foreign-type-convert-result
-		   (finish-foreign-result ft body)
-		   t) ) ) ]
-	  [(assq x location-pointer-map)
-	   => (lambda (a)
-		(let* ([t (third a)]
-		       [ft (final-foreign-type t)] 
-		       [body `(##core#inline_loc_ref (,t) ,(second a))] )
-		  (foreign-type-convert-result
-		   (finish-foreign-result ft body)
-		   t) ) ) ]
-	  [else 
-	   (let ((x2 (lookup x se)))
-	     (if (symbol? x2) 
-		 (##sys#alias-global-hook x2)
-		 x))]))
+  (define (resolve-variable x0 se dest)
+    (let ((x (lookup x0 se)))
+      (cond ((not (symbol? x)) x0)
+	    [(and constants-used (##sys#hash-table-ref constant-table x)) 
+	     => (lambda (val) (walk (car val) se dest)) ]
+	    [(and inline-table-used (##sys#hash-table-ref inline-table x))
+	     => (lambda (val) (walk val se dest)) ]
+	    [(assq x foreign-variables)
+	     => (lambda (fv) 
+		  (let* ([t (second fv)]
+			 [ft (final-foreign-type t)] 
+			 [body `(##core#inline_ref (,(third fv) ,t))] )
+		    (foreign-type-convert-result
+		     (finish-foreign-result ft body)
+		     t) ) ) ]
+	    [(assq x location-pointer-map)
+	     => (lambda (a)
+		  (let* ([t (third a)]
+			 [ft (final-foreign-type t)] 
+			 [body `(##core#inline_loc_ref (,t) ,(second a))] )
+		    (foreign-type-convert-result
+		     (finish-foreign-result ft body)
+		     t) ) ) ]
+	    [else (##sys#alias-global-hook x)])))
   
   (define (eval/meta form)
     ((##sys#compile-to-closure
