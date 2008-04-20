@@ -1,3 +1,9 @@
+chicken (3.1.0-0.3) unstable; urgency=low
+
+  * Chicken shared library moved to libchicken0 package.
+
+ -- Ivan Raikov <raikov@oist.jp>  Sun, 20 Apr 2008 16:02:55 +0900
+
 chicken (3.1.0-0.2) unstable; urgency=low
 
   * rules changed to link against host PCRE library.
