@@ -54,6 +54,8 @@ csc.c
 csi.c
 eval.c
 eval.exports
+data-structures.c
+data-structures.exports
 extras.c
 extras.exports
 library.c
@@ -88,6 +90,7 @@ tcp.c
 tcp.exports
 ueval.c
 uextras.c
+udata-structures.c
 ulibrary.c
 ulolevel.c
 uregex.c
@@ -129,6 +132,7 @@ csi.scm
 csibatch.bat
 eval.scm
 extras.scm
+data-structures.scm
 chicken-bug.1
 chicken-bug.scm
 chicken-bug.c
@@ -160,6 +164,7 @@ html/pattern-matching.html
 html/supported-language.html
 html/unit-eval.html
 html/unit-extras.html
+html/unit-data-structures.html
 html/unit-library.html
 html/unit-lolevel.html
 html/unit-match.html
