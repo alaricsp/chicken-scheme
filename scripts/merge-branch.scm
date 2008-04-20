@@ -1,14 +1,12 @@
-#!/bin/sh
-#| merge-branch                                   -*- Scheme -*-
-exec csi -s "$0" "$@"
-|#
+;;;; merge-branch.scm
 
 (load-relative "tools.scm")
 
-(define-constant +repobase+ "https://galinha.ucpel.tche.br/svn/chicken-eggs")
+(define-constant +repobase+ "https://chicken.wiki.br/svn/chicken-eggs/chicken")
 
 (define (usage)
-  (print " usage: merge-branch [--dry-run] [--diff[=REVS]] [--repourl=URL] [--verbose] BRANCHFROM BRANCHTO [WC]")
+  (print " usage: csi -s merge-branch.scm [--dry-run] [--diff[=REVS]] "
+	 "[--repourl=URL] [--verbose] BRANCHFROM BRANCHTO [WC]")
   (exit 1) )
 
 (define *dry-run* #f)
@@ -24,8 +22,9 @@ exec csi -s "$0" "$@"
 	,(make-pathname +repobase+ b1)
 	,(if (not *diff*) wc "") ) ) )
 
-(match (simple-args)
-  ((b1 b2 . wc) (apply do-merge b1 b2 wc))
-  (_ (usage)))
+(let ((args (simple-args)))
+  (if (>= (length args) 2)
+      (apply do-merge (car args) (cadr args) (cddr args))
+      (usage)))
 
 (exit)

@@ -434,7 +434,7 @@
 					    (let ((x (car next)))
 					      (set! next (cdr next))
 					      (values opt x))))) )
-				  ((string? (second m)) (values opt #t))
+				  ((string? (second m)) (values (third m) #t))
 				  (else (values #f #f)) ) ) )
 	       (cond (var 
 		      (assign var val)
