@@ -101,6 +101,7 @@ usrfi-13.c
 usrfi-14.c
 usrfi-18.c
 usrfi-4.c
+usrfi-69.c
 utcp.c
 utils.c
 utils.exports
