@@ -739,7 +739,7 @@ chicken.info: chicken.texi
 
 # precompiled chicken.h
 chicken.h.gch: chicken.h
-	-$(C_COMPILER) $<
+	-$(C_COMPILER) -DHAVE_CHICKEN_CONFIG_H $<
 	touch $@
 
 # installation
