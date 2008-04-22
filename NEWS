@@ -1,3 +1,7 @@
+3.1.9
+
+- precompiled chicken.h is included in the Chicken distribution
+
 3.1.6
 
 - unit extras: moved lists, queues, strings to data-structures
