@@ -737,6 +737,11 @@ $(CHICKEN_BUG_PROGRAM)$(EXE): chicken-bug$(O) libchicken$(A)
 chicken.info: chicken.texi
 	$(MAKEINFO_PROGRAM) $(MAKEINFO_PROGRAM_OPTIONS) $<
 
+# precompiled chicken.h
+chicken.h.gch: chicken.h
+	-$(C_COMPILER) $<
+	touch $@
+
 # installation
 
 .PHONY: install uninstall install-libs install-manifests
@@ -767,6 +772,7 @@ ifneq ($(POSTINSTALL_STATIC_LIBRARY),true)
 	  $(ILIBDIR)/libuchicken$(A)
 endif
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.h $(DESTDIR)$(IINCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.h.gch $(DESTDIR)$(IINCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(CHICKEN_CONFIG_H) $(DESTDIR)$(IINCDIR)
 ifndef STATICBUILD
 ifdef DLLSINPATH
@@ -876,6 +882,7 @@ endif
 	  $(DESTDIR)$(IMANDIR)/csc.1 $(DESTDIR)$(IMANDIR)/chicken-profile.1 $(DESTDIR)$(IMANDIR)/chicken-setup.1 \
 	  $(DESTDIR)$(IMANDIR)/chicken-bug.1
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IINCDIR)/chicken.h $(DESTDIR)$(IINCDIR)/chicken-config.h
+	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IINCDIR)/chicken.gch 
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) $(DESTDIR)$(IDATADIR)
 	$(UNINSTALLINFO_PROGRAM) $(UNINSTALLINFO_PROGRAM_OPTIONS) --infodir=$(DESTDIR)$(IINFODIR) chicken.info
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IINFODIR)/chicken.info
@@ -1020,7 +1027,7 @@ clean:
 	  $(LIBCHICKEN_SO_FILE) $(LIBUCHICKEN_SO_FILE) $(LIBCHICKENGUI_SO_FILE) \
 	  libchicken$(A) libuchicken$(A) libchickengui$(A) $(PROGRAM_IMPORT_LIBRARIES) \
 	  $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
-	  $(MSVC_CHICKEN_EXPORT_FILES) chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) \
+	  $(MSVC_CHICKEN_EXPORT_FILES) chicken.info chicken.h.gch $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) \
 	  $(CLEAN_MANIFESTS)
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision

@@ -121,6 +121,7 @@ chicken-setup.1
 chicken-setup.scm
 chicken.1
 chicken.h
+chicken.h.gch
 chicken.ico
 chicken.rc
 chicken.scm
