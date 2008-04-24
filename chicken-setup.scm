@@ -113,14 +113,14 @@
 '("-help" "-uninstall" "-list" "-run" "-repository" "-program-path"
   "-version" "-script" "-fetch" "-host" "-proxy" "-keep" "-verbose"
   "-csc-option" "-dont-ask" "-no-install" "-docindex" "-eval"
-  "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" "-svn"
-  "-local" "-revision" "-host-extension" "-build-prefix"
-  "-download-path" "-install-prefix") )
+  "-debug" "-ls" "-release" "-test" "-fetch-tree" "-tree" 
+  "-svn" "-svn-trunk" "-local" "-revision" "-host-extension" 
+  "-build-prefix" "-download-path" "-install-prefix") )
 
 
 (define-constant short-options
-  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t #f #f #f #f #f #f
-    #f) )
+  '(#\h #\u #\l #\r #\R #\P #\V #\s #\f #\H #\p #\k #\v #\c #\d #\n #\i #\e #\D #f #f #\t 
+	#f #f #f #f #f #f #f #f) )
 
 (define *installed-executables* 
   `(("chicken" . ,(foreign-value "C_CHICKEN_PROGRAM" c-string))
@@ -172,7 +172,8 @@
 
 (define setup-build-prefix
   (make-parameter
-   (or (getenv "CHICKEN_TMPDIR") (getenv "TMPDIR") 
+   (or (getenv "CHICKEN_TMPDIR") (getenv "TMPDIR")
+       (getenv "TMP") (getenv "TEMP")
        ((lambda (user) 
 	  (and user  (file-write-access? "/tmp") 
 	       (conc "/tmp/chicken-setup-" *major-version* "-" user))) 
@@ -182,7 +183,7 @@
 	(getenv "HOME") (getenv "USER"))
        (current-directory))))
 
-(define setup-download-directory  (make-parameter (conc (setup-build-prefix) "/downloads")))
+(define setup-download-directory  (make-parameter (make-pathname (setup-build-prefix) "downloads")))
 (define setup-root-directory      (make-parameter #f))
 (define setup-build-directory     (make-parameter #f))
 (define setup-verbose-flag        (make-parameter #f))
@@ -210,6 +211,7 @@
 (define *base-directory* (current-directory))
 (define *fetch-tree-only* #f)
 (define *svn-repository* #f)
+(define *svn-trunk* #f)
 (define *local-repository* #f)
 (define *repository-hosts* (list (list "www.call-with-current-continuation.org" *default-eggdir* 80)))
 (define *revision* #f)
@@ -217,7 +219,34 @@
 (define *fetched-eggs* '())
 
 
-;;; File-system routines
+; Convert a string with a version (such as "1.22.0") to a list of the
+; numbers (such as (1 22 0)). If one of the version components cannot
+; be converted to a number, then it is kept as a string.
+
+(define (version-string->numbers string)
+  (map (lambda (x) (or (string->number x) (->string x))) 
+       (string-split string ".")))
+
+(define (numbers->version-string numbers)
+  (string-intersperse (map ->string numbers) "."))
+
+; Given two lists with numbers corresponding to a software version (as returned
+; by version-string->numbers), check if the first is greater than the second.
+
+(define (version-numbers> a b)
+  (cond ((null? a) #f)
+	((null? b)  #t)
+	((and (pair? a) (pair? b))
+	 (let ((a1 (car a))
+	       (an (cdr a))
+	       (b1 (car b))
+	       (bn (cdr b)))
+	  (cond ((and (number? a1) (number? b1))
+		 (cond ((> a1 b1) #t) ((= a1 b1) (version-numbers> an bn)) (else #f)))
+		((and (string? a1) (string? b1))  
+		 (cond ((string> a1 b1) #t) ((string= a1 b1) (version-numbers> an bn)) (else #f)))
+		(else (version-numbers> (cons (->string a1) an) (cons (->string b1) bn))))) )
+	(else (error 'version-numbers> "invalid revisions: " a b))))
 
 (define create-directory/parents
   (let ([create-directory create-directory])
@@ -243,11 +272,15 @@
 
 ;;; Helper stuff
 
+(define (quotewrapped? str)
+  (and (string? str) (string-prefix? "\"" str) (string-suffix? "\"" str) ))
+
 (define (quotewrap str)
-  (if (or (string-any char-whitespace? str)
-          (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
-      (string-append "\"" str "\"") 
-      str) )
+  (cond ((quotewrapped? str) str)
+	((or (string-any char-whitespace? str)
+	     (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
+	 (string-append "\"" str "\""))
+	(else str)))
 
 (define (abort-setup)
   (*abort-hook* #f) )
@@ -546,6 +579,7 @@ usage: chicken-setup [OPTION ...] FILENAME
       -create-tree DIRECTORY     creates repository catalog from SVN checkout
       -tree FILENAME             uses repository catalog from given file
       -svn URL                   fetches extension from subversion repository
+      -svn-trunk URL             fetches extension from trunk in subversion repository
       -local PATH                fetches extension from local filesystem
       -revision REV              specifies SVN revision for checkout
       -build-prefix PATH         location where chicken-setup will create egg build directories
@@ -609,7 +643,7 @@ EOF
 	    (setup-file (make-setup-info-pathname sid (repo-path #t)))
 	    (write-setup-info (with-output-to-file setup-file
 				(cut pp info))))
-	(unless *windows-shell* (run (chmod a+r ,setup-file)))
+	(unless *windows-shell* (run (chmod a+r ,(quotewrap setup-file))))
 	write-setup-info))))
 
 (define (fix-exports id info)
@@ -677,8 +711,8 @@ EOF
 			  filename))
 		 (v (setup-verbose-flag)) )
 	     (if (testgz fn2)
-		 (run (,*gzip-program* -d -c ,fn2 |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
-		 (run (,*tar-program* ,(if v 'xvf 'xf) ,fn2)) ) ) ) )
+		 (run (,*gzip-program* -d -c ,(quotewrap fn2) |\|| ,*tar-program* ,(if v 'xvf 'xf) -))
+		 (run (,*tar-program* ,(if v 'xvf 'xf) ,(quotewrap fn2))) ) ) ) )
     ))
 
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
@@ -742,15 +776,15 @@ EOF
 			       (to (make-dest-pathname rpathd f)) )
 			   (when (and (not *windows*) 
 				      (equal? "so" (pathname-extension to)))
-			     (run (,*remove-command* ,to)) )
+			     (run (,*remove-command* ,(quotewrap to)) ))
 			   (copy-file from to)
 			   (unless *windows-shell*
-			     (run (chmod a+r ,to)))
+			     (run (chmod a+r ,(quotewrap to))))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) 
 					(equal? (pathname-extension to) "a"))
-			       (run (ranlib ,to)) ) )
+			       (run (ranlib ,(quotewrap to)) ) ))
 			   (make-dest-pathname rpath f)))
 		       files) ) )
       (and-let* ((docs (assq 'documentation info)))
@@ -772,7 +806,7 @@ EOF
 	     (let ((destf (make-pathname example-dest f)))
 	       (copy-file f destf #f)
 	       (unless *windows-shell*
-	         (run (chmod a+rx ,destf))) ) )
+	         (run (chmod a+rx ,(quotewrap destf))) ) ))
 	   (cdr exs))
 	  (newline) ))
       (write-info id dests info) ) ) )
@@ -798,7 +832,7 @@ EOF
 			       (to (make-dest-pathname ppath f)) )
 			   (copy-file from to) 
 			   (unless *windows-shell*
-				   (run (chmod a+r ,to)))
+				   (run (chmod a+r ,(quotewrap to))))
 			   to) )
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -813,7 +847,7 @@ EOF
 				(to (make-dest-pathname ppath f)) )
 			    (copy-file from to) 
 			    (unless *windows-shell*
-				    (run (chmod a+r ,to)))
+				    (run (chmod a+r ,(quotewrap to))))
 			    to) )
 			files) ) )
       (unless *windows-shell*
@@ -854,7 +888,7 @@ EOF
 	(begin
 	  (create-directory dir)
 	  (unless *windows-shell*
-		  (run (chmod a+x ,dir)))))))
+		  (run (chmod a+x ,(quotewrap dir))))))))
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
 		     (verb (setup-verbose-flag)) (compile-only #f))
@@ -1013,13 +1047,15 @@ EOF
 		(fpath  (make-pathname (setup-download-directory) p "egg-dir")))
 	   (copy-file (make-pathname *local-repository* p) fpath #t #f)))
 
-	(*svn-repository*
-	 (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" *svn-repository*))
-	 (let* ((p (->string item))
-		(fpath (make-pathname (setup-download-directory) p "egg-dir")))
-	   (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
-		     ,(make-pathname *svn-repository* p) ,fpath))
-	   fpath))
+	((or *svn-trunk* *svn-repository* ) =>
+	 (lambda (url)
+	   (when (setup-verbose-flag) (printf "fetching from svn repository ~a ...~%" url))
+	   (let* ((p (->string item))
+		  (fpath (make-pathname (setup-download-directory) p "egg-dir")))
+	     (run (svn co ,(if *revision* (conc "--revision " *revision*) "")
+		       ,(make-pathname url p) ,(quotewrap fpath)))
+	     fpath)))
+
 	(else
 	 (if (and (list? hostdata) (= 3 (length hostdata)))
 	     (let ((host (car hostdata))
@@ -1105,11 +1141,17 @@ EOF
 		 (when df
 		   (unpack/enter fpath)
 		   (let ((sfile (pathname-replace-extension f "setup")))
-		     (when (and (not (file-exists? sfile)) (file-exists? "tags") )
-		       (let ((ds (sort (directory "tags") string>=?)))
-			 (when (pair? ds) 
-			   (let ((d (make-pathname "tags" (car ds))))
-			     (chdir d) ) )  ) )
+		     (when (not (file-exists? sfile))
+		       (cond
+			(*svn-trunk* 
+			 (when (file-exists? "trunk") (chdir "trunk")))
+
+			((and (not *svn-trunk*) (file-exists? "tags") )
+			 (let ((ds (sort (map version-string->numbers (directory "tags")) version-numbers>)))
+			   (when (pair? ds) 
+			     (let ((d (make-pathname "tags" (car ds))))
+			       (chdir d)))) )
+			))
 		     (loop sfile)
 		     (clear-builddir) ) ) ) ))
 	    ((fetch-file filename) =>
@@ -1467,6 +1509,10 @@ EOF
 		 (set! *svn-repository* (cadr args))
 		 (set! *dont-ask* #t)
 		 (loop (cddr args)))
+		((and (string=? arg "-svn-trunk") (pair? (cdr args)))
+		 (set! *svn-trunk* (cadr args))
+		 (set! *dont-ask* #t)
+		 (loop more) )
 		((string=? arg "-test")
 		 (set! *run-tests* #t)
 		 (loop (cdr args)))
@@ -1486,7 +1532,7 @@ EOF
 		 (host-extension #t)
 		 (loop (cdr args)))
 		((member arg '("-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-install-prefix" 
-			       "-tree" "-local" "-svn" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
+			       "-tree" "-local" "-svn" "-svn-trunk" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
 		 (error "missing option argument" arg))
 		(else
 		 (let ((filename arg)

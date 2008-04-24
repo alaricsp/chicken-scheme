@@ -485,7 +485,7 @@
 				   (canonicalize-begin-body exps) ) ) ) ] 
 		    [proc (user-pass-2)] )
 	       (when (debugging 'M "; requirements:")
-		 (pretty-print (hash-table->alist file-requirements)))
+		 (pretty-print (##sys#hash-table->alist file-requirements)))
 	       (when proc
 		 (when verbose (printf "Secondary user pass...~%"))
 		 (begin-time)

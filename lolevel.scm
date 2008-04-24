@@ -27,7 +27,6 @@
 
 (declare
   (unit lolevel)
-  (uses extras)
   (usual-integrations)
   (disable-warning var redef)
   (hide ipc-hook-0 xproc-tag)
@@ -53,8 +52,9 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     ##sys#symbol-hash-toplevel-binding? ##sys#make-locative ##sys#become! make-hash-table 
-     hash-table-ref/default ##sys#make-string make-vector hash-table-set! hash-table-set!
+     ##sys#hash-table-ref ##sys#hash-table-set!
+     ##sys#make-locative ##sys#become!
+     ##sys#make-string
      make-property-condition make-composite-condition signal ##sys#set-pointer-address! ##sys#make-vector
      ##sys#make-pointer make-string make-byte-vector ##sys#not-a-proper-list-error ##sys#check-pointer
      ##sys#locative? ##sys#bytevector?
@@ -448,24 +448,24 @@ EOF
 
 ;;; Copy arbitrary object:
 
-(define object-copy
-  (let ([make-vector make-vector])
-    (lambda (x)
-      (let copy ([x x])
-	(cond [(not (##core#inline "C_blockp" x)) x]
-	      [(symbol? x) (##sys#intern-symbol (##sys#slot x 1))]
-	      [else
-	       (let* ([n (##sys#size x)]
-		      [words (if (##core#inline "C_byteblockp" x) (##core#inline "C_words" n) n)]
-		      [y (##core#inline "C_copy_block" x (make-vector words))] )
-		 (unless (or (##core#inline "C_byteblockp" x) (symbol? x))
-		   (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
-		       ((fx>= i n))
-		     (##sys#setslot y i (copy (##sys#slot y i))) ) )
-		 y) ] ) ) ) ) )
+(define (object-copy x)
+  (let copy ([x x])
+    (cond [(not (##core#inline "C_blockp" x)) x]
+	  [(symbol? x) (##sys#intern-symbol (##sys#slot x 1))]
+	  [else
+	    (let* ([n (##sys#size x)]
+		   [words (if (##core#inline "C_byteblockp" x) (##core#inline "C_words" n) n)]
+		   [y (##core#inline "C_copy_block" x (##sys#make-vector words))] )
+              (unless (or (##core#inline "C_byteblockp" x) (symbol? x))
+		(do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
+		    ((fx>= i n))
+		  (##sys#setslot y i (copy (##sys#slot y i))) ) )
+	      y) ] ) ) )
 
 
 ;;; Evict objects into static memory:
+
+(define-constant evict-table-size 301)
 
 (define (object-evicted? x) (##core#inline "C_permanentp" x))
 
@@ -475,16 +475,16 @@ EOF
 	     (if (pair? allocator) 
 		 (car allocator)
 		 (foreign-lambda c-pointer "C_malloc" int) ) ] 
-	    [tab (make-hash-table eq?)] )
+	    [tab (##sys#make-vector evict-table-size '())] )
 	(let evict ([x x])
 	  (cond [(not (##core#inline "C_blockp" x)) x]
-		[(hash-table-ref/default tab x #f)]
+		[(##sys#hash-table-ref tab x)]
 		[else
 		 (let* ([n (##sys#size x)]
 			[bytes (if (##core#inline "C_byteblockp" x) (align-to-word n) (##core#inline "C_bytes" n))]
 			[y (##core#inline "C_evict_block" x (allocator (fx+ bytes (##core#inline "C_bytes" 1))))] )
 		   (when (symbol? x) (##sys#setislot y 0 (##core#undefined)))
-		   (hash-table-set! tab x y)
+		   (##sys#hash-table-set! tab x y)
 		   (unless (##core#inline "C_byteblockp" x)
 		     (do ([i (if (or (##core#inline "C_specialp" x) (symbol? x)) 1 0) (fx+ i 1)])
 			 ((fx>= i n))
@@ -525,11 +525,11 @@ EOF
 		    limit)
 		  #f) ]
 	     [ptr2 (##sys#address->pointer (##sys#pointer->address ptr))]
-	     [tab (make-hash-table eq?)]
+	     [tab (##sys#make-vector evict-table-size '())]
 	     [x2
 	      (let evict ([x x])
 		(cond [(not (##core#inline "C_blockp" x)) x]
-		      [(hash-table-ref/default tab x #f)]
+		      [(##sys#hash-table-ref tab x)]
 		      [else
 		       (let* ([n (##sys#size x)]
 			      [bytes 
@@ -548,7 +548,7 @@ EOF
 			 (let ([y (##core#inline "C_evict_block" x ptr2)])
 			   (when (symbol? x) (##sys#setislot y 0 (##core#undefined)))
 			   (##sys#set-pointer-address! ptr2 (+ (##sys#pointer->address ptr2) bytes))
-			   (hash-table-set! tab x y)
+			   (##sys#hash-table-set! tab x y)
 			   (unless (##core#inline "C_byteblockp" x)
 			     (do ([i (if (or (##core#inline "C_specialp" x) (symbol? x))
 					 1
@@ -561,16 +561,16 @@ EOF
 
 (define object-size
     (lambda (x)
-      (let ([tab (make-hash-table eq?)])
+      (let ([tab (##sys#make-vector evict-table-size '())])
 	(let evict ([x x])
 	  (cond [(not (##core#inline "C_blockp" x)) 0]
-		[(hash-table-ref/default tab x #f) 0]
+		[(##sys#hash-table-ref tab x) 0]
 		[else
 		 (let* ([n (##sys#size x)]
 			[bytes
 			 (fx+ (if (##core#inline "C_byteblockp" x) (align-to-word n) (##core#inline "C_bytes" n))
 			      (##core#inline "C_bytes" 1) ) ] )
-		   (hash-table-set! tab x #t)
+		   (##sys#hash-table-set! tab x #t)
 		   (unless (##core#inline "C_byteblockp" x)
 		     (do ([i (if (or (##core#inline "C_specialp" x) (symbol? x))
 				 1 
@@ -584,25 +584,25 @@ EOF
     (lambda (x #!optional (full #f))
       (define (err x)
 	(##sys#signal-hook #:type-error 'object-unevict "can not copy object" x) )
-      (let ([tab (make-hash-table eq?)])
+      (let ([tab (##sys#make-vector evict-table-size '())])
 	(let copy ([x x])
 	  (cond [(not (##core#inline "C_blockp" x)) x]
 		[(not (##core#inline "C_permanentp" x)) x]
-		[(hash-table-ref/default tab x #f)]
+		[(##sys#hash-table-ref tab x)]
 		[(##core#inline "C_byteblockp" x) 
 		 (if full
 		     (let ([y (##core#inline "C_copy_block" x (##sys#make-string (##sys#size x)))])
-		       (hash-table-set! tab x y)
+		       (##sys#hash-table-set! tab x y)
 		       y) 
 		     x) ]
 		[(symbol? x) 
 		 (let ([y (##sys#intern-symbol (##sys#slot x 1))])
-		   (hash-table-set! tab x y)
+		   (##sys#hash-table-set! tab x y)
 		   y) ]
 		[else
 		 (let* ([words (##sys#size x)]
-			[y (##core#inline "C_copy_block" x (make-vector words))] )
-		   (hash-table-set! tab x y)
+			[y (##core#inline "C_copy_block" x (##sys#make-vector words))] )
+		   (##sys#hash-table-set! tab x y)
 		   (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
 		       ((fx>= i words))
 		     (##sys#setslot y i (copy (##sys#slot y i))) )
@@ -635,7 +635,7 @@ EOF
     (##sys#signal-hook #:type-error 'mutate-procedure "bad argument type - not a procedure" old))
   (let* ((n (##sys#size old))
 	 (words (##core#inline "C_words" n))
-	 (y (##core#inline "C_copy_block" old (make-vector words))) )
+	 (y (##core#inline "C_copy_block" old (##sys#make-vector words))) )
     (##sys#become! (list (cons old (proc y))))
     y) )
 

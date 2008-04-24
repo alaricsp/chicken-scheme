@@ -27,7 +27,7 @@
 
 (declare
   (block)
-  (uses extras srfi-1 srfi-13 utils))
+  (uses data-structures srfi-1 srfi-13 utils extras ))
 
 #>
 #ifndef C_TARGET_CC

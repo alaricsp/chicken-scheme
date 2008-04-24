@@ -25,6 +25,8 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
+(declare (uses srfi-69))
+
 (declare
   (usual-integrations)
   (disable-interrupts)

@@ -1,7 +1,35 @@
-3.0.8
+3.1.9
+
+- precompiled chicken.h is included in the Chicken distribution
+
+3.1.6
+
+- unit extras: moved lists, queues, strings to data-structures
+- new unit data-structures
+
+3.1.5
+
+- unit library: symbol->string now copies its argument
+
+3.1.3
+
+- chicken-setup: added option -svn-trunk
+
+3.1.2
+
+- unit utils: added file-copy and file-move (request by the einit team)
+
+3.1.1
+
+- unit srfi-69: added hash-table-clear!
+- unit srfi-69: new
+- unit extras: moved SRFI 69 to unit srfi-69
+
+3.1.0
 
 - svnrevision.sh - cleaned logic to prevent invalid error message
 - csc - fixed bug preventing static linking of executables (build order issues)
+- unit regex: PCRE 7.6
 - unit regex: avoid string copy in regex matching [Jim Ursetto]
 - chicken-setup: eggs are downloaded to and compiled in a temporary
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
@@ -14,6 +42,8 @@
   MSYS) are available [Many thanks to Ashley]
 - unit library: added "flonum-print-precision" for changing the default of
   16
+- unit posix: create-directory can now handle DOS drive letters 
+  in the given path
 - unit posix: added stat- predicates for file types
 - unit posix: added strftime format string support to "time->string"
 - unit posix: added "string->time", which takes a strptime format string
@@ -27,7 +57,7 @@
   "symbol-hash", "keyword-hash", "##sys#number-hash-hook", and
   "hash-by-identity" as a synonym for "eq?-hash"
 
-3.0.0rc1
+3.0.0
 
 - upgraded scheme-complete.el to version 0.6 [Thanks to Alex Shinn]
 - unit library: added "blob=?"

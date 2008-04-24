@@ -278,6 +278,9 @@
 	  Makefiles for mingw under MSYS and Windows shell are provided
 	  (`Makefile.mingw-msys' and `Makefile.mingw').
 
+        - When installing under the mingw-msys platform, PREFIX must be an
+          absolute path name (i.e. it must include the drive letter).
+
 	- Cygwin will not be able to find the chicken shared libraries
           until Windows is rebooted.
 

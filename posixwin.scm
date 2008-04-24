@@ -1153,12 +1153,44 @@ EOF
 
 ;;; Directory stuff:
 
+(define-inline (create-directory-helper name)
+    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string name)))
+            (##sys#update-errno)
+            (##sys#signal-hook #:file-error 'create-directory
+                               "cannot create directory" name)))
+
+(define-inline (create-directory-check name)
+    (if (file-exists? name)
+        (let ((i   (##sys#file-info name)))
+            (and i
+                 (fx= 1 (##sys#slot i 4))))
+        #f))
+
+(define-inline (create-directory-helper-silent name)
+    (unless (create-directory-check name)
+            (create-directory-helper name)))
+
+(define-inline (create-directory-helper-parents name)
+    (let* ((l   (string-split name "\\"))
+           (c   (car l)))
+        (for-each
+             (lambda (x)
+                 (set! c (string-append c "\\" x))
+                 (create-directory-helper-silent c))
+             (cdr l))))
+
 (define create-directory
-  (lambda (name)
+  (lambda (name #!optional parents?)
     (##sys#check-string name 'create-directory)
-    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
-      (##sys#update-errno)
-      (##sys#signal-hook #:file-error 'create-directory "cannot create directory" name) ) ) )
+    (if parents?
+        (create-directory-helper-parents (canonical-path name))
+        (create-directory-helper (canonical-path name)))))
+;(define create-directory
+;  (lambda (name)
+;    (##sys#check-string name 'create-directory)
+;    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
+;      (##sys#update-errno)
+;      (##sys#signal-hook #:file-error 'create-directory "cannot create directory" name) ) ) )
 
 (define change-directory
   (lambda (name)
@@ -1235,7 +1267,10 @@ EOF
           (isperse    (cut string-intersperse <> "\\"))
           (sep?       (lambda (c) (or (char=? #\/ c) (char=? #\\ c))))
           (user       current-user-name)
-          (cwd        current-directory))
+          (cwd        (let ((cw   current-directory))
+                          (lambda ()
+                              (condition-case (cw)
+                                  (var ()    "c:\\"))))))
         (lambda (path)
             (##sys#check-string path 'canonical-path)
             (let ((p   (cond ((fx= 0 (##sys#size path))

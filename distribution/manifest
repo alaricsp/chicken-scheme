@@ -54,6 +54,8 @@ csc.c
 csi.c
 eval.c
 eval.exports
+data-structures.c
+data-structures.exports
 extras.c
 extras.exports
 library.c
@@ -69,6 +71,8 @@ posixwin.c
 profiler.c
 scheduler.c
 scheduler.exports
+srfi-69.c
+srfi-69.exports
 srfi-1.c
 srfi-1.exports
 srfi-13.c
@@ -85,6 +89,7 @@ tcp.c
 tcp.exports
 ueval.c
 uextras.c
+udata-structures.c
 ulibrary.c
 ulolevel.c
 uregex.c
@@ -95,6 +100,7 @@ usrfi-13.c
 usrfi-14.c
 usrfi-18.c
 usrfi-4.c
+usrfi-69.c
 utcp.c
 utils.c
 utils.exports
@@ -113,6 +119,7 @@ chicken-setup.1
 chicken-setup.scm
 chicken.1
 chicken.h
+chicken.h.gch
 chicken.ico
 chicken.rc
 chicken.scm
@@ -125,6 +132,7 @@ csi.scm
 csibatch.bat
 eval.scm
 extras.scm
+data-structures.scm
 chicken-bug.1
 chicken-bug.scm
 chicken-bug.c
@@ -145,6 +153,7 @@ html/embedding.html
 html/extensions-to-the-standard.html
 html/faq.html
 html/foreign-type-specifiers.html
+html/getting-started.html
 html/index.html
 html/interface-to-external-functions-and-variables.html
 html/locations.html
@@ -153,6 +162,7 @@ html/non-standard-read-syntax.html
 html/other-support-procedures.html
 html/parameters.html
 html/supported-language.html
+html/unit-data-structures.html
 html/unit-eval.html
 html/unit-extras.html
 html/unit-library.html
@@ -164,6 +174,7 @@ html/unit-srfi-13.html
 html/unit-srfi-14.html
 html/unit-srfi-18.html
 html/unit-srfi-4.html
+html/unit-srfi-69.html
 html/unit-tcp.html
 html/unit-utils.html
 html/using-the-compiler.html
@@ -177,6 +188,7 @@ posixwin.scm
 profiler.scm
 runtime.c
 scheduler.scm
+srfi-69.scm
 srfi-1.scm
 srfi-13.scm
 srfi-14.scm
@@ -190,6 +202,7 @@ tests/locative-stress-test.scm
 tests/r4rstest.scm
 tests/runtests.sh
 tests/srfi-18-tests.scm
+tests/hash-table-tests.scm
 tests/apply-test.scm
 tests/embedded1.c
 tests/fixnum-tests.scm

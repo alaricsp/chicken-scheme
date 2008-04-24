@@ -185,6 +185,9 @@
 		  (##sys#setslot b 1 val)
 		  (loop (##sys#slot bucket 1)) ) ) ) ) ) ) )
 
+(define (##sys#hash-table-update! ht key updtfunc valufunc)
+  (##sys#hash-table-set! ht key (updtfunc (or (##sys#hash-table-ref ht key) (valufunc)))) )
+
 (define (##sys#hash-table-for-each p ht)
   (let ((len (##core#inline "C_block_size" ht)))
     (do ((i 0 (fx+ i 1)))
@@ -1103,7 +1106,7 @@
     (lambda (id comp?)
       (define (add-req id)
 	(when comp?
-	  (hash-table-update! 		; assumes compiler has extras available - will break in the interpreter
+	  (##sys#hash-table-update! 		; assumes compiler has extras available - will break in the interpreter
 	   ##compiler#file-requirements
 	   'syntax-requirements
 	   (cut lset-adjoin eq? <> id) 

@@ -1157,7 +1157,7 @@ EOF
 
 (define (symbol->string s)
   (##sys#check-symbol s 'symbol->string)
-  (##sys#symbol->string s) )
+  (string-copy (##sys#symbol->string s) ) )
 
 (define string->symbol
   (let ([string-copy string-copy])
