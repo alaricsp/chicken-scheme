@@ -621,7 +621,7 @@ pcre/pcre_chartables-static$(O): pcre/pcre_chartables.c pcre/pcre_internal.h pcr
 
 # assembler objects
 
-ifdef HACKED_APPLY
+ifneq ($(HACKED_APPLY),)
 $(APPLY_HACK_OBJECT): apply-hack.$(ARCH).s
 	$(ASSEMBLER) $(ASSEMBLER_OPTIONS) $(ASSEMBLER_COMPILE_OPTION) $< $(ASSEMBLER_OUTPUT)
 endif

@@ -3276,9 +3276,10 @@ EOF
 	     ""
 	     (string-append "\t[" spec " ]") )
 	 (if (not (zero? rev)) 
-	     (##sys#string-append "\nSVN rev. " (number->string rev))
-	     "")
-	 "\t" +build-tag+))
+	     (string-append 
+	      "\nSVN rev. " (number->string rev) "\t")
+	     "\n")
+	 +build-tag+))
       +build-version+) )
 
 (define ##sys#pathname-directory-separator #\/) ; DEPRECATED
