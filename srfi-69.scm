@@ -46,13 +46,6 @@
       ##sys#slot ##sys#setslot
       ##srfi-69#%equal?-hash ) ) ] )
 
-(private srfi-69
-  unbound-value-thunk
-  %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
-  %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
-  %hash-table-for-each %hash-table-fold
-  hash-table-canonical-length hash-table-rehash )
-
 (declare
   (hide
     unbound-value-thunk
@@ -61,65 +54,58 @@
     %hash-table-for-each %hash-table-fold
     hash-table-canonical-length hash-table-rehash) )
 
+(include "unsafe-declarations.scm")
+
 (cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-closure . _) '(##core#undefined))
-    (define-macro (##sys#check-inexact . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "srfi-69.exports")) ] )
+ ((not unsafe)
+  (declare (emit-exports "srfi-69.exports")))
+ (else))
 
 (register-feature! 'srfi-69)
 
 
 ;;; Unbound Value:
 
-;; This only works because of '(no-bound-checks)'
-
-(define-macro ($unbound-value)
- '(##sys#slot '##sys#arbitrary-unbound-symbol 0) )
+(define-inline ($unbound-value)
+  (##sys#slot '##sys#arbitrary-unbound-symbol 0))
 
 (define unbound-value-thunk (lambda () ($unbound-value)))
 
-(define-macro ($unbound? ?val)
-  `(eq? ($unbound-value) ,?val) )
+(define-inline ($unbound? ?val)
+  (eq? ($unbound-value) ?val) )
 
 
 ;;; Core Inlines:
 
-(define-macro ($quick-flonum-truncate ?flo)
-  `(##core#inline "C_quickflonumtruncate" ,?flo) )
+(define-inline ($quick-flonum-truncate ?flo)
+  (##core#inline "C_quickflonumtruncate" ?flo) )
 
-(define-macro ($fix ?wrd)
-  `(##core#inline "C_fix" ,?wrd) )
+(define-inline ($fix ?wrd)
+  (##core#inline "C_fix" ?wrd) )
 
-(define-macro ($block? ?obj)
-  `(##core#inline "C_blockp" ,?obj) )
+(define-inline ($block? ?obj)
+  (##core#inline "C_blockp" ?obj) )
 
-(define-macro ($special? ?obj)
-  `(##core#inline "C_specialp" ,?obj) )
+(define-inline ($special? ?obj)
+  (##core#inline "C_specialp" ?obj) )
 
-(define-macro ($port? ?obj)
-  `(##core#inline "C_portp" ,?obj) )
+(define-inline ($port? ?obj)
+  (##core#inline "C_portp" ?obj) )
 
-(define-macro ($byte-block? ?obj)
-  `(##core#inline "C_byteblockp" ,?obj) )
+(define-inline ($byte-block? ?obj)
+  (##core#inline "C_byteblockp" ?obj) )
 
-(define-macro ($hash-string ?str)
-  `(##core#inline "C_hash_string" ,?str) )
+(define-inline ($hash-string ?str)
+  (##core#inline "C_hash_string" ?str) )
 
-(define-macro ($hash-string-ci ?str)
-  `(##core#inline "C_hash_string_ci" ,?str) )
+(define-inline ($hash-string-ci ?str)
+  (##core#inline "C_hash_string_ci" ?str) )
 
 
 ;;;
 
-(define-macro ($immediate? ?obj)
-  `(not ($block? ,?obj)) )
+(define-inline ($immediate? ?obj)
+  (not ($block? ?obj)) )
 
 
 ;;; Generation of hash-values:
@@ -153,13 +139,13 @@
 
 ;; Force Hash to Bounded Fixnum:
 
-(define-macro ($fxabs ?fxn)
-  `(let ([_fxn ,?fxn]) (if (fx< _fxn 0) (fxneg _fxn) _fxn ) ) )
+(define-inline ($fxabs ?fxn)
+  (let ([_fxn ?fxn]) (if (fx< _fxn 0) (fxneg _fxn) _fxn ) ) )
 
-(define-macro ($hash/limit ?hsh ?lim)
-  `(fxmod (fxand (foreign-value "C_MOST_POSITIVE_FIXNUM" int)
-		 ($fxabs ,?hsh))
-	  ,?lim) )
+(define-inline ($hash/limit ?hsh ?lim)
+  (fxmod (fxand (foreign-value "C_MOST_POSITIVE_FIXNUM" int)
+		($fxabs ?hsh))
+	 ?lim) )
 
 ;; Number Hash:
 
@@ -178,19 +164,19 @@
 		      (fxshl ,(loop (fx- idx 1)) 1))))) )
 |#
 
-(define-macro ($hash-flonum ?flo)
-  `(fx* flonum-magic ($quick-flonum-truncate ,?flo)) )
+(define-inline ($hash-flonum ?flo)
+  (fx* flonum-magic ($quick-flonum-truncate ?flo)) )
 
 (define (##sys#number-hash-hook obj)
   (%equal?-hash obj) )
 
-(define-macro ($non-fixnum-number-hash ?obj)
-  `(cond [(flonum? obj)	($hash-flonum ,?obj)]
-	 [else		($fix (##sys#number-hash-hook ,?obj))] ) )
+(define-inline ($non-fixnum-number-hash ?obj)
+  (cond [(flonum? obj)	($hash-flonum ?obj)]
+	[else		($fix (##sys#number-hash-hook ?obj))] ) )
 
-(define-macro ($number-hash ?obj)
-  `(cond [(fixnum? obj)	,?obj]
-	 [else		($non-fixnum-number-hash ?obj)] ) )
+(define-inline ($number-hash ?obj)
+  (cond [(fixnum? obj)	?obj]
+	[else		($non-fixnum-number-hash ?obj)] ) )
 
 (define (number-hash obj #!optional (bound hash-default-bound))
   (unless (number? obj)
@@ -217,8 +203,8 @@
 (define-macro ($symbol-hash ?obj)
   `(##sys#slot ,?obj INDEX-OF-UNIQUE-HASH-VALUE-COMPUTED-DURING-SYMBOL-CREATION) )
 
-(define-macro ($symbol-hash ?obj)
-  `($hash-string (##sys#slot ,?obj 1)) )
+(define-inline ($symbol-hash ?obj)
+  ($hash-string (##sys#slot ?obj 1)) )
 
 (define (symbol-hash obj #!optional (bound hash-default-bound))
   (##sys#check-symbol obj 'symbol-hash)
@@ -237,8 +223,8 @@
 (define-macro ($keyword-hash ?obj)
   `(##sys#slot ,?obj INDEX-OF-UNIQUE-HASH-VALUE-COMPUTED-DURING-KEYWORD-CREATION) )
 
-(define-macro ($keyword-hash ?obj)
-  `($hash-string (##sys#slot ,?obj 1)) )
+(define-inline ($keyword-hash ?obj)
+  ($hash-string (##sys#slot ?obj 1)) )
 
 (define (keyword-hash obj #!optional (bound hash-default-bound))
   (##sys#check-keyword obj 'keyword-hash)
@@ -247,11 +233,11 @@
 
 ;; Eq Hash:
 
-(define-macro ($eq?-hash-object? ?obj)
-  `(or ($immediate? ,?obj)
-       (symbol? ,?obj)
+(define-inline ($eq?-hash-object? ?obj)
+  (or ($immediate? ?obj)
+       (symbol? ?obj)
        #; ;NOT YET (no keyword vs. symbol issue)
-       (keyword? ,?obj) ) )
+       (keyword? ?obj) ) )
 
 (define (%eq?-hash obj)
   (cond [(fixnum? obj)		obj]
@@ -274,9 +260,9 @@
 
 ;; Eqv Hash:
 
-(define-macro ($eqv?-hash-object? ?obj)
-  `(or ($eq?-hash-object? ,?obj)
-       (number? ,?obj)) )
+(define-inline ($eqv?-hash-object? ?obj)
+  (or ($eq?-hash-object? ?obj)
+       (number? ?obj)) )
 
 (define (%eqv?-hash obj)
   (cond [(fixnum? obj)		obj]
@@ -302,25 +288,25 @@
 (define-constant recursive-hash-max-depth 4)
 (define-constant recursive-hash-max-length 4)
 
-(define-macro ($*list-hash ?obj)
-  `(fx+ (length ,?obj)
-	(recursive-atomic-hash (##sys#slot ,?obj 0) depth)) )
+(define-inline ($*list-hash ?obj)
+  (fx+ (length ?obj)
+       (recursive-atomic-hash (##sys#slot ?obj 0) depth)) )
 
-(define-macro ($*pair-hash ?obj)
-  `(fx+ (fxshl (recursive-atomic-hash (##sys#slot ,?obj 0) depth) 16)
-	(recursive-atomic-hash (##sys#slot ,?obj 1) depth)) )
+(define-inline ($*pair-hash ?obj)
+  (fx+ (fxshl (recursive-atomic-hash (##sys#slot ?obj 0) depth) 16)
+	(recursive-atomic-hash (##sys#slot ?obj 1) depth)) )
 
-(define-macro ($*port-hash ?obj)
-  `(fx+ (fxshl (##sys#peek-fixnum ,?obj 0) 4) ; Little extra "identity"
-	(if (input-port? ,?obj)
+(define-inline ($*port-hash ?obj)
+  (fx+ (fxshl (##sys#peek-fixnum ?obj 0) 4) ; Little extra "identity"
+	(if (input-port? ?obj)
 	    input-port-hash-value
 	    output-port-hash-value)) )
 
-(define-macro ($*special-vector-hash ?obj)
-  `(vector-hash ,?obj (##sys#peek-fixnum ,?obj 0) depth 1) )
+(define-inline ($*special-vector-hash ?obj)
+  (vector-hash ?obj (##sys#peek-fixnum ?obj 0) depth 1) )
 
-(define-macro ($*regular-vector-hash ?obj)
-  `(vector-hash ,?obj 0 depth 0) )
+(define-inline ($*regular-vector-hash ?obj)
+  (vector-hash ?obj 0 depth 0) )
 
 (define (%equal?-hash obj)
 
