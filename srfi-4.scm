@@ -600,7 +600,7 @@ EOF
 		 [tag (and (symbol? x) x)] )
 	    (cond [(or (eq? tag 'f) (eq? tag 'F)) #f]
 		  [(memq tag consers) => (lambda (c) ((##sys#slot (##sys#slot c 1) 0) (read port)))]
-		  [else (##sys#error "illegal bytevector syntax" tag)] ) )
+		  [else (##sys#read-error port "illegal bytevector syntax" tag)] ) )
 	  (old-hook char port) ) ) ) )
 
 
