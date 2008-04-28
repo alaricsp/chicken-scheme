@@ -7,8 +7,10 @@
 (require-extension srfi-69)
 (require-extension posix)
 (require-extension utils)
-(require-extension stream-wiki)
+(require-extension srfi-40)
+(require-extension html-stream)
 (require-extension stream-ext)
+(require-extension stream-wiki)
 
 (define extensions (make-hash-table))
 
