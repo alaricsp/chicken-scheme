@@ -1146,7 +1146,7 @@
 	(check-decl spec 1 1)
 	(let* ([u (cadr spec)]
 	       [un (string->c-identifier (stringify u))] )
-	  (hash-table-set! file-requirements 'unit u)
+	  (##sys#hash-table-set! file-requirements 'unit u)
 	  (when (and unit-name (not (string=? unit-name un)))
 	    (compiler-warning 'usage "unit was already given a name (new name is ignored)") )
 	  (set! unit-name un) ) )

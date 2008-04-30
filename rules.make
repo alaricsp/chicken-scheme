@@ -988,7 +988,7 @@ chicken-bug.c: chicken-bug.scm
 
 # distribution files
 
-.PHONY: distfiles
+.PHONY: distfiles dist
 
 distfiles: buildsvnrevision library.c eval.c expand.c data-structures.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
@@ -999,6 +999,9 @@ distfiles: buildsvnrevision library.c eval.c expand.c data-structures.c extras.c
 	chicken-profile.c chicken-setup.c csc.c csi.c \
 	chicken.c batch-driver.c compiler.c optimizer.c support.c \
 	c-platform.c c-backend.c chicken-bug.c
+
+dist: distfiles
+	$(CSI) -s scripts/makedist.scm
 
 # cleaning up
 

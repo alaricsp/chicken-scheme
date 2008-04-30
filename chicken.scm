@@ -26,7 +26,7 @@
 
 
 (declare
-  (uses srfi-1 srfi-4 utils support compiler optimizer driver platform backend)
+  (uses srfi-1 srfi-4 utils support compiler optimizer driver platform backend srfi-69)
   (run-time-macros) )			;*** later: compile-syntax
 
 

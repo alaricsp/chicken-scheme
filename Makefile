@@ -66,8 +66,7 @@ check:
 fullcheck:
 	$(MAKE) -f Makefile.$(PLATFORM) fullcheck
 dist:
-	$(MAKE) -f Makefile.$(PLATFORM) distfiles
-	csi -s misc/makedist.scm
+	$(MAKE) -f Makefile.$(PLATFORM) dist
 libs:
 	$(MAKE) -f Makefile.$(PLATFORM) libs
 install-libs:

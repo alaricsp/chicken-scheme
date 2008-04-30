@@ -266,6 +266,10 @@ endif
 
 CHICKEN ?= chicken$(EXE)
 
+# interpreter for scripts
+
+CSI ?= csi$(EXE)
+
 # Scheme compiler flags
 
 CHICKEN_OPTIONS = -quiet -no-trace -optimize-level 2 -include-path .
