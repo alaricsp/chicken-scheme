@@ -1,3 +1,9 @@
+chicken (3.2.0-0.1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Ivan Raikov <raikov@oist.jp>  Wed, 30 Apr 2008 13:43:22 +0900
+
 chicken (3.1.0-0.3) unstable; urgency=low
 
   * Chicken shared library moved to libchicken0 package.
