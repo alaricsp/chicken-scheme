@@ -613,6 +613,36 @@
 			    (eval/meta (caddr x))))
 			  (compile '(##core#undefined) e #f tf cntr se) )
 
+			 ((##core#module)
+			  (let ((name (rename (cadr x) se))
+				(exports (map (cut rename <> se) (caddr x))) 
+				(me0 ##sys#macro-environment))
+			    (parameterize ((##sys#current-module 
+					    (##sys#register-module name exports) )
+					   (##sys#import-environment '()))
+			      (fluid-let ((##sys#macro-environment ;*** make parameter later
+					   ##sys#macro-environment))
+				(let loop ((body (cdddr x)) (xs '()))
+				  (if (null? body)
+				      (let ((xs (reverse xs)))
+					(##sys#finalize-module 
+					 (##sys#current-module) 
+					 me0)
+					(lambda (v)
+					  (let loop2 ((xs xs))
+					    (if (null? xs)
+						(##sys#void))
+					    (let ((n (##sys#slot xs 1)))
+					      (cond ((pair? n)
+						     ((##sys#slot xs 0) v)
+						     (loop2 n))
+						    (else
+						     ((##sys#slot xs 0) v)))))))
+				      (loop 
+				       (cdr body)
+				       (cons (compile (car body) e #f tf cntr se)
+					     xs))))) ) ) )
+
 			 [(##core#loop-lambda)
 			  (compile `(,(rename 'lambda se) ,@(cdr x)) e #f tf cntr se) ]
 

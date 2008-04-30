@@ -30,7 +30,7 @@
   (fixnum)
   (hide match-expression
 	macro-alias
-	d
+	d dd
 	lookup) )
 
 
@@ -42,10 +42,19 @@
       (pp arg1)
       (apply print arg1 more)))
 
-(cond-expand
+(define dd d)
+
+#;(cond-expand
  (hygienic-macros
   (define-syntax d (syntax-rules () ((_ . _) (void)))))
- (else (define-macro (d . _) '(void))))	;***
+ (else					;*** remove later
+  (define-macro (d . _) '(void))))
+
+(cond-expand
+ (hygienic-macros
+  (define-syntax dd (syntax-rules () ((_ . _) (void)))))
+ (else					;*** remove later
+  (define-macro (dd . _) '(void))))
 
 
 ;;; Syntactic environments
@@ -131,7 +140,7 @@
   (let ([string-append string-append])
     (lambda (exp dse)
       (define (call-handler name handler exp se)
-	(d "invoking macro: " name)
+	(dd "invoking macro: " name)
 	(handle-exceptions ex
 	    (##sys#abort
 	     (if (and (##sys#structure? ex 'condition)
@@ -159,7 +168,7 @@
 		 ex) )
 	  (handler exp se dse)))
       (define (expand head exp mdef)
-	(d `(EXPAND: ,head ,exp ,(map car dse)))
+	(dd `(EXPAND: ,head ,exp ,(map car dse)))
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
@@ -204,7 +213,29 @@
 	  (values exp #f) ) ) ) )
 
 (define ##sys#enable-runtime-macros #f)
-(define (##sys#alias-global-hook sym) sym)
+(define ##sys#import-environment (make-parameter '()))
+
+(define (##sys#module-rename sym prefix)
+  (##sys#string->symbol 
+   (string-append 
+    (##sys#slot prefix 1)
+    "#" 
+    (##sys#slot sym 1) ) ) )
+
+(define (##sys#alias-global-hook sym) 
+  (define (mrename sym)
+    (cond ((##sys#current-module) => 
+	   (lambda (mod)
+	     (d "global alias " sym " -> " (module-name mod))
+	     (##sys#module-rename sym (module-name mod))))
+	  (else sym)))
+  (cond ((##sys#qualified-symbol? sym) sym)
+	((assq sym (##sys#import-environment)) =>
+	 (lambda (a)
+	   (if (pair? (cdr a))
+	       (mrename sym)
+	       (cdr a) ) ) )
+	(else (mrename sym))))
 
 
 ;;; User-level macroexpansion
@@ -918,7 +949,105 @@
 	  (%quote (r 'quote)))
       `(##core#require-extension ,@ids) ) ) ) )
 
+(##sys#extend-macro-environment
+ 'import
+ '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (##sys#check-syntax 'import x '(_ symbol))
+    (let* ((mname (or (lookup (cadr x) '()) (cadr x))) ;*** empty se?
+	   (mod (##sys#find-module mname)))
+      (d "importing: " mname)
+      (d (module-vexports mod))
+      (##sys#import-environment
+       (append (module-vexports mod) (##sys#import-environment)))
+      (set! ##sys#macro-environment
+	(append (module-sexports mod) ##sys#macro-environment))
+      '(##sys#void)))))
+
+(##sys#extend-macro-environment
+ 'module
+ '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (##sys#check-syntax 'module x '(_ symbol #(symbol 0) . #(_ 1)))
+    `(##core#module ,@(cdr x)))))
+
 
 ;;; syntax-rules
 
 (include "synrules.scm")
+
+
+;;; low-level module support
+
+(define ##sys#current-module (make-parameter #f))
+
+(declare 
+  (hide make-module module?
+	module-name module-vexports module-sexports
+	set-module-vexports! set-module-sexports!
+	module-se set-module-se!))
+
+(define-record-type module
+  (make-module name vexports sexports) 
+  module?
+  (name module-name)
+  (vexports module-vexports set-module-vexports!)
+  (sexports module-sexports set-module-sexports!) )
+
+(define (##sys#find-module name)
+  (cond ((assq name ##sys#module-table) => cdr)
+	(else (error 'import "module not found" name))))
+
+(define (##sys#register-module name vexports #!optional (sexports '()))
+  (let* ((se1 (map (lambda (ve) (cons ve (##sys#module-rename ve name))) vexports))
+	 (se2 (map (lambda (se) (list (car se) '() (cdr se))) sexports))
+	 (mod (make-module name se1 se2)))
+    (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
+    mod) )
+
+(define (##sys#finalize-module mod me0)
+  (let ((sexports
+	 (let loop ((me ##sys#macro-environment))
+	   (if (or (null? me) (eq? me0 me))
+	       '()
+	       (cons (car me) (loop (cdr me)))))))
+    (d `(SEXPORTS: ,(module-name mod) ,@(map car sexports)))
+    (set-module-sexports! mod sexports)))
+
+(define ##sys#module-table
+  (list
+   (cons
+    'scheme 
+    (make-module
+     'scheme
+     (map (lambda (s) (cons s s))
+	  '(not boolean? eq? eqv? equal? pair?
+		cons car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr
+		cddar cdddr caaaar caaadr caadar caaddr cadaar cadadr cadddr cdaaar
+		cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr set-car! set-cdr!
+		null? list? list length list-tail list-ref append reverse memq memv
+		member assq assv assoc symbol? symbol->string string->symbol number?
+		integer? exact? real? complex? inexact? rational? zero? odd? even?
+		positive? negative?  max min + - * / = > < >= <= quotient remainder
+		modulo gcd lcm abs floor ceiling truncate round exact->inexact
+		inexact->exact exp log expt sqrt sin cos tan asin acos atan
+		number->string string->number char? char=? char>? char<? char>=?
+		char<=? char-ci=? char-ci<? char-ci>?  char-ci>=? char-ci<=?
+		char-alphabetic? char-whitespace? char-numeric? char-upper-case?
+		char-lower-case? char-upcase char-downcase char->integer integer->char
+		string? string=?  string>? string<? string>=? string<=? string-ci=?
+		string-ci<? string-ci>? string-ci>=? string-ci<=?  make-string
+		string-length string-ref string-set! string-append string-copy
+		string->list list->string substring string-fill! vector? make-vector
+		vector-ref vector-set! string vector vector-length vector->list
+		list->vector vector-fill! procedure? map for-each apply force
+		call-with-current-continuation input-port? output-port?
+		current-input-port current-output-port call-with-input-file
+		call-with-output-file open-input-file open-output-file
+		close-input-port close-output-port load read eof-object? read-char
+		peek-char write display write-char newline with-input-from-file
+		with-output-to-file dynamic-wind values call-with-values eval
+		scheme-report-environment null-environment interaction-environment) )
+     ##sys#macro-environment))))
