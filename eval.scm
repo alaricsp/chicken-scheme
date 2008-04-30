@@ -606,16 +606,27 @@
 			       
 			 ((define-syntax define-compiled-syntax)
 			  (##sys#check-syntax 'define-syntax x '(_ variable _) #f se)
-			  (##sys#extend-macro-environment
-			   (rename (cadr x) se)
-			   (##sys#current-environment)
-			   (##sys#er-transformer
-			    (eval/meta (caddr x))))
-			  (compile '(##core#undefined) e #f tf cntr se) )
+			  (let ((name (rename (cadr x) se)))
+			    (##sys#extend-macro-environment
+			     name
+			     (##sys#current-environment)
+			     (##sys#er-transformer
+			      (eval/meta (caddr x))))
+			    (##sys#register-export name (##sys#current-module))
+			    (compile '(##core#undefined) e #f tf cntr se) ) )
 
 			 ((##core#module)
-			  (let ((name (rename (cadr x) se))
-				(exports (map (cut rename <> se) (caddr x))) 
+			  (let* ((name (rename (cadr x) se))
+				(exports 
+				 (map (lambda (exp)
+					(cond ((symbol? exp) (rename exp se))
+					      ((and (pair? exp) (symbol? (car exp)))
+					       (map (cut rename <> se) exp) )
+					      (else
+					       (##sys#syntax-error-hook
+						'module
+						"invalid export syntax" exp name))))
+				      (caddr x)))
 				(me0 ##sys#macro-environment))
 			    (parameterize ((##sys#current-module 
 					    (##sys#register-module name exports) )

@@ -21,8 +21,8 @@
   (abc 1))
 1)
 
-(test-error "external/unimported variable" (abc 2))
-(test-error "external/unimported syntax" (def 3))
+(test-error "external/unimported variable (fail)" (abc 2))
+(test-error "external/unimported syntax (fail)" (def 3))
 
 (import foo)
 (test-equal "external/imported variable" (abc 4) 4)

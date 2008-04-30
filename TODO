@@ -4,8 +4,9 @@ TODO for macro/module system					-*- Outline -*-
 
 * test line-number retention over macro-expansion
 
-* add low-level support for modules
-* find suitable design for modules
+* modules
+** implement for compiler
+*** hide unexported module definitions
 
 * update manual/NEWS
 ** hygienic macros
