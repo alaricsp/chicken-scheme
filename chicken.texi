@@ -1,6 +1,13 @@
 \input texinfo @c -*- texinfo -*-
 @settitle Chicken Scheme Reference Manual
 @setchapternewpage on
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* Chicken: (chicken.info). Chicken Scheme Reference Manual.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
 @copying
 Copyright 2007-2008 Felix Winkelmann and the Chicken Team
 @end copying
