@@ -1,3 +1,9 @@
+chicken (3.2.0-0.2) unstable; urgency=low
+
+  * Added directory information to texi documentation file.
+
+ -- Ivan Raikov <raikov@oist.jp>  Thu, 01 May 2008 10:06:00 +0900
+
 chicken (3.2.0-0.1) unstable; urgency=low
 
   * New upstream version.
