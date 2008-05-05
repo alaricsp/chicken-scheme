@@ -63,11 +63,6 @@ EOF
 
 (include "unsafe-declarations.scm")
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "lolevel.exports")))
- (else))
-
 (register-feature! 'lolevel)
 
 

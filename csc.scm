@@ -174,16 +174,19 @@
   '(-explicit-use -no-trace -no-warnings -no-usual-integrations -optimize-leaf-routines -unsafe
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
-    -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info -check-imports
+    -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info 
+    -check-imports			; DEPRECATED
     -emit-external-prototypes-first -inline -extension -release -static-extensions
     -analyze-only -keep-shadowed-macros -disable-compiler-macros) )
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -inline-limit -profile-name -disable-warning -import -require-static-extension
-    -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
-    -compress-literals) )		; DEPRECATED
+    -inline-limit -profile-name -disable-warning 
+    -import 				; DEPRECATED
+    -require-static-extension
+    -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
+    -emit-exports -compress-literals) )		; DEPRECATED
 
 (define-constant shortcuts
   '((-h "-help")
@@ -198,7 +201,7 @@
     (|-K| "-keyword-style")
     (|-X| "-extend")
     (|-N| "-no-usual-integrations")
-    (|-G| "-check-imports")
+    (|-G| "-check-imports")		; DEPRECATED
     (-x "-explicit-use")
     (-u "-unsafe")
     (-b "-block") ) )
@@ -367,9 +370,6 @@
     -accumulate-profile         executable emits profiling information in append mode
     -profile-name FILENAME      name of the generated profile information file
     -emit-debug-info            emit additional debug-information
-    -emit-exports FILENAME      write exported toplevel variables to FILENAME
-    -G  -check-imports          look for undefined toplevel variables
-    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 

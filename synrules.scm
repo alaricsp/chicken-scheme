@@ -96,7 +96,7 @@
   (define %rename (r 'rename))
   (define %tail (r 'tail))
   (define %temp (r 'temp))
-  (define %syntax-error (r 'syntax-error))
+  (define %syntax-error '##sys#syntax-error-hook)
 
   (define (make-transformer rules)
     `(,%lambda (,%input ,%rename ,%compare)
@@ -120,7 +120,7 @@
 		    ,(process-template template
 				       0
 				       (meta-variables pattern 0 '())))))
-	(syntax-error "ill-formed syntax rule" rule)))
+	(##sys#syntax-error-hook "ill-formed syntax rule" rule)))
 
   ;; Generate code to test whether input expression matches pattern
 
@@ -225,8 +225,8 @@
 	     (if probe
 		 (if (<= (cdr probe) dim)
 		     template
-		     (syntax-error "template dimension error (too few ellipses?)"
-				   template))
+		     (##sys#syntax-error-hook "template dimension error (too few ellipses?)"
+					      template))
 		 `(,%rename (##core#syntax ,template)))))
 	  ((segment-template? template)
 	   (let* ((depth (segment-depth template))
@@ -234,7 +234,7 @@
 		  (vars
 		   (free-meta-variables (car template) seg-dim env '())))
 	     (if (null? vars)
-		 (syntax-error "too many ellipses" template)
+		 (##sys#syntax-error-hook "too many ellipses" template)
 		 (let* ((x (process-template (car template)
 					     seg-dim
 					     env))
@@ -304,7 +304,7 @@
   (define (segment-pattern? pattern)
     (and (segment-template? pattern)
 	 (or (null? (cddr pattern))
-	     (syntax-error "segment matching not implemented" pattern))))
+	     (##sys#syntax-error-hook "segment matching not implemented" pattern))))
 
   (define (segment-template? pattern)
     (and (pair? pattern)

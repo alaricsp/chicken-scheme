@@ -629,9 +629,7 @@ EOF
 	(print "egg has no test suite.") ) ) )
 
 (define (write-info id files info)
-  (let-values (((exports info) (fix-exports id info)))
     (let ((info `((files ,@files) 
-		,@exports
 		,@(or (and-let* (*repository-tree*
 				 (a (assq id *repository-tree*))
 				 (a2 (assq 'date (second a))) )
@@ -644,28 +642,7 @@ EOF
 	    (write-setup-info (with-output-to-file setup-file
 				(cut pp info))))
 	(unless *windows-shell* (run (chmod a+r ,(quotewrap setup-file))))
-	write-setup-info))))
-
-(define (fix-exports id info)
-  (let-values (((einfo oinfo) (partition (lambda (item) (eq? 'exports (car item))) info)))
-    (let ((exports
-	   (if (pair? einfo)
-	       (append-map
-		(lambda (eitem)
-		  (let loop ((exports (cdr eitem)))
-		    (if (null? exports)
-			'()
-			(let ((x (car exports))
-			      (rest (cdr exports)) )
-			  (cond ((string? x) (append (read-file x) (loop rest)))
-				((symbol? x) (cons x (loop rest)))
-				(else (error "invalid export item" x)) ) ) ) ) )
-		einfo) 
-	       (and-let* ((f (file-exists? (make-pathname #f (->string id) "exports"))))
-		 (read-file f) ) ) ) )
-      (if exports 
-	  (values `((exports ,@exports)) oinfo)
-	  (values '() oinfo) ) ) ) )
+	write-setup-info)))
 
 (define (compute-builddir fpath)
   (if (equal? "egg-dir" (pathname-extension fpath)) fpath

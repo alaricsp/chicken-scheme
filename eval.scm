@@ -96,10 +96,6 @@
 
 (include "unsafe-declarations.scm")
 
-(cond-expand 
- ((not unsafe) (declare (emit-exports "eval.exports")))
- (else))
-
 (define-foreign-variable install-egg-home c-string "C_INSTALL_EGG_HOME")
 (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
@@ -617,17 +613,20 @@
 
 			 ((##core#module)
 			  (let* ((name (rename (cadr x) se))
-				(exports 
-				 (map (lambda (exp)
-					(cond ((symbol? exp) (rename exp se))
-					      ((and (pair? exp) (symbol? (car exp)))
-					       (map (cut rename <> se) exp) )
+				 (exports 
+				  (map (lambda (exp)
+					 (cond ((symbol? exp) (rename exp se))
+					       ((and (pair? exp) (symbol? (car exp)))
+						(map (cut rename <> se) exp) )
 					      (else
 					       (##sys#syntax-error-hook
 						'module
 						"invalid export syntax" exp name))))
-				      (caddr x)))
-				(me0 ##sys#macro-environment))
+				       (caddr x)))
+				 (me0 ##sys#macro-environment))
+			    (when (pair? se)
+			      (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
+						       name))
 			    (parameterize ((##sys#current-module 
 					    (##sys#register-module name exports) )
 					   (##sys#import-environment '()))
@@ -642,13 +641,13 @@
 					(lambda (v)
 					  (let loop2 ((xs xs))
 					    (if (null? xs)
-						(##sys#void))
-					    (let ((n (##sys#slot xs 1)))
-					      (cond ((pair? n)
-						     ((##sys#slot xs 0) v)
-						     (loop2 n))
-						    (else
-						     ((##sys#slot xs 0) v)))))))
+						(##sys#void)
+						(let ((n (##sys#slot xs 1)))
+						  (cond ((pair? n)
+							 ((##sys#slot xs 0) v)
+							 (loop2 n))
+							(else
+							 ((##sys#slot xs 0) v))))))))
 				      (loop 
 				       (cdr body)
 				       (cons (compile (car body) e #f tf cntr se)
@@ -1157,13 +1156,13 @@
 		   (if comp?
 		       (memq id builtin-features/compiled)
 		       (##sys#feature? id) ) )
-	       (values '(##sys#void) #t) )
+	       (values '(##core#undefined) #t) )
 	      ((memq id special-syntax-files)
 	       (let ((fid (##sys#->feature-id id)))
 		 (unless (memq fid ##sys#features)
 		   (##sys#load (##sys#resolve-include-filename (##sys#symbol->string id) #t) #f #f) 
 		   (set! ##sys#features (cons fid ##sys#features)) )
-		 (values '(##sys#void) #t) ) )
+		 (values '(##core#undefined) #t) ) )
 	      ((memq id ##sys#core-library-modules)
 	       (values
 		(if comp?
@@ -1265,7 +1264,7 @@
 	 (unless (and vv (string>=? (->string (car vv)) (->string (caddr spec))))
 	   (error "installed extension does not match required version" id vv (caddr spec)))
 	 id) 
-       (syntax-error 'require-extension "invalid version specification" spec)) ) )
+       (##sys#syntax-error-hook 'require-extension "invalid version specification" spec)) ) )
 
 
 ;;; Convert string into valid C-identifier:

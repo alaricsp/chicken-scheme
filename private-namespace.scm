@@ -42,7 +42,7 @@
 	      var 'c:namespace
 	      (##sys#string->qualified-symbol prefix (symbol->string var))))
 	   vars)
-	  '(##sys#void) ) ) ) ) )
+	  '(##core#undefined) ) ) ) ) )
  (else
   (define-macro (private . args)
     (let ((namespace (car args))

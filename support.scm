@@ -37,7 +37,7 @@
   file-io-only banner custom-declare-alist disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
   foreign-declarations block-compilation line-number-database-size
-  target-heap-size target-stack-size check-global-exports check-global-imports
+  target-heap-size target-stack-size
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
@@ -53,7 +53,7 @@
   transform-direct-lambdas! finish-foreign-result csc-control-file
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
-  constant? basic-literal? source-info->string import-table
+  constant? basic-literal? source-info->string 
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
   build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
@@ -64,11 +64,11 @@
   default-declarations units-used-by-default words-per-flonum emit-control-file-item compiler-warning
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  default-optimization-iterations chop-separator chop-extension follow-without-loop dump-exported-globals
+  default-optimization-iterations chop-separator chop-extension follow-without-loop
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  lookup-exports-file constant-declarations process-lambda-documentation big-fixnum?
-  compiler-macro-table register-compiler-macro export-dump-hook export-import-hook
+  constant-declarations process-lambda-documentation big-fixnum?
+  compiler-macro-table register-compiler-macro export-dump-hook
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
 
 
@@ -85,8 +85,8 @@
 
 (define (bomb . msg-and-args)
   (if (pair? msg-and-args)
-      (apply error (string-append "[internal compiler screwup] " (car msg-and-args)) (cdr msg-and-args))
-      (error "[internal compiler screwup]") ) )
+      (apply error (string-append "[internal compiler error] " (car msg-and-args)) (cdr msg-and-args))
+      (error "[internal compiler error]") ) )
 
 (define (debugging mode msg . args)
   (and (memq mode debugging-chicken)
@@ -758,30 +758,6 @@
 
 ;;; Some safety checks and database dumping:
 
-(define (export-dump-hook db file) (void))
-
-(define (dump-exported-globals db file)
-  (unless block-compilation
-    (with-output-to-file file
-      (lambda ()
-	(let ((exports '()))
-	  (##sys#hash-table-for-each
-	   (lambda (sym plist)
-	     (when (and (assq 'global plist) 
-			(assq 'assigned plist)
-			(or (and export-list (memq sym export-list))
-			    (not (memq sym block-globals)) ) )
-	       (set! exports (cons sym exports)) ) )
-	   db)
-	  (for-each 
-	   (lambda (s)
-	     (write s)
-	     (newline) )
-	   (sort exports
-		 (lambda (s1 s2)
-		   (string<? (##sys#slot s1 1) (##sys#slot s2 1)))) )
-	  (export-dump-hook db file) ) ) ) ) )
-
 (define (dump-undefined-globals db)
   (##sys#hash-table-for-each
    (lambda (sym plist)
@@ -802,35 +778,7 @@
        db)
       (for-each (cut compiler-warning 'var "exported global variable `~S' is not defined" <>) exps) ) ) )
 
-(define (check-global-imports db)
-  (##sys#hash-table-for-each
-   (lambda (sym plist)
-     (let ((imp (##sys#hash-table-ref import-table sym))
-	   (refs (assq 'references plist))
-	   (assgn (assq 'assigned plist)) )
-       (when (assq 'global plist)
-	 (cond (assgn
-		(when imp
-		  (compiler-warning 'redef "redefinition of imported variable `~s' from `~s'" sym imp) ) )
-	       ((and (pair? refs) (not imp) (not (keyword? sym)))
-		(compiler-warning 'var "variable `~s' used but not imported" sym) ) ) ) ) )
-   db) )
-
 (define (export-import-hook x id) (void))
-
-(define (lookup-exports-file id)
-  (and-let* ((xfile (##sys#resolve-include-filename 
-		     (string-append (->string id) ".exports")
-		     #t #t) )
-	     ((file-exists? xfile)) )
-    (when verbose-mode 
-      (printf "loading exports file ~a ...~%" xfile) )
-    (for-each
-     (lambda (exp)
-       (if (symbol? exp)
-	   (##sys#hash-table-set! import-table exp id) 
-	   (export-import-hook exp id) ) )
-     (read-file xfile)) ) )
 
 
 ;;; Compute general statistics from analysis database:
@@ -1279,9 +1227,6 @@ Usage: chicken FILENAME OPTION ...
     -profile-name FILENAME      name of the generated profile information file
     -accumulate-profile         executable emits profiling information in append mode
     -no-lambda-info             omit additional procedure-information
-    -emit-exports FILENAME      write exported toplevel variables to FILENAME
-    -check-imports              look for undefined toplevel variables
-    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 

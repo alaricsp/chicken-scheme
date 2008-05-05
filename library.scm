@@ -121,11 +121,6 @@ fast_read_string_from_file (C_word dest, C_word port, C_word len, C_word pos)
 EOF
 ) )
 
-(cond-expand 
- ((not unsafe)
-  (declare (emit-exports "library.exports")))
- (else) )
-
 (cond-expand
  [paranoia]
  [else

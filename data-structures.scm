@@ -71,11 +71,6 @@ EOF
 
 (include "unsafe-declarations.scm")
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "data-structures.exports")) )
- (else))
-
 (register-feature! 'data-structures)
 
 

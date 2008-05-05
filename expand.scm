@@ -439,7 +439,7 @@
 				  (loop rest (cons head vars)
 					(cons (if (pair? (cddr x))
 						  (caddr x)
-						  '(##sys#void) )
+						  '(##core#undefined) )
 					      vals)
 					mvars mvals) ]
 				 [(pair? (car head))
@@ -650,7 +650,7 @@
 	       (##sys#check-syntax 'define head 'symbol)
 	       (##sys#check-syntax 'define body '#(_ 0 1))
 	       (##sys#register-export head (##sys#current-module))
-	       `(##core#set! ,head ,(if (pair? body) (car body) '(##sys#void))) )
+	       `(##core#set! ,head ,(if (pair? body) (car body) '(##core#undefined))) )
 	      ((pair? (car head))
 	       (##sys#check-syntax 'define head '(_ . lambda-list))
 	       (##sys#check-syntax 'define body '#(_ 1))
@@ -965,14 +965,14 @@
        (append (module-vexports mod) (##sys#import-environment)))
       (set! ##sys#macro-environment
 	(append (module-sexports mod) ##sys#macro-environment))
-      '(##sys#void)))))
+      '(##core#undefined)))))
 
 (##sys#extend-macro-environment
  'module
  '()
  (##sys#er-transformer
   (lambda (x r c)
-    (##sys#check-syntax 'module x '(_ symbol #(symbol 0) . #(_ 1)))
+    (##sys#check-syntax 'module x '(_ symbol #(symbol 0) . #(_ 0)))
     `(##core#module ,@(cdr x)))))
 
 
@@ -994,26 +994,52 @@
 (define-record-type module
   (make-module name export-list defined-list vexports sexports) 
   module?
-  (name module-name)
-  (export-list module-export-list)
-  (defined-list module-defined-list set-module-defined-list!)
-  (vexports module-vexports set-module-vexports!)
-  (sexports module-sexports set-module-sexports!) )
+  (name module-name)			; SYMBOL
+  (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
+  (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)
+  (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
+  (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
 (define (##sys#find-module name)
   (cond ((assq name ##sys#module-table) => cdr)
 	(else (error 'import "module not found" name))))
 
-(define (##sys#register-export sym mod)
+(define (##sys#register-export sym mod #!optional val)
   (when mod
     (when (##sys#find-export sym mod)
       (d "defined: " sym)
-      (set-module-defined-list! mod (cons sym (module-defined-list mod))))))
+      (set-module-defined-list! 
+       mod
+       (cons (cons sym val)
+	     (module-defined-list mod))))))
 
 (define (##sys#register-module name explist)
   (let ((mod (make-module name explist '() '() '())))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
+
+(define (##sys#compiled-module-registration mod)
+  (let ((dlist (module-defined-list mod)))
+    `(##sys#register-compiled-module
+      ',(module-name mod)
+      ',(module-vexports mod)
+      (list 
+       ,@(map (lambda (sexport)
+		(let* ((name (car sexport))
+		       (a (assq name dlist)))
+		  (unless a 
+		    (bomb "exported syntax has no source"))
+		  `(cons ',(car sexport) ,(cdr a))))
+	      (module-sexports mod))))))
+
+(define (##sys#register-compiled-module name vexports sexports)
+  (let ((mod (make-module 
+	      name '() '() vexports 
+	      (map (lambda (se)
+		     (list (car se) '() (##sys#er-transformer (cdr se))))
+		   sexports))))
+    (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
+    mod))
 
 (define (##sys#find-export sym mod)
   (let loop ((xl (module-export-list mod)))
@@ -1043,10 +1069,10 @@
 		  (else (loop (append (cdar xl) (cdr xl))))))))
     (for-each 
      (lambda (x)
-       (unless (memq (car x) dlist)
+       (unless (assq (car x) dlist)
 	 (warning "exported identifier has not been defined" (car x))))
      vexports)
-    (d `(EXPORTS: ,(module-name mod) ,(module-defined-list mod) 
+    (d `(EXPORTS: ,(module-name mod) ,(map car dlist)
 		  ,(map car vexports) ,(map car sexports)))
     (set-module-vexports! mod vexports)
     (set-module-sexports! mod sexports)))

@@ -65,7 +65,6 @@
 ; (custom-declare (<tag> <name> <filename> <arg> ...) <string> ...)
 ; (data <tag1> <exp1> ...)
 ; (post-process <string> ...)
-; (emit-exports <string>)
 ; (keep-shadowed-macros)
 ; (import <symbol-or-string> ...)
 ; (unused <symbol> ...)
@@ -118,8 +117,9 @@
 ; (##core#app <exp> {<exp>})
 ; (##coresyntax <exp>)
 ; (<exp> {<exp>})
-; (define-syntax <symbol> <ewxo>)
-; (define-compiled-syntax <symbol> <ewxo>)
+; (define-syntax <symbol> <expr>)
+; (define-compiled-syntax <symbol> <expr>)
+; (##core#module <symbol> (<name> | (<name> ...) ...) <body>)
 ;
 ; - Core language:
 ;
@@ -265,7 +265,7 @@
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning import-table use-import-table compiler-macro-table compiler-macros-enabled
+  compiler-warning compiler-macro-table compiler-macros-enabled
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
@@ -287,9 +287,9 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-rewrite-hook
-  lookup-exports-file undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
+  undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  process-custom-declaration do-lambda-lifting file-requirements emit-closure-info export-file-name
+  process-custom-declaration do-lambda-lifting file-requirements emit-closure-info 
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
   big-fixnum?)
 
@@ -323,7 +323,6 @@
 (define-constant constant-table-size 301)
 (define-constant file-requirements-size 301)
 (define-constant real-name-table-size 997)
-(define-constant import-table-size 997)
 (define-constant default-inline-max-size 10)
 
 
@@ -362,9 +361,6 @@
 (define do-lambda-lifting #f)
 (define inline-max-size -1)
 (define emit-closure-info #t)
-(define export-file-name #f)
-(define import-table #f)
-(define use-import-table #f)
 (define undefine-shadowed-macros #t)
 (define constant-declarations '())
 
@@ -440,9 +436,6 @@
   (if file-requirements
       (vector-fill! file-requirements '())
       (set! file-requirements (make-vector file-requirements-size '())) )
-  (if import-table
-      (vector-fill! import-table '())
-      (set! import-table (make-vector import-table-size '())) )
   (if foreign-type-table
       (vector-fill! foreign-type-table '())
       (set! foreign-type-table (make-vector foreign-type-table-size '())) ) )
@@ -485,7 +478,7 @@
 
   (define (resolve-variable x0 se dest)
     (let ((x (lookup x0 se)))
-      (cond ((not (symbol? x)) x0)
+      (cond ((not (symbol? x)) x0)	; syntax?
 	    [(and constants-used (##sys#hash-table-ref constant-table x)) 
 	     => (lambda (val) (walk (car val) se dest)) ]
 	    [(and inline-table-used (##sys#hash-table-ref inline-table x))
@@ -506,7 +499,8 @@
 		    (foreign-type-convert-result
 		     (finish-foreign-result ft body)
 		     t) ) ) ]
-	    [else (##sys#alias-global-hook x)])))
+	    ((not (assq x0 se)) (##sys#alias-global-hook x)) ; only globals
+	    (else x))))
   
   (define (eval/meta form)
     ((##sys#compile-to-closure
@@ -596,24 +590,15 @@
 							  (##sys#canonicalize-extension-path 
 							   id 'require-extension) #f)) ) ) )
 					(compiler-warning 
-					 'ext "extension `~A' is currently not installed" id)
-					(unless (and-let* (use-import-table
-							   ((symbol? id))
-							   (info (##sys#extension-information id #f)) 
-							   (exps (assq 'exports info)) )
-						  (for-each
-						   (cut ##sys#hash-table-set! import-table <> id)
-						   (cdr exps) )
-						  #t)
-					  (lookup-exports-file id) ) )
+					 'ext "extension `~A' is currently not installed" id))
 				    `(begin ,exp ,(loop (cdr ids))) ) ) ) )
 			  se dest) )
 
 			((let)
 			 (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f se)
-			 (let* ([bindings (cadr x)]
-				[vars (unzip1 bindings)]
-				[aliases (map gensym vars)] 
+			 (let* ((bindings (cadr x))
+				(vars (unzip1 bindings))
+				(aliases (map gensym vars))
 				(se2 (append (map cons vars aliases) se)) )
 			   (set-real-names! aliases vars)
 			   `(let
@@ -625,8 +610,8 @@
 
 			((lambda ##core#internal-lambda)
 			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)
-			 (let ([llist (cadr x)]
-			       [obody (cddr x)] )
+			 (let ((llist (cadr x))
+			       (obody (cddr x)) )
 			   (when (##sys#extended-lambda-list? llist)
 			     (set!-values 
 			      (llist obody) 
@@ -700,50 +685,93 @@
 			       
 		       ((define-syntax)
 			(##sys#check-syntax 'define-syntax x '(define-syntax variable _) #f se)
-			(##sys#extend-macro-environment
-			 (lookup (cadr x) se)
-			 (##sys#current-environment)
-			 (##sys#er-transformer
-			  (eval/meta (caddr x))))
-			(walk
-			 (if ##sys#enable-runtime-macros
-			     `(##sys#extend-macro-environment
-			       ',(cadr x)
-			       (##sys#current-environment)
-			       (##sys#er-transformer
-				,(caddr x))) ;*** possibly wrong se?
-			     '(##core#undefined) )
-			 se dest))
+			(let ((name (lookup (cadr x) se))
+			      (tx (caddr x)))
+			  (##sys#extend-macro-environment
+			   name
+			   (##sys#current-environment)
+			   (##sys#er-transformer (eval/meta tx)))
+			  (##sys#register-export name (##sys#current-module) tx)
+			  (walk
+			   (if ##sys#enable-runtime-macros
+			       `(##sys#extend-macro-environment
+				 ',(cadr x)
+				 (##sys#current-environment)
+				 (##sys#er-transformer
+				  ,tx)) ;*** possibly wrong se?
+			       '(##core#undefined) )
+			   se dest)) )
 
 		       ((define-compiled-syntax)
 			(##sys#check-syntax 'define-compiled-syntax x '(_ variable _) #f se)
-			(##sys#extend-macro-environment
-			 (lookup (cadr x) se)
-			 (##sys#current-environment)
-			 (##sys#er-transformer
-			  (eval/meta (caddr x))))
-			(walk
-			 `(##sys#extend-macro-environment
-			   ',(cadr x)
+			(let ((name (lookup (cadr x) se))
+			      (tx (caddr x)))
+			  (##sys#extend-macro-environment
+			   name
 			   (##sys#current-environment)
-			   (##sys#er-transformer
-			    ,(caddr x))) ;*** possibly wrong se?
-			 se dest))
+			   (##sys#er-transformer (eval/meta tx)))
+			  (##sys#register-export name (##sys#current-module) tx)
+			  (walk
+			   `(##sys#extend-macro-environment
+			     ',(cadr x)
+			     (##sys#current-environment)
+			     (##sys#er-transformer
+			      ,tx)) ;*** possibly wrong se?
+			   se dest)))
+
+		       ((##core#module)
+			(let* ((name (lookup (cadr x) se))
+			       (exports 
+				(map (lambda (exp)
+				       (cond ((symbol? exp) (lookup exp se))
+					     ((and (pair? exp) (symbol? (car exp)))
+					      (map (cut lookup <> se) exp) )
+					     (else
+					      (##sys#syntax-error-hook
+					       'module
+					       "invalid export syntax" exp name))))
+				     (caddr x)))
+			       (me0 ##sys#macro-environment))
+			  (when (pair? se)
+			    (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
+						     name))
+			  (let-values (((body mreg)
+					(parameterize ((##sys#current-module 
+							(##sys#register-module name exports) )
+						       (##sys#import-environment '()))
+					  (fluid-let ((##sys#macro-environment ;*** make parameter later
+						       ##sys#macro-environment))
+					    (let loop ((body (cdddr x)) (xs '()))
+					      (cond 
+					       ((null? body)
+						(##sys#finalize-module (##sys#current-module) me0)
+						(values
+						 (reverse xs)
+						 (walk 
+						  (##sys#compiled-module-registration (##sys#current-module))
+						  (##sys#current-meta-environment)
+						  #f) ) )
+					       (else
+						(loop 
+						 (cdr body)
+						 (cons (walk (car body) se #f) xs)))))))))
+			    (canonicalize-begin-body
+			     (append (list mreg) body)))))
 
 		       ((##core#named-lambda)
 			(walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )
 
-			((##core#loop-lambda)
-			 (let* ([vars (cadr x)]
-				[obody (cddr x)]
-				[aliases (map gensym vars)]
-				(se2 (append (map cons vars aliases) se))
-				[body 
-				 (walk 
-				  (##sys#canonicalize-body obody se2)
-				  se2 #f) ] )
-			   (set-real-names! aliases vars)
-			   `(lambda ,aliases ,body) ) )
+		       ((##core#loop-lambda)
+			(let* ([vars (cadr x)]
+			       [obody (cddr x)]
+			       [aliases (map gensym vars)]
+			       (se2 (append (map cons vars aliases) se))
+			       [body 
+				(walk 
+				 (##sys#canonicalize-body obody se2)
+				 se2 #f) ] )
+			  (set-real-names! aliases vars)
+			  `(lambda ,aliases ,body) ) )
 
 			((set! ##core#set!) 
 			 (##sys#check-syntax 'set! x '(_ variable _) #f se)
@@ -1136,8 +1164,6 @@
        ((uses)
 	(let ((us (cdr spec)))
 	  (apply register-feature! us)
-	  (when use-import-table
-	    (for-each lookup-exports-file us) )
 	  (when (pair? us)
 	    (##sys#hash-table-update! file-requirements 'uses (cut lset-union eq? us <>) (lambda () us))
 	    (let ((units (map (lambda (u) (string->c-identifier (stringify u))) us)))
@@ -1263,11 +1289,6 @@
 	(let ((syms (cdr spec)))
 	  (set! block-globals (lset-difference eq? block-globals syms))
 	  (set! export-list (lset-union eq? syms (or export-list '())))))
-       ((emit-exports)
-	(cond ((null? (cdr spec))
-	       (quit "invalid `emit-exports' declaration" spec) )
-	      ((not export-file-name) 
-	       (set! export-file-name (cadr spec))) ) )
        ((emit-external-prototypes-first)
 	(set! external-protos-first #t) )
        ((lambda-lift) (set! do-lambda-lifting #t))
@@ -1288,19 +1309,6 @@
 	  (if (every symbol? syms)
 	      (set! constant-declarations (append syms constant-declarations))
 	      (quit "invalid arguments to `constant' declaration: ~S" spec)) ) )
-       ((import)
-	(let-values (((syms strs) 
-		      (partition
-		       (lambda (x)
-			 (cond ((symbol? x) #t)
-			       ((string? x) #f)
-			       (else (quit "argument to `import' declaration is not a string or symbol" x)) ) )
-		       (cdr spec) ) ) )
-	  (set! use-import-table #t)
-	  (for-each 
-	   (cut ##sys#hash-table-set! import-table <> "<here>") 
-	   syms)
-	  (for-each lookup-exports-file strs) ) )
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 

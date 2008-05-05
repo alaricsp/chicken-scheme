@@ -90,11 +90,6 @@ EOF
 
 (register-feature! 'tcp)
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "tcp.exports")))
- (else))
-
 (define-foreign-variable errno int "errno")
 (define-foreign-variable strerror c-string "strerror(errno)")
 

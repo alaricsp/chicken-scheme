@@ -156,14 +156,14 @@
 				 old-tmps ids)
 			  ,@(map (lambda (id nt) `(##core#set! ,id ,nt))
 				 ids new-tmps)
-			  (##sys#void) )
+			  (##core#undefined) )
 		(,%lambda () ,@body)
 		(,%lambda ()
 			  ,@(map (lambda (nt id) `(##core#set! ,nt ,id))
 				 new-tmps ids)
 			  ,@(map (lambda (id ot) `(##core#set! ,id ,ot))
 				 ids old-tmps)
-			  (##sys#void) ) ) ) ) )))
+			  (##core#undefined) ) ) ) ) )))
 
 (##sys#extend-macro-environment
  'eval-when '()
@@ -833,7 +833,7 @@
 		   ,@(map (lambda (sname)
 			    (if (memq sname vars)
 				sname
-				'(##sys#void) ) )
+				'(##core#undefined) ) )
 			  slotnames) ) )
 	(,%define (,pred ,x) (##sys#structure? ,x ',t))
 	,@(let loop ([slots slots] [i 1])
@@ -1023,7 +1023,7 @@
     (##sys#check-syntax 'define-for-syntax form '(_ _ . _))
     (let ((head (cadr form))
 	  (body (cddr form)))
-      (let* ((body (if (null? body) '((##sys#void)) body))
+      (let* ((body (if (null? body) '((##core#undefined)) body))
 	     (name (if (pair? head) (car head) head)) 
 	     (body (if (pair? head)
 		       `(,(r 'lambda) ,(cdr head) ,@body)
@@ -1033,7 +1033,7 @@
 	    (syntax-error 'define-for-syntax "invalid identifier" name) )
 	(if ##sys#enable-runtime-macros
 	    `(,(r 'define) ,name ,body)
-	    '(##sys#void)))))))
+	    '(##core#undefined)))))))
 
 
 ;;; Register features provided by this file

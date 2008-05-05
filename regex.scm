@@ -80,8 +80,7 @@
       ##sys#check-string ##sys#check-list ##sys#check-exact ##sys#check-vector
       ##sys#check-structure ##sys#check-symbol ##sys#check-blob ##sys#check-integer )
     (export
-      ##sys#check-chardef-table )
-    (emit-exports "regex.exports") ) )
+      ##sys#check-chardef-table )))
  (else))
 
 

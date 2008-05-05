@@ -81,11 +81,6 @@ EOF
 
 (include "unsafe-declarations.scm")
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "srfi-4.exports")))
- (else))
-
 
 ;;; Helper routines:
 

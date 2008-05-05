@@ -847,7 +847,6 @@ endif
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) README $(DESTDIR)$(IDOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) LICENSE $(DESTDIR)$(IDOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) *.exports $(DESTDIR)$(IDATADIR)
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.info $(DESTDIR)$(IINFODIR)
 	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(DESTDIR)$(IINFODIR) chicken.info
 ifdef WINDOWS
@@ -1036,7 +1035,7 @@ spotless: distclean
 	  usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c chicken-bug.c \
 	  csc.c csi.c \
 	  chicken.c batch-driver.c compiler.c optimizer.c support.c \
-	  c-platform.c c-backend.c *.exports
+	  c-platform.c c-backend.c
 
 distclean: clean confclean
 

@@ -926,11 +926,6 @@ EOF
 
 (include "unsafe-declarations.scm")
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "posix.exports")))
- (else))
-
 (register-feature! 'posix)
 
 (define posix-error

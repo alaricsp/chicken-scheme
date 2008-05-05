@@ -46,11 +46,6 @@
 
 (include "unsafe-declarations.scm")
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "srfi-13.exports")))
- (else))
-
 (register-feature! 'srfi-13)
 
 

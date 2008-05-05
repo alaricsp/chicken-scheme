@@ -30,7 +30,6 @@
   (unit scheduler)
   (disable-interrupts)
   (usual-integrations)
-  (emit-exports "scheduler.exports")
   (disable-warning var)
   (hide ##sys#ready-queue-head ##sys#ready-queue-tail ##sys#timeout-list
 	##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer

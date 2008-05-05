@@ -36,7 +36,7 @@
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
-  compiler-cleanup-hook check-global-exports disabled-warnings check-global-imports
+  compiler-cleanup-hook disabled-warnings
   file-io-only undefine-shadowed-macros
   unit-name insert-timer-checks used-units inline-max-size
   debugging perform-lambda-lifting! disable-stack-overflow-checking
@@ -64,7 +64,7 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes
-  inline-max-size file-requirements use-import-table lookup-exports-file
+  inline-max-size file-requirements
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
@@ -214,19 +214,18 @@
     (when (memq 'disable-compiler-macros options) (set! compiler-macros-enabled #f))
     (when (memq 't debugging-chicken) (##sys#start-timer))
     (when (memq 'b debugging-chicken) (set! time-breakdown #t))
-    (and-let* ((xfile (memq 'emit-exports options)))
-      (set! export-file-name (cadr xfile)) )
+    (when (memq 'emit-exports options)
+      (warning "deprecated compiler option: emit-exports") )
     (when (memq 'raw options)
       (set! explicit-use-flag #t)
       (set! cleanup-forms '())
       (set! initforms '()) )
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
-    (set! use-import-table (memq 'check-imports options))
-    (let ((imps (collect-options 'import)))
-      (when (pair? imps)
-	(set! use-import-table #t)
-	(for-each lookup-exports-file imps) ) )
+    (when (memq 'check-imports options)
+      (compiler-warning 'usage "deprecated compiler option: -check-imports"))
+    (when (memq 'import options)
+      (compiler-warning 'usage "deprecated compiler option: -import"))
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
       (when verbose (printf "Warnings are disabled~%~!"))
@@ -528,8 +527,6 @@
 		   (begin-time)
 		   (let ([db (analyze 'opt node2 i progress)])
 		     (when first-analysis
-		       (when use-import-table (check-global-imports db))
-		       (check-global-exports db)
 		       (when (memq 'u debugging-chicken)
 			 (dump-undefined-globals db)) )
 		     (set! first-analysis #f)
@@ -570,8 +567,6 @@
 			      (print-db "final-analysis" '|8| db i)
 			      (when (and ##sys#warnings-enabled (> (- (cputime) start-time) funny-message-timeout))
 				(display "(do not worry - still compiling...)\n") )
-			      (when export-file-name
-				(dump-exported-globals db export-file-name) )
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 

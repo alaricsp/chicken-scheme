@@ -172,4 +172,4 @@
 		((not (##compiler#register-compiler-macro (car head) (cdr head) body))
 		 (bad) ) )
 	  (bad) )
-      '(##sys#void) ) ) ) )
+      '(##core#undefined) ) ) ) )
