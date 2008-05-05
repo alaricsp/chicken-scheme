@@ -11,11 +11,12 @@
 
 (define *dry-run* #f)
 (define *diff* #f)
+(define *revs* #f)
 
 (define (do-merge b1 b2 #!optional (wc "."))
   (run (svn 
 	,(if *diff* 
-	     `("diff" ,(if (string? *diff*) (conc "-r" *diff*) ""))
+	     `("diff" ,(if (string? *diff*) (string-append "-r" *diff*) ""))
 	     "merge")
 	,(if *dry-run* "--dry-run" "")
 	,(make-pathname +repobase+ b2)
