@@ -30,7 +30,7 @@
 #ifndef ___CHICKEN
 #define ___CHICKEN
 
-#define C_MAJOR_VERSION       3
+#define C_MAJOR_VERSION       4
 
 /*
  * N.B. This file MUST not rely upon "chicken-config.h"

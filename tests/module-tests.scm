@@ -1,7 +1,7 @@
 ;;;; module-tests.scm
 
 
-(include "test.scm")
+(load-relative "test.scm")
 
 (test-begin "modules")
 
@@ -22,5 +22,26 @@
 
 (test-equal "external/imported variable" (abc 4) 37)
 (test-equal "external/imported syntax" (def 5) 137)
+
+(module bar (x y)
+  (import (prefix scheme s:))
+  (define (x y) (s:* y 2))
+  (define y 1))
+
+(import (prefix (only (except (rename bar (x z)) y) z) "bar-"))
+(test-equal "modified import" (bar-z 10) 20)
+(test-error "hidden import" y)
+
+#| this breaks currently (prefixed primitives in expansion of syntax-rules)
+
+(module foo (x)
+  (import (prefix scheme s:))
+  (define-syntax x
+    (syntax-rules ()
+      ((_ x) (list x)))))
+
+(import foo)
+(pp (x 1))
+|#
 
 (test-end "modules")

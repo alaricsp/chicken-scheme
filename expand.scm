@@ -956,30 +956,108 @@
  '()
  (##sys#er-transformer
   (lambda (x r c)
-    (##sys#check-syntax 'import x '(_ symbol))
-    (let* ((mname (or (lookup (cadr x) '()) (cadr x))) ;*** empty se?
-	   (mod (##sys#find-module mname #f)))
-      (unless mod
-	(let ((il (##sys#resolve-include-filename 
-		   (string-append (symbol->string mname) ".import")
-		   #f #t) ) )
-	  (cond (il (when (load-verbose)
-		      (display "; loading import library")
-		      (display il)
-		      (display " ...\n") )
-		    (##sys#load-extension il) 
-		    (set mod (##sys#find-module mname)))
-		(else
-		 (syntax-error
-		  'import "can not import from undefined module" 
-		  mname)))))
-      (d "importing: " mname)
-      (d (module-vexports mod))
-      (##sys#import-environment
-       (append (module-vexports mod) (##sys#import-environment)))
-      (set! ##sys#macro-environment
-	(append (module-sexports mod) ##sys#macro-environment))
-      '(##core#undefined)))))
+    (let ((%only (r 'only))
+	  (%rename (r 'rename))
+	  (%except (r 'except))
+	  (%prefix (r 'prefix)))
+      (define (resolve sym)
+	(or (lookup sym '()) sym))	;*** empty se?
+      (define (tostr x)
+	(cond ((string? x) x)
+	      ((keyword? x) (##sys#string-append (##sys#symbol->string x) ":")) ; why not?
+	      ((symbol? x) (##sys#symbol->string x))
+	      ((number? x) (number->string x))
+	      (else (syntax-error 'import "invalid prefix" ))))
+      (define (import-name spec)
+	(let* ((mname (resolve spec))
+	       (mod (##sys#find-module mname #f)))
+	  (unless mod
+	    (let ((il (##sys#resolve-include-filename 
+		       (string-append (symbol->string mname) ".import")
+		       #f #t) ) )
+	      (cond (il (##sys#load il #f #f)
+			(set mod (##sys#find-module mname)))
+		    (else
+		     (syntax-error
+		      'import "can not import from undefined module" 
+		      mname)))))
+	  (cons (module-vexports mod) 
+		(module-sexports mod))))
+      (define (import-spec spec)
+	(cond ((symbol? spec) (import-name spec))
+	      ((or (not (list? spec)) (< (length spec) 2))
+	       (syntax-error 'import "invalid import specification" spec))
+	      (else
+	       (let* ((s (car spec))
+		      (imp (import-spec (cadr spec)))
+		      (impv (car imp))
+		      (imps (cdr imp)))
+		 (cond ((c %only (car spec))
+			(##sys#check-syntax 'only spec '(_ _ . #(symbol 0)))
+			(let ((ids (map resolve (cddr spec))))
+			  (let loop ((ids ids) (v '()) (s '()))
+			    (cond ((null? ids) (cons v s))
+				  ((assq (car ids) impv) =>
+				   (lambda (a) 
+				     (loop (cdr ids) (cons a v) s)))
+				  ((assq (car ids) imps) =>
+				   (lambda (a) 
+				     (loop (cdr ids) v (cons a s))))
+				  (else (loop (cdr ids) v s))))))
+		       ((c %except (car spec))
+			(##sys#check-syntax 'except spec '(_ _ . #(symbol 0)))
+			(let ((ids (map resolve (cddr spec))))
+			  (let loop ((impv impv) (v '()))
+			    (cond ((null? impv)
+				   (let loop ((imps imps) (s '()))
+				     (cond ((null? imps) (cons v s))
+					   ((memq (caar imps) ids) (loop (cdr imps) s))
+					   (else (loop (cdr imps) (cons (car imps) s))))))
+				  ((memq (caar impv) ids) (loop (cdr impv) v))
+				  (else (loop (cdr impv) (cons (car impv) v)))))))
+		       ((c %rename (car spec))
+			(##sys#check-syntax 'rename spec '(_ _ . #((symbol symbol) 0)))
+			(let loop ((impv impv) (imps imps) (v '()) (s '()) (ids (cddr spec)))
+			  (cond ((null? impv) 
+				 (cond ((null? imps)
+					(for-each
+					 (lambda (id)
+					   (##sys#warn "renamed identifier not imported" id) )
+					 ids)
+					(cons v s))
+				       ((assq (caar imps) ids) =>
+					(lambda (a)
+					  (loop impv (cdr imps)
+						v
+						(cons (cons (cadr a) (cdar imps)) s)
+						(##sys#delq a ids))))
+				       (else (loop impv (cdr imps) v (cons (car imps) s) ids))))
+				((assq (caar impv) ids) =>
+				 (lambda (a)
+				   (loop (cdr impv) imps
+					 (cons (cons (cadr a) (cdar impv)) v)
+					 s
+					 (##sys#delq a ids))))
+				(else (loop (cdr impv) imps
+					    (cons (car impv) v)
+					    s ids)))))
+		       ((c %prefix (car spec))
+			(##sys#check-syntax 'prefix spec '(_ _ _))
+			(let ((pref (tostr (caddr spec))))
+			  (define (ren imp)
+			    (cons 
+			     (##sys#string->symbol 
+			      (##sys#string-append pref (##sys#symbol->string (car imp))) )
+			     (cdr imp) ) )
+			  (cons (map ren impv) (map ren imps))))
+		       (else (syntax-error 'import "invalid import specification" spec)))))))
+      (##sys#check-syntax 'import x '(_ _))
+      (let ((vs (import-spec (cadr x))))
+	(d `(V: ,(car vs)))
+	(d `(S: ,(cdr vs)))
+	(##sys#import-environment (append (car vs) (##sys#import-environment)))
+	(set! ##sys#macro-environment (append (cdr vs) ##sys#macro-environment))
+	'(##core#undefined))))))
 
 (##sys#extend-macro-environment
  'module
