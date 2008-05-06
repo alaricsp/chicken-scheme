@@ -897,9 +897,9 @@ EOF
 ; Pushes the items in item-list back onto the queue,
 ; so that (car item-list) becomes the next removable item.
 
-(define-macro (last-pair lst0)
-  `(do ((lst ,lst0 (##sys#slot lst 1)))
-       ((eq? (##sys#slot lst 1) '()) lst)))
+(define-inline (last-pair lst0)
+  (do ((lst lst0 (##sys#slot lst 1)))
+      ((eq? (##sys#slot lst 1) '()) lst)))
 
 (define (queue-push-back-list! q itemlist)
   (##sys#check-structure q 'queue 'queue-push-back-list!)

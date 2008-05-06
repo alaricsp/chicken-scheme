@@ -1,7 +1,7 @@
 ;;;; module-tests.scm
 
 
-(include "tests/test.scm")
+(include "test.scm")
 
 (test-begin "modules")
 
@@ -23,4 +23,4 @@
 (test-equal "external/imported variable" (abc 4) 37)
 (test-equal "external/imported syntax" (def 5) 137)
 
-;(test-end "modules")
+(test-end "modules")

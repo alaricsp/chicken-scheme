@@ -64,7 +64,7 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes
-  inline-max-size file-requirements
+  inline-max-size file-requirements import-libraries
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
@@ -210,6 +210,11 @@
 	      (string->list do) ) )
        (collect-options 'debug) ) )
     (set! dumpnodes (memq '|D| debugging-chicken))
+    (set! import-libraries
+      (map (lambda (il)
+	     (cons (string->symbol il) 
+		   (string-append il ".import.scm")))
+	   (collect-options 'emit-import-library)))
     (when (memq 'lambda-lift options) (set! do-lambda-lifting #t))
     (when (memq 'disable-compiler-macros options) (set! compiler-macros-enabled #f))
     (when (memq 't debugging-chicken) (##sys#start-timer))

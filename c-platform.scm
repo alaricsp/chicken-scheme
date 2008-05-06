@@ -127,6 +127,7 @@
 	  inline-limit profile-name disable-warning emit-exports import
     prelude postlude prologue epilogue nursery extend feature 
     compress-literals			; DEPRECATED
+    emit-import-library
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 

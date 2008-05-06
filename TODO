@@ -1,8 +1,12 @@
 TODO for macro/module system					-*- Outline -*-
 
+* eval: ##sys#unbound-in-eval + modules doesn't seem to work
+
 * make ##sys#macro-environment a parameter
 
-* test line-number retention over macro-expansion
+* test
+** line-number retention over macro-expansion
+** import libraries
 
 * syntax-error
 ** if ##sys#current-module is set, add name to error message
@@ -17,12 +21,6 @@ TODO for macro/module system					-*- Outline -*-
 ** hide unexported module definitions
 ** support for re-exports of imported bindings
    fixup vexport/sexport lists
-** support for "import-libraries"
-*** write compiled module registration to extra file
-*** declaration
-    (emit-import-library [MODULE | (MODULE FILENAME) ...])
-*** option
-    -emit-import-library MODULE
 ** import specs
    (import SPEC)
    SPEC = MODULE 
@@ -33,6 +31,8 @@ TODO for macro/module system					-*- Outline -*-
 
 * update manual/NEWS
 ** hygienic macros
+** modules
+** import libraries
 ** expand unit (move stuff from eval)
 ** document extensions
 *** user defined ellipsis

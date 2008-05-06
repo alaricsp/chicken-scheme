@@ -2059,9 +2059,9 @@ EOF
 
 ;;; unimplemented stuff:
 
-(define-macro (define-unimplemented name)
-  `(define (,name . _)
-     (error ',name (##core#immutable '"this function is not available on this platform")) ) )
+(define-inline (define-unimplemented name)
+  (define (,name . _)
+    (error 'name (##core#immutable '"this function is not available on this platform")) ) )
 
 (define-unimplemented change-file-owner)
 (define-unimplemented create-fifo)

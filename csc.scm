@@ -177,7 +177,7 @@
     -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info 
     -check-imports			; DEPRECATED
     -emit-external-prototypes-first -inline -extension -release -static-extensions
-    -analyze-only -keep-shadowed-macros -disable-compiler-macros) )
+    -analyze-only -keep-shadowed-macros -disable-compiler-macros))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
@@ -186,7 +186,8 @@
     -import 				; DEPRECATED
     -require-static-extension
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
-    -emit-exports -compress-literals) )		; DEPRECATED
+    -emit-exports -compress-literals		; DEPRECATED
+    -emit-import-library))
 
 (define-constant shortcuts
   '((-h "-help")
@@ -352,6 +353,7 @@
     -i -case-insensitive        don't preserve case of read symbols    
     -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
     -compile-syntax             macros are made available at run-time
+    -emit-import-library MODULE write compile-time module information into separate file
 
   Translation options:
 

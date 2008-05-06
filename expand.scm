@@ -958,7 +958,21 @@
   (lambda (x r c)
     (##sys#check-syntax 'import x '(_ symbol))
     (let* ((mname (or (lookup (cadr x) '()) (cadr x))) ;*** empty se?
-	   (mod (##sys#find-module mname)))
+	   (mod (##sys#find-module mname #f)))
+      (unless mod
+	(let ((il (##sys#resolve-include-filename 
+		   (string-append (symbol->string mname) ".import")
+		   #f #t) ) )
+	  (cond (il (when (load-verbose)
+		      (display "; loading import library")
+		      (display il)
+		      (display " ...\n") )
+		    (##sys#load-extension il) 
+		    (set mod (##sys#find-module mname)))
+		(else
+		 (syntax-error
+		  'import "can not import from undefined module" 
+		  mname)))))
       (d "importing: " mname)
       (d (module-vexports mod))
       (##sys#import-environment
@@ -1000,9 +1014,10 @@
   (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
-(define (##sys#find-module name)
+(define (##sys#find-module name #!optional (err #t))
   (cond ((assq name ##sys#module-table) => cdr)
-	(else (error 'import "module not found" name))))
+	(err (error 'import "module not found" name))
+	(else #f)))
 
 (define (##sys#register-export sym mod #!optional val)
   (when mod
@@ -1076,6 +1091,9 @@
 		  ,(map car vexports) ,(map car sexports)))
     (set-module-vexports! mod vexports)
     (set-module-sexports! mod sexports)))
+
+
+;;*** put "scheme" module into import library
 
 (define ##sys#module-table
   (list

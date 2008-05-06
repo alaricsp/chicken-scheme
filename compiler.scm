@@ -291,7 +291,7 @@
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info 
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
-  big-fixnum?)
+  big-fixnum? import-libraries)
 
 
 (include "tweaks")
@@ -363,6 +363,7 @@
 (define emit-closure-info #t)
 (define undefine-shadowed-macros #t)
 (define constant-declarations '())
+(define import-libraries '())
 
 
 ;;; These are here so that the backend can access them:
@@ -745,12 +746,23 @@
 					      (cond 
 					       ((null? body)
 						(##sys#finalize-module (##sys#current-module) me0)
-						(values
-						 (reverse xs)
-						 (walk 
-						  (##sys#compiled-module-registration (##sys#current-module))
-						  (##sys#current-meta-environment)
-						  #f) ) )
+						(cond ((assq name import-libraries) =>
+						       (lambda (il)
+							 (with-output-to-file (cdr il)
+							   (lambda ()
+							     (pretty-print
+							      (##sys#compiled-module-registration
+							       (##sys#current-module))))) 
+							 (values 
+							  (reverse xs)
+							  '(##core#undefined))))
+						      (else
+						       (values
+							(reverse xs)
+							(walk 
+							 (##sys#compiled-module-registration (##sys#current-module))
+							 (##sys#current-meta-environment)
+							 #f) ) ) ) )
 					       (else
 						(loop 
 						 (cdr body)
@@ -1299,16 +1311,32 @@
 	    (set! inline-list (lset-union eq? inline-list (cdr spec)))) ) 
        ((inline-limit)
 	(check-decl spec 1 1)
-	(set! inline-max-size
-	  (let ([n (cadr spec)])
-	    (if (number? n)
-		n
-		(quit "invalid argument to `inline-limit' declaration" spec) ) ) ) )
+	(let ([n (cadr spec)])
+	  (if (number? n)
+	      (set! inline-max-size n)
+	      (compiler-warning 
+	       'syntax
+	       "invalid argument to `inline-limit' declaration: ~s" spec) ) ) )
        ((constant)
 	(let ((syms (cdr spec)))
 	  (if (every symbol? syms)
 	      (set! constant-declarations (append syms constant-declarations))
 	      (quit "invalid arguments to `constant' declaration: ~S" spec)) ) )
+       ((emit-import-library)
+	(set! import-libraries
+	  (append
+	   import-libraries
+	   (map (lambda (il)
+		  (cond ((symbol? il)
+			 (cons il (string-append (symbol->string il) ".import.scm")) )
+			((and (list? il) (= 2 (length il))
+			      (symbol? (car il)) (string (cadr il)))
+			 (cons (car il) (cadr il))) 
+			(else
+			 (compiler-warning 
+			  'syntax
+			  "invalid import-library specification: ~s" il))))
+		(cdr spec)))))
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 

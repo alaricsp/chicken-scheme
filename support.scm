@@ -1210,6 +1210,7 @@ Usage: chicken FILENAME OPTION ...
     -case-insensitive           don't preserve case of read symbols
     -keyword-style STYLE        allow alternative keyword syntax (none, prefix or suffix)
     -compile-syntax             macros are made available at run-time
+    -emit-import-library MODULE write compile-time module information into separate file
 
   Translation options:
 
@@ -1239,7 +1240,8 @@ Usage: chicken FILENAME OPTION ...
     -disable-interrupts         disable interrupts in compiled code
     -fixnum-arithmetic          assume all numbers are fixnums
     -benchmark-mode             fixnum mode, no interrupts and opt.-level 3
-    -disable-stack-overflow-checks  disables detection of stack-overflows.
+    -disable-stack-overflow-checks  
+                                disables detection of stack-overflows.
     -inline                     enable inlining
     -inline-limit               set inlining threshold
 

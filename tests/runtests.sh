@@ -18,6 +18,9 @@ echo "======================================== syntax tests ..."
 ../csi -w -s syntax-tests.scm
 ../csi -w matchable.scm -s match-test.scm
 
+echo "======================================== module tests ..."
+../csi -w -s module-tests.scm
+
 echo "======================================== hash-table tests ..."
 ../csi -w -s hash-table-tests.scm
 
