@@ -17,7 +17,7 @@ echo "======================================== library tests ..."
 echo "======================================== syntax tests ..."
 ../csi -w -s syntax-tests.scm
 ../csi -w matchable.scm -s match-test.scm
-../csi -w loopy-test.scm
+../csi -w -s loopy-test.scm
 
 echo "======================================== module tests ..."
 ../csi -w -s module-tests.scm

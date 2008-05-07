@@ -3,9 +3,9 @@ TODO for macro/module system					-*- Outline -*-
 * bugs
 ** modules
 *** syntax-definitions in modules
-    Transformer code (syntax-rules + hand-written) is also renamed via alias hook,
-    this is probably bad (or should we simply require scheme to be imported, without
-    prefix/renamings? ugly)
+    transformers use ##sys#meta-macro-environment + unset ##sys#current-module,
+    this may not be be sufficient (expansion assumes ids are imported in used
+    context)
 
 * make ##sys#[meta-]macro-environment a parameter
 
