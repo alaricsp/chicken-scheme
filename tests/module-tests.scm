@@ -32,16 +32,14 @@
 (test-equal "modified import" (bar-z 10) 20)
 (test-error "hidden import" y)
 
-#| this breaks currently (prefixed primitives in expansion of syntax-rules)
-
-(module foo (x)
+(module baz (x)
   (import (prefix scheme s:))
   (define-syntax x
     (syntax-rules ()
-      ((_ x) (list x)))))
+      ((_ x) (list x)))))  ; actually incorrect: we assume users of this module
+                           ; import "list" as "list"...
 
-(import foo)
-(pp (x 1))
-|#
+(import baz)
+(test-equal "prefixed import" (x 1) '(1))
 
 (test-end "modules")

@@ -277,11 +277,13 @@
 	(##sys#eval-decorator p ll h cntr) )
 
       (define (eval/meta form)
-	((##sys#compile-to-closure
-	  form
-	  '() 
-	  (##sys#current-meta-environment))
-	 '() ) )
+	(parameterize ((##sys#current-module #f))
+	  (fluid-let ((##sys#macro-environment ##sys#meta-macro-environment))
+	    ((##sys#compile-to-closure
+	      form
+	      '() 
+	      (##sys#current-meta-environment))
+	     '() ) )) )
 
       (define (eval/elab form)
 	((##sys#compile-to-closure

@@ -7,7 +7,7 @@ TODO for macro/module system					-*- Outline -*-
     this is probably bad (or should we simply require scheme to be imported, without
     prefix/renamings? ugly)
 
-* make ##sys#macro-environment a parameter
+* make ##sys#[meta-]macro-environment a parameter
 
 * test
 ** bootstrap

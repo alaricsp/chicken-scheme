@@ -1075,6 +1075,7 @@
 
 ;;; low-level module support
 
+(define ##sys#meta-macro-environment ##sys#macro-environment) ;*** later: parameter
 (define ##sys#current-module (make-parameter #f))
 
 (declare 
