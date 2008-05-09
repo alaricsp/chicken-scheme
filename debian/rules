@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
-export DH_COMPAT=4
-
 BUILD_ARCH = $(shell dpkg --print-installation-architecture)
 
 CFLAGS= -g
@@ -71,7 +69,6 @@ install: build
 binary-common:
 	dh_testdir
 	dh_testroot
-	dh_movefiles
 	dh_installdocs
 	dh_installman
 # The asterisk in chicken.info* is necessary, because Debian makeinfo
