@@ -9,7 +9,7 @@ Package: chicken-bin
 Section: interpreters
 Architecture: any
 Conflicts: chicken, chicken-dev
-Depends: ${shlibs:Depends}, libchicken-dev (= ${Source-Version})
+Depends: ${shlibs:Depends}, libchicken-dev (= ${binary:Version})
 Replaces: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - compiler
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
@@ -42,7 +42,7 @@ Architecture: any
 Section: libdevel
 Priority: optional
 Conflicts: chicken, chicken-dev
-Depends: libchicken0 (= ${Source-Version}), libpcre3-dev
+Depends: libchicken0 (= ${binary:Version}), libpcre3-dev
 Replaces: chicken, chicken-dev
 Description: Simple Scheme-to-C compiler - development
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
