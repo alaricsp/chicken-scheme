@@ -504,11 +504,13 @@
 	    (else x))))
   
   (define (eval/meta form)
-    ((##sys#compile-to-closure
-      form
-      '() 
-      (##sys#current-meta-environment))
-     '() ) )
+    (parameterize ((##sys#current-module #f)
+		   (##sys#macro-environment (##sys#meta-macro-environment)))
+      ((##sys#compile-to-closure
+	form
+	'() 
+	(##sys#current-meta-environment))
+       '() ) ))
 
   (define (walk x se dest)
     (cond ((symbol? x)
@@ -725,23 +727,26 @@
 			       (exports 
 				(map (lambda (exp)
 				       (cond ((symbol? exp) (lookup exp se))
-					     ((and (pair? exp) (symbol? (car exp)))
+					     ((and (pair? exp)
+						   (let loop ((exp exp))
+						     (or (null? exp)
+							   (and (symbol? (car exp))
+								(loop (cdr exp))))))
 					      (map (cut lookup <> se) exp) )
 					     (else
 					      (##sys#syntax-error-hook
 					       'module
 					       "invalid export syntax" exp name))))
 				     (caddr x)))
-			       (me0 ##sys#macro-environment))
+			       (me0 (##sys#macro-environment)))
 			  (when (pair? se)
 			    (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
 						     name))
 			  (let-values (((body mreg)
 					(parameterize ((##sys#current-module 
 							(##sys#register-module name exports) )
-						       (##sys#import-environment '()))
-					  (fluid-let ((##sys#macro-environment ;*** make parameter later
-						       ##sys#macro-environment))
+						       (##sys#import-environment '())
+						       (##sys#macro-environment ##sys#initial-macro-environment))
 					    (let loop ((body (cdddr x)) (xs '()))
 					      (cond 
 					       ((null? body)
@@ -757,18 +762,20 @@
 							  (reverse xs)
 							  '(##core#undefined))))
 						      (else
-						       (values
-							(reverse xs)
-							(walk 
-							 (##sys#compiled-module-registration (##sys#current-module))
-							 (##sys#current-meta-environment)
-							 #f) ) ) ) )
+							 (values
+							  (reverse xs)
+							  (##sys#compiled-module-registration (##sys#current-module))))))
 					       (else
 						(loop 
 						 (cdr body)
-						 (cons (walk (car body) se #f) xs)))))))))
+						 (cons (walk (car body) se #f) xs))))))))
 			    (canonicalize-begin-body
-			     (append (list mreg) body)))))
+			     (append
+			      (list
+			       (parameterize ((##sys#current-module #f)
+					      (##sys#macro-environment (##sys#meta-macro-environment)))
+				 (walk mreg (##sys#current-meta-environment) #f)) )
+			      body)))))
 
 		       ((##core#named-lambda)
 			(walk `(,(macro-alias 'lambda se) ,@(cddr x)) se (cadr x)) )

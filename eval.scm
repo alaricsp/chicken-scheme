@@ -162,24 +162,22 @@
 (define (##sys#hash-table-ref ht key)
   (let ((k (##sys#hash-symbol key (##core#inline "C_block_size" ht))))
     (let loop ((bucket (##sys#slot ht k)))
+      (and (not (null? bucket))
+	   (let ((b (##sys#slot bucket 0)))
+	     (if (eq? key (##sys#slot b 0))
+		 (##sys#slot b 1)
+		 (loop (##sys#slot bucket 1)) ) ) ) ) ) )
+
+(define (##sys#hash-table-set! ht key val)
+  (let* ((k (##sys#hash-symbol key (##core#inline "C_block_size" ht)))
+	 (bucket0 (##sys#slot ht k)) )
+    (let loop ((bucket bucket0))
       (if (eq? bucket '())
-	  #f
+	  (##sys#setslot ht k (cons (cons key val) bucket0))
 	  (let ((b (##sys#slot bucket 0)))
 	    (if (eq? key (##sys#slot b 0))
-		(##sys#slot b 1)
+		(##sys#setslot b 1 val)
 		(loop (##sys#slot bucket 1)) ) ) ) ) ) )
-
-(define ##sys#hash-table-set! 
-  (lambda (ht key val)
-    (let* ((k (##sys#hash-symbol key (##core#inline "C_block_size" ht)))
-	   (bucket0 (##sys#slot ht k)) )
-      (let loop ((bucket bucket0))
-	(if (eq? bucket '())
-	    (##sys#setslot ht k (cons (cons key val) bucket0))
-	    (let ((b (##sys#slot bucket 0)))
-	      (if (eq? key (##sys#slot b 0))
-		  (##sys#setslot b 1 val)
-		  (loop (##sys#slot bucket 1)) ) ) ) ) ) ) )
 
 (define (##sys#hash-table-update! ht key updtfunc valufunc)
   (##sys#hash-table-set! ht key (updtfunc (or (##sys#hash-table-ref ht key) (valufunc)))) )
@@ -277,13 +275,13 @@
 	(##sys#eval-decorator p ll h cntr) )
 
       (define (eval/meta form)
-	(parameterize ((##sys#current-module #f))
-	  (fluid-let ((##sys#macro-environment ##sys#meta-macro-environment))
+	(parameterize ((##sys#current-module #f)
+		       (##sys#macro-environment (##sys#meta-macro-environment)))
 	    ((##sys#compile-to-closure
 	      form
 	      '() 
 	      (##sys#current-meta-environment))
-	     '() ) )) )
+	     '() ) ))
 
       (define (eval/elab form)
 	((##sys#compile-to-closure
@@ -618,22 +616,25 @@
 				 (exports 
 				  (map (lambda (exp)
 					 (cond ((symbol? exp) (rename exp se))
-					       ((and (pair? exp) (symbol? (car exp)))
+					       ((and (pair? exp) 
+						     (let loop ((exp exp))
+						       (or (null? exp)
+							   (and (symbol? (car exp))
+								(loop (cdr exp))))))
 						(map (cut rename <> se) exp) )
-					      (else
-					       (##sys#syntax-error-hook
-						'module
-						"invalid export syntax" exp name))))
+					       (else
+						(##sys#syntax-error-hook
+						 'module
+						 "invalid export syntax" exp name))))
 				       (caddr x)))
-				 (me0 ##sys#macro-environment))
+				 (me0 (##sys#macro-environment)))
 			    (when (pair? se)
 			      (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
 						       name))
 			    (parameterize ((##sys#current-module 
 					    (##sys#register-module name exports) )
-					   (##sys#import-environment '()))
-			      (fluid-let ((##sys#macro-environment ;*** make parameter later
-					   ##sys#macro-environment))
+					   (##sys#import-environment '())
+					   (##sys#macro-environment ##sys#initial-macro-environment))
 				(let loop ((body (cdddr x)) (xs '()))
 				  (if (null? body)
 				      (let ((xs (reverse xs)))
@@ -653,7 +654,7 @@
 				      (loop 
 				       (cdr body)
 				       (cons (compile (car body) e #f tf cntr se)
-					     xs))))) ) ) )
+					     xs))))) ) )
 
 			 [(##core#loop-lambda)
 			  (compile `(,(rename 'lambda se) ,@(cdr x)) e #f tf cntr se) ]

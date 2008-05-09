@@ -25,8 +25,6 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(declare (uses srfi-69))
-
 (declare
   (usual-integrations)
   (disable-interrupts)
@@ -73,7 +71,7 @@ EOF
 
 (define (print-usage)
   (display
-"Usage: csi {FILENAME | OPTION}
+"usage: csi [FILENAME | OPTION ...]
 
   where OPTION may be one of the following:
 
@@ -95,6 +93,7 @@ EOF
     -k  -keyword-style STYLE    enable alternative keyword-syntax (none, prefix or suffix)
     -s  -script PATHNAME        use interpreter for shell scripts
         -ss PATHNAME            shell script with `main' procedure
+        -se PATHNAME            same as `-s', but print each expression as it is evaluated
     -R  -require-extension NAME require extension before executing code
     -I  -include-path PATHNAME  add PATHNAME to include path
     --                          ignore all following options
@@ -208,22 +207,18 @@ EOF
     (lambda ()
       (when (tty-input?) (old)) ) ) )
 
-(define command-table (make-hash-table eq?))
+(define command-table (make-vector 37 '()))
 
-(define toplevel-command
-  (let ((hash-table-set! hash-table-set!))
-    (lambda (name proc #!optional help)
-      (##sys#check-symbol name 'toplevel-command)
-      (when help (##sys#check-string help 'toplevel-command))
-      (hash-table-set! command-table name (cons proc help)) ) ) )
+(define (toplevel-command name proc #!optional help)
+  (##sys#check-symbol name 'toplevel-command)
+  (when help (##sys#check-string help 'toplevel-command))
+  (##sys#hash-table-set! command-table name (cons proc help)) )
 
 (set! ##sys#repl-eval-hook
   (let ((eval eval)
 	(load-noisily load-noisily)
 	(read read)
 	(singlestep singlestep)
-	(hash-table-ref hash-table-ref)
-	(hash-table-walk hash-table-walk)
 	(read-line read-line)
 	(length length)
 	(display display)
@@ -240,7 +235,7 @@ EOF
 	    ((and (pair? form)
 		  (eq? 'unquote (##sys#slot form 0)) )
 	     (let ((cmd (cadr form)))
-	       (cond ((and (symbol? cmd) (hash-table-ref/default command-table cmd #f)) =>
+	       (cond ((and (symbol? cmd) (##sys#hash-table-ref command-table cmd)) =>
 		      (lambda (p)
 			((car p))
 			(##sys#void) ) )
@@ -344,13 +339,13 @@ EOF
  ,exn              Describe last exception
  ,t EXP            Evaluate form and print elapsed time
  ,x EXP            Pretty print expanded expression EXP\n")
-			 (hash-table-walk
-			  command-table
+			 (##sys#hash-table-for-each
 			  (lambda (k v) 
 			    (let ((help (cdr v)))
 			      (if help
 				  (print #\space help)
-				  (print " ," k) ) ) ) )
+				  (print " ," k) ) ) )
+			  command-table)
 			 (##sys#void) )
 			(else
 			 (printf "Undefined toplevel command ~s - enter `,?' for help~%" form) 
@@ -571,7 +566,7 @@ EOF
 
 (define-constant max-describe-lines 40)
 
-(define describer-table (make-hash-table eq?))
+(define describer-table (make-vector 37 '()))
 
 (define describe
   (let ([sprintf sprintf]
@@ -579,11 +574,8 @@ EOF
 	[fprintf fprintf]
 	[length length]
 	[list-ref list-ref]
-	[string-ref string-ref]
-	(hash-table-ref/default hash-table-ref/default)
-	[hash-table-walk hash-table-walk] )
+	[string-ref string-ref])
     (lambda (x #!optional (out ##sys#standard-output))
-
       (define (descseq name plen pref start)
 	(let ((len (fx- (plen x) start)))
 	  (when name (fprintf out "~A of length ~S~%" name len))
@@ -604,7 +596,6 @@ EOF
 			      (loop1 (fx+ i n)) )
 			     ((eq? v (pref x j)) (loop2 (fx+ n 1) (fx+ j 1)))
 			     (else (loop2 n len)) ) ) ) ) ) ) ) )
-
       (when (##sys#permanent? x)
 	(fprintf out "statically allocated (0x~X) " (##sys#block-address x)) )
       (cond [(char? x)
@@ -688,7 +679,7 @@ EOF
 	       (fprintf out "hash-table with ~S element~a~%  comparison procedure: ~A~%"
 			n (if (fx= n 1) "" "s")  (##sys#slot x 3)) )
 	     (fprintf out "  hash function: ~a~%" (##sys#slot x 4))
-	     (hash-table-walk
+	     (hash-table-walk		; blindly assumes it is bound
 	      x
 	      (lambda (k v) (fprintf out " ~S\t-> ~S~%" k v)) ) ]
 	    [(##sys#structure? x 'condition)
@@ -706,7 +697,7 @@ EOF
 	     (unveil x out) ]
 	    [(##sys#generic-structure? x)
 	     (let ([st (##sys#slot x 0)])
-	       (cond ((hash-table-ref/default describer-table st #f) => (cut <> x out))
+	       (cond ((##sys#hash-table-ref describer-table st) => (cut <> x out))
 		     ((assq st bytevector-data) =>
 		      (lambda (data)
 			(apply descseq (append (map eval (cdr data)) (list 0)))) )
@@ -716,10 +707,9 @@ EOF
 	    [else (fprintf out "unknown object~%")] )
       (##sys#void) ) ) )
 
-(define set-describer!
-  (let ((hash-table-set! hash-table-set!))
-    (lambda (tag proc)
-      (hash-table-set! describer-table tag proc) ) ) )
+(define (set-describer! tag proc)
+  (##sys#check-symbol tag 'symbol 'set-describer!)
+  (##sys#hash-table-set! describer-table tag proc) )
 
 
 ;;; Display hexdump:
@@ -806,7 +796,7 @@ EOF
   '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" 
     "-eval" "-case-insensitive"
     "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
-    "-include-path" "-release" "-ss"
+    "-include-path" "-release" "-ss" "-se"
     "-print" "-pretty-print") )
 
 (define (canonicalize-args args)
@@ -837,7 +827,7 @@ EOF
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (command-line-arguments))]
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
-	 [script (member* '("-s" "-ss" "-script") args)])
+	 [script (member* '("-s" "-ss" "-se" "-script") args)])
     (cond [script
 	   (when (or (not (pair? (cdr script)))
 		     (zero? (string-length (cadr script)))
@@ -930,7 +920,7 @@ EOF
 		  arg 
 		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script"
 		    "-b" "-q" "-n" "-w" "-s" "-i"
-		    "-case-insensitive" "-ss") ) )
+		    "-case-insensitive" "-ss" "-se") ) )
 		((member arg '("-feature" "-include-path" "-keyword-style" 
 			       "-D" "-I" "-k"))
 		 (set! args (cdr args)) )
@@ -951,13 +941,21 @@ EOF
 		  (cut for-each pretty-print <...>) )
 		 (set! args (cdr args)) )
 		(else
-		 (load arg) 
-		 (when (and script (string=? "-ss" (car script)))
-		   (call-with-values (cut main (command-line-arguments))
-		     (lambda results
-		       (exit
-			(if (and (pair? results) (fixnum? (car results)))
-			    (car results)
-			    0) ) ) ) ) ) ) ) ) ) ) )
+		 (let ((scr (and script (car script))))
+		   (##sys#load 
+		    arg 
+		    (and (string=? "-se" scr)
+			 (lambda (x)
+			   (pretty-print x ##sys#standard-error)
+			   (newline ##sys#standard-error)
+			   (eval x)))
+		    #f)
+		   (when (and scr (member scr '("-ss" "-se")))
+		     (call-with-values (cut main (command-line-arguments))
+		       (lambda results
+			 (exit
+			  (if (and (pair? results) (fixnum? (car results)))
+			      (car results)
+			      0) ) ) ) ) ) ) ) ) ) ) ) )
 
 (run)

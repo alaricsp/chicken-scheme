@@ -99,32 +99,33 @@
 
 ;;; Macro handling
 
-(define ##sys#macro-environment '())
+(define ##sys#macro-environment (make-parameter '()))
 
 (define (##sys#extend-macro-environment name se handler)
-  (cond ((lookup name ##sys#macro-environment) =>
-	 (lambda (a)
-	   (set-car! a se)
-	   (set-car! (cdr a) handler) ) )
-	(else 
-	 (set! ##sys#macro-environment
-	   (cons (list name se handler)
-		 ##sys#macro-environment)))))
+  (let ((me (##sys#macro-environment)))
+    (cond ((lookup name me) =>
+	   (lambda (a)
+	     (set-car! a se)
+	     (set-car! (cdr a) handler) ) )
+	  (else 
+	   (##sys#macro-environment
+	    (cons (list name se handler)
+		  me))))))
 
 (define (##sys#copy-macro old new)
-  (let ((def (lookup old ##sys#macro-environment)))
+  (let ((def (lookup old (##sys#macro-environment))))
     (apply ##sys#extend-macro-environment new def) ) )
 
 (define (macro? sym #!optional (senv (##sys#current-environment)))
   (##sys#check-symbol sym 'macro?)
   (##sys#check-list senv 'macro?)
   (or (lookup sym senv)
-      (and (lookup sym ##sys#macro-environment) #t) ) )
+      (and (lookup sym (##sys#macro-environment)) #t) ) )
 
 (define (##sys#unregister-macro name)
-  (set! ##sys#macro-environment
+  (##sys#macro-environment
     ;; this builds up stack, but isn't used often anyway...
-    (let loop ((me ##sys#macro-environment) (me2 '()))
+    (let loop ((me (##sys#macro-environment)) (me2 '()))
       (cond ((null? me) '())
 	    ((eq? x (caar me)) (cdr me))
 	    (else (cons (car me) (loop (cdr me))))))))
@@ -183,7 +184,7 @@
 	    (if (symbol? head)
 		(let ((head2 (or (lookup head dse) head)))
 		  (unless (pair? head2)
-		    (set! head2 (or (lookup head2 ##sys#macro-environment) head2)) )
+		    (set! head2 (or (lookup head2 (##sys#macro-environment)) head2)) )
 		  (cond [(eq? head2 'let)
 			 (##sys#check-syntax 'let body '#(_ 2) #f dse)
 			 (let ([bindings (car body)])
@@ -639,6 +640,135 @@
 ;;; Macro definitions:
 
 (##sys#extend-macro-environment
+ 'import
+ '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (let ((%only (r 'only))
+	  (%rename (r 'rename))
+	  (%except (r 'except))
+	  (%prefix (r 'prefix)))
+      (define (resolve sym)
+	(or (lookup sym '()) sym))	;*** empty se?
+      (define (tostr x)
+	(cond ((string? x) x)
+	      ((keyword? x) (##sys#string-append (##sys#symbol->string x) ":")) ; why not?
+	      ((symbol? x) (##sys#symbol->string x))
+	      ((number? x) (number->string x))
+	      (else (syntax-error 'import "invalid prefix" ))))
+      (define (import-name spec)
+	(let* ((mname (resolve spec))
+	       (mod (##sys#find-module mname #f)))
+	  (unless mod
+	    (let ((il (##sys#resolve-include-filename 
+		       (string-append (symbol->string mname) ".import")
+		       #f #t) ) )
+	      (cond (il (parameterize ((##sys#current-module #f)
+				       (##sys#import-environment '())
+				       (##sys#macro-environment ##sys#default-macro-environment))
+			  (##sys#load il #f #f))
+			(set! mod (##sys#find-module mname)))
+		    (else
+		     (syntax-error
+		      'import "can not import from undefined module" 
+		      mname)))))
+	  (cons (module-vexports mod) 
+		(module-sexports mod))))
+      (define (import-spec spec)
+	(cond ((symbol? spec) (import-name spec))
+	      ((or (not (list? spec)) (< (length spec) 2))
+	       (syntax-error 'import "invalid import specification" spec))
+	      (else
+	       (let* ((s (car spec))
+		      (imp (import-spec (cadr spec)))
+		      (impv (car imp))
+		      (imps (cdr imp)))
+		 (cond ((c %only (car spec))
+			(##sys#check-syntax 'only spec '(_ _ . #(symbol 0)))
+			(let ((ids (map resolve (cddr spec))))
+			  (let loop ((ids ids) (v '()) (s '()))
+			    (cond ((null? ids) (cons v s))
+				  ((assq (car ids) impv) =>
+				   (lambda (a) 
+				     (loop (cdr ids) (cons a v) s)))
+				  ((assq (car ids) imps) =>
+				   (lambda (a) 
+				     (loop (cdr ids) v (cons a s))))
+				  (else (loop (cdr ids) v s))))))
+		       ((c %except (car spec))
+			(##sys#check-syntax 'except spec '(_ _ . #(symbol 0)))
+			(let ((ids (map resolve (cddr spec))))
+			  (let loop ((impv impv) (v '()))
+			    (cond ((null? impv)
+				   (let loop ((imps imps) (s '()))
+				     (cond ((null? imps) (cons v s))
+					   ((memq (caar imps) ids) (loop (cdr imps) s))
+					   (else (loop (cdr imps) (cons (car imps) s))))))
+				  ((memq (caar impv) ids) (loop (cdr impv) v))
+				  (else (loop (cdr impv) (cons (car impv) v)))))))
+		       ((c %rename (car spec))
+			(##sys#check-syntax 'rename spec '(_ _ . #((symbol symbol) 0)))
+			(let loop ((impv impv) (imps imps) (v '()) (s '()) (ids (cddr spec)))
+			  (cond ((null? impv) 
+				 (cond ((null? imps)
+					(for-each
+					 (lambda (id)
+					   (##sys#warn "renamed identifier not imported" id) )
+					 ids)
+					(cons v s))
+				       ((assq (caar imps) ids) =>
+					(lambda (a)
+					  (loop impv (cdr imps)
+						v
+						(cons (cons (cadr a) (cdar imps)) s)
+						(##sys#delq a ids))))
+				       (else (loop impv (cdr imps) v (cons (car imps) s) ids))))
+				((assq (caar impv) ids) =>
+				 (lambda (a)
+				   (loop (cdr impv) imps
+					 (cons (cons (cadr a) (cdar impv)) v)
+					 s
+					 (##sys#delq a ids))))
+				(else (loop (cdr impv) imps
+					    (cons (car impv) v)
+					    s ids)))))
+		       ((c %prefix (car spec))
+			(##sys#check-syntax 'prefix spec '(_ _ _))
+			(let ((pref (tostr (caddr spec))))
+			  (define (ren imp)
+			    (cons 
+			     (##sys#string->symbol 
+			      (##sys#string-append pref (##sys#symbol->string (car imp))) )
+			     (cdr imp) ) )
+			  (cons (map ren impv) (map ren imps))))
+		       (else (syntax-error 'import "invalid import specification" spec)))))))
+      (##sys#check-syntax 'import x '(_ _))
+      (let* ((vs (import-spec (cadr x)))
+	     (vsv (car vs))
+	     (vss (cdr vs))
+	     (cm (##sys#current-module)))
+	;; fixup reexports
+	(when cm
+	  (let ((dlist (module-defined-list cm)))
+	    (define (fixup! imports)
+	      (for-each
+	       (lambda (imp)
+		 (when (##sys#find-export (car imp) cm) ;*** must process export list for every import
+		   (d "fixup reexport: " imp)
+		   (set! dlist (cons imp dlist))))
+	       imports) )
+	    (fixup! vsv)
+	    (fixup! vss)
+	    (set-module-defined-list! cm dlist)) )
+	(d `(V: ,vsv))
+	(d `(S: ,vss))
+	(##sys#import-environment (append vsv (##sys#import-environment)))
+	(##sys#macro-environment (append vss (##sys#macro-environment)))
+	'(##core#undefined))))))
+
+(define ##sys#initial-macro-environment (##sys#macro-environment))
+
+(##sys#extend-macro-environment
  'define
  '()
  (##sys#er-transformer
@@ -952,120 +1082,17 @@
       `(##core#require-extension ,@ids) ) ) ) )
 
 (##sys#extend-macro-environment
- 'import
- '()
- (##sys#er-transformer
-  (lambda (x r c)
-    (let ((%only (r 'only))
-	  (%rename (r 'rename))
-	  (%except (r 'except))
-	  (%prefix (r 'prefix)))
-      (define (resolve sym)
-	(or (lookup sym '()) sym))	;*** empty se?
-      (define (tostr x)
-	(cond ((string? x) x)
-	      ((keyword? x) (##sys#string-append (##sys#symbol->string x) ":")) ; why not?
-	      ((symbol? x) (##sys#symbol->string x))
-	      ((number? x) (number->string x))
-	      (else (syntax-error 'import "invalid prefix" ))))
-      (define (import-name spec)
-	(let* ((mname (resolve spec))
-	       (mod (##sys#find-module mname #f)))
-	  (unless mod
-	    (let ((il (##sys#resolve-include-filename 
-		       (string-append (symbol->string mname) ".import")
-		       #f #t) ) )
-	      (cond (il (##sys#load il #f #f)
-			(set mod (##sys#find-module mname)))
-		    (else
-		     (syntax-error
-		      'import "can not import from undefined module" 
-		      mname)))))
-	  (cons (module-vexports mod) 
-		(module-sexports mod))))
-      (define (import-spec spec)
-	(cond ((symbol? spec) (import-name spec))
-	      ((or (not (list? spec)) (< (length spec) 2))
-	       (syntax-error 'import "invalid import specification" spec))
-	      (else
-	       (let* ((s (car spec))
-		      (imp (import-spec (cadr spec)))
-		      (impv (car imp))
-		      (imps (cdr imp)))
-		 (cond ((c %only (car spec))
-			(##sys#check-syntax 'only spec '(_ _ . #(symbol 0)))
-			(let ((ids (map resolve (cddr spec))))
-			  (let loop ((ids ids) (v '()) (s '()))
-			    (cond ((null? ids) (cons v s))
-				  ((assq (car ids) impv) =>
-				   (lambda (a) 
-				     (loop (cdr ids) (cons a v) s)))
-				  ((assq (car ids) imps) =>
-				   (lambda (a) 
-				     (loop (cdr ids) v (cons a s))))
-				  (else (loop (cdr ids) v s))))))
-		       ((c %except (car spec))
-			(##sys#check-syntax 'except spec '(_ _ . #(symbol 0)))
-			(let ((ids (map resolve (cddr spec))))
-			  (let loop ((impv impv) (v '()))
-			    (cond ((null? impv)
-				   (let loop ((imps imps) (s '()))
-				     (cond ((null? imps) (cons v s))
-					   ((memq (caar imps) ids) (loop (cdr imps) s))
-					   (else (loop (cdr imps) (cons (car imps) s))))))
-				  ((memq (caar impv) ids) (loop (cdr impv) v))
-				  (else (loop (cdr impv) (cons (car impv) v)))))))
-		       ((c %rename (car spec))
-			(##sys#check-syntax 'rename spec '(_ _ . #((symbol symbol) 0)))
-			(let loop ((impv impv) (imps imps) (v '()) (s '()) (ids (cddr spec)))
-			  (cond ((null? impv) 
-				 (cond ((null? imps)
-					(for-each
-					 (lambda (id)
-					   (##sys#warn "renamed identifier not imported" id) )
-					 ids)
-					(cons v s))
-				       ((assq (caar imps) ids) =>
-					(lambda (a)
-					  (loop impv (cdr imps)
-						v
-						(cons (cons (cadr a) (cdar imps)) s)
-						(##sys#delq a ids))))
-				       (else (loop impv (cdr imps) v (cons (car imps) s) ids))))
-				((assq (caar impv) ids) =>
-				 (lambda (a)
-				   (loop (cdr impv) imps
-					 (cons (cons (cadr a) (cdar impv)) v)
-					 s
-					 (##sys#delq a ids))))
-				(else (loop (cdr impv) imps
-					    (cons (car impv) v)
-					    s ids)))))
-		       ((c %prefix (car spec))
-			(##sys#check-syntax 'prefix spec '(_ _ _))
-			(let ((pref (tostr (caddr spec))))
-			  (define (ren imp)
-			    (cons 
-			     (##sys#string->symbol 
-			      (##sys#string-append pref (##sys#symbol->string (car imp))) )
-			     (cdr imp) ) )
-			  (cons (map ren impv) (map ren imps))))
-		       (else (syntax-error 'import "invalid import specification" spec)))))))
-      (##sys#check-syntax 'import x '(_ _))
-      (let ((vs (import-spec (cadr x))))
-	(d `(V: ,(car vs)))
-	(d `(S: ,(cdr vs)))
-	(##sys#import-environment (append (car vs) (##sys#import-environment)))
-	(set! ##sys#macro-environment (append (cdr vs) ##sys#macro-environment))
-	'(##core#undefined))))))
-
-(##sys#extend-macro-environment
  'module
  '()
  (##sys#er-transformer
   (lambda (x r c)
-    (##sys#check-syntax 'module x '(_ symbol #(symbol 0) . #(_ 0)))
+    (##sys#check-syntax 'module x '(_ symbol #(_ 0) . #(_ 0)))
     `(##core#module ,@(cdr x)))))
+
+
+;;; the base macro environment ("scheme", essentially)
+
+(define ##sys#default-macro-environment (##sys#macro-environment))
 
 
 ;;; syntax-rules
@@ -1075,7 +1102,7 @@
 
 ;;; low-level module support
 
-(define ##sys#meta-macro-environment ##sys#macro-environment) ;*** later: parameter
+(define ##sys#meta-macro-environment (make-parameter (##sys#macro-environment)))
 (define ##sys#current-module (make-parameter #f))
 
 (declare 
@@ -1102,13 +1129,17 @@
   (when mod
     (when (##sys#find-export sym mod)
       (d "defined: " sym)
+      (when (assq sym (module-defined-list mod))
+	(##sys#warn
+	 "exported variable multiply defined"
+	 sym (module-name mod)))
       (set-module-defined-list! 
        mod
        (cons (cons sym val)
 	     (module-defined-list mod))))))
 
-(define (##sys#register-module name explist)
-  (let ((mod (make-module name explist '() '() '())))
+(define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
+  (let ((mod (make-module name explist '() vexports sexports)))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
 
@@ -1121,16 +1152,35 @@
        ,@(map (lambda (sexport)
 		(let* ((name (car sexport))
 		       (a (assq name dlist)))
-		  (unless a 
+		  (unless (pair? a)
 		    (bomb "exported syntax has no source"))
 		  `(cons ',(car sexport) ,(cdr a))))
 	      (module-sexports mod))))))
 
 (define (##sys#register-compiled-module name vexports sexports)
   (let ((mod (make-module 
-	      name '() '() vexports 
+	      name '() '() 
+	      vexports
 	      (map (lambda (se)
 		     (list (car se) '() (##sys#er-transformer (cdr se))))
+		   sexports))))
+    (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
+    mod))
+
+(define (##sys#register-primitive-module name vexports sexports)
+  (let* ((me (##sys#macro-environment))
+	 (mod (make-module 
+	      name '() '() 
+	      (map (lambda (ve)
+		     (if (symbol? ve)
+			 (cons ve ve)
+			 ve))
+		   vexports)
+	      (map (lambda (se)
+		     (if (symbol? se)
+			 (or (assq se me)
+			     (##sys#error "unknown macro referenced while registering module" se name))
+			 se))
 		   sexports))))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
@@ -1139,7 +1189,7 @@
   (let loop ((xl (module-export-list mod)))
     (cond ((null? xl) #f)
 	  ((and (symbol? (car xl)) (eq? sym (car xl))))
-	  ((and (pair? (car xl)) (memq sym (car xl))))
+	  ((memq sym (car xl)))
 	  (else (loop (cdr xl))))))
 
 (define (##sys#finalize-module mod me0)
@@ -1147,7 +1197,7 @@
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
 	 (sexports
-	  (let loop ((me ##sys#macro-environment))
+	  (let loop ((me (##sys#macro-environment)))
 	    (cond ((or (null? me) (eq? me0 me)) '())
 		  ((##sys#find-export (caar me) mod)
 		   (cons (car me) (loop (cdr me))))
@@ -1156,57 +1206,24 @@
 	  (let loop ((xl explist))
 	    (cond ((null? xl) '())
 		  ((symbol? (car xl))
-		   (if (assq (car xl) sexports) 
-		       (loop (cdr xl))
-		       (cons (cons (car xl) (##sys#module-rename (car xl) name))
-			     (loop (cdr xl)))))
+		   (let ((id (car xl)))
+		     (if (assq id sexports) 
+			 (loop (cdr xl))
+			 (cons (cons id
+				     (let ((def (assq id dlist)))
+				       (if (and def (symbol? (cdr def)))
+					   (cdr def)
+					   (##sys#module-rename id name))))
+			       (loop (cdr xl))))))
 		  (else (loop (append (cdar xl) (cdr xl))))))))
     (for-each 
      (lambda (x)
        (unless (assq (car x) dlist)
-	 (warning "exported identifier has not been defined" (car x))))
+	 (##sys#warn "exported identifier has not been defined" (car x) name)))
      vexports)
     (d `(EXPORTS: ,(module-name mod) ,(map car dlist)
 		  ,(map car vexports) ,(map car sexports)))
     (set-module-vexports! mod vexports)
     (set-module-sexports! mod sexports)))
 
-
-;;*** put "scheme" module into import library
-
-(define ##sys#module-table
-  (list
-   (cons
-    'scheme 
-    (make-module
-     'scheme
-     '() '()
-     (map (lambda (s) (cons s s))
-	  '(not boolean? eq? eqv? equal? pair?
-		cons car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr
-		cddar cdddr caaaar caaadr caadar caaddr cadaar cadadr cadddr cdaaar
-		cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr set-car! set-cdr!
-		null? list? list length list-tail list-ref append reverse memq memv
-		member assq assv assoc symbol? symbol->string string->symbol number?
-		integer? exact? real? complex? inexact? rational? zero? odd? even?
-		positive? negative?  max min + - * / = > < >= <= quotient remainder
-		modulo gcd lcm abs floor ceiling truncate round exact->inexact
-		inexact->exact exp log expt sqrt sin cos tan asin acos atan
-		number->string string->number char? char=? char>? char<? char>=?
-		char<=? char-ci=? char-ci<? char-ci>?  char-ci>=? char-ci<=?
-		char-alphabetic? char-whitespace? char-numeric? char-upper-case?
-		char-lower-case? char-upcase char-downcase char->integer integer->char
-		string? string=?  string>? string<? string>=? string<=? string-ci=?
-		string-ci<? string-ci>? string-ci>=? string-ci<=?  make-string
-		string-length string-ref string-set! string-append string-copy
-		string->list list->string substring string-fill! vector? make-vector
-		vector-ref vector-set! string vector vector-length vector->list
-		list->vector vector-fill! procedure? map for-each apply force
-		call-with-current-continuation input-port? output-port?
-		current-input-port current-output-port call-with-input-file
-		call-with-output-file open-input-file open-output-file
-		close-input-port close-output-port load read eof-object? read-char
-		peek-char write display write-char newline with-input-from-file
-		with-output-to-file dynamic-wind values call-with-values eval
-		scheme-report-environment null-environment interaction-environment) )
-     ##sys#macro-environment))))
+(define ##sys#module-table '())

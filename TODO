@@ -2,30 +2,28 @@ TODO for macro/module system					-*- Outline -*-
 
 * bugs
 ** modules
+*** code-duplication in compiler and evaluator for ##core#module
 *** syntax-definitions in modules
     transformers use ##sys#meta-macro-environment + unset ##sys#current-module,
     this may not be be sufficient (expansion assumes ids are imported in used
-    context)
-
-* make ##sys#[meta-]macro-environment a parameter
+    context) [is this still relevant? we could simply reexport the ids used in
+    in the expansion]
+*** "scheme" module does not include special forms ("define-syntax", etc.)
 
 * test
+** reexports
 ** bootstrap
 ** line-number retention over macro-expansion
-** import libraries
 
 * syntax-error
 ** if ##sys#current-module is set, add name to error message
 
 * modules
 ** checks
-*** exported id not defined
 *** redefinition of imported id 
-*** multiple definition of export
+*** reimport of imported id
 ** hide unexported module definitions
-** support for re-exports of imported bindings
-   fixup vexport/sexport lists
-** create handwritten import libraries (build + installation)
+** create import libraries
 
 * update manual/NEWS
 ** hygienic macros
@@ -48,6 +46,9 @@ TODO for macro/module system					-*- Outline -*-
     -check-imports
     -emit-exports
     -import
+
+* build
+** compile and install import libraries
 
 * csi
 ** describe should print if symbol is interned

@@ -1,7 +1,11 @@
 ;;;; module-tests.scm
 
 
-(load-relative "test.scm")
+(cond-expand
+ (compiling
+  (include "test.scm") )
+ (else
+  (load-relative "test.scm")))
 
 (test-begin "modules")
 
@@ -25,21 +29,20 @@
 
 (module bar (x y)
   (import (prefix scheme s:))
-  (define (x y) (s:* y 2))
-  (define y 1))
+  (s:define (x y) (s:* y 2))
+  (s:define y 1))
 
 (import (prefix (only (except (rename bar (x z)) y) z) "bar-"))
 (test-equal "modified import" (bar-z 10) 20)
 (test-error "hidden import" y)
 
-(module baz (x)
+(module baz ((x s:list))
   (import (prefix scheme s:))
   (define-syntax x
     (syntax-rules ()
-      ((_ x) (list x)))))  ; actually incorrect: we assume users of this module
-                           ; import "list" as "list"...
+      ((_ x) (s:list x)))))
 
 (import baz)
-(test-equal "prefixed import" (x 1) '(1))
+(test-equal "prefixed import and reexport" (x 1) '(1))
 
 (test-end "modules")

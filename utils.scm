@@ -87,7 +87,7 @@
 	     (let ((key (car a)))
 	       (when (string-search patt (symbol->string key))
 		 (set! ms (cons key ms)) ) ) )
-	   ##sys#macro-environment)
+	   (##sys#macro-environment))
           ms ) ) ) ) )
 
 (define (##sys#apropos patt env #!optional macf)
