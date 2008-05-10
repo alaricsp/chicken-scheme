@@ -11,6 +11,7 @@ TODO for macro/module system					-*- Outline -*-
 *** "scheme" module does not include special forms ("define-syntax", etc.)
 
 * test
+** reexports
 ** foreign module
 ** bootstrap
 ** line-number retention over macro-expansion
@@ -24,6 +25,7 @@ TODO for macro/module system					-*- Outline -*-
 *** reimport of imported id
 ** hide unexported module definitions
 ** create remaining import libraries
+** let-string-start+end should go into srfi-14 import lib
 
 * update manual/NEWS
 ** hygienic macros
@@ -35,8 +37,10 @@ TODO for macro/module system					-*- Outline -*-
 *** define-compiled-syntax
 *** modules
 ** ack synrules authors
+** DSSSL lambda-lists work only with imported "chicken" module
+   let-optionals, etc.
 ** removals
-*** run-time and compile-time situations for eval-when
+*** "run-time" and "compile-time" situations for eval-when
 *** syntax
     define-foreign-record
     define-foreign-enum
@@ -50,6 +54,7 @@ TODO for macro/module system					-*- Outline -*-
 * build
 ** compile and install import libraries
 *** where? probably in repository...
+*** install import libs as .scm when it is a static build
 
 * csi
 ** describe should print if symbol is interned
