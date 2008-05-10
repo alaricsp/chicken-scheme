@@ -944,7 +944,7 @@ EOF
 		 (let ((scr (and script (car script))))
 		   (##sys#load 
 		    arg 
-		    (and (string=? "-se" scr)
+		    (and (equal? "-se" scr)
 			 (lambda (x)
 			   (pretty-print x ##sys#standard-error)
 			   (newline ##sys#standard-error)

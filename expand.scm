@@ -44,7 +44,7 @@
 
 (define dd d)
 
-#;(cond-expand
+(cond-expand
  (hygienic-macros
   (define-syntax d (syntax-rules () ((_ . _) (void)))))
  (else					;*** remove later
@@ -742,29 +742,32 @@
 			     (cdr imp) ) )
 			  (cons (map ren impv) (map ren imps))))
 		       (else (syntax-error 'import "invalid import specification" spec)))))))
-      (##sys#check-syntax 'import x '(_ _))
-      (let* ((vs (import-spec (cadr x)))
-	     (vsv (car vs))
-	     (vss (cdr vs))
-	     (cm (##sys#current-module)))
-	;; fixup reexports
-	(when cm
-	  (let ((dlist (module-defined-list cm)))
-	    (define (fixup! imports)
-	      (for-each
-	       (lambda (imp)
-		 (when (##sys#find-export (car imp) cm) ;*** must process export list for every import
-		   (d "fixup reexport: " imp)
-		   (set! dlist (cons imp dlist))))
-	       imports) )
-	    (fixup! vsv)
-	    (fixup! vss)
-	    (set-module-defined-list! cm dlist)) )
-	(d `(V: ,vsv))
-	(d `(S: ,vss))
-	(##sys#import-environment (append vsv (##sys#import-environment)))
-	(##sys#macro-environment (append vss (##sys#macro-environment)))
-	'(##core#undefined))))))
+      (##sys#check-syntax 'import x '(_ . #(_ 1)))
+      (for-each
+       (lambda (spec)
+	 (let* ((vs (import-spec spec))
+		(vsv (car vs))
+		(vss (cdr vs))
+		(cm (##sys#current-module)))
+	   ;; fixup reexports
+	   (when cm
+	     (let ((dlist (module-defined-list cm)))
+	       (define (fixup! imports)
+		 (for-each
+		  (lambda (imp)
+		    (when (##sys#find-export (car imp) cm) ;*** must process export list for every import
+		      (d "fixup reexport: " imp)
+		      (set! dlist (cons imp dlist))))
+		  imports) )
+	       (fixup! vsv)
+	       (fixup! vss)
+	       (set-module-defined-list! cm dlist)) )
+	   (d `(V: ,vsv))
+	   (d `(S: ,vss))
+	   (##sys#import-environment (append vsv (##sys#import-environment)))
+	   (##sys#macro-environment (append vss (##sys#macro-environment))) ) )
+       (cdr x))
+      '(##core#undefined)))))
 
 (define ##sys#initial-macro-environment (##sys#macro-environment))
 
@@ -1167,7 +1170,7 @@
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
-(define (##sys#register-primitive-module name vexports sexports)
+(define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
 	      name '() '() 

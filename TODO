@@ -11,7 +11,7 @@ TODO for macro/module system					-*- Outline -*-
 *** "scheme" module does not include special forms ("define-syntax", etc.)
 
 * test
-** reexports
+** foreign module
 ** bootstrap
 ** line-number retention over macro-expansion
 
@@ -23,7 +23,7 @@ TODO for macro/module system					-*- Outline -*-
 *** redefinition of imported id 
 *** reimport of imported id
 ** hide unexported module definitions
-** create import libraries
+** create remaining import libraries
 
 * update manual/NEWS
 ** hygienic macros
@@ -49,6 +49,7 @@ TODO for macro/module system					-*- Outline -*-
 
 * build
 ** compile and install import libraries
+*** where? probably in repository...
 
 * csi
 ** describe should print if symbol is interned

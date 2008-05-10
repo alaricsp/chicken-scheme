@@ -262,3 +262,9 @@ synrules.scm
 expand.scm
 expand.c
 unsafe-declarations.scm
+scheme.import.scm
+scheme.import.c
+chicken.import.scm
+chicken.import.c
+foreign.import.scm
+foreign.import.c

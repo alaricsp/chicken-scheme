@@ -27,6 +27,8 @@
 
 (##sys#provide 'chicken-more-macros)
 
+(define ##sys#me-0 (##sys#macro-environment))
+
 
 ;;; Non-standard macros:
 
@@ -1037,6 +1039,12 @@
 
 
 ;;; Register features provided by this file
+
+(define ##sys#chicken-macro-environment
+  (let loop ((me (##sys#macro-environment)))
+    (if (or (null? me) (eq? me ##sys#me-0))
+	'()
+	(cons (car me) (loop (cdr me))))))
 
 (eval-when (compile load eval)
   (register-feature! 'srfi-8 'srfi-16 'srfi-26 'srfi-31 'srfi-15 'srfi-11) )
