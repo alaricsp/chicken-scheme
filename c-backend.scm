@@ -219,9 +219,9 @@
 	     (expr (car subs) i) )
 
 	    ((##core#global)
-	     (let ([index (first params)]
-		   [safe (second params)] 
-		   [block (third params)] )
+	     (let ((index (first params))
+		   (safe (second params)) 
+		   (block (third params)) )
 	       (cond [block
 		      (if safe
 			  (gen "lf[" index "]")
@@ -230,23 +230,28 @@
 		     [else (gen "C_retrieve(lf[" index "])")] ) ) )
 
 	    ((##core#setglobal)
-	     (let ([index (first params)]
-		   [block (second params)] )
+	     (let ((index (first params))
+		   (block (second params)) 
+		   (var (third params)))
 	       (if block
-		   (gen "C_mutate(&lf[" index "],")
-		   (gen "C_mutate((C_word*)lf[" index "]+1,") )
+		   (gen "C_mutate(&lf[" index "]")
+		   (gen "C_mutate((C_word*)lf[" index "]+1") )
+	       (gen " /* " (uncommentify (symbol->string var)) " ...) */,")
 	       (expr (car subs) i)
 	       (gen #\)) ) )
 
 	    ((##core#setglobal_i)
-	     (let ([index (first params)]
-		   [block (second params)] )
+	     (let ((index (first params))
+		   (block (second params)) 
+		   (var (third params)) )
 	       (cond [block
-		      (gen "lf[" index "]=")
+		      (gen "lf[" index "] /* "
+			   (uncommentify (symbol->string var)) " */ =")
 		      (expr (car subs) i)
 		      (gen #\;) ]
 		     [else
-		      (gen "C_set_block_item(lf[" index "],0,")
+		      (gen "C_set_block_item(lf[" index "] /* "
+			   (uncommentify (symbol->string var)) " */,0,")
 		      (expr (car subs) i)
 		      (gen #\)) ] ) ) )
 

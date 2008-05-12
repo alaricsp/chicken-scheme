@@ -12,6 +12,10 @@ TODO for macro/module system					-*- Outline -*-
 
 * test
 ** reexports
+** compiled import libs
+** syntax-export of srfi-14 module
+** hiding of non-exported module vars in compiler
+** def of exported module variables with defie-values
 ** foreign module
 ** bootstrap
 ** line-number retention over macro-expansion
@@ -24,8 +28,6 @@ TODO for macro/module system					-*- Outline -*-
 *** redefinition of imported id 
 *** reimport of imported id
 ** hide unexported module definitions
-** create remaining import libraries
-** let-string-start+end should go into srfi-14 import lib
 
 * update manual/NEWS
 ** hygienic macros
@@ -36,6 +38,19 @@ TODO for macro/module system					-*- Outline -*-
 *** user defined ellipsis
 *** define-compiled-syntax
 *** modules
+** removed deprecated stuff
+   [un]shift!
+   andmap ormap
+   byte-vector? byte-vector-fill!
+   make-byte-vector byte-vector
+   byte-vector-set! byte-vector-ref 
+   byte-vector->list list->byte-vector
+   string->byte-vector byte-vector->string
+   byte-vector-length
+   make-static-byte-vector static-byte-vector->pointer
+   byte-vector-move! byte-vector-append!
+   set-file-position! set-user-id! set-group-id!
+   set-process-group-id!
 ** ack synrules authors
 ** DSSSL lambda-lists work only with imported "chicken" module
    let-optionals, etc.

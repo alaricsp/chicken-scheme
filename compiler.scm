@@ -1,7 +1,6 @@
 ;;;; compiler.scm - The CHICKEN Scheme compiler
 ;
 ;
-;
 ; "This is insane. What we clearly want to do is not exactly clear, and is rooted in NCOMPLR."
 ;
 ;
@@ -172,8 +171,8 @@
 ; [##core#local {<index>}]
 ; [##core#setlocal {<index>} <exp>]
 ; [##core#global {<literal> <safe-flag> <block-mode> [<name>]}]
-; [##core#setglobal {<literal> <block-mode>} <exp>]
-; [##core#setglobal_i {<literal> <block-mode>} <exp>]
+; [##core#setglobal {<literal> <block-mode> <name>} <exp>]
+; [##core#setglobal_i {<literal> <block-mode> <name>} <exp>]
 ; [##core#literal {<literal>}]
 ; [##core#immediate {<type> [<immediate>]}]     - type: bool/fix/nil/char
 ; [##core#proc {<name> [<non-internal>]}]
@@ -739,6 +738,8 @@
 					       "invalid export syntax" exp name))))
 				     (caddr x)))
 			       (me0 (##sys#macro-environment)))
+			  (when (##sys#current-module)
+			    (##sys#syntax-error-hook 'module "modules may not be nested" name))
 			  (when (pair? se)
 			    (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
 						     name))
@@ -2408,7 +2409,8 @@
 		       (list (if blockvar
 				 (blockvar-literal var)
 				 (literal var) )
-			     blockvar)
+			     blockvar
+			     var)
 		       (list (walk (car subs) e here boxes)) ) ) ) ) ) )
 
 	  ((##core#call) 

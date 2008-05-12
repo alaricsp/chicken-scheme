@@ -4302,32 +4302,6 @@ EOF
   (##sys#structure? x 'promise) )
 
 
-;;; andmap + ormap: DEPRECATED
-
-(define andmap
-  (lambda (f first . rest)
-    (cond ((null? rest)
-	   (let mapf ((l first))
-	     (or (null? l)
-		 (and (f (car l)) (mapf (cdr l))))))
-	  ((null? (cdr rest))
-	   (let mapf ((l1 first) (l2 (car rest)))
-	     (or (null? l1)
-		 (and (f (car l1) (car l2)) (mapf (cdr l1) (cdr l2))))))
-	  (else
-	   (let mapf ((first first) (rest rest))
-	     (or (null? first)
-		 (and (apply f (car first) (map (lambda (x) (car x)) rest))
-		      (mapf (cdr first) (map (lambda (x) (cdr x)) rest)))))))))
-
-(define ormap
-  (lambda (f first . rest)
-    (and (pair? first)
-	 (let ([lists (cons first rest)])
-	   (or (apply f (map (lambda (x) (car x)) lists))
-	       (apply ormap f (map (lambda (x) (cdr x)) lists)) ) ) ) ) )
-
-
 ;;; Internal string-reader:
 
 (define ##sys#read-from-string 

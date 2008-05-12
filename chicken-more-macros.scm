@@ -27,10 +27,11 @@
 
 (##sys#provide 'chicken-more-macros)
 
-(define ##sys#me-0 (##sys#macro-environment))
-
 
 ;;; Non-standard macros:
+
+(define ##sys#chicken-macro-environment
+(let ((me0 (##sys#macro-environment)))
 
 (##sys#extend-macro-environment
  'receive
@@ -244,7 +245,7 @@
  'set!-values '()
  (##sys#er-transformer
   (lambda (form r c)
-    (##sys#check-syntax 'set!-values form '(_ #(symbol 0) _))
+    (##sys#check-syntax 'set!-values form '(_ #(variable 0) _))
     (let ((vars (cadr form))
 	  (exp (caddr form))
 	  (%lambda (r 'lambda)))
@@ -268,6 +269,8 @@
  'define-values '()
  (##sys#er-transformer
   (lambda (form r c)
+    (##sys#check-syntax 'define-values form '(_ #(variable 0) _))
+    (for-each (cut ##sys#register-export <> (##sys#current-module)) (cadr form))
     `(,(r 'set!-values) ,@(cdr form)))))
 
 (##sys#extend-macro-environment
@@ -1038,13 +1041,15 @@
 	    '(##core#undefined)))))))
 
 
-;;; Register features provided by this file
+;;; just in case someone forgets
 
-(define ##sys#chicken-macro-environment
-  (let loop ((me (##sys#macro-environment)))
-    (if (or (null? me) (eq? me ##sys#me-0))
-	'()
-	(cons (car me) (loop (cdr me))))))
+(##sys#extend-macro-environment
+ 'define-macro '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (syntax-error 'define-macro "`define-macro' is not supported - please use `define-syntax'"))))
+
+(##sys#macro-subset me0)))
 
 (eval-when (compile load eval)
   (register-feature! 'srfi-8 'srfi-16 'srfi-26 'srfi-31 'srfi-15 'srfi-11) )

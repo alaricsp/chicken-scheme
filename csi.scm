@@ -26,7 +26,8 @@
 
 
 (declare
-  (usual-integrations)
+  (uses srfi-69)			; is here because a bootstrap from an older chicken may not make
+  (usual-integrations)			;  this used automatically
   (disable-interrupts)
   (disable-warning var)
   (run-time-macros)			;*** later: compile-syntax
@@ -93,7 +94,7 @@ EOF
     -k  -keyword-style STYLE    enable alternative keyword-syntax (none, prefix or suffix)
     -s  -script PATHNAME        use interpreter for shell scripts
         -ss PATHNAME            shell script with `main' procedure
-        -se PATHNAME            same as `-s', but print each expression as it is evaluated
+        -sx PATHNAME            same as `-s', but print each expression as it is evaluated
     -R  -require-extension NAME require extension before executing code
     -I  -include-path PATHNAME  add PATHNAME to include path
     --                          ignore all following options
@@ -796,7 +797,7 @@ EOF
   '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" 
     "-eval" "-case-insensitive"
     "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
-    "-include-path" "-release" "-ss" "-se"
+    "-include-path" "-release" "-ss" "-sx"
     "-print" "-pretty-print") )
 
 (define (canonicalize-args args)
@@ -827,7 +828,7 @@ EOF
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (command-line-arguments))]
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
-	 [script (member* '("-s" "-ss" "-se" "-script") args)])
+	 [script (member* '("-s" "-ss" "-sx" "-script") args)])
     (cond [script
 	   (when (or (not (pair? (cdr script)))
 		     (zero? (string-length (cadr script)))
@@ -920,7 +921,7 @@ EOF
 		  arg 
 		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script"
 		    "-b" "-q" "-n" "-w" "-s" "-i"
-		    "-case-insensitive" "-ss" "-se") ) )
+		    "-case-insensitive" "-ss" "-sx") ) )
 		((member arg '("-feature" "-include-path" "-keyword-style" 
 			       "-D" "-I" "-k"))
 		 (set! args (cdr args)) )
@@ -944,13 +945,13 @@ EOF
 		 (let ((scr (and script (car script))))
 		   (##sys#load 
 		    arg 
-		    (and (equal? "-se" scr)
+		    (and (equal? "-sx" scr)
 			 (lambda (x)
 			   (pretty-print x ##sys#standard-error)
 			   (newline ##sys#standard-error)
 			   (eval x)))
 		    #f)
-		   (when (and scr (member scr '("-ss" "-se")))
+		   (when (and scr (member scr '("-ss" "-sx")))
 		     (call-with-values (cut main (command-line-arguments))
 		       (lambda results
 			 (exit

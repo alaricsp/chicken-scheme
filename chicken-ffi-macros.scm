@@ -25,7 +25,8 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(define ##sys#me-0 (##sys#macro-environment))
+(define ##sys#chicken-ffi-macro-environment
+  (let ((me0 (##sys#macro-environment)))
 
 (##sys#extend-macro-environment
  'define-external
@@ -176,11 +177,4 @@
 	  (bad) )
       '(##core#undefined) ) ) ) )
 
-
-;;; save macros for import library
-
-(define ##sys#chicken-ffi-macro-environment
-  (let loop ((me (##sys#macro-environment)))
-    (if (or (null? me) (eq? me ##sys#me-0))
-	'()
-	(cons (car me) (loop (cdr me))))))
+(##sys#macro-subset me0)))

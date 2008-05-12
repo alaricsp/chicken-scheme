@@ -778,7 +778,15 @@
        db)
       (for-each (cut compiler-warning 'var "exported global variable `~S' is not defined" <>) exps) ) ) )
 
-(define (export-import-hook x id) (void))
+
+;;; change hook function to hide non-exported module bindings
+
+(set! ##sys#toplevel-definition-hook
+  (lambda (sym mod exp val)
+    (when (and (not val) (not exp))
+      (debugging 'o "hiding nonexported module bindings" sym)
+      (set! block-globals (cons sym block-globals)) ) ) )
+
 
 
 ;;; Compute general statistics from analysis database:

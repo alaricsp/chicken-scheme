@@ -47,7 +47,7 @@ The options recognized by the interpreter are:
 
 ; -s  -script PATHNAME : This is equivalent to {{-batch -quiet -no-init PATHNAME}}. Arguments following {{PATHNAME}} are available by using  {{command-line-arguments}} and are not processed as interpreter options. Extra options in the environment variable {{CSI_OPTIONS}} are ignored.
 
-; -se PATHNAME : The same as {{-s PATHNAME}} but prints each expression to {{(current-error-port)}} before it is evaluated.
+; -sx PATHNAME : The same as {{-s PATHNAME}} but prints each expression to {{(current-error-port)}} before it is evaluated.
 
 ; -ss PATHNAME : The same as {{-s PATHNAME}} but invokes the procedure {{main}} with the value of {{(command-line-arguments)}} as its single argument. If the main procedure returns an integer result, then the interpreter is terminated, returning the integer as the status code back to the invoking process. Any other result terminates the interpreter with a zero exit status.
 

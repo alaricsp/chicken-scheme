@@ -660,9 +660,9 @@
 	(let* ((mname (resolve spec))
 	       (mod (##sys#find-module mname #f)))
 	  (unless mod
-	    (let ((il (##sys#resolve-include-filename 
+	    (let ((il (##sys#find-extension 
 		       (string-append (symbol->string mname) ".import")
-		       #f #t) ) )
+		       #t)))
 	      (cond (il (parameterize ((##sys#current-module #f)
 				       (##sys#import-environment '())
 				       (##sys#macro-environment ##sys#default-macro-environment))
@@ -1128,18 +1128,22 @@
 	(err (error 'import "module not found" name))
 	(else #f)))
 
+(define (##sys#toplevel-definition-hook sym mod exp val) #f)
+
 (define (##sys#register-export sym mod #!optional val)
   (when mod
-    (when (##sys#find-export sym mod)
-      (d "defined: " sym)
-      (when (assq sym (module-defined-list mod))
-	(##sys#warn
-	 "exported variable multiply defined"
-	 sym (module-name mod)))
-      (set-module-defined-list! 
-       mod
-       (cons (cons sym val)
-	     (module-defined-list mod))))))
+    (let ((exp (##sys#find-export sym mod)))
+      (##sys#toplevel-definition-hook (##sys#module-rename sym (module-name mod)) mod exp val)
+      (when exp
+	(d "defined: " sym)
+	(when (assq sym (module-defined-list mod))
+	  (##sys#warn
+	   "exported variable multiply defined"
+	   sym (module-name mod)))
+	(set-module-defined-list! 
+	 mod
+	 (cons (cons sym val)
+	       (module-defined-list mod)))))) )
 
 (define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
   (let ((mod (make-module name explist '() vexports sexports)))
@@ -1230,3 +1234,9 @@
     (set-module-sexports! mod sexports)))
 
 (define ##sys#module-table '())
+
+(define (##sys#macro-subset me0)
+  (let loop ((me (##sys#macro-environment)))
+    (if (or (null? me) (eq? me me0))
+	'()
+	(cons (car me) (loop (cdr me))))))

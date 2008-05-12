@@ -26,7 +26,7 @@
 
 (##sys#register-primitive-module
  'chicken
- '(abort add1 andmap argc+argv argv 
+ '(abort add1 argc+argv argv 
 	 bit-set?
 	 bitwise-and
 	 bitwise-ior
@@ -127,7 +127,6 @@
 	 on-exit
 	 open-input-string
 	 open-output-string
-	 ormap
 	 port-name
 	 port-position
 	 port?
@@ -168,5 +167,6 @@
 	 vector-resize
 	 void
 	 warning
+	 expand expand*
 	 with-exception-handler)
  ##sys#chicken-macro-environment)

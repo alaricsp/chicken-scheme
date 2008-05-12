@@ -502,27 +502,6 @@
 	(with-input-from-file file (cut read-string #f)) ) ) )
 
 
-;;; Handy little things:
-
-(define (shift! lst #!optional default) ;; DEPRECATED
-  (if (null? lst)
-      default
-      (begin
-	(##sys#check-pair lst 'shift!)
-	(let ([x (##sys#slot lst 0)]
-	      [d (##sys#slot lst 1)] )
-	  (##sys#check-pair d 'shift!)
-	  (##sys#setslot lst 1 (##sys#slot d 1))
-	  (##sys#setslot lst 0 (##sys#slot d 0))
-	  x) ) ) )
-
-(define (unshift! x lst) ;; DEPRECATED
-  (##sys#check-pair lst 'unshift!)
-  (##sys#setslot lst 1 (cons (##sys#slot lst 0) (##sys#slot lst 1)))
-  (##sys#setslot lst 0 x)
-  lst)
-
-
 ;;;; Port-mapping (found in Gauche):
 
 (define (port-for-each fn thunk)

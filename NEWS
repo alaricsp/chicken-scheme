@@ -1,3 +1,7 @@
+4.0.0x
+
+- added "-sx" option to csi
+
 3.1.9
 
 - precompiled chicken.h is included in the Chicken distribution

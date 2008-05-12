@@ -78,6 +78,7 @@ COMPILER_OBJECTS_1 = \
 COMPILER_OBJECTS        = $(COMPILER_OBJECTS_1:=$(O))
 COMPILER_STATIC_OBJECTS = $(COMPILER_OBJECTS_1:=-static$(O))
 
+
 # library objects
 
 runtime$(O): runtime.c chicken.h $(CHICKEN_CONFIG_H)
@@ -398,6 +399,73 @@ uutils-static$(O): uutils.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 
+# import library objects
+
+scheme.import$(O): scheme.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+chicken.import$(O): chicken.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+lolevel.import$(O): lolevel.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+srfi-1.import$(O): srfi-1.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+srfi-4.import$(O): srfi-4.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+data-structures.import$(O): data-structures.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+posix.import$(O): posix.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+srfi-13.import$(O): srfi-13.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+srfi-69.import$(O): srfi-69.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+extras.import$(O): extras.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+regex.import$(O): regex.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+srfi-14.import$(O): srfi-14.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+tcp.import$(O): tcp.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+foreign.import$(O): foreign.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+srfi-18.import$(O): srfi-18.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+utils.import$(O): utils.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+
 # compiler objects
 
 batch-driver$(O): batch-driver.c chicken.h $(CHICKEN_CONFIG_H)
@@ -650,7 +718,7 @@ chicken-bug$(O): chicken-bug.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $< $(C_COMPILER_OUTPUT)
 
-# libchicken
+# libraries
 
 .PHONY: libs
 
@@ -698,6 +766,14 @@ libuchicken$(A): $(APPLY_HACK_OBJECT) $(LIBUCHICKEN_STATIC_OBJECTS) $(PCRE_STATI
 libchickengui$(A): $(APPLY_HACK_OBJECT) $(LIBCHICKENGUI_STATIC_OBJECTS) $(PCRE_STATIC_OBJECTS) 
 	$(LIBRARIAN) $(LIBRARIAN_OPTIONS) $(LIBRARIAN_OUTPUT) $^
 
+# import libraries
+
+.SUFFIXES: .import.so
+
+%.import.so: %.import.o
+	$(LINKER) $(LINKER_OPTIONS) $(LINKER_LINK_DLOADABLE_OPTIONS) $^ $(LINKER_OUTPUT_OPTION) $@ \
+	  $(LINKER_LIBRARY_PREFIX)chicken$(LINKER_LIBRARY_SUFFIX) $(LIBRARIES)
+
 # executables
 
 $(CHICKEN_SHARED_EXECUTABLE): $(COMPILER_OBJECTS) $(PRIMARY_LIBCHICKEN)
@@ -739,7 +815,7 @@ chicken.info: chicken.texi
 
 # installation
 
-.PHONY: install uninstall install-libs install-manifests
+.PHONY: install uninstall install-libs install-manifests install-import-libs
 
 install-libs:
 ifneq ($(DESTDIR),)
@@ -807,7 +883,7 @@ ifndef STATICBUILD
 	$(MAKE_WRITABLE_COMMAND) $(CHICKEN_SETUP_PROGRAM)$(EXE)
 endif
 else
-install: $(TARGETS) install-libs install-manifests
+install: $(TARGETS) install-libs install-import-libs install-manifests
 ifneq ($(DESTDIR),)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DESTDIR) 
 endif
@@ -827,6 +903,22 @@ ifneq ($(POSTINSTALL_PROGRAM),true)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_PROFILE_PROGRAM)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IBINDIR)/$(CSC_PROGRAM)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_BUG_PROGRAM)
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/chicken.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/lolevel.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-1.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-4.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/data-structures.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/posix.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-13.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-69.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/extras.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/regex.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-14.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/tcp.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/foreign.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/scheme.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-18.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/utils.import.so
 endif
 ifndef STATICBUILD
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(CHICKEN_SETUP_PROGRAM)$(EXE) \
@@ -852,6 +944,14 @@ endif
 ifdef WINDOWS
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) csibatch.bat $(DESTDIR)$(IBINDIR)
 endif
+endif
+
+ifdef STATICBUILD
+install-import-libs:
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(IMPORT_LIBRARIES:=.import.scm) $(DESTDIR)$(IEGGDIR)
+else
+install-import-libs:
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(IMPORT_LIBRARIES:=.import.so) $(DESTDIR)$(IEGGDIR)
 endif
 
 uninstall:
@@ -959,6 +1059,39 @@ uposixwin.c: posixwin.scm unsafe-declarations.scm
 uregex.c: regex.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_PCRE_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ 
 
+chicken.import.c: chicken.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+lolevel.import.c: lolevel.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+srfi-1.import.c: srfi-1.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+srfi-4.import.c: srfi-4.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+data-structures.import.c: data-structures.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+posix.import.c: posix.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+srfi-13.import.c: srfi-13.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+srfi-69.import.c: srfi-69.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+extras.import.c: extras.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+regex.import.c: regex.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+srfi-14.import.c: srfi-14.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+tcp.import.c: tcp.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+foreign.import.c: foreign.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+scheme.import.c: scheme.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+srfi-18.import.c: srfi-18.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+utils.import.c: utils.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+
 chicken.c: chicken.scm chicken-more-macros.scm chicken-ffi-macros.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 support.c: support.scm banner.scm private-namespace.scm
@@ -997,7 +1130,7 @@ distfiles: buildsvnrevision library.c eval.c expand.c data-structures.c extras.c
 	usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c \
 	chicken-profile.c chicken-setup.c csc.c csi.c \
 	chicken.c batch-driver.c compiler.c optimizer.c support.c \
-	c-platform.c c-backend.c chicken-bug.c
+	c-platform.c c-backend.c chicken-bug.c $(IMPORT_LIBRARIES:=.import.c)
 
 dist: distfiles
 	$(CSI) -s scripts/makedist.scm
@@ -1035,7 +1168,8 @@ spotless: distclean
 	  usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c chicken-bug.c \
 	  csc.c csi.c \
 	  chicken.c batch-driver.c compiler.c optimizer.c support.c \
-	  c-platform.c c-backend.c
+	  c-platform.c c-backend.c \
+	  $(IMPORT_LIBRARIES:=.import.c)
 
 distclean: clean confclean
 
@@ -1079,7 +1213,7 @@ bootstrap: bootstrap.tar.gz
 	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 
-bootstrap.tar.gz: posixunix.c posixwin.c
+bootstrap.tar.gz: posixunix.c posixwin.c $(IMPORT_LIBRARIES:=.import.c)
 	tar cfz bootstrap.tar.gz library.c eval.c data-structures.c extras.c lolevel.c utils.c tcp.c \
 	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c posixunix.c posixwin.c regex.c \
 	  scheduler.c profiler.c stub.c expand.c $(COMPILER_OBJECTS_1:=.c)
