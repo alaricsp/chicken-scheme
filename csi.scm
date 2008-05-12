@@ -25,7 +25,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(declare (uses match srfi-69))
+(declare (uses match srfi-69 ports))
 
 (declare
   (usual-integrations)
