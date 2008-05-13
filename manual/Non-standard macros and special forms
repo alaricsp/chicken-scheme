@@ -374,24 +374,16 @@ Equivalent to:
 
 === Record structures
 
-==== define-record
+==== define-record-type
 
- [syntax] (define-record NAME SLOTNAME ...)
+ [syntax] (define-record-type NAME
+                              (CONSTRUCTOR TAG ...)
+                              PREDICATE
+                              (FIELD ACCESSOR [MODIFIER]) ...)
 
-Defines a record type. Call {{make-NAME}} to create an instance
-of the structure (with one initialization-argument for each slot).
-{{(NAME? STRUCT)}} tests any object for being an instance of this
-structure.  Slots are accessed via {{(NAME-SLOTNAME STRUCT)}}
-and updated using {{(NAME-SLOTNAME-set!}} {{STRUCT}} {{VALUE)}}.
+SRFI-9 record types. For more information see the documentation for
+[[http://srfi.schemers.org/srfi-9/srfi-9.html|SRFI-9]].
 
-<enscript highlight=scheme>
-(define-record point x y)
-(define p1 (make-point 123 456))
-(point? p1)                      ==> #t
-(point-x p1)                     ==> 123
-(point-y-set! p1 99)
-(point-y p1)                     ==> 99
-</enscript>
 
 ==== define-record-printer
 
@@ -405,7 +397,10 @@ the procedure is called with two arguments: the record to be printed
 and an output-port.
 
 <enscript highlight=scheme>
-(define-record foo x y z)
+(define-record-type foo (make-foo x y z) foo?
+  (x foo-x)
+  (y foo-y)
+  (z foo-z))
 (define f (make-foo 1 2 3))
 (define-record-printer (foo x out)
   (fprintf out "#,(foo ~S ~S ~S)"
@@ -417,19 +412,6 @@ s                                   ==> "#,(foo 1 2 3)"
 (equal? f (with-input-from-string
               s read)))             ==> #t
 </enscript>
-
-{{define-record-printer}} works also with SRFI-9 record types.
-
-==== define-record-type
-
- [syntax] (define-record-type NAME
-                              (CONSTRUCTOR TAG ...)
-                              PREDICATE
-                              (FIELD ACCESSOR [MODIFIER]) ...)
-
-SRFI-9 record types. For more information see the documentation for
-[[http://srfi.schemers.org/srfi-9/srfi-9.html|SRFI-9]].
-
 
 === Other forms
 

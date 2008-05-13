@@ -208,7 +208,9 @@ with a record-type object that has the type {{TAG}} (a symbol). {{PROC}} is call
 two arguments: the object to be described and an output-port. It should write a possibly useful
 textual description of the object to the passed output-port. For example:
 
- #;1> (define-record point x y)
+ #;1> (define-record-type point (make-point x y) point?
+        (x point-x)
+	(y point-y))
  #;2> (set-describer! 'point 
         (lambda (pt o)
           (print "a point with x=" (point-x pt) " and y=" (point-y pt))))

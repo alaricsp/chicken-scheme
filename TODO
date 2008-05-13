@@ -12,7 +12,6 @@ TODO for macro/module system					-*- Outline -*-
 
 * test
 ** reexports
-** compiled import libs
 ** syntax-export of srfi-14 module
 ** hiding of non-exported module vars in compiler
 ** def of exported module variables with defie-values
@@ -27,7 +26,6 @@ TODO for macro/module system					-*- Outline -*-
 ** checks
 *** redefinition of imported id 
 *** reimport of imported id
-** hide unexported module definitions
 
 * update manual/NEWS
 ** hygienic macros
