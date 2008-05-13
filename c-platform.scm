@@ -99,7 +99,7 @@
      '(bound-to-procedure
        ##sys#profile-entry ##sys#profile-exit) ) ) )
 
-(define units-used-by-default '(library eval data-structures extras srfi-69)) 
+(define units-used-by-default '(library eval data-structures ports extras srfi-69)) 
 (define words-per-flonum 4)
 (define parameter-limit 1024)
 (define small-parameter-limit 128)

@@ -36,6 +36,7 @@
 			     "Unit library"
 			     "Unit eval"
 			     "Unit data-structures"
+			     "Unit ports"
 			     "Unit extras"
 			     "Unit srfi-1"
 			     "Unit srfi-4"

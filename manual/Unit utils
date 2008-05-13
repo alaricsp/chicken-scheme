@@ -189,28 +189,6 @@ This code will act as a simple Unix cat(1) command:
 (for-each-argv-line print)
 </enscript>
 
-==== port-for-each
-
- [procedure] (port-for-each FN THUNK)
-
-Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
-until it returns {{#!eof}}, discarding the results.
-
-==== port-map
-
- [procedure] (port-map FN THUNK)
-
-Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
-until it returns {{#!eof}}, returning a list of the collected results.
-
-==== port-fold
-
- [procedure] (port-map FN ACC THUNK)
-
-Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}},
-passing the {{ACC}} value as the second argument. The {{FN}} result becomes the new
-{{ACC}} value. When {{THUNK}} returns {{#!eof}}, the last {{FN}} result is returned.
-
 === Executing shell commands with formatstring and error checking
 
 ==== system*
@@ -232,55 +210,6 @@ If {{FILE-OR-PORT}} is a string, then this procedure returns the contents of the
 as a string. If {{FILE-OR-PORT}} is a port, all remaining input is read and returned as
 a string. The port is not closed. If no argument is provided, input will be read from the
 port that is the current value of {{(current-input-port)}}.
-
-
-=== Funky ports
-
-==== make-broadcast-port
-
- [procedure] (make-broadcast-port PORT ...)
-
-Returns a custom output port that emits everything written into it to
-the ports given as {{PORT ...}}. Closing the broadcast port does not close
-any of the argument ports.
-
-==== make-concatenated-port
-
- [procedure] (make-concatenated-port PORT1 PORT2 ...)
-
-Returns a custom input port that reads its input from {{PORT1}}, until it
-is empty, then from {{PORT2}} and so on. Closing the concatenated port
-does not close any of the argument ports.
-
-
-===  Miscellaneous handy things
-
-==== shift! DEPRECATED
-
- [procedure] (shift! LIST [DEFAULT])
-
-Returns the car of {{LIST}} (or {{DEFAULT}} if {{LIST}} is empty) and replaces
-the car of {{LIST}} with it's cadr and the cdr with the cddr. If {{DEFAULT}} is not given, and
-the list is empty, {{#f}} is returned. An example might be clearer, here:
-
-<enscript highlight=scheme>
-(define lst '(1 2 3))
-(shift! lst)             ==> 1, lst is now (2 3)
-</enscript> 
-
-The list must contain at least 2 elements.
-
-==== unshift! DEPRECATED
-
- [procedure] (unshift! X PAIR)
-
-Sets the car of {{PAIR}} to {{X}} and the cdr to its cddr. Returns {{PAIR}}:
-
-<enscript highlight=scheme>
-(define lst '(2))
-(unshift! 99 lst)      ; lst is now (99 2)
-</enscript>
-
 
 Previous: [[Unit posix]]
 

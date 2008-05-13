@@ -76,6 +76,7 @@ binary-common:
 # difficult to convince it to produce standalone Texinfo files. 
 	dh_installinfo chicken.info*
 	dh_installchangelogs ChangeLog.*
+	dh_install --autodest
 	dh_link
 ifeq "$(findstring nostrip,$(DEB_BUILD_OPTIONS))" ""
 	dh_strip

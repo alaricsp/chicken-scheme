@@ -27,7 +27,7 @@
 
 (declare
   (unit default_stub)
-  (uses library eval data-structures extras)
+  (uses library eval data-structures ports extras)
   (not safe) )
 
 (let loop () (return-to-host) (loop))

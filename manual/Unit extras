@@ -8,42 +8,6 @@ This unit is used by default, unless the program
 is compiled with the {{-explicit-use}} option.
 
 
-=== String-port extensions
-
-
-==== call-with-input-string
-
- [procedure] (call-with-input-string STRING PROC)
-
-Calls the procedure {{PROC}} with a single argument that is a
-string-input-port with the contents of {{STRING}}.
-
-
-==== call-with-output-string
-
- [procedure] (call-with-output-string PROC)
-
-Calls the procedure {{PROC}} with a single argument that is a
-string-output-port.  Returns the accumulated output-string.
-
-
-==== with-input-from-string
-
- [procedure] (with-input-from-string STRING THUNK)
-
-Call procedure {{THUNK}} with the current input-port temporarily
-bound to an input-string-port with the contents of {{STRING}}.
-
-
-==== with-output-to-string
-
- [procedure] (with-output-to-string THUNK)
-
-Call procedure {{THUNK}} with the current output-port temporarily
-bound to a string-output-port and return the accumulated output string.
-
-
-
 === Formatted output
 
 
@@ -130,39 +94,7 @@ On startup (when the {{extras}} unit is initialized), the random number generato
 is initialized with the current time.
 
 
-
 === Input/Output extensions
-
-
-==== make-input-port
-
- [procedure] (make-input-port READ READY? CLOSE [PEEK])
-
-Returns a custom input port. Common operations on this
-port are handled by the given parameters, which should be
-procedures of no arguments. {{READ}} is called when the
-next character is to be read and should return a character or
-{{#!eof}}. {{READY?}} is called
-when {{char-ready?}} is called on this port and should return
-{{#t}} or {{#f}}.  {{CLOSE}} is called when the port is
-closed. {{PEEK}} is called when {{peek-char}} is called on this
-port and should return a character or {{#!eof}}.
-if the argument {{PEEK}} is not given, then {{READ}} is used
-instead and the created port object handles peeking automatically (by
-calling {{READ}} and buffering the character).
-
-
-==== make-output-port
-
- [procedure] (make-output-port WRITE CLOSE [FLUSH])
-
-Returns a custom output port. Common operations on this port are handled
-by the given parameters, which should be procedures.  {{WRITE}} is
-called when output is sent to the port and receives a single argument,
-a string.  {{CLOSE}} is called when the port is closed and should
-be a procedure of no arguments. {{FLUSH}} (if provided) is called
-for flushing the output port.
-
 
 ==== pretty-print
 
@@ -250,31 +182,6 @@ and calls the procedure {{PREDICATE}} with each character until {{PREDICATE}} re
 false. Returns a string with the accumulated characters.
 
 
-==== with-error-output-to-port
-
- [procedure] (with-error-output-to-port PORT THUNK)
-
-Call procedure {{THUNK}} with the current error output-port
-temporarily bound to {{PORT}}.
-
-
-==== with-input-from-port
-
- [procedure] (with-input-from-port PORT THUNK)
-
-Call procedure {{THUNK}} with the current input-port temporarily
-bound to {{PORT}}.
-
-
-==== with-output-to-port
-
- [procedure] (with-output-to-port PORT THUNK)
-
-Call procedure {{THUNK}} with the current output-port temporarily
-bound to {{PORT}}.
-
-
-
-Previous: [[Unit data-structures]]
+Previous: [[Unit ports]]
 
 Next: [[Unit srfi-1]]

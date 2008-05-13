@@ -1,3 +1,8 @@
+3.2.1
+
+- unit utils and extras: moved port extensions to unit ports
+- new unit ports
+
 3.2.0
 
 - unit extras: moved lists, queues, strings to data-structures
