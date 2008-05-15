@@ -16,7 +16,6 @@ TODO for macro/module system					-*- Outline -*-
 ** hiding of non-exported module vars in compiler
 ** def of exported module variables with defie-values
 ** foreign module
-** bootstrap
 ** line-number retention over macro-expansion
 
 * syntax-error
