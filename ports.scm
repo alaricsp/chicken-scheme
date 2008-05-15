@@ -65,8 +65,9 @@ EOF
       ##sys#pointer->string ##sys#user-print-hook ##sys#peek-char-0
       ##sys#read-char-0 ##sys#write-char ##sys#string-append ##sys#gcd ##sys#lcm
       ##sys#fudge ##sys#check-list ##sys#user-read-hook ##sys#check-closure ##sys#check-inexact
-      input-port? make-vector list->vector  open-output-string floor
+      input-port? make-vector list->vector  open-output-string floor 
       get-output-string current-output-port display write port? list->string
+      call-with-input-string with-input-from-string
       make-string string newline char-name read 
       open-input-string call-with-input-file reverse ) ) ] )
 

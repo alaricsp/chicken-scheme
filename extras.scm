@@ -27,7 +27,7 @@
 
 (declare
  (unit extras)
- (uses data-structures)
+ (uses data-structures ports)
  (usual-integrations)
  (disable-warning redef)
  (foreign-declare #<<EOF
@@ -89,7 +89,6 @@ EOF
   (declare (emit-exports "extras.exports")) ] )
 
 (register-feature! 'extras)
-
 
 ;;; Read expressions from file:
 
