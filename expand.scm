@@ -764,6 +764,16 @@
 	       (set-module-defined-list! cm dlist)) )
 	   (d `(V: ,vsv))
 	   (d `(S: ,vss))
+	   (for-each
+	    (lambda (imp)
+	      (when (assq (car imp) ##sys#import-environment)
+		(##sys#warn "re-importing already imported identfier: " (car imp))) )
+	    vsv)
+	   (for-each
+	    (lambda (imp)
+	      (when (assq (car imp) ##sys#macro-environment)
+		(##sys#warn "re-importing already imported syntax: " (car imp))) )
+	    vss)
 	   (##sys#import-environment (append vsv (##sys#import-environment)))
 	   (##sys#macro-environment (append vss (##sys#macro-environment))) ) )
        (cdr x))

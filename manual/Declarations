@@ -119,13 +119,13 @@ Disable warnings of type {{CLASS ...}} (equivalent to the {{-disable-warning CLA
 compiler option).
 
 
-=== import
+=== emit-import-library
 
- [declaration specifier] (import SYMBOL-OR-STRING ...)
+ [declaration specifier] (emit-import-library MODULENAME | (MODULENAME FILENAME) ...)
 
-Adds new imports to the list of externally available toplevel variables. Arguments to this declaration
-may be either strings (designating {{.exports}} files, without the file-extension) or symbols
-which directly designate imported variables.
+Declares that any following definition of a module named {{MODULENAME}} should be written to
+an external file (either a specified one or a file named {{"MODULENAME.import.scm"}}).
+The compiler option {{-emit-import-library}} may also be used.
 
 
 === inline
@@ -304,6 +304,6 @@ expressions are evaluated before A's.  Furthermore, the used symbols
 are registered as features during compile-time, so {{cond-expand}}
 knows about them.
 
-Previous: [[Non-standard macros and special forms]]
+Previous: [[Modules and macros]]
 
 Next: [[Parameters]]

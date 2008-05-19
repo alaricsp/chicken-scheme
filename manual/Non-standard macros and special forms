@@ -484,9 +484,6 @@ The following table should make this clearer:
 <tr><td>{{load}}</td><td>compile as normal</td><td>ignore</td></tr>
 </table>
 
-The situation specifiers {{compile-time}} and {{run-time}} are also
-defined and have the same meaning as {{compile}} and {{load}}, respectively.
-
 ==== include
 
  [syntax] (include STRING)
@@ -514,4 +511,4 @@ and major GCs.
 
 Previous: [[Non-standard read syntax]]
 
-Next: [[Declarations]]
+Next: [[Modules and macros]]

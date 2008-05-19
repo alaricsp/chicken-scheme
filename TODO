@@ -17,6 +17,7 @@ TODO for macro/module system					-*- Outline -*-
 ** def of exported module variables with defie-values
 ** foreign module
 ** line-number retention over macro-expansion
+** warnings for re-imports
 
 * syntax-error
 ** if ##sys#current-module is set, add name to error message
@@ -25,48 +26,14 @@ TODO for macro/module system					-*- Outline -*-
 ** checks
 *** redefinition of imported id 
 *** reimport of imported id
+** "ports" import library
 
-* update manual/NEWS
-** hygienic macros
-** modules
+* update manual
 ** import libraries
-** expand unit (move stuff from eval)
-** document extensions
-*** user defined ellipsis
-*** define-compiled-syntax
-*** modules
-** removed deprecated stuff
-   [un]shift!
-   andmap ormap
-   byte-vector? byte-vector-fill!
-   make-byte-vector byte-vector
-   byte-vector-set! byte-vector-ref 
-   byte-vector->list list->byte-vector
-   string->byte-vector byte-vector->string
-   byte-vector-length
-   make-static-byte-vector static-byte-vector->pointer
-   byte-vector-move! byte-vector-append!
-   set-file-position! set-user-id! set-group-id!
-   set-process-group-id!
 ** ack synrules authors
 ** DSSSL lambda-lists work only with imported "chicken" module
    let-optionals, etc.
-** removals
-*** "run-time" and "compile-time" situations for eval-when
-*** syntax
-    define-foreign-record
-    define-foreign-enum
-    define-record
-    define-macro
-*** compiler options
-    -check-imports
-    -emit-exports
-    -import
-
-* build
-** compile and install import libraries
-*** where? probably in repository...
-*** install import libs as .scm when it is a static build
+** link to explicit-renaming paper
 
 * csi
 ** describe should print if symbol is interned

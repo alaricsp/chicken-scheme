@@ -85,6 +85,10 @@ expands into
    (letrec ((foo 456))
      (baz foo) ) )
 
+Local sequences of {{define-syntax}} forms are translated into equivalent 
+{{letrec-syntax}} forms that enclose the following forms as the body of
+the expression.
+
 [5.2] {{define}} with a single argument is allowed and initializes the toplevel or local binding
 to an unspecified value. CHICKEN supports ''curried'' definitions, where the variable name
 may also be a list specifying a name and a nested lambda list. So
@@ -155,8 +159,6 @@ argument which should be one or more keywords, if supplied. These
 arguments specify the mode in which the file is opened. Possible
 values are the keywords {{#:text}}, {{#:binary}} or
 {{#:append}}.
-
-[6.7] The {{exit}} procedure exits a program right away and does ''not'' invoke pending {{dynamic-wind}} thunks.
 
 Previous: [[Deviations from the standard]]
 

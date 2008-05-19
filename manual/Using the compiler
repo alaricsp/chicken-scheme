@@ -32,8 +32,6 @@ Possible options are:
 
 ; -case-insensitive : Enables the reader to read symbols case insensitive. The default is to read case sensitive (in violation of R5RS).  This option registers the {{case-insensitive}} feature identifier.
 
-; -check-imports : Search for references to undefined global variables. For each library unit accessed via {{(declare (uses ...))}}, the compiler will search a file named {{UNITNAME.exports}} in the current include path and load its contents into the ''import-table'' (if found). Also, export-information for extensions (accessed through {{(require-extension ...)}}) will be searched and stored in the import-table. If a required extension does not provide explicit export-information a {{.exports}} file is searched (as with used units). After the analysis phase of the compiler, referenced toplevel variables for which no assignment was found will generate a warning. Also, re-assignments of imported variables will trigger a warning.
-
 ; -check-syntax : Aborts compilation process after macro-expansion and syntax checks.
 
 ; -debug MODES : Enables one or more compiler debugging modes. {{MODES}} is a string of characters that select debugging information about the compiler that will be printed to standard output.
@@ -95,9 +93,9 @@ Possible options are:
 
 ; -epilogue FILENAME : Includes the file named {{FILENAME}} at the end of the compiled source file. The include-path is not searched. This option may be given multiple times.
 
-; -emit-exports FILENAME : Write exported toplevel variables to {{FILENAME}}.
-
 ; -emit-external-prototypes-first : Emit prototypes for callbacks defined with {{define-external}} before any other foreign declarations. This is sometimes useful, when C/C++ code embedded into the a Scheme program has to access the callbacks. By default the prototypes are emitted after foreign declarations.
+
+; -emit-import-library MODULE : Specifies that an import library named {{MODULE.import.scm}} for the named module should be generated (equivalent to using the {{emit-import-library}} declaration).
 
 ; -explicit-use : Disables automatic use of the units {{library, eval}} and {{extras}}. Use this option if compiling a library unit instead of an application unit.
 
@@ -118,8 +116,6 @@ Possible options are:
 ; -heap-shrinkage PERCENTAGE : Sets the heap-shrinkage rate for the compiled program at compile time (see: {{-:hs}}).
 
 ; -help : Print a summary of available options and the format of the command line parameters and exit the compiler.
-
-; -import FILENAME : Read exports from linked or loaded libraries from given file. See also {{-check-imports}}. This is equivalent to declaring {{(declare (import FILENAME))}}. Implies {{-check-imports}}.
 
 ; -include-path PATHNAME : Specifies an additional search path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}.
 

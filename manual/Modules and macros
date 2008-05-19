@@ -1,0 +1,206 @@
+[[tags: manual]]
+[[toc:]]
+
+
+== Modules and macros
+
+
+CHICKEN supports standard R5RS {{syntax-rules}} macros and a low-level 
+macro system based on ''explicit renaming''.
+
+
+=== Macro definitions
+
+==== define-syntax
+
+ [syntax] (define-syntax IDENTIFIER TRANSFORMER)
+
+Defines a macro named {{IDENTIFIER}} that will transform an expression
+with {{IDENTIFIER}} in operator position according to {{TRANSFORMER}}.
+The transformer expression must be a procedure with three arguments or
+a {{syntax-rules}} form. If {{syntax-rules}} is used, the usual R5RS
+semantics apply. If {{TRANSFORMER}} is a procedure, then it will
+be called on expansion with the complete s-expression of the macro
+invocation, a rename procedure that hygienically renames identifiers
+and a comparison procedure that compares (possibly renamed) identifiers.
+
+{{define-syntax}} may be used to define local macros that are visible
+throughout the rest of the body in which the definition occurred, i.e.
+
+  (let ()
+    ...
+    (define-syntax foo ...)
+    (define-syntax bar ...)
+    ...)
+
+is expanded into
+
+  (let ()
+    ...
+    (letrec-syntax ((foo ...) (bar ...))
+      ...) )
+
+{{syntax-rules}} partially supports [[http://srfi.schemers.org/srfi-46/|SRFI-46]]
+in allowing the ellipsis identifier to be user-defined by passing it as the first
+argument to the {{syntax-rules}} form.
+
+
+==== define-compiled-syntax
+
+ [syntax] (define-compiled-syntax IDENTIFIER TRANSFORMER)
+
+Equivalent to {{define-syntax}}, but when compiled, will also define the macro
+at runtime.
+
+
+=== Modules
+
+To allow some control over visible bindings and to organize code at
+the global level, a simple module system is available. A ''module''
+defines a set of toplevel expressions that are initially evaluated in
+an empty syntactical environment. By ''importing'' other modules,
+exported value- and macro-bindings are made visible inside the
+environment of the module that imports them.
+
+Note that modules are purely syntactical - they do not change the
+control flow or delay the execution of the contained toplevel
+forms. The body of a module is executed at load-time, when code is
+loaded or accessed via the {{uses}} declaration.
+
+A module is initially empty (has no visible bindings). You must at least
+import the {{scheme}} module to do anything useful.
+
+
+==== module
+
+ [syntax] (module NAME (EXPORT ...) BODY ...)
+
+Defines a module with the name {{NAME}}, a set of exported bindings
+and a contained sequence of toplevel expressions that are evaluated in
+an empty syntactical environment. {{EXPORT}} may be a symbol or a list
+of the form {{(IDENTIFIER1 IDENTIFIER2 ...)}}. In the former case the
+identifier given is exported from the module and can be imported at
+the toplevel or in other modules. The latter case exports all
+identifiers listed (this is a hint to the module expander to export
+bindings referenced by syntax-definitions which make use of them, but
+which would normally be internal to the module - that allows some
+optimization, which is currently not implemented but may be in the
+future).
+
+Nested modules or modules not at toplevel (i.e. local modules)
+are not supported.
+
+==== import
+
+ [syntax] (import IMPORT ...)
+
+Imports module bindings into the currentl syntactical environment.
+The visibility of any imported bindings is limited to the current
+module, if used inside a module-definition, or to the current
+compilation unit, if compiled and used outside of a module.
+
+Importing a module does not load or link it - this is a separate
+operation from importing its bindings.
+
+{{IMPORT}} may be a module name, or an ''import specifier''.
+An {{IMPORT}} defines a set of bindings that are to be made visible
+in the current scope.
+
+===== only
+
+ [import specifier] (only IMPORT IDENTIFIER ...)
+
+Only import the listed value- or syntax bindings from the set given
+by {{IMPORT}}.
+
+===== except
+
+ [import specifier] (except IMPORT IDENTIFIER ...)
+
+Remove the listed identifiers from the import-set defined by {{IMPORT}}.
+
+===== rename
+
+ [import specifier] (rename IMPORT (OLD1 NEW1) ...)
+
+Renames identifiers imported from {{IMPORT}}.
+
+===== prefix
+
+ [import specifier] (prefix IMPORT SYMBOL)
+
+Prefixes all imported identifiers with {{SYMBOL}}.
+
+
+=== import libraries
+
+''import libraries'' allow the syntactical (compile-time) 
+and run-time parts of a compiled module to be separated into a normal
+compiled file and a shared library that only contains macro definitions
+and module information. This reduces the size of executables and
+simplifies compiling code that uses modules for a different architecture
+than the machine the compiler is executing on (i.e. "cross" compilation).
+
+By using the {{emit-import-library}} compiler-option or declaration,
+a separate file is generated that only contains syntactical information
+(including macros) for a module. {{import}} will automatically find and
+load an import library for a currently unknown module, if the import-
+library is either in the extension repository or the current include
+path. Import libraries may also be explicitly loaded into the
+compiler by using the {{-extend}} compiler option. Interpreted code
+can simply load the import library to make the module-definition
+available.
+
+
+=== Predefined modules
+
+Import libraries for the following modules are initially
+available:
+
+ [module] scheme
+
+Exports the standard R5RS bindings.
+
+ [module] chicken
+
+Everything from the {{library}}, {{eval}} and {{expand}} library units.
+
+ [module] extras
+ [module] data-structures
+ [module] lolevel
+ [module] posix
+ [module] regex
+ [module] srfi-1
+ [module] srfi-4
+ [module] srfi-13
+ [module] srfi-14
+ [module] srfi-18
+ [module] srfi-69
+ [module] tcp
+ [module] utils
+
+Modules exporting the bindings from the respective library units.
+
+ [module] foreign
+
+Exports all macros and procedures that are used to access foreign
+C/C++ code.
+
+
+=== Caveats
+
+Macros are currently not referentially transparent on the module
+level: internal Identifiers used by exported macros must be
+exported too or the macro expansion will contain references to
+unbound identifiers. This is a bug.
+
+The macro- and module system has been implemented relatively
+recently and is likely to contain bugs. Please contact the
+maintainers if you encounter behaviour that you think is
+not correct or that triggers an error where there shouldn't
+be one.
+
+
+Previous: [[Non-standard macros and special forms]]
+
+Next: [[Declarations]]

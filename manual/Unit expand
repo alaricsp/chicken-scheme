@@ -1,0 +1,58 @@
+[[tags: manual]]
+[[toc:]]
+
+== Unit expand
+
+This unit has support for macro- and module handling. This unit is used
+by default, unless the program is compiled with the {{-explicit-use}}
+option.
+
+=== Macros
+
+==== get-line-number
+
+ [procedure] (get-line-number EXPR)
+
+If {{EXPR}} is a pair with the car being a symbol, and line-number
+information is available for this expression, then this procedure returns
+the associated line number. If line-number information is not available,
+then {{#f}} is returned.  Note that line-number information for
+expressions is only available in the compiler.
+
+==== macro?
+
+ [procedure] (macro? SYMBOL)
+
+Returns {{#t}} if there exists a macro-definition for {{SYMBOL}}.
+
+==== expand
+
+ [procedure] (expand X)
+
+If {{X}} is a macro-form, expand the macro (and repeat expansion
+until expression is a non-macro form).  Returns the resulting expression.
+
+==== expand*
+
+ [procedure] (expand* X)
+
+If {{X}} is a macro-form, expand the macro.  Returns the resulting
+expression.
+
+==== undefine-macro!
+
+ [procedure] (undefine-macro! SYMBOL)
+
+Remove the current macro-definition of the macro named {{SYMBOL}}.
+
+==== syntax-error
+
+ [procedure] (syntax-error [LOCATION] MESSAGE ARGUMENT ...)
+
+Signals an exception of the kind {{(exn syntax)}}. Otherwise identical to 
+{{error}}.
+
+
+Previous: [[Unit library]]
+
+Next: [[Unit expand]]

@@ -485,6 +485,7 @@ Exit the running process and return exit-code, which defaults to 0
 (Invokes {{exit-handler}}).
 
 Note that pending {{dynamic-wind}} thunks are ''not'' invoked when exiting your program in this way.
+
 ==== build-platform
 
  [procedure] (build-platform)
