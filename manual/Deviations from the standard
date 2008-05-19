@@ -8,11 +8,7 @@ command line format]]).
 
 [4.1.3] The maximal number of arguments that may be passed to a
 compiled procedure or macro is 120.  A macro-definition that has a
-single rest-parameter can have any number of arguments.  If the
-{{libffi}} library is available on this platform, and if it is
-installed, then CHICKEN can take advantage of this. See the
-[[http://chicken.wiki.br/chicken/README|README]] file for more
-details.
+single rest-parameter can have any number of arguments.  
 
 [4.2.2] {{letrec}} does evaluate the initial values for the bound
 variables sequentially and not in parallel, that is:
