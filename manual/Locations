@@ -70,7 +70,7 @@ returns more than one result value:
     (print "i=" i ", f=" f) ) )
 </enscript>
 
-See [[location-and-c-string-star|location and c-string*]] for a tip on returning a {{c-string*}} type.
+See [[http://chicken.wiki.br/location-and-c-string-star|location and c-string*]] for a tip on returning a {{c-string*}} type.
 
 {{location}} returns a value of type {{c-pointer}}, when given
 the name of a callback-procedure defined with {{define-external}}.
