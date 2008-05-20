@@ -7,7 +7,6 @@ Build-Depends: debhelper (>> 4.0.0), autotools-dev, libpcre3-dev
 Standards-Version: 3.7.3
 
 Package: chicken-bin
-
 Section: interpreters
 Architecture: any
 Conflicts: chicken, chicken-dev
@@ -19,7 +18,6 @@ Description: Simple Scheme-to-C compiler - compiler
  has a small core and is easily extendable.
  .
  This package contains the compiler.
- .
  
 
 Package: libchicken0
@@ -36,7 +34,6 @@ Description: Simple Scheme-to-C compiler - runtime
  .
  This package contains the shared library needed to run programs using
  chicken.
- .
  
 
 Package: libchicken-dev
@@ -53,4 +50,4 @@ Description: Simple Scheme-to-C compiler - development
  .
  This package contains the header file and static library for developing
  with chicken.
- .
+
