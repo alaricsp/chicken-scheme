@@ -40,6 +40,7 @@ This is the top node.
 * Unit library::
 * Unit eval::
 * Unit data-structures::
+* Unit ports::
 * Unit extras::
 * Unit srfi-1::
 * Unit srfi-4::
@@ -72,7 +73,7 @@ This is the top node.
 @chapter The User's Manual
 
 
-This is the user's manual for the Chicken Scheme compiler, version 3.1.10
+This is the user's manual for the Chicken Scheme compiler, version 3.2.1.
 
 @table @b
 @item @ref{Getting started, Getting started}
@@ -1534,6 +1535,8 @@ Next: @ref{Supported language, Supported language}
 
 @item @ref{Unit data-structures, Unit data-structures} data structures
 
+@item @ref{Unit ports, Unit ports} I/O ports
+
 @item @ref{Unit extras, Unit extras} useful utility definitions
 
 @item @ref{Unit srfi-1, Unit srfi-1} list library
@@ -1572,7 +1575,7 @@ Next: @ref{Interface to external functions and variables, Interface to external 
 
 Identifiers are by default case-sensitive (see @uref{http://galinha.ucpel.tche.br:8080/Using%20the%20compiler#Compiler%20command%20line%20format, Compiler command line format}).
 
-[4.1.3] The maximal number of arguments that may be passed to a compiled procedure or macro is 120.  A macro-definition that has a single rest-parameter can have any number of arguments.  If the @code{libffi} library is available on this platform, and if it is installed, then CHICKEN can take advantage of this. See the @uref{http://chicken.wiki.br/chicken/README, README} file for more details.
+[4.1.3] The maximal number of arguments that may be passed to a compiled procedure or macro is 120.  A macro-definition that has a single rest-parameter can have any number of arguments.  
 
 [4.2.2] @code{letrec} does evaluate the initial values for the bound variables sequentially and not in parallel, that is:
 
@@ -2134,7 +2137,7 @@ Expands into a lambda that invokes the body following the first matching lambda-
     ((x y z) (+ (+ x y) z))
     (args (apply + args))))
 
-(plus)                      =@strong{=>} 9
+(plus)                      =@strong{=>} 0
 (plus 1)                    =@strong{=>} 1
 (plus 1 2 3)                =@strong{=>} 6
 @end example
@@ -5174,7 +5177,7 @@ Previous: @ref{Unit library, Unit library}
 
 Next: @ref{Unit extras, Unit extras}  
 
-@node Unit data-structures, Unit extras, Unit eval, Top
+@node Unit data-structures, Unit ports, Unit eval, Top
 @chapter Unit data-structures
 
 @menu
@@ -5858,13 +5861,202 @@ Performs a binary search in @code{SEQUENCE}, which should be a sorted list or ve
 
 Previous: @ref{Unit eval, Unit eval}
 
+Next: @ref{Unit ports, Unit ports}  
+
+@node Unit ports, Unit extras, Unit data-structures, Top
+@chapter Unit ports
+
+@menu
+* Unit ports - Input/output port extensions::
+* Unit ports - String-port extensions::
+* Unit ports - Port iterators::
+* Unit ports - Funky ports::
+
+@end menu
+
+
+This unit contains various extended port definitions. This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+
+@node Unit ports - Input/output port extensions, Unit ports - String-port extensions,  , Unit ports
+@section Input/output port extensions
+
+@menu
+* Unit ports - Input/output port extensions - with-output-to-port::
+* Unit ports - Input/output port extensions - make-input-port::
+* Unit ports - Input/output port extensions - make-output-port::
+* Unit ports - Input/output port extensions - with-error-output-to-port::
+* Unit ports - Input/output port extensions - with-input-from-port::
+
+@end menu
+
+
+@node Unit ports - Input/output port extensions - with-output-to-port, Unit ports - Input/output port extensions - make-input-port,  , Unit ports - Input/output port extensions
+@subsection with-output-to-port
+
+
+@verbatim
+[procedure] (with-output-to-port PORT THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current output-port temporarily bound to @code{PORT}.
+
+@node Unit ports - Input/output port extensions - make-input-port, Unit ports - Input/output port extensions - make-output-port, Unit ports - Input/output port extensions - with-output-to-port, Unit ports - Input/output port extensions
+@subsection make-input-port
+
+
+@verbatim
+[procedure] (make-input-port READ READY? CLOSE [PEEK])
+@end verbatim
+Returns a custom input port. Common operations on this port are handled by the given parameters, which should be procedures of no arguments. @code{READ} is called when the next character is to be read and should return a character or @code{#!eof}. @code{READY?} is called when @code{char-ready?} is called on this port and should return @code{#t} or @code{#f}.  @code{CLOSE} is called when the port is closed. @code{PEEK} is called when @code{peek-char} is called on this port and should return a character or @code{#!eof}. if the argument @code{PEEK} is not given, then @code{READ} is used instead and the created port object handles peeking automatically (by calling @code{READ} and buffering the character).
+
+@node Unit ports - Input/output port extensions - make-output-port, Unit ports - Input/output port extensions - with-error-output-to-port, Unit ports - Input/output port extensions - make-input-port, Unit ports - Input/output port extensions
+@subsection make-output-port
+
+
+@verbatim
+[procedure] (make-output-port WRITE CLOSE [FLUSH])
+@end verbatim
+Returns a custom output port. Common operations on this port are handled by the given parameters, which should be procedures.  @code{WRITE} is called when output is sent to the port and receives a single argument, a string.  @code{CLOSE} is called when the port is closed and should be a procedure of no arguments. @code{FLUSH} (if provided) is called for flushing the output port.
+
+@node Unit ports - Input/output port extensions - with-error-output-to-port, Unit ports - Input/output port extensions - with-input-from-port, Unit ports - Input/output port extensions - make-output-port, Unit ports - Input/output port extensions
+@subsection with-error-output-to-port
+
+
+@verbatim
+[procedure] (with-error-output-to-port PORT THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current error output-port temporarily bound to @code{PORT}.
+
+@node Unit ports - Input/output port extensions - with-input-from-port,  , Unit ports - Input/output port extensions - with-error-output-to-port, Unit ports - Input/output port extensions
+@subsection with-input-from-port
+
+
+@verbatim
+[procedure] (with-input-from-port PORT THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current input-port temporarily bound to @code{PORT}.
+
+@node Unit ports - String-port extensions, Unit ports - Port iterators, Unit ports - Input/output port extensions, Unit ports
+@section String-port extensions
+
+@menu
+* Unit ports - String-port extensions - call-with-input-string::
+* Unit ports - String-port extensions - call-with-output-string::
+* Unit ports - String-port extensions - with-input-from-string::
+* Unit ports - String-port extensions - with-output-to-string::
+
+@end menu
+
+
+@node Unit ports - String-port extensions - call-with-input-string, Unit ports - String-port extensions - call-with-output-string,  , Unit ports - String-port extensions
+@subsection call-with-input-string
+
+
+@verbatim
+[procedure] (call-with-input-string STRING PROC)
+@end verbatim
+Calls the procedure @code{PROC} with a single argument that is a string-input-port with the contents of @code{STRING}.
+
+@node Unit ports - String-port extensions - call-with-output-string, Unit ports - String-port extensions - with-input-from-string, Unit ports - String-port extensions - call-with-input-string, Unit ports - String-port extensions
+@subsection call-with-output-string
+
+
+@verbatim
+[procedure] (call-with-output-string PROC)
+@end verbatim
+Calls the procedure @code{PROC} with a single argument that is a string-output-port.  Returns the accumulated output-string.
+
+@node Unit ports - String-port extensions - with-input-from-string, Unit ports - String-port extensions - with-output-to-string, Unit ports - String-port extensions - call-with-output-string, Unit ports - String-port extensions
+@subsection with-input-from-string
+
+
+@verbatim
+[procedure] (with-input-from-string STRING THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current input-port temporarily bound to an input-string-port with the contents of @code{STRING}.
+
+@node Unit ports - String-port extensions - with-output-to-string,  , Unit ports - String-port extensions - with-input-from-string, Unit ports - String-port extensions
+@subsection with-output-to-string
+
+
+@verbatim
+[procedure] (with-output-to-string THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current output-port temporarily bound to a string-output-port and return the accumulated output string.
+
+@node Unit ports - Port iterators, Unit ports - Funky ports, Unit ports - String-port extensions, Unit ports
+@section Port iterators
+
+@menu
+* Unit ports - Port iterators - port-for-each::
+* Unit ports - Port iterators - port-map::
+* Unit ports - Port iterators - port-fold::
+
+@end menu
+
+
+@node Unit ports - Port iterators - port-for-each, Unit ports - Port iterators - port-map,  , Unit ports - Port iterators
+@subsection port-for-each
+
+
+@verbatim
+[procedure] (port-for-each FN THUNK)
+@end verbatim
+Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK} until it returns @code{#!eof}, discarding the results.
+
+@node Unit ports - Port iterators - port-map, Unit ports - Port iterators - port-fold, Unit ports - Port iterators - port-for-each, Unit ports - Port iterators
+@subsection port-map
+
+
+@verbatim
+[procedure] (port-map FN THUNK)
+@end verbatim
+Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK} until it returns @code{#!eof}, returning a list of the collected results.
+
+@node Unit ports - Port iterators - port-fold,  , Unit ports - Port iterators - port-map, Unit ports - Port iterators
+@subsection port-fold
+
+
+@verbatim
+[procedure] (port-map FN ACC THUNK)
+@end verbatim
+Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK}, passing the @code{ACC} value as the second argument. The @code{FN} result becomes the new @code{ACC} value. When @code{THUNK} returns @code{#!eof}, the last @code{FN} result is returned.
+
+@node Unit ports - Funky ports,  , Unit ports - Port iterators, Unit ports
+@section Funky ports
+
+@menu
+* Unit ports - Funky ports - make-broadcast-port::
+* Unit ports - Funky ports - make-concatenated-port::
+
+@end menu
+
+
+@node Unit ports - Funky ports - make-broadcast-port, Unit ports - Funky ports - make-concatenated-port,  , Unit ports - Funky ports
+@subsection make-broadcast-port
+
+
+@verbatim
+[procedure] (make-broadcast-port PORT ...)
+@end verbatim
+Returns a custom output port that emits everything written into it to the ports given as @code{PORT ...}. Closing the broadcast port does not close any of the argument ports.
+
+@node Unit ports - Funky ports - make-concatenated-port,  , Unit ports - Funky ports - make-broadcast-port, Unit ports - Funky ports
+@subsection make-concatenated-port
+
+
+@verbatim
+[procedure] (make-concatenated-port PORT1 PORT2 ...)
+@end verbatim
+Returns a custom input port that reads its input from @code{PORT1}, until it is empty, then from @code{PORT2} and so on. Closing the concatenated port does not close any of the argument ports.
+
+Previous: @ref{Unit data-structures, Unit data-structures}
+
 Next: @ref{Unit extras, Unit extras}  
 
-@node Unit extras, Unit srfi-1, Unit data-structures, Top
+@node Unit extras, Unit srfi-1, Unit ports, Top
 @chapter Unit extras
 
 @menu
-* Unit extras - String-port extensions::
 * Unit extras - Formatted output::
 * Unit extras - Random numbers::
 * Unit extras - Input/Output extensions::
@@ -5874,55 +6066,7 @@ Next: @ref{Unit extras, Unit extras}
 
 This unit contains a collection of useful utility definitions.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
 
-@node Unit extras - String-port extensions, Unit extras - Formatted output,  , Unit extras
-@section String-port extensions
-
-@menu
-* Unit extras - String-port extensions - call-with-input-string::
-* Unit extras - String-port extensions - call-with-output-string::
-* Unit extras - String-port extensions - with-input-from-string::
-* Unit extras - String-port extensions - with-output-to-string::
-
-@end menu
-
-
-@node Unit extras - String-port extensions - call-with-input-string, Unit extras - String-port extensions - call-with-output-string,  , Unit extras - String-port extensions
-@subsection call-with-input-string
-
-
-@verbatim
-[procedure] (call-with-input-string STRING PROC)
-@end verbatim
-Calls the procedure @code{PROC} with a single argument that is a string-input-port with the contents of @code{STRING}.
-
-@node Unit extras - String-port extensions - call-with-output-string, Unit extras - String-port extensions - with-input-from-string, Unit extras - String-port extensions - call-with-input-string, Unit extras - String-port extensions
-@subsection call-with-output-string
-
-
-@verbatim
-[procedure] (call-with-output-string PROC)
-@end verbatim
-Calls the procedure @code{PROC} with a single argument that is a string-output-port.  Returns the accumulated output-string.
-
-@node Unit extras - String-port extensions - with-input-from-string, Unit extras - String-port extensions - with-output-to-string, Unit extras - String-port extensions - call-with-output-string, Unit extras - String-port extensions
-@subsection with-input-from-string
-
-
-@verbatim
-[procedure] (with-input-from-string STRING THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current input-port temporarily bound to an input-string-port with the contents of @code{STRING}.
-
-@node Unit extras - String-port extensions - with-output-to-string,  , Unit extras - String-port extensions - with-input-from-string, Unit extras - String-port extensions
-@subsection with-output-to-string
-
-
-@verbatim
-[procedure] (with-output-to-string THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current output-port temporarily bound to a string-output-port and return the accumulated output string.
-
-@node Unit extras - Formatted output, Unit extras - Random numbers, Unit extras - String-port extensions, Unit extras
+@node Unit extras - Formatted output, Unit extras - Random numbers,  , Unit extras
 @section Formatted output
 
 @menu
@@ -6008,8 +6152,6 @@ Set random-number seed. If @code{X} is not supplied, the current time is used. O
 @section Input/Output extensions
 
 @menu
-* Unit extras - Input/Output extensions - make-input-port::
-* Unit extras - Input/Output extensions - make-output-port::
 * Unit extras - Input/Output extensions - pretty-print::
 * Unit extras - Input/Output extensions - pretty-print-width::
 * Unit extras - Input/Output extensions - read-byte::
@@ -6022,32 +6164,11 @@ Set random-number seed. If @code{X} is not supplied, the current time is used. O
 * Unit extras - Input/Output extensions - read-string!::
 * Unit extras - Input/Output extensions - write-string::
 * Unit extras - Input/Output extensions - read-token::
-* Unit extras - Input/Output extensions - with-error-output-to-port::
-* Unit extras - Input/Output extensions - with-input-from-port::
-* Unit extras - Input/Output extensions - with-output-to-port::
 
 @end menu
 
 
-@node Unit extras - Input/Output extensions - make-input-port, Unit extras - Input/Output extensions - make-output-port,  , Unit extras - Input/Output extensions
-@subsection make-input-port
-
-
-@verbatim
-[procedure] (make-input-port READ READY? CLOSE [PEEK])
-@end verbatim
-Returns a custom input port. Common operations on this port are handled by the given parameters, which should be procedures of no arguments. @code{READ} is called when the next character is to be read and should return a character or @code{#!eof}. @code{READY?} is called when @code{char-ready?} is called on this port and should return @code{#t} or @code{#f}.  @code{CLOSE} is called when the port is closed. @code{PEEK} is called when @code{peek-char} is called on this port and should return a character or @code{#!eof}. if the argument @code{PEEK} is not given, then @code{READ} is used instead and the created port object handles peeking automatically (by calling @code{READ} and buffering the character).
-
-@node Unit extras - Input/Output extensions - make-output-port, Unit extras - Input/Output extensions - pretty-print, Unit extras - Input/Output extensions - make-input-port, Unit extras - Input/Output extensions
-@subsection make-output-port
-
-
-@verbatim
-[procedure] (make-output-port WRITE CLOSE [FLUSH])
-@end verbatim
-Returns a custom output port. Common operations on this port are handled by the given parameters, which should be procedures.  @code{WRITE} is called when output is sent to the port and receives a single argument, a string.  @code{CLOSE} is called when the port is closed and should be a procedure of no arguments. @code{FLUSH} (if provided) is called for flushing the output port.
-
-@node Unit extras - Input/Output extensions - pretty-print, Unit extras - Input/Output extensions - pretty-print-width, Unit extras - Input/Output extensions - make-output-port, Unit extras - Input/Output extensions
+@node Unit extras - Input/Output extensions - pretty-print, Unit extras - Input/Output extensions - pretty-print-width,  , Unit extras - Input/Output extensions
 @subsection pretty-print
 
 
@@ -6128,7 +6249,7 @@ Read @code{MAX} or fewer lines from @code{PORT}. @code{PORT} defaults to the val
 @end verbatim
 Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the value of @code{(current-input-port)} or @code{(current-output-port)}, respectively.  If @code{NUM} is @code{#f} or not given, then all data up to the end-of-file is read, or, in the case of @code{write-string} the whole string is written. If no more input is available, @code{read-string} returns the empty string. @code{read-string!} reads destructively into the given @code{STRING} argument, but never more characters that would fit into @code{STRING}. If @code{START} is given, then the read characters are stored starting at that position. @code{read-string!} returns the actual number of characters read.
 
-@node Unit extras - Input/Output extensions - read-token, Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions - write-string, Unit extras - Input/Output extensions
+@node Unit extras - Input/Output extensions - read-token,  , Unit extras - Input/Output extensions - write-string, Unit extras - Input/Output extensions
 @subsection read-token
 
 
@@ -6137,34 +6258,7 @@ Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the v
 @end verbatim
 Reads characters from @code{PORT} (which defaults to the value of @code{(current-input-port)}) and calls the procedure @code{PREDICATE} with each character until @code{PREDICATE} returns false. Returns a string with the accumulated characters.
 
-@node Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions - with-input-from-port, Unit extras - Input/Output extensions - read-token, Unit extras - Input/Output extensions
-@subsection with-error-output-to-port
-
-
-@verbatim
-[procedure] (with-error-output-to-port PORT THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current error output-port temporarily bound to @code{PORT}.
-
-@node Unit extras - Input/Output extensions - with-input-from-port, Unit extras - Input/Output extensions - with-output-to-port, Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions
-@subsection with-input-from-port
-
-
-@verbatim
-[procedure] (with-input-from-port PORT THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current input-port temporarily bound to @code{PORT}.
-
-@node Unit extras - Input/Output extensions - with-output-to-port,  , Unit extras - Input/Output extensions - with-input-from-port, Unit extras - Input/Output extensions
-@subsection with-output-to-port
-
-
-@verbatim
-[procedure] (with-output-to-port PORT THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current output-port temporarily bound to @code{PORT}.
-
-Previous: @ref{Unit data-structures, Unit data-structures}
+Previous: @ref{Unit ports, Unit ports}
 
 Next: @ref{Unit srfi-1, Unit srfi-1} 
 
@@ -9734,8 +9828,6 @@ Next: @ref{Unit utils, Unit utils}
 * Unit utils - Iterating over input lines and files::
 * Unit utils - Executing shell commands with formatstring and error checking::
 * Unit utils - Reading a file's contents::
-* Unit utils - Funky ports::
-* Unit utils - Miscellaneous handy things::
 
 @end menu
 
@@ -9980,9 +10072,6 @@ Moves @code{ORIGFILE} (a string denoting some filename) to @code{NEWFILE}, with 
 @menu
 * Unit utils - Iterating over input lines and files - for-each-line::
 * Unit utils - Iterating over input lines and files - for-each-argv-line::
-* Unit utils - Iterating over input lines and files - port-for-each::
-* Unit utils - Iterating over input lines and files - port-map::
-* Unit utils - Iterating over input lines and files - port-fold::
 
 @end menu
 
@@ -9996,7 +10085,7 @@ Moves @code{ORIGFILE} (a string denoting some filename) to @code{NEWFILE}, with 
 @end verbatim
 Calls @code{PROCEDURE} for each line read from @code{PORT} (which defaults to the value of @code{(current-input-port)}. The argument passed to @code{PROCEDURE} is a string with the contents of the line, excluding any line-terminators. When all input has been read from the port, @code{for-each-line} returns some unspecified value.
 
-@node Unit utils - Iterating over input lines and files - for-each-argv-line, Unit utils - Iterating over input lines and files - port-for-each, Unit utils - Iterating over input lines and files - for-each-line, Unit utils - Iterating over input lines and files
+@node Unit utils - Iterating over input lines and files - for-each-argv-line,  , Unit utils - Iterating over input lines and files - for-each-line, Unit utils - Iterating over input lines and files
 @subsection for-each-argv-line
 
 
@@ -10010,33 +10099,6 @@ This code will act as a simple Unix cat(1) command:
 @example
 (for-each-argv-line print)
 @end example
-@node Unit utils - Iterating over input lines and files - port-for-each, Unit utils - Iterating over input lines and files - port-map, Unit utils - Iterating over input lines and files - for-each-argv-line, Unit utils - Iterating over input lines and files
-@subsection port-for-each
-
-
-@verbatim
-[procedure] (port-for-each FN THUNK)
-@end verbatim
-Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK} until it returns @code{#!eof}, discarding the results.
-
-@node Unit utils - Iterating over input lines and files - port-map, Unit utils - Iterating over input lines and files - port-fold, Unit utils - Iterating over input lines and files - port-for-each, Unit utils - Iterating over input lines and files
-@subsection port-map
-
-
-@verbatim
-[procedure] (port-map FN THUNK)
-@end verbatim
-Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK} until it returns @code{#!eof}, returning a list of the collected results.
-
-@node Unit utils - Iterating over input lines and files - port-fold,  , Unit utils - Iterating over input lines and files - port-map, Unit utils - Iterating over input lines and files
-@subsection port-fold
-
-
-@verbatim
-[procedure] (port-map FN ACC THUNK)
-@end verbatim
-Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK}, passing the @code{ACC} value as the second argument. The @code{FN} result becomes the new @code{ACC} value. When @code{THUNK} returns @code{#!eof}, the last @code{FN} result is returned.
-
 @node Unit utils - Executing shell commands with formatstring and error checking, Unit utils - Reading a file's contents, Unit utils - Iterating over input lines and files, Unit utils
 @section Executing shell commands with formatstring and error checking
 
@@ -10055,7 +10117,7 @@ Apply @code{FN} to successive results of calling the zero argument procedure @co
 @end verbatim
 Similar to @code{(system (sprintf FORMATSTRING ARGUMENT1 ...))}, but signals an error if the invoked program should return a nonzero exit status.
 
-@node Unit utils - Reading a file's contents, Unit utils - Funky ports, Unit utils - Executing shell commands with formatstring and error checking, Unit utils
+@node Unit utils - Reading a file's contents,  , Unit utils - Executing shell commands with formatstring and error checking, Unit utils
 @section Reading a file's contents
 
 @menu
@@ -10073,75 +10135,6 @@ Similar to @code{(system (sprintf FORMATSTRING ARGUMENT1 ...))}, but signals an 
 @end verbatim
 If @code{FILE-OR-PORT} is a string, then this procedure returns the contents of the file as a string. If @code{FILE-OR-PORT} is a port, all remaining input is read and returned as a string. The port is not closed. If no argument is provided, input will be read from the port that is the current value of @code{(current-input-port)}.
 
-@node Unit utils - Funky ports, Unit utils - Miscellaneous handy things, Unit utils - Reading a file's contents, Unit utils
-@section Funky ports
-
-@menu
-* Unit utils - Funky ports - make-broadcast-port::
-* Unit utils - Funky ports - make-concatenated-port::
-
-@end menu
-
-
-@node Unit utils - Funky ports - make-broadcast-port, Unit utils - Funky ports - make-concatenated-port,  , Unit utils - Funky ports
-@subsection make-broadcast-port
-
-
-@verbatim
-[procedure] (make-broadcast-port PORT ...)
-@end verbatim
-Returns a custom output port that emits everything written into it to the ports given as @code{PORT ...}. Closing the broadcast port does not close any of the argument ports.
-
-@node Unit utils - Funky ports - make-concatenated-port,  , Unit utils - Funky ports - make-broadcast-port, Unit utils - Funky ports
-@subsection make-concatenated-port
-
-
-@verbatim
-[procedure] (make-concatenated-port PORT1 PORT2 ...)
-@end verbatim
-Returns a custom input port that reads its input from @code{PORT1}, until it is empty, then from @code{PORT2} and so on. Closing the concatenated port does not close any of the argument ports.
-
-@node Unit utils - Miscellaneous handy things,  , Unit utils - Funky ports, Unit utils
-@section Miscellaneous handy things
-
-@menu
-* Unit utils - Miscellaneous handy things - shift! DEPRECATED::
-* Unit utils - Miscellaneous handy things - unshift! DEPRECATED::
-
-@end menu
-
-
-@node Unit utils - Miscellaneous handy things - shift! DEPRECATED, Unit utils - Miscellaneous handy things - unshift! DEPRECATED,  , Unit utils - Miscellaneous handy things
-@subsection shift! DEPRECATED
-
-
-@verbatim
-[procedure] (shift! LIST [DEFAULT])
-@end verbatim
-Returns the car of @code{LIST} (or @code{DEFAULT} if @code{LIST} is empty) and replaces the car of @code{LIST} with it's cadr and the cdr with the cddr. If @code{DEFAULT} is not given, and the list is empty, @code{#f} is returned. An example might be clearer, here:
-
-@example
-(@strong{define} @strong{lst} '(1 2 3))
-(shift! lst)             =@strong{=>} 1, lst is now (2 3)
-@end example
-@verbatim
-
-@end verbatim
-The list must contain at least 2 elements.
-
-@node Unit utils - Miscellaneous handy things - unshift! DEPRECATED,  , Unit utils - Miscellaneous handy things - shift! DEPRECATED, Unit utils - Miscellaneous handy things
-@subsection unshift! DEPRECATED
-
-
-@verbatim
-[procedure] (unshift! X PAIR)
-@end verbatim
-Sets the car of @code{PAIR} to @code{X} and the cdr to its cddr. Returns @code{PAIR}:
-
-@example
-(@strong{define} @strong{lst} '(2))
-(unshift! 99 lst)      @emph{; lst is now (99 2)
-}@end example
 Previous: @ref{Unit posix, Unit posix}
 
 Next: @ref{Unit tcp, Unit tcp}  
@@ -12881,12 +12874,28 @@ Note: Extension may also be normal applications or shell scripts, but are usuall
 @node chicken-setup - Installing extensions, chicken-setup - Creating extensions, chicken-setup - Extension libraries, chicken-setup
 @section Installing extensions
 
+@menu
+* chicken-setup - Installing extensions - Installing extensions that use libraries::
+
+@end menu
+
 
 To install an extension library, run the @code{chicken-setup} program with the extension name as argument. The extension archive is downloaded, its contents extracted and the contained @emph{setup} script is executed. This setup script is a normal Scheme source file, which will be interpreted by @code{chicken-setup}. The complete language supported by @code{csi} is available, and the library units @code{srfi-1 regex utils posix tcp} are loaded. Additional libraries can be loaded at run-time.
 
 The setup script should perform all necessary steps to build the new library (or application). After a successful build, the extension can be installed by invoking one of the procedures @code{install-extension}, @code{install-program} or @code{install-script}.  These procedures will copy a number of given files into the extension repository or in the path where the CHICKEN executables are located (in the case of executable programs or scripts). Additionally the list of installed files, and user-defined metadata is stored in the repository.
 
 If no extension name is given on the command-line, and if none of the options @code{-list}, @code{-version}, @code{-repository} (without argument), @code{-program-path} (without argument), @code{-fetch}, @code{-fetch-tree} or @code{-docindex} is given, then all @code{.setup} scripts in the current directory are processed.
+
+@node chicken-setup - Installing extensions - Installing extensions that use libraries,  ,  , chicken-setup - Installing extensions
+@subsection Installing extensions that use libraries
+
+
+Sometimes an extension requires a C library to compile. Compilation can fail when your system has this library in a nonstandard location. Luckily, normally Chicken searches in the default locations @code{/usr} and @code{/usr/local}, and in the prefix where Chicken itself was installed. Sometimes this is not enough, so you'll need to supply chicken-setup with some extra hints to the C compiler/linker. Here's an example:
+
+@verbatim
+ chicken-setup -c '-I/usr/pkg/include/mysql' -c '-L/usr/pkg/lib/mysql' -c '-L -R/usr/pkg/lib/mysql' mysql
+@end verbatim
+This installs the mysql egg with the extra compiler options -I and -L to set the include path and the library search path. The second -L switch passes the -R option directly to the linker, which causes the library path to get hardcoded into the resulting extension file (for systems that do not use ld.so.conf).
 
 @node chicken-setup - Creating extensions, chicken-setup - Procedures and macros available in setup scripts, chicken-setup - Installing extensions, chicken-setup
 @section Creating extensions
@@ -13822,7 +13831,9 @@ will signal an error, because to applicable method can be found. To specialize a
 @subsection Does CHICKEN support native threads?
 
 
-Currently native threads are not supported. The runtime system is not reentrant, and the garbage-collection algorithm would be made much more complicated, since the location of every object (whether it is allocated on the stack or on the heap or completely outside the GC-able data space) has to be checked - this would be rather complex and inefficient in a situation where multiple threads are involved.
+Native threads are not supported for two reasons. One, the runtime system is not reentrant.  Two, concurrency implemented properly would require mandatory locking of every object that could be potentially shared between two threads. The garbage-collection algorithm would then become much more complex and inefficient, since the location of every object has to be accessed via a thread synchronization protocol. Such a design would make native threads in Chicken essentially equivalent to Unix processes and shared memory.
+
+For a different approach to concurrency, please see the @uref{http://www.call-with-current-continuation.org/eggs/3/mpi.html, mpi} egg.
 
 @node FAQ - General - Does CHICKEN support Unicode strings?, FAQ - General - Why do I get an "Error; invalid syntax; ;;;" using 'match' and 'syntax-case'?, FAQ - General - Does CHICKEN support native threads?, FAQ - General
 @subsection Does CHICKEN support Unicode strings?
