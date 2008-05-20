@@ -128,11 +128,18 @@ objects, use {{<top>}}:
 
 ==== Does CHICKEN support native threads?
 
-Currently native threads are not supported. The runtime system is not reentrant, and the garbage-collection
-algorithm would be made much more complicated, since the location of every object (whether it is allocated
-on the stack or on the heap or completely outside the GC-able data space) has to be checked - this would
-be rather complex and inefficient in a situation where multiple threads are involved.
+Native threads are not supported for two reasons. One, the runtime
+system is not reentrant.  Two, concurrency implemented properly would
+require mandatory locking of every object that could be potentially
+shared between two threads. The garbage-collection algorithm would
+then become much more complex and inefficient, since the location of
+every object has to be accessed via a thread synchronization
+protocol. Such a design would make native threads in Chicken
+essentially equivalent to Unix processes and shared memory.
 
+For a different approach to concurrency, please see the
+[[http://www.call-with-current-continuation.org/eggs/3/mpi.html|mpi]]
+egg.
 
 ==== Does CHICKEN support Unicode strings?
 

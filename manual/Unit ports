@@ -7,7 +7,6 @@ This unit contains various extended port definitions. This unit is
 used by default, unless the program is compiled with the
 {{-explicit-use}} option.
 
-
 === Input/output port extensions
 
 ==== with-output-to-port
