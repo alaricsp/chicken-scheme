@@ -1,11 +1,9 @@
 .\" dummy line
-.TH CSI 1 "10 May 2001"
+.TH CSI 1 "20 May 2008"
 
-.SH NAME
+.SH NAME 
 
-The
-.I Chicken
-Scheme interpreter
+csi \- Chicken Scheme interpreter
 
 .SH SYNOPSIS
 
@@ -53,6 +51,20 @@ Quit the interpreter after processing all command line options.
 .BI \-e\ \-eval \ expressions
 Evaluate
 .I expressions
+\.
+
+.TP
+.BI \-p\ \-print \ expressions
+Evaluate 
+.I expressions
+and print result(s)
+\.
+
+.TP
+.BI \-P\ \-pretty-print \ expressions
+Evaluate 
+.I expressions
+and pretty-print result(s)
 \.
 
 .BI \-D\ \-feature \ symbol
