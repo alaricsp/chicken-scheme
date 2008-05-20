@@ -48,6 +48,7 @@ LIBCHICKENGUI_OBJECTS_1 = \
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
 LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
 
+ifeq ($(USE_HOST_PCRE),)
 PCRE_OBJECTS_1 ?= \
        pcre/pcre_compile \
        pcre/pcre_config \
@@ -71,6 +72,7 @@ PCRE_OBJECTS_1 ?= \
        pcre/pcre_chartables
 PCRE_SHARED_OBJECTS = $(PCRE_OBJECTS_1:=$(O))
 PCRE_STATIC_OBJECTS = $(PCRE_OBJECTS_1:=-static$(O))
+endif
 
 COMPILER_OBJECTS_1 = \
        chicken batch-driver compiler optimizer support \
