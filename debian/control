@@ -2,7 +2,7 @@ Source: chicken
 Section: interpreters
 Priority: optional
 Maintainer: Davide Puricelli (evo) <evo@debian.org>
-Build-Depends: debhelper (>> 3.0.0), autotools-dev, libpcre3-dev
+Build-Depends: debhelper (>> 4.0.0), autotools-dev, libpcre3-dev
 Standards-Version: 3.7.3
 
 Package: chicken-bin

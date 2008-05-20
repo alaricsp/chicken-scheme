@@ -20,7 +20,6 @@ build-stamp:
 	dh_testdir
 #	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
 	$(MAKE) \
-	    MAKEINFO_PROGRAM_OPTIONS="" \
             USE_HOST_PCRE=1 \
 	    CFLAGS="$(CFLAGS)" \
 	    PREFIX="$(PREFIX)" \
@@ -28,7 +27,7 @@ build-stamp:
 	    INFODIR="$(PREFIX)/share/info" \
 	    SHAREDIR="$(PREFIX)/share" \
 	    EGGDIR="/var/lib/chicken/$(BINARYVERSION)" \
-	    MAKEINFO_PROGRAM_OPTIONS= \
+	    MAKEINFO_PROGRAM_OPTIONS="" \
 	    HOSTNAME=debian
 	touch build-stamp
 
@@ -58,12 +57,13 @@ install: build
 # build system, but will not end up in the package.
 	$(MAKE) \
 	    install \
+            USE_HOST_PCRE=1 \
 	    PREFIX="$(CURDIR)/debian/tmp/usr" \
 	    MANDIR="$(CURDIR)/debian/tmp/usr/share/man" \
 	    INFODIR="$(CURDIR)/debian/tmp/usr/share/info" \
 	    SHAREDIR="$(CURDIR)/debian/tmp/usr/share" \
 	    EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)" \
-	    MAKEINFO_PROGRAM_OPTIONS= \
+	    MAKEINFO_PROGRAM_OPTIONS="" \
 	    HOSTNAME=debian
 
 binary-common:
@@ -76,7 +76,7 @@ binary-common:
 # difficult to convince it to produce standalone Texinfo files. 
 	dh_installinfo chicken.info*
 	dh_installchangelogs ChangeLog.*
-	dh_install --autodest
+	dh_install --sourcedir=debian/tmp
 	dh_link
 ifeq "$(findstring nostrip,$(DEB_BUILD_OPTIONS))" ""
 	dh_strip
