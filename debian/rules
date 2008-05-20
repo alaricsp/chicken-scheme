@@ -18,7 +18,6 @@ BINARYVERSION=3
 build: build-stamp
 build-stamp:
 	dh_testdir
-#	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
 	$(MAKE) \
             USE_HOST_PCRE=1 \
 	    CFLAGS="$(CFLAGS)" \
@@ -35,12 +34,8 @@ clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
-#	-test -r /usr/share/misc/config.sub && \
-#	  cp -f /usr/share/misc/config.sub $(CURDIR)/config.sub
-#	-test -r /usr/share/misc/config.guess && \
-#	  cp -f /usr/share/misc/config.guess $(CURDIR)/config.guess
-	-$(MAKE) clean
-	-$(MAKE) distclean
+	$(MAKE) clean
+	$(MAKE) distclean
 	rm -f c_defaults.h
 	rm -f chicken_defaults.h
 	dh_clean
