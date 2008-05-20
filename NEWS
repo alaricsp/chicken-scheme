@@ -1,3 +1,7 @@
+3.2.3
+
+- some fixes to the build system when USE_HOST_PCRE is set
+
 3.2.2
 
 - added use of unit ports to unit extras and chicken-setup
