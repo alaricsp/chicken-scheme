@@ -1,5 +1,5 @@
 Source: chicken
-Homepage: http://www.call-with-current-continuation.org
+Homepage: http://www.call-with-current-continuation.org/
 Section: interpreters
 Priority: optional
 Maintainer: Davide Puricelli (evo) <evo@debian.org>
