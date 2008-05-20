@@ -1,4 +1,5 @@
 Source: chicken
+Homepage: http://www.call-with-current-continuation.org
 Section: interpreters
 Priority: optional
 Maintainer: Davide Puricelli (evo) <evo@debian.org>
@@ -6,6 +7,7 @@ Build-Depends: debhelper (>> 4.0.0), autotools-dev, libpcre3-dev
 Standards-Version: 3.7.3
 
 Package: chicken-bin
+
 Section: interpreters
 Architecture: any
 Conflicts: chicken, chicken-dev
@@ -18,7 +20,7 @@ Description: Simple Scheme-to-C compiler - compiler
  .
  This package contains the compiler.
  .
- Homepage: http://www.call-with-current-continuation.org
+ 
 
 Package: libchicken0
 Architecture: any
@@ -35,7 +37,7 @@ Description: Simple Scheme-to-C compiler - runtime
  This package contains the shared library needed to run programs using
  chicken.
  .
- Homepage: http://www.call-with-current-continuation.org
+ 
 
 Package: libchicken-dev
 Architecture: any
@@ -52,4 +54,3 @@ Description: Simple Scheme-to-C compiler - development
  This package contains the header file and static library for developing
  with chicken.
  .
- Homepage: http://www.call-with-current-continuation.org
