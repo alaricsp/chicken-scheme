@@ -744,14 +744,14 @@ EOF
 	(open-output-string open-output-string)
 	(get-output-string get-output-string))
     (lambda (loc port msg args)
+      (when port (##sys#check-port port loc))
+      (let ((out (if (and port (##sys#tty-port? port))
+		     port
+		     (open-output-string))))
       (let rec ([msg msg] [args args])
 	(##sys#check-string msg loc)
-	(when port (##sys#check-port port loc))
 	(let ((index 0)
-	      (len (##sys#size msg)) 
-	      (out (if (and port (##sys#tty-port? port))
-		       port
-		       (open-output-string))))
+	      (len (##sys#size msg)) )
 	  (define (fetch)
 	    (let ((c (##core#inline "C_subchar" msg index)))
 	      (set! index (fx+ index 1))
@@ -779,7 +779,7 @@ EOF
 			 (let* ([fstr (next)]
 				[lst (next)] )
 			   (##sys#check-list lst loc)
-			   (display (rec fstr lst) out) ) )
+			   (rec fstr lst) out) )
 			((#\~) (##sys#write-char-0 #\~ out))
 			((#\% #\N) (newline out))
 			(else
@@ -790,10 +790,10 @@ EOF
 				   (set! index (fx- index 1)) ) )
 			     (##sys#error loc "illegal format-string character" dchar) ) ) ) )
 		    (##sys#write-char-0 c out) )
-		(loop) ) ) )
-	  (cond ((not port) (get-output-string out))
-		((not (eq? out port))
-		 (##sys#print (get-output-string out) #f port) ) ) ) ) ) ) )
+		(loop) ) ) ) ) )
+      (cond ((not port) (get-output-string out))
+	    ((not (eq? out port))
+	     (##sys#print (get-output-string out) #f port) ) ) ) ) ) )
 
 (define (fprintf port fstr . args)
   (fprintf0 'fprintf port fstr args) )

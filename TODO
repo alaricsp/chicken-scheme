@@ -9,6 +9,8 @@ TODO for macro/module system					-*- Outline -*-
     context) [is this still relevant? we could simply reexport the ids used in
     in the expansion]
 *** "scheme" module does not include special forms ("define-syntax", etc.)
+** import of ec doesn't seem to work for interpreted ec.import.scm
+   explicit loading works, though
 
 * test
 ** reexports
@@ -18,6 +20,7 @@ TODO for macro/module system					-*- Outline -*-
 ** foreign module
 ** line-number retention over macro-expansion
 ** warnings for re-imports
+** add ec to test-suite
 
 * syntax-error
 ** if ##sys#current-module is set, add name to error message
@@ -27,6 +30,7 @@ TODO for macro/module system					-*- Outline -*-
 *** redefinition of imported id 
 *** reimport of imported id
 ** "ports" import library
+** allow exporting all definitions
 
 * update manual
 ** import libraries
