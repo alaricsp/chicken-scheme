@@ -1103,14 +1103,14 @@
     `(##core#module ,@(cdr x)))))
 
 
-;;; the base macro environment ("scheme", essentially)
-
-(define ##sys#default-macro-environment (##sys#macro-environment))
-
-
 ;;; syntax-rules
 
 (include "synrules.scm")
+
+
+;;; the base macro environment ("scheme", essentially)
+
+(define ##sys#default-macro-environment (##sys#macro-environment))
 
 
 ;;; low-level module support

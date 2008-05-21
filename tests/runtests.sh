@@ -5,7 +5,8 @@ set -e
 TEST_DIR=`pwd`
 export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
-compile="../csc -compiler ../chicken -C -I.. -L.. -o a.out"
+compile="../csc -compiler ../chicken -v -C -I.. -L.. -o a.out"
+compile_s="../csc -s -compiler ../chicken -v -C -I.. -L.."
 
 echo "======================================== runtime tests ..."
 ../csi -s apply-test.scm
@@ -21,6 +22,12 @@ echo "======================================== syntax tests ..."
 
 echo "======================================== module tests ..."
 ../csi -w -s module-tests.scm
+rm -f ec.so ec.import.*
+../csi -wbqn ec.scm ec-tests.scm
+$compile_s ec.scm -emit-import-library ec -o ec.so
+$compile_s ec.import.scm -o ec.import.so
+../csi -wbnq ec.so ec-tests.scm
+# $compile ec-tests.scm && ./a.out
 
 echo "======================================== hash-table tests ..."
 ../csi -w -s hash-table-tests.scm
