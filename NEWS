@@ -1,3 +1,7 @@
+3.2.4
+
+- the build system now sets the SONAME field of libchicken.so under Linux
+
 3.2.3
 
 - some fixes to the build system when USE_HOST_PCRE is set
