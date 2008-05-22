@@ -65,7 +65,10 @@ environment of the module that imports them.
 Note that modules are purely syntactical - they do not change the
 control flow or delay the execution of the contained toplevel
 forms. The body of a module is executed at load-time, when code is
-loaded or accessed via the {{uses}} declaration.
+loaded or accessed via the {{uses}} declaration, just like normal
+toplevel expressions. Exported macro-definitions are compiled as
+well, and can be accessed in interpreted or compiled code by loading
+and importing the compiled file that contains the module.
 
 A module is initially empty (has no visible bindings). You must at least
 import the {{scheme}} module to do anything useful.
@@ -130,6 +133,19 @@ Renames identifiers imported from {{IMPORT}}.
  [import specifier] (prefix IMPORT SYMBOL)
 
 Prefixes all imported identifiers with {{SYMBOL}}.
+
+
+==== import-for-syntax
+
+ [syntax] (import-for-syntax IMPORT ...)
+
+Similar to {{import}}, but imports exported bindings of a module into
+the environment in which macro transformers are evaluated. 
+
+Note: currently this isn't fully correct - value bindings are still
+imported into the normal environment because a separate import
+environment for syntax has not been implemented (syntactic bindings
+are kept separate correctly).
 
 
 === import libraries

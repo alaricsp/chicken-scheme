@@ -951,7 +951,7 @@ EOF
 			   (newline ##sys#standard-error)
 			   (eval x)))
 		    #f)
-		   (when (and scr (member scr '("-ss" "-sx")))
+		   (when (equal? scr "-ss")
 		     (call-with-values (cut main (command-line-arguments))
 		       (lambda results
 			 (exit

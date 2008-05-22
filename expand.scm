@@ -639,11 +639,8 @@
 
 ;;; Macro definitions:
 
-(##sys#extend-macro-environment
- 'import
- '()
- (##sys#er-transformer
-  (lambda (x r c)
+(let ()
+  (define (expand-import x r c import-env macro-env loc)
     (let ((%only (r 'only))
 	  (%rename (r 'rename))
 	  (%except (r 'except))
@@ -655,7 +652,7 @@
 	      ((keyword? x) (##sys#string-append (##sys#symbol->string x) ":")) ; why not?
 	      ((symbol? x) (##sys#symbol->string x))
 	      ((number? x) (number->string x))
-	      (else (syntax-error 'import "invalid prefix" ))))
+	      (else (syntax-error loc "invalid prefix" ))))
       (define (import-name spec)
 	(let* ((mname (resolve spec))
 	       (mod (##sys#find-module mname #f)))
@@ -665,26 +662,26 @@
 		       #t)))
 	      (cond (il (parameterize ((##sys#current-module #f)
 				       (##sys#import-environment '())
-				       (##sys#macro-environment ##sys#default-macro-environment))
+				       (##sys#macro-environment (##sys#meta-macro-environment)))
 			  (##sys#load il #f #f))
 			(set! mod (##sys#find-module mname)))
 		    (else
 		     (syntax-error
-		      'import "can not import from undefined module" 
+		      loc "can not import from undefined module" 
 		      mname)))))
 	  (cons (module-vexports mod) 
 		(module-sexports mod))))
       (define (import-spec spec)
 	(cond ((symbol? spec) (import-name spec))
 	      ((or (not (list? spec)) (< (length spec) 2))
-	       (syntax-error 'import "invalid import specification" spec))
+	       (syntax-error loc "invalid import specification" spec))
 	      (else
 	       (let* ((s (car spec))
 		      (imp (import-spec (cadr spec)))
 		      (impv (car imp))
 		      (imps (cdr imp)))
 		 (cond ((c %only (car spec))
-			(##sys#check-syntax 'only spec '(_ _ . #(symbol 0)))
+			(##sys#check-syntax loc spec '(_ _ . #(symbol 0)))
 			(let ((ids (map resolve (cddr spec))))
 			  (let loop ((ids ids) (v '()) (s '()))
 			    (cond ((null? ids) (cons v s))
@@ -696,7 +693,7 @@
 				     (loop (cdr ids) v (cons a s))))
 				  (else (loop (cdr ids) v s))))))
 		       ((c %except (car spec))
-			(##sys#check-syntax 'except spec '(_ _ . #(symbol 0)))
+			(##sys#check-syntax loc spec '(_ _ . #(symbol 0)))
 			(let ((ids (map resolve (cddr spec))))
 			  (let loop ((impv impv) (v '()))
 			    (cond ((null? impv)
@@ -707,7 +704,7 @@
 				  ((memq (caar impv) ids) (loop (cdr impv) v))
 				  (else (loop (cdr impv) (cons (car impv) v)))))))
 		       ((c %rename (car spec))
-			(##sys#check-syntax 'rename spec '(_ _ . #((symbol symbol) 0)))
+			(##sys#check-syntax loc spec '(_ _ . #((symbol symbol) 0)))
 			(let loop ((impv impv) (imps imps) (v '()) (s '()) (ids (cddr spec)))
 			  (cond ((null? impv) 
 				 (cond ((null? imps)
@@ -733,7 +730,7 @@
 					    (cons (car impv) v)
 					    s ids)))))
 		       ((c %prefix (car spec))
-			(##sys#check-syntax 'prefix spec '(_ _ _))
+			(##sys#check-syntax loc spec '(_ _ _))
 			(let ((pref (tostr (caddr spec))))
 			  (define (ren imp)
 			    (cons 
@@ -741,8 +738,8 @@
 			      (##sys#string-append pref (##sys#symbol->string (car imp))) )
 			     (cdr imp) ) )
 			  (cons (map ren impv) (map ren imps))))
-		       (else (syntax-error 'import "invalid import specification" spec)))))))
-      (##sys#check-syntax 'import x '(_ . #(_ 1)))
+		       (else (syntax-error loc "invalid import specification" spec)))))))
+      (##sys#check-syntax loc x '(_ . #(_ 1)))
       (for-each
        (lambda (spec)
 	 (let* ((vs (import-spec spec))
@@ -766,18 +763,31 @@
 	   (d `(S: ,vss))
 	   (for-each
 	    (lambda (imp)
-	      (when (assq (car imp) ##sys#import-environment)
+	      (and-let* ((a (assq (car imp) (import-env)))
+			 ((not (eq? (cdr imp) (cdr a)))))
 		(##sys#warn "re-importing already imported identfier: " (car imp))) )
 	    vsv)
 	   (for-each
 	    (lambda (imp)
-	      (when (assq (car imp) ##sys#macro-environment)
+	      (and-let* ((a (assq (car imp) (macro-env)))
+			 ((not (eq? (cdr imp) (cdr a)))))
 		(##sys#warn "re-importing already imported syntax: " (car imp))) )
 	    vss)
-	   (##sys#import-environment (append vsv (##sys#import-environment)))
-	   (##sys#macro-environment (append vss (##sys#macro-environment))) ) )
+	   (import-env (append vsv (import-env)))
+	   (macro-env (append vss (macro-env)))))
        (cdr x))
-      '(##core#undefined)))))
+      '(##core#undefined)))
+  (##sys#extend-macro-environment
+   'import '() 
+   (##sys#er-transformer 
+    (cut expand-import <> <> <> ##sys#import-environment ##sys#macro-environment
+	 'import) ) )
+  (##sys#extend-macro-environment
+   'import-for-syntax '() 
+   (##sys#er-transformer 
+    ;;*** ##sys#import-environment is likely to be wrong here
+    (cut expand-import <> <> <> ##sys#import-environment ##sys#meta-macro-environment 
+	 'import-for-syntax) ) ))
 
 (define ##sys#initial-macro-environment (##sys#macro-environment))
 

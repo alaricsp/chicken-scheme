@@ -9,8 +9,8 @@ TODO for macro/module system					-*- Outline -*-
     context) [is this still relevant? we could simply reexport the ids used in
     in the expansion]
 *** "scheme" module does not include special forms ("define-syntax", etc.)
-** import of ec doesn't seem to work for interpreted ec.import.scm
-   explicit loading works, though
+*** import-for-syntax imports value bindings into import-env
+    should actually be a distinct meta-import-env.
 
 * test
 ** reexports
@@ -31,6 +31,7 @@ TODO for macro/module system					-*- Outline -*-
 *** reimport of imported id
 ** "ports" import library
 ** allow exporting all definitions
+** "define-for-syntax" still right?
 
 * update manual
 ** import libraries

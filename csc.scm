@@ -205,6 +205,7 @@
     (|-G| "-check-imports")		; DEPRECATED
     (-x "-explicit-use")
     (-u "-unsafe")
+    (-j "-emit-import-library")
     (-b "-block") ) )
 
 (define short-options
@@ -353,7 +354,8 @@
     -i -case-insensitive        don't preserve case of read symbols    
     -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
     -compile-syntax             macros are made available at run-time
-    -emit-import-library MODULE write compile-time module information into separate file
+    -j -emit-import-library MODULE 
+                                write compile-time module information into separate file
 
   Translation options:
 
