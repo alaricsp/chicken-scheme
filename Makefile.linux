@@ -31,8 +31,8 @@ ARCH = $(shell sh config-arch.sh)
 
 # options
 
-LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,soname,libchicken.so.$(BINARYVERSION)
-LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,soname,libuchicken.so.$(BINARYVERSION)
+LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,-soname,libchicken.so.$(BINARYVERSION)
+LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,-soname,libuchicken.so.$(BINARYVERSION)
 C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
 ifdef DEBUGBUILD
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
@@ -44,7 +44,7 @@ RUNTIME_LINKER_PATH = $(shell pwd)
 LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(RUNTIME_LINKER_PATH)
 LIBRARIES = -lm -ldl
 NEEDS_RELINKING = yes
-
+LINUX = 1
 
 # special files
 
