@@ -193,3 +193,38 @@
 (t '(1 2 3)
    (foo #(1 2 3))
 )
+
+
+(define-syntax loop
+  (lambda (x r c)
+    (let ((body (cdr x)))
+      `(,(r 'call/cc)
+	(,(r 'lambda) (exit)
+	 (,(r 'let) ,(r 'f) () ,@body (,(r 'f))))))))
+
+(let ((n 10))
+  (loop
+   (print* n " ") 
+   (set! n (sub1 n))
+   (when (zero? n) (exit #f)))
+  (newline))
+
+(define-syntax while0
+  (syntax-rules ()
+    ((_ t b ...)
+     (loop (if (not t) (exit #f)) 
+	   b ...))))
+
+(f (while0 #f (print "no.")))
+
+(define-syntax while
+  (lambda (x r c)
+    `(,(r 'loop) 
+      (,(r 'if) (,(r 'not) ,(cadr x)) (exit #f))
+      ,@(cddr x))))
+
+(let ((n 10))
+  (while (not (zero? n))
+	 (print* n " ")
+	 (set! n (- n 1)) )
+  (newline))
