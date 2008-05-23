@@ -1,6 +1,7 @@
 3.2.4
 
 - the build system now sets the SONAME field of libchicken.so under Linux
+- fixed an allocation bug in decode_literal
 
 3.2.3
 
