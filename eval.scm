@@ -352,7 +352,7 @@
 			      [(()) (lambda v '())]
 			      [else (lambda v c)] ) ) ]
 
-			 ((##core#syntax)
+			 ((syntax)
 			  (let ((c (cadr x)))
 			    (lambda v c)))
 
