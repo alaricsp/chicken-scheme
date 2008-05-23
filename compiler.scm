@@ -548,8 +548,8 @@
 				'(##core#undefined)
 				(walk (cadddr x) se #f) ) ) )
 
-			((quote ##core#syntax)
-			 (##sys#check-syntax 'quote x '(_ _) #f se)
+			((quote syntax)
+			 (##sys#check-syntax name x '(_ _) #f se)
 			 `(quote ,(##sys#strip-syntax (cadr x))))
 
 			((##core#check)
@@ -754,6 +754,9 @@
 						(##sys#finalize-module (##sys#current-module) me0)
 						(cond ((assq name import-libraries) =>
 						       (lambda (il)
+							 (when verbose-mode
+							   (print "generating import library " (cdr il) " for module "
+								  name " ..."))
 							 (with-output-to-file (cdr il)
 							   (lambda ()
 							     (pretty-print
