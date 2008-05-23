@@ -132,6 +132,7 @@ html/callbacks.html
 html/chicken-setup.html
 html/data-representation.html
 html/declarations.html
+html/modules-and-macros.html
 html/deviations-from-the-standard.html
 html/embedding.html
 html/extensions-to-the-standard.html
@@ -197,6 +198,8 @@ tests/test-gc-hook.scm
 tests/matchable.scm
 tests/match-tests.scm
 tests/syntax-tests.scm
+tests/ec.scm
+tests/ec-tests.scm
 tweaks.scm
 utils.scm
 pcre/AUTHORS
