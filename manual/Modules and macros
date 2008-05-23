@@ -402,8 +402,8 @@ libraries:
   % csc -s hello.scm -j test
   % csc -s test.import.scm
 
-  #;1> ,l x.so
-  ; loading x.so ...
+  #;1> ,l hello.so
+  ; loading hello.so ...
   #;1> (import test)
   ; loading ./test.import.so ...
   #;2> (hello)
@@ -416,8 +416,8 @@ somewhere in the extensions-repository or include path, it
 is automatically loaded on import. Otherwise you have to
 load it manually:
 
-  #;1> ,l x.so
-  ; loading x.so ...
+  #;1> ,l hello.so
+  ; loading hello.so ...
   #;1> ,l test.import.so
   ; loading test.import.so ...
   #;1> (import test)
@@ -436,6 +436,9 @@ recently and is likely to contain bugs. Please contact the
 maintainers if you encounter behaviour that you think is
 not correct or that triggers an error where there shouldn't
 be one.
+
+Currently value bindings imported by {{import}} and {{import-for-syntax}}
+share the same import-environment.
 
 
 Previous: [[Non-standard macros and special forms]]
