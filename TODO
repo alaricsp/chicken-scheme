@@ -15,8 +15,6 @@ TODO for macro/module system					-*- Outline -*-
 * test
 ** reexports
 ** syntax-export of srfi-14 module
-** hiding of non-exported module vars in compiler
-** def of exported module variables with defie-values
 ** foreign module
 ** line-number retention over macro-expansion
 ** warnings for re-imports
@@ -33,18 +31,12 @@ TODO for macro/module system					-*- Outline -*-
 ** allow exporting all definitions
 ** "define-for-syntax" still right?
 
-* update manual
-** import libraries
-** ack synrules authors
-** DSSSL lambda-lists work only with imported "chicken" module
-   let-optionals, etc.
-** link to explicit-renaming paper
-
 * csi
 ** describe should print if symbol is interned
 
 * compiler
 ** warn if encountering global ref to "unquote[-splicing]"
+** add command-line option for import
 
 * eggs to be adapted/obsoleted
 ** syntax-case (eval/expand integration?)
