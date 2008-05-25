@@ -1,3 +1,7 @@
+3.2.5
+
+- bug fix in versioned symlink for shared library in rules.make
+
 3.2.4
 
 - the build system now sets the SONAME field of libchicken.so under Linux
