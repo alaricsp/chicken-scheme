@@ -746,17 +746,19 @@
  'define-record-printer '()
  (##sys#er-transformer
   (lambda (form r c)
-    (##sys#check-syntax 'define-record-printer form '(_ . _))
-    (cond [(pair? head)
-	   (##sys#check-syntax 
-	    'define-record-printer (cons head body)
-	    '((symbol symbol symbol) . #(_ 1)))
-	   `(##sys#register-record-printer 
-	     ',(##sys#slot head 0)
-	     (,(r 'lambda) ,(##sys#slot head 1) ,@body)) ]
-	  [else
-	   (##sys#check-syntax 'define-record-printer (cons head body) '(symbol _))
-	   `(##sys#register-record-printer ',head ,@body) ] ) )))
+    (##sys#check-syntax 'define-record-printer form '(_ _ . _))
+    (let ([head (cadr form)]
+	  [body (cddr form)])
+      (cond [(pair? head)
+	     (##sys#check-syntax 
+	      'define-record-printer (cons head body)
+	      '((symbol symbol symbol) . #(_ 1)))
+	     `(##sys#register-record-printer 
+	       ',(##sys#slot head 0)
+	       (,(r 'lambda) ,(##sys#slot head 1) ,@body)) ]
+	    [else
+	     (##sys#check-syntax 'define-record-printer (cons head body) '(symbol _))
+	     `(##sys#register-record-printer ',head ,@body) ] ) ))))
 
 
 ;;; Exceptions:
