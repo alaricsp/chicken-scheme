@@ -228,3 +228,7 @@
 	 (print* n " ")
 	 (set! n (- n 1)) )
   (newline))
+
+;;; found by Jim Ursetto
+
+(let ((lambda 0)) (define (x) 1) (x))

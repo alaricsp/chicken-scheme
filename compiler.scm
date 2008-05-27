@@ -79,10 +79,10 @@
 ; (##core#global-ref <variable>)
 ; (quote <exp>)
 ; (if <exp> <exp> [<exp>])
-; (let ({(<variable> <exp>)}) <body>)
+; ([##core#]let ({(<variable> <exp>)}) <body>)
 ; (##core#let-location <symbol> <type> [<init>] <exp>)
-; (lambda <variable> <body>)
-; (lambda ({<variable>}+ [. <variable>]) <body>)
+; ([##core#]lambda <variable> <body>)
+; ([##core#]lambda ({<variable>}+ [. <variable>]) <body>)
 ; (set! <variable> <exp>)
 ; (##core#set! <variable> <exp>)
 ; (##core#named-lambda <name> <llist> <body>)
@@ -596,8 +596,8 @@
 				    `(begin ,exp ,(loop (cdr ids))) ) ) ) )
 			  se dest) )
 
-			((let)
-			 (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f se)
+			((let ##core#let)
+			 (##sys#check-syntax 'let x '(_ #((variable _) 0) . #(_ 1)) #f se)
 			 (let* ((bindings (cadr x))
 				(vars (unzip1 bindings))
 				(aliases (map gensym vars))
@@ -610,7 +610,7 @@
 			     ,(walk (##sys#canonicalize-body (cddr x) se2)
 				    se2 dest) ) ) )
 
-			((lambda ##core#internal-lambda)
+			((lambda ##core#lambda)
 			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)
 			 (let ((llist (cadr x))
 			       (obody (cddr x)) )
@@ -968,7 +968,7 @@
 				[val (third x)] )
 			   (receive (val2 mlist)
 			       (extract-mutable-constants
-				(walk (cons '##core#internal-lambda (cdr val)) se name) )
+				(walk (cons '##core#lambda (cdr val)) se name) )
 			     (##sys#hash-table-set! inline-table name val2)
 			     (set! always-bound (append (unzip1 mlist) always-bound))
 			     (set! inline-table-used #t)
@@ -1032,7 +1032,7 @@
 				vars atypes) )
 			     `(##core#foreign-callback-wrapper
 			       ,@(mapwalk args se)
-			       ,(walk `(##core#internal-lambda 
+			       ,(walk `(##core#lambda 
 					,vars
 					(,(macro-alias 'let se)
 					 ,(let loop ([vars vars] [types atypes])
@@ -1137,7 +1137,7 @@
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
 	   (mapwalk x se) )
 
-	  ((and (pair? (car x)) (eq? 'lambda (caar x)))
+	  ((and (pair? (car x)) (eq? 'lambda (or (lookup (caar x) se) (caar x))))
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
 	     (emit-syntax-trace-info x #f)
@@ -1488,15 +1488,16 @@
 						    (list v
 							  (walk (cadr subs) k1)
 							  (walk (caddr subs) k1) ) ) ) ) ) ) ) )
-	((let) (let loop ((vars params) (vals subs))
-		 (if (null? vars)
-		     (walk (car vals) k)
-		     (walk (car vals)
-			   (lambda (r) 
-			     (make-node 'let
-					(list (car vars))
-					(list r (loop (cdr vars) (cdr vals))) ) ) ) ) ) )
-	((lambda) (cps-lambda (gensym-f-id) (first params) subs k))
+	((let)
+	 (let loop ((vars params) (vals subs))
+	   (if (null? vars)
+	       (walk (car vals) k)
+	       (walk (car vals)
+		     (lambda (r) 
+		       (make-node 'let
+				  (list (car vars))
+				  (list r (loop (cdr vars) (cdr vals))) ) ) ) ) ) )
+	((lambda ##core#lambda) (cps-lambda (gensym-f-id) (first params) subs k))
 	((set!) (let ((t1 (gensym 't)))
 		  (walk (car subs)
 			(lambda (r)
@@ -1647,7 +1648,7 @@
 		     (walk val env localenv here #f) 
 		     (loop (cdr vars) (cdr vals)) ) ) ) ) )
 
-	  ((lambda)			; will this actually be ever used? aren't all lambdas now ##core#lambdas?
+	  #;((lambda)			;*** will this actually be ever used? aren't all lambdas now ##core#lambdas?
 	   (grow 1)
 	   (decompose-lambda-list
 	    (first params)

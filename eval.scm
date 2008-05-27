@@ -420,8 +420,8 @@
 					 (##sys#setslot
 					  (##core#inline "C_u_i_list_ref" v i) j (##core#app val v)) ) ] ) ) ) ) ]
 
-			 [(let)
-			  (##sys#check-syntax 'let x '(let #((variable _) 0) . #(_ 1)) #f se)
+			 [(let ##core#let)
+			  (##sys#check-syntax 'let x '(_ #((variable _) 0) . #(_ 1)) #f se)
 			  (let* ([bindings (cadr x)]
 				 [n (length bindings)] 
 				 [vars (map (lambda (x) (car x)) bindings)] 
@@ -472,8 +472,8 @@
 				       (##sys#setslot v2 i (##core#app (##sys#slot vlist 0) v)) )
 				     (##core#app body (cons v2 v)) ) ) ) ] ) ) ]
 
-			 [(lambda)
-			  (##sys#check-syntax 'lambda x '(lambda lambda-list . #(_ 1)) #f se)
+			 [(lambda ##core#lambda)
+			  (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)
 			  (let* ([llist (cadr x)]
 				 [body (cddr x)] 
 				 [info (cons (or h '?) llist)] )

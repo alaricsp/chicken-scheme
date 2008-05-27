@@ -533,7 +533,8 @@
 		      (make-node 'let (unzip1 bs)
 				 (append (map (lambda (b) (walk (cadr b))) (cadr x))
 					 (list (walk body)) ) ) ) ) )
-	       ((lambda) (make-node 'lambda (list (cadr x)) (list (walk (caddr x)))))
+	       ((lambda ##core#lambda) 
+		(make-node 'lambda (list (cadr x)) (list (walk (caddr x)))))
 	       ((##core#primitive)
 		(let ([arg (cadr x)])
 		  (make-node

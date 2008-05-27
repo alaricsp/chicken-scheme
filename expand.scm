@@ -185,7 +185,7 @@
 		(let ((head2 (or (lookup head dse) head)))
 		  (unless (pair? head2)
 		    (set! head2 (or (lookup head2 (##sys#macro-environment)) head2)) )
-		  (cond [(eq? head2 'let)
+		  (cond [(memq head2 '(let ##core#let))
 			 (##sys#check-syntax 'let body '#(_ 2) #f dse)
 			 (let ([bindings (car body)])
 			   (cond [(symbol? bindings)
@@ -193,7 +193,7 @@
 				  (let ([bs (cadr body)])
 				    (values
 				     `(##core#app
-				       (,(macro-alias 'letrec dse)
+				       (,(macro-alias 'letrec dse) ;*** correct to use dse?
 					([,bindings (##core#loop-lambda ,(map (lambda (b) (car b)) bs) ,@(cddr body))])
 					,bindings)
 				       ,@(##sys#map cadr bs) )
@@ -282,7 +282,7 @@
       (let ([rvar #f]
 	    [hasrest #f] 
 	    (%let* (macro-alias 'let* se))
-	    (%lambda (macro-alias 'lambda se))
+	    (%lambda '##core#lambda)
 	    (%opt (macro-alias 'optional se))
 	    (%let-optionals (macro-alias 'let-optionals se))
 	    (%let-optionals* (macro-alias 'let-optionals* se))
@@ -392,21 +392,26 @@
 			 (macro-alias 'begin se)
 			 (##sys#append (reverse exps) (list (expand body2))))
 			(loop (cdr body2) (cons x exps)) ) ) ) )
-	    (let ([vars (reverse vars)]
-		  (lam (macro-alias 'lambda se)))
-	      `(,(macro-alias 'let se)
-		,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
-			    (apply ##sys#append vars mvars) )
-		,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
-		,@(map (lambda (vs x)
-			 (let ([tmps (##sys#map gensym vs)])
-			   `(##sys#call-with-values
-			     (,lam () ,x)
-			     (,lam ,tmps 
-				   ,@(map (lambda (v t) `(##core#set! ,v ,t)) vs tmps) ) ) ) ) 
-		       (reverse mvars)
-		       (reverse mvals) )
-		,@body) ) ) )
+	    (let* ((vars (reverse vars))
+		   (result 
+		    `(##core#let
+		      ,(##sys#map (lambda (v) (##sys#list v (##sys#list '##core#undefined))) 
+				  (apply ##sys#append vars mvars) )
+		      ,@(map (lambda (v x) `(##core#set! ,v ,x)) vars (reverse vals))
+		      ,@(map (lambda (vs x)
+			       (let ([tmps (##sys#map gensym vs)])
+				 `(##sys#call-with-values
+				   (##core#lambda () ,x)
+				   (##core#lambda 
+				    ,tmps 
+				    ,@(map (lambda (v t)
+					     `(##core#set! ,v ,t)) 
+					   vs tmps) ) ) ) ) 
+			     (reverse mvars)
+			     (reverse mvals) )
+		      ,@body) ) )
+	      (dd `(BODY: ,result))
+	      result)))
       (define (fini/syntax vars vals mvars mvals body)
 	(fini
 	 vars vals mvars mvals
@@ -451,7 +456,7 @@
 				  (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f se)
 				  (loop rest
 					(cons (car head) vars)
-					(cons `(,(macro-alias 'lambda se) ,(cdr head) ,@(cddr x)) vals)
+					(cons `(##core#lambda ,(cdr head) ,@(cddr x)) vals)
 					mvars mvals) ] ) ) ) ]
 		      ((eq? 'define-syntax head)
 		       (##sys#check-syntax 'define-syntax x '(define-syntax variable _) se)
@@ -492,14 +497,13 @@
 ;;; Expand "curried" lambda-list syntax for `define'
 
 (define (##sys#expand-curried-define head body se)
-  (let* ([name #f]
-	 (lam (macro-alias 'lambda se)))
+  (let ((name #f))
     (define (loop head body)
       (if (symbol? (car head))
 	  (begin
 	    (set! name (car head))
-	    `(,lam ,(cdr head) ,@body) )
-	  (loop (car head) `((,lam ,(cdr head) ,@body)) ) ))
+	    `(##core#lambda ,(cdr head) ,@body) )
+	  (loop (car head) `((##core#lambda ,(cdr head) ,@body)) ) ))
     (let ([exp (loop head body)])
       (list name exp) ) ) )
 

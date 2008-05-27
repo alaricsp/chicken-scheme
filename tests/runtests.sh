@@ -17,6 +17,7 @@ echo "======================================== library tests ..."
 
 echo "======================================== syntax tests ..."
 ../csi -w -s syntax-tests.scm
+$compile syntax-tests.scm && ./a.out
 ../csi -w matchable.scm -s match-test.scm
 ../csi -w -s loopy-test.scm
 

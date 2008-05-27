@@ -1,6 +1,11 @@
 TODO for macro/module system					-*- Outline -*-
 
 * bugs
+** macro expansion
+*** canonicalization of body has to keep track of introduced bindings
+    or global macros will apply to local bodies that shadow global id locally:
+    (define-syntax foo ...)
+    (let () (define (foo) 1) (foo)) ; last expr uses foo macro
 ** modules
 *** code-duplication in compiler and evaluator for ##core#module
 *** syntax-definitions in modules
