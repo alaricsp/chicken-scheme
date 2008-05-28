@@ -179,7 +179,7 @@
 		#t))
 	      (else (values exp #f)) ) )
       (if (pair? exp)
-	  (let ((head (##sys#slot exp 0))
+	  (let ((head (car exp))
 		(body (cdr exp)) )
 	    (if (symbol? head)
 		(let ((head2 (or (lookup head dse) head)))
@@ -467,6 +467,8 @@
 		      [(eq? 'begin head)
 		       (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
 		       (loop (##sys#append (cdr x) rest) vars vals mvars mvals) ]
+		      ((or (memq head vars) (memq head mvars))
+		       (fini vars vals mvars mvals body))
 		      [else
 		       (let ([x2 (##sys#expand-0 x se)])
 			 (if (eq? x x2)

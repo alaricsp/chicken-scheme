@@ -209,8 +209,14 @@ toplevel expressions. Exported macro-definitions are compiled as
 well, and can be accessed in interpreted or compiled code by loading
 and importing the compiled file that contains the module.
 
+Imported toplevel bindings can be assigned (with {{set!}}), any modifications
+to these will change the global value and will be visible to other
+modules that export or import the same toplevel binding.
+
 A module is initially empty (has no visible bindings). You must at least
-import the {{scheme}} module to do anything useful.
+import the {{scheme}} module to do anything useful. To access any
+of the non-standard macros and procedures, import the {{chicken}}
+module.
 
 
 ==== module

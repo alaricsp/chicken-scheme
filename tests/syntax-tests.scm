@@ -231,4 +231,4 @@
 
 ;;; found by Jim Ursetto
 
-(let ((lambda 0)) (define (x) 1) (x))
+(let ((lambda 0)) (define (foo) 1) (foo))

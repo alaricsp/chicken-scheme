@@ -6,6 +6,7 @@ TODO for macro/module system					-*- Outline -*-
     or global macros will apply to local bodies that shadow global id locally:
     (define-syntax foo ...)
     (let () (define (foo) 1) (foo)) ; last expr uses foo macro
+**** partially implemented (but not for local syntax bindings)
 ** modules
 *** code-duplication in compiler and evaluator for ##core#module
 *** syntax-definitions in modules
@@ -13,7 +14,7 @@ TODO for macro/module system					-*- Outline -*-
     this may not be be sufficient (expansion assumes ids are imported in used
     context) [is this still relevant? we could simply reexport the ids used in
     in the expansion]
-*** "scheme" module does not include special forms ("define-syntax", etc.)
+*** "scheme" module does not include some special forms ("define-syntax", etc.)
 *** import-for-syntax imports value bindings into import-env
     should actually be a distinct meta-import-env.
 
@@ -35,6 +36,7 @@ TODO for macro/module system					-*- Outline -*-
 ** "ports" import library
 ** allow exporting all definitions
 ** "define-for-syntax" still right?
+** Jim suggests issuing warnings for refs to unimported ids inside modules
 
 * csi
 ** describe should print if symbol is interned
