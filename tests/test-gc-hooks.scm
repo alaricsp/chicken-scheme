@@ -1,6 +1,5 @@
 ;;;; test-gc-hooks.scm
 
-
 #>
 
 static int count = 0;

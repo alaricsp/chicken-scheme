@@ -265,33 +265,30 @@
     (and (not (member id '("/usr/include" "")))
 	 id) ) )
 
-(define compile-options
-  (if include-dir (list "-I" include-dir) '()))
+(define compile-options '())
+(define builtin-compile-options
+  (if include-dir (list (conc "-I" (quotewrap include-dir))) '()))
 
 (define compile-only-flag "-c")
 (define translation-optimization-options default-translation-optimization-options)
 (define compilation-optimization-options default-compilation-optimization-options)
 (define linking-optimization-options default-linking-optimization-options)
 
-(define link-options
+(define library-dir
+  (prefix "" "lib"
+         (if host-mode
+             INSTALL_LIB_HOME
+             TARGET_LIB_HOME)) )
+
+(define link-options '())
+(define builtin-link-options
   (cond ((or osx hpux-hppa mingw)
-	 (list (conc "-L" (quotewrap
-			   (prefix "" "lib"
-				   (if host-mode 
-				       INSTALL_LIB_HOME
-				       TARGET_LIB_HOME)) ))))
+	 (list (conc "-L" (quotewrap library-dir))))
         (msvc
-         (list (conc "-LIBPATH:" (quotewrap
-                                  (prefix "" "lib"
-                                          (if host-mode 
-                                              INSTALL_LIB_HOME
-                                              TARGET_LIB_HOME)) ))))
+         (list (conc "-LIBPATH:" (quotewrap library-dir))))
 	(else 
 	 (list
-	  (conc "-L" (quotewrap (prefix "" "lib"
-					(if host-mode
-					    INSTALL_LIB_HOME
-					    TARGET_LIB_HOME))))
+	  (conc "-L" (quotewrap library-dir))
 	  (conc " -Wl,-R" (quotewrap (prefix "" "lib"
 					     (if host-mode
 						 INSTALL_LIB_HOME
@@ -497,6 +494,10 @@
 
   (let loop ([args args])
     (cond [(null? args)
+           ;Builtin search directory options do not override explict options
+           (set! compile-options (append compile-options builtin-compile-options))
+           (set! link-options (append link-options builtin-link-options))
+           ;
 	   (when inquiry-only
 	     (when show-cflags (print* (compiler-options) #\space))
 	     (when show-ldflags (print* (linker-options) #\space))
