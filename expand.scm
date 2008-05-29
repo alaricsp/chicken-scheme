@@ -223,11 +223,12 @@
     "#" 
     (##sys#slot sym 1) ) ) )
 
-(define (##sys#alias-global-hook sym) 
+(define (##sys#alias-global-hook sym assign)
   (define (mrename sym)
     (cond ((##sys#current-module) => 
 	   (lambda (mod)
 	     (d "global alias " sym " -> " (module-name mod))
+	     (unless assign (##sys#register-undefined sym mod))
 	     (##sys#module-rename sym (module-name mod))))
 	  (else sym)))
   (cond ((##sys#qualified-symbol? sym) sym)
@@ -1141,11 +1142,12 @@
 	module-export-list module-defined-list set-module-defined-list!))
 
 (define-record-type module
-  (make-module name export-list defined-list vexports sexports) 
+  (make-module name export-list defined-list undefined-list vexports sexports) 
   module?
   (name module-name)			; SYMBOL
   (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
   (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)
+  (undefined-list module-undefined-list set-module-undefined-list!) ; (SYMBOL ...)
   (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
@@ -1158,8 +1160,13 @@
 
 (define (##sys#register-export sym mod #!optional val)
   (when mod
-    (let ((exp (##sys#find-export sym mod)))
-      (##sys#toplevel-definition-hook (##sys#module-rename sym (module-name mod)) mod exp val)
+    (let ((exp (##sys#find-export sym mod))
+	  (ulist (module-undefined-list mod)))
+      (##sys#toplevel-definition-hook
+       (##sys#module-rename sym (module-name mod)) 
+       mod exp val)
+      (when (memq sym ulist)
+	(set-module-undefined-list! mod (##sys#delq sym ulist)))
       (when exp
 	(d "defined: " sym)
 	(when (assq sym (module-defined-list mod))
@@ -1171,8 +1178,14 @@
 	 (cons (cons sym val)
 	       (module-defined-list mod)))))) )
 
+(define (##sys#register-undefined sym mod)
+  (when mod
+    (let ((ul (module-undefined-list mod)))
+      (unless (memq sym ul)
+	(set-module-undefined-list! mod (cons sym ul))))))
+
 (define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
-  (let ((mod (make-module name explist '() vexports sexports)))
+  (let ((mod (make-module name explist '() '() vexports sexports)))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
 
@@ -1192,7 +1205,7 @@
 
 (define (##sys#register-compiled-module name vexports sexports)
   (let ((mod (make-module 
-	      name '() '() 
+	      name '() '() '()
 	      vexports
 	      (map (lambda (se)
 		     (list (car se) '() (##sys#er-transformer (cdr se))))
@@ -1203,7 +1216,7 @@
 (define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
-	      name '() '() 
+	      name '() '() '()
 	      (map (lambda (ve)
 		     (if (symbol? ve)
 			 (cons ve ve)
@@ -1254,6 +1267,15 @@
        (unless (assq (car x) dlist)
 	 (##sys#warn "exported identifier has not been defined" (car x) name)))
      vexports)
+    (for-each
+     (lambda (u)
+       (unless (assq u dlist)
+	 (##sys#warn 
+	  (string-append
+	   "reference to possible unbound identifier `" 
+	   (##sys#symbol->string u)
+	   "'"))))
+     (module-undefined-list mod))
     (d `(EXPORTS: ,(module-name mod) ,(map car dlist)
 		  ,(map car vexports) ,(map car sexports)))
     (set-module-vexports! mod vexports)

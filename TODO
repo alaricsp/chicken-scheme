@@ -1,13 +1,9 @@
 TODO for macro/module system					-*- Outline -*-
 
 * bugs
-** macro expansion
-*** canonicalization of body has to keep track of introduced bindings
-    or global macros will apply to local bodies that shadow global id locally:
-    (define-syntax foo ...)
-    (let () (define (foo) 1) (foo)) ; last expr uses foo macro
-**** partially implemented (but not for local syntax bindings)
 ** modules
+*** exported macros do not inherit local se
+    and are thus unhygienic and require the importing context to import dependencies
 *** code-duplication in compiler and evaluator for ##core#module
 *** syntax-definitions in modules
     transformers use ##sys#meta-macro-environment + unset ##sys#current-module,
@@ -36,7 +32,6 @@ TODO for macro/module system					-*- Outline -*-
 ** "ports" import library
 ** allow exporting all definitions
 ** "define-for-syntax" still right?
-** Jim suggests issuing warnings for refs to unimported ids inside modules
 
 * csi
 ** describe should print if symbol is interned
@@ -55,3 +50,11 @@ TODO for macro/module system					-*- Outline -*-
 ** syntactic-closures?
 ** simple-macros
 ** alexpander
+
+* more bugs
+** macro expansion
+*** canonicalization of body has to keep track of introduced bindings
+    or global macros will apply to local bodies that shadow global id locally:
+    (define-syntax foo ...)
+    (let () (define (foo) 1) (foo)) ; last expr uses foo macro
+**** partially implemented (but not for local syntax bindings)

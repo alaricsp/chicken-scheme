@@ -499,7 +499,7 @@
 		    (foreign-type-convert-result
 		     (finish-foreign-result ft body)
 		     t) ) ) ]
-	    ((not (assq x0 se)) (##sys#alias-global-hook x)) ; only globals
+	    ((not (assq x0 se)) (##sys#alias-global-hook x #f)) ; only globals
 	    (else x))))
   
   (define (eval/meta form)
@@ -803,7 +803,7 @@
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
 			   (when (eq? var var0) ; global?
-			     (set! var (##sys#alias-global-hook var))
+			     (set! var (##sys#alias-global-hook var #t))
 			     (when safe-globals-flag
 			       (set! always-bound-to-procedure
 				 (lset-adjoin eq? always-bound-to-procedure var))

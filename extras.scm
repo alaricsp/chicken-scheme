@@ -73,11 +73,6 @@ EOF
 
 (include "unsafe-declarations.scm")
 
-(cond-expand
- ((not unsafe)
-  (declare (emit-exports "extras.exports")) ) 
- (else))
-
 (register-feature! 'extras)
 
 

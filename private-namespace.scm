@@ -61,5 +61,5 @@
 	'(void) ) ) ) ) )
 
 (set! ##sys#alias-global-hook
-  (lambda (var)
+  (lambda (var . assign)		; must work with old chicken
     (or (get var 'c:namespace) var) ) )

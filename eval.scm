@@ -294,7 +294,7 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
-			(let ((var (##sys#alias-global-hook j)))
+			(let ((var (##sys#alias-global-hook j #f)))
 			  (if ##sys#eval-environment
 			      (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
 				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" var))
@@ -402,7 +402,7 @@
 			    (receive (i j) (lookup var e se)
 			      (let ((val (compile (caddr x) e var tf cntr se)))
 				(cond [(not i)
-				       (let ((var (##sys#alias-global-hook j)))
+				       (let ((var (##sys#alias-global-hook j #t)))
 					 (if ##sys#eval-environment
 					     (let ([loc (##sys#hash-table-location
 							 ##sys#eval-environment 
