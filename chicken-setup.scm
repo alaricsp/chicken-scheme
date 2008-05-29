@@ -27,7 +27,7 @@
 
 (declare
   (run-time-macros)			;*** later: compile-syntax
-  (uses srfi-1 regex utils posix tcp srfi-18 srfi-13)
+  (uses srfi-1 regex utils posix tcp srfi-18 srfi-13 ports)
   (export move-file run:execute make/proc uninstall-extension
 	  install-extension install-program install-script setup-verbose-flag
 	  setup-install-flag installation-prefix chicken-prefix find-library

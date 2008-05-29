@@ -1,5 +1,8 @@
 TODO for macro/module system					-*- Outline -*-
 
+* documentation
+** chicken.texi needs to be regenerated
+
 * bugs
 ** modules
 *** exported macros do not inherit local se

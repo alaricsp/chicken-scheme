@@ -28,7 +28,7 @@
 (declare
  (unit srfi-69)
  (usual-integrations)
- #;(disable-warning redef) )
+ (disable-warning redef) ) ; hash-table-ref is an extended binding!
 
 (cond-expand
  [paranoia]

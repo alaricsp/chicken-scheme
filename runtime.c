@@ -9175,7 +9175,8 @@ static C_regparm C_uword C_fcall decode_size(C_char **str)
 }
 
 
-static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
+static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str,
+						C_word *dest)
 {
   unsigned long bits = *((*str)++) & 0xff;
   C_word *data, *dptr, val;
@@ -9259,7 +9260,10 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
     break;
     
   case C_SYMBOL_TYPE:
-    val = C_intern(ptr, size, *str);
+    if(dest == NULL) 
+      panic(C_text("invalid literal symbol destination"));
+
+    val = C_h_intern(dest, size, *str);
     *str += size;
     break;
 
@@ -9284,7 +9288,8 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
       *ptr += size;
 
       while(size--) {
-	*(dptr++) = decode_literal2(ptr, str);
+	*dptr = decode_literal2(ptr, str, dptr);
+	++dptr;
       }
     }
   }
@@ -9295,5 +9300,5 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str)
 
 C_regparm C_word C_fcall C_decode_literal(C_word **ptr, C_char *str)
 {
-  return decode_literal2(ptr, &str);
+  return decode_literal2(ptr, &str, NULL);
 }

@@ -54,6 +54,7 @@ csc.c
 csi.c
 eval.c
 data-structures.c
+ports.c
 extras.c
 library.c
 lolevel.c
@@ -75,6 +76,7 @@ tcp.c
 ueval.c
 uextras.c
 udata-structures.c
+uports.c
 ulibrary.c
 ulolevel.c
 uregex.c
@@ -103,7 +105,6 @@ chicken-setup.1
 chicken-setup.scm
 chicken.1
 chicken.h
-chicken.h.gch
 chicken.ico
 chicken.rc
 chicken.scm
@@ -117,6 +118,7 @@ csibatch.bat
 eval.scm
 extras.scm
 data-structures.scm
+ports.scm
 chicken-bug.1
 chicken-bug.scm
 chicken-bug.c
@@ -148,6 +150,7 @@ html/other-support-procedures.html
 html/parameters.html
 html/supported-language.html
 html/unit-data-structures.html
+html/unit-ports.html
 html/unit-eval.html
 html/unit-extras.html
 html/unit-library.html

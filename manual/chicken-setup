@@ -51,6 +51,13 @@ options {{-list}}, {{-version}}, {{-repository}} (without argument),
 {{-docindex}} is given, then all {{.setup}} scripts in the current
 directory are processed.
 
+==== Installing extensions that use libraries
+
+Sometimes an extension requires a C library to compile. Compilation can fail when your system has this library in a nonstandard location. Luckily, normally Chicken searches in the default locations {{/usr}} and {{/usr/local}}, and in the prefix where Chicken itself was installed. Sometimes this is not enough, so you'll need to supply chicken-setup with some extra hints to the C compiler/linker. Here's an example:
+
+  chicken-setup -c '-I/usr/pkg/include/mysql' -c '-L/usr/pkg/lib/mysql' -c '-L -R/usr/pkg/lib/mysql' mysql
+
+This installs the mysql egg with the extra compiler options -I and -L to set the include path and the library search path. The second -L switch passes the -R option directly to the linker, which causes the library path to get hardcoded into the resulting extension file (for systems that do not use ld.so.conf).
 
 === Creating extensions
 

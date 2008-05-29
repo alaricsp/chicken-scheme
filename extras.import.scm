@@ -26,12 +26,8 @@
 
 (##sys#register-primitive-module
  'extras
- '(call-with-input-string
-   call-with-output-string
-   format
+ '(format
    fprintf
-   make-input-port
-   make-output-port
    pp
    pretty-print
    pretty-print-width
@@ -47,11 +43,6 @@
    read-string!
    read-token
    sprintf
-   with-error-output-to-port
-   with-input-from-port
-   with-input-from-string
-   with-output-to-port
-   with-output-to-string
    write-byte
    write-line
    write-string))

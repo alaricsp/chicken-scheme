@@ -1,6 +1,4 @@
 #!/usr/bin/make -f
-export DH_COMPAT=4
-
 BUILD_ARCH = $(shell dpkg --print-installation-architecture)
 
 CFLAGS= -g
@@ -10,8 +8,7 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
      CFLAGS += -O2 -fno-strict-aliasing
 endif
 
-version=0.0.0
-major=0
+version=3.2
 
 MAKE:=$(MAKE) PLATFORM=linux
 PREFIX=/usr
@@ -29,7 +26,7 @@ build-stamp:
 	    INFODIR="$(PREFIX)/share/info" \
 	    SHAREDIR="$(PREFIX)/share" \
 	    EGGDIR="/var/lib/chicken/$(BINARYVERSION)" \
-	    MAKEINFO_PROGRAM_OPTIONS= \
+	    MAKEINFO_PROGRAM_OPTIONS="" \
 	    HOSTNAME=debian
 	touch build-stamp
 
@@ -37,12 +34,8 @@ clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
-#	-test -r /usr/share/misc/config.sub && \
-#	  cp -f /usr/share/misc/config.sub $(CURDIR)/config.sub
-#	-test -r /usr/share/misc/config.guess && \
-#	  cp -f /usr/share/misc/config.guess $(CURDIR)/config.guess
-	-$(MAKE) clean
-	-$(MAKE) distclean
+	$(MAKE) clean
+	$(MAKE) distclean
 	rm -f c_defaults.h
 	rm -f chicken_defaults.h
 	dh_clean
@@ -59,18 +52,18 @@ install: build
 # build system, but will not end up in the package.
 	$(MAKE) \
 	    install \
+            USE_HOST_PCRE=1 \
 	    PREFIX="$(CURDIR)/debian/tmp/usr" \
 	    MANDIR="$(CURDIR)/debian/tmp/usr/share/man" \
 	    INFODIR="$(CURDIR)/debian/tmp/usr/share/info" \
 	    SHAREDIR="$(CURDIR)/debian/tmp/usr/share" \
 	    EGGDIR="$(CURDIR)/debian/tmp/var/lib/chicken/$(BINARYVERSION)" \
-	    MAKEINFO_PROGRAM_OPTIONS= \
+	    MAKEINFO_PROGRAM_OPTIONS="" \
 	    HOSTNAME=debian
 
 binary-common:
 	dh_testdir
 	dh_testroot
-	dh_movefiles
 	dh_installdocs
 	dh_installman
 # The asterisk in chicken.info* is necessary, because Debian makeinfo
@@ -78,6 +71,7 @@ binary-common:
 # difficult to convince it to produce standalone Texinfo files. 
 	dh_installinfo chicken.info*
 	dh_installchangelogs ChangeLog.*
+	dh_install --sourcedir=debian/tmp
 	dh_link
 ifeq "$(findstring nostrip,$(DEB_BUILD_OPTIONS))" ""
 	dh_strip

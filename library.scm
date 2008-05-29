@@ -1855,8 +1855,8 @@ EOF
 
 (define open-input-file)
 (define open-output-file)
-(define close-input-file)
-(define close-output-file)
+(define close-input-port)
+(define close-output-port)
 
 (let ()
  

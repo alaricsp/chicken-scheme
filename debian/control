@@ -27,29 +27,27 @@ Priority: optional
 Replaces: chicken, chicken-dev
 Depends: ${shlibs:Depends}
 Conflicts: chicken, chicken-dev
-Description: Simple Scheme-to-C compiler - runtime
+Description: A practical and portable Scheme system - runtime
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C. 
  It uses the ideas presented in Baker's paper "Cheney on the MTA", and 
  has a small core and is easily extendable.
  .
  This package contains the shared library needed to run programs using
  chicken.
- .
- Homepage: http://www.call-with-current-continuation.org
+ 
 
 Package: libchicken-dev
 Architecture: any
 Section: libdevel
 Priority: optional
 Conflicts: chicken, chicken-dev
-Depends: libchicken0 (= ${Source-Version}), libpcre3-dev
+Depends: libchicken0 (= ${binary:Version}), libpcre3-dev
 Replaces: chicken, chicken-dev
-Description: Simple Scheme-to-C compiler - development
+Description: A practical and portable Scheme system - development
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
  It uses the ideas presented in Baker's paper "Cheney on the MTA", and
  has a small core and is easily extendable.
  .
  This package contains the header file and static library for developing
  with chicken.
- .
- Homepage: http://www.call-with-current-continuation.org
+

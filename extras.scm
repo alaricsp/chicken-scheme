@@ -27,7 +27,7 @@
 
 (declare
  (unit extras)
- (uses data-structures)
+ (uses data-structures ports)
  (usual-integrations)
  (disable-warning redef)
  (foreign-declare #<<EOF
@@ -74,7 +74,6 @@ EOF
 (include "unsafe-declarations.scm")
 
 (register-feature! 'extras)
-
 
 ;;; Read expressions from file:
 
@@ -303,118 +302,6 @@ EOF
   (##sys#write-char-0 (integer->char byte) port) )
 
 
-;;; Redirect standard ports:
-
-(define (with-input-from-port port thunk)
-  (##sys#check-port port 'with-input-from-port)
-  (fluid-let ([##sys#standard-input port])
-    (thunk) ) )
-
-(define (with-output-to-port port thunk)
-  (##sys#check-port port 'with-output-from-port)
-  (fluid-let ([##sys#standard-output port])
-    (thunk) ) )
-
-(define (with-error-output-to-port port thunk)
-  (##sys#check-port port 'with-error-output-from-port)
-  (fluid-let ([##sys#standard-error port])
-    (thunk) ) )
-
-
-;;; Extended string-port operations:
-  
-(define call-with-input-string 
-  (let ([open-input-string open-input-string])
-    (lambda (str proc)
-      (let ((in (open-input-string str)))
-	(proc in) ) ) ) )
-
-(define call-with-output-string
-  (let ((open-output-string open-output-string)
-	(get-output-string get-output-string) )
-    (lambda (proc)
-      (let ((out (open-output-string)))
-	(proc out)
-	(get-output-string out) ) ) ) )
-
-(define with-input-from-string
-  (let ((open-input-string open-input-string))
-    (lambda (str thunk)
-      (fluid-let ([##sys#standard-input (open-input-string str)])
-	(thunk) ) ) ) )
-
-(define with-output-to-string
-  (let ([open-output-string open-output-string]
-	[get-output-string get-output-string] )
-    (lambda (thunk)
-      (fluid-let ([##sys#standard-output (open-output-string)])
-	(thunk) 
-	(get-output-string ##sys#standard-output) ) ) ) )
-
-
-;;; Custom ports:
-;
-; - Port-slots:
-;
-;   10: last
-
-(define make-input-port
-  (lambda (read ready? close #!optional peek read-string read-line)
-    (let* ((class
-	    (vector 
-	     (lambda (p)		; read-char
-	       (let ([last (##sys#slot p 10)])
-		 (cond [peek (read)]
-		       [last
-			(##sys#setislot p 10 #f)
-			last]
-		       [else (read)] ) ) )
-	     (lambda (p)		; peek-char
-	       (let ([last (##sys#slot p 10)])
-		 (cond [peek (peek)]
-		       [last last]
-		       [else
-			(let ([last (read)])
-			  (##sys#setslot p 10 last)
-			  last) ] ) ) )
-	     #f				; write-char
-	     #f				; write-string
-	     (lambda (p)		; close
-	       (close)
-	       (##sys#setislot p 8 #t) )
-	     #f				; flush-output
-	     (lambda (p)		; char-ready?
-	       (ready?) )
-	     read-string		; read-string!
-	     read-line) )		; read-line
-	   (data (vector #f))
-	   (port (##sys#make-port #t class "(custom)" 'custom)) )
-      (##sys#setslot port 9 data) 
-      port) ) )
-
-(define make-output-port
-  (let ([string string])
-    (lambda (write close #!optional flush)
-      (let* ((class
-	      (vector
-	       #f			; read-char
-	       #f			; peek-char
-	       (lambda (p c)		; write-char
-		 (write (string c)) )
-	       (lambda (p s)		; write-string
-		 (write s) )
-	       (lambda (p)		; close
-		 (close)
-		 (##sys#setislot p 8 #t) )
-	       (lambda (p)		; flush-output
-		 (when flush (flush)) )
-	       #f			; char-ready?
-	       #f			; read-string!
-	       #f) )			; read-line
-	     (data (vector #f))
-	     (port (##sys#make-port #f class "(custom)" 'custom)) )
-	(##sys#setslot port 9 data) 
-	port) ) ) )
 
 
 ;;; Pretty print:

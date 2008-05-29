@@ -1,6 +1,5 @@
-;;;; stub.scm
+;;;; ports.import.scm - import library for "ports" module
 ;
-; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
 ;
@@ -25,9 +24,20 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(declare
-  (unit default_stub)
-  (uses library eval data-structures ports extras)
-  (not safe) )
-
-(let loop () (return-to-host) (loop))
+(##sys#register-primitive-module
+ 'ports
+ '(call-with-input-string
+   call-with-output-string
+   make-input-port
+   make-output-port
+   port-for-each
+   port-map
+   port-fold
+   make-broadcast-port
+   make-concatenated-port
+   with-error-output-to-port
+   with-input-from-port
+   with-input-from-string
+   with-output-to-port
+   with-output-to-string
+   with-error-output-to-port))
