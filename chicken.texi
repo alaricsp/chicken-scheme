@@ -25,7 +25,7 @@ Copyright 2007-2008 Felix Winkelmann and the Chicken Team
 This is the top node.
 @menu
 * The User's Manual::
-* Overview::
+* Getting started::
 * Basic mode of operation::
 * Using the compiler::
 * Using the interpreter::
@@ -39,11 +39,14 @@ This is the top node.
 * Parameters::
 * Unit library::
 * Unit eval::
+* Unit data-structures::
+* Unit ports::
 * Unit extras::
 * Unit srfi-1::
 * Unit srfi-4::
 * Unit srfi-13::
 * Unit srfi-14::
+* Unit srfi-69::
 * Unit match::
 * Unit regex::
 * Unit srfi-18::
@@ -66,16 +69,16 @@ This is the top node.
 * Acknowledgements::
 * Bibliography::
 @end menu
-@node The User's Manual, Overview, Top, Top
+@node The User's Manual, Getting started, Top, Top
 @chapter The User's Manual
 
 
-This is the user's manual for the Chicken Scheme compiler, version 3.0.6.
+This is the user's manual for the Chicken Scheme compiler, version 3.2.1.
 
 @table @b
-@item @ref{Overview, Overview}
+@item @ref{Getting started, Getting started}
 
-What is Chicken?
+What is CHICKEN and how do I use it?
 @item @ref{Basic mode of operation, Basic mode of operation}
 
 Compiling Scheme files.
@@ -111,38 +114,95 @@ A list of some of the people that have contributed to make CHICKEN what it is.
 Links to documents that may be of interest.
 
 @end table
-@node Overview, Basic mode of operation, The User's Manual, Top
-@chapter Overview
+@node Getting started, Basic mode of operation, The User's Manual, Top
+@chapter Getting started
 
 @menu
-* Overview - Features::
+* Getting started - Scheme::
+* Getting started - Chicken::
+* Getting started - Chicken repositories; websites; and community::
+* Getting started - Installing Chicken::
+* Getting started - Development environments::
+* Getting started - The Read-Eval-Print loop::
+* Getting started - The compiler::
+* Getting started - Installing an egg::
+* Getting started - Accessing C libraries::
 
 @end menu
 
 
-@b{CHICKEN is a compiler that translates Scheme source files into C}, which in turn can be fed to a C-compiler to generate a standalone executable.  An interpreter is also available and can be used as a scripting environment or for testing programs before compilation.
+Chicken is a compiler that translates Scheme source files into C, which in turn can be fed to a C compiler to generate a standalone executable.  An interpreter is also available and can be used as a scripting environment or for testing programs before compilation.
 
-This package is distributed under the @b{BSD license} and as such is free to use and modify. 
+This chapter is designed to get you started with Chicken programming, describing what it is and what it will do for you, and covering basic use of the system. With almost everything discussed here, there is more to the story, which the remainder of the manual reveals. Here, we only cover enough to get you started. Nonetheless, someone who knows Scheme already should be able to use this chapter as the basis for writing and running small Chicken programs. 
 
-The method of compilation and the design of the runtime-system follow closely Henry Baker's @uref{http://home.pipeline.com/~hbaker1/CheneyMTA.html, CONS Should Not CONS Its Arguments, Part II: Cheney on the M.T.A.} paper and expose a number of interesting properties:
+@node Getting started - Scheme, Getting started - Chicken,  , Getting started
+@section Scheme
+
+
+Scheme is a member of the Lisp family of languages, of which Common Lisp and Emacs Lisp are the other two widely-known members. As with Lisp dialects, Scheme features
 
 @itemize
-@item Consing (creation of data on the heap) is relatively inexpensive, because a generational garbage collection scheme is used, in which short-lived data structures are reclaimed extremely quickly.
+@item a wide variety of programming paradigms, including imperative, functional, and object-oriented
 
-@item Moreover, @code{call-with-current-continuation} is practically for free and CHICKEN does not suffer under any performance penalties if first-class continuations are used in complex ways.
+@item a very simple syntax, based upon nested parenthesization
+
+@item the ability to extend the language in meaningful and useful ways
+
+
+@end itemize
+In contrast to Common Lisp, Scheme is very minimal, and tries to include only those features absolutely necessary in programming. In contrast to Emacs Lisp, Scheme is not anchored into any one program (Emacs), and has a somewhat more modern language design. 
+
+Scheme is defined in a document called @emph{The Revised^5 Report on the Algorithmic Language Scheme}, or @emph{R5RS} for short. (Yes, it really has been revised five times, so an expanded version of its name would be @emph{The Revised Revised Revised Revised Revised Report}.)  A newer report, @emph{R6RS}, was  released in 2007, but this report has attracted considerable controversy, and not all Scheme implementations will be made compliant with it. Chicken essentially complies with R5RS. 
+
+Even though Scheme is consciously minimalist, it is recognized that a language must be more than a minimal core in order to be useful. Accordingly, the Scheme community uses a process known as `Scheme Requests For Implementation' (SRFI, pronounced `SUR-fee') to define new language features. A typical Scheme system therefore complies with one of the Scheme reports plus some or all of the accepted SRFIs. 
+
+A good starting point for Scheme knowledge is @uref{http://www.schemers.org, http://www.schemers.org}. There you will find the defining reports, FAQs, lists of useful books and other resources, and the SRFIs. 
+
+The Chicken community is at present developing tutorials for programmers who are new to Scheme but experienced with Python, Ruby, or other languages. These can be found on the Chicken wiki. 
+
+@node Getting started - Chicken, Getting started - Chicken repositories; websites; and community, Getting started - Scheme, Getting started
+@section Chicken
+
+
+Chicken is an implementation of Scheme that has many advantages.
+
+<blockquote> Chicken Scheme combines an optimising compiler with a reasonably fast interpreter.  It supports almost all of R5RS and the important SRFIs. The compiler generates portable C code that supports tail recursion, first-class continuations, and lightweight threads, and the interface to and from C libraries is flexible, efficient, and easy to use.  There are hundreds of contributed Chicken libraries that make the programmer's task easier.  The interpreter allows interactive use, fast prototyping, debugging, and scripting.  The active and helpful Chicken community fixes bugs and provides support.  Extensive documentation is supplied. </blockquote>
+
+Chicken was developed by Felix L. Winkelmann over the period from 2000 through 2007. In early 2008, Felix asked the community to take over the responsibility of developing and maintaining the system, though he still takes a strong interest in it, and participates actively. 
+
+Chicken includes 
+
+@itemize
+@item a Scheme interpreter that supports almost all of  R5RS Scheme, with   only a few relatively minor omissions, and with many extensions
+
+@item a compatible compiler whose target is C, thus making porting to new   machines and architectures relatively straightforward@itemize
+@item the C support allows Scheme code to include `embedded' C code,   thus making it relatively easy to invoke host OS or library   functions
+
+
+@end itemize
+
+
+@item a framework for language extensions, library modules that broaden   the functionality of the system
+
+
+@end itemize
+This package is distributed under the @b{BSD license} and as such is free to use and modify.
+
+Scheme cognoscenti will appreciate the method of compilation and the design of the runtime-system, which follow closely Henry Baker's @uref{http://home.pipeline.com/~hbaker1/CheneyMTA.html, CONS Should Not CONS Its Arguments, Part II: Cheney on the M.T.A.} paper and expose a number of interesting properties.
+
+@itemize
+@item Consing (creation of data on the heap) is relatively inexpensive,   because a generational garbage collection scheme is used, in which   short-lived data structures are reclaimed extremely quickly.
+
+@item Moreover, @code{call-with-current-continuation} is practically for free   and Chicken does not suffer under any performance penalties if   first-class continuations are used in complex ways.
 
 
 @end itemize
 The generated C code is fully tail-recursive.
 
-@node Overview - Features,  ,  , Overview
-@section Features
-
-
-Some of the features supported by CHICKEN:
+Some of the features supported by Chicken:
 
 @itemize
-@item SRFIs 0, 1, 2, 4, 6-19, 23, 25-31, 37-40, 42, 43, 45, 47, 55, 57, 60-63, 66, 69, 72, 78, 85 and 95.
+@item SRFIs 0, 1, 2, 4, 6-19, 23, 25-31, 37-40, 42, 43, 45, 47, 55, 57,   60-63, 66, 69, 72, 78, 85 and 95.
 
 @item Lightweight threads based on first-class continuations
 
@@ -156,7 +216,7 @@ Some of the features supported by CHICKEN:
 
 @item UNIX system calls and extended data structures
 
-@item Create interpreted or compiled shell scripts written in Scheme for UNIX or Windows
+@item Create interpreted or compiled shell scripts written in Scheme for   UNIX or Windows
 
 @item Compiled C files can be easily distributed
 
@@ -166,11 +226,399 @@ Some of the features supported by CHICKEN:
 
 
 @end itemize
-This manual is merely a reference for the CHICKEN system and assumes a working knowledge of Scheme.
+Chicken has been used in many environments ranging from embedded systems through desktop machines to large-scale server deployments.   The number of language extensions, or @b{eggs}, will soon reach 400, including
 
-Back to @ref{The User's Manual, The User's Manual} 
+@itemize
+@item extended language features
 
-@node Basic mode of operation, Using the compiler, Overview, Top
+@item development tools, such as documentation generators, debugging, and   automated testing libraries
+
+@item interfaces to other languages such as Java, Python, and Objective-C
+
+@item interfaces to database systems, GUIs, and other large-scale   libraries,
+
+@item network applications, such as servers and clients for ftp,   smtp/pop3, irc, and http
+
+@item web servers and related tools, including URL parsing, HTML   generation, AJAX, and HTTP session management
+
+@item data formats, including XML, JSON, and Unicode support
+
+
+@end itemize
+Chicken is supported by SWIG (Simplified Wrapper and Interface Generator), a tool that produces quick-and-dirty interface modules for C libraries (@uref{http://www.swig.org, http://www.swig.org}). 
+
+This chapter provides you with an overview of the entire system, with enough information to get started writing and running small Scheme programs. Subsequent chapters cover
+
+@itemize
+@item @ref{Basic mode of operation, Basic mode of operation}: Compiling Scheme files.
+
+@item @ref{Using the compiler, Using the compiler}: Explains how to use Chicken to compile   programs and execute them.
+
+@item @ref{Using the interpreter, Using the interpreter}: Invocation and usage of @code{csi}, the   Chicken interpreter
+
+@item @ref{Supported language, Supported language}: The language implemented by Chicken   (deviations from the standard and extensions).
+
+@item @ref{Interface to external functions and variables, Interface to external functions and variables}: Accessing C and   C++ code and data.
+
+@item @ref{chicken-setup, chicken-setup}: Packaging and installing extension libraries.
+
+@item @ref{Data representation, Data representation}: How Scheme data is internally represented.
+
+@item @ref{Bugs and limitations, Bugs and limitations}: Yes, there are some.
+
+@item @ref{FAQ, FAQ}: A list of Frequently Asked Questions about Chicken (and   their answers!).
+
+@item @ref{Acknowledgements, Acknowledgements}: A list of some of the people that have   contributed to make Chicken what it is.
+
+@item @ref{Bibliography, Bibliography}: Links to documents that may be of interest.
+
+
+@end itemize
+@node Getting started - Chicken repositories; websites; and community, Getting started - Installing Chicken, Getting started - Chicken, Getting started
+@section Chicken repositories, websites, and community
+
+
+At present, the URLs for Chicken information and download are somewhat confusing. It is envisaged that everything will eventually be accessible via the  domain @code{chicken-scheme.org}, but this hasn't been completely done. 
+
+At present, the master Chicken website is @uref{http://www.call-with-current-continuation.org, http://www.call-with-current-continuation.org}. Here you can find basic information about Chicken, downloads, and pointers to other key resources. 
+
+The Chicken wiki (@uref{http://chicken.wiki.br, http://chicken.wiki.br}) contains the most current version of the User's manual, along with various tutorials and other useful documents. The list of eggs is at @uref{http://chicken.wiki.br/Eggs%20Unlimited%203, http://chicken.wiki.br/Eggs%20Unlimited%203}. 
+
+A very useful search facility for questions about Chicken is found at @uref{http://www.callcc.org, http://www.callcc.org}. The Chicken issue tracker is at @uref{http://trac.callcc.org, http://trac.callcc.org}. 
+
+The Chicken community has two major mailing lists. If you are a Chicken user, @code{Chicken-Users} (@uref{http://lists.nongnu.org/mailman/listinfo/chicken-users, http://lists.nongnu.org/mailman/listinfo/chicken-users}) will be of interest. The crew working on the Chicken system itself uses the very low-volume @code{Chicken-Hackers} list (@uref{http://lists.nongnu.org/mailman/listinfo/chicken-hackers, http://lists.nongnu.org/mailman/listinfo/chicken-hackers}) for communication.  
+
+@node Getting started - Installing Chicken, Getting started - Development environments, Getting started - Chicken repositories; websites; and community, Getting started
+@section Installing Chicken
+
+
+Chicken is available in binary form for Windows and Linux/x86 systems, and in source form for all other platforms. Refer to the @code{README} file in the distribution for instructions on installing it on your system. 
+
+Because it compiles to C, Chicken requires that a C compiler be installed on your system. (If you're not writing embedded C code, you can pretty much ignore the C compiler once you have installed it.) 
+
+@itemize
+@item On a Linux system, the GNU Compiler Collection (@code{gcc}) should be   installed as part of the basic operating system, or should be   available through the package management system (e.g., APT,   Synaptic, RPM, or Yum, depending upon your Linux distribution).
+
+@item On Macintosh OS X, you will need the XCode tools, which are shipped   on the OS X DVD with recent versions of the operating system.
+
+@item On Windows, you have three choices.@itemize
+@item Cygwin (@uref{http://sources.redhat.com/cygwin, http://sources.redhat.com/cygwin}) provides a relatively   full-featured Unix environment for Windows.  Chicken works   substantially the same in Cygwin and Unix.
+
+@item The GNU Compiler Collection has been ported to Windows, in the   MinGW system (@uref{http://mingw.sourceforge.net, http://mingw.sourceforge.net}). Unlike Cygwin,   executables produced with MinGW do not need the Cygwin DLLs in order   to run.   MSys is a companion package to MinGW; it provides a minimum   Unix-style development/build environment, again ported from free   software.@itemize
+@item You can build Chicken either with MinGW alone or with MinGW plus    MSys. Both approaches produce a Chicken built against the mingw headers    and import libraries.   The only difference is the environment where you actually run make.   @code{Makefile.mingw} is can be used in @code{cmd.exe} with the version of make   that comes with mingw.  @code{Makefile.mingw-msys}    uses unix commands such as @code{cp} and @code{rm}.  The end product is the   same.
+
+
+@end itemize
+
+
+@item Microsoft Visual Studio will soon be supported, including the   Express edition, which is a non-free but no-cost compiler suite   available from Microsoft   (@uref{http://www.microsoft.com/express/vc, http://www.microsoft.com/express/vc}). Chicken supports   command-line building using the command-line C/C++ compiler.@itemize
+@item Visual   Studio users will want to install the Unix Utilities, available at   @uref{http://www.call-with-current-continuation.org/tarballs/UnxUtils.zip, http://www.call-with-current-continuation.org/tarballs/UnxUtils.zip},   in order to get suitable versions of @code{make}, @code{tar}, @code{gzip}, and   similar commands.
+
+
+@end itemize
+
+
+
+@end itemize
+
+
+
+@end itemize
+Refer to the @code{README} file for the version you're installing for more information on the installation process. 
+
+@node Getting started - Development environments, Getting started - The Read-Eval-Print loop, Getting started - Installing Chicken, Getting started
+@section Development environments
+
+
+The simplest development environment is a text editor and terminal window (Windows: Command Prompt, OSX: Terminal, Linux/Unix: xterm) for using the interpreter and/or calling the compiler. If you @uref{http://chicken.wiki.br/readline, install the @code{readline} egg}, you have all the benefits of command history in the interpreter, Emacs or vi-compatible line editing, and customization.
+
+You will need a text editor that knows Scheme; it's just too painful with editors that don't do parenthesis matching and proper indentation. Some editors allow you to execute Scheme code directly in the editor. This makes programming very interactive: you can type in a function and then try it right away. This feature is very highly recommended. 
+
+As programmers have very specific tastes about editors, the editors listed here are shown in alphabetic order. We aren't about to tell you which editor to use, and there may be editors not shown here that might satisfy your needs. We would be very interested in reports of other editors that have been used with Chicken, especially those that support interactive evaluation of forms during editing. Pointers to these (and to any editor customization files appropriate) should be put on the Chicken wiki, and will likely be added to future editions of this manual. (We have had a request for editors that support proportional fonts, in particular.) 
+
+@itemize
+@item Emacs (@uref{http://www.gnu.org/software/emacs, http://www.gnu.org/software/emacs}) is an extensible, customizable, self-documenting editor available for Linux/Unix, Macintosh, and Windows systems; CHICKEN provides Emacs support out of the box, with the @code{hen.el} Emacs Lisp file. Consult the `Emacs Guide for Chicken Users' (which will be available on the Chicken Wiki soon) for information on setting up and using Emacs with Chicken.
+
+@item Epsilon (@uref{http://www.lugaru.com, http://www.lugaru.com}) is a commercial (proprietary) text editor whose design was inspired by Emacs. Although Scheme support isn't provided, a Lisp mode is available on Lugaru's FTP site, and could with some work be made to duplicate the Emacs support.
+
+@item SciTE (@uref{http://scintilla.sourceforge.net/SciTE.html, http://scintilla.sourceforge.net/SciTE.html}),  unlike Emacs or Vim, follows typical graphical UI design conventions and control-key mappings, and for simple tasks is as familiar and easy to use as Notepad, KEdit, TeachText etc.  However it has many programming features such as multiple open files, syntax highlighting for a large number of languages (including Lisps), matching of brackets, ability to fold sections of code based on the matched brackets, column selections, comment/uncomment, and the ability to run commands in the same directory as the current file (such as make, grep, etc.)  SciTE is written with the GTK toolkit and is portable to any GTK platform, including Windows, Linux and MacOS.  It uses the Scintilla text-editing component, which lends itself well to embedding within other IDEs and graphical toolkits. It does not have any other Scheme-specific features, but being open-source and modular, features like auto-formatting of S-expressions could be added.  The syntax highlighting can be configured to use different fonts for different types of syntax, including proportional fonts.
+
+@item Vim (@uref{http://www.vim.org, http://www.vim.org}) is a highly configurable text editor built to enable efficient and fast text editing. It is an improved version of the vi editor distributed with most UNIX systems. Vim comes with generic Lisp (and therefore Scheme) editing capabilities out of the box. A few tips on using Vim with Chicken can be found at  @uref{http://cybertiggyr.com/gene/15-vim/, http://cybertiggyr.com/gene/15-vim/}.
+
+
+@end itemize
+In the rest of this chapter, we'll assume that you are using an editor of your choice and a regular terminal window for executing your Chicken code. 
+
+@node Getting started - The Read-Eval-Print loop, Getting started - The compiler, Getting started - Development environments, Getting started
+@section The Read-Eval-Print loop
+
+@menu
+* Getting started - The Read-Eval-Print loop - Scripts::
+
+@end menu
+
+
+To invoke the Chicken interpreter, you use the @code{csi} command. 
+
+@verbatim
+$ csi
+CHICKEN
+(c)2008 The Chicken Team
+(c)2000-2007 Felix L. Winkelmann
+Version 3.1.2 - macosx-unix-gnu-x86	[ manyargs dload ptables applyhook ]
+SVN rev. 10185	compiled 2008-03-27 on argyre.local (Darwin)
+#;1>
+@end verbatim
+This brings up a brief banner, and then the prompt. You can use this pretty much like any other Scheme system, e.g., 
+
+@verbatim
+#;1> (define (twice f) (lambda (x) (f (f x))))
+#;2> ((twice (lambda (n) (* n 10))) 3)
+300
+@end verbatim
+Suppose  we have already created a file @code{fact.scm} containing a  function definition. 
+
+@verbatim
+(define (fact n)
+  (if (= n 0)
+      1
+      (* n (fact (- n 1)))))
+@end verbatim
+We can now load this file and try out the function. 
+
+@verbatim
+#;3> (load "fact.scm")
+; loading fact.scm ...
+#;4> (fact 3)
+6
+@end verbatim
+The @b{read-eval-print loop} (@b{REPL}) is the component of the Scheme system that @emph{reads} a Scheme expression, @emph{eval}uates it, and @emph{prints} out the result. The REPL's prompt can be customized (see the @uref{http:Using%20the%20interpreter, `Using the Interpreter'}) but the default prompt, showing the number of the form, is quite convenient. 
+
+The REPL also supports debugging commands:  input lines beginning with a @code{,} (comma) are treated as special commands. (See the @ref{Using the interpreter - Toplevel commands, full list}.) We can @b{trace} @code{fact} to see how it works. 
+
+@verbatim
+#;5> ,tr fact
+#;5> (fact 3)
+|(fact 3)
+| (fact 2)
+|  (fact 1)
+|   (fact 0)
+|   fact -> 1 
+|  fact -> 1 
+| fact -> 2 
+|fact -> 6 
+6
+@end verbatim
+The command number didn't increment, because the @code{tr} command isn't actually a Scheme @emph{form}. 
+
+@node Getting started - The Read-Eval-Print loop - Scripts,  ,  , Getting started - The Read-Eval-Print loop
+@subsection Scripts
+
+
+You can use the interpreter to run a Scheme program from the command line. Here we create a program that does a quick search-and-replace on an input file; the arguments are a regular expression and a replacement string.
+
+@verbatim
+$ cat quickrep.dat
+xyzabcghi
+abxawxcgh
+foonly 
+$ csi -ss quickrep.scm <quickrep.dat 'a.*c' A
+xyzAghi
+Agh
+foonly 
+@end verbatim
+The @code{-ss} option sets several options that work smoothly together to execute a script. You can make the command directly executable from the shell by inserting a `@ref{Using the interpreter - Writing Scheme scripts, shebang line}' at the beginning of the program.
+
+@code{regex}, the regular expression library, is one of the libraries included with Chicken. 
+
+@verbatim
+(use regex) 
+(define (process-line line re rplc) 
+  (string-substitute re rplc line 'all))
+(define (quickrep re rplc) 
+  (let ((line (read-line)))
+    (if (not (eof-object? line))
+        (begin 
+          (display (process-line line re rplc))
+          (newline)
+          (quickrep re rplc)))))
+;;; Does a lousy job of error checking!
+(define (main args)
+  (quickrep (regexp (car args)) (cadr args)))
+@end verbatim
+The @code{-ss} option arranges to call a procedure named @code{main}, with the command line arguments, packed in a list, as its arguments. (There are a number of ways this program could be made more idiomatic Chicken Scheme, see the rest of the manual for details.)
+
+@node Getting started - The compiler, Getting started - Installing an egg, Getting started - The Read-Eval-Print loop, Getting started
+@section The compiler
+
+
+There are several reasons you might want to compile your code. 
+
+@itemize
+@item Compiled code executes substantially faster than interpreted   code.
+
+@item You might want to deploy an application onto machines where the   users aren't expected to have Chicken installed: compiled   applications can be self-contained.
+
+
+@end itemize
+The Chicken compiler is provided as the command @code{chicken}, but in almost all cases, you will want to use the @code{csc} command instead. @code{csc} is a convenient driver that automates compiling Scheme programs into C, compiling C code into object code, and linking the results into an executable file. (Note: in a Windows environment with Visual Studio, you may find that @code{csc} refers to Microsoft's C# compiler. There are a number of ways of sorting this out, of which the simplest is to rename one of the two tools, and/or to  organize your @code{PATH} according to the task at hand.)
+
+Compiled code can be intermixed with interpreted code on systems that support dynamic loading, which includes modern versions of *BSD, Linux, Mac OS X, Solaris, and Windows. 
+
+We can compile our factorial function, producing a file named @code{fact.so} (`shared object' in Linux-ese, the same file type is used in OS X and Windows, rather than @code{dylib} or @code{dll}, respectively). 
+
+@verbatim
+chicken$ csc -dynamic fact.scm
+chicken$ csi -quiet
+#;1> (load "fact.so")
+; loading fact.so ...
+#;2> (fact 6)
+720
+@end verbatim
+On any system, we can just compile a program directly into an executable. Here's a program that tells you whether its argument is a palindrome. 
+
+@verbatim
+(define (palindrome? x)
+  (define (check left right)
+    (if (>= left right)
+        #t
+        (and (char=? (string-ref x left) (string-ref x right))
+             (check (add1 left) (sub1 right)))))
+  (check 0 (sub1 (string-length x))))
+(let ((arg (car (command-line-arguments))))
+  (display 
+   (string-append arg 
+                  (if (palindrome? arg) 
+                      " is a palindrome\n"
+                      " isn't a palindrome\n"))))
+ 
+@end verbatim
+We can compile this program using @code{csc}, creating an executable named @code{palindrome}. 
+
+@verbatim
+$ csc -o palindrome palindrome.scm
+$ ./palindrome level
+level is a palindrome
+$ ./palindrome liver
+liver isn't a palindrome
+@end verbatim
+Chicken supports separate compilation, using some extensions to Scheme. Let's divide our palindrome program into a library module (@code{pal-proc.scm}) and a client module (@code{pal-user.scm}). 
+
+Here's the external library. We @code{declare} that @code{pal-proc} is a `unit', which is the basis of separately-compiled modules in Chicken. (Units deal with separate compilation, but don't involve separated namespaces; namespaced module systems are available as eggs.)
+
+@verbatim
+;;; Library pal-proc.scm
+(declare (unit pal-proc))
+(define (palindrome? x)
+  (define (check left right)
+    (if (>= left right)
+        #t
+        (and (char=? (string-ref x left) (string-ref x right))
+             (check (add1 left) (sub1 right)))))
+  (check 0 (sub1 (string-length x))))
+@end verbatim
+Next we have some  client code that `uses' this separately-compiled module.  
+
+@verbatim
+;;; Client pal-user.scm
+(declare (uses pal-proc))
+(let ((arg (car (command-line-arguments))))
+  (display 
+   (string-append arg 
+                  (if (palindrome? arg) 
+                      " is a palindrome\n"
+                      " isn't a palindrome\n"))))
+@end verbatim
+Now we can compile and link everything together. (We show the compile and link operations separately, but they can of course be combined into one command.) 
+
+@verbatim
+$ csc -c pal-proc.scm
+$ csc -c pal-user.scm
+$ csc -o pal-separate pal-proc.o pal-user.o
+$ ./pal-separate level
+level is a palindrome
+@end verbatim
+@node Getting started - Installing an egg, Getting started - Accessing C libraries, Getting started - The compiler, Getting started
+@section Installing an egg
+
+
+Installing eggs is quite straightforward on systems that support dynamic loading (again, that would include *BSD, Linux, Mac OS X, Solaris, and Windows).  The command @code{chicken-setup} will fetch an egg from the master Chicken repository, and install it on your local system.
+
+In this example, we install the @code{uri} egg, for parsing Uniform Resource Identifiers. The installation produces a lot of output, which we have edited for space reasons.
+
+@verbatim
+$ chicken-setup uri
+@end verbatim
+@verbatim
+The extension uri does not exist.
+Do you want to download it ? (yes/no/abort) [yes] yes
+downloading uri.egg from (www.call-with-current-continuation.org eggs/3 80) 
+  gzip -d -c ../uri.egg | tar xf -
+.  /Users/vmanis/local/bin/csc -feature compiling-extension 
+     -s -O2 -d1 uri.scm -o uri.so -check-imports -emit-exports uri.exports
+... (lots of stuff elided)
+.  rm -fr /Users/vmanis/project/chicken/uri.egg
+@end verbatim
+First, @code{chicken-setup} asks us if we want to download the egg. It then uncompresses the egg, compiles the code, and installs the egg in the local Chicken repository. 
+
+Now we can use our new egg. 
+
+@verbatim
+#;1> (use uri)
+; loading /Users/vmanis/local/lib/chicken/3/uri.so ...
+; loading /Users/vmanis/local/lib/chicken/3/coerce-support.so ...
+; loading /Users/vmanis/local/lib/chicken/3/misc-extn-list-support.so ...
+; loading /Users/vmanis/local/lib/chicken/3/synch-support.so ...
+; loading /Users/vmanis/local/lib/chicken/3/lookup-table.so ...
+; loading /Users/vmanis/local/lib/chicken/3/misc-extn-control-support.so ...
+#;2> (uri-host (uri "uref{http://www.foobar.org/blah, http://www.foobar.org/blah}"))
+"www.foobar.org"
+@end verbatim
+@node Getting started - Accessing C libraries,  , Getting started - Installing an egg, Getting started
+@section Accessing C libraries
+
+
+Because Chicken compiles to C, and because a foreign function interface is built into the compiler, interfacing to a C library is quite straightforward. This means that nearly any facility available on the host system is accessible from Chicken, with more or less work. 
+
+Let's create a simple C library, to demonstrate how this works. Here we have a function that will compute and return the @b{n}th Fibonacci number. (This isn't a particularly good use of C here, because we could write this function just as easily in Scheme, but a real example would take far too much space here.) 
+
+@verbatim
+int fib(int n) {
+  int prev = 0, curr = 1;
+  int next; 
+  int i; 
+  for (i = 0; i < n; i++) {
+    next = prev + curr;
+    prev = curr;
+    curr = next; 
+  }
+  return curr;
+} 
+@end verbatim
+Now we can call this function from Chicken. 
+
+@verbatim
+#>
+  extern fib(int n);
+<# 
+(define xfib (foreign-lambda int "fib" int))
+(do ((i 0 (+ i 1))) ((> i 10))
+  (printf "~A " (xfib i)))
+(newline)
+@end verbatim
+The syntax @code{#>...<#} allows you to include literal C (typically external declarations) in your Chicken code. We access @code{fib} by defining a @code{foreign-lambda} for it, in this case saying that the function takes one integer argument (the @code{int} after the function name), and that it returns an integer result (the @code{int} before.) Now we can invoke @code{xfib} as though it were an ordinary Scheme function. 
+
+@verbatim
+$ gcc -c fib.c
+$ csc -o fib-user fib.o fib-user.scm
+$ ./fib-user
+0 1 1 2 3 5 8 13 21 34 55 
+@end verbatim
+Those who are interfacing to substantial C libraries should consider using the  easyffi egg, or SWIG. 
+
+Back to @ref{The User's Manual, The User's Manual} Next: @ref{Basic mode of operation, Basic mode of operation} 
+
+@node Basic mode of operation, Using the compiler, Getting started, Top
 @chapter Basic mode of operation
 
 
@@ -197,7 +645,7 @@ Macro definitions are only available when processed by @code{include} or @code{r
 
 On platforms that support dynamic loading of compiled code ( Windows, most ELF based systems like Linux or BSD, MacOS X, and others) code can be compiled into a shared object @code{.dll}, @code{.so}, @code{.dylib}) and loaded  dynamically into a running application.
 
-Previous: @ref{The User's Manual, The User's Manual} Next: @ref{Using the compiler, Using the compiler}  
+Previous: @ref{Getting started, Getting started} Next: @ref{Using the compiler, Using the compiler}  
 
 @node Using the compiler, Using the interpreter, Basic mode of operation, Top
 @chapter Using the compiler
@@ -1085,17 +1533,21 @@ Next: @ref{Supported language, Supported language}
 
 @item @ref{Unit eval, Unit eval} evaluation and macro-handling
 
+@item @ref{Unit data-structures, Unit data-structures} data structures
+
 @item @ref{Unit ports, Unit ports} I/O ports
 
 @item @ref{Unit extras, Unit extras} useful utility definitions
 
-@item @ref{Unit srfi-1, Unit srfi-1} List Library
+@item @ref{Unit srfi-1, Unit srfi-1} list library
 
-@item @ref{Unit srfi-4, Unit srfi-4} Homogeneous numeric vectors
+@item @ref{Unit srfi-4, Unit srfi-4} homogeneous numeric vectors
 
-@item @ref{Unit srfi-13, Unit srfi-13} String library
+@item @ref{Unit srfi-13, Unit srfi-13} string library
 
 @item @ref{Unit srfi-14, Unit srfi-14} character set library
+
+@item @ref{Unit srfi-69, Unit srfi-69} hash tables
 
 @item @ref{Unit match, Unit match} pattern matching runtime-support
 
@@ -1332,7 +1784,7 @@ A multiline @emph{block} comment. May be nested. Implements @uref{http://srfi.sc
 @verbatim
 #;EXPRESSION
 @end verbatim
-Treats @code{EXPRESSION} as a comment.
+Treats @code{EXPRESSION} as a comment.  That is, the comment runs through the whole S-expression, regardless of newlines, which saves you from having to comment out every line, or add a newline in the middle of your parens to make the commenting of the last line work, or other things like that.
 
 @node Non-standard read syntax - External Representation, Non-standard read syntax - Syntax Expression, Non-standard read syntax - Expression Comment, Non-standard read syntax
 @section External Representation
@@ -4386,7 +4838,7 @@ Previous: @ref{Parameters, Parameters}
 
 Next: @ref{Unit eval, Unit eval}  
 
-@node Unit eval, Unit extras, Unit library, Top
+@node Unit eval, Unit data-structures, Unit library, Top
 @chapter Unit eval
 
 @menu
@@ -4725,48 +5177,44 @@ Previous: @ref{Unit library, Unit library}
 
 Next: @ref{Unit extras, Unit extras}  
 
-@node Unit extras, Unit srfi-1, Unit eval, Top
-@chapter Unit extras
+@node Unit data-structures, Unit ports, Unit eval, Top
+@chapter Unit data-structures
 
 @menu
-* Unit extras - Lists::
-* Unit extras - String-port extensions::
-* Unit extras - Formatted output::
-* Unit extras - Hash tables::
-* Unit extras - Queues::
-* Unit extras - Sorting::
-* Unit extras - Random numbers::
-* Unit extras - Input/Output extensions::
-* Unit extras - Strings::
-* Unit extras - Combinators::
-* Unit extras - Binary searching::
+* Unit data-structures - Lists::
+* Unit data-structures - Queues::
+* Unit data-structures - Sorting::
+* Unit data-structures - Random numbers::
+* Unit data-structures - Strings::
+* Unit data-structures - Combinators::
+* Unit data-structures - Binary searching::
 
 @end menu
 
 
-This unit contains a collection of useful utility definitions.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+This unit contains a collection of procedures related to data structures.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
 
-@node Unit extras - Lists, Unit extras - String-port extensions,  , Unit extras
+@node Unit data-structures - Lists, Unit data-structures - Queues,  , Unit data-structures
 @section Lists
 
 @menu
-* Unit extras - Lists - alist-ref::
-* Unit extras - Lists - alist-update!::
-* Unit extras - Lists - atom?::
-* Unit extras - Lists - rassoc::
-* Unit extras - Lists - butlast::
-* Unit extras - Lists - chop::
-* Unit extras - Lists - compress::
-* Unit extras - Lists - flatten::
-* Unit extras - Lists - intersperse::
-* Unit extras - Lists - join::
-* Unit extras - Lists - shuffle::
-* Unit extras - Lists - tail?::
+* Unit data-structures - Lists - alist-ref::
+* Unit data-structures - Lists - alist-update!::
+* Unit data-structures - Lists - atom?::
+* Unit data-structures - Lists - rassoc::
+* Unit data-structures - Lists - butlast::
+* Unit data-structures - Lists - chop::
+* Unit data-structures - Lists - compress::
+* Unit data-structures - Lists - flatten::
+* Unit data-structures - Lists - intersperse::
+* Unit data-structures - Lists - join::
+* Unit data-structures - Lists - shuffle::
+* Unit data-structures - Lists - tail?::
 
 @end menu
 
 
-@node Unit extras - Lists - alist-ref, Unit extras - Lists - alist-update!,  , Unit extras - Lists
+@node Unit data-structures - Lists - alist-ref, Unit data-structures - Lists - alist-update!,  , Unit data-structures - Lists
 @subsection alist-ref
 
 
@@ -4775,7 +5223,7 @@ This unit contains a collection of useful utility definitions.  This unit is use
 @end verbatim
 Looks up @code{KEY} in @code{ALIST} using @code{TEST} as the comparison function (or @code{eqv?} if no test was given) and returns the cdr of the found pair, or @code{DEFAULT} (which defaults to @code{#f}).
 
-@node Unit extras - Lists - alist-update!, Unit extras - Lists - atom?, Unit extras - Lists - alist-ref, Unit extras - Lists
+@node Unit data-structures - Lists - alist-update!, Unit data-structures - Lists - atom?, Unit data-structures - Lists - alist-ref, Unit data-structures - Lists
 @subsection alist-update!
 
 
@@ -4784,7 +5232,7 @@ Looks up @code{KEY} in @code{ALIST} using @code{TEST} as the comparison function
 @end verbatim
 If the list @code{ALIST} contains a pair of the form @code{(KEY . X)}, then this procedure replaces @code{X} with @code{VALUE} and returns @code{ALIST}. If @code{ALIST} contains no such item, then @code{alist-update!} returns @code{((KEY . VALUE) . ALIST)}. The optional argument @code{TEST} specifies the comparison procedure to search a matching pair in @code{ALIST} and defaults to @code{eqv?}.
 
-@node Unit extras - Lists - atom?, Unit extras - Lists - rassoc, Unit extras - Lists - alist-update!, Unit extras - Lists
+@node Unit data-structures - Lists - atom?, Unit data-structures - Lists - rassoc, Unit data-structures - Lists - alist-update!, Unit data-structures - Lists
 @subsection atom?
 
 
@@ -4793,7 +5241,7 @@ If the list @code{ALIST} contains a pair of the form @code{(KEY . X)}, then this
 @end verbatim
 Returns @code{#t} if @code{X} is not a pair. This is identical to @code{not-pair?} from @ref{Unit srfi-1, Unit srfi-1} but kept for historical reasons.
 
-@node Unit extras - Lists - rassoc, Unit extras - Lists - butlast, Unit extras - Lists - atom?, Unit extras - Lists
+@node Unit data-structures - Lists - rassoc, Unit data-structures - Lists - butlast, Unit data-structures - Lists - atom?, Unit data-structures - Lists
 @subsection rassoc
 
 
@@ -4802,7 +5250,7 @@ Returns @code{#t} if @code{X} is not a pair. This is identical to @code{not-pair
 @end verbatim
 Similar to @code{assoc}, but compares @code{KEY} with the @code{cdr} of each pair in @code{LIST} using @code{TEST} as the comparison procedures (which defaults to @code{eqv?}.
 
-@node Unit extras - Lists - butlast, Unit extras - Lists - chop, Unit extras - Lists - rassoc, Unit extras - Lists
+@node Unit data-structures - Lists - butlast, Unit data-structures - Lists - chop, Unit data-structures - Lists - rassoc, Unit data-structures - Lists
 @subsection butlast
 
 
@@ -4811,7 +5259,7 @@ Similar to @code{assoc}, but compares @code{KEY} with the @code{cdr} of each pai
 @end verbatim
 Returns a fresh list with all elements but the last of @code{LIST}.
 
-@node Unit extras - Lists - chop, Unit extras - Lists - compress, Unit extras - Lists - butlast, Unit extras - Lists
+@node Unit data-structures - Lists - chop, Unit data-structures - Lists - compress, Unit data-structures - Lists - butlast, Unit data-structures - Lists
 @subsection chop
 
 
@@ -4824,7 +5272,7 @@ Returns a new list of sublists, where each sublist contains @code{N} elements of
 (chop '(1 2 3 4 5 6) 2) =@strong{=>} ((1 2) (3 4) (5 6))
 (chop '(a b c d) 3)     =@strong{=>} ((a b c) (d))
 @end example
-@node Unit extras - Lists - compress, Unit extras - Lists - flatten, Unit extras - Lists - chop, Unit extras - Lists
+@node Unit data-structures - Lists - compress, Unit data-structures - Lists - flatten, Unit data-structures - Lists - chop, Unit data-structures - Lists
 @subsection compress
 
 
@@ -4837,7 +5285,7 @@ Returns a new list with elements taken from @code{LIST} with corresponding true 
 (@strong{define} @strong{nums} '(99 100 110 401 1234))
 (compress (map odd? nums) nums)      =@strong{=>} (99 401)
 @end example
-@node Unit extras - Lists - flatten, Unit extras - Lists - intersperse, Unit extras - Lists - compress, Unit extras - Lists
+@node Unit data-structures - Lists - flatten, Unit data-structures - Lists - intersperse, Unit data-structures - Lists - compress, Unit data-structures - Lists
 @subsection flatten
 
 
@@ -4846,7 +5294,7 @@ Returns a new list with elements taken from @code{LIST} with corresponding true 
 @end verbatim
 Returns @code{LIST1 ...} concatenated together, with nested lists removed (flattened).
 
-@node Unit extras - Lists - intersperse, Unit extras - Lists - join, Unit extras - Lists - flatten, Unit extras - Lists
+@node Unit data-structures - Lists - intersperse, Unit data-structures - Lists - join, Unit data-structures - Lists - flatten, Unit data-structures - Lists
 @subsection intersperse
 
 
@@ -4855,7 +5303,7 @@ Returns @code{LIST1 ...} concatenated together, with nested lists removed (flatt
 @end verbatim
 Returns a new list with @code{X} placed between each element.
 
-@node Unit extras - Lists - join, Unit extras - Lists - shuffle, Unit extras - Lists - intersperse, Unit extras - Lists
+@node Unit data-structures - Lists - join, Unit data-structures - Lists - shuffle, Unit data-structures - Lists - intersperse, Unit data-structures - Lists
 @subsection join
 
 
@@ -4874,16 +5322,16 @@ Concatenates the lists in @code{LISTOFLISTS} with @code{LIST} placed between eac
 (@strong{define} (@strong{join} lstoflsts #!optional (lst '()))
   (apply append (intersperse lstoflists lst)) )
 @end example
-@node Unit extras - Lists - shuffle, Unit extras - Lists - tail?, Unit extras - Lists - join, Unit extras - Lists
+@node Unit data-structures - Lists - shuffle, Unit data-structures - Lists - tail?, Unit data-structures - Lists - join, Unit data-structures - Lists
 @subsection shuffle
 
 
 @verbatim
-[procedure] (shuffle LIST)
+[procedure] (shuffle LIST RANDOM)
 @end verbatim
-Returns @code{LIST} with its elements sorted in a random order.
+Returns @code{LIST} with its elements sorted in a random order given by procedure RANDOM. 
 
-@node Unit extras - Lists - tail?,  , Unit extras - Lists - shuffle, Unit extras - Lists
+@node Unit data-structures - Lists - tail?,  , Unit data-structures - Lists - shuffle, Unit data-structures - Lists
 @subsection tail?
 
 
@@ -4892,19 +5340,614 @@ Returns @code{LIST} with its elements sorted in a random order.
 @end verbatim
 Returns true if @code{X} is one of the tails (cdr's) of @code{LIST}.
 
-@node Unit extras - String-port extensions, Unit extras - Formatted output, Unit extras - Lists, Unit extras
-@section String-port extensions
+@node Unit data-structures - Queues, Unit data-structures - Sorting, Unit data-structures - Lists, Unit data-structures
+@section Queues
 
 @menu
-* Unit extras - String-port extensions - call-with-input-string::
-* Unit extras - String-port extensions - call-with-output-string::
-* Unit extras - String-port extensions - with-input-from-string::
-* Unit extras - String-port extensions - with-output-to-string::
+* Unit data-structures - Queues - list->queue::
+* Unit data-structures - Queues - make-queue::
+* Unit data-structures - Queues - queue?::
+* Unit data-structures - Queues - queue->list::
+* Unit data-structures - Queues - queue-add!::
+* Unit data-structures - Queues - queue-empty?::
+* Unit data-structures - Queues - queue-first::
+* Unit data-structures - Queues - queue-last::
+* Unit data-structures - Queues - queue-remove!::
+* Unit data-structures - Queues - queue-push-back!::
+* Unit data-structures - Queues - queue-push-back-list!::
 
 @end menu
 
 
-@node Unit extras - String-port extensions - call-with-input-string, Unit extras - String-port extensions - call-with-output-string,  , Unit extras - String-port extensions
+@node Unit data-structures - Queues - list->queue, Unit data-structures - Queues - make-queue,  , Unit data-structures - Queues
+@subsection list->queue
+
+
+@verbatim
+[procedure] (list->queue LIST)
+@end verbatim
+Returns @code{LIST} converted into a queue, where the first element of the list is the same as the first element of the queue. The resulting queue may share memory with the list and the list should not be modified after this operation.
+
+@node Unit data-structures - Queues - make-queue, Unit data-structures - Queues - queue?, Unit data-structures - Queues - list->queue, Unit data-structures - Queues
+@subsection make-queue
+
+
+@verbatim
+[procedure] (make-queue)
+@end verbatim
+Returns a newly created queue.
+
+@node Unit data-structures - Queues - queue?, Unit data-structures - Queues - queue->list, Unit data-structures - Queues - make-queue, Unit data-structures - Queues
+@subsection queue?
+
+
+@verbatim
+[procedure] (queue? X)
+@end verbatim
+Returns @code{#t} if @code{X} is a queue, or @code{#f} otherwise.
+
+@node Unit data-structures - Queues - queue->list, Unit data-structures - Queues - queue-add!, Unit data-structures - Queues - queue?, Unit data-structures - Queues
+@subsection queue->list
+
+
+@verbatim
+[procedure] (queue->list QUEUE)
+@end verbatim
+Returns @code{QUEUE} converted into a list, where the first element of the list is the same as the first element of the queue. The resulting list may share memory with the queue object and should not be modified.
+
+@node Unit data-structures - Queues - queue-add!, Unit data-structures - Queues - queue-empty?, Unit data-structures - Queues - queue->list, Unit data-structures - Queues
+@subsection queue-add!
+
+
+@verbatim
+[procedure] (queue-add! QUEUE X)
+@end verbatim
+Adds @code{X} to the rear of @code{QUEUE}.
+
+@node Unit data-structures - Queues - queue-empty?, Unit data-structures - Queues - queue-first, Unit data-structures - Queues - queue-add!, Unit data-structures - Queues
+@subsection queue-empty?
+
+
+@verbatim
+[procedure] (queue-empty? QUEUE)
+@end verbatim
+Returns @code{#t} if @code{QUEUE} is empty, or @code{#f} otherwise.
+
+@node Unit data-structures - Queues - queue-first, Unit data-structures - Queues - queue-last, Unit data-structures - Queues - queue-empty?, Unit data-structures - Queues
+@subsection queue-first
+
+
+@verbatim
+[procedure] (queue-first QUEUE)
+@end verbatim
+Returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
+
+@node Unit data-structures - Queues - queue-last, Unit data-structures - Queues - queue-remove!, Unit data-structures - Queues - queue-first, Unit data-structures - Queues
+@subsection queue-last
+
+
+@verbatim
+[procedure] (queue-last QUEUE)
+@end verbatim
+Returns the last element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
+
+@node Unit data-structures - Queues - queue-remove!, Unit data-structures - Queues - queue-push-back!, Unit data-structures - Queues - queue-last, Unit data-structures - Queues
+@subsection queue-remove!
+
+
+@verbatim
+[procedure] (queue-remove! QUEUE)
+@end verbatim
+Removes and returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
+
+@node Unit data-structures - Queues - queue-push-back!, Unit data-structures - Queues - queue-push-back-list!, Unit data-structures - Queues - queue-remove!, Unit data-structures - Queues
+@subsection queue-push-back!
+
+
+@verbatim
+[procedure] (queue-push-back! QUEUE ITEM)
+@end verbatim
+Pushes an item into the first position of a queue, i.e. the next @code{queue-remove!} will return @code{ITEM}.
+
+@node Unit data-structures - Queues - queue-push-back-list!,  , Unit data-structures - Queues - queue-push-back!, Unit data-structures - Queues
+@subsection queue-push-back-list!
+
+
+@verbatim
+[procedure] (queue-push-back-list! QUEUE LIST)
+@end verbatim
+Pushes the items in item-list back onto the queue, so that @code{(car LIST)} becomes the next removable item.
+
+@node Unit data-structures - Sorting, Unit data-structures - Random numbers, Unit data-structures - Queues, Unit data-structures
+@section Sorting
+
+@menu
+* Unit data-structures - Sorting - merge::
+* Unit data-structures - Sorting - sort::
+* Unit data-structures - Sorting - sorted?::
+
+@end menu
+
+
+@node Unit data-structures - Sorting - merge, Unit data-structures - Sorting - sort,  , Unit data-structures - Sorting
+@subsection merge
+
+
+@verbatim
+[procedure] (merge LIST1 LIST2 LESS?)
+[procedure] (merge! LIST1 LIST2 LESS?)
+@end verbatim
+Joins two lists in sorted order. @code{merge!} is the destructive version of merge. @code{LESS?  } should be a procedure of two arguments, that returns true if the first argument is to be ordered before the second argument.
+
+@node Unit data-structures - Sorting - sort, Unit data-structures - Sorting - sorted?, Unit data-structures - Sorting - merge, Unit data-structures - Sorting
+@subsection sort
+
+
+@verbatim
+[procedure] (sort SEQUENCE LESS?)
+[procedure] (sort! SEQUENCE LESS?)
+@end verbatim
+Sort @code{SEQUENCE}, which should be a list or a vector. @code{sort!} is the destructive version of sort.
+
+@node Unit data-structures - Sorting - sorted?,  , Unit data-structures - Sorting - sort, Unit data-structures - Sorting
+@subsection sorted?
+
+
+@verbatim
+[procedure] (sorted? SEQUENCE LESS?)
+@end verbatim
+Returns true if the list or vector @code{SEQUENCE} is already sorted.
+
+@node Unit data-structures - Random numbers, Unit data-structures - Strings, Unit data-structures - Sorting, Unit data-structures
+@section Random numbers
+
+@menu
+* Unit data-structures - Random numbers - random-seed::
+
+@end menu
+
+
+@node Unit data-structures - Random numbers - random-seed,  ,  , Unit data-structures - Random numbers
+@subsection random-seed
+
+
+@verbatim
+[procedure] (random-seed [SEED])
+@end verbatim
+Seeds the random number generator with @code{SEED} (an exact integer) or  @code{(current-seconds)} if @code{SEED} is not given.
+
+@node Unit data-structures - Strings, Unit data-structures - Combinators, Unit data-structures - Random numbers, Unit data-structures
+@section Strings
+
+@menu
+* Unit data-structures - Strings - conc::
+* Unit data-structures - Strings - ->string::
+* Unit data-structures - Strings - string-chop::
+* Unit data-structures - Strings - string-chomp::
+* Unit data-structures - Strings - string-compare3::
+* Unit data-structures - Strings - string-intersperse::
+* Unit data-structures - Strings - string-split::
+* Unit data-structures - Strings - string-translate::
+* Unit data-structures - Strings - string-translate*::
+* Unit data-structures - Strings - substring=?::
+* Unit data-structures - Strings - substring-index::
+
+@end menu
+
+
+@node Unit data-structures - Strings - conc, Unit data-structures - Strings - ->string,  , Unit data-structures - Strings
+@subsection conc
+
+
+@verbatim
+[procedure] (conc X ...)
+@end verbatim
+Returns a string with the string-represenation of all arguments concatenated together. @code{conc} could be implemented as
+
+@example
+(@strong{define} (@strong{conc} . args)
+  (apply string-append (map ->string args)) )
+@end example
+@node Unit data-structures - Strings - ->string, Unit data-structures - Strings - string-chop, Unit data-structures - Strings - conc, Unit data-structures - Strings
+@subsection ->string
+
+
+@verbatim
+[procedure] (->string X)
+@end verbatim
+Returns a string-representation of @code{X}.
+
+@node Unit data-structures - Strings - string-chop, Unit data-structures - Strings - string-chomp, Unit data-structures - Strings - ->string, Unit data-structures - Strings
+@subsection string-chop
+
+
+@verbatim
+[procedure] (string-chop STRING LENGTH)
+@end verbatim
+Returns a list of substrings taken by @emph{chopping} @code{STRING} every @code{LENGTH} characters:
+
+@example
+(string-chop @strong{"one two three"} 4)  =@strong{=>}  (@strong{"one "} @strong{"two "} @strong{"thre"} @strong{"e"})
+@end example
+@node Unit data-structures - Strings - string-chomp, Unit data-structures - Strings - string-compare3, Unit data-structures - Strings - string-chop, Unit data-structures - Strings
+@subsection string-chomp
+
+
+@verbatim
+[procedure] (string-chomp STRING [SUFFIX])
+@end verbatim
+If @code{STRING} ends with @code{SUFFIX}, then this procedure returns a copy of its first argument with the suffix removed, otherwise returns @code{STRING} unchanged. @code{SUFFIX} defaults to @code{"\n"}.
+
+@node Unit data-structures - Strings - string-compare3, Unit data-structures - Strings - string-intersperse, Unit data-structures - Strings - string-chomp, Unit data-structures - Strings
+@subsection string-compare3
+
+
+@verbatim
+[procedure] (string-compare3 STRING1 STRING2)
+[procedure] (string-compare3-ci STRING1 STRING2)
+@end verbatim
+Perform a three-way comparison between the @code{STRING1} and @code{STRING2}, returning either @code{-1} if @code{STRING1} is lexicographically less than @code{STRING2}, @code{0} if it is equal, or @code{1} if it s greater. @code{string-compare3-ci} performs a case-insensitive comparison.
+
+@node Unit data-structures - Strings - string-intersperse, Unit data-structures - Strings - string-split, Unit data-structures - Strings - string-compare3, Unit data-structures - Strings
+@subsection string-intersperse
+
+
+@verbatim
+[procedure] (string-intersperse LIST [STRING])
+@end verbatim
+Returns a string that contains all strings in @code{LIST} concatenated together.  @code{STRING} is placed between each concatenated string and defaults to @code{" "}.
+
+@example
+(string-intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"})
+@end example
+is equivalent to
+
+@example
+(apply string-append (intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"}))
+@end example
+@node Unit data-structures - Strings - string-split, Unit data-structures - Strings - string-translate, Unit data-structures - Strings - string-intersperse, Unit data-structures - Strings
+@subsection string-split
+
+
+@verbatim
+[procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
+@end verbatim
+Split string into substrings separated by the given delimiters. If no delimiters are specified, a string comprising the tab, newline and space characters  is assumed. If the parameter @code{KEEPEMPTY} is given and not @code{#f}, then empty substrings are retained:
+
+@example
+(string-split @strong{"one  two  three"}) =@strong{=>} (@strong{"one"} @strong{"two"} @strong{"three"})
+(string-split @strong{"foo:bar::baz:"} @strong{":"} #t) =@strong{=>} (@strong{"foo"} @strong{"bar"} @strong{""} @strong{"baz"} @strong{""})
+@end example
+@node Unit data-structures - Strings - string-translate, Unit data-structures - Strings - string-translate*, Unit data-structures - Strings - string-split, Unit data-structures - Strings
+@subsection string-translate
+
+
+@verbatim
+[procedure] (string-translate STRING FROM [TO])
+@end verbatim
+Returns a fresh copy of @code{STRING} with characters matching @code{FROM} translated to @code{TO}.  If @code{TO} is omitted, then matching characters are removed. @code{FROM} and @code{TO} may be a character, a string or a list. If both @code{FROM} and @code{TO} are strings, then the character at the same position in @code{TO} as the matching character in @code{FROM} is substituted.
+
+@node Unit data-structures - Strings - string-translate*, Unit data-structures - Strings - substring=?, Unit data-structures - Strings - string-translate, Unit data-structures - Strings
+@subsection string-translate*
+
+
+@verbatim
+[procedure] (string-translate* STRING SMAP)
+@end verbatim
+Substitutes elements of @code{STRING} according to @code{SMAP}. @code{SMAP} should be an association-list where each element of the list is a pair of the form @code{(MATCH \. REPLACEMENT)}. Every occurrence of the string @code{MATCH} in @code{STRING} will be replaced by the string @code{REPLACEMENT}:
+
+@example
+(string-translate*
+  @strong{"<h1>this is a \"string\"</h1>"}
+  '((@strong{"<"} . @strong{"&lt;"}) (@strong{">"} . @strong{"&gt;"}) (@strong{"\""} . @strong{"&quot;"})) )
+@strong{=>}  @strong{"&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"}
+@end example
+@node Unit data-structures - Strings - substring=?, Unit data-structures - Strings - substring-index, Unit data-structures - Strings - string-translate*, Unit data-structures - Strings
+@subsection substring=?
+
+
+@verbatim
+[procedure] (substring=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
+[procedure] (substring-ci=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
+@end verbatim
+Returns @code{#t} if the strings @code{STRING1} and @code{STRING2} are equal, or @code{#f} otherwise. The comparison starts at the positions @code{START1} and @code{START2} (which default to 0), comparing @code{LENGTH} characters (which defaults to the minimum of the remaining length of both strings).
+
+@node Unit data-structures - Strings - substring-index,  , Unit data-structures - Strings - substring=?, Unit data-structures - Strings
+@subsection substring-index
+
+
+@verbatim
+[procedure] (substring-index WHICH WHERE [START])
+[procedure] (substring-index-ci WHICH WHERE [START])
+@end verbatim
+Searches for first index in string @code{WHERE} where string @code{WHICH} occurs.  If the optional argument @code{START} is given, then the search starts at that index.  @code{substring-index-ci} is a case-insensitive version of @code{substring-index}.
+
+@node Unit data-structures - Combinators, Unit data-structures - Binary searching, Unit data-structures - Strings, Unit data-structures
+@section Combinators
+
+@menu
+* Unit data-structures - Combinators - any?::
+* Unit data-structures - Combinators - constantly::
+* Unit data-structures - Combinators - complement::
+* Unit data-structures - Combinators - compose::
+* Unit data-structures - Combinators - conjoin::
+* Unit data-structures - Combinators - disjoin::
+* Unit data-structures - Combinators - each::
+* Unit data-structures - Combinators - flip::
+* Unit data-structures - Combinators - identity::
+* Unit data-structures - Combinators - project::
+* Unit data-structures - Combinators - list-of::
+* Unit data-structures - Combinators - noop::
+* Unit data-structures - Combinators - o::
+
+@end menu
+
+
+@node Unit data-structures - Combinators - any?, Unit data-structures - Combinators - constantly,  , Unit data-structures - Combinators
+@subsection any?
+
+
+@verbatim
+[procedure] (any? X)
+@end verbatim
+Ignores its argument and always returns @code{#t}. This is actually useful sometimes.
+
+@node Unit data-structures - Combinators - constantly, Unit data-structures - Combinators - complement, Unit data-structures - Combinators - any?, Unit data-structures - Combinators
+@subsection constantly
+
+
+@verbatim
+[procedure] (constantly X ...)
+@end verbatim
+Returns a procedure that always returns the values @code{X ...} regardless of the number and value of its arguments.
+
+@example
+(constantly X) <@strong{=>} (@strong{lambda} args X)
+@end example
+@node Unit data-structures - Combinators - complement, Unit data-structures - Combinators - compose, Unit data-structures - Combinators - constantly, Unit data-structures - Combinators
+@subsection complement
+
+
+@verbatim
+[procedure] (complement PROC)
+@end verbatim
+Returns a procedure that returns the boolean inverse of @code{PROC}.
+
+@example
+(complement PROC) <@strong{=>} (@strong{lambda} (x) (not (PROC x)))
+@end example
+@node Unit data-structures - Combinators - compose, Unit data-structures - Combinators - conjoin, Unit data-structures - Combinators - complement, Unit data-structures - Combinators
+@subsection compose
+
+
+@verbatim
+[procedure] (compose PROC1 PROC2 ...)
+@end verbatim
+Returns a procedure that represents the composition of the argument-procedures @code{PROC1 PROC2 ...}.
+
+@example
+(compose F G) <@strong{=>} (@strong{lambda} args
+                      (call-with-values
+                         (@strong{lambda} () (apply G args))
+                         F))
+@end example
+@code{(compose)} is equivalent to @code{values}.
+
+@node Unit data-structures - Combinators - conjoin, Unit data-structures - Combinators - disjoin, Unit data-structures - Combinators - compose, Unit data-structures - Combinators
+@subsection conjoin
+
+
+@verbatim
+[procedure] (conjoin PRED ...)
+@end verbatim
+Returns a procedure that returns @code{#t} if its argument satisfies the predicates @code{PRED ...}. @example
+((conjoin odd? positive?) 33)   =@strong{=>}  #t
+((conjoin odd? positive?) -33)  =@strong{=>}  #f
+@end example
+
+
+@node Unit data-structures - Combinators - disjoin, Unit data-structures - Combinators - each, Unit data-structures - Combinators - conjoin, Unit data-structures - Combinators
+@subsection disjoin
+
+
+@verbatim
+[procedure] (disjoin PRED ...)
+@end verbatim
+Returns a procedure that returns @code{#t} if its argument satisfies any predicate @code{PRED ...}. @example
+((disjoin odd? positive?) 32)    =@strong{=>}  #t
+((disjoin odd? positive?) -32)   =@strong{=>}  #f
+@end example
+
+
+@node Unit data-structures - Combinators - each, Unit data-structures - Combinators - flip, Unit data-structures - Combinators - disjoin, Unit data-structures - Combinators
+@subsection each
+
+
+@verbatim
+[procedure] (each PROC ...)
+@end verbatim
+Returns a procedure that applies @code{PROC ...} to its arguments, and returns the result(s) of the last procedure application. For example
+
+@example
+(each pp eval)
+@end example
+is equivalent to
+
+@example
+(@strong{lambda} args 
+  (apply pp args)
+  (apply eval args) )
+@end example
+@code{(each PROC)} is equivalent to @code{PROC} and @code{(each)} is equivalent to @code{noop}.
+
+@node Unit data-structures - Combinators - flip, Unit data-structures - Combinators - identity, Unit data-structures - Combinators - each, Unit data-structures - Combinators
+@subsection flip
+
+
+@verbatim
+[procedure] (flip PROC)
+@end verbatim
+Returns a two-argument procedure that calls @code{PROC} with its arguments swapped: @example
+(flip PROC) <@strong{=>} (@strong{lambda} (x y) (PROC y x))
+@end example
+
+
+@node Unit data-structures - Combinators - identity, Unit data-structures - Combinators - project, Unit data-structures - Combinators - flip, Unit data-structures - Combinators
+@subsection identity
+
+
+@verbatim
+[procedure] (identity X)
+@end verbatim
+Returns its sole argument @code{X}.
+
+@node Unit data-structures - Combinators - project, Unit data-structures - Combinators - list-of, Unit data-structures - Combinators - identity, Unit data-structures - Combinators
+@subsection project
+
+
+@verbatim
+[procedure] (project N)
+@end verbatim
+Returns a procedure that returns its @code{N}th argument (starting from 0).
+
+@node Unit data-structures - Combinators - list-of, Unit data-structures - Combinators - noop, Unit data-structures - Combinators - project, Unit data-structures - Combinators
+@subsection list-of
+
+
+@verbatim
+[procedure] (list-of PRED)
+@end verbatim
+Returns a procedure of one argument that returns @code{#t} when applied to a list of elements that all satisfy the predicate procedure @code{PRED}, or @code{#f} otherwise.
+
+@example
+((list-of even?) '(1 2 3))   =@strong{=>} #f
+((list-of number?) '(1 2 3)) =@strong{=>} #t
+@end example
+@node Unit data-structures - Combinators - noop, Unit data-structures - Combinators - o, Unit data-structures - Combinators - list-of, Unit data-structures - Combinators
+@subsection noop
+
+
+@verbatim
+[procedure] (noop X ...)
+@end verbatim
+Ignores it's arguments, does nothing and returns an unspecified value.
+
+@node Unit data-structures - Combinators - o,  , Unit data-structures - Combinators - noop, Unit data-structures - Combinators
+@subsection o
+
+
+@verbatim
+[procedure] (o PROC ...)
+@end verbatim
+A single value version of @code{compose} (slightly faster). @code{(o)} is equivalent to @code{identity}.
+
+@node Unit data-structures - Binary searching,  , Unit data-structures - Combinators, Unit data-structures
+@section Binary searching
+
+@menu
+* Unit data-structures - Binary searching - binary-search::
+
+@end menu
+
+
+@node Unit data-structures - Binary searching - binary-search,  ,  , Unit data-structures - Binary searching
+@subsection binary-search
+
+
+@verbatim
+[procedure] (binary-search SEQUENCE PROC)
+@end verbatim
+Performs a binary search in @code{SEQUENCE}, which should be a sorted list or vector.  @code{PROC} is called to compare items in the sequence, should accept a single argument and return an exact integer: zero if the searched value is equal to the current item, negative if the searched value is @emph{less} than the current item, and positive otherwise. Returns the index of the found value or @code{#f} otherwise.
+
+Previous: @ref{Unit eval, Unit eval}
+
+Next: @ref{Unit ports, Unit ports}  
+
+@node Unit ports, Unit extras, Unit data-structures, Top
+@chapter Unit ports
+
+@menu
+* Unit ports - Input/output port extensions::
+* Unit ports - String-port extensions::
+* Unit ports - Port iterators::
+* Unit ports - Funky ports::
+
+@end menu
+
+
+This unit contains various extended port definitions. This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+
+@node Unit ports - Input/output port extensions, Unit ports - String-port extensions,  , Unit ports
+@section Input/output port extensions
+
+@menu
+* Unit ports - Input/output port extensions - with-output-to-port::
+* Unit ports - Input/output port extensions - make-input-port::
+* Unit ports - Input/output port extensions - make-output-port::
+* Unit ports - Input/output port extensions - with-error-output-to-port::
+* Unit ports - Input/output port extensions - with-input-from-port::
+
+@end menu
+
+
+@node Unit ports - Input/output port extensions - with-output-to-port, Unit ports - Input/output port extensions - make-input-port,  , Unit ports - Input/output port extensions
+@subsection with-output-to-port
+
+
+@verbatim
+[procedure] (with-output-to-port PORT THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current output-port temporarily bound to @code{PORT}.
+
+@node Unit ports - Input/output port extensions - make-input-port, Unit ports - Input/output port extensions - make-output-port, Unit ports - Input/output port extensions - with-output-to-port, Unit ports - Input/output port extensions
+@subsection make-input-port
+
+
+@verbatim
+[procedure] (make-input-port READ READY? CLOSE [PEEK])
+@end verbatim
+Returns a custom input port. Common operations on this port are handled by the given parameters, which should be procedures of no arguments. @code{READ} is called when the next character is to be read and should return a character or @code{#!eof}. @code{READY?} is called when @code{char-ready?} is called on this port and should return @code{#t} or @code{#f}.  @code{CLOSE} is called when the port is closed. @code{PEEK} is called when @code{peek-char} is called on this port and should return a character or @code{#!eof}. if the argument @code{PEEK} is not given, then @code{READ} is used instead and the created port object handles peeking automatically (by calling @code{READ} and buffering the character).
+
+@node Unit ports - Input/output port extensions - make-output-port, Unit ports - Input/output port extensions - with-error-output-to-port, Unit ports - Input/output port extensions - make-input-port, Unit ports - Input/output port extensions
+@subsection make-output-port
+
+
+@verbatim
+[procedure] (make-output-port WRITE CLOSE [FLUSH])
+@end verbatim
+Returns a custom output port. Common operations on this port are handled by the given parameters, which should be procedures.  @code{WRITE} is called when output is sent to the port and receives a single argument, a string.  @code{CLOSE} is called when the port is closed and should be a procedure of no arguments. @code{FLUSH} (if provided) is called for flushing the output port.
+
+@node Unit ports - Input/output port extensions - with-error-output-to-port, Unit ports - Input/output port extensions - with-input-from-port, Unit ports - Input/output port extensions - make-output-port, Unit ports - Input/output port extensions
+@subsection with-error-output-to-port
+
+
+@verbatim
+[procedure] (with-error-output-to-port PORT THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current error output-port temporarily bound to @code{PORT}.
+
+@node Unit ports - Input/output port extensions - with-input-from-port,  , Unit ports - Input/output port extensions - with-error-output-to-port, Unit ports - Input/output port extensions
+@subsection with-input-from-port
+
+
+@verbatim
+[procedure] (with-input-from-port PORT THUNK)
+@end verbatim
+Call procedure @code{THUNK} with the current input-port temporarily bound to @code{PORT}.
+
+@node Unit ports - String-port extensions, Unit ports - Port iterators, Unit ports - Input/output port extensions, Unit ports
+@section String-port extensions
+
+@menu
+* Unit ports - String-port extensions - call-with-input-string::
+* Unit ports - String-port extensions - call-with-output-string::
+* Unit ports - String-port extensions - with-input-from-string::
+* Unit ports - String-port extensions - with-output-to-string::
+
+@end menu
+
+
+@node Unit ports - String-port extensions - call-with-input-string, Unit ports - String-port extensions - call-with-output-string,  , Unit ports - String-port extensions
 @subsection call-with-input-string
 
 
@@ -4940,7 +5983,90 @@ Call procedure @code{THUNK} with the current input-port temporarily bound to an 
 @end verbatim
 Call procedure @code{THUNK} with the current output-port temporarily bound to a string-output-port and return the accumulated output string.
 
-@node Unit extras - Formatted output, Unit extras - Hash tables, Unit extras - String-port extensions, Unit extras
+@node Unit ports - Port iterators, Unit ports - Funky ports, Unit ports - String-port extensions, Unit ports
+@section Port iterators
+
+@menu
+* Unit ports - Port iterators - port-for-each::
+* Unit ports - Port iterators - port-map::
+* Unit ports - Port iterators - port-fold::
+
+@end menu
+
+
+@node Unit ports - Port iterators - port-for-each, Unit ports - Port iterators - port-map,  , Unit ports - Port iterators
+@subsection port-for-each
+
+
+@verbatim
+[procedure] (port-for-each FN THUNK)
+@end verbatim
+Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK} until it returns @code{#!eof}, discarding the results.
+
+@node Unit ports - Port iterators - port-map, Unit ports - Port iterators - port-fold, Unit ports - Port iterators - port-for-each, Unit ports - Port iterators
+@subsection port-map
+
+
+@verbatim
+[procedure] (port-map FN THUNK)
+@end verbatim
+Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK} until it returns @code{#!eof}, returning a list of the collected results.
+
+@node Unit ports - Port iterators - port-fold,  , Unit ports - Port iterators - port-map, Unit ports - Port iterators
+@subsection port-fold
+
+
+@verbatim
+[procedure] (port-map FN ACC THUNK)
+@end verbatim
+Apply @code{FN} to successive results of calling the zero argument procedure @code{THUNK}, passing the @code{ACC} value as the second argument. The @code{FN} result becomes the new @code{ACC} value. When @code{THUNK} returns @code{#!eof}, the last @code{FN} result is returned.
+
+@node Unit ports - Funky ports,  , Unit ports - Port iterators, Unit ports
+@section Funky ports
+
+@menu
+* Unit ports - Funky ports - make-broadcast-port::
+* Unit ports - Funky ports - make-concatenated-port::
+
+@end menu
+
+
+@node Unit ports - Funky ports - make-broadcast-port, Unit ports - Funky ports - make-concatenated-port,  , Unit ports - Funky ports
+@subsection make-broadcast-port
+
+
+@verbatim
+[procedure] (make-broadcast-port PORT ...)
+@end verbatim
+Returns a custom output port that emits everything written into it to the ports given as @code{PORT ...}. Closing the broadcast port does not close any of the argument ports.
+
+@node Unit ports - Funky ports - make-concatenated-port,  , Unit ports - Funky ports - make-broadcast-port, Unit ports - Funky ports
+@subsection make-concatenated-port
+
+
+@verbatim
+[procedure] (make-concatenated-port PORT1 PORT2 ...)
+@end verbatim
+Returns a custom input port that reads its input from @code{PORT1}, until it is empty, then from @code{PORT2} and so on. Closing the concatenated port does not close any of the argument ports.
+
+Previous: @ref{Unit data-structures, Unit data-structures}
+
+Next: @ref{Unit extras, Unit extras}  
+
+@node Unit extras, Unit srfi-1, Unit ports, Top
+@chapter Unit extras
+
+@menu
+* Unit extras - Formatted output::
+* Unit extras - Random numbers::
+* Unit extras - Input/Output extensions::
+
+@end menu
+
+
+This unit contains a collection of useful utility definitions.  This unit is used by default, unless the program is compiled with the @code{-explicit-use} option.
+
+@node Unit extras - Formatted output, Unit extras - Random numbers,  , Unit extras
 @section Formatted output
 
 @menu
@@ -4984,197 +6110,7 @@ The parameters  @code{FORMATSTRING} and @code{ARG ...} are as for (@code{printf}
 
 The optional @code{DESTINATION}, when supplied, performs a (@code{sprintf}) for a  @code{#f}, a (@code{printf}) for a @code{#t}, and a (@code{fprintf}) for an output-port. When missing a (@code{sprintf}) is performed.
 
-@node Unit extras - Hash tables, Unit extras - Queues, Unit extras - Formatted output, Unit extras
-@section Hash tables
-
-@menu
-* Unit extras - Hash tables - hash-table-remove!::
-
-@end menu
-
-
-CHICKEN implements SRFI-69. For more information,  see @uref{http://srfi.schemers.org/srfi-69/srfi-69.html, SRFI-69}.
-
-A setter for @code{hash-table-ref} is defined, so
-
-@example
-(@strong{set!} (hash-table-ref HT KEY) VAL)
-@end example
-is equivalent to
-
-@example
-(hash-table-set! HT KEY VAL)
-@end example
-As an extension to SRFI-69, @code{hash-table-update!} and @code{hash-table-update!/default} return the new value (after applying the update procedure).
-
-@node Unit extras - Hash tables - hash-table-remove!,  ,  , Unit extras - Hash tables
-@subsection hash-table-remove!
-
-
-@verbatim
-[procedure] (hash-table-remove! HASHTABLE PROC)
-@end verbatim
-Calls @code{PROC} for all entries in @code{HASHTABLE} with the key and value of each entry. If @code{PROC} returns true, then that entry is removed.
-
-@node Unit extras - Queues, Unit extras - Sorting, Unit extras - Hash tables, Unit extras
-@section Queues
-
-@menu
-* Unit extras - Queues - list->queue::
-* Unit extras - Queues - make-queue::
-* Unit extras - Queues - queue?::
-* Unit extras - Queues - queue->list::
-* Unit extras - Queues - queue-add!::
-* Unit extras - Queues - queue-empty?::
-* Unit extras - Queues - queue-first::
-* Unit extras - Queues - queue-last::
-* Unit extras - Queues - queue-remove!::
-* Unit extras - Queues - queue-push-back!::
-* Unit extras - Queues - queue-push-back-list!::
-
-@end menu
-
-
-@node Unit extras - Queues - list->queue, Unit extras - Queues - make-queue,  , Unit extras - Queues
-@subsection list->queue
-
-
-@verbatim
-[procedure] (list->queue LIST)
-@end verbatim
-Returns @code{LIST} converted into a queue, where the first element of the list is the same as the first element of the queue. The resulting queue may share memory with the list and the list should not be modified after this operation.
-
-@node Unit extras - Queues - make-queue, Unit extras - Queues - queue?, Unit extras - Queues - list->queue, Unit extras - Queues
-@subsection make-queue
-
-
-@verbatim
-[procedure] (make-queue)
-@end verbatim
-Returns a newly created queue.
-
-@node Unit extras - Queues - queue?, Unit extras - Queues - queue->list, Unit extras - Queues - make-queue, Unit extras - Queues
-@subsection queue?
-
-
-@verbatim
-[procedure] (queue? X)
-@end verbatim
-Returns @code{#t} if @code{X} is a queue, or @code{#f} otherwise.
-
-@node Unit extras - Queues - queue->list, Unit extras - Queues - queue-add!, Unit extras - Queues - queue?, Unit extras - Queues
-@subsection queue->list
-
-
-@verbatim
-[procedure] (queue->list QUEUE)
-@end verbatim
-Returns @code{QUEUE} converted into a list, where the first element of the list is the same as the first element of the queue. The resulting list may share memory with the queue object and should not be modified.
-
-@node Unit extras - Queues - queue-add!, Unit extras - Queues - queue-empty?, Unit extras - Queues - queue->list, Unit extras - Queues
-@subsection queue-add!
-
-
-@verbatim
-[procedure] (queue-add! QUEUE X)
-@end verbatim
-Adds @code{X} to the rear of @code{QUEUE}.
-
-@node Unit extras - Queues - queue-empty?, Unit extras - Queues - queue-first, Unit extras - Queues - queue-add!, Unit extras - Queues
-@subsection queue-empty?
-
-
-@verbatim
-[procedure] (queue-empty? QUEUE)
-@end verbatim
-Returns @code{#t} if @code{QUEUE} is empty, or @code{#f} otherwise.
-
-@node Unit extras - Queues - queue-first, Unit extras - Queues - queue-last, Unit extras - Queues - queue-empty?, Unit extras - Queues
-@subsection queue-first
-
-
-@verbatim
-[procedure] (queue-first QUEUE)
-@end verbatim
-Returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
-
-@node Unit extras - Queues - queue-last, Unit extras - Queues - queue-remove!, Unit extras - Queues - queue-first, Unit extras - Queues
-@subsection queue-last
-
-
-@verbatim
-[procedure] (queue-last QUEUE)
-@end verbatim
-Returns the last element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
-
-@node Unit extras - Queues - queue-remove!, Unit extras - Queues - queue-push-back!, Unit extras - Queues - queue-last, Unit extras - Queues
-@subsection queue-remove!
-
-
-@verbatim
-[procedure] (queue-remove! QUEUE)
-@end verbatim
-Removes and returns the first element of @code{QUEUE}. If @code{QUEUE} is empty an error is signaled
-
-@node Unit extras - Queues - queue-push-back!, Unit extras - Queues - queue-push-back-list!, Unit extras - Queues - queue-remove!, Unit extras - Queues
-@subsection queue-push-back!
-
-
-@verbatim
-[procedure] (queue-push-back! QUEUE ITEM)
-@end verbatim
-Pushes an item into the first position of a queue, i.e. the next @code{queue-remove!} will return @code{ITEM}.
-
-@node Unit extras - Queues - queue-push-back-list!,  , Unit extras - Queues - queue-push-back!, Unit extras - Queues
-@subsection queue-push-back-list!
-
-
-@verbatim
-[procedure] (queue-push-back-list! QUEUE LIST)
-@end verbatim
-Pushes the items in item-list back onto the queue, so that @code{(car LIST)} becomes the next removable item.
-
-@node Unit extras - Sorting, Unit extras - Random numbers, Unit extras - Queues, Unit extras
-@section Sorting
-
-@menu
-* Unit extras - Sorting - merge::
-* Unit extras - Sorting - sort::
-* Unit extras - Sorting - sorted?::
-
-@end menu
-
-
-@node Unit extras - Sorting - merge, Unit extras - Sorting - sort,  , Unit extras - Sorting
-@subsection merge
-
-
-@verbatim
-[procedure] (merge LIST1 LIST2 LESS?)
-[procedure] (merge! LIST1 LIST2 LESS?)
-@end verbatim
-Joins two lists in sorted order. @code{merge!} is the destructive version of merge. @code{LESS?  } should be a procedure of two arguments, that returns true if the first argument is to be ordered before the second argument.
-
-@node Unit extras - Sorting - sort, Unit extras - Sorting - sorted?, Unit extras - Sorting - merge, Unit extras - Sorting
-@subsection sort
-
-
-@verbatim
-[procedure] (sort SEQUENCE LESS?)
-[procedure] (sort! SEQUENCE LESS?)
-@end verbatim
-Sort @code{SEQUENCE}, which should be a list or a vector. @code{sort!} is the destructive version of sort.
-
-@node Unit extras - Sorting - sorted?,  , Unit extras - Sorting - sort, Unit extras - Sorting
-@subsection sorted?
-
-
-@verbatim
-[procedure] (sorted? SEQUENCE LESS?)
-@end verbatim
-Returns true if the list or vector @code{SEQUENCE} is already sorted.
-
-@node Unit extras - Random numbers, Unit extras - Input/Output extensions, Unit extras - Sorting, Unit extras
+@node Unit extras - Random numbers, Unit extras - Input/Output extensions, Unit extras - Formatted output, Unit extras
 @section Random numbers
 
 @menu
@@ -5212,7 +6148,7 @@ Returns an exact random integer from 0 to @code{N}-1.
 @end verbatim
 Set random-number seed. If @code{X} is not supplied, the current time is used. On startup (when the @code{extras} unit is initialized), the random number generator is initialized with the current time.
 
-@node Unit extras - Input/Output extensions, Unit extras - Strings, Unit extras - Random numbers, Unit extras
+@node Unit extras - Input/Output extensions,  , Unit extras - Random numbers, Unit extras
 @section Input/Output extensions
 
 @menu
@@ -5322,377 +6258,7 @@ Read or write @code{NUM} characters from/to @code{PORT}, which defaults to the v
 @end verbatim
 Reads characters from @code{PORT} (which defaults to the value of @code{(current-input-port)}) and calls the procedure @code{PREDICATE} with each character until @code{PREDICATE} returns false. Returns a string with the accumulated characters.
 
-@node Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions - with-input-from-port, Unit extras - Input/Output extensions - read-token, Unit extras - Input/Output extensions
-@subsection with-error-output-to-port
-
-
-@verbatim
-[procedure] (with-error-output-to-port PORT THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current error output-port temporarily bound to @code{PORT}.
-
-@node Unit extras - Input/Output extensions - with-input-from-port, Unit extras - Input/Output extensions - with-output-to-port, Unit extras - Input/Output extensions - with-error-output-to-port, Unit extras - Input/Output extensions
-@subsection with-input-from-port
-
-
-@verbatim
-[procedure] (with-input-from-port PORT THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current input-port temporarily bound to @code{PORT}.
-
-@node Unit extras - Input/Output extensions - with-output-to-port,  , Unit extras - Input/Output extensions - with-input-from-port, Unit extras - Input/Output extensions
-@subsection with-output-to-port
-
-
-@verbatim
-[procedure] (with-output-to-port PORT THUNK)
-@end verbatim
-Call procedure @code{THUNK} with the current output-port temporarily bound to @code{PORT}.
-
-@node Unit extras - Strings, Unit extras - Combinators, Unit extras - Input/Output extensions, Unit extras
-@section Strings
-
-@menu
-* Unit extras - Strings - conc::
-* Unit extras - Strings - ->string::
-* Unit extras - Strings - string-chop::
-* Unit extras - Strings - string-chomp::
-* Unit extras - Strings - string-compare3::
-* Unit extras - Strings - string-intersperse::
-* Unit extras - Strings - string-split::
-* Unit extras - Strings - string-translate::
-* Unit extras - Strings - string-translate*::
-* Unit extras - Strings - substring=?::
-* Unit extras - Strings - substring-index::
-
-@end menu
-
-
-@node Unit extras - Strings - conc, Unit extras - Strings - ->string,  , Unit extras - Strings
-@subsection conc
-
-
-@verbatim
-[procedure] (conc X ...)
-@end verbatim
-Returns a string with the string-represenation of all arguments concatenated together. @code{conc} could be implemented as
-
-@example
-(@strong{define} (@strong{conc} . args)
-  (apply string-append (map ->string args)) )
-@end example
-@node Unit extras - Strings - ->string, Unit extras - Strings - string-chop, Unit extras - Strings - conc, Unit extras - Strings
-@subsection ->string
-
-
-@verbatim
-[procedure] (->string X)
-@end verbatim
-Returns a string-representation of @code{X}.
-
-@node Unit extras - Strings - string-chop, Unit extras - Strings - string-chomp, Unit extras - Strings - ->string, Unit extras - Strings
-@subsection string-chop
-
-
-@verbatim
-[procedure] (string-chop STRING LENGTH)
-@end verbatim
-Returns a list of substrings taken by @emph{chopping} @code{STRING} every @code{LENGTH} characters:
-
-@example
-(string-chop @strong{"one two three"} 4)  =@strong{=>}  (@strong{"one "} @strong{"two "} @strong{"thre"} @strong{"e"})
-@end example
-@node Unit extras - Strings - string-chomp, Unit extras - Strings - string-compare3, Unit extras - Strings - string-chop, Unit extras - Strings
-@subsection string-chomp
-
-
-@verbatim
-[procedure] (string-chomp STRING [SUFFIX])
-@end verbatim
-If @code{STRING} ends with @code{SUFFIX}, then this procedure returns a copy of its first argument with the suffix removed, otherwise returns @code{STRING} unchanged. @code{SUFFIX} defaults to @code{"\n"}.
-
-@node Unit extras - Strings - string-compare3, Unit extras - Strings - string-intersperse, Unit extras - Strings - string-chomp, Unit extras - Strings
-@subsection string-compare3
-
-
-@verbatim
-[procedure] (string-compare3 STRING1 STRING2)
-[procedure] (string-compare3-ci STRING1 STRING2)
-@end verbatim
-Perform a three-way comparison between the @code{STRING1} and @code{STRING2}, returning either @code{-1} if @code{STRING1} is lexicographically less than @code{STRING2}, @code{0} if it is equal, or @code{1} if it s greater. @code{string-compare3-ci} performs a case-insensitive comparison.
-
-@node Unit extras - Strings - string-intersperse, Unit extras - Strings - string-split, Unit extras - Strings - string-compare3, Unit extras - Strings
-@subsection string-intersperse
-
-
-@verbatim
-[procedure] (string-intersperse LIST [STRING])
-@end verbatim
-Returns a string that contains all strings in @code{LIST} concatenated together.  @code{STRING} is placed between each concatenated string and defaults to @code{" "}.
-
-@example
-(string-intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"})
-@end example
-is equivalent to
-
-@example
-(apply string-append (intersperse '(@strong{"one"} @strong{"two"}) @strong{"three"}))
-@end example
-@node Unit extras - Strings - string-split, Unit extras - Strings - string-translate, Unit extras - Strings - string-intersperse, Unit extras - Strings
-@subsection string-split
-
-
-@verbatim
-[procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
-@end verbatim
-Split string into substrings separated by the given delimiters. If no delimiters are specified, a string comprising the tab, newline and space characters  is assumed. If the parameter @code{KEEPEMPTY} is given and not @code{#f}, then empty substrings are retained:
-
-@example
-(string-split @strong{"one  two  three"}) =@strong{=>} (@strong{"one"} @strong{"two"} @strong{"three"})
-(string-split @strong{"foo:bar::baz:"} @strong{":"} #t) =@strong{=>} (@strong{"foo"} @strong{"bar"} @strong{""} @strong{"baz"} @strong{""})
-@end example
-@node Unit extras - Strings - string-translate, Unit extras - Strings - string-translate*, Unit extras - Strings - string-split, Unit extras - Strings
-@subsection string-translate
-
-
-@verbatim
-[procedure] (string-translate STRING FROM [TO])
-@end verbatim
-Returns a fresh copy of @code{STRING} with characters matching @code{FROM} translated to @code{TO}.  If @code{TO} is omitted, then matching characters are removed. @code{FROM} and @code{TO} may be a character, a string or a list. If both @code{FROM} and @code{TO} are strings, then the character at the same position in @code{TO} as the matching character in @code{FROM} is substituted.
-
-@node Unit extras - Strings - string-translate*, Unit extras - Strings - substring=?, Unit extras - Strings - string-translate, Unit extras - Strings
-@subsection string-translate*
-
-
-@verbatim
-[procedure] (string-translate* STRING SMAP)
-@end verbatim
-Substitutes elements of @code{STRING} according to @code{SMAP}. @code{SMAP} should be an association-list where each element of the list is a pair of the form @code{(MATCH \. REPLACEMENT)}. Every occurrence of the string @code{MATCH} in @code{STRING} will be replaced by the string @code{REPLACEMENT}:
-
-@example
-(string-translate*
-  @strong{"<h1>this is a \"string\"</h1>"}
-  '((@strong{"<"} . @strong{"&lt;"}) (@strong{">"} . @strong{"&gt;"}) (@strong{"\""} . @strong{"&quot;"})) )
-@strong{=>}  @strong{"&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"}
-@end example
-@node Unit extras - Strings - substring=?, Unit extras - Strings - substring-index, Unit extras - Strings - string-translate*, Unit extras - Strings
-@subsection substring=?
-
-
-@verbatim
-[procedure] (substring=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
-[procedure] (substring-ci=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
-@end verbatim
-Returns @code{#t} if the strings @code{STRING1} and @code{STRING2} are equal, or @code{#f} otherwise. The comparison starts at the positions @code{START1} and @code{START2} (which default to 0), comparing @code{LENGTH} characters (which defaults to the minimum of the remaining length of both strings).
-
-@node Unit extras - Strings - substring-index,  , Unit extras - Strings - substring=?, Unit extras - Strings
-@subsection substring-index
-
-
-@verbatim
-[procedure] (substring-index WHICH WHERE [START])
-[procedure] (substring-index-ci WHICH WHERE [START])
-@end verbatim
-Searches for first index in string @code{WHERE} where string @code{WHICH} occurs.  If the optional argument @code{START} is given, then the search starts at that index.  @code{substring-index-ci} is a case-insensitive version of @code{substring-index}.
-
-@node Unit extras - Combinators, Unit extras - Binary searching, Unit extras - Strings, Unit extras
-@section Combinators
-
-@menu
-* Unit extras - Combinators - any?::
-* Unit extras - Combinators - constantly::
-* Unit extras - Combinators - complement::
-* Unit extras - Combinators - compose::
-* Unit extras - Combinators - conjoin::
-* Unit extras - Combinators - disjoin::
-* Unit extras - Combinators - each::
-* Unit extras - Combinators - flip::
-* Unit extras - Combinators - identity::
-* Unit extras - Combinators - project::
-* Unit extras - Combinators - list-of::
-* Unit extras - Combinators - noop::
-* Unit extras - Combinators - o::
-
-@end menu
-
-
-@node Unit extras - Combinators - any?, Unit extras - Combinators - constantly,  , Unit extras - Combinators
-@subsection any?
-
-
-@verbatim
-[procedure] (any? X)
-@end verbatim
-Ignores its argument and always returns @code{#t}. This is actually useful sometimes.
-
-@node Unit extras - Combinators - constantly, Unit extras - Combinators - complement, Unit extras - Combinators - any?, Unit extras - Combinators
-@subsection constantly
-
-
-@verbatim
-[procedure] (constantly X ...)
-@end verbatim
-Returns a procedure that always returns the values @code{X ...} regardless of the number and value of its arguments.
-
-@example
-(constantly X) <@strong{=>} (@strong{lambda} args X)
-@end example
-@node Unit extras - Combinators - complement, Unit extras - Combinators - compose, Unit extras - Combinators - constantly, Unit extras - Combinators
-@subsection complement
-
-
-@verbatim
-[procedure] (complement PROC)
-@end verbatim
-Returns a procedure that returns the boolean inverse of @code{PROC}.
-
-@example
-(complement PROC) <@strong{=>} (@strong{lambda} (x) (not (PROC x)))
-@end example
-@node Unit extras - Combinators - compose, Unit extras - Combinators - conjoin, Unit extras - Combinators - complement, Unit extras - Combinators
-@subsection compose
-
-
-@verbatim
-[procedure] (compose PROC1 PROC2 ...)
-@end verbatim
-Returns a procedure that represents the composition of the argument-procedures @code{PROC1 PROC2 ...}.
-
-@example
-(compose F G) <@strong{=>} (@strong{lambda} args
-                      (call-with-values
-                         (@strong{lambda} () (apply G args))
-                         F))
-@end example
-@code{(compose)} is equivalent to @code{values}.
-
-@node Unit extras - Combinators - conjoin, Unit extras - Combinators - disjoin, Unit extras - Combinators - compose, Unit extras - Combinators
-@subsection conjoin
-
-
-@verbatim
-[procedure] (conjoin PRED ...)
-@end verbatim
-Returns a procedure that returns @code{#t} if its argument satisfies the predicates @code{PRED ...}. @example
-((conjoin odd? positive?) 33)   =@strong{=>}  #t
-((conjoin odd? positive?) -33)  =@strong{=>}  #f
-@end example
-
-
-@node Unit extras - Combinators - disjoin, Unit extras - Combinators - each, Unit extras - Combinators - conjoin, Unit extras - Combinators
-@subsection disjoin
-
-
-@verbatim
-[procedure] (disjoin PRED ...)
-@end verbatim
-Returns a procedure that returns @code{#t} if its argument satisfies any predicate @code{PRED ...}. @example
-((disjoin odd? positive?) 32)    =@strong{=>}  #t
-((disjoin odd? positive?) -32)   =@strong{=>}  #f
-@end example
-
-
-@node Unit extras - Combinators - each, Unit extras - Combinators - flip, Unit extras - Combinators - disjoin, Unit extras - Combinators
-@subsection each
-
-
-@verbatim
-[procedure] (each PROC ...)
-@end verbatim
-Returns a procedure that applies @code{PROC ...} to its arguments, and returns the result(s) of the last procedure application. For example
-
-@example
-(each pp eval)
-@end example
-is equivalent to
-
-@example
-(@strong{lambda} args 
-  (apply pp args)
-  (apply eval args) )
-@end example
-@code{(each PROC)} is equivalent to @code{PROC} and @code{(each)} is equivalent to @code{noop}.
-
-@node Unit extras - Combinators - flip, Unit extras - Combinators - identity, Unit extras - Combinators - each, Unit extras - Combinators
-@subsection flip
-
-
-@verbatim
-[procedure] (flip PROC)
-@end verbatim
-Returns a two-argument procedure that calls @code{PROC} with its arguments swapped: @example
-(flip PROC) <@strong{=>} (@strong{lambda} (x y) (PROC y x))
-@end example
-
-
-@node Unit extras - Combinators - identity, Unit extras - Combinators - project, Unit extras - Combinators - flip, Unit extras - Combinators
-@subsection identity
-
-
-@verbatim
-[procedure] (identity X)
-@end verbatim
-Returns its sole argument @code{X}.
-
-@node Unit extras - Combinators - project, Unit extras - Combinators - list-of, Unit extras - Combinators - identity, Unit extras - Combinators
-@subsection project
-
-
-@verbatim
-[procedure] (project N)
-@end verbatim
-Returns a procedure that returns its @code{N}th argument (starting from 0).
-
-@node Unit extras - Combinators - list-of, Unit extras - Combinators - noop, Unit extras - Combinators - project, Unit extras - Combinators
-@subsection list-of
-
-
-@verbatim
-[procedure] (list-of PRED)
-@end verbatim
-Returns a procedure of one argument that returns @code{#t} when applied to a list of elements that all satisfy the predicate procedure @code{PRED}, or @code{#f} otherwise.
-
-@example
-((list-of even?) '(1 2 3))   =@strong{=>} #f
-((list-of number?) '(1 2 3)) =@strong{=>} #t
-@end example
-@node Unit extras - Combinators - noop, Unit extras - Combinators - o, Unit extras - Combinators - list-of, Unit extras - Combinators
-@subsection noop
-
-
-@verbatim
-[procedure] (noop X ...)
-@end verbatim
-Ignores it's arguments, does nothing and returns an unspecified value.
-
-@node Unit extras - Combinators - o,  , Unit extras - Combinators - noop, Unit extras - Combinators
-@subsection o
-
-
-@verbatim
-[procedure] (o PROC ...)
-@end verbatim
-A single value version of @code{compose} (slightly faster). @code{(o)} is equivalent to @code{identity}.
-
-@node Unit extras - Binary searching,  , Unit extras - Combinators, Unit extras
-@section Binary searching
-
-@menu
-* Unit extras - Binary searching - binary-search::
-
-@end menu
-
-
-@node Unit extras - Binary searching - binary-search,  ,  , Unit extras - Binary searching
-@subsection binary-search
-
-
-@verbatim
-[procedure] (binary-search SEQUENCE PROC)
-@end verbatim
-Performs a binary search in @code{SEQUENCE}, which should be a sorted list or vector.  @code{PROC} is called to compare items in the sequence, should accept a single argument and return an exact integer: zero if the searched value is equal to the current item, negative if the searched value is @emph{less} than the current item, and positive otherwise. Returns the index of the found value or @code{#f} otherwise.
-
-Previous: @ref{Unit eval, Unit eval}
+Previous: @ref{Unit ports, Unit ports}
 
 Next: @ref{Unit srfi-1, Unit srfi-1} 
 
@@ -6033,7 +6599,7 @@ Previous: @ref{Unit srfi-4, Unit srfi-4}
 
 Next: @ref{Unit srfi-14, Unit srfi-14} 
 
-@node Unit srfi-14, Unit match, Unit srfi-13, Top
+@node Unit srfi-14, Unit srfi-69, Unit srfi-13, Top
 @chapter Unit srfi-14
 
 
@@ -6048,9 +6614,518 @@ This library provides only the Latin-1 character set.
 
 Previous: @ref{Unit srfi-13, Unit srfi-13}
 
-Next: @ref{Unit match, Unit match} 
+Next: @ref{Unit srfi-69, Unit srfi-69}  
 
-@node Unit match, Unit regex, Unit srfi-14, Top
+@node Unit srfi-69, Unit match, Unit srfi-14, Top
+@chapter Unit srfi-69
+
+@menu
+* Unit srfi-69 - Hash Table Procedures::
+* Unit srfi-69 - Hashing Functions::
+
+@end menu
+
+
+CHICKEN implements SRFI 69 with SRFI 90 extensions. For more information, see @uref{http://srfi.schemers.org/srfi-69/srfi-69.html, SRFI-69} and @uref{http://srfi.schemers.org/srfi-90/srfi-90.html, SRFI-90}.
+
+@node Unit srfi-69 - Hash Table Procedures, Unit srfi-69 - Hashing Functions,  , Unit srfi-69
+@section Hash Table Procedures
+
+@menu
+* Unit srfi-69 - Hash Table Procedures - make-hash-table::
+* Unit srfi-69 - Hash Table Procedures - hash-table?::
+* Unit srfi-69 - Hash Table Procedures - hash-table-size::
+* Unit srfi-69 - Hash Table Procedures - hash-table-equivalence-function::
+* Unit srfi-69 - Hash Table Procedures - hash-table-hash-function::
+* Unit srfi-69 - Hash Table Procedures - hash-table-min-load::
+* Unit srfi-69 - Hash Table Procedures - hash-table-max-load::
+* Unit srfi-69 - Hash Table Procedures - hash-table-weak-keys::
+* Unit srfi-69 - Hash Table Procedures - hash-table-weak-values::
+* Unit srfi-69 - Hash Table Procedures - hash-table-has-initial?::
+* Unit srfi-69 - Hash Table Procedures - hash-table-initial::
+* Unit srfi-69 - Hash Table Procedures - hash-table-keys::
+* Unit srfi-69 - Hash Table Procedures - hash-table-values::
+* Unit srfi-69 - Hash Table Procedures - hash-table->alist::
+* Unit srfi-69 - Hash Table Procedures - alist->hash-table::
+* Unit srfi-69 - Hash Table Procedures - hash-table-ref::
+* Unit srfi-69 - Hash Table Procedures - hash-table-ref/default::
+* Unit srfi-69 - Hash Table Procedures - hash-table-exists?::
+* Unit srfi-69 - Hash Table Procedures - hash-table-set!::
+* Unit srfi-69 - Hash Table Procedures - hash-table-update!::
+* Unit srfi-69 - Hash Table Procedures - hash-table-update!/default::
+* Unit srfi-69 - Hash Table Procedures - hash-table-copy::
+* Unit srfi-69 - Hash Table Procedures - hash-table-delete!::
+* Unit srfi-69 - Hash Table Procedures - hash-table-remove!::
+* Unit srfi-69 - Hash Table Procedures - hash-table-clear!::
+* Unit srfi-69 - Hash Table Procedures - hash-table-merge::
+* Unit srfi-69 - Hash Table Procedures - hash-table-merge!::
+* Unit srfi-69 - Hash Table Procedures - hash-table-map::
+* Unit srfi-69 - Hash Table Procedures - hash-table-fold::
+* Unit srfi-69 - Hash Table Procedures - hash-table-for-each::
+* Unit srfi-69 - Hash Table Procedures - hash-table-walk::
+
+@end menu
+
+
+@node Unit srfi-69 - Hash Table Procedures - make-hash-table, Unit srfi-69 - Hash Table Procedures - hash-table?,  , Unit srfi-69 - Hash Table Procedures
+@subsection make-hash-table
+
+
+@verbatim
+[procedure] (make-hash-table [TEST HASH SIZE] #:TEST #:HASH #:SIZE #:INITIAL #:MIN-LOAD #:MAX-LOAD #:WEAK-KEYS #:WEAK-VALUES)
+@end verbatim
+Returns a new @code{HASH-TABLE} with the supplied configuration.
+
+@table @b
+@item @code{TEST}
+
+The equivalence function.
+@item @code{HASH}
+
+The hash function.
+@item @code{SIZE}
+
+The expected number of table elements.
+@item @code{INITIAL}
+
+The default initial value.
+@item @code{MIN-LOAD}
+
+The minimum load factor. A @code{flonum} in (0.0 1.0).
+@item @code{MAX-LOAD}
+
+The maximum load factor. A @code{flonum} in (0.0 1.0).
+@item @code{WEAK-KEYS}
+
+Use weak references for keys. (Ignored)
+@item @code{WEAK-VALUES}
+
+Use weak references for values. (Ignored)
+
+@end table
+(No, the keyword parameters are not uppercase.)
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table?, Unit srfi-69 - Hash Table Procedures - hash-table-size, Unit srfi-69 - Hash Table Procedures - make-hash-table, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table?
+
+
+@verbatim
+[procedure] (hash-table? OBJECT)
+@end verbatim
+Is the @code{OBJECT} a @code{hash-table}?
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-size, Unit srfi-69 - Hash Table Procedures - hash-table-equivalence-function, Unit srfi-69 - Hash Table Procedures - hash-table?, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-size
+
+
+@verbatim
+[procedure] (hash-table-size HASH-TABLE)
+@end verbatim
+The @code{HASH-TABLE} size.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-equivalence-function, Unit srfi-69 - Hash Table Procedures - hash-table-hash-function, Unit srfi-69 - Hash Table Procedures - hash-table-size, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-equivalence-function
+
+
+@verbatim
+[procedure] (hash-table-equivalence-function HASH-TABLE)
+@end verbatim
+The @code{HASH-TABLE} @code{equivalence-function}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-hash-function, Unit srfi-69 - Hash Table Procedures - hash-table-min-load, Unit srfi-69 - Hash Table Procedures - hash-table-equivalence-function, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-hash-function
+
+
+@verbatim
+[procedure] (hash-table-hash-function HASH-TABLE)
+@end verbatim
+The @code{HASH-TABLE} @code{hash-function}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-min-load, Unit srfi-69 - Hash Table Procedures - hash-table-max-load, Unit srfi-69 - Hash Table Procedures - hash-table-hash-function, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-min-load
+
+
+@verbatim
+[procedure] (hash-table-min-load HASH-TABLE)
+@end verbatim
+The @code{HASH-TABLE} minimum load factor.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-max-load, Unit srfi-69 - Hash Table Procedures - hash-table-weak-keys, Unit srfi-69 - Hash Table Procedures - hash-table-min-load, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-max-load
+
+
+@verbatim
+[procedure] (hash-table-max-load HASH-TABLE)
+@end verbatim
+The @code{HASH-TABLE} maximum load factor.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-weak-keys, Unit srfi-69 - Hash Table Procedures - hash-table-weak-values, Unit srfi-69 - Hash Table Procedures - hash-table-max-load, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-weak-keys
+
+
+@verbatim
+[procedure] (hash-table-weak-keys HASH-TABLE)
+@end verbatim
+Does the @code{HASH-TABLE} weak references for keys?
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-weak-values, Unit srfi-69 - Hash Table Procedures - hash-table-has-initial?, Unit srfi-69 - Hash Table Procedures - hash-table-weak-keys, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-weak-values
+
+
+@verbatim
+[procedure] (hash-table-weak-values HASH-TABLE)
+@end verbatim
+Does the @code{HASH-TABLE} weak references for values?
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-has-initial?, Unit srfi-69 - Hash Table Procedures - hash-table-initial, Unit srfi-69 - Hash Table Procedures - hash-table-weak-values, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-has-initial?
+
+
+@verbatim
+[procedure] (hash-table-has-initial? HASH-TABLE)
+@end verbatim
+Does the @code{HASH-TABLE} have a default initial value?
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-initial, Unit srfi-69 - Hash Table Procedures - hash-table-keys, Unit srfi-69 - Hash Table Procedures - hash-table-has-initial?, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-initial
+
+
+@verbatim
+[procedure] (hash-table-initial HASH-TABLE)
+@end verbatim
+The @code{HASH-TABLE} default initial value.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-keys, Unit srfi-69 - Hash Table Procedures - hash-table-values, Unit srfi-69 - Hash Table Procedures - hash-table-initial, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-keys
+
+
+@verbatim
+[procedure] (hash-table-keys HASH-TABLE)
+@end verbatim
+Returns a list of the keys in the @code{HASH-TABLE} population.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-values, Unit srfi-69 - Hash Table Procedures - hash-table->alist, Unit srfi-69 - Hash Table Procedures - hash-table-keys, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-values
+
+
+@verbatim
+[procedure] (hash-table-values HASH-TABLE)
+@end verbatim
+Returns a list of the values in the @code{HASH-TABLE} population.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table->alist, Unit srfi-69 - Hash Table Procedures - alist->hash-table, Unit srfi-69 - Hash Table Procedures - hash-table-values, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table->alist
+
+
+@verbatim
+[procedure] (hash-table->alist HASH-TABLE)
+@end verbatim
+Returns the population of the @code{HASH-TABLE} as an @code{association-list}.
+
+@node Unit srfi-69 - Hash Table Procedures - alist->hash-table, Unit srfi-69 - Hash Table Procedures - hash-table-ref, Unit srfi-69 - Hash Table Procedures - hash-table->alist, Unit srfi-69 - Hash Table Procedures
+@subsection alist->hash-table
+
+
+@verbatim
+[procedure] (alist->hash-table ASSOCIATION-LIST [MAKE-HASH-TABLE-PARAMETER ...])
+@end verbatim
+Returns a new @code{HASH-TABLE}, configured using the optional @code{MAKE-HASH-TABLE-PARAMETER ...}. The @code{HASH-TABLE} is populated from the @code{ASSOCIATION-LIST}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-ref, Unit srfi-69 - Hash Table Procedures - hash-table-ref/default, Unit srfi-69 - Hash Table Procedures - alist->hash-table, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-ref
+
+
+@verbatim
+[procedure] (hash-table-ref HASH-TABLE KEY)
+@end verbatim
+Returns the @code{VALUE} for the @code{KEY} in the @code{HASH-TABLE}.
+
+Aborts with an exception when the @code{KEY} is missing.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-ref/default, Unit srfi-69 - Hash Table Procedures - hash-table-exists?, Unit srfi-69 - Hash Table Procedures - hash-table-ref, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-ref/default
+
+
+@verbatim
+[procedure] (hash-table-ref/default HASH-TABLE KEY DEFAULT)
+@end verbatim
+Returns the @code{VALUE} for the @code{KEY} in the @code{HASH-TABLE}, or the @code{DEFAULT} when the @code{KEY} is missing.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-exists?, Unit srfi-69 - Hash Table Procedures - hash-table-set!, Unit srfi-69 - Hash Table Procedures - hash-table-ref/default, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-exists?
+
+
+@verbatim
+[procedure] (hash-table-exists? HASH-TABLE KEY)
+@end verbatim
+Does the @code{KEY} exist in the @code{HASH-TABLE}?
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-set!, Unit srfi-69 - Hash Table Procedures - hash-table-update!, Unit srfi-69 - Hash Table Procedures - hash-table-exists?, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-set!
+
+
+@verbatim
+[procedure] (hash-table-set! HASH-TABLE KEY VALUE)
+@end verbatim
+Set the @code{VALUE} for the @code{KEY} in the @code{HASH-TABLE}.
+
+A setter for @code{hash-table-ref} is defined, so
+
+@example
+(@strong{set!} (hash-table-ref HASH-TABLE KEY) VALUE)
+@end example
+is equivalent to
+
+@example
+(hash-table-set! HASH-TABLE KEY VALUE)
+@end example
+@node Unit srfi-69 - Hash Table Procedures - hash-table-update!, Unit srfi-69 - Hash Table Procedures - hash-table-update!/default, Unit srfi-69 - Hash Table Procedures - hash-table-set!, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-update!
+
+
+@verbatim
+[procedure] (hash-table-update! HASH-TABLE KEY [UPDATE-FUNCTION [DEFAULT-VALUE-FUNCTION]])
+@end verbatim
+Sets or replaces the @code{VALUE} for @code{KEY} in the @code{HASH-TABLE}.
+
+The @code{UPDATE-FUNCTION} takes the existing @code{VALUE} for @code{KEY} and returns the new @code{VALUE}. The default is @code{identity}
+
+The @code{DEFAULT-VALUE-FUNCTION} is called when the entry for @code{KEY} is missing. The default uses the @code{(hash-table-initial-value)}, if provided. Otherwise aborts with an exception.
+
+Returns the new @code{VALUE}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-update!/default, Unit srfi-69 - Hash Table Procedures - hash-table-copy, Unit srfi-69 - Hash Table Procedures - hash-table-update!, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-update!/default
+
+
+@verbatim
+[procedure] (hash-table-update! HASH-TABLE KEY UPDATE-FUNCTION DEFAULT-VALUE)
+@end verbatim
+Sets or replaces the @code{VALUE} for @code{KEY} in the @code{HASH-TABLE}.
+
+The @code{UPDATE-FUNCTION} takes the existing @code{VALUE} for @code{KEY} and returns the new @code{VALUE}.
+
+The @code{DEFAULT-VALUE} is used when the entry for @code{KEY} is missing.
+
+Returns the new @code{VALUE}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-copy, Unit srfi-69 - Hash Table Procedures - hash-table-delete!, Unit srfi-69 - Hash Table Procedures - hash-table-update!/default, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-copy
+
+
+@verbatim
+[procededure] (hash-table-copy HASH-TABLE)
+@end verbatim
+Returns a shallow copy of the @code{HASH-TABLE}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-delete!, Unit srfi-69 - Hash Table Procedures - hash-table-remove!, Unit srfi-69 - Hash Table Procedures - hash-table-copy, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-delete!
+
+
+@verbatim
+[procedure] (hash-table-delete! HASH-TABLE KEY)
+@end verbatim
+Deletes the entry for @code{KEY} in the @code{HASH-TABLE}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-remove!, Unit srfi-69 - Hash Table Procedures - hash-table-clear!, Unit srfi-69 - Hash Table Procedures - hash-table-delete!, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-remove!
+
+
+@verbatim
+[procedure] (hash-table-remove! HASH-TABLE PROC)
+@end verbatim
+Calls @code{PROC} for all entries in @code{HASH-TABLE} with the key and value of each entry. If @code{PROC} returns true, then that entry is removed.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-clear!, Unit srfi-69 - Hash Table Procedures - hash-table-merge, Unit srfi-69 - Hash Table Procedures - hash-table-remove!, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-clear!
+
+
+@verbatim
+[procedure] (hash-table-clear! HASH-TABLE)
+@end verbatim
+Deletes all entries in @code{HASH-TABLE}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-merge, Unit srfi-69 - Hash Table Procedures - hash-table-merge!, Unit srfi-69 - Hash Table Procedures - hash-table-clear!, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-merge
+
+
+@verbatim
+[procedure] (hash-table-merge HASH-TABLE-1 HASH-TABLE-2)
+@end verbatim
+Returns a new @code{HASH-TABLE} with the union of @code{HASH-TABLE-1} and @code{HASH-TABLE-2}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-merge!, Unit srfi-69 - Hash Table Procedures - hash-table-map, Unit srfi-69 - Hash Table Procedures - hash-table-merge, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-merge!
+
+
+@verbatim
+[procedure] (hash-table-merge! HASH-TABLE-1 HASH-TABLE-2)
+@end verbatim
+Returns @code{HASH-TABLE-1} as the union of @code{HASH-TABLE-1} and @code{HASH-TABLE-2}.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-map, Unit srfi-69 - Hash Table Procedures - hash-table-fold, Unit srfi-69 - Hash Table Procedures - hash-table-merge!, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-map
+
+
+@verbatim
+[procedure] (hash-table-map HASH-TABLE FUNC)
+@end verbatim
+Calls @code{FUNC} for all entries in @code{HASH-TABLE} with the key and value of each entry.
+
+Returns a list of the results of each call.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-fold, Unit srfi-69 - Hash Table Procedures - hash-table-for-each, Unit srfi-69 - Hash Table Procedures - hash-table-map, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-fold
+
+
+@verbatim
+[procedure] (hash-table-fold HASH-TABLE FUNC INIT)
+@end verbatim
+Calls @code{FUNC} for all entries in @code{HASH-TABLE} with the key and value of each entry, and the current folded value. The initial folded value is @code{INIT}.
+
+Returns the final folded value.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-for-each, Unit srfi-69 - Hash Table Procedures - hash-table-walk, Unit srfi-69 - Hash Table Procedures - hash-table-fold, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-for-each
+
+
+@verbatim
+[procedure] (hash-table-for-each HASH-TABLE PROC)
+@end verbatim
+Calls @code{PROC} for all entries in @code{HASH-TABLE} with the key and value of each entry.
+
+@node Unit srfi-69 - Hash Table Procedures - hash-table-walk,  , Unit srfi-69 - Hash Table Procedures - hash-table-for-each, Unit srfi-69 - Hash Table Procedures
+@subsection hash-table-walk
+
+
+@verbatim
+[procedure] (hash-table-walk HASH-TABLE PROC)
+@end verbatim
+Calls @code{PROC} for all entries in @code{HASH-TABLE} with the key and value of each entry.
+
+@node Unit srfi-69 - Hashing Functions,  , Unit srfi-69 - Hash Table Procedures, Unit srfi-69
+@section Hashing Functions
+
+@menu
+* Unit srfi-69 - Hashing Functions - number-hash::
+* Unit srfi-69 - Hashing Functions - object-uid-hash::
+* Unit srfi-69 - Hashing Functions - symbol-hash::
+* Unit srfi-69 - Hashing Functions - keyword-hash::
+* Unit srfi-69 - Hashing Functions - string-hash::
+* Unit srfi-69 - Hashing Functions - string-ci-hash::
+* Unit srfi-69 - Hashing Functions - eq?-hash::
+* Unit srfi-69 - Hashing Functions - eqv?-hash::
+* Unit srfi-69 - Hashing Functions - equal?-hash::
+* Unit srfi-69 - Hashing Functions - hash::
+* Unit srfi-69 - Hashing Functions - hash-by-identity::
+
+@end menu
+
+
+All hash functions return a @code{fixnum} in the range [0 @code{BOUND}).
+
+@node Unit srfi-69 - Hashing Functions - number-hash, Unit srfi-69 - Hashing Functions - object-uid-hash,  , Unit srfi-69 - Hashing Functions
+@subsection number-hash
+
+
+@verbatim
+[procedure] (number-hash NUMBER [BOUND])
+@end verbatim
+For use with @code{=} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - object-uid-hash, Unit srfi-69 - Hashing Functions - symbol-hash, Unit srfi-69 - Hashing Functions - number-hash, Unit srfi-69 - Hashing Functions
+@subsection object-uid-hash
+
+
+@verbatim
+[procedure] (object-uid-hash OBJECT [BOUND])
+@end verbatim
+Currently a synonym for @code{equal?-hash}.
+
+@node Unit srfi-69 - Hashing Functions - symbol-hash, Unit srfi-69 - Hashing Functions - keyword-hash, Unit srfi-69 - Hashing Functions - object-uid-hash, Unit srfi-69 - Hashing Functions
+@subsection symbol-hash
+
+
+@verbatim
+[procedure] (symbol-hash SYMBOL [BOUND])
+@end verbatim
+For use with @code{eq?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - keyword-hash, Unit srfi-69 - Hashing Functions - string-hash, Unit srfi-69 - Hashing Functions - symbol-hash, Unit srfi-69 - Hashing Functions
+@subsection keyword-hash
+
+
+@verbatim
+[procedure] (keyword-hash KEYWORD [BOUND])
+@end verbatim
+For use with @code{eq?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - string-hash, Unit srfi-69 - Hashing Functions - string-ci-hash, Unit srfi-69 - Hashing Functions - keyword-hash, Unit srfi-69 - Hashing Functions
+@subsection string-hash
+
+
+@verbatim
+[procedure] (string-hash STRING [BOUND])
+@end verbatim
+For use with @code{string=?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - string-ci-hash, Unit srfi-69 - Hashing Functions - eq?-hash, Unit srfi-69 - Hashing Functions - string-hash, Unit srfi-69 - Hashing Functions
+@subsection string-ci-hash
+
+
+@verbatim
+[procedure] (string-ci-hash STRING [BOUND])
+@end verbatim
+For use with @code{string-ci=?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - eq?-hash, Unit srfi-69 - Hashing Functions - eqv?-hash, Unit srfi-69 - Hashing Functions - string-ci-hash, Unit srfi-69 - Hashing Functions
+@subsection eq?-hash
+
+
+@verbatim
+[procedure] (eq?-hash OBJECT [BOUND])
+@end verbatim
+For use with @code{eq?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - eqv?-hash, Unit srfi-69 - Hashing Functions - equal?-hash, Unit srfi-69 - Hashing Functions - eq?-hash, Unit srfi-69 - Hashing Functions
+@subsection eqv?-hash
+
+
+@verbatim
+[procedure] (eqv?-hash OBJECT [BOUND])
+@end verbatim
+For use with @code{eqv?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - equal?-hash, Unit srfi-69 - Hashing Functions - hash, Unit srfi-69 - Hashing Functions - eqv?-hash, Unit srfi-69 - Hashing Functions
+@subsection equal?-hash
+
+
+@verbatim
+[procedure] (equal?-hash OBJECT [BOUND])
+@end verbatim
+For use with @code{equal?} as a @code{hash-table-equivalence-function}.
+
+@node Unit srfi-69 - Hashing Functions - hash, Unit srfi-69 - Hashing Functions - hash-by-identity, Unit srfi-69 - Hashing Functions - equal?-hash, Unit srfi-69 - Hashing Functions
+@subsection hash
+
+
+@verbatim
+[procedure] (hash OBJECT [BOUND])
+@end verbatim
+Synonym for @code{equal?-hash}.
+
+@node Unit srfi-69 - Hashing Functions - hash-by-identity,  , Unit srfi-69 - Hashing Functions - hash, Unit srfi-69 - Hashing Functions
+@subsection hash-by-identity
+
+
+@verbatim
+[procedure] (hash-by-identity OBJECT [BOUND])
+@end verbatim
+Synonym for @code{eq?-hash}.
+
+Previous: @ref{Unit srfi-14, Unit srfi-14} Next: @ref{Unit match, Unit match}
+
+@node Unit match, Unit regex, Unit srfi-69, Top
 @chapter Unit match
 
 
@@ -6090,7 +7165,7 @@ To test that PCRE support has been built into Chicken properly, try:
 
 @example
 (require 'regex)
-(test-feature? 'pcre) @strong{=>} t
+(feature? 'pcre) @strong{=>} #t
 @end example
 @node Unit regex - grep, Unit regex - glob->regexp,  , Unit regex
 @section grep
@@ -6383,6 +7458,7 @@ Next: @ref{Unit srfi-18, Unit srfi-18}
 * Unit srfi-18 - thread-resume!::
 * Unit srfi-18 - thread-wait-for-i/o!::
 * Unit srfi-18 - time->milliseconds::
+* Unit srfi-18 - milliseconds->time::
 
 @end menu
 
@@ -6475,7 +7551,7 @@ Readies the suspended thread @code{THREAD}.
 @end verbatim
 Suspends the current thread until input (@code{MODE} is @code{#:input}), output (@code{MODE} is @code{#:output}) or both (@code{MODE} is @code{#:all}) is available. @code{FD} should be a file-descriptor (not a port!) open for input or output, respectively.
 
-@node Unit srfi-18 - time->milliseconds,  , Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18
+@node Unit srfi-18 - time->milliseconds, Unit srfi-18 - milliseconds->time, Unit srfi-18 - thread-wait-for-i/o!, Unit srfi-18
 @section time->milliseconds
 
 
@@ -6484,6 +7560,22 @@ Suspends the current thread until input (@code{MODE} is @code{#:input}), output 
 @end verbatim
 Converts a time object (as created via @code{current-time}) into an exact integer representing the number of milliseconds since process startup.
 
+@node Unit srfi-18 - milliseconds->time,  , Unit srfi-18 - time->milliseconds, Unit srfi-18
+@section milliseconds->time
+
+
+@verbatim
+[procedure] (milliseconds->time ms)
+@end verbatim
+Converts into a time object an exact integer representing the number of milliseconds since process startup.
+
+This procedure may be useful in combination with @code{thread-sleep!} when your compilation unit is using @code{(declare fixnum-arithmetic)}.  In that case you won't be able to pass an inexact value to @code{thread-sleep!}, but you can do the following:
+
+@verbatim
+(define (thread-sleep!/ms ms)
+  (thread-sleep!
+   (milliseconds->time (+ ms (current-milliseconds)))))
+@end verbatim
 Previous: @ref{Unit regex, Unit regex}
 
 Next: @ref{Unit posix, Unit posix}  
@@ -6800,9 +7892,9 @@ Returns the name of the current working directory. If the optional argument @cod
 
 
 @verbatim
-[procedure] (create-directory NAME)
+[procedure] (create-directory NAME #!optional PARENTS?)
 @end verbatim
-Creates a directory with the pathname @code{NAME}.
+Creates a directory with the pathname @code{NAME}.  If the @code{PARENTS?} argument is given and not false, any nonextant parent directories are also created.
 
 @node Unit posix - Directories - delete-directory, Unit posix - Directories - directory, Unit posix - Directories - create-directory, Unit posix - Directories
 @subsection delete-directory
@@ -6838,7 +7930,7 @@ Returns @code{#t} if there exists a file with the name @code{NAME} and if that f
 @verbatim
 [procedure] (glob PATTERN1 ...)
 @end verbatim
-Returns a list of the pathnames of all existing files matching @code{PATTERN1 ...}, which should be strings containing the usual file-patterns (with @code{*} matching zero or more characters and @code{?} matching zero or one character).
+Returns a list of the pathnames of all existing files matching @code{PATTERN1 ...}, which should be strings containing the usual file-patterns (with @code{*} matching zero or more characters and @code{?} matching zero or one character).  Bug: wildcard characters are only recognized in the rightmost portion of the pattern.
 
 @node Unit posix - Directories - canonical-path, Unit posix - Directories - set-root-directory!, Unit posix - Directories - glob, Unit posix - Directories
 @subsection canonical-path
@@ -7768,7 +8860,7 @@ Sets an internal timer to raise the @code{signal/alrm} after @code{SECONDS} are 
 @verbatim
 [procedure] (set-signal-handler! SIGNUM PROC)
 @end verbatim
-Establishes the procedure of one argument @code{PROC} as the handler for the signal with the code @code{SIGNUM}. @code{PROC} is called with the signal number as its sole argument. If the argument @code{PROC} is @code{#f} then any signal handler will be removed.
+Establishes the procedure of one argument @code{PROC} as the handler for the signal with the code @code{SIGNUM}. @code{PROC} is called with the signal number as its sole argument. If the argument @code{PROC} is @code{#f} then any signal handler will be removed, and the corresponding signal set to @code{SIG_IGN}.
 
 Note that is is unspecified in which thread of execution the signal handler will be invoked.
 
@@ -8732,6 +9824,7 @@ Next: @ref{Unit utils, Unit utils}
 * Unit utils - Pathname operations::
 * Unit utils - Temporary files::
 * Unit utils - Deleting a file without signalling an error::
+* Unit utils - File move/copy::
 * Unit utils - Iterating over input lines and files::
 * Unit utils - Executing shell commands with formatstring and error checking::
 * Unit utils - Reading a file's contents::
@@ -8927,7 +10020,7 @@ Does the @code{DIRECTORY} consist only of path separators and the period?
 @end verbatim
 Creates an empty temporary file and returns its pathname. If @code{EXTENSION} is not given, then @code{.tmp} is used. If the environment variable @code{TMPDIR, TEMP} or @code{TMP} is set, then the pathname names a file in that directory.
 
-@node Unit utils - Deleting a file without signalling an error, Unit utils - Iterating over input lines and files, Unit utils - Temporary files, Unit utils
+@node Unit utils - Deleting a file without signalling an error, Unit utils - File move/copy, Unit utils - Temporary files, Unit utils
 @section Deleting a file without signalling an error
 
 @menu
@@ -8945,7 +10038,35 @@ Creates an empty temporary file and returns its pathname. If @code{EXTENSION} is
 @end verbatim
 If the file @code{FILENAME} exists, it is deleted and @code{#t} is returned.  If the file does not exist, nothing happens and @code{#f} is returned.
 
-@node Unit utils - Iterating over input lines and files, Unit utils - Executing shell commands with formatstring and error checking, Unit utils - Deleting a file without signalling an error, Unit utils
+@node Unit utils - File move/copy, Unit utils - Iterating over input lines and files, Unit utils - Deleting a file without signalling an error, Unit utils
+@section File move/copy
+
+@menu
+* Unit utils - File move/copy - file-copy::
+* Unit utils - File move/copy - file-move::
+
+@end menu
+
+
+@node Unit utils - File move/copy - file-copy, Unit utils - File move/copy - file-move,  , Unit utils - File move/copy
+@subsection file-copy
+
+
+@verbatim
+[procedure] (file-copy ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+@end verbatim
+Copies @code{ORIGFILE} (a string denoting some filename) to @code{NEWFILE},  @code{BLOCKSIZE} bytes at a time.  @code{BLOCKSIZE} defaults to 1024, and must be a positive integer.  Returns the number of bytes copied on success, or errors on failure.  @code{CLOBBER} determines the behaviour of @code{file-copy} when @code{NEWFILE} is already extant.  When set to @code{#f} (default), an error is signalled.  When set to any other value, @code{NEWFILE} is overwritten. @code{file-copy} will work across filesystems and devices and is not platform-dependent.
+
+@node Unit utils - File move/copy - file-move,  , Unit utils - File move/copy - file-copy, Unit utils - File move/copy
+@subsection file-move
+
+
+@verbatim
+[procedure] (file-move ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+@end verbatim
+Moves @code{ORIGFILE} (a string denoting some filename) to @code{NEWFILE}, with the same semantics as @code{file-copy}, above.  @code{file-move} is safe across filesystems and devices (unlike @code{file-rename}).  It is possible for an error to be signalled despite partial success if @code{NEWFILE} could be created and fully written but removing @code{ORIGFILE} fails.
+
+@node Unit utils - Iterating over input lines and files, Unit utils - Executing shell commands with formatstring and error checking, Unit utils - File move/copy, Unit utils
 @section Iterating over input lines and files
 
 @menu
@@ -12351,6 +13472,9 @@ Download and show the repository catalog
 @item @code{-svn URL}
 
 Fetch extension from @uref{http://subversion.tigris.org, Subversion} repository
+@item @code{-svn-trunk URL}
+
+Fetch extension from trunk in @uref{http://subversion.tigris.org, Subversion} repository
 @item @code{-revision REV}
 
 Specifies SVN revision to check out

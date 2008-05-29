@@ -1104,6 +1104,8 @@ srfi-4.import.c: srfi-4.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 data-structures.import.c: data-structures.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+ports.import.c: ports.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 posix.import.c: posix.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 srfi-13.import.c: srfi-13.import.scm
