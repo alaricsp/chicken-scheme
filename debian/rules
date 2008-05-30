@@ -17,9 +17,7 @@ BINARYVERSION=3
 build: build-stamp
 build-stamp:
 	dh_testdir
-#	CFLAGS="$(CFLAGS)" ./configure --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info
 	$(MAKE) \
-	    MAKEINFO_PROGRAM_OPTIONS="" \
 	    CFLAGS="$(CFLAGS)" \
 	    PREFIX="$(PREFIX)" \
 	    MANDIR="$(PREFIX)/share/man" \

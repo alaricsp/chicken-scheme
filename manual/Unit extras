@@ -457,30 +457,6 @@ and calls the procedure {{PREDICATE}} with each character until {{PREDICATE}} re
 false. Returns a string with the accumulated characters.
 
 
-==== with-error-output-to-port
-
- [procedure] (with-error-output-to-port PORT THUNK)
-
-Call procedure {{THUNK}} with the current error output-port
-temporarily bound to {{PORT}}.
-
-
-==== with-input-from-port
-
- [procedure] (with-input-from-port PORT THUNK)
-
-Call procedure {{THUNK}} with the current input-port temporarily
-bound to {{PORT}}.
-
-
-==== with-output-to-port
-
- [procedure] (with-output-to-port PORT THUNK)
-
-Call procedure {{THUNK}} with the current output-port temporarily
-bound to {{PORT}}.
-
-
 
 === Strings
 
@@ -828,6 +804,6 @@ searched value is equal to the current item, negative if the searched
 value is ''less'' than the current item, and positive otherwise.
 Returns the index of the found value or {{#f}} otherwise.
 
-Previous: [[Unit eval]]
+Previous: [[Unit ports]]
 
 Next: [[Unit srfi-1]]

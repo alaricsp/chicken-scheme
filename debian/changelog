@@ -1,3 +1,19 @@
+chicken (3.2.0-0.2) unstable; urgency=low
+
+  * Added directory information to texi documentation file.
+
+ -- Ivan Raikov <raikov@oist.jp>  Thu, 01 May 2008 10:06:00 +0900
+
+chicken (3.2.0-0.1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Ivan Raikov <raikov@oist.jp>  Wed, 30 Apr 2008 13:43:22 +0900
+
+chicken (3.1.0-0.3) unstable; urgency=low
+
+  * Chicken shared library moved to libchicken0 package.
+
 chicken (3.0.0-0.1) unstable; urgency=low
 
   * New upstream version.

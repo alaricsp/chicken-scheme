@@ -5,8 +5,8 @@ set -e
 TEST_DIR=`pwd`
 export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
-compile="../csc -compiler ../chicken -v -C -I.. -L.. -o a.out"
-compile_s="../csc -s -compiler ../chicken -v -C -I.. -L.."
+compile="../csc -compiler ../chicken -v -I.. -L.. -o a.out"
+compile_s="../csc -s -compiler ../chicken -v -I.. -L.."
 
 echo "======================================== runtime tests ..."
 ../csi -s apply-test.scm

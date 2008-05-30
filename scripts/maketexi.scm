@@ -35,6 +35,8 @@
 			     "Unit eval"
 			     "Unit expand"
 			     "Unit extras"
+			     "Unit data-structures"
+			     "Unit ports"
 			     "Unit srfi-1"
 			     "Unit srfi-4"
 			     "Unit srfi-13"

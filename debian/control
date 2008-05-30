@@ -1,24 +1,24 @@
 Source: chicken
+Homepage: http://www.call-with-current-continuation.org/
 Section: interpreters
 Priority: optional
 Maintainer: Davide Puricelli (evo) <evo@debian.org>
-Build-Depends: debhelper (>> 3.0.0), autotools-dev
-Standards-Version: 3.6.2
+Build-Depends: debhelper (>> 4.0.0), libpcre3-dev
+Standards-Version: 3.7.3
 
 Package: chicken-bin
 Section: interpreters
 Architecture: any
 Conflicts: chicken, chicken-dev
-Depends: ${shlibs:Depends}, libchicken-dev (= ${Source-Version})
+Depends: ${shlibs:Depends}, libchicken-dev (= ${binary:Version})
 Replaces: chicken, chicken-dev
-Description: Simple Scheme-to-C compiler - compiler
+Description: A practical and portable Scheme system - compiler
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.
  It uses the ideas presented in Baker's paper "Cheney on the MTA", and
  has a small core and is easily extendable.
  .
  This package contains the compiler.
- .
- Homepage: http://www.call-with-current-continuation.org
+
 
 Package: libchicken0
 Architecture: any
