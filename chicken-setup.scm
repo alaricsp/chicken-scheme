@@ -1473,7 +1473,7 @@ EOF
 	 (host-extension #t)
 	 (loop more) )
 	(((or "-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-install-prefix" 
-	      "-tree" "-local" "-svn" "-svn-trunk" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
+	      "-tree" "-local" "-svn" "-svn-trunk" "-eval" "-create-tree" "-build-prefix" "-download-path"))
 	 (error "missing option argument" (car args)) )
 	((filename . more)
 	 (cond ((and (> (string-length filename) 0) (char=? #\- (string-ref filename 0)))
