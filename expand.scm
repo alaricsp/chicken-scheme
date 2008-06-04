@@ -84,6 +84,10 @@
       (let* ((alias (gensym var))
 	     (ua (or (lookup var se) var)))
 	(##sys#put! alias '##sys#macro-alias ua)
+	(dd "aliasing " var " to " 
+	    (if (pair? ua)
+		`(MACRO: ,@(map-se (car ua)))
+		ua))
 	alias) ) )
 
 (define (map-se se)
@@ -650,7 +654,7 @@
 	       (if (symbol? a)
 		   a
 		   (let ((a2 (macro-alias sym se)))
-		     (dd `(SE/RENAME: ,sym ,a2 ,(map-se (car a))))
+		     ;;(dd `(SE/RENAME: ,sym ,a2 ,(map-se (car a))))
 		     (set! renv (cons (cons sym a2) renv))
 		     a2))))
 	    (else
@@ -1301,6 +1305,13 @@
 	   (##sys#symbol->string u)
 	   "'"))))
      (module-undefined-list mod))
+    (let ((exports (append sexports vexports)))
+      (for-each
+       (lambda (sexp)
+	 (let ((se (append sexports vexports (cadr sexp))))
+	   (dm `(FIXUP: ,(car sexp) ,@(map-se se)))
+	   (set-car! (cdr sexp) (append sexports vexports (cadr sexp)))))
+       sexports))
     (dm `(EXPORTS: 
 	  ,(module-name mod) 
 	  (DLIST: ,(map-se dlist))
