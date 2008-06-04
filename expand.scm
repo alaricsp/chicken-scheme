@@ -71,7 +71,7 @@
 
 (define (lookup id se)
   (cond ((assq id se) => cdr)
-	((##sys#get id '##sys#macro-alias))
+	((##sys#get id '##core#macro-alias))
 	(else #f)))
 
 (define (macro-alias var se)
@@ -83,7 +83,7 @@
       var
       (let* ((alias (gensym var))
 	     (ua (or (lookup var se) var)))
-	(##sys#put! alias '##sys#macro-alias ua)
+	(##sys#put! alias '##core#macro-alias ua)
 	(dd "aliasing " var " to " 
 	    (if (pair? ua)
 		`(MACRO: ,@(map-se (car ua)))
@@ -101,7 +101,7 @@
     (cond ((symbol? x)
 	   (let ((x2 (if se 
 			 (lookup x se)
-			 (get x '##sys#macro-alias) ) ) )
+			 (get x '##core#macro-alias) ) ) )
 	     (cond ((not x2) x)
 		   ((pair? x2) x)
 		   (else x2))))
@@ -159,6 +159,7 @@
     (lambda (exp dse)
       (define (call-handler name handler exp se)
 	(d "invoking macro: " name)
+	(dd `(STATIC-SE: ,(map car se)))
 	(handle-exceptions ex
 	    (##sys#abort
 	     (if (and (##sys#structure? ex 'condition)
@@ -190,7 +191,7 @@
       (define (expand head exp mdef)
 	(dd `(EXPAND: 
 	      ,head 
-	      ,(cond ((get head '##sys#macro-alias) =>
+	      ,(cond ((get head '##core#macro-alias) =>
 		      (lambda (a) (if (symbol? a) a '<macro>)) )
 		     (else '_))
 	      ,exp 
@@ -258,6 +259,7 @@
 	     (##sys#module-rename sym (module-name mod))))
 	  (else sym)))
   (cond ((##sys#qualified-symbol? sym) sym)
+	((##sys#get sym '##core#aliased) sym)
 	((assq sym (##sys#current-environment)) =>
 	 (lambda (a)
 	   (if (pair? (cdr a))
@@ -663,10 +665,10 @@
 	       a))))
     (define (compare s1 s2)
       (if (and (symbol? s1) (symbol? s2))
-	  (eq? (or (##sys#get s1 '##sys#macro-alias)
+	  (eq? (or (##sys#get s1 '##core#macro-alias)
 		   (lookup s1 dse)
 		   s1)
-	       (or (##sys#get s2 '##sys#macro-alias)
+	       (or (##sys#get s2 '##core#macro-alias)
 		   (lookup s2 dse)
 		   s2) )
 	  (eq? s1 s2)))
@@ -776,43 +778,49 @@
 			  (cons (map ren impv) (map ren imps))))
 		       (else (syntax-error loc "invalid import specification" spec)))))))
       (##sys#check-syntax loc x '(_ . #(_ 1)))
-      (for-each
-       (lambda (spec)
-	 (let* ((vs (import-spec spec))
-		(vsv (car vs))
-		(vss (cdr vs))
-		(cm (##sys#current-module)))
-	   ;; fixup reexports
-	   (when cm
-	     (let ((dlist (module-defined-list cm)))
-	       (define (fixup! imports)
-		 (for-each
-		  (lambda (imp)
-		    (when (##sys#find-export (car imp) cm) ;*** must process export list for every import
-		      (d "fixup reexport: " imp)
-		      (set! dlist (cons imp dlist))))
-		  imports) )
-	       (fixup! vsv)
-	       (fixup! vss)
-	       (set-module-defined-list! cm dlist)) )
-	   (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,(map-se vsv)))
-	   (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,(map-se vss)))
-	   (for-each
-	    (lambda (imp)
-	      (and-let* ((a (assq (car imp) (import-env)))
-			 ((not (eq? (cdr imp) (cdr a)))))
-		(##sys#warn "re-importing already imported identfier: " (car imp))) )
-	    vsv)
-	   (for-each
-	    (lambda (imp)
-	      (and-let* ((a (assq (car imp) (macro-env)))
-			 ((not (eq? (cdr imp) (cdr a)))))
-		(##sys#warn "re-importing already imported syntax: " (car imp))) )
-	    vss)
-	   (import-env (append vsv (import-env)))
-	   (macro-env (append vss (macro-env)))))
-       (cdr x))
-      '(##core#undefined)))
+      (let ((cm (##sys#current-module)))
+	(when cm
+	  ;; save import form
+	  (set-module-import-forms! cm (append (module-import-forms cm) (cdr x))))
+	(for-each
+	 (lambda (spec)
+	   (let* ((vs (import-spec spec))
+		  (vsv (car vs))
+		  (vss (cdr vs)))
+	     (when cm
+	       ;; fixup reexports
+	       (let ((dlist (module-defined-list cm)))
+		 (define (fixup! imports)
+		   (for-each
+		    (lambda (imp)
+		      (when (##sys#find-export (car imp) cm) ;*** must process export list for every import
+			(d "fixup reexport: " imp)
+			(set! dlist (cons imp dlist))))
+		    imports) )
+		 (fixup! vsv)
+		 (fixup! vss)
+		 (set-module-defined-list! cm dlist)) )
+	     (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,(map-se vsv)))
+	     (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,(map-se vss)))
+	     (for-each
+	      (lambda (imp)
+		(let ((id (car imp))
+		      (aid (cdr imp)))
+		  (##sys#put! aid '##core#aliased #t)
+		  (and-let* ((a (assq id (import-env)))
+			     ((not (eq? aid (cdr a)))))
+		    (##sys#warn "re-importing already imported identfier: " id))))
+	      vsv)
+	     (for-each
+	      (lambda (imp)
+		(and-let* ((a (assq (car imp) (macro-env)))
+			   ((not (eq? (cdr imp) (cdr a)))))
+		  (##sys#warn "re-importing already imported syntax: " (car imp))) )
+	      vss)
+	     (import-env (append vsv (import-env)))
+	     (macro-env (append vss (macro-env)))))
+	 (cdr x))
+	'(##core#undefined))))
   (##sys#extend-macro-environment
    'import '() 
    (##sys#er-transformer 
@@ -823,7 +831,7 @@
    (##sys#er-transformer 
     ;;*** ##sys#import-environment is likely to be wrong here
     (cut expand-import <> <> <> ##sys#current-environment ##sys#meta-macro-environment 
-	 'import-for-syntax) ) ))
+	 'import-for-syntax) ) ) )
 
 (define ##sys#initial-macro-environment (##sys#macro-environment))
 
@@ -1168,15 +1176,20 @@
   (hide make-module module?
 	module-name module-vexports module-sexports
 	set-module-vexports! set-module-sexports!
-	module-export-list module-defined-list set-module-defined-list!))
+	module-export-list module-defined-list set-module-defined-list!
+	module-import-forms set-module-import-forms!
+	module-defined-syntax-list set-module-defined-syntax-list!))
 
 (define-record-type module
-  (make-module name export-list defined-list undefined-list vexports sexports) 
+  (make-module name export-list defined-list defined-syntax-list undefined-list 
+	       import-forms vexports sexports) 
   module?
   (name module-name)			; SYMBOL
   (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
   (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)
+  (defined-syntax-list module-defined-syntax-list set-module-defined-syntax-list!) ; ((SYMBOL . VALUE) ...)
   (undefined-list module-undefined-list set-module-undefined-list!) ; (SYMBOL ...)
+  (import-forms module-import-forms set-module-import-forms!)	    ; (SPEC ...)
   (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
@@ -1187,25 +1200,38 @@
 
 (define (##sys#toplevel-definition-hook sym mod exp val) #f)
 
-(define (##sys#register-export sym mod #!optional val)
+(define (##sys#register-export sym mod)
   (when mod
     (let ((exp (##sys#find-export sym mod))
 	  (ulist (module-undefined-list mod)))
       (##sys#toplevel-definition-hook
        (##sys#module-rename sym (module-name mod)) 
-       mod exp val)
+       mod exp #f)
       (when (memq sym ulist)
 	(set-module-undefined-list! mod (##sys#delq sym ulist)))
       (when exp
 	(d "defined: " sym)
-	(when (assq sym (module-defined-list mod))
-	  (##sys#warn
-	   "exported variable multiply defined"
-	   sym (module-name mod)))
+	(set-module-defined-list! 
+	 mod
+	 (cons (cons sym #f)
+	       (module-defined-list mod)))))) )
+
+(define (##sys#register-syntax-export sym mod val)
+  (when mod
+    (let ((exp (##sys#find-export sym mod))
+	  (ulist (module-undefined-list mod))
+	  (mname (module-name mod)))
+      (when (memq sym ulist)
+	(##sys#warn "use of syntax precedes definition" sym mname))
+      (when exp
+	(d "defined: " sym)
 	(set-module-defined-list! 
 	 mod
 	 (cons (cons sym val)
-	       (module-defined-list mod)))))) )
+	       (module-defined-list mod))) )
+      (set-module-defined-syntax-list! 
+       mod
+       (cons sym (module-defined-syntax-list mod))))))
 
 (define (##sys#register-undefined sym mod)
   (when mod
@@ -1214,27 +1240,35 @@
 	(set-module-undefined-list! mod (cons sym ul))))))
 
 (define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
-  (let ((mod (make-module name explist '() '() vexports sexports)))
+  (let ((mod (make-module name explist '() '() '() '() vexports sexports)))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
 
+(define (##sys#mark-imported-symbols se)
+  (for-each
+   (lambda (imp)
+     (when (pair? (cdr imp)) (##sys#put! (car imp) '##core#pre-aliased #t)))
+   se))
+
 (define (##sys#compiled-module-registration mod)
   (let ((dlist (module-defined-list mod)))
-    `(##sys#register-compiled-module
-      ',(module-name mod)
-      ',(module-vexports mod)
-      (list 
-       ,@(map (lambda (sexport)
-		(let* ((name (car sexport))
-		       (a (assq name dlist)))
-		  (unless (pair? a)
-		    (bomb "exported syntax has no source"))
-		  `(cons ',(car sexport) ,(cdr a))))
-	      (module-sexports mod))))))
+    `(begin
+       (import ,@(module-import-forms mod))
+       (##sys#register-compiled-module
+	',(module-name mod)
+	',(module-vexports mod)
+	(list 
+	 ,@(map (lambda (sexport)
+		  (let* ((name (car sexport))
+			 (a (assq name dlist)))
+		    (unless (pair? a)
+		      (bomb "exported syntax has no source"))
+		    `(cons ',(car sexport) ,(cdr a))))
+		(module-sexports mod)))))))
 
 (define (##sys#register-compiled-module name vexports sexports)
   (let ((mod (make-module 
-	      name '() '() '()
+	      name '() '() '() '() '()
 	      vexports
 	      (map (lambda (se)
 		     (list (car se) '() (##sys#er-transformer (cdr se))))
@@ -1245,7 +1279,7 @@
 (define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
-	      name '() '() '()
+	      name '() '() '() '()'()
 	      (map (lambda (ve)
 		     (if (symbol? ve)
 			 (cons ve ve)
@@ -1271,6 +1305,14 @@
   (let* ((explist (module-export-list mod))
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
+	 (sdlist (map (lambda (sym) (assq sym (##sys#macro-environment)))
+		      (module-defined-syntax-list mod)))
+	 (sexports
+	  (let loop ((me (##sys#macro-environment)))
+	    (cond ((or (null? me) (eq? me0 me)) '())
+		  ((##sys#find-export (caar me) mod)
+		   (cons (car me) (loop (cdr me))))
+		  (else (loop (cdr me))))))
 	 (sexports
 	  (let loop ((me (##sys#macro-environment)))
 	    (cond ((or (null? me) (eq? me0 me)) '())
@@ -1301,22 +1343,23 @@
        (unless (assq u dlist)
 	 (##sys#warn 
 	  (string-append
-	   "reference to possible unbound identifier `" 
+	   "reference to possibly unbound identifier `" 
 	   (##sys#symbol->string u)
 	   "'"))))
      (module-undefined-list mod))
-    (let ((exports (append sexports vexports)))
+    (let ((exports (append sdlist vexports)))
       (for-each
-       (lambda (sexp)
-	 (let ((se (append sexports vexports (cadr sexp))))
-	   (dm `(FIXUP: ,(car sexp) ,@(map-se se)))
-	   (set-car! (cdr sexp) (append sexports vexports (cadr sexp)))))
-       sexports))
+       (lambda (m)
+	 (let ((se (append exports (cadr m))))
+	   (dm `(FIXUP: ,(car m) ,@(map-se se)))
+	   (set-car! (cdr m) se)))
+       sdlist))
     (dm `(EXPORTS: 
 	  ,(module-name mod) 
-	  (DLIST: ,(map-se dlist))
-	  (VEXPORTS: ,(map-se vexports))
-	  (SEXPORTS: ,(map-se sexports))))
+	  (DLIST: ,@(map-se dlist))
+	  (SDLIST: ,@(map-se sdlist))
+	  (VEXPORTS: ,@(map-se vexports))
+	  (SEXPORTS: ,@(map-se sexports))))
     (set-module-vexports! mod vexports)
     (set-module-sexports! mod sexports)))
 

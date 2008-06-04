@@ -432,11 +432,6 @@ load it manually:
 
 === Caveats
 
-Macros are currently not referentially transparent on the module
-level: internal Identifiers used by exported macros must be
-exported too or the macro expansion will contain references to
-unbound identifiers. This is a bug.
-
 The macro- and module system has been implemented relatively
 recently and is likely to contain bugs. Please contact the
 maintainers if you encounter behaviour that you think is

@@ -1,38 +1,42 @@
 TODO for macro/module system					-*- Outline -*-
 
-* documentation
-** chicken.texi needs to be regenerated
-
 * bugs
 ** modules
-*** exported macros do not inherit local se
-    and are thus unhygienic and require the importing context to import dependencies
+*** import-libraries must also include non-exported macros
+    (in case the expansion of an exported macro needs it - yuck)
+**** probably add additional sdefs arg to register-compiled-module
+     similar to current sexports - add to SE of each exported macro
+*** value bindings in expansions of exported macros must currently also be exported
+    or they will be hidden anyway
 *** code-duplication in compiler and evaluator for ##core#module
-*** syntax-definitions in modules
-    transformers use ##sys#meta-macro-environment + unset ##sys#current-module,
-    this may not be be sufficient (expansion assumes ids are imported in used
-    context) [is this still relevant? we could simply reexport the ids used in
-    in the expansion]
 *** "scheme" module does not include some special forms ("define-syntax", etc.)
 *** import-for-syntax imports value bindings into import-env
     should actually be a distinct meta-import-env.
 
+* documentation
+** modules
+*** document export issues
+**** v-bindings in exported macros must be exported
+**** unexported macros in exported ones may not
+
+* build
+** clear up soname thing (removed here, ivan says he needs it for debian)
+** chicken.texi needs to be regenerated
+
 * test
-** reexports
 ** syntax-export of srfi-14 module
 ** foreign module
-** line-number retention over macro-expansion
 ** warnings for re-imports
-** add ec to test-suite
+** modularize fps egg as a more realistic test
 
 * syntax-error
-** if ##sys#current-module is set, add name to error message
+** if ##sys#current-module is set, add name to error message?
 
 * modules
 ** checks
+*** module-def not at toplevel
 *** redef of imported id
 *** reimport of imported id
-** "ports" import library
 ** allow exporting all definitions
 ** "define-for-syntax" still right?
 
@@ -42,15 +46,14 @@ TODO for macro/module system					-*- Outline -*-
 * compiler
 ** warn if encountering global ref to "unquote[-splicing]"
 ** add command-line option for import
+   should we?
 
-* eggs to be adapted/obsoleted
-** syntax-case (eval/expand integration?)
+* eggs to be removed
+** syntax-case
 *** sxml-match
 ** codewalk
-   must probably go... influences modules, crunch
-** remove
-   modules
-** syntactic-closures?
+*** modules, crunch
+** syntactic-closures
 ** simple-macros
 ** alexpander
 

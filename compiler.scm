@@ -452,12 +452,12 @@
 
   (define (lookup id se)
     (cond ((find-id id se))
-	  ((##sys#get id '##sys#macro-alias))
+	  ((##sys#get id '##core#macro-alias))
 	  (else id)))
 
   (define (macro-alias var se)
     (let ((alias (gensym var)))
-      (##sys#put! alias '##sys#macro-alias (lookup var se))
+      (##sys#put! alias '##core#macro-alias (lookup var se))
       alias) )
 
   (define (set-real-names! as ns)
@@ -693,7 +693,7 @@
 			   name
 			   (##sys#current-environment)
 			   (##sys#er-transformer (eval/meta tx)))
-			  (##sys#register-export name (##sys#current-module) tx)
+			  (##sys#register-syntax-export name (##sys#current-module) tx)
 			  (walk
 			   (if ##sys#enable-runtime-macros
 			       `(##sys#extend-macro-environment
@@ -712,7 +712,7 @@
 			   name
 			   (##sys#current-environment)
 			   (##sys#er-transformer (eval/meta tx)))
-			  (##sys#register-export name (##sys#current-module) tx)
+			  (##sys#register-syntax-export name (##sys#current-module) tx)
 			  (walk
 			   `(##sys#extend-macro-environment
 			     ',(cadr x)
@@ -740,9 +740,6 @@
 			       (me0 (##sys#macro-environment)))
 			  (when (##sys#current-module)
 			    (##sys#syntax-error-hook 'module "modules may not be nested" name))
-			  (when (pair? se)
-			    (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
-						     name))
 			  (let-values (((body mreg)
 					(parameterize ((##sys#current-module 
 							(##sys#register-module name exports) )

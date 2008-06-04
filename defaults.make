@@ -295,7 +295,7 @@ CSI_PROGRAM = $(PROGRAM_PREFIX)csi$(PROGRAM_SUFFIX)
 CHICKEN_PROFILE_PROGRAM = $(PROGRAM_PREFIX)chicken-profile$(PROGRAM_SUFFIX)
 CHICKEN_SETUP_PROGRAM = $(PROGRAM_PREFIX)chicken-setup$(PROGRAM_SUFFIX)
 CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
-IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures posix srfi-13 srfi-69 extras \
+IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports posix srfi-13 srfi-69 extras \
 	regex srfi-14 tcp foreign scheme srfi-18 utils csi
 
 ifdef STATICBUILD

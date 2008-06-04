@@ -247,7 +247,7 @@
 
       (define (rename var se)
 	(cond ((find-id var se))
-	      ((##sys#get var '##sys#macro-alias))
+	      ((##sys#get var '##core#macro-alias))
 	      (else var)))
 
       (define (lookup var0 e se)
@@ -609,7 +609,7 @@
 			     (##sys#current-environment)
 			     (##sys#er-transformer
 			      (eval/meta (caddr x))))
-			    (##sys#register-export name (##sys#current-module))
+			    (##sys#register-syntax-export name (##sys#current-module) #f)
 			    (compile '(##core#undefined) e #f tf cntr se) ) )
 
 			 ((##core#module)
@@ -629,10 +629,8 @@
 						 "invalid export syntax" exp name))))
 				       (caddr x)))
 				 (me0 (##sys#macro-environment)))
-			    #;(when (pair? se)
-			      (##sys#syntax-error-hook
-			       'module "module definition not in toplevel scope"
-			       name))
+			    (when (##sys#current-module)
+			      (##sys#syntax-error-hook 'module "modules may not be nested" name))
 			    (parameterize ((##sys#current-module 
 					    (##sys#register-module name exports) )
 					   (##sys#current-environment '())
