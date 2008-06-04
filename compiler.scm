@@ -746,7 +746,7 @@
 			  (let-values (((body mreg)
 					(parameterize ((##sys#current-module 
 							(##sys#register-module name exports) )
-						       (##sys#import-environment '())
+						       (##sys#current-environment '())
 						       (##sys#macro-environment ##sys#initial-macro-environment))
 					    (let loop ((body (cdddr x)) (xs '()))
 					      (cond 

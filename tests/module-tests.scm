@@ -45,4 +45,24 @@
 (import baz)
 (test-equal "prefixed import and reexport" (x 1) '(1))
 
+#|
+(module foo (bar gna)
+  (import scheme)
+  (define (gna x) (list 'gna x))
+  (define-syntax bar
+    (syntax-rules ()
+      ((_ x) (baz x))))
+  (define-syntax baz
+    (syntax-rules ()
+      ((_ x) (gna 'x)))))
+
+(module goo ()
+  (import scheme chicken foo)
+  (define-syntax baz
+    (syntax-rules ()
+      ((_ x) (list 'goo 'x))))
+  (define (gna _) (bomb))
+  (print (bar 99)))
+|#
+
 (test-end "modules")

@@ -629,13 +629,13 @@
 						 "invalid export syntax" exp name))))
 				       (caddr x)))
 				 (me0 (##sys#macro-environment)))
-			    (when (pair? se)
+			    #;(when (pair? se)
 			      (##sys#syntax-error-hook
 			       'module "module definition not in toplevel scope"
 			       name))
 			    (parameterize ((##sys#current-module 
 					    (##sys#register-module name exports) )
-					   (##sys#import-environment '())
+					   (##sys#current-environment '())
 					   (##sys#macro-environment ##sys#initial-macro-environment))
 				(let loop ((body (cdddr x)) (xs '()))
 				  (if (null? body)

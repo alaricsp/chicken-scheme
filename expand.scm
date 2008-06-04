@@ -30,7 +30,7 @@
   (fixnum)
   (hide match-expression
 	macro-alias
-	d dd
+	d dd dm map-se
 	lookup) )
 
 
@@ -43,6 +43,7 @@
       (apply print arg1 more)))
 
 (define dd d)
+(define dm d)
 
 #;(cond-expand
  (hygienic-macros
@@ -55,6 +56,12 @@
   (define-syntax dd (syntax-rules () ((_ . _) (void)))))
  (else					;*** remove later
   (define-macro (dd . _) '(void))))
+
+#;(cond-expand
+ (hygienic-macros
+  (define-syntax dm (syntax-rules () ((_ . _) (void)))))
+ (else					;*** remove later
+  (define-macro (dm . _) '(void))))
 
 
 ;;; Syntactic environments
@@ -78,6 +85,11 @@
 	     (ua (or (lookup var se) var)))
 	(##sys#put! alias '##sys#macro-alias ua)
 	alias) ) )
+
+(define (map-se se)
+  (map (lambda (a) 
+	 (cons (car a) (if (symbol? (cdr a)) (cdr a) '<macro>)))
+       se))
 
 (define (##sys#strip-syntax exp #!optional se)
   ;; if se is given, retain bound vars
@@ -103,6 +115,7 @@
 
 (define (##sys#extend-macro-environment name se handler)
   (let ((me (##sys#macro-environment)))
+    (dd "extending: " name " SE: " (map-se se))
     (cond ((lookup name me) =>
 	   (lambda (a)
 	     (set-car! a se)
@@ -177,7 +190,9 @@
 		      (lambda (a) (if (symbol? a) a '<macro>)) )
 		     (else '_))
 	      ,exp 
-	      ,(map car dse)))
+	      ,(if (pair? mdef)
+		   `(SE: ,@(map-se (car mdef)))
+		   mdef)))
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
@@ -222,7 +237,6 @@
 	  (values exp #f) ) ) ) )
 
 (define ##sys#enable-runtime-macros #f)
-(define ##sys#import-environment (make-parameter '()))
 
 (define (##sys#module-rename sym prefix)
   (##sys#string->symbol 
@@ -240,7 +254,7 @@
 	     (##sys#module-rename sym (module-name mod))))
 	  (else sym)))
   (cond ((##sys#qualified-symbol? sym) sym)
-	((assq sym (##sys#import-environment)) =>
+	((assq sym (##sys#current-environment)) =>
 	 (lambda (a)
 	   (if (pair? (cdr a))
 	       (mrename sym)
@@ -635,9 +649,10 @@
 	     (lambda (a)
 	       (if (symbol? a)
 		   a
-		   (let ((a (macro-alias sym se)))
-		     (set! renv (cons (cons sym a) renv))
-		     a))))
+		   (let ((a2 (macro-alias sym se)))
+		     (dd `(SE/RENAME: ,sym ,a2 ,(map-se (car a))))
+		     (set! renv (cons (cons sym a2) renv))
+		     a2))))
 	    (else
 	     (let ((a (macro-alias sym se)))
 	       (set! renv (cons (cons sym a) renv))
@@ -678,7 +693,7 @@
 		       (string-append (symbol->string mname) ".import")
 		       #t)))
 	      (cond (il (parameterize ((##sys#current-module #f)
-				       (##sys#import-environment '())
+				       (##sys#current-environment '())
 				       (##sys#macro-environment (##sys#meta-macro-environment)))
 			  (##sys#load il #f #f))
 			(set! mod (##sys#find-module mname)))
@@ -776,8 +791,8 @@
 	       (fixup! vsv)
 	       (fixup! vss)
 	       (set-module-defined-list! cm dlist)) )
-	   (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,vsv))
-	   (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,vss))
+	   (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,(map-se vsv)))
+	   (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,(map-se vss)))
 	   (for-each
 	    (lambda (imp)
 	      (and-let* ((a (assq (car imp) (import-env)))
@@ -797,13 +812,13 @@
   (##sys#extend-macro-environment
    'import '() 
    (##sys#er-transformer 
-    (cut expand-import <> <> <> ##sys#import-environment ##sys#macro-environment
+    (cut expand-import <> <> <> ##sys#current-environment ##sys#macro-environment
 	 'import) ) )
   (##sys#extend-macro-environment
    'import-for-syntax '() 
    (##sys#er-transformer 
     ;;*** ##sys#import-environment is likely to be wrong here
-    (cut expand-import <> <> <> ##sys#import-environment ##sys#meta-macro-environment 
+    (cut expand-import <> <> <> ##sys#current-environment ##sys#meta-macro-environment 
 	 'import-for-syntax) ) ))
 
 (define ##sys#initial-macro-environment (##sys#macro-environment))
@@ -1252,18 +1267,11 @@
   (let* ((explist (module-export-list mod))
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
-	 (imports 
-	  (append (##sys#import-environment)
-		  (##sys#macro-environment)))
 	 (sexports
 	  (let loop ((me (##sys#macro-environment)))
 	    (cond ((or (null? me) (eq? me0 me)) '())
 		  ((##sys#find-export (caar me) mod)
-		   (cons 
-		    (list (caar me)
-			  imports
-			  (caddar me))
-		    (loop (cdr me))))
+		   (cons (car me) (loop (cdr me))))
 		  (else (loop (cdr me))))))
 	 (vexports
 	  (let loop ((xl explist))
@@ -1293,8 +1301,11 @@
 	   (##sys#symbol->string u)
 	   "'"))))
      (module-undefined-list mod))
-    (d `(EXPORTS: ,(module-name mod) ,(map car dlist)
-		  ,(map car vexports) ,(map car sexports)))
+    (dm `(EXPORTS: 
+	  ,(module-name mod) 
+	  (DLIST: ,(map-se dlist))
+	  (VEXPORTS: ,(map-se vexports))
+	  (SEXPORTS: ,(map-se sexports))))
     (set-module-vexports! mod vexports)
     (set-module-sexports! mod sexports)))
 

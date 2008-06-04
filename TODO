@@ -30,7 +30,7 @@ TODO for macro/module system					-*- Outline -*-
 
 * modules
 ** checks
-*** redefinition of imported id 
+*** redef of imported id
 *** reimport of imported id
 ** "ports" import library
 ** allow exporting all definitions
