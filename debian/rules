@@ -8,8 +8,6 @@ ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
      CFLAGS += -O2 -fno-strict-aliasing
 endif
 
-version=3.2
-
 MAKE:=$(MAKE) PLATFORM=linux
 PREFIX=/usr
 BINARYVERSION=3
