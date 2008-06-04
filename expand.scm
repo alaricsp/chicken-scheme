@@ -44,13 +44,13 @@
 
 (define dd d)
 
-(cond-expand
+#;(cond-expand
  (hygienic-macros
   (define-syntax d (syntax-rules () ((_ . _) (void)))))
  (else					;*** remove later
   (define-macro (d . _) '(void))))
 
-(cond-expand
+#;(cond-expand
  (hygienic-macros
   (define-syntax dd (syntax-rules () ((_ . _) (void)))))
  (else					;*** remove later
@@ -141,7 +141,7 @@
   (let ([string-append string-append])
     (lambda (exp dse)
       (define (call-handler name handler exp se)
-	(dd "invoking macro: " name)
+	(d "invoking macro: " name)
 	(handle-exceptions ex
 	    (##sys#abort
 	     (if (and (##sys#structure? ex 'condition)
@@ -167,9 +167,17 @@
 				     (cdr r) ) )
 			      (copy r) ) ) ) ) )
 		 ex) )
-	  (handler exp se dse)))
+	  (let ((exp2 (handler exp se dse)))
+	    (dd exp2)
+	    exp2)))
       (define (expand head exp mdef)
-	(dd `(EXPAND: ,head ,exp ,(map car dse)))
+	(dd `(EXPAND: 
+	      ,head 
+	      ,(cond ((get head '##sys#macro-alias) =>
+		      (lambda (a) (if (symbol? a) a '<macro>)) )
+		     (else '_))
+	      ,exp 
+	      ,(map car dse)))
 	(cond ((not (list? exp))
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
@@ -627,7 +635,9 @@
 	     (lambda (a)
 	       (if (symbol? a)
 		   a
-		   sym) ) )
+		   (let ((a (macro-alias sym se)))
+		     (set! renv (cons (cons sym a) renv))
+		     a))))
 	    (else
 	     (let ((a (macro-alias sym se)))
 	       (set! renv (cons (cons sym a) renv))
@@ -766,8 +776,8 @@
 	       (fixup! vsv)
 	       (fixup! vss)
 	       (set-module-defined-list! cm dlist)) )
-	   (d `(V: ,vsv))
-	   (d `(S: ,vss))
+	   (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,vsv))
+	   (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,vss))
 	   (for-each
 	    (lambda (imp)
 	      (and-let* ((a (assq (car imp) (import-env)))
@@ -1242,11 +1252,18 @@
   (let* ((explist (module-export-list mod))
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
+	 (imports 
+	  (append (##sys#import-environment)
+		  (##sys#macro-environment)))
 	 (sexports
 	  (let loop ((me (##sys#macro-environment)))
 	    (cond ((or (null? me) (eq? me0 me)) '())
 		  ((##sys#find-export (caar me) mod)
-		   (cons (car me) (loop (cdr me))))
+		   (cons 
+		    (list (caar me)
+			  imports
+			  (caddar me))
+		    (loop (cdr me))))
 		  (else (loop (cdr me))))))
 	 (vexports
 	  (let loop ((xl explist))

@@ -630,8 +630,9 @@
 				       (caddr x)))
 				 (me0 (##sys#macro-environment)))
 			    (when (pair? se)
-			      (##sys#syntax-error-hook 'module "module definition not in toplevel scope"
-						       name))
+			      (##sys#syntax-error-hook
+			       'module "module definition not in toplevel scope"
+			       name))
 			    (parameterize ((##sys#current-module 
 					    (##sys#register-module name exports) )
 					   (##sys#import-environment '())
