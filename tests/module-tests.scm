@@ -45,8 +45,7 @@
 (import baz)
 (test-equal "prefixed import and reexport" (x 1) '(1))
 
-#|
-(module foo (bar gna)
+(module m1 ((bar gna))
   (import scheme)
   (define (gna x) (list 'gna x))
   (define-syntax bar
@@ -56,13 +55,14 @@
     (syntax-rules ()
       ((_ x) (gna 'x)))))
 
-(module goo ()
-  (import scheme chicken foo)
+(module m2 (run)
+  (import scheme chicken m1)
   (define-syntax baz
     (syntax-rules ()
       ((_ x) (list 'goo 'x))))
-  (define (gna _) (bomb))
-  (print (bar 99)))
-|#
+  (define (run) (bar 99)))
+
+(import (only m2 run))
+(test-equal "indirect imports" (run) '(gna 99))
 
 (test-end "modules")

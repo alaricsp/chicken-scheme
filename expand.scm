@@ -793,7 +793,7 @@
 		 (define (fixup! imports)
 		   (for-each
 		    (lambda (imp)
-		      (when (##sys#find-export (car imp) cm) ;*** must process export list for every import
+		      (when (##sys#find-export (car imp) cm #t) ;*** must process export list for every import
 			(d "fixup reexport: " imp)
 			(set! dlist (cons imp dlist))))
 		    imports) )
@@ -1202,7 +1202,7 @@
 
 (define (##sys#register-export sym mod)
   (when mod
-    (let ((exp (##sys#find-export sym mod))
+    (let ((exp (##sys#find-export sym mod #t))
 	  (ulist (module-undefined-list mod)))
       (##sys#toplevel-definition-hook
        (##sys#module-rename sym (module-name mod)) 
@@ -1218,7 +1218,7 @@
 
 (define (##sys#register-syntax-export sym mod val)
   (when mod
-    (let ((exp (##sys#find-export sym mod))
+    (let ((exp (##sys#find-export sym mod #t))
 	  (ulist (module-undefined-list mod))
 	  (mname (module-name mod)))
       (when (memq sym ulist)
@@ -1294,11 +1294,14 @@
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
-(define (##sys#find-export sym mod)
+(define (##sys#find-export sym mod indirect)
   (let loop ((xl (module-export-list mod)))
     (cond ((null? xl) #f)
-	  ((and (symbol? (car xl)) (eq? sym (car xl))))
-	  ((memq sym (car xl)))
+	  ((eq? sym (car xl)))
+	  ((pair? (car xl))
+	   (or (eq? sym (caar xl))
+	       (memq sym (if indirect (car xl) (cdar xl)))
+	       (loop (cdr xl))))
 	  (else (loop (cdr xl))))))
 
 (define (##sys#finalize-module mod me0)
@@ -1310,13 +1313,7 @@
 	 (sexports
 	  (let loop ((me (##sys#macro-environment)))
 	    (cond ((or (null? me) (eq? me0 me)) '())
-		  ((##sys#find-export (caar me) mod)
-		   (cons (car me) (loop (cdr me))))
-		  (else (loop (cdr me))))))
-	 (sexports
-	  (let loop ((me (##sys#macro-environment)))
-	    (cond ((or (null? me) (eq? me0 me)) '())
-		  ((##sys#find-export (caar me) mod)
+		  ((##sys#find-export (caar me) mod #f)
 		   (cons (car me) (loop (cdr me))))
 		  (else (loop (cdr me))))))
 	 (vexports

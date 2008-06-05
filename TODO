@@ -6,6 +6,7 @@ TODO for macro/module system					-*- Outline -*-
     (in case the expansion of an exported macro needs it - yuck)
 **** probably add additional sdefs arg to register-compiled-module
      similar to current sexports - add to SE of each exported macro
+**** we can limit these to indirect exports
 *** value bindings in expansions of exported macros must currently also be exported
     or they will be hidden anyway
 *** code-duplication in compiler and evaluator for ##core#module
@@ -18,6 +19,7 @@ TODO for macro/module system					-*- Outline -*-
 *** document export issues
 **** v-bindings in exported macros must be exported
 **** unexported macros in exported ones may not
+**** indirect exports
 
 * build
 ** clear up soname thing (removed here, ivan says he needs it for debian)
