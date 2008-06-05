@@ -45,7 +45,7 @@
 (import baz)
 (test-equal "prefixed import and reexport" (x 1) '(1))
 
-(module m1 ((bar gna))
+(module m1 ((bar gna baz))
   (import scheme)
   (define (gna x) (list 'gna x))
   (define-syntax bar

@@ -1247,7 +1247,9 @@
 (define (##sys#mark-imported-symbols se)
   (for-each
    (lambda (imp)
-     (when (pair? (cdr imp)) (##sys#put! (car imp) '##core#pre-aliased #t)))
+     (when (symbol? (cdr imp))
+       (dm `(MARKING: ,(cdr imp)))
+       (##sys#put! (cdr imp) '##core#aliased #t)))
    se))
 
 (define (module-indirect-exports mod)
@@ -1303,6 +1305,7 @@
 	       name '() '() '() '() '()
 	       vexports sexports))
 	 (exports (append iexports vexports sexports (##sys#current-environment))))
+    (##sys#mark-imported-symbols iexports)
     (for-each
      (lambda (sexp)
        (set-car! (cdr sexp) exports))
@@ -1334,7 +1337,7 @@
 	  ((eq? sym (car xl)))
 	  ((pair? (car xl))
 	   (or (eq? sym (caar xl))
-	       (memq sym (if indirect (car xl) (cdar xl)))
+	       (and indirect (memq sym (cdar xl)))
 	       (loop (cdr xl))))
 	  (else (loop (cdr xl))))))
 
@@ -1386,6 +1389,7 @@
 			((assq (car exp) (##sys#macro-environment)))
 			(else (##sys#error "(internal) indirect export not found" (car exp)))) )
 		(module-indirect-exports mod))))
+      (##sys#mark-imported-symbols exports)
       (for-each
        (lambda (m)
 	 (let ((se (append exports (cadr m))))
