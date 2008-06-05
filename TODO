@@ -2,13 +2,9 @@ TODO for macro/module system					-*- Outline -*-
 
 * bugs
 ** modules
-*** import-libraries must also include non-exported macros
-    (in case the expansion of an exported macro needs it - yuck)
-**** probably add additional sdefs arg to register-compiled-module
-     similar to current sexports - add to SE of each exported macro
-**** we can limit these to indirect exports
-*** value bindings in expansions of exported macros must currently also be exported
-    or they will be hidden anyway
+*** import-libraries
+**** iexported macros will always have empty static SEs
+     breaks in last module-tests example (baz should have gna in SE)
 *** code-duplication in compiler and evaluator for ##core#module
 *** "scheme" module does not include some special forms ("define-syntax", etc.)
 *** import-for-syntax imports value bindings into import-env
@@ -16,6 +12,8 @@ TODO for macro/module system					-*- Outline -*-
 
 * documentation
 ** modules
+*** unexported defines do not appear in dlist and thus will trigger a warning
+    
 *** document export issues
 **** v-bindings in exported macros must be exported
 **** unexported macros in exported ones may not

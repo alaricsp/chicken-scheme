@@ -45,23 +45,17 @@
 (define dd d)
 (define dm d)
 
-#;(cond-expand
- (hygienic-macros
-  (define-syntax d (syntax-rules () ((_ . _) (void)))))
- (else					;*** remove later
-  (define-macro (d . _) '(void))))
-
-#;(cond-expand
- (hygienic-macros
-  (define-syntax dd (syntax-rules () ((_ . _) (void)))))
- (else					;*** remove later
-  (define-macro (dd . _) '(void))))
-
-#;(cond-expand
- (hygienic-macros
-  (define-syntax dm (syntax-rules () ((_ . _) (void)))))
- (else					;*** remove later
-  (define-macro (dm . _) '(void))))
+(begin
+  (cond-expand
+   (hygienic-macros
+    (define-syntax dd (syntax-rules () ((_ . _) (void)))))
+   (else					;*** remove later
+    (define-macro (dd . _) '(void))))
+  (cond-expand
+   (hygienic-macros
+    (define-syntax dm (syntax-rules () ((_ . _) (void)))))
+   (else					;*** remove later
+    (define-macro (dm . _) '(void)))))
 
 
 ;;; Syntactic environments
@@ -158,8 +152,8 @@
   (let ([string-append string-append])
     (lambda (exp dse)
       (define (call-handler name handler exp se)
-	(d "invoking macro: " name)
-	(dd `(STATIC-SE: ,(map car se)))
+	(dd "invoking macro: " name)
+	(dd `(STATIC-SE: ,@(map-se se)))
 	(handle-exceptions ex
 	    (##sys#abort
 	     (if (and (##sys#structure? ex 'condition)
@@ -202,7 +196,7 @@
 	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
 	      ((pair? mdef)
 	       (values 
-		;; force ref. opaqueness by passing dynamic se
+		;; force ref. opaqueness by passing dynamic se  [what is this comment meaning? I forgot]
 		(call-handler head (cadr mdef) exp (car mdef))
 		#t))
 	      (else (values exp #f)) ) )
@@ -254,7 +248,7 @@
   (define (mrename sym)
     (cond ((##sys#current-module) => 
 	   (lambda (mod)
-	     (d "global alias " sym " -> " (module-name mod))
+	     (dm "global alias " sym " -> " (module-name mod))
 	     (unless assign (##sys#register-undefined sym mod))
 	     (##sys#module-rename sym (module-name mod))))
 	  (else sym)))
@@ -794,7 +788,7 @@
 		   (for-each
 		    (lambda (imp)
 		      (when (##sys#find-export (car imp) cm #t) ;*** must process export list for every import
-			(d "fixup reexport: " imp)
+			(dm "fixup reexport: " imp)
 			(set! dlist (cons  dlist)))) ;*** incorrect!
 		    imports) )
 		 (fixup! vsv)
@@ -1210,7 +1204,7 @@
       (when (memq sym ulist)
 	(set-module-undefined-list! mod (##sys#delq sym ulist)))
       (when exp
-	(d "defined: " sym)
+	(dm "defined: " sym)
 	(set-module-defined-list! 
 	 mod
 	 (cons (cons sym #f)
@@ -1223,7 +1217,7 @@
 	  (mname (module-name mod)))
       (when (memq sym ulist)
 	(##sys#warn "use of syntax precedes definition" sym mname))
-      (d "defined syntax: " sym)
+      (dm "defined syntax: " sym)
       (when exp
 	(set-module-defined-list! 
 	 mod
@@ -1283,7 +1277,7 @@
 	(list
 	 ,@(map (lambda (ie)
 		  (if (symbol? (cdr ie))
-		      `'(,(car ie) ,(cdr ie))
+		      `'(,(car ie) . ,(cdr ie))
 		      `(list ',(car ie) '() ,(cdr ie))))
 		(module-indirect-exports mod)))
 	',(module-vexports mod)
@@ -1301,15 +1295,21 @@
 	  (map (lambda (se)
 		 (list (car se) #f (##sys#er-transformer (cdr se))))
 	       sexports))
+	 (iexps 
+	  (map (lambda (ie)
+		 (if (pair? (cdr ie))
+		     (list (car ie) (cadr ie) (##sys#er-transformer (caddr ie)))
+		     ie))
+	       iexports))
 	 (mod (make-module 
 	       name '() '() '() '() '()
-	       vexports sexports))
-	 (exports (append iexports vexports sexports (##sys#current-environment))))
-    (##sys#mark-imported-symbols iexports)
+	       vexports sexps))
+	 (exports (append iexps vexports sexps (##sys#current-environment))))
+    (##sys#mark-imported-symbols iexps)
     (for-each
      (lambda (sexp)
        (set-car! (cdr sexp) exports))
-     sexports)
+     sexps)
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 

@@ -60,7 +60,8 @@
   (define-syntax baz
     (syntax-rules ()
       ((_ x) (list 'goo 'x))))
-  (define (run) (bar 99)))
+  (define (gna x) (print "ok."))
+  (define (run) (gna 9) (bar 99)))
 
 (import (only m2 run))
 (test-equal "indirect imports" (run) '(gna 99))
