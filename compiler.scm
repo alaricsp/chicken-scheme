@@ -763,9 +763,9 @@
 							  (reverse xs)
 							  '(##core#undefined))))
 						      (else
-							 (values
-							  (reverse xs)
-							  (##sys#compiled-module-registration (##sys#current-module))))))
+						       (values
+							(reverse xs)
+							(##sys#compiled-module-registration (##sys#current-module))))))
 					       (else
 						(loop 
 						 (cdr body)

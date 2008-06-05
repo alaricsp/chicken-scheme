@@ -29,7 +29,7 @@
   (disable-interrupts)
   (fixnum)
   (hide match-expression
-	macro-alias
+	macro-alias module-indirect-exports
 	d dd dm map-se
 	lookup) )
 
@@ -787,7 +787,7 @@
 	   (let* ((vs (import-spec spec))
 		  (vsv (car vs))
 		  (vss (cdr vs)))
-	     (when cm
+	     #;(when cm
 	       ;; fixup reexports
 	       (let ((dlist (module-defined-list cm)))
 		 (define (fixup! imports)
@@ -795,7 +795,7 @@
 		    (lambda (imp)
 		      (when (##sys#find-export (car imp) cm #t) ;*** must process export list for every import
 			(d "fixup reexport: " imp)
-			(set! dlist (cons imp dlist))))
+			(set! dlist (cons  dlist)))) ;*** incorrect!
 		    imports) )
 		 (fixup! vsv)
 		 (fixup! vss)
@@ -1223,8 +1223,8 @@
 	  (mname (module-name mod)))
       (when (memq sym ulist)
 	(##sys#warn "use of syntax precedes definition" sym mname))
+      (d "defined syntax: " sym)
       (when exp
-	(d "defined: " sym)
 	(set-module-defined-list! 
 	 mod
 	 (cons (cons sym val)
@@ -1250,12 +1250,40 @@
      (when (pair? (cdr imp)) (##sys#put! (car imp) '##core#pre-aliased #t)))
    se))
 
+(define (module-indirect-exports mod)
+  (let ((exports (module-export-list mod))
+	(mname (module-name mod)))
+    (define (indirect? id)
+      (let loop ((exports exports))
+	(and (not (null? exports))
+	     (or (and (pair? (car exports))
+		      (memq id (cdar exports)))
+		 (loop (cdr exports))))))
+    (let loop ((dlist (module-defined-list mod)))
+      (cond ((null? dlist) '())
+	    ((indirect? (caar dlist))
+	     (cons 
+	      (cons 
+	       (caar dlist)
+	       (or (cdar dlist)
+		   (##sys#module-rename (caar dlist) mname)))
+	      (loop (cdr dlist))))
+	    (else (loop (cdr dlist)))))))
+
 (define (##sys#compiled-module-registration mod)
-  (let ((dlist (module-defined-list mod)))
+  (let ((dlist (module-defined-list mod))
+	(exports (module-export-list mod))
+	(mname (module-name mod)))
     `(begin
        (import ,@(module-import-forms mod))
        (##sys#register-compiled-module
 	',(module-name mod)
+	(list
+	 ,@(map (lambda (ie)
+		  (if (symbol? (cdr ie))
+		      `'(,(car ie) ,(cdr ie))
+		      `(list ',(car ie) '() ,(cdr ie))))
+		(module-indirect-exports mod)))
 	',(module-vexports mod)
 	(list 
 	 ,@(map (lambda (sexport)
@@ -1266,13 +1294,19 @@
 		    `(cons ',(car sexport) ,(cdr a))))
 		(module-sexports mod)))))))
 
-(define (##sys#register-compiled-module name vexports sexports)
-  (let ((mod (make-module 
-	      name '() '() '() '() '()
-	      vexports
-	      (map (lambda (se)
-		     (list (car se) '() (##sys#er-transformer (cdr se))))
-		   sexports))))
+(define (##sys#register-compiled-module name iexports vexports sexports)
+  (let* ((sexps
+	  (map (lambda (se)
+		 (list (car se) #f (##sys#er-transformer (cdr se))))
+	       sexports))
+	 (mod (make-module 
+	       name '() '() '() '() '()
+	       vexports sexports))
+	 (exports (append iexports vexports sexports (##sys#current-environment))))
+    (for-each
+     (lambda (sexp)
+       (set-car! (cdr sexp) exports))
+     sexports)
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
@@ -1318,18 +1352,20 @@
 		  (else (loop (cdr me))))))
 	 (vexports
 	  (let loop ((xl explist))
-	    (cond ((null? xl) '())
-		  ((symbol? (car xl))
-		   (let ((id (car xl)))
-		     (if (assq id sexports) 
-			 (loop (cdr xl))
-			 (cons (cons id
-				     (let ((def (assq id dlist)))
-				       (if (and def (symbol? (cdr def)))
-					   (cdr def)
-					   (##sys#module-rename id name))))
-			       (loop (cdr xl))))))
-		  (else (loop (append (cdar xl) (cdr xl))))))))
+	    (if (null? xl)
+		'()
+		(let* ((h (car xl))
+		       (id (if (symbol? h) h (car h))))
+		  (if (assq id sexports) 
+		      (loop (cdr xl))
+		      (cons 
+		       (cons 
+			id
+			(let ((def (assq id dlist)))
+			  (if (and def (symbol? (cdr def)))
+			      (cdr def)
+			      (##sys#module-rename id name))))
+		       (loop (cdr xl)))))))))
     (for-each 
      (lambda (x)
        (unless (assq (car x) dlist)
@@ -1344,21 +1380,27 @@
 	   (##sys#symbol->string u)
 	   "'"))))
      (module-undefined-list mod))
-    (let ((exports (append sdlist vexports)))
+    (let ((exports 
+	   (map (lambda (exp)
+		  (cond ((symbol? (cdr exp)) exp)
+			((assq (car exp) (##sys#macro-environment)))
+			(else (##sys#error "(internal) indirect export not found" (car exp)))) )
+		(module-indirect-exports mod))))
       (for-each
        (lambda (m)
 	 (let ((se (append exports (cadr m))))
 	   (dm `(FIXUP: ,(car m) ,@(map-se se)))
 	   (set-car! (cdr m) se)))
-       sdlist))
-    (dm `(EXPORTS: 
-	  ,(module-name mod) 
-	  (DLIST: ,@(map-se dlist))
-	  (SDLIST: ,@(map-se sdlist))
-	  (VEXPORTS: ,@(map-se vexports))
-	  (SEXPORTS: ,@(map-se sexports))))
-    (set-module-vexports! mod vexports)
-    (set-module-sexports! mod sexports)))
+       sdlist)
+      (dm `(EXPORTS: 
+	    ,(module-name mod) 
+	    (DLIST: ,@dlist)
+	    (SDLIST: ,@(map-se sdlist))
+	    (IEXPORTS: ,@(map-se exports))
+	    (VEXPORTS: ,@(map-se vexports))
+	    (SEXPORTS: ,@(map-se sexports))))
+      (set-module-vexports! mod vexports)
+      (set-module-sexports! mod sexports))))
 
 (define ##sys#module-table '())
 

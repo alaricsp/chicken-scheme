@@ -609,7 +609,9 @@
 			     (##sys#current-environment)
 			     (##sys#er-transformer
 			      (eval/meta (caddr x))))
-			    (##sys#register-syntax-export name (##sys#current-module) #f)
+			    (##sys#register-syntax-export 
+			     name (##sys#current-module)
+			     (caddr x))	;*** not really necessary, it only shouldn't be #f
 			    (compile '(##core#undefined) e #f tf cntr se) ) )
 
 			 ((##core#module)
