@@ -228,12 +228,13 @@ and a contained sequence of toplevel expressions that are evaluated in
 an empty syntactical environment. {{EXPORT}} may be a symbol or a list
 of the form {{(IDENTIFIER1 IDENTIFIER2 ...)}}. In the former case the
 identifier given is exported from the module and can be imported at
-the toplevel or in other modules. The latter case exports all
-identifiers listed (this is a hint to the module expander to export
-bindings referenced by syntax-definitions which make use of them, but
-which would normally be internal to the module - that allows some
-optimization, which is currently not implemented but may be in the
-future).
+the toplevel or in other modules. The latter case exports
+{{IDENTIFIER1}} (which should name a macro) and also arranges for the
+remaining identifiers in the list to be visible in the expansion of
+the macro (this is a hint to the module expander to export bindings
+referenced by syntax-definitions which make use of them, but which
+would normally be internal to the module - that allows some
+optimization and also records).
 
 Nested modules or modules not at toplevel (i.e. local modules)
 are not supported.

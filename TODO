@@ -2,6 +2,8 @@ TODO for macro/module system					-*- Outline -*-
 
 * bugs
 ** modules
+*** syntax-definitions do not close over imported macros
+    could we fixup SEs of exported macros with imported macros?
 *** import-libraries
 **** iexported macros will always have empty static SEs
      breaks in last module-tests example (baz should have gna in SE)

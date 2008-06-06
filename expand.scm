@@ -45,7 +45,7 @@
 (define dd d)
 (define dm d)
 
-(begin
+#;(begin
   (cond-expand
    (hygienic-macros
     (define-syntax dd (syntax-rules () ((_ . _) (void)))))
@@ -1310,6 +1310,11 @@
      (lambda (sexp)
        (set-car! (cdr sexp) exports))
      sexps)
+    (for-each
+     (lambda (iexp)
+       (when (pair? (cdr iexp))
+	 (set-car! (cdr iexp) exports)))
+     iexps)
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
