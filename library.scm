@@ -3851,7 +3851,7 @@ EOF
 
 (define (##sys#pointer->address ptr)
   ;; *** '4' is platform dependent!
-  (##core#inline_allocate ("C_a_int_to_num" 4) (##sys#slot ptr 0)) )
+  (##core#inline_allocate ("C_a_unsigned_int_to_num" 4) (##sys#slot ptr 0)) )
 
 (define ##sys#make-c-string 
   (lambda (str)
