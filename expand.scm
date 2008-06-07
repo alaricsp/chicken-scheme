@@ -30,7 +30,7 @@
   (fixnum)
   (hide match-expression
 	macro-alias module-indirect-exports
-	d dd dm map-se
+	d dd dm map-se merge-se
 	lookup) )
 
 
@@ -113,7 +113,6 @@
 
 (define (##sys#extend-macro-environment name se handler)
   (let ((me (##sys#macro-environment)))
-    (dd "extending: " name " SE: " (map-se se))
     (cond ((lookup name me) =>
 	   (lambda (a)
 	     (set-car! a se)
@@ -1172,15 +1171,17 @@
 	set-module-vexports! set-module-sexports!
 	module-export-list module-defined-list set-module-defined-list!
 	module-import-forms set-module-import-forms!
+	module-exist-list set-module-exist-list!
 	module-defined-syntax-list set-module-defined-syntax-list!))
 
 (define-record-type module
-  (make-module name export-list defined-list defined-syntax-list undefined-list 
+  (make-module name export-list defined-list exist-list defined-syntax-list undefined-list 
 	       import-forms vexports sexports) 
   module?
   (name module-name)			; SYMBOL
   (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
-  (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)
+  (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)    - *exported* value definitions
+  (exist-list module-exist-list set-module-exist-list!)	      ; (SYMBOL ...)    - only for checking refs to undef'd
   (defined-syntax-list module-defined-syntax-list set-module-defined-syntax-list!) ; ((SYMBOL . VALUE) ...)
   (undefined-list module-undefined-list set-module-undefined-list!) ; (SYMBOL ...)
   (import-forms module-import-forms set-module-import-forms!)	    ; (SPEC ...)
@@ -1203,6 +1204,7 @@
        mod exp #f)
       (when (memq sym ulist)
 	(set-module-undefined-list! mod (##sys#delq sym ulist)))
+      (set-module-exist-list! mod (cons sym (module-exist-list mod)))
       (when exp
 	(dm "defined: " sym)
 	(set-module-defined-list! 
@@ -1234,7 +1236,7 @@
 	(set-module-undefined-list! mod (cons sym ul))))))
 
 (define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
-  (let ((mod (make-module name explist '() '() '() '() vexports sexports)))
+  (let ((mod (make-module name explist '() '() '() '() '() vexports sexports)))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
 
@@ -1265,6 +1267,17 @@
 		   (##sys#module-rename (caar dlist) mname)))
 	      (loop (cdr dlist))))
 	    (else (loop (cdr dlist)))))))
+
+(define (merge-se . ses)		; later occurrences take precedence to earlier ones
+  (let ((se (apply append ses)))
+    (dm "merging " (length ses) " se's with total length of " (length se))
+    (let ((se2
+	   (let loop ((se se))
+	     (cond ((null? se) '())
+		   ((assq (caar se) (cdr se)) (loop (cdr se)))
+		   (else (cons (car se) (loop (cdr se))))))))
+      (dm "  merged has length " (length se2))
+      se2)))
 
 (define (##sys#compiled-module-registration mod)
   (let ((dlist (module-defined-list mod))
@@ -1302,9 +1315,12 @@
 		     ie))
 	       iexports))
 	 (mod (make-module 
-	       name '() '() '() '() '()
+	       name '() '() '() '() '() '()
 	       vexports sexps))
-	 (exports (append iexps vexports sexps (##sys#current-environment))))
+	 (exports (merge-se 
+		   (##sys#macro-environment)
+		   (##sys#current-environment)
+		   iexps vexports sexps)))
     (##sys#mark-imported-symbols iexps)
     (for-each
      (lambda (sexp)
@@ -1321,7 +1337,7 @@
 (define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
-	      name '() '() '() '()'()
+	      name '() '() '() '() '()'()
 	      (map (lambda (ve)
 		     (if (symbol? ve)
 			 (cons ve ve)
@@ -1350,6 +1366,7 @@
   (let* ((explist (module-export-list mod))
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
+	 (elist (module-exist-list mod))
 	 (sdlist (map (lambda (sym) (assq sym (##sys#macro-environment)))
 		      (module-defined-syntax-list mod)))
 	 (sexports
@@ -1374,30 +1391,34 @@
 			      (cdr def)
 			      (##sys#module-rename id name))))
 		       (loop (cdr xl)))))))))
-    (for-each 
+    (for-each 				;*** do we need this? it should only appear in dlist if exported
      (lambda (x)
        (unless (assq (car x) dlist)
 	 (##sys#warn "exported identifier has not been defined" (car x) name)))
      vexports)
     (for-each
      (lambda (u)
-       (unless (assq u dlist)
+       (unless (memq u elist)
 	 (##sys#warn 
 	  (string-append
 	   "reference to possibly unbound identifier `" 
 	   (##sys#symbol->string u)
 	   "'"))))
      (module-undefined-list mod))
-    (let ((exports 
-	   (map (lambda (exp)
-		  (cond ((symbol? (cdr exp)) exp)
-			((assq (car exp) (##sys#macro-environment)))
-			(else (##sys#error "(internal) indirect export not found" (car exp)))) )
-		(module-indirect-exports mod))))
+    (let* ((exports 
+	    (map (lambda (exp)
+		   (cond ((symbol? (cdr exp)) exp)
+			 ((assq (car exp) (##sys#macro-environment)))
+			 (else (##sys#error "(internal) indirect export not found" (car exp)))) )
+		 (module-indirect-exports mod)))
+	   (new-se (merge-se 
+		    (##sys#macro-environment) 
+		    (##sys#current-environment) 
+		    exports)))
       (##sys#mark-imported-symbols exports)
       (for-each
        (lambda (m)
-	 (let ((se (append exports (cadr m))))
+	 (let ((se (merge-se (cadr m) new-se)))
 	   (dm `(FIXUP: ,(car m) ,@(map-se se)))
 	   (set-car! (cdr m) se)))
        sdlist)

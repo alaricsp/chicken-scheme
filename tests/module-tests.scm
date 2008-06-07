@@ -66,11 +66,9 @@
 (import (only m2 run))
 (test-equal "indirect imports" (run) '(gna 99))
 
-#| currently fails
-
 (module m1 ((s1 f1))
   (import scheme chicken)
-  (define (f1) (print "f1"))
+  (define (f1) (print "f1") 'f1)
   (define-syntax s1
     (syntax-rules ()
       ((_) (f1)))))
@@ -87,10 +85,7 @@
     (syntax-rules ()
       ((_) (s2)))))
 
-(import m2)
-(s2)					; fails
-;(import m3)
-;(s3)
-|#
+(import m3)
+(test-equal "chained indirect imports" (s3) 'f1)
 
 (test-end "modules")
