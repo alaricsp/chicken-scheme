@@ -756,12 +756,13 @@
 								  name " ..."))
 							 (with-output-to-file (cdr il)
 							   (lambda ()
-							     (pretty-print
+							     (for-each
+							      pretty-print
 							      (##sys#compiled-module-registration
 							       (##sys#current-module))))) 
 							 (values 
 							  (reverse xs)
-							  '(##core#undefined))))
+							  '((##core#undefined)))))
 						      (else
 						       (values
 							(reverse xs)
@@ -772,10 +773,12 @@
 						 (cons (walk (car body) se #f) xs))))))))
 			    (canonicalize-begin-body
 			     (append
-			      (list
-			       (parameterize ((##sys#current-module #f)
-					      (##sys#macro-environment (##sys#meta-macro-environment)))
-				 (walk mreg (##sys#current-meta-environment) #f)) )
+			      (parameterize ((##sys#current-module #f)
+					     (##sys#macro-environment (##sys#meta-macro-environment)))
+				(map
+				 (lambda (x)
+				   (walk x (##sys#current-meta-environment) #f) )
+				 mreg))
 			      body)))))
 
 		       ((##core#named-lambda)

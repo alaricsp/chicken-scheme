@@ -35,7 +35,8 @@
 	  setup-build-directory setup-root-directory create-directory
 	  test-compile try-compile copy-file run-verbose
 	  required-chicken-version required-extension-version cross-chicken
-	  ##sys#current-source-filename host-extension) )
+	  ##sys#current-source-filename host-extension
+	  ##sys#chicken-macro-environment) )
 
 
 ;;; Constants, variables and parameters
@@ -226,9 +227,6 @@
 (define (version-string->numbers string)
   (map (lambda (x) (or (string->number x) (->string x))) 
        (string-split string ".")))
-
-(define (numbers->version-string numbers)
-  (string-intersperse (map ->string numbers) "."))
 
 ; Given two lists with numbers corresponding to a software version (as returned
 ; by version-string->numbers), check if the first is greater than the second.

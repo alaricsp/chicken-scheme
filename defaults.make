@@ -273,8 +273,7 @@ CSI ?= csi$(EXE)
 
 # Scheme compiler flags
 
-#*** CHICKEN_OPTIONS = -quiet -no-trace -optimize-level 2 -include-path .
-CHICKEN_OPTIONS = -quiet -optimize-level 2 -include-path .
+CHICKEN_OPTIONS = -quiet -no-trace -optimize-level 2 -include-path .
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm

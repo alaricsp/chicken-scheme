@@ -261,6 +261,16 @@ operation from importing its bindings.
 An {{IMPORT}} defines a set of bindings that are to be made visible
 in the current scope.
 
+Note that the imported bindings are only visible in the next toplevel
+expression (regardless of wether the import appears inside or outside
+a module):
+
+  (begin
+    (import m1)
+    ...              ; imports not visible here
+  
+  ...                ; imports visible here
+
 ===== only
 
  [import specifier] (only IMPORT IDENTIFIER ...)

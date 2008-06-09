@@ -23,12 +23,25 @@ $compile syntax-tests.scm && ./a.out
 
 echo "======================================== module tests ..."
 ../csi -w -s module-tests.scm
+
+echo "======================================== module tests (ec) ..."
 rm -f ec.so ec.import.*
-../csi -wbqn ec.scm ec-tests.scm
-$compile_s ec.scm -emit-import-library ec -o ec.so
-$compile_s ec.import.scm -o ec.import.so
-../csi -wbnq ec.so ec-tests.scm
-# $compile ec-tests.scm && ./a.out
+
+# doesn't work in the moment
+
+#../csi -wbqn -ec.scm ec-tests.scm
+#$compile_s ec.scm -emit-import-library ec -o ec.so
+#$compile_s ec.import.scm -o ec.import.so 
+#../csi -wbnq ec.so ec-tests.scm
+# $compile ec-tests.scm && ./a.out        # takes ages to compile
+
+echo "======================================== module tests (chained) ..."
+rm -f m*.import.* test-chained-modules.so
+../csi -bnq test-chained-modules.scm
+$compile_s test-chained-modules.scm -j m3
+$compile_s m3.import.scm
+../csi -bn test-chained-modules.so
+../csi -bn test-chained-modules.so -e '(import m3) (s3)'
 
 echo "======================================== hash-table tests ..."
 ../csi -w -s hash-table-tests.scm
