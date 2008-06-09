@@ -1,13 +1,6 @@
 \input texinfo @c -*- texinfo -*-
 @settitle Chicken Scheme Reference Manual
 @setchapternewpage on
-@ifinfo
-@format
-START-INFO-DIR-ENTRY
-* Chicken: (chicken.info). Chicken Scheme Reference Manual.
-END-INFO-DIR-ENTRY
-@end format
-@end ifinfo
 @copying
 Copyright 2007-2008 Felix Winkelmann and the Chicken Team
 @end copying
@@ -73,7 +66,7 @@ This is the top node.
 @chapter The User's Manual
 
 
-This is the user's manual for the Chicken Scheme compiler, version 3.2.1.
+This is the user's manual for the Chicken Scheme compiler, version 3.2.6
 
 @table @b
 @item @ref{Getting started, Getting started}
@@ -14310,7 +14303,7 @@ Next: @ref{Acknowledgements, Acknowledgements}
 @chapter Acknowledgements
 
 
-Many thanks to Nico Amtsberg, William Annis, Marc Baily, Peter Barabas, Jonah Beckford, Arto Bendiken, Peter Bex, Jean-Francois Bignolles, Alaric Blagrave-Snellpym, Dave Bodenstab, Fabian Boehlke, T. Kurt Bond, Ashley Bone, Dominique Boucher, Terence Brannon, Roy Bryant, Adam Buchbinder, Hans Bulfone, Category 5, Taylor Campbell, Naruto Canada, Esteban U. Caamano Castro, Franklin Chen, Thomas Chust, Gian Paolo Ciceri, John Cowan, Grzegorz Chrupa&#322;a, James Crippen, Tollef Fog Heen, Alejandro Forero Cuervo, Linh Dang, Brian Denheyer, dgym, Don, Chris Double, Jarod Eells, Petter Egesund, Steve Elkins, Daniel B. Faken, Will Farr, Graham Fawcett, Marc Feeley, Fizzie, Kimura Fuyuki, Tony Garnock-Jones, Martin Gasbichler, Joey Gibson, Stephen C. Gilardi, Joshua Griffith, Johannes Groedem, Damian Gryski, Mario Domenech Goulart, Andreas Gustafsson, Sven Hartrumpf, Jun-ichiro itojun Hagino, Ahdi Hargo, Matthias Heiler, Karl M. Hegbloom, William P. Heinemann, Bill Hoffman, Bruce Hoult, Hans Huebner, Markus Huelsmann, Goetz Isenmann, Paulo Jabardo, David Janssens, Christian Jaeger, Dale Jordan, Valentin Kamyshenko, Daishi Kato, Peter Keller, Brad Kind, Ron Kneusel, Matthias Koeppe, Krysztof Kowa&#322;czyk, Andre Kuehne, Todd R. Kueny Sr, Goran Krampe, David Krentzlin, Ben Kurtz, Micky Latowicki, John Lenz, Kirill Lisovsky, Juergen Lorenz, Kon Lovett, Dennis Marti, Charles Martin, Bob McIsaac, Alain Mellan, Eric Merrit, Perry Metzger, Scott G. Miller, Mikael, Bruce Mitchener, Chris Moline, Eric E. Moore, Julian Morrison, Dan Muresan, Lars Nilsson, Ian Oversby, o.t., Gene Pavlovsky, Levi Pearson, Nicolas Pelletier, Carlos Pita, Robin Lee Powell, Pupeno, Davide Puricelli, Doug Quale, Eric Raible, Ivan Raikov, Joel Reymont, Eric Rochester, Andreas Rottman, David Rush, Lars Rustemeier, Daniel Sadilek, Oskar Schirmer, Burton Samograd, Reed Sheridan, Ronald Schroeder, Spencer Schumann, Alex Shinn, Ivan Shmakov, Shmul, Tony Sidaway, Jeffrey B. Siegal, Andrey Sidorenko, Michele Simionato, Volker Stolz, Jon Strait, Dorai Sitaram, Robert Skeels, Jason Songhurst, Clifford Stein, Sunnan, Zbigniew Szadkowski, Rick Taube, Mike Thomas, Minh Thu, Christian Tismer, Andre van Tonder, John Tobey, Henrik Tramberend, Vladimir Tsichevsky, Neil van Dyke, Sander Vesik, Jaques Vidrine, Panagiotis Vossos, Shawn Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas Weidner, Goeran Weinholt, Matthew Welland, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard Zidlicky and Houman Zolfaghari for bug-fixes, tips and suggestions.
+Many thanks to Nico Amtsberg, William Annis, Marc Baily, Peter Barabas, Jonah Beckford, Arto Bendiken, Peter Bex, Jean-Francois Bignolles, Alaric Blagrave-Snellpym, Dave Bodenstab, Fabian Boehlke, T. Kurt Bond, Ashley Bone, Dominique Boucher, Terence Brannon, Roy Bryant, Adam Buchbinder, Hans Bulfone, Category 5, Taylor Campbell, Naruto Canada, Esteban U. Caamano Castro, Franklin Chen, Thomas Chust, Gian Paolo Ciceri, John Cowan, Grzegorz Chrupa&#322;a, James Crippen, Tollef Fog Heen, Alejandro Forero Cuervo, Daniel Dewey, Linh Dang, Brian Denheyer, dgym, Don, Chris Double, Jarod Eells, Petter Egesund, Steve Elkins, Daniel B. Faken, Will Farr, Graham Fawcett, Marc Feeley, Fizzie, Kimura Fuyuki, Tony Garnock-Jones, Martin Gasbichler, Joey Gibson, Stephen C. Gilardi, Joshua Griffith, Johannes Groedem, Damian Gryski, Mario Domenech Goulart, Andreas Gustafsson, Sven Hartrumpf, Jun-ichiro itojun Hagino, Ahdi Hargo, Matthias Heiler, Karl M. Hegbloom, William P. Heinemann, Bill Hoffman, Bruce Hoult, Hans Huebner, Markus Huelsmann, Goetz Isenmann, Paulo Jabardo, David Janssens, Christian Jaeger, Dale Jordan, Valentin Kamyshenko, Daishi Kato, Peter Keller, Brad Kind, Ron Kneusel, Matthias Koeppe, Krysztof Kowa&#322;czyk, Andre Kuehne, Todd R. Kueny Sr, Goran Krampe, David Krentzlin, Ben Kurtz, Micky Latowicki, John Lenz, Kirill Lisovsky, Juergen Lorenz, Kon Lovett, Dennis Marti, Charles Martin, Bob McIsaac, Alain Mellan, Eric Merrit, Perry Metzger, Scott G. Miller, Mikael, Bruce Mitchener, Chris Moline, Eric E. Moore, Julian Morrison, Dan Muresan, Lars Nilsson, Ian Oversby, o.t., Gene Pavlovsky, Levi Pearson, Nicolas Pelletier, Carlos Pita, Robin Lee Powell, Pupeno, Davide Puricelli, Doug Quale, Eric Raible, Ivan Raikov, Joel Reymont, Eric Rochester, Andreas Rottman, David Rush, Lars Rustemeier, Daniel Sadilek, Oskar Schirmer, Burton Samograd, Reed Sheridan, Ronald Schroeder, Spencer Schumann, Alex Shinn, Ivan Shmakov, Shmul, Tony Sidaway, Jeffrey B. Siegal, Andrey Sidorenko, Michele Simionato, Volker Stolz, Jon Strait, Dorai Sitaram, Robert Skeels, Jason Songhurst, Clifford Stein, Sunnan, Zbigniew Szadkowski, Rick Taube, Mike Thomas, Minh Thu, Christian Tismer, Andre van Tonder, John Tobey, Henrik Tramberend, Vladimir Tsichevsky, Neil van Dyke, Sander Vesik, Jaques Vidrine, Panagiotis Vossos, Shawn Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas Weidner, Goeran Weinholt, Matthew Welland, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard Zidlicky and Houman Zolfaghari for bug-fixes, tips and suggestions.
 
 CHICKEN uses the PCRE regular expression package (@uref{http://www.pcre.org, http://www.pcre.org}), which is written by Philip Hazel.
 
