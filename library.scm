@@ -934,7 +934,7 @@ EOF
 
 (define (angle n)
   (##sys#check-number n 'angle)
-  0)
+  (if (< n 0) (fp* 2.0 (acos 0.0)) 0.0) )
 
 (define (real-part n)
   (##sys#check-number n 'real-part)
