@@ -45,7 +45,7 @@
 (define dd d)
 (define dm d)
 
-(begin
+#;(begin
   (cond-expand
    (hygienic-macros
     (define-syntax dd (syntax-rules () ((_ . _) (void)))))
@@ -80,7 +80,7 @@
 	(##sys#put! alias '##core#macro-alias ua)
 	(dd "aliasing " var " to " 
 	    (if (pair? ua)
-		`(MACRO: ,@(map-se (car ua)))
+		'<macro>
 		ua))
 	alias) ) )
 
@@ -179,7 +179,7 @@
 			      (copy r) ) ) ) ) )
 		 ex) )
 	  (let ((exp2 (handler exp se dse)))
-	    (dd exp2)
+	    (dd `(,name --> ,exp2))
 	    exp2)))
       (define (expand head exp mdef)
 	(dd `(EXPAND: 
@@ -643,28 +643,45 @@
 (define ((##sys#er-transformer handler) form se dse)
   (let ((renv '()))			; keep rename-environment for this expansion
     (define (rename sym)
-      (cond ((assq sym renv) => cdr)
+      (cond ((assq sym renv) => 
+	     (lambda (a) 
+	       (dd `(RENAME/RENV: ,sym --> ,(cdr a)))
+	       (cdr a)))
 	    ((lookup sym se) => 
 	     (lambda (a)
-	       (if (symbol? a)
-		   a
-		   (let ((a2 (macro-alias sym se)))
-		     ;;(dd `(SE/RENAME: ,sym ,a2 ,(map-se (car a))))
-		     (set! renv (cons (cons sym a2) renv))
-		     a2))))
+	       (cond ((symbol? a)
+		      (dd `(RENAME/LOOKUP: ,sym --> ,a))
+		      a)
+		     (else
+		      (let ((a2 (macro-alias sym se)))
+			(dd `(RENAME/LOOKUP/MACRO: ,sym --> ,a2))
+			(set! renv (cons (cons sym a2) renv))
+			a2)))))
 	    (else
 	     (let ((a (macro-alias sym se)))
+	       (dd `(RENAME: ,sym --> ,a))
 	       (set! renv (cons (cons sym a) renv))
 	       a))))
     (define (compare s1 s2)
-      (if (and (symbol? s1) (symbol? s2))
-	  (eq? (or (##sys#get s1 '##core#macro-alias)
-		   (lookup s1 dse)
-		   s1)
-	       (or (##sys#get s2 '##core#macro-alias)
-		   (lookup s2 dse)
-		   s2) )
-	  (eq? s1 s2)))
+      (let ((result
+	     (if (and (symbol? s1) (symbol? s2))
+		 (eq? (or (##sys#get s1 '##core#macro-alias)
+			  (lookup2 1 s1 dse)
+			  s1)
+		      (or (##sys#get s2 '##core#macro-alias)
+			  (lookup2 2 s2 dse)
+			  s2) )
+		 (eq? s1 s2))) )
+	(dd `(COMPARE: ,s1 ,s2 --> ,result)) 
+	result))
+    (define (lookup2 n sym dse)
+      (let ((r (lookup sym dse)))
+	(dd "  (lookup/DSE " (list n) ": " sym " --> " 
+	    (if (and r (pair? (cdr r)))
+		'<macro>
+		r)
+	    ")")
+	r))
     (handler form rename compare) ) )
 
 

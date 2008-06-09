@@ -88,4 +88,14 @@
 (import m3)
 (test-equal "chained indirect imports" (s3) 'f1)
 
+(module literal-compare-test (s1)
+  (import scheme)
+  (define-syntax s1
+    (syntax-rules (and)
+      ((_ (and x)) (list x))))
+)
+
+(import literal-compare-test)
+(test-equal "literal compare and export" (s1 (and 100)) '(100))
+
 (test-end "modules")
