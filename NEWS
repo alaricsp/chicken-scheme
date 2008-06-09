@@ -1,5 +1,6 @@
 3.2.6
 
+- bug fixes for tickets  393, 430, 436
 - bug fix pointer->address
 
 3.2.5
