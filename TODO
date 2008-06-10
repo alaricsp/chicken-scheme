@@ -1,6 +1,13 @@
 TODO for macro/module system					-*- Outline -*-
 
 * bugs
+** macros
+*** from r4rstest:
+    (test '(a `(b ,x ,'y d) e) 'quasiquote
+	  (let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)))
+    expansion contains aliases (created by rename/lookup/macro/global), runs
+    ok, but not correct
+
 ** modules
 *** indirect imports don't work fully for compiled modules / import libraries
     iexports

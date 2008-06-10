@@ -38,9 +38,10 @@
   (append '(#:hygienic-macros #:syntax-rules) ##sys#features))
 
 (define (d arg1 . more)
-  (if (null? more)
-      (pp arg1)
-      (apply print arg1 more)))
+  (when (##sys#fudge 13)
+    (if (null? more)
+	(pp arg1)
+	(apply print arg1 more))) )
 
 (define dd d)
 (define dm d)
@@ -657,6 +658,12 @@
 			(dd `(RENAME/LOOKUP/MACRO: ,sym --> ,a2))
 			(set! renv (cons (cons sym a2) renv))
 			a2)))))
+	    ((assq sym (##sys#macro-environment)) =>
+	     (lambda (a)
+	       (let ((a2 (macro-alias sym (##sys#macro-environment))))
+		 (dd `(RENAME/LOOKUP/MACRO/GLOBAL: ,sym --> ,a2))
+		 (set! renv (cons (cons sym a2) renv))
+		 a2)))
 	    (else
 	     (let ((a (macro-alias sym se)))
 	       (dd `(RENAME: ,sym --> ,a))
@@ -667,9 +674,15 @@
 	     (if (and (symbol? s1) (symbol? s2))
 		 (eq? (or (##sys#get s1 '##core#macro-alias)
 			  (lookup2 1 s1 dse)
+			  (and-let* ((a (assq s1 (##sys#macro-environment))))
+			    (dm "  global macro: " s1)
+			    (cdr a))
 			  s1)
 		      (or (##sys#get s2 '##core#macro-alias)
 			  (lookup2 2 s2 dse)
+			  (and-let* ((a (assq s2 (##sys#macro-environment))))
+			    (dm "  global macro: " s2)
+			    (cdr a))
 			  s2) )
 		 (eq? s1 s2))) )
 	(dd `(COMPARE: ,s1 ,s2 --> ,result)) 
@@ -677,7 +690,7 @@
     (define (lookup2 n sym dse)
       (let ((r (lookup sym dse)))
 	(dd "  (lookup/DSE " (list n) ": " sym " --> " 
-	    (if (and r (pair? (cdr r)))
+	    (if (and r (pair? r))
 		'<macro>
 		r)
 	    ")")

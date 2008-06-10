@@ -17,8 +17,14 @@ echo "======================================== library tests ..."
 
 echo "======================================== syntax tests ..."
 ../csi -w -s syntax-tests.scm
+
+echo "======================================== syntax tests (compiled) ..."
 $compile syntax-tests.scm && ./a.out
+
+echo "======================================== syntax tests (matchable) ..."
 ../csi -w matchable.scm -s match-test.scm
+
+echo "======================================== syntax tests (loopy-loop) ..."
 ../csi -w -s loopy-test.scm
 
 echo "======================================== module tests ..."
@@ -26,13 +32,10 @@ echo "======================================== module tests ..."
 
 echo "======================================== module tests (ec) ..."
 rm -f ec.so ec.import.*
-
-# doesn't work in the moment
-
-#../csi -wbqn -ec.scm ec-tests.scm
-#$compile_s ec.scm -emit-import-library ec -o ec.so
-#$compile_s ec.import.scm -o ec.import.so 
-#../csi -wbnq ec.so ec-tests.scm
+../csi -wbqn ec.scm ec-tests.scm
+$compile_s ec.scm -emit-import-library ec -o ec.so
+$compile_s ec.import.scm -o ec.import.so 
+../csi -wbnq ec.so ec-tests.scm
 # $compile ec-tests.scm && ./a.out        # takes ages to compile
 
 echo "======================================== module tests (chained) ..."
