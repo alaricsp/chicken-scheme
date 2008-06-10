@@ -72,7 +72,7 @@
     (let ((highlight (assoc 'highlight params)))
       (if (or (not highlight) (stream-every (disjoin char-alphabetic? char-numeric?) (cdr highlight)))
         (receive (in out pid)
-                 (process (format #f "enscript~A~A -w texinfo -p- -q"
+                 (process (format #f "enscript~A~A --language=texinfo -p- -q"
                                   (if highlight " -E" "")
                                   (if highlight (stream->string (cdr highlight)) "")))
           (write-stream (stream-drop-while (lambda (a) (char=? a #\newline)) text) out)
