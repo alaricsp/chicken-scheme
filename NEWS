@@ -1,3 +1,7 @@
+3.2.7
+
+- a different approach to creating a versioned shared library
+
 3.2.6
 
 - bug fixes for tickets  393, 430, 436
