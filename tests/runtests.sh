@@ -28,6 +28,9 @@ $interpret -w matchable.scm -s match-test.scm
 echo "======================================== syntax tests (loopy-loop) ..."
 $interpret -w -s loopy-test.scm
 
+echo "======================================== syntax tests (r5rs_pitfalls) ..."
+$interpret -iw -s r5rs_pitfalls.scm
+
 echo "======================================== module tests ..."
 $interpret -include-path .. -w -s module-tests.scm
 
