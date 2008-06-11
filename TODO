@@ -1,29 +1,16 @@
 TODO for macro/module system					-*- Outline -*-
 
 * bugs
+
 ** macros
-*** from r4rstest:
-    (test '(a `(b ,x ,'y d) e) 'quasiquote
-	  (let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)))
-    expansion contains aliases (created by rename/lookup/macro/global), runs
-    ok, but not correct
+*** expansion of r5rs_pitfall 4.2 incorrect
+    possibly due to a non-aliased implicit "begin", has to be found
 
 ** modules
-*** indirect imports don't work fully for compiled modules / import libraries
-    iexports
 *** code-duplication in compiler and evaluator for ##core#module
 *** "scheme" module does not include some special forms ("define-syntax", etc.)
 *** import-for-syntax imports value bindings into import-env
     should actually be a distinct meta-import-env.
-
-* documentation
-** modules
-*** unexported defines do not appear in dlist and thus will trigger a warning
-    
-*** document export issues
-**** v-bindings in exported macros must be exported
-**** unexported macros in exported ones may not
-**** indirect exports
 
 * build
 ** clear up soname thing (removed here, ivan says he needs it for debian)
@@ -62,11 +49,3 @@ TODO for macro/module system					-*- Outline -*-
 ** syntactic-closures
 ** simple-macros
 ** alexpander
-
-* more bugs
-** macro expansion
-*** canonicalization of body has to keep track of introduced bindings
-    or global macros will apply to local bodies that shadow global id locally:
-    (define-syntax foo ...)
-    (let () (define (foo) 1) (foo)) ; last expr uses foo macro
-**** partially implemented (but not for local syntax bindings)
