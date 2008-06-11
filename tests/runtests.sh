@@ -5,64 +5,65 @@ set -e
 TEST_DIR=`pwd`
 export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
-compile="../csc -compiler ../chicken -v -I.. -L.. -o a.out"
-compile_s="../csc -s -compiler ../chicken -v -I.. -L.."
+compile="../csc -compiler ../chicken -v -I.. -L.. -include-path .. -o a.out"
+compile_s="../csc -s -compiler ../chicken -v -I.. -L.. -include-path .."
+interpret="../csi -include-path .."
 
 echo "======================================== runtime tests ..."
-../csi -s apply-test.scm
+$interpret -s apply-test.scm
 $compile test-gc-hooks.scm && ./a.out
 
 echo "======================================== library tests ..."
-../csi -w -s library-tests.scm
+$interpret -w -s library-tests.scm
 
 echo "======================================== syntax tests ..."
-../csi -w -s syntax-tests.scm
+$interpret -w -s syntax-tests.scm
 
 echo "======================================== syntax tests (compiled) ..."
 $compile syntax-tests.scm && ./a.out
 
 echo "======================================== syntax tests (matchable) ..."
-../csi -w matchable.scm -s match-test.scm
+$interpret -w matchable.scm -s match-test.scm
 
 echo "======================================== syntax tests (loopy-loop) ..."
-../csi -w -s loopy-test.scm
+$interpret -w -s loopy-test.scm
 
 echo "======================================== module tests ..."
-../csi -w -s module-tests.scm
+$interpret -include-path .. -w -s module-tests.scm
 
 echo "======================================== module tests (ec) ..."
 rm -f ec.so ec.import.*
-../csi -wbqn ec.scm ec-tests.scm
+$interpret -wbqn ec.scm ec-tests.scm
 $compile_s ec.scm -emit-import-library ec -o ec.so
 $compile_s ec.import.scm -o ec.import.so 
-../csi -wbnq ec.so ec-tests.scm
+$interpret -wbnq ec.so ec-tests.scm
 # $compile ec-tests.scm && ./a.out        # takes ages to compile
 
 echo "======================================== module tests (chained) ..."
 rm -f m*.import.* test-chained-modules.so
-../csi -bnq test-chained-modules.scm
+$interpret -bnq test-chained-modules.scm
 $compile_s test-chained-modules.scm -j m3
 $compile_s m3.import.scm
-../csi -bn test-chained-modules.so
-../csi -bn test-chained-modules.so -e '(import m3) (s3)'
+$interpret -bn test-chained-modules.so
+$interpret -bn test-chained-modules.so -e '(import m3) (s3)'
 
 echo "======================================== hash-table tests ..."
-../csi -w -s hash-table-tests.scm
+$interpret -w -s hash-table-tests.scm
 
 echo "======================================== port tests ..."
-../csi -w -s port-tests.scm
+$interpret -w -s port-tests.scm
 
 echo "======================================== fixnum tests ..."
 $compile fixnum-tests.scm && ./a.out
 
 echo "======================================== srfi-18 tests ..."
-../csi -w -s srfi-18-tests.scm
+$interpret -w -s srfi-18-tests.scm
 
 echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out
 
 echo "======================================== r4rstest ..."
-../csi -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
+$interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
   -i -s r4rstest.scm >r4rstest.log
 diff -u r4rstest.out r4rstest.log
 
