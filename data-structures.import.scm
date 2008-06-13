@@ -25,7 +25,7 @@
 
 
 (##sys#register-primitive-module
- 'extras
+ 'data-structures
  '(->string
    alist-ref
    alist-update!

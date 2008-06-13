@@ -43,13 +43,13 @@ the current file:
 (include "FILENAME")
 </enscript>
 
-Macro definitions are only available when processed
-by {{include}} or {{require-for-syntax}}. Macro definitions in separate units are not available, since
-they are defined at compile time, i.e the time when that other unit
-was compiled (macros can optionally be
-available at runtime, see {{define-macro}} in [[Non-standard macros and special forms|Substitution forms and macros]]).
+Macro definitions are only available when processed by {{include}} or
+{{import}}. Macro definitions in separate units are not available,
+since they are defined at compile time, i.e the time when that other
+unit was compiled (macros can optionally be available at runtime, see
+{{define-syntax}} in [[Non-standard macros and special forms|Substitution forms and macros]]).
 
-On platforms that support dynamic loading of compiled code ( Windows, most ELF based
+On platforms that support dynamic loading of compiled code (Windows, most ELF based
 systems like Linux or BSD, MacOS X, and others) code can be compiled into a shared object {{.dll}}, {{.so}}, {{.dylib}}) and loaded 
 dynamically into a running application.
 

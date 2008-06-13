@@ -867,12 +867,6 @@
 ;;; Compile-time `require':
 
 (##sys#extend-macro-environment
- 'require-for-syntax '()
- (##sys#er-transformer
-  (lambda (form r c)
-    `(##core#require-for-syntax ,@(cdr form)))))
-
-(##sys#extend-macro-environment
  'use '()
  (##sys#er-transformer
   (lambda (form r c)

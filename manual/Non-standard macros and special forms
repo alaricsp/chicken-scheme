@@ -24,7 +24,7 @@ following:
 * If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
 * If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded.
 * If {{ID}} names one of the core library units shipped with CHICKEN, then a {{(load-library 'ID)}} will be performed.
-* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, probably followed by {{(require ...)}} for any run-time requirements.
+* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the extensions is loaded at compile-time, probably doing a run-time {{(require ...)}} for any run-time requirements.
 * Otherwise, {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
 
 During compilation, one of the following happens instead:
@@ -32,7 +32,7 @@ During compilation, one of the following happens instead:
 * If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
 * If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded at compile-time, making the syntactic extensions available in compiled code.
 * If {{ID}} names one of the core library units shipped with CHICKEN, or if the option {{-uses ID}} has been passed to the compiler, then a {{(declare (uses ID))}} is generated.
-* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the equivalent of {{(require-for-syntax 'ID)}} is performed, and code is emitted to {{(require ...)}} any needed run-time requirements.
+* If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the extension is loaded at compile-time, and code is emitted to {{(require ...)}} any needed run-time requirements.
 * Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
 
 To make long matters short - just use {{require-extension}} and it will normally figure everything out for dynamically

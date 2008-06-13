@@ -14,7 +14,7 @@ any command-line settings.  Declarations are valid for the whole
 compilation-unit (source file), the position of the declaration in
 the source file can be arbitrary. Declarations are ignored in the interpreter
 but not in code evaluated at compile-time (by {{eval-when}} or in
-syntax extensions loaded via {{require-extension}} or {{require-for-syntax}}.
+syntax extensions loaded via {{require-extension}}).
 {{DECLSPEC}} may be any of the following:
 
 

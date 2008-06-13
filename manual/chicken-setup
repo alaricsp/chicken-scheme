@@ -505,8 +505,8 @@ The setup script looks like this:
 The invocation of {{install-extension}} provides the files that are to
 be copied into the extension repository, and a metadata list that
 specifies that the extension {{glass}} is a syntax extension and that,
-if it is declared to be used by other code (either with the
-{{require-extension}} or {{require-for-syntax}} form), then client
+if it is declared to be used by other code (with the
+{{require-extension}} form), then client
 code should perform an implicit {{(require 'glass-support)}} at
 startup.
 
