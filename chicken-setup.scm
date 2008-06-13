@@ -995,7 +995,7 @@ EOF
 				     #t)
 				   (loop) ) ) ) ) )
 		       (loop more) ) ) ) )
-	      (else (error "(internal) invalid host" hpp)) ) ) ) ) )
+	      (else (error "can't locate repository tree")) ) ) ) ) )
 
 (define *progress-indicator*
   (thread-start!

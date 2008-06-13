@@ -345,6 +345,7 @@ Everything from the {{library}}, {{eval}} and {{expand}} library units.
 
  [module] extras
  [module] data-structures
+ [module] ports
  [module] lolevel
  [module] posix
  [module] regex
