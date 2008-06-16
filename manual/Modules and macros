@@ -222,6 +222,7 @@ module.
 ==== module
 
  [syntax] (module NAME (EXPORT ...) BODY ...)
+ [syntax] (module NAME all BODY ...)
 
 Defines a module with the name {{NAME}}, a set of exported bindings
 and a contained sequence of toplevel expressions that are evaluated in
@@ -244,6 +245,9 @@ is stored in the generated binary and available when loading
 it into interpreted or compiled code. Note that this is different
 to normal macros (outside of module declarations), which are normally
 not exported from compiled code.
+
+As a special case, specifying {{all}} instead of an export-list
+will export all definitions.
 
 ==== import
 

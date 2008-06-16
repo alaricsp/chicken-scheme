@@ -617,20 +617,20 @@
 			 ((##core#module)
 			  (let* ((name (rename (cadr x) se))
 				 (exports 
-				  (map (lambda (exp)
-					 (cond ((symbol? exp) (rename exp se))
-					       ((and (pair? exp) 
-						     (let loop ((exp exp))
-						       (or (null? exp)
-							   (and (symbol? (car exp))
-								(loop (cdr exp))))))
-						(map (cut rename <> se) exp) )
-					       (else
-						(##sys#syntax-error-hook
-						 'module
-						 "invalid export syntax" exp name))))
-				       (caddr x)))
-				 (me0 (##sys#macro-environment)))
+				  (or (eq? #t (caddr x))
+				      (map (lambda (exp)
+					     (cond ((symbol? exp) (rename exp se))
+						   ((and (pair? exp) 
+							 (let loop ((exp exp))
+							   (or (null? exp)
+							       (and (symbol? (car exp))
+								    (loop (cdr exp))))))
+						    (map (cut rename <> se) exp) )
+						   (else
+						    (##sys#syntax-error-hook
+						     'module
+						     "invalid export syntax" exp name))))
+					   (caddr x)))))
 			    (when (##sys#current-module)
 			      (##sys#syntax-error-hook 'module "modules may not be nested" name))
 			    (parameterize ((##sys#current-module 
@@ -640,9 +640,7 @@
 				(let loop ((body (cdddr x)) (xs '()))
 				  (if (null? body)
 				      (let ((xs (reverse xs)))
-					(##sys#finalize-module 
-					 (##sys#current-module) 
-					 me0)
+					(##sys#finalize-module (##sys#current-module))
 					(lambda (v)
 					  (let loop2 ((xs xs))
 					    (if (null? xs)

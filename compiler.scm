@@ -118,7 +118,7 @@
 ; (<exp> {<exp>})
 ; (define-syntax <symbol> <expr>)
 ; (define-compiled-syntax <symbol> <expr>)
-; (##core#module <symbol> (<name> | (<name> ...) ...) <body>)
+; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
 ;
 ; - Core language:
 ;
@@ -724,20 +724,20 @@
 		       ((##core#module)
 			(let* ((name (lookup (cadr x) se))
 			       (exports 
-				(map (lambda (exp)
-				       (cond ((symbol? exp) (lookup exp se))
-					     ((and (pair? exp)
-						   (let loop ((exp exp))
-						     (or (null? exp)
-							   (and (symbol? (car exp))
-								(loop (cdr exp))))))
-					      (map (cut lookup <> se) exp) )
-					     (else
-					      (##sys#syntax-error-hook
-					       'module
-					       "invalid export syntax" exp name))))
-				     (caddr x)))
-			       (me0 (##sys#macro-environment)))
+				(or (eq? #t (caddr x))
+				    (map (lambda (exp)
+					   (cond ((symbol? exp) (lookup exp se))
+						 ((and (pair? exp)
+						       (let loop ((exp exp))
+							 (or (null? exp)
+							     (and (symbol? (car exp))
+								  (loop (cdr exp))))))
+						  (map (cut lookup <> se) exp) )
+						 (else
+						  (##sys#syntax-error-hook
+						   'module
+						   "invalid export syntax" exp name))))
+					 (caddr x)))))
 			  (when (##sys#current-module)
 			    (##sys#syntax-error-hook 'module "modules may not be nested" name))
 			  (let-values (((body mreg)
@@ -748,7 +748,7 @@
 					    (let loop ((body (cdddr x)) (xs '()))
 					      (cond 
 					       ((null? body)
-						(##sys#finalize-module (##sys#current-module) me0)
+						(##sys#finalize-module (##sys#current-module))
 						(cond ((assq name import-libraries) =>
 						       (lambda (il)
 							 (when verbose-mode

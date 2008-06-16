@@ -1175,8 +1175,11 @@
  '()
  (##sys#er-transformer
   (lambda (x r c)
-    (##sys#check-syntax 'module x '(_ symbol #(_ 0) . #(_ 0)))
-    `(##core#module ,@(cdr x)))))
+    (##sys#check-syntax 'module x '(_ symbol _ . #(_ 0)))
+    `(##core#module 
+      ,(cadr x)
+      ,(if (c (r 'all) (caddr x)) #t (caddr x))
+      ,@(cdddr x)))))
 
 
 ;;; syntax-rules
@@ -1226,7 +1229,8 @@
 
 (define (##sys#register-export sym mod)
   (when mod
-    (let ((exp (##sys#find-export sym mod #t))
+    (let ((exp (or (eq? #t (module-export-list mod))
+		   (##sys#find-export sym mod #t)))
 	  (ulist (module-undefined-list mod)))
       (##sys#toplevel-definition-hook
        (##sys#module-rename sym (module-name mod)) 
@@ -1243,7 +1247,8 @@
 
 (define (##sys#register-syntax-export sym mod val)
   (when mod
-    (let ((exp (##sys#find-export sym mod #t))
+    (let ((exp (or (eq? #t (module-export-list mod))
+		   (##sys#find-export sym mod #t)))
 	  (ulist (module-undefined-list mod))
 	  (mname (module-name mod)))
       (when (memq sym ulist)
@@ -1286,16 +1291,18 @@
 	     (or (and (pair? (car exports))
 		      (memq id (cdar exports)))
 		 (loop (cdr exports))))))
-    (let loop ((dlist (module-defined-list mod)))
-      (cond ((null? dlist) '())
-	    ((indirect? (caar dlist))
-	     (cons 
-	      (cons 
-	       (caar dlist)
-	       (or (cdar dlist)
-		   (##sys#module-rename (caar dlist) mname)))
-	      (loop (cdr dlist))))
-	    (else (loop (cdr dlist)))))))
+    (if (eq? #t exports)
+	'()
+	(let loop ((dlist (module-defined-list mod)))
+	  (cond ((null? dlist) '())
+		((indirect? (caar dlist))
+		 (cons 
+		  (cons 
+		   (caar dlist)
+		   (or (cdar dlist)
+		       (##sys#module-rename (caar dlist) mname)))
+		  (loop (cdr dlist))))
+		(else (loop (cdr dlist))))))) )
 
 (define (merge-se . ses)		; later occurrences take precedence to earlier ones
   (let ((se (apply append ses)))
@@ -1310,7 +1317,6 @@
 
 (define (##sys#compiled-module-registration mod)
   (let ((dlist (module-defined-list mod))
-	(exports (module-export-list mod))
 	(mname (module-name mod)))
     `((eval '(import ,@(module-import-forms mod)))
       (##sys#register-compiled-module
@@ -1327,7 +1333,7 @@
 		 (let* ((name (car sexport))
 			(a (assq name dlist)))
 		   (unless (pair? a)
-		     (bomb "exported syntax has no source"))
+		     (error 'module "(internal) exported syntax has no source" name mname))
 		   `(cons ',(car sexport) ,(cdr a))))
 	       (module-sexports mod)))))))
 
@@ -1381,16 +1387,17 @@
     mod))
 
 (define (##sys#find-export sym mod indirect)
-  (let loop ((xl (module-export-list mod)))
-    (cond ((null? xl) #f)
-	  ((eq? sym (car xl)))
-	  ((pair? (car xl))
-	   (or (eq? sym (caar xl))
-	       (and indirect (memq sym (cdar xl)))
-	       (loop (cdr xl))))
-	  (else (loop (cdr xl))))))
+  (let ((exports (module-export-list mod)))
+    (let loop ((xl (if (eq? #t exports) (module-exists-list mod) exports)))
+      (cond ((null? xl) #f)
+	    ((eq? sym (car xl)))
+	    ((pair? (car xl))
+	     (or (eq? sym (caar xl))
+		 (and indirect (memq sym (cdar xl)))
+		 (loop (cdr xl))))
+	    (else (loop (cdr xl)))))))
 
-(define (##sys#finalize-module mod me0)
+(define (##sys#finalize-module mod)
   (let* ((explist (module-export-list mod))
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
@@ -1398,13 +1405,16 @@
 	 (sdlist (map (lambda (sym) (assq sym (##sys#macro-environment)))
 		      (module-defined-syntax-list mod)))
 	 (sexports
-	  (let loop ((me (##sys#macro-environment)))
-	    (cond ((or (null? me) (eq? me0 me)) '())
-		  ((##sys#find-export (caar me) mod #f)
-		   (cons (car me) (loop (cdr me))))
-		  (else (loop (cdr me))))))
+	  (if (eq? #t explist)
+	      (map (lambda (sd) (assq (car sd) (##sys#macro-environment)))
+		   sdlist)
+	      (let loop ((me (##sys#macro-environment)))
+		(cond ((null? me) '())
+		      ((##sys#find-export (caar me) mod #f)
+		       (cons (car me) (loop (cdr me))))
+		      (else (loop (cdr me)))))))
 	 (vexports
-	  (let loop ((xl explist))
+	  (let loop ((xl (if (eq? #t explist) elist explist)))
 	    (if (null? xl)
 		'()
 		(let* ((h (car xl))
