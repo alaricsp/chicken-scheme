@@ -44,7 +44,7 @@ endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -dynamiclib -compatibility_version 1 -current_version 1.0 -install_name $@
 POSTINSTALL_PROGRAM_FLAGS = -change libchicken$(SO) $(LIBDIR)/libchicken$(SO)
 LIBRARIAN_OPTIONS = scru
-LINKER_LINK_DLOADABLE_OPTIONS = -bundle
+LINKER_LINK_DLOADABLE_OPTIONS = -bundle -L.
 
 # file extensions
 
