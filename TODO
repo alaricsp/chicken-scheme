@@ -1,5 +1,8 @@
 TODO for macro/module system					-*- Outline -*-
 
+* merge changes from trunk
+** -r10950:HEAD
+
 * bugs
 
 ** macros
@@ -12,15 +15,17 @@ TODO for macro/module system					-*- Outline -*-
 *** import-for-syntax imports value bindings into import-env
     should actually be a distinct meta-import-env.
 
+* better load/import syntax
+** "require-extension" -> "require-library"
+** "require-extension" = "require-library" + "import"
+** document, test
+
 * build
-** clear up soname thing (removed here, ivan says he needs it for debian)
 ** chicken.texi needs to be regenerated
 
 * test
-** syntax-export of srfi-14 module
 ** foreign module
 ** warnings for re-imports
-** modularize fps egg as a more realistic test
 
 * syntax-error
 ** if ##sys#current-module is set, add name to error message?
