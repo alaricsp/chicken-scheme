@@ -27,8 +27,8 @@ Alain Mellan, Eric Merrit, Perry Metzger, Scott G. Miller, Mikael,
 Bruce Mitchener, Chris Moline, Eric E. Moore, Julian Morrison, Dan
 Muresan, Lars Nilsson, Ian Oversby, o.t., Gene Pavlovsky, Levi
 Pearson, Nicolas Pelletier, Carlos Pita, Robin Lee Powell, Pupeno,
-Davide Puricelli, Doug Quale, Eric Raible, Ivan Raikov, Joel Reymont,
-Eric Rochester, Andreas Rottman, David Rush, Lars Rustemeier, Daniel
+Davide Puricelli, Doug Quale, Eric Raible, Joel Reymont, Eric
+Rochester, Andreas Rottman, David Rush, Lars Rustemeier, Daniel
 Sadilek, Oskar Schirmer, Burton Samograd, Reed Sheridan, Ronald
 Schroeder, Spencer Schumann, Alex Shinn, Ivan Shmakov, Shmul, Tony
 Sidaway, Jeffrey B. Siegal, Andrey Sidorenko, Michele Simionato,
@@ -40,6 +40,8 @@ Jaques Vidrine, Panagiotis Vossos, Shawn Wagner, Peter Wang, Ed
 Watkeys, Brad Watson, Thomas Weidner, Goeran Weinholt, Matthew
 Welland, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard
 Zidlicky and Houman Zolfaghari for bug-fixes, tips and suggestions.
+
+An applause to Ivan Raikov for being a great release manager.
 
 CHICKEN uses the PCRE regular expression package ([[http://www.pcre.org]]),
 which is written by Philip Hazel.
