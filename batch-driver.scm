@@ -310,15 +310,20 @@
 		     (else (quit "no filename available for `-extension' option")) ) ) ) ) ) ) )
 
     ;; Append required extensions to initforms:
-    (let ([ids (lset-difference 
-		eq?
-		(map string->symbol
-		     (append-map
-		      (cut string-split <> ",")
-		      (collect-options 'require-extension)))
-		uses-units)])
+    (let ()
+      (define (ids opt)
+	(lset-difference 
+	 eq?
+	 (map string->symbol
+	      (append-map
+	       (cut string-split <> ",")
+	       (collect-options opt)))
+	 uses-units))
       (set! initforms
-	(append initforms (map (lambda (r) `(##core#require-extension ',r)) ids)) ) )
+	(append 
+	 initforms 
+	 (map (lambda (r) `(##core#require-extension (,r) #t)) 
+	      (ids 'require-extension))))
 
     (when (memq 'compile-syntax options)
       (set! ##sys#enable-runtime-macros #t) )

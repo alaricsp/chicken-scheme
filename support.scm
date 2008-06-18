@@ -1270,7 +1270,7 @@ Usage: chicken FILENAME OPTION ...
     -prologue FILENAME          include file before main source file
     -epilogue FILENAME          include file after main source file
     -dynamic                    compile as dynamically loadable code
-    -require-extension NAME     require extension NAME in compiled code
+    -require-extension NAME     require and import extension NAME
     -extension                  compile as extension (dynamic or static)
 
   Obscure options:

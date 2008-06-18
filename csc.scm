@@ -1,4 +1,4 @@
-;;;; csc.scm - Driver program for the CHICKEN compiler - felix -*- Hen -*-
+;;;; csc.scm - Driver program for the CHICKEN compiler - felix -*- Scheme -*-
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; Copyright (c) 2008, The Chicken Team
@@ -410,7 +410,7 @@
 
     -e  -embedded               compile as embedded (don't generate `main()')
     -W  -windows                compile as Windows GUI application (MSVC only)
-    -R  -require-extension NAME require extension in compiled code
+    -R  -require-extension NAME require extension and import in compiled code
     -E  -extension              compile as extension (dynamic or static)
     -dll -library               compile multiple units into a dynamic library
 

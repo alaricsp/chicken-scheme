@@ -112,7 +112,7 @@
 ; (##core#define-external-variable (quote <name>) (quote <type>) (quote <bool>))
 ; (##core#check <exp>)
 ; (##core#require-for-syntax <exp> ...)
-; (##core#require-extension <id> ...)
+; (##core#require-extension (<id> ...) <bool>)
 ; (##core#app <exp> {<exp>})
 ; (##coresyntax <exp>)
 ; (<exp> {<exp>})
@@ -579,22 +579,24 @@
 			   '(##core#undefined) ) )
 
 			((##core#require-extension)
-			 (walk
-			  (let loop ([ids (cdr x)])
-			    (if (null? ids)
-				'(##core#undefined)
-				(let ([id (car ids)])
-				  (let-values ([(exp f) (##sys#do-the-right-thing id #t)])
-				    (if (not (or f 
-						 (and (symbol? id)
-						     (or (feature? id)
-							 (##sys#find-extension
-							  (##sys#canonicalize-extension-path 
-							   id 'require-extension) #f)) ) ) )
+			 (let ((imp? (caddr x)))
+			   (walk
+			    (let loop ([ids (cadr x)])
+			      (if (null? ids)
+				  '(##core#undefined)
+				  (let ([id (car ids)])
+				    (let-values ([(exp f)
+						  (##sys#do-the-right-thing id #t imp?)])
+				      (unless (or f 
+						  (and (symbol? id)
+						       (or (feature? id)
+							   (##sys#find-extension
+							    (##sys#canonicalize-extension-path 
+							     id 'require-extension) #f)) ) ) 
 					(compiler-warning 
 					 'ext "extension `~A' is currently not installed" id))
-				    `(begin ,exp ,(loop (cdr ids))) ) ) ) )
-			  se dest) )
+				      `(begin ,exp ,(loop (cdr ids))) ) ) ) )
+			    se dest) ) )
 
 			((let ##core#let)
 			 (##sys#check-syntax 'let x '(_ #((variable _) 0) . #(_ 1)) #f se)

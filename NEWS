@@ -24,8 +24,8 @@
 - the following macros have been removed:
     define-foreign-record
     define-foreign-enum
-    define-record
     define-macro
+    use
 
 3.2.5
 

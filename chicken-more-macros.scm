@@ -34,6 +34,52 @@
 (let ((me0 (##sys#macro-environment)))
 
 (##sys#extend-macro-environment
+ 'define-record '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (##sys#check-syntax 'define-record x '(_ symbol . #(symbol 0)))
+    (let* ((name (cadr x))
+	   (slots (cddr x))
+	   (prefix (symbol->string name))
+	   (setters (memq #:record-setters ##sys#features))
+	   (%begin (r 'begin))
+	   (%define (r 'define))
+	   (%getter-with-setter (r 'getter-with-setter))
+	   (%lambda (r 'lambda)) )
+      `(,%begin
+	  (,%define 
+	   ,(string->symbol (string-append "make-" prefix))
+	   (,%lambda ,slots (##sys#make-structure ',name ,@slots)) )
+	  (,%define
+	   ,(string->symbol (string-append prefix "?"))
+	   (,%lambda (x) (##sys#structure? x ',name)) )
+	  ,@(let mapslots ((slots slots) (i 1))
+	      (if (eq? slots '())
+		  slots
+		  (let* ((slotname (symbol->string (##sys#slot slots 0)))
+			 (setr (string->symbol (string-append prefix "-" slotname "-set!")))
+			 (getr (string->symbol (string-append prefix "-" slotname)) ) )
+		    (cons
+		     `(,%begin
+			(,%define
+			 ,setr
+			 (,%lambda (x val)
+				   (##core#check (##sys#check-structure x ',name))
+				   (##sys#block-set! x ,i val) ) )
+			(,%define
+			 ,getr
+			 ,(if setters
+			      `(,%getter-with-setter
+				(,%lambda (x) 
+					  (##core#check (##sys#check-structure x ',name))
+					  (##sys#block-ref x ,i) )
+				,setr)
+			      `(,%lambda (x)
+					 (##core#check (##sys#check-structure x ',name))
+					 (##sys#block-ref x ,i) ) ) ) )
+		     (mapslots (##sys#slot slots 1) (fx+ i 1)) ) ) ) ) ) ) ) ) )
+
+(##sys#extend-macro-environment
  'receive
  '()
  (##sys#er-transformer
@@ -862,15 +908,6 @@
 				   `(,%getter-with-setter ,getr ,(caddr slot))
 				   getr) )
 		    ,@(loop (cdr slots) (add1 i)) ) ) ) ) ) ) ) ) )
-
-
-;;; Compile-time `require':
-
-(##sys#extend-macro-environment
- 'use '()
- (##sys#er-transformer
-  (lambda (form r c)
-    `(##core#require-extension ,@(cdr form)))))
 
 
 ;;; SRFI-26:

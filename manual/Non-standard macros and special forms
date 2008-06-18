@@ -9,12 +9,11 @@
 ==== require-extension
 
  [syntax] (require-extension ID ...)
- [syntax] (use ID ...)
 
 This form does all the necessary steps to make the libraries or extensions given
 in {{ID ...}} available. It loads syntactic extensions, if needed and generates
 code for loading/linking with core library modules or separately installed
-extensions. {{use}} is just a shorter alias for {{require-extension}}.
+extensions.
 This implementation of {{require-extension}} is compliant with [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]]
 (see the [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]] document for more information).
 
@@ -373,6 +372,25 @@ Equivalent to:
 
 
 === Record structures
+
+==== define-record
+
+ [syntax] (define-record NAME SLOTNAME ...)
+
+Defines a record type. Call {{make-NAME}} to create an instance
+of the structure (with one initialization-argument for each slot).
+{{(NAME? STRUCT)}} tests any object for being an instance of this
+structure.  Slots are accessed via {{(NAME-SLOTNAME STRUCT)}}
+and updated using {{(NAME-SLOTNAME-set!}} {{STRUCT}} {{VALUE)}}.
+
+<enscript highlight=scheme>
+(define-record point x y)
+(define p1 (make-point 123 456))
+(point? p1)                      ==> #t
+(point-x p1)                     ==> 123
+(point-y-set! p1 99)
+(point-y p1)                     ==> 99
+</enscript>
 
 ==== define-record-type
 

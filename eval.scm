@@ -116,7 +116,6 @@
 (define-constant setup-file-extension "setup-info")
 (define-constant repository-environment-variable "CHICKEN_REPOSITORY")
 (define-constant prefix-environment-variable "CHICKEN_PREFIX")
-(define-constant special-syntax-files '(chicken-ffi-macros chicken-more-macros))
 (define-constant default-binary-version 3)
 
 ; these are actually in unit extras, but that is used by default
@@ -675,13 +674,15 @@
 			       e #f tf cntr se) ) ) ]
 
 			 [(##core#require-extension)
-			  (compile
-			   (let loop ([ids (cdr x)])
-			     (if (null? ids)
-				 '(##core#undefined)
-				 (let-values ([(exp _) (##sys#do-the-right-thing (car ids) #f)])
-				   `(,(rename 'begin se) ,exp ,(loop (cdr ids))) ) ) )
-			   e #f tf cntr se) ]
+			  (let ((imp? (caddr x)))
+			    (compile
+			     (let loop ([ids (cadr x)])
+			       (if (null? ids)
+				   '(##core#undefined)
+				   (let-values ([(exp _)
+						 (##sys#do-the-right-thing (car ids) #f imp?)])
+				     `(,(rename 'begin se) ,exp ,(loop (cdr ids))) ) ) )
+			     e #f tf cntr se) ) ]
 
 			 [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
 			  (eval/elab (cadr x))
@@ -1146,7 +1147,7 @@
 
 (define ##sys#do-the-right-thing
   (let ((vector->list vector->list))
-    (lambda (id comp?)
+    (lambda (id comp? imp?)
       (define (add-req id)
 	(when comp?
 	  (##sys#hash-table-update! 		; assumes compiler has extras available - will break in the interpreter
@@ -1154,23 +1155,25 @@
 	   'syntax-requirements
 	   (cut lset-adjoin eq? <> id) 
 	   (lambda () (list id)))))
+      (define (impform x id builtin?)
+	`(begin
+	   ,x
+	   ,@(if (and imp? (or (not builtin?) (not (##sys#current-module))))
+		 `((import ,id))
+		 '())))
       (define (doit id)
 	(cond ((or (memq id builtin-features)
 		   (if comp?
 		       (memq id builtin-features/compiled)
 		       (##sys#feature? id) ) )
 	       (values '(##core#undefined) #t) )
-	      ((memq id special-syntax-files)
-	       (let ((fid (##sys#->feature-id id)))
-		 (unless (memq fid ##sys#features)
-		   (##sys#load (##sys#resolve-include-filename (##sys#symbol->string id) #t) #f #f) 
-		   (set! ##sys#features (cons fid ##sys#features)) )
-		 (values '(##core#undefined) #t) ) )
 	      ((memq id ##sys#core-library-modules)
 	       (values
-		(if comp?
-		    `(##core#declare (uses ,id))
-		    `(load-library ',id) )
+		(impform
+		 (if comp?
+		     `(##core#declare (uses ,id))
+		     `(load-library ',id) )
+		 id #t)
 		#t) )
 	      ((memq id ##sys#explicit-library-modules)
 	       (let* ((info (##sys#extension-information id 'require-extension))
@@ -1178,9 +1181,11 @@
 		 (values
 		  `(begin
 		     ,@(if s `((##core#require-for-syntax ',id)) '())
-		     ,(if comp?
-			  `(##core#declare (uses ,id)) 
-			  `(load-library ',id) ) )
+		     ,(impform
+		       (if comp?
+			   `(##core#declare (uses ,id)) 
+			   `(load-library ',id) )
+		       id #f))
 		  #t) ) )
 	      (else
 	       (let ((info (##sys#extension-information id 'require-extension)))
@@ -1189,18 +1194,24 @@
 			      (rr (assq 'require-at-runtime info)) )
 			  (when s (add-req id))
 			  (values 
-			   `(begin
-			      ,@(if s `((##core#require-for-syntax ',id)) '())
-			      ,@(if (and (not rr) s)
-				   '()
-				   `((##sys#require
-				      ,@(map (lambda (id) `',id)
-					     (cond (rr (cdr rr))
-						   (else (list id)) ) ) ) ) ) )
+			   (impform
+			    `(begin
+			       ,@(if s `((##core#require-for-syntax ',id)) '())
+			       ,@(if (and (not rr) s)
+				     '()
+				     `((##sys#require
+					,@(map (lambda (id) `',id)
+					       (cond (rr (cdr rr))
+						     (else (list id)) ) ) ) ) ) )
+			    id #f)
 			   #t) ) )
 		       (else
 			(add-req id)
-			(values `(##sys#require ',id) #f)) ) ) ) ) )
+			(values
+			 (impform
+			  `(##sys#require ',id) 
+			  id #f)
+			 #f)))))))
       (if (and (pair? id) (symbol? (car id)))
 	  (let ((a (assq (##sys#slot id 0) ##sys#extension-specifiers)))
 	    (if a
@@ -1212,11 +1223,12 @@
 				    (f #f) )
 			   (if (null? specs)
 			       (values `(begin ,@(reverse exps)) f)
-			       (let-values (((exp fi) (##sys#do-the-right-thing (car specs) comp?)))
+			       (let-values (((exp fi)
+					     (##sys#do-the-right-thing (car specs) comp? imp?)))
 				 (loop (cdr specs)
 				       (cons exp exps)
 				       (or fi f) ) ) ) ) )
-			(else (##sys#do-the-right-thing a comp?)) ) )
+			(else (##sys#do-the-right-thing a comp? imp?)) ) )
 		(##sys#error "undefined extension specifier" id) ) )
 	  (if (symbol? id)
 	      (doit id) 
@@ -1267,7 +1279,7 @@
 	 (unless (and vv (string>=? (->string (car vv)) (->string (caddr spec))))
 	   (error "installed extension does not match required version" id vv (caddr spec)))
 	 id) 
-       (##sys#syntax-error-hook 'require-extension "invalid version specification" spec)) ) )
+       (##sys#syntax-error-hook "invalid version specification" spec)) ) )
 
 
 ;;; Convert string into valid C-identifier:

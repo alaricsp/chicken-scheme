@@ -1162,13 +1162,22 @@
 			     (else (expand rclauses)) ) ) ) ) ) ) ) ) ) ) )
 
 (##sys#extend-macro-environment
+ 'require-library
+ '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (let ((ids (cdr x))
+	  (%quote (r 'quote)))
+      `(##core#require-extension ,ids #f) ) ) ) )
+
+(##sys#extend-macro-environment
  'require-extension
  '()
  (##sys#er-transformer
   (lambda (x r c)
     (let ((ids (cdr x))
 	  (%quote (r 'quote)))
-      `(##core#require-extension ,@ids) ) ) ) )
+      `(##core#require-extension ,ids #t) ) ) ) )
 
 (##sys#extend-macro-environment
  'module

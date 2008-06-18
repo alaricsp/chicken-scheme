@@ -95,7 +95,7 @@ EOF
     -s  -script PATHNAME        use interpreter for shell scripts
         -ss PATHNAME            shell script with `main' procedure
         -sx PATHNAME            same as `-s', but print each expression as it is evaluated
-    -R  -require-extension NAME require extension before executing code
+    -R  -require-extension NAME require extension and import before executing code
     -I  -include-path PATHNAME  add PATHNAME to include path
     --                          ignore all following options
 
@@ -926,7 +926,7 @@ EOF
 			       "-D" "-I" "-k"))
 		 (set! args (cdr args)) )
 		((or (string=? "-R" arg) (string=? "-require-extension" arg))
-		 (eval `(##core#require-extension ,(string->symbol (cadr args))))
+		 (eval `(##core#require-extension (,(string->symbol (cadr args))) #t))
 		 (set! args (cdr args)) )
 		((or (string=? "-e" arg) (string=? "-eval" arg))
 		 (evalstring (cadr args))
