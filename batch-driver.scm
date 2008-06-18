@@ -595,4 +595,4 @@
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
                                 (compiler-cleanup-hook)
                                 (when verbose 
-                                  (printf "compilation finished.~%~!") ) ) ) ] ) ) ) ) ) ) ) ) ) )
+                                  (printf "compilation finished.~%~!") ) ) ) ] ) ) ) ) ) ) ) ) ) ) )
