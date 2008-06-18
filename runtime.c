@@ -4241,7 +4241,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
 
   case C_fix(34):
 #ifdef C_HACKED_APPLY
-    return C_fix(1000);
+    return C_fix(TEMPORARY_STACK_SIZE);
 #else
     return C_fix(126);
 #endif
