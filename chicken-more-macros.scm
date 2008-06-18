@@ -995,7 +995,7 @@
 
 ;;; Extension helper:
 
-(##sys#extend-macro-environment
+(##sys#extend-macro-environment		; DEPRECATED
  'define-extension '()
  (##sys#er-transformer
   (lambda (form r c)

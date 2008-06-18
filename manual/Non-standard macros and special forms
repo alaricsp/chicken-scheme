@@ -6,25 +6,23 @@
 
 === Making extra libraries and extensions available
 
-==== require-extension
+==== require-library
 
- [syntax] (require-extension ID ...)
+ [syntax] (require-library ID ...)
 
 This form does all the necessary steps to make the libraries or extensions given
 in {{ID ...}} available. It loads syntactic extensions, if needed and generates
 code for loading/linking with core library modules or separately installed
 extensions.
-This implementation of {{require-extension}} is compliant with [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]]
-(see the [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]] document for more information).
 
-During interpretation/evaluation {{require-extension}} performs one of the
+During interpretation/evaluation {{require-library}} performs one of the
 following:
 
 * If {{ID}} names a built-in feature {{chicken srfi-0 srfi-2 srfi-6 srfi-8 srfi-9 srfi-10 srfi-17 srfi-23 srfi-30 srfi-39 srfi-55}}, then nothing is done.
 * If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded.
 * If {{ID}} names one of the core library units shipped with CHICKEN, then a {{(load-library 'ID)}} will be performed.
 * If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the extensions is loaded at compile-time, probably doing a run-time {{(require ...)}} for any run-time requirements.
-* Otherwise, {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
+* Otherwise, {{(require-library ID)}} is equivalent to {{(require 'ID)}}.
 
 During compilation, one of the following happens instead:
 
@@ -32,9 +30,9 @@ During compilation, one of the following happens instead:
 * If {{ID}} names one of the syntactic extensions {{chicken-more-macros chicken-ffi-macros}}, then this extension will be loaded at compile-time, making the syntactic extensions available in compiled code.
 * If {{ID}} names one of the core library units shipped with CHICKEN, or if the option {{-uses ID}} has been passed to the compiler, then a {{(declare (uses ID))}} is generated.
 * If {{ID}} names an installed extension with the {{syntax}} or {{require-at-runtime}} attribute, then the extension is loaded at compile-time, and code is emitted to {{(require ...)}} any needed run-time requirements.
-* Otherwise {{(require-extension ID)}} is equivalent to {{(require 'ID)}}.
+* Otherwise {{(require-library ID)}} is equivalent to {{(require 'ID)}}.
 
-To make long matters short - just use {{require-extension}} and it will normally figure everything out for dynamically
+To make long matters short - just use {{require-library}} and it will normally figure everything out for dynamically
 loadable extensions and core library units.
 
 {{ID}} should be a pure extension name and should not contain any path prefixes (for example {{dir/lib...}}) is illegal).
@@ -47,58 +45,12 @@ defined:
 
 See also: {{set-extension-specifier!}}
 
-When syntax extensions are loaded that redefine the global toplevel macro-expander (for example the
-[[http://www.call-with-current-continuation.org/eggs/syntax-case.html|syntax-case]] extension), then
-all remaining expression ''in the same toplevel form'' are still expanded with the old toplevel
-macro-expander.
+==== require-extension
 
-==== define-extension
+ [syntax] (require-extension ID ...)
 
- [syntax] (define-extension NAME CLAUSE ...)
-
-This macro simplifies the task of writing extensions that can be linked both statically and dynamically.
-If encountered in interpreted code or code that is compiled into a shared object (specifically if compiled
-with the feature {{chicken-compile-shared}}, done automatically by {{csc}} when compiling with
-the {{-shared}} or {{-dynamic}} option) then the code given by clauses of the form
-
-<enscript highlight=scheme>
-(dynamic EXPRESSION ...)
-</enscript>
-
-are inserted into the output as a {{begin}} form.
-
-If compiled statically (specifically if the feature {{chicken-compile-shared}} has not been given), then
-this form expands into the following:
-
-<enscript highlight=scheme>
-(declare (unit NAME))
-(provide 'NAME)
-</enscript>
-
-and all clauses of the form
-
-<enscript highlight=scheme>
-(static EXPRESSION ...)
-</enscript>
-
-all additionally inserted into the expansion.
-
-As a convenience, the clause
-
-<enscript highlight=scheme>
-(export IDENTIFIER ...)
-</enscript>
-
-is also allowed and is identical to {{(declare (export IDENTIFIER ...))}} (unless the {{define-extension}} form
-occurs in interpreted code, in with it is simply ignored).
-
-Note that the compiler option {{-extension NAME}} is equivalent to prefixing the
-compiled file with 
-
-<enscript highlight=scheme>
-(define-extension NAME)
-</enscript>
-
+This is equivalent to {{(require-library ID ...)}} but performs an implicit
+{{import}}, if necessary.
 
 === Binding forms for optional arguments
 
