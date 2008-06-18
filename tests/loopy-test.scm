@@ -1,7 +1,7 @@
 (load-relative "loopy-loop.scm")
 (load-relative "matchable.scm")
 
-(use srfi-69)
+(require-extension srfi-69)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SRFI-64 subset + test-approx=

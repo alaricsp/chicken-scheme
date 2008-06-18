@@ -1,4 +1,4 @@
-(use srfi-18)
+(require-extension srfi-18)
 
 (cond-expand (dribble
 (define-for-syntax count 0)

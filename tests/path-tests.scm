@@ -1,4 +1,4 @@
-(use utils)
+(require-extension utils)
 (define-syntax test
   (syntax-rules ()
     ((_ x) `(printf "~s\t=> ~s~%" ',x ,x))))
