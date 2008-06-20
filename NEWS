@@ -25,7 +25,9 @@
     define-foreign-record
     define-foreign-enum
     define-macro
+- the following macros have been deprecated:
     use
+    define-extension
 
 3.2.5
 

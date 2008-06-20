@@ -111,6 +111,7 @@
 ;;; Macro handling
 
 (define ##sys#macro-environment (make-parameter '()))
+(define ##sys#chicken-macro-environment '()) ; used later in chicken.import.scm
 
 (define (##sys#extend-macro-environment name se handler)
   (let ((me (##sys#macro-environment)))
@@ -1166,8 +1167,7 @@
  '()
  (##sys#er-transformer
   (lambda (x r c)
-    (let ((ids (cdr x))
-	  (%quote (r 'quote)))
+    (let ((ids (cdr x)))
       `(##core#require-extension ,ids #f) ) ) ) )
 
 (##sys#extend-macro-environment
@@ -1175,8 +1175,7 @@
  '()
  (##sys#er-transformer
   (lambda (x r c)
-    (let ((ids (cdr x))
-	  (%quote (r 'quote)))
+    (let ((ids (cdr x)))
       `(##core#require-extension ,ids #t) ) ) ) )
 
 (##sys#extend-macro-environment
@@ -1326,8 +1325,9 @@
 
 (define (##sys#compiled-module-registration mod)
   (let ((dlist (module-defined-list mod))
-	(mname (module-name mod)))
-    `((eval '(import ,@(module-import-forms mod)))
+	(mname (module-name mod))
+	(ifs (module-import-forms mod)))
+    `(,@(if (pair? ifs) `((eval '(import ,@ifs))) '())
       (##sys#register-compiled-module
        ',(module-name mod)
        (list

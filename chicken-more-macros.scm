@@ -31,7 +31,7 @@
 ;;; Non-standard macros:
 
 (define ##sys#chicken-macro-environment
-(let ((me0 (##sys#macro-environment)))
+  (let ((me0 (##sys#macro-environment)))
 
 (##sys#extend-macro-environment
  'define-record '()
@@ -1072,6 +1072,16 @@
 	(if ##sys#enable-runtime-macros
 	    `(,(r 'define) ,name ,body)
 	    '(##core#undefined)))))))
+
+
+;;; Just for backwards compatibility
+
+(##sys#extend-macro-environment		; DEPRECATED
+ 'use '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (##sys#check-syntax 'use x '(_ . #(_ 0)))
+    `(##core#require-extension ,(cdr x) #t))))
 
 
 ;;; just in case someone forgets

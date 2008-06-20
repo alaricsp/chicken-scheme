@@ -169,4 +169,4 @@
 	 warning
 	 expand expand*
 	 with-exception-handler)
- ##sys#chicken-macro-environment)
+ ##sys#chicken-macro-environment)	;*** incorrect - won't work in compiled executable

@@ -3,8 +3,6 @@ TODO for macro/module system					-*- Outline -*-
 * merge changes from trunk
 ** -r10950:HEAD
 
-* test require-extenion/require-library and interaction with modules
-
 * bugs
 
 ** macros
@@ -12,10 +10,15 @@ TODO for macro/module system					-*- Outline -*-
     possibly due to a non-aliased implicit "begin", has to be found
 
 ** modules
-*** code-duplication in compiler and evaluator for ##core#module
-*** "scheme" module does not include some special forms ("define-syntax", etc.)
-*** import-for-syntax imports value bindings into import-env
-    should actually be a distinct meta-import-env.
+*** chicken.import.scm refers to ##sys#chicken-macro-environment
+    ... which is only set, if chicken-more-macros.scm is loaded, which is
+    of course not the case inside a compiled executable
+
+* module issues
+** code-duplication in compiler and evaluator for ##core#module
+** "scheme" module does not include some special forms ("define-syntax", etc.)
+** import-for-syntax imports value bindings into import-env
+   should actually be a distinct meta-import-env.
 
 * better load/import syntax
 ** "require-extension" -> "require-library"

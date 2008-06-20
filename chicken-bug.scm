@@ -24,7 +24,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(use srfi-13 posix tcp data-structures utils extras)
+(require-extension srfi-13 posix tcp data-structures utils extras)
 
 
 #>
