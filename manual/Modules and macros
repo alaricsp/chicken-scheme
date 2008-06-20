@@ -237,8 +237,8 @@ referenced by syntax-definitions which make use of them, but which
 would normally be internal to the module - that allows some
 optimization and also records).
 
-Nested modules or modules not at toplevel (i.e. local modules)
-are not supported.
+Nested modules, modules not at toplevel (i.e. local modules) or
+mutually recursive modules are not supported.
 
 When compiled, the module information, including exported macros
 is stored in the generated binary and available when loading

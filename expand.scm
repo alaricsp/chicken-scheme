@@ -112,6 +112,7 @@
 
 (define ##sys#macro-environment (make-parameter '()))
 (define ##sys#chicken-macro-environment '()) ; used later in chicken.import.scm
+(define ##sys#chicken-ffi-macro-environment '()) ; used later in foreign.import.scm
 
 (define (##sys#extend-macro-environment name se handler)
   (let ((me (##sys#macro-environment)))

@@ -13,6 +13,11 @@ TODO for macro/module system					-*- Outline -*-
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
     ... which is only set, if chicken-more-macros.scm is loaded, which is
     of course not the case inside a compiled executable
+*** same for ##sys#chicken-ffi-macro-environment
+
+** eggs
+*** check warnings of reimports
+    string-downcase, let-string-start+end (when importing silex)
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
@@ -59,3 +64,6 @@ TODO for macro/module system					-*- Outline -*-
 ** syntactic-closures
 ** simple-macros
 ** alexpander
+
+* chicken-setup
+** remove local documentation-index stuff

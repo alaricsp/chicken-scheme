@@ -489,9 +489,8 @@
 
 (define-syntax make
   (lambda (form r c)
-    (##sys#check-syntax 'make form '(_ spec . #(_ 0 1)))
+    (##sys#check-syntax 'make form '(_ _ . #(_ 0 1)))
     (let ((spec (cadr form))
-	  (argv (optional argv ''()))
 	  (%list (r 'list))
 	  (%lambda (r 'lambda)))
       (let ((form-error (lambda (s . p) (apply error s spec p))))
@@ -512,10 +511,11 @@
 				  ,@(let ((l (cddr line)))
 				      (if (null? l)
 					  '()
-					  `((,%lambda ()
-						      ,@l))))))
+					  `((,%lambda () ,@l))))))
 		       spec))
-	  ,argv)))))
+	  ,@(if (null? (cddr form))
+		'('())
+		(cddr form)))))))
 
 )(else))					;*** s.a.
 
