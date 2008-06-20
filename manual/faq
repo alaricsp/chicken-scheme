@@ -61,7 +61,7 @@ to register features at compile time.
 ==== Why are constants defined by {{define-constant}} not honoured in {{case}} constructs?
 
 {{case}} expands into a cascaded {{if}} expression, where the first item in each arm
-is treated as a quoted list. So the {{case}} macro can not infer wether
+is treated as a quoted list. So the {{case}} macro can not infer whether
 a symbol is to be treated as a constant-name (defined via {{define-constant}}) or
 a literal symbol.
 
