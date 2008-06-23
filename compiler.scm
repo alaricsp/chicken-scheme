@@ -1173,7 +1173,8 @@
       ,(begin
 	 (set! extended-bindings (append internal-bindings extended-bindings))
 	 exp) )
-   '() #f) )
+   (##sys#current-environment)
+   #f) )
 
 
 (define (process-declaration spec se)	; se unused in the moment

@@ -700,7 +700,7 @@
 
 ;;; Macro definitions:
 
-(define (##sys#expand-import x r c import-env macro-env loc)
+(define (##sys#expand-import x r c import-env macro-env meta? loc)
   (let ((%only (r 'only))
 	(%rename (r 'rename))
 	(%except (r 'except))
@@ -803,7 +803,13 @@
     (let ((cm (##sys#current-module)))
       (when cm
 	;; save import form
-	(set-module-import-forms! cm (append (module-import-forms cm) (cdr x))))
+	(if meta?
+	    (set-module-meta-import-forms! 
+	     cm
+	     (append (module-meta-import-forms cm) (cdr x)))
+	    (set-module-import-forms!
+	     cm 
+	     (append (module-import-forms cm) (cdr x)))))
       (for-each
        (lambda (spec)
 	 (let* ((vs (import-spec spec))
@@ -822,6 +828,7 @@
 	   (fixup! vsv)
 	   (fixup! vss)
 	   (set-module-defined-list! cm dlist)) )
+	   (dd `(IMPORT: ,loc))
 	   (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,(map-se vsv)))
 	   (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,(map-se vss)))
 	   (for-each
@@ -848,14 +855,13 @@
  'import '() 
  (##sys#er-transformer 
   (cut ##sys#expand-import <> <> <> ##sys#current-environment ##sys#macro-environment
-       'import) ) )
+       #f 'import) ) )
 
 (##sys#extend-macro-environment
  'import-for-syntax '() 
  (##sys#er-transformer 
-  ;;*** ##sys#current-environment is likely to be wrong here
-  (cut ##sys#expand-import <> <> <> ##sys#current-environment ##sys#meta-macro-environment 
-       'import-for-syntax) ) )
+  (cut ##sys#expand-import <> <> <> ##sys#current-meta-environment ##sys#meta-macro-environment 
+       #t 'import-for-syntax) ) )
 
 (define ##sys#initial-macro-environment (##sys#macro-environment))
 
@@ -1212,12 +1218,13 @@
 	set-module-vexports! set-module-sexports!
 	module-export-list module-defined-list set-module-defined-list!
 	module-import-forms set-module-import-forms!
+	module-meta-import-forms set-module-meta-import-forms!
 	module-exist-list set-module-exist-list!
 	module-defined-syntax-list set-module-defined-syntax-list!))
 
 (define-record-type module
   (make-module name export-list defined-list exist-list defined-syntax-list undefined-list 
-	       import-forms vexports sexports) 
+	       import-forms meta-import-forms vexports sexports) 
   module?
   (name module-name)			; SYMBOL
   (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
@@ -1226,6 +1233,7 @@
   (defined-syntax-list module-defined-syntax-list set-module-defined-syntax-list!) ; ((SYMBOL . VALUE) ...)
   (undefined-list module-undefined-list set-module-undefined-list!) ; (SYMBOL ...)
   (import-forms module-import-forms set-module-import-forms!)	    ; (SPEC ...)
+  (meta-import-forms module-meta-import-forms set-module-meta-import-forms!)	    ; (SPEC ...)
   (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
@@ -1279,7 +1287,7 @@
 	(set-module-undefined-list! mod (cons sym ul))))))
 
 (define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
-  (let ((mod (make-module name explist '() '() '() '() '() vexports sexports)))
+  (let ((mod (make-module name explist '() '() '() '() '() '() vexports sexports)))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
 
@@ -1327,8 +1335,10 @@
 (define (##sys#compiled-module-registration mod)
   (let ((dlist (module-defined-list mod))
 	(mname (module-name mod))
-	(ifs (module-import-forms mod)))
+	(ifs (module-import-forms mod))
+	(mifs (module-meta-import-forms mod)))
     `(,@(if (pair? ifs) `((eval '(import ,@ifs))) '())
+      ,@(if (pair? mifs) `((eval '(import-for-syntax ,@mifs))) '())
       (##sys#register-compiled-module
        ',(module-name mod)
        (list
@@ -1359,7 +1369,7 @@
 		     ie))
 	       iexports))
 	 (mod (make-module 
-	       name '() '() '() '() '() '()
+	       name '() '() '() '() '() '() '()
 	       vexports sexps))
 	 (exports (merge-se 
 		   (##sys#macro-environment)
@@ -1381,7 +1391,7 @@
 (define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
-	      name '() '() '() '() '()'()
+	      name '() '() '() '() '()'() '()
 	      (map (lambda (ve)
 		     (if (symbol? ve)
 			 (cons ve ve)
