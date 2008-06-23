@@ -853,7 +853,7 @@
 (##sys#extend-macro-environment
  'import-for-syntax '() 
  (##sys#er-transformer 
-  ;;*** ##sys#import-environment is likely to be wrong here
+  ;;*** ##sys#current-environment is likely to be wrong here
   (cut ##sys#expand-import <> <> <> ##sys#current-environment ##sys#meta-macro-environment 
        'import-for-syntax) ) )
 
