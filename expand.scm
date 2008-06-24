@@ -1338,7 +1338,7 @@
 	(ifs (module-import-forms mod))
 	(mifs (module-meta-import-forms mod)))
     `(,@(if (pair? ifs) `((eval '(import ,@ifs))) '())
-      ,@(if (pair? mifs) `((eval '(import-for-syntax ,@mifs))) '())
+      ,@(if (pair? mifs) `((import ,@mifs)) '())
       (##sys#register-compiled-module
        ',(module-name mod)
        (list
