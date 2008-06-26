@@ -98,4 +98,17 @@
 (import literal-compare-test)
 (test-equal "literal compare and export" (s1 (and 100)) '(100))
 
+(module y (y1)
+  (import scheme)
+  (define y1 10))
+
+(module x (magnitude)
+  (import (except scheme magnitude) y)
+  (define magnitude y1))
+
+(test-equal "redefinition of indirect import" (procedure? magnitude) #t)
+
+(import x)
+(test-equal "redefinition of indirect import (II)" magnitude 10)
+
 (test-end "modules")
