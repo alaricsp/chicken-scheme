@@ -130,13 +130,15 @@ EOF
 	      h
 	      (lambda (x) (h ((loop t) x))))))))
 
-(define (list-of pred)
+(define (list-of? pred)
   (lambda (lst)
     (let loop ([lst lst])
       (cond [(null? lst) #t]
 	    [(not-pair? lst) #f]
 	    [(pred (##sys#slot lst 0)) (loop (##sys#slot lst 1))]
 	    [else #f] ) ) ) )
+
+(define list-of list-of?)		; DEPRECATED
 
 (define (noop . _) (void))
 

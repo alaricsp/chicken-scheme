@@ -138,7 +138,7 @@ as
           (let* ((first (car clauses))
                  (rest (cdr clauses))
                  (test (car first)))
-            (cond ((and (identifier? test)
+            (cond ((and (symbol? test)
                         (compare test (rename 'else)))
                    `(,(rename 'begin) ,@(cdr first)))
                   (else `(,(rename 'if)

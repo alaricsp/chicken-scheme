@@ -1207,7 +1207,7 @@
 		  (string-append (->string (cadr type)) "*" target))
 		 ((and (= len 3) (eq? 'instance-ref (car type)))
 		  (string-append (->string (cadr type)) "&" target))
-		 ((and (> len 3) (eq? 'function (car type)))
+		 ((and (>= len 3) (eq? 'function (car type)))
 		  (let ((rtype (cadr type))
 			(argtypes (caddr type))
 			(callconv (optional (cdddr type) "")))

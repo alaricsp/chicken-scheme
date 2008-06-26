@@ -50,7 +50,7 @@
    join
    left-section
    list->queue
-   list-of
+   list-of?
    make-queue
    merge
    merge!

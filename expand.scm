@@ -132,15 +132,17 @@
 (define (macro? sym #!optional (senv (##sys#current-environment)))
   (##sys#check-symbol sym 'macro?)
   (##sys#check-list senv 'macro?)
-  (or (lookup sym senv)
-      (and (lookup sym (##sys#macro-environment)) #t) ) )
+  (or (let ((l (lookup sym senv)))
+	(pair? l))
+      (and-let* ((l (lookup sym (##sys#macro-environment))))
+	(pair? l))))
 
 (define (##sys#unregister-macro name)
   (##sys#macro-environment
     ;; this builds up stack, but isn't used often anyway...
     (let loop ((me (##sys#macro-environment)) (me2 '()))
       (cond ((null? me) '())
-	    ((eq? x (caar me)) (cdr me))
+	    ((eq? name (caar me)) (cdr me))
 	    (else (cons (car me) (loop (cdr me))))))))
 
 (define (undefine-macro! name)
