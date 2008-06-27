@@ -488,6 +488,7 @@
 		  (let* ([t (second fv)]
 			 [ft (final-foreign-type t)] 
 			 [body `(##core#inline_ref (,(third fv) ,t))] )
+		    ;;*** must this expansion be walked?
 		    (foreign-type-convert-result
 		     (finish-foreign-result ft body)
 		     t) ) ) ]
@@ -496,6 +497,7 @@
 		  (let* ([t (third a)]
 			 [ft (final-foreign-type t)] 
 			 [body `(##core#inline_loc_ref (,t) ,(second a))] )
+		    ;;*** must this expansion be walked?
 		    (foreign-type-convert-result
 		     (finish-foreign-result ft body)
 		     t) ) ) ]
@@ -972,12 +974,15 @@
 			       (extract-mutable-constants
 				(walk (cons '##core#lambda (cdr val)) se name) )
 			     (##sys#hash-table-set! inline-table name val2)
-			     (set! always-bound (append (unzip1 mlist) always-bound))
+			     (let ((gs (unzip1 mlist)))
+			       (set! always-bound (append gs always-bound))
+			       (set! block-globals (append gs block-globals)) )
 			     (set! inline-table-used #t)
 			     (walk
 			      `(,(macro-alias 'begin se)
 				,@(map (lambda (m)
-					 `(##core#set! ,(car m) ',(cdr m))) mlist))
+					 `(,(macro-alias 'define se) ,(car m) ',(cdr m))) 
+				       mlist))
 			      se #f) ) ) )
 
 			((define-constant)

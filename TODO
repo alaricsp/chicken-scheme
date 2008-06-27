@@ -13,7 +13,10 @@ TODO for macro/module system					-*- Outline -*-
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
     ... which is only set, if chicken-more-macros.scm is loaded, which is
     of course not the case inside a compiled executable
+    (current workaround is to set them to nil by default)
 *** same for ##sys#chicken-ffi-macro-environment
+** inline-function expansions are walked multiple times
+   results in mutable-constant placeholder vars to be aliased several times
 
 ** eggs
 *** check warnings of reimports
@@ -24,11 +27,6 @@ TODO for macro/module system					-*- Outline -*-
 ** "scheme" module does not include some special forms ("define-syntax", etc.)
 ** import-for-syntax imports value bindings into import-env
    should actually be a distinct meta-import-env.
-
-* better load/import syntax
-** "require-extension" -> "require-library"
-** "require-extension" = "require-library" + "import"
-** document, test
 
 * build
 ** chicken.texi needs to be regenerated
@@ -42,10 +40,8 @@ TODO for macro/module system					-*- Outline -*-
 
 * modules
 ** checks
-*** module-def not at toplevel
 *** redef of imported id
 *** reimport of imported id
-** allow exporting all definitions
 ** "define-for-syntax" still right?
 
 * csi
