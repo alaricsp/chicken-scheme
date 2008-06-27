@@ -192,6 +192,36 @@
 	   (s-e3 s-e4) procv s2 rest
 	   . body) ) ) ) ) ) ) )
 
+(cond-expand
+ ((not hygienic-macros)
+  (define-macro (let-string-start+end s-e-r proc s-exp args-exp . body)
+    (if (pair? (cddr s-e-r))
+	`(receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
+	     (string-parse-start+end ,proc ,s-exp ,args-exp)
+	   ,@body)
+	`(receive ,s-e-r
+	     (string-parse-final-start+end ,proc ,s-exp ,args-exp)
+	   ,@body) ) ) )
+ (else
+  (define-syntax let-string-start+end
+    (lambda (form r c)
+      (##sys#check-syntax 'let-string-start+end form '(_ _ _ _ _ . _))
+      (let ((s-e-r (cadr form))
+	    (proc (caddr form))
+	    (s-exp (cadddr form))
+	    (args-exp (car (cddddr form)))
+	    (body (cdr (cddddr form)))
+	    (%receive (r 'receive))
+	    (%string-parse-start+end (r 'string-parse-start+end))
+	    (%string-parse-final-start+end (r 'string-parse-final-start+end)))
+	(if (pair? (cddr s-e-r))
+	    `(,%receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
+			(,%string-parse-start+end ,proc ,s-exp ,args-exp)
+			,@body)
+	    `(,%receive ,s-e-r
+			(,%string-parse-final-start+end ,proc ,s-exp ,args-exp)
+			,@body) ) )))) )
+
 
 ;;; Returns three values: rest start end
 
@@ -318,8 +348,8 @@
 ;;; You want compiler support for high-level transforms on fold and unfold ops.
 ;;; You'd at least like a lot of inlining for clients of these procedures.
 ;;; Don't hold your breath.
-;;;
-;;; Shut up, Olin.
+
+;;; Shut up, Olin (flw)
 
 (define (string-map proc s . maybe-start+end)
 ;  (check-arg procedure? proc string-map)
@@ -1376,7 +1406,7 @@
 ;;; Searching for an occurrence of a substring
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; this is broken. Thanks, Olin! ;-)
+; this is completely broken and was probably never tested. Thanks, Olin! (flw)
 
 
 ;;; Knuth-Morris-Pratt string searching
@@ -2032,6 +2062,9 @@
 ;;; The KMP string-search code was influenced by implementations written
 ;;; by Stephen Bevan, Brian Dehneyer and Will Fitzgerald. However, this
 ;;; version was written from scratch by myself.
+
+;;; I guessed that much. (flw)
+
 ;;;
 ;;; The remainder of this code was written from scratch by myself for scsh.
 ;;; The scsh copyright is a BSD-style open source copyright. See below for

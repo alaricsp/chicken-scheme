@@ -16,11 +16,14 @@ TODO for macro/module system					-*- Outline -*-
     (current workaround is to set them to nil by default)
 *** same for ##sys#chicken-ffi-macro-environment
 ** inline-function expansions are walked multiple times
-   results in mutable-constant placeholder vars to be aliased several times
+   results in mutable-constant placeholder vars to be aliased several
+   times.  if we don't walk, we can't extract mutable vars safely, if
+   we do walk, we must avoid re-walking, but every expansion must be
+   a-converted. We probably have to 
 
 ** eggs
 *** check warnings of reimports
-    string-downcase, let-string-start+end (when importing silex)
+    string-downcase (silex, should use srfi-13)
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
