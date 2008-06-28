@@ -968,22 +968,11 @@
 				dest) ) ) )
 
 			((##core#define-inline)
-			 (let* ([name (second x)]
-				[val (third x)] )
-			   (receive (val2 mlist)
-			       (extract-mutable-constants
-				(walk (cons '##core#lambda (cdr val)) se name) )
-			     (##sys#hash-table-set! inline-table name val2)
-			     (let ((gs (unzip1 mlist)))
-			       (set! always-bound (append gs always-bound))
-			       (set! block-globals (append gs block-globals)) )
+			 (let* ((name (second x))
+				(val `(##core#lambda ,@(cdaddr x))))
+			     (##sys#hash-table-set! inline-table name val)
 			     (set! inline-table-used #t)
-			     (walk
-			      `(,(macro-alias 'begin se)
-				,@(map (lambda (m)
-					 `(,(macro-alias 'define se) ,(car m) ',(cdr m))) 
-				       mlist))
-			      se #f) ) ) )
+			     '(##core#undefined)))
 
 			((define-constant)
 			 (let* ([name (second x)]

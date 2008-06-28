@@ -54,7 +54,7 @@
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
   constant? basic-literal? source-info->string 
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
+  collapsable-literal? immediate? canonicalize-begin-body string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
   build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
@@ -279,39 +279,6 @@
 	   (loop (cdr xs)) )
 	  (else `(let ((,(gensym 't) ,(car xs)))
 		   ,(loop (cdr xs))) ) ) ) )
-
-(define (extract-mutable-constants exp)
-  (let ([mlist '()])
-    (define (walk x)
-      (cond
-       [(not-pair? x) x]
-       [(and (= 2 (length x)) (eq? 'quote (car x)))
-	(let ((c (cadr x)))
-	 (if (not (collapsable-literal? c))
-	     (let ([var (make-random-name)])
-	       (set! mlist (alist-cons var c mlist))
-	       var)
-	     x) ) ]
-       [(and (> (length x) 2) (eq? 'let (car x)))
-	(let* ((bindings (cadr x))
-	       (body (cddr x))
-	       (vars (map car bindings))
-	       (vals (map cadr bindings)))
-	  `(let ,(map (lambda (var val) (list var (walk val))) vars vals) ,@(map walk body)) ) ]
-       [else
-	(let ((op (car x))
-	      (args (cdr x)))
-	(case op
-	  [(##core#include ##core#declare ##core#immutable ##core#undefined ##core#primitive ##core#inline_ref) x]
-	  [(##core#set! set! lambda ##core#inline ##core#inline_allocate ##core#inline_update ##core#inline_loc_ref
-			##core#inline_loc_update)
-	   (cons* op (first args) (map walk (cdr args))) ]
-	  [(if ##core#compiletimeonly ##core#compiletimetoo)
-	   (cons op (map walk args)) ]
-	  [else (map walk x)] ) ) ]
-       [else x]))
-    (let ([exp2 (walk exp)])
-      (values exp2 mlist) ) ) )
 
 (define string->expr
   (let ([exn? (condition-predicate 'exn)]
