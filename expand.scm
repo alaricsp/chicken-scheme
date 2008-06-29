@@ -1196,7 +1196,7 @@
     (##sys#check-syntax 'module x '(_ symbol _ . #(_ 0)))
     `(##core#module 
       ,(cadr x)
-      ,(if (c (r 'all) (caddr x)) #t (caddr x))
+      ,(if (c (r '*) (caddr x)) #t (caddr x))
       ,@(cdddr x)))))
 
 
@@ -1216,18 +1216,19 @@
 (define ##sys#current-module (make-parameter #f))
 
 (declare 
-  (hide make-module module?
+  (hide make-module module? %make-module
 	module-name module-vexports module-sexports
 	set-module-vexports! set-module-sexports!
 	module-export-list module-defined-list set-module-defined-list!
 	module-import-forms set-module-import-forms!
 	module-meta-import-forms set-module-meta-import-forms!
 	module-exist-list set-module-exist-list!
+	module-meta-expressions set-module-meta-expressions!
 	module-defined-syntax-list set-module-defined-syntax-list!))
 
 (define-record-type module
-  (make-module name export-list defined-list exist-list defined-syntax-list undefined-list 
-	       import-forms meta-import-forms vexports sexports) 
+  (%make-module name export-list defined-list exist-list defined-syntax-list undefined-list 
+		import-forms meta-import-forms meta-expressions vexports sexports) 
   module?
   (name module-name)			; SYMBOL
   (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
@@ -1237,8 +1238,12 @@
   (undefined-list module-undefined-list set-module-undefined-list!) ; (SYMBOL ...)
   (import-forms module-import-forms set-module-import-forms!)	    ; (SPEC ...)
   (meta-import-forms module-meta-import-forms set-module-meta-import-forms!)	    ; (SPEC ...)
+  (meta-expressions module-meta-expressions set-module-meta-expressions!) ; (EXP ...)
   (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
+
+(define (make-module name explist vexports sexports)
+  (%make-module name explist '() '() '() '() '() '() '() vexports sexports))
 
 (define (##sys#find-module name #!optional (err #t))
   (cond ((assq name ##sys#module-table) => cdr)
@@ -1246,6 +1251,10 @@
 	(else #f)))
 
 (define (##sys#toplevel-definition-hook sym mod exp val) #f)
+
+(define (##sys#register-meta-expression exp)
+  (and-let* ((mod (##sys#current-module)))
+    (set-module-meta-expressions! mod (cons exp (module-meta-expressions mod)))))
 
 (define (##sys#register-export sym mod)
   (when mod
@@ -1290,7 +1299,7 @@
 	(set-module-undefined-list! mod (cons sym ul))))))
 
 (define (##sys#register-module name explist #!optional (vexports '()) (sexports '()))
-  (let ((mod (make-module name explist '() '() '() '() '() '() vexports sexports)))
+  (let ((mod (make-module name explist vexports sexports)))
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table))
     mod) )
 
@@ -1342,6 +1351,7 @@
 	(mifs (module-meta-import-forms mod)))
     `(,@(if (pair? ifs) `((eval '(import ,@ifs))) '())
       ,@(if (pair? mifs) `((import ,@mifs)) '())
+      ,@(reverse (map ##sys#strip-syntax (module-meta-expressions mod)))
       (##sys#register-compiled-module
        ',(module-name mod)
        (list
@@ -1371,9 +1381,7 @@
 		     (list (car ie) (cadr ie) (##sys#er-transformer (caddr ie)))
 		     ie))
 	       iexports))
-	 (mod (make-module 
-	       name '() '() '() '() '() '() '()
-	       vexports sexps))
+	 (mod (make-module name '() vexports sexps))
 	 (exports (merge-se 
 		   (##sys#macro-environment)
 		   (##sys#current-environment)
@@ -1394,7 +1402,7 @@
 (define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
-	      name '() '() '() '() '()'() '()
+	      name '()
 	      (map (lambda (ve)
 		     (if (symbol? ve)
 			 (cons ve ve)

@@ -222,7 +222,7 @@ module.
 ==== module
 
  [syntax] (module NAME (EXPORT ...) BODY ...)
- [syntax] (module NAME all BODY ...)
+ [syntax] (module NAME * BODY ...)
 
 Defines a module with the name {{NAME}}, a set of exported bindings
 and a contained sequence of toplevel expressions that are evaluated in
@@ -246,7 +246,7 @@ it into interpreted or compiled code. Note that this is different
 to normal macros (outside of module declarations), which are normally
 not exported from compiled code.
 
-As a special case, specifying {{all}} instead of an export-list
+As a special case, specifying {{*}} instead of an export-list
 will export all definitions.
 
 ==== import
@@ -331,7 +331,10 @@ library is either in the extension repository or the current include
 path. Import libraries may also be explicitly loaded into the
 compiler by using the {{-extend}} compiler option. Interpreted code
 can simply load the import library to make the module-definition
-available.
+available. Macro-support definitions defined with {{define-for-syntax}}
+will be added to import libraries to make them available for exported
+macros. Note that these definitions will ruthlessly pollute the 
+toplevel namespace and so their name should be selected with care.
 
 
 === Predefined modules

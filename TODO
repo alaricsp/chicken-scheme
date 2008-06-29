@@ -45,7 +45,6 @@ TODO for macro/module system					-*- Outline -*-
 ** checks
 *** redef of imported id
 *** reimport of imported id
-** "define-for-syntax" still right?
 
 * csi
 ** describe should print if symbol is interned

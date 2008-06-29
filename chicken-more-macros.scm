@@ -1045,6 +1045,7 @@
 	(if (symbol? name)
 	    (##sys#setslot name 0 (eval body))
 	    (syntax-error 'define-for-syntax "invalid identifier" name) )
+	(##sys#register-meta-expression `(define ,name ,body))
 	(if ##sys#enable-runtime-macros
 	    `(,(r 'define) ,name ,body)
 	    '(##core#undefined)))))))
