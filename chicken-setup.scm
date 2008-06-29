@@ -351,6 +351,8 @@
 (cond-expand
  (hygienic-macros
 
+  ;;*** deliberately not included before bootstrap
+
 (define-syntax run
   (syntax-rules ()
     ((_ exp ...)
@@ -361,7 +363,16 @@
     ((_ exp ...)
      (run (csc exp ...)))))
 
-)(else))					;*** deliberately not included before bootstrap
+)
+(else
+
+ (define-macro (run . exps)
+   `(run:execute (list ,@exps)))
+
+ (define-macro (compile . exps)
+   `(run (csc ,@exps)))
+))
+
 
 ;;; "make" functionality
 
