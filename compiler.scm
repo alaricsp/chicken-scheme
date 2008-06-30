@@ -861,11 +861,11 @@
 
 			((##core#compiletimetoo ##core#elaborationtimetoo)
 			 (let ((exp (cadr x)))
-			   (eval exp)
+			   (eval/meta exp)
 			   (walk exp se dest) ) )
 
 			((##core#compiletimeonly ##core#elaborationtimeonly)
-			 (eval (cadr x))
+			 (eval/meta (cadr x))
 			 '(##core#undefined) )
 
 			((begin) 

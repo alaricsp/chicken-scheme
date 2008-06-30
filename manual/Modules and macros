@@ -332,9 +332,10 @@ path. Import libraries may also be explicitly loaded into the
 compiler by using the {{-extend}} compiler option. Interpreted code
 can simply load the import library to make the module-definition
 available. Macro-support definitions defined with {{define-for-syntax}}
+and expansion-time expressions of the form {{(begin-for-syntax ...)}}
 will be added to import libraries to make them available for exported
 macros. Note that these definitions will ruthlessly pollute the 
-toplevel namespace and so their name should be selected with care.
+toplevel namespace and so they should be used sparingly.
 
 
 === Predefined modules

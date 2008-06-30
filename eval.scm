@@ -685,7 +685,7 @@
 			     e #f tf cntr se) ) ]
 
 			 [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
-			  (eval/elab (cadr x))
+			  (eval/meta (cadr x))
 			  (compile '(##core#undefined) e #f tf cntr se) ]
 
 			 [(##core#compiletimetoo)

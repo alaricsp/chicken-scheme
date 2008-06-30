@@ -396,6 +396,15 @@ by specifying the {{-unsafe}} compiler option or by declaring
 {{(unsafe)}}), then this expression expands to an unspecified value.
 The result is the value of {{EXP}}.
 
+
+==== begin-for-syntax
+
+ [syntax] (begin-for-syntax EXP ...)
+
+Equivalent to {{(begin EXP ...)}}, but performs the evaluation of
+the expression during macro-expansion time.
+
+
 ==== cond-expand
 
  [syntax] (cond-expand FEATURE-CLAUSE ...)
