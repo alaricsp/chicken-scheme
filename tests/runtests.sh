@@ -34,13 +34,8 @@ $interpret -iw -s r5rs_pitfalls.scm
 echo "======================================== module tests ..."
 $interpret -include-path .. -w -s module-tests.scm
 
-echo "======================================== module tests (ec) ..."
-rm -f ec.so ec.import.*
-$interpret -wbqn ec.scm ec-tests.scm
-$compile_s ec.scm -emit-import-library ec -o ec.so
-$compile_s ec.import.scm -o ec.import.so 
-$interpret -wbnq ec.so ec-tests.scm
-# $compile ec-tests.scm && ./a.out        # takes ages to compile
+echo "======================================== module tests (compiled) ..."
+$compile module-tests-compiled.scm && ./a.out
 
 echo "======================================== module tests (chained) ..."
 rm -f m*.import.* test-chained-modules.so
@@ -49,6 +44,14 @@ $compile_s test-chained-modules.scm -j m3
 $compile_s m3.import.scm
 $interpret -bn test-chained-modules.so
 $interpret -bn test-chained-modules.so -e '(import m3) (s3)'
+
+echo "======================================== module tests (ec) ..."
+rm -f ec.so ec.import.*
+$interpret -wbqn ec.scm ec-tests.scm
+$compile_s ec.scm -emit-import-library ec -o ec.so
+$compile_s ec.import.scm -o ec.import.so 
+$interpret -wbnq ec.so ec-tests.scm
+# $compile ec-tests.scm && ./a.out        # takes ages to compile
 
 echo "======================================== hash-table tests ..."
 $interpret -w -s hash-table-tests.scm
@@ -87,8 +90,8 @@ for x in `ls *.scm`; do
 	"plists.scm");;
 	*)
 	    echo $x
-	    ../csc $x -compiler ../chicken -C -I.. -L.. -O2 -d0 && \
-		./`basename $x .scm`;;
+	    ../csc $x -compiler ../chicken -C -I.. -L.. -O2 -d0
+	    ./`basename $x .scm`;;
     esac
 done
 cd ${TEST_DIR}

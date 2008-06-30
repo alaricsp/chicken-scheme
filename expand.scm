@@ -706,7 +706,8 @@
   (let ((%only (r 'only))
 	(%rename (r 'rename))
 	(%except (r 'except))
-	(%prefix (r 'prefix)))
+	(%prefix (r 'prefix))
+	(unmarked '()))
     (define (resolve sym)
       (or (lookup sym '()) sym))	;*** empty se?
     (define (tostr x)
@@ -732,8 +733,12 @@
 		   (syntax-error
 		    loc "can not import from undefined module" 
 		    mname)))))
-	(cons (module-vexports mod) 
-	      (module-sexports mod))))
+	(let ((vexp (module-vexports mod))
+	      (sexp (module-sexports mod)))
+	  (when (module-primitive? mod)	; remember exports from primitive modules
+	    (dd mname " is primitive")
+	    (set! unmarked (append (map car vexp) unmarked)))
+	  (cons vexp sexp))))	  
     (define (import-spec spec)
       (cond ((symbol? spec) (import-name spec))
 	    ((or (not (list? spec)) (< (length spec) 2))
@@ -802,6 +807,11 @@
 			   (cdr imp) ) )
 			(cons (map ren impv) (map ren imps))))
 		     (else (syntax-error loc "invalid import specification" spec)))))))
+    (define (mark-diff vsv)
+      (let loop ((vsv vsv) (d '()))
+	(cond ((null? vsv) (reverse d))
+	      ((memq (cdar vsv) unmarked) (loop (cdr vsv) d))
+	      (else (loop (cdr vsv) (cons (car vsv) d))))))
     (##sys#check-syntax loc x '(_ . #(_ 1)))
     (let ((cm (##sys#current-module)))
       (when cm
@@ -818,23 +828,10 @@
 	 (let* ((vs (import-spec spec))
 		(vsv (car vs))
 		(vss (cdr vs)))
-	   #;(when cm
-	   ;; fixup reexports
-	   (let ((dlist (module-defined-list cm)))
-	   (define (fixup! imports)
-	   (for-each
-	   (lambda (imp)
-	   (when (##sys#find-export (car imp) cm #t) ;*** must process export list for every import
-	   (dm "fixup reexport: " imp)
-	   (set! dlist (cons  dlist)))) ;*** incorrect!
-	   imports) )
-	   (fixup! vsv)
-	   (fixup! vss)
-	   (set-module-defined-list! cm dlist)) )
 	   (dd `(IMPORT: ,loc))
 	   (dd `(V: ,(if cm (module-name cm) '<toplevel>) ,(map-se vsv)))
 	   (dd `(S: ,(if cm (module-name cm) '<toplevel>) ,(map-se vss)))
-	   (##sys#mark-imported-symbols vsv)
+	   (##sys#mark-imported-symbols (mark-diff vsv))
 	   (for-each
 	    (lambda (imp)
 	      (let ((id (car imp))
@@ -1228,6 +1225,7 @@
 (declare 
   (hide make-module module? %make-module
 	module-name module-vexports module-sexports
+	module-primitive module-primitive? set-module-primitive!
 	set-module-vexports! set-module-sexports!
 	module-export-list module-defined-list set-module-defined-list!
 	module-import-forms set-module-import-forms!
@@ -1237,10 +1235,12 @@
 	module-defined-syntax-list set-module-defined-syntax-list!))
 
 (define-record-type module
-  (%make-module name export-list defined-list exist-list defined-syntax-list undefined-list 
-		import-forms meta-import-forms meta-expressions vexports sexports) 
+  (%make-module name primitive export-list defined-list exist-list defined-syntax-list
+		undefined-list import-forms meta-import-forms meta-expressions 
+		vexports sexports) 
   module?
   (name module-name)			; SYMBOL
+  (primitive module-primitive? set-module-primitive!)		; BOOL
   (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
   (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)    - *exported* value definitions
   (exist-list module-exist-list set-module-exist-list!)	      ; (SYMBOL ...)    - only for checking refs to undef'd
@@ -1253,7 +1253,7 @@
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
 (define (make-module name explist vexports sexports)
-  (%make-module name explist '() '() '() '() '() '() '() vexports sexports))
+  (%make-module name #f explist '() '() '() '() '() '() '() vexports sexports))
 
 (define (##sys#find-module name #!optional (err #t))
   (cond ((assq name ##sys#module-table) => cdr)
@@ -1424,6 +1424,7 @@
 			     (##sys#error "unknown macro referenced while registering module" se name))
 			 se))
 		   sexports))))
+    (set-module-primitive! mod #t)	; mark to avoid import-marking
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
