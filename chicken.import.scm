@@ -140,6 +140,7 @@
 	 put!
 	 register-feature!
 	 remprop!
+	 require
 	 rename-file
 	 reset
 	 reset-handler
@@ -151,6 +152,7 @@
 	 set-port-name!
 	 set-read-syntax!
 	 set-sharp-read-syntax!
+	 syntax-error
 	 setter
 	 signal
 	 signum
@@ -167,6 +169,6 @@
 	 vector-resize
 	 void
 	 warning
-	 expand expand*
+	 expand
 	 with-exception-handler)
  ##sys#chicken-macro-environment)	;*** incorrect - won't work in compiled executable

@@ -277,9 +277,6 @@
 
 (define expand ##sys#expand)
 
-(define (expand* exp #!optional (me (##sys#current-environment)))
-  (##sys#expand-0 exp me) )
-
 
 ;;; Extended (DSSSL-style) lambda lists
 ;
