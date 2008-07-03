@@ -16,6 +16,7 @@ build: build-stamp
 build-stamp:
 	dh_testdir
 	$(MAKE) \
+            USE_HOST_PCRE=1 \
 	    CFLAGS="$(CFLAGS)" \
 	    PREFIX="$(PREFIX)" \
 	    MANDIR="$(PREFIX)/share/man" \

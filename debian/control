@@ -18,7 +18,7 @@ Description: A practical and portable Scheme system - compiler
  has a small core and is easily extendable.
  .
  This package contains the compiler.
-
+ 
 
 Package: libchicken3
 Architecture: any
