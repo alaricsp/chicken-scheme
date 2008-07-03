@@ -13770,7 +13770,7 @@ Each unit used via @code{(declare (uses ...))} is registered as a feature and so
 @subsection Why are constants defined by @code{define-constant} not honoured in @code{case} constructs?
 
 
-@code{case} expands into a cascaded @code{if} expression, where the first item in each arm is treated as a quoted list. So the @code{case} macro can not infer wether a symbol is to be treated as a constant-name (defined via @code{define-constant}) or a literal symbol.
+@code{case} expands into a cascaded @code{if} expression, where the first item in each arm is treated as a quoted list. So the @code{case} macro can not infer whether a symbol is to be treated as a constant-name (defined via @code{define-constant}) or a literal symbol.
 
 @node FAQ - General - How can I enable case sensitive reading/writing in user code?, FAQ - General - How can I change match-error-control during compilation?, FAQ - General - Why are constants defined by define-constant not honoured in case constructs?, FAQ - General
 @subsection How can I enable case sensitive reading/writing in user code?

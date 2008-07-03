@@ -20,7 +20,7 @@ Description: A practical and portable Scheme system - compiler
  This package contains the compiler.
 
 
-Package: libchicken0
+Package: libchicken3
 Architecture: any
 Section: libs
 Priority: optional
@@ -41,7 +41,7 @@ Architecture: any
 Section: libdevel
 Priority: optional
 Conflicts: chicken, chicken-dev
-Depends: libchicken0 (= ${binary:Version}), libpcre3-dev
+Depends: libchicken3 (= ${binary:Version}), libpcre3-dev
 Replaces: chicken, chicken-dev
 Description: A practical and portable Scheme system - development
  CHICKEN is a Scheme compiler which compiles a subset of R5RS into C.

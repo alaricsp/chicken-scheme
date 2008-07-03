@@ -1518,7 +1518,8 @@ EOF
 		 (host-extension #t)
 		 (loop (cdr args)))
 		((member arg '("-run" "-script" "-proxy" "-host" "-csc-option" "-ls" "-install-prefix" 
-			       "-tree" "-local" "-svn" "-svn-trunk" "-eval" "-create-tree" "-build-prefix" "-download-dir"))
+			       "-tree" "-local" "-svn" "-svn-trunk" "-eval" "-create-tree" "-build-prefix"
+			       "-download-path"))
 		 (error "missing option argument" arg))
 		(else
 		 (let ((filename arg)

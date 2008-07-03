@@ -667,6 +667,6 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
                   (warning 'make-anchored-pattern
                            "cannot select partial anchor for compiled regular expression") )
                 (%regexp-options-set! rgxp
-                                      (bitwise-or (%regexp-options regexp)
+                                      (bitwise-ior (%regexp-options regexp)
                                                   (pcre-option->number 'anchored)))
                 rgxp] ) ) ) ) )

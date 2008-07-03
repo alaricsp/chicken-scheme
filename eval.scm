@@ -726,9 +726,13 @@
       (define (fudge-argument-list n alst)
 	(if (null? alst) 
 	    (list alst)
-	    (do ([n n (fx- n 1)]
-		 [args alst (##sys#slot args 1)]
-		 [last #f args] )
+	    (do ((n n (fx- n 1))
+		 (c 0 (fx+ c 1))
+		 (args alst 
+		       (if (eq? '() args)
+			   (##sys#error "bad argument count" n c)
+			   (##sys#slot args 1)))
+		 (last #f args) )
 		((fx= n 0)
 		 (##sys#setslot last 1 (list args))
 		 alst) ) ) )

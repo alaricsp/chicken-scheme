@@ -1471,7 +1471,9 @@
     (for-each 				;*** do we need this? it should only appear in dlist if exported
      (lambda (x)
        (unless (assq (car x) dlist)
-	 (##sys#warn "exported identifier has not been defined" (car x) name)))
+	 (##sys#warn 
+	  "exported identifier for module `" (->string name) 
+	  "' has not been defined" (car x))))
      vexports)
     (for-each
      (lambda (u)

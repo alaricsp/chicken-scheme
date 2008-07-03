@@ -1,8 +1,5 @@
 TODO for macro/module system					-*- Outline -*-
 
-* merge changes from trunk
-** -r10950:HEAD
-
 * bugs
 
 ** macros
@@ -49,6 +46,3 @@ TODO for macro/module system					-*- Outline -*-
 ** syntactic-closures
 ** simple-macros
 ** alexpander
-
-* chicken-setup
-** remove local documentation-index stuff

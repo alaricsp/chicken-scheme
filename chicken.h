@@ -156,7 +156,7 @@ char *alloca ();
 #endif
 
 #ifndef C_SIXTY_FOUR
-# if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__)
+# if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__) || defined(__powerpc64__)
 #   define C_SIXTY_FOUR
 # elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
 #   define C_SIXTY_FOUR

@@ -170,5 +170,7 @@
 	 void
 	 warning
 	 expand
+	 extension-information
+	 repository-path
 	 with-exception-handler)
  ##sys#chicken-macro-environment)	;*** incorrect - won't work in compiled executable
