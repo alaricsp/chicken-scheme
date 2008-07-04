@@ -526,9 +526,7 @@
 
 (define (move-file from to)
   (let ((from  (if (pair? from) (car from) from))
-	(to    (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
-		 (if (and pre (not (string-prefix? pre to-path)))
-		     (make-pathname pre to-path) to-path))))
+	(to    (if (pair? from) (make-pathname to (cadr from)) to)))
     (ensure-directory to)
     (run (,*move-command* ,(quotewrap from) ,(quotewrap to)) ) ) )
 

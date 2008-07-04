@@ -997,7 +997,7 @@
 				    (set! mutable-constants (alist-cons var val mutable-constants))
 				    (set! block-globals (cons var block-globals))
 				    (set! always-bound (cons var always-bound))
-				    (walk `(##core#set! ,var ',val) se #f) ) ] ) ) )
+				    (walk `(define ,var ',val) se #f) ) ] ) ) )
 
 			((##core#declare)
 			 (walk

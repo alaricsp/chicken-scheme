@@ -12,6 +12,8 @@ TODO for macro/module system					-*- Outline -*-
     of course not the case inside a compiled executable
     (current workaround is to set them to nil by default)
 *** same for ##sys#chicken-ffi-macro-environment
+*** constants defined with `define-constant' appear in warnings (setup-api)
+    expansion seems to be correct...
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
@@ -29,6 +31,7 @@ TODO for macro/module system					-*- Outline -*-
 ** checks
 *** redef of imported id
 *** reimport of imported id
+*** unused defs?
 
 * csi
 ** describe should print if symbol is interned
@@ -46,3 +49,15 @@ TODO for macro/module system					-*- Outline -*-
 ** syntactic-closures
 ** simple-macros
 ** alexpander
+
+* new setup
+
+** chicken-update
+*** download repository file from server and replace existing one
+*** list available eggs, possibly with filter (regex)
+
+** chicken-install
+*** download egg + dependencies
+*** unpack/extract
+*** build
+**** just run csi on .setup script with setup api imported
