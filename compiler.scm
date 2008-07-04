@@ -255,7 +255,7 @@
   profile-info-vector-name finish-foreign-result pending-canonicalizations
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size valid-c-identifier?
+  target-heap-size target-stack-size valid-c-identifier? standalone-executable
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -363,6 +363,7 @@
 (define undefine-shadowed-macros #t)
 (define constant-declarations '())
 (define import-libraries '())
+(define standalone-executable #t)
 
 
 ;;; These are here so that the backend can access them:
@@ -770,7 +771,9 @@
 						      (else
 						       (values
 							(reverse xs)
-							(##sys#compiled-module-registration (##sys#current-module))))))
+							(if standalone-executable
+							    '()
+							    (##sys#compiled-module-registration (##sys#current-module)))))))
 					       (else
 						(loop 
 						 (cdr body)

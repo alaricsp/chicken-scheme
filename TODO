@@ -12,14 +12,13 @@ TODO for macro/module system					-*- Outline -*-
     of course not the case inside a compiled executable
     (current workaround is to set them to nil by default)
 *** same for ##sys#chicken-ffi-macro-environment
-*** constants defined with `define-constant' appear in warnings (setup-api)
-    expansion seems to be correct...
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
 ** "scheme" module does not include some special forms ("define-syntax", etc.)
 ** import-for-syntax imports value bindings into import-env
    should actually be a distinct meta-import-env.
+*** does it work at all?
 
 * build
 ** chicken.texi needs to be regenerated
@@ -49,15 +48,3 @@ TODO for macro/module system					-*- Outline -*-
 ** syntactic-closures
 ** simple-macros
 ** alexpander
-
-* new setup
-
-** chicken-update
-*** download repository file from server and replace existing one
-*** -show: list available eggs, possibly with filter (regex)
-
-** chicken-install
-*** download egg + dependencies
-*** unpack/extract
-*** build
-**** just run csi on .setup script with setup api imported
