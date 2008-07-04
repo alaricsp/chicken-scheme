@@ -39,8 +39,8 @@
      setup-install-flag installation-prefix chicken-prefix 
      find-library
      find-header program-path remove-file* 
-     patch yes-or-no?
-     setup-root-directory create-directory
+     patch yes-or-no? abort-setup
+     setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
      required-chicken-version required-extension-version cross-chicken
      host-extension)
@@ -156,8 +156,6 @@
 	    (cadr m)
 	    "/usr/local") ) ) )
 
-(define program-path (make-parameter chicken-bin-path))
-
 (define (cross-chicken) (##sys#fudge 39))
 (define host-extension (make-parameter #f))
 
@@ -169,7 +167,6 @@
 (define *builddir-created* #f)
 (define *keep-stuff* #f)
 (define *csc-options* '())
-(define *abort-hook* #f)
 (define *dont-ask* #f)
 (define *repository-tree* #f)
 (define *base-directory* (current-directory))
@@ -211,7 +208,7 @@
 		(else (version-numbers> (cons (->string a1) an) (cons (->string b1) bn))))) )
 	(else (error 'version-numbers> "invalid revisions: " a b))))
 
-(define create-directory/parents
+(define create-directory-0
   (let ([create-directory create-directory])
     (lambda (dir)
       (let loop ([dir dir])
@@ -219,14 +216,14 @@
           (loop (pathname-directory dir))
           (create-directory dir))) ) ) )
 
-(define create-directory
+(define create-directory/parents
   (let ()
     (define (verb dir)
       (when (setup-verbose-flag) (printf "  creating directory `~a'~%~!" dir)) )
     (if *windows-shell*
 	(lambda (dir)
 	  (verb dir)
-	  (create-directory/parents dir) ) 
+	  (create-directory-0 dir) ) 
 	(lambda (dir)
 	  (verb dir)
 	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
@@ -245,8 +242,8 @@
 	 (string-append "\"" str "\""))
 	(else str)))
 
-(define (abort-setup)
-  (*abort-hook* #f) )
+(define abort-setup 
+  (make-parameter exit))
 
 (define (yes-or-no? str . default)
   (let ((def (optional default #f)))
@@ -259,7 +256,7 @@
 	      ((and def (string=? "" ln)) (set! ln def)) )
 	(cond ((string-ci=? "yes" ln) #t)
 	      ((string-ci=? "no" ln) #f)
-	      ((string-ci=? "abort" ln) (abort-setup))
+	      ((string-ci=? "abort" ln) ((abort-setup)))
 	      (else
 	       (printf "~%Please enter \"yes\", \"no\" or \"abort\".~%")
 	       (loop) ) ) ) ) ) )

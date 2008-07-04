@@ -31,14 +31,11 @@
 (module setup-download 
 
     (download-data
-     setup-download-directory
-     setup-build-prefix)
+     setup-download-directory)
 
   (import scheme chicken extras regex posix utils srfi-1 srfi-13 tcp
-	  data-structures)
+	  data-structures setup-api)
 
-
-(define *major-version* (##sys#fudge 41))
 
 (define setup-build-prefix
   (make-parameter
@@ -93,22 +90,29 @@
 		(if filename (pathname-strip-directory filename) filename)
 		host) ) )
       (display req o) )
-    (let loop ()
+    (let loop ((first #t))
       (let ((ln (read-line i)))
-	;;*** check for 404 here...
-	(if (string=? "" ln)
-	    (let ((data (read-string #f i)))
-	      (close-input-port i)
-	      (close-output-port o)
-	      (unless (file-exists? (setup-download-directory))
-		(create-directory (setup-download-directory)))
-	      (let ((fpath (make-pathname 
-			    (setup-download-directory)
-			    (pathname-strip-directory filename))))
-		(with-output-to-file fpath
-		  (cut display data) 
-		  binary:)
-		fpath))
-	    (loop) ) ) ) ) )
+	(cond ((and first (string-match "HTTP/[.0-9]+\\s+(\\d+)\\s+(.+)" ln)) =>
+	       (lambda (m)
+		 ;; *** doesn't handle redirects
+		 (cond ((not (string=? "200" (cadr m)))
+			(close-input-port i)
+			(close-output-port o)
+			(values #f (string-append (cadr m) " " (caddr m))) )
+		       (else (loop #f))))
+	      ((string=? "" ln)
+	       (let ((data (read-string #f i)))
+		 (close-input-port i)
+		 (close-output-port o)
+		 (unless (file-exists? (setup-download-directory))
+		   (create-directory/parents (setup-download-directory)))
+		 (let ((fpath (make-pathname 
+			       (setup-download-directory)
+			       (pathname-strip-directory filename))))
+		   (with-output-to-file fpath
+		     (cut display data) 
+		     binary:)
+		   (values #t fpath))))
+	      (else (loop) ) ) ) ) ))
 
 )

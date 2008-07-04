@@ -54,7 +54,7 @@ TODO for macro/module system					-*- Outline -*-
 
 ** chicken-update
 *** download repository file from server and replace existing one
-*** list available eggs, possibly with filter (regex)
+*** -show: list available eggs, possibly with filter (regex)
 
 ** chicken-install
 *** download egg + dependencies

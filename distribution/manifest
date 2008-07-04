@@ -302,3 +302,9 @@ srfi-14.import.c
 tcp.import.c
 srfi-18.import.c
 utils.import.c
+setup-api.scm
+setup-api.c
+setup-download.scm
+setup-download.c
+chicken-update.scm
+chicken-update.c
