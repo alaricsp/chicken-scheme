@@ -28,6 +28,7 @@
  'chicken
  '(abort add1 argc+argv argv 
 	 bit-set?
+	 arithmetic-shift
 	 bitwise-and
 	 bitwise-ior
 	 bitwise-not
