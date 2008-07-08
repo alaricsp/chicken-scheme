@@ -1053,7 +1053,7 @@
 
 ;;; Just for backwards compatibility
 
-(##sys#extend-macro-environment		; DEPRECATED
+(##sys#extend-macro-environment
  'use '()
  (##sys#er-transformer
   (lambda (x r c)

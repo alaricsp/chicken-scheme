@@ -1464,17 +1464,20 @@
 		       (cons 
 			id
 			(let ((def (assq id dlist)))
-			  (if (and def (symbol? (cdr def)))
+			  (if (and def (symbol? (cdr def))) 
 			      (cdr def)
-			      (##sys#module-rename id name))))
+			      (let ((a (assq id (##sys#current-environment))))
+				(cond ((and a (symbol? (cdr a))) 
+				       (dm "reexporting: " id " -> " (cdr a))
+				       (cdr a)) 
+				      ((not def)
+				       (##sys#warn 
+					(string-append 
+					 "exported identifier for module `" (->string name) 
+					 "' has not been defined")
+					id) )
+				      (else (##sys#module-rename id name)))))))
 		       (loop (cdr xl)))))))))
-    (for-each 				;*** do we need this? it should only appear in dlist if exported
-     (lambda (x)
-       (unless (assq (car x) dlist)
-	 (##sys#warn 
-	  "exported identifier for module `" (->string name) 
-	  "' has not been defined" (car x))))
-     vexports)
     (for-each
      (lambda (u)
        (unless (memq u elist)

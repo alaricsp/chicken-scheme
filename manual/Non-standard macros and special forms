@@ -52,6 +52,13 @@ See also: {{set-extension-specifier!}}
 This is equivalent to {{(require-library ID ...)}} but performs an implicit
 {{import}}, if necessary.
 
+==== use
+
+ [syntax] (use ID ...)
+
+{{use}} is just a shorter alias for {{require-extension}}.
+
+
 === Binding forms for optional arguments
 
 ==== optional

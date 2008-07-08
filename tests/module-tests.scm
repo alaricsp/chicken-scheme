@@ -111,4 +111,18 @@
 (import x)
 (test-equal "redefinition of indirect import (II)" magnitude 10)
 
+(module m10 (m10x m10y)
+  (import scheme)
+  (define m10x 99)
+  (define-syntax m10y
+    (syntax-rules ()
+      ((_ x) (list 'x)))))
+
+(module m11 (m10x m10y)
+  (import m10))
+
+(import m11)
+(test-equal "value reexport" m10x 99)
+(test-equal "syntax reexport" (m10y 3) '(3))
+
 (test-end "modules")

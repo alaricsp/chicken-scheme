@@ -32,7 +32,7 @@ echo "======================================== syntax tests (r5rs_pitfalls) ..."
 $interpret -iw -s r5rs_pitfalls.scm
 
 echo "======================================== module tests ..."
-$interpret -include-path .. -w -s module-tests.scm
+$interpret -include-path .. -s module-tests.scm
 
 echo "======================================== module tests (compiled) ..."
 $compile module-tests-compiled.scm && ./a.out

@@ -921,8 +921,8 @@
 				    (set! block-globals (cons* arg ret block-globals))
 				    (walk
 				     `(,(macro-alias 'begin se)
-					(##core#set! ,arg ,(first conv))
-					(##core#set! 
+					(define ,arg ,(first conv))
+					(define 
 					 ,ret 
 					 ,(if (pair? (cdr conv)) (second conv) '##sys#values)) ) 
 				     se dest) ) ]
