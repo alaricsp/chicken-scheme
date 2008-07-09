@@ -14,6 +14,7 @@
 * [[Unit eval]] evaluation and macro-handling
 * [[Unit data-structures]] data structures
 * [[Unit ports]] I/O ports
+* [[Unit files]] File and pathname operations
 * [[Unit extras]] useful utility definitions
 * [[Unit srfi-1]] list library
 * [[Unit srfi-4]] homogeneous numeric vectors

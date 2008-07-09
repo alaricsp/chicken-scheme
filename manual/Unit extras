@@ -182,6 +182,6 @@ and calls the procedure {{PREDICATE}} with each character until {{PREDICATE}} re
 false. Returns a string with the accumulated characters.
 
 
-Previous: [[Unit ports]]
+Previous: [[Unit files]]
 
 Next: [[Unit srfi-1]]
