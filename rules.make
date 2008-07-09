@@ -28,21 +28,21 @@
 # object files
 
 LIBCHICKEN_OBJECTS_1 = \
-       library eval data-structures ports extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
        profiler stub match runtime
 LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
 LIBCHICKEN_STATIC_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBUCHICKEN_OBJECTS_1 = \
-       ulibrary ueval udata-structures uports uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
+       ulibrary ueval udata-structures uports ufiles uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
        usrfi-13 usrfi-14 usrfi-18 usrfi-69 u$(POSIXFILE) uregex scheduler \
        profiler stub match uruntime
 LIBUCHICKEN_SHARED_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=$(O))
 LIBUCHICKEN_STATIC_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBCHICKENGUI_OBJECTS_1 = \
-       library eval data-structures ports extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
        profiler stub match gui-runtime
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
@@ -100,6 +100,10 @@ data-structures$(O): data-structures.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 ports$(O): ports.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+files$(O): files.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -192,6 +196,10 @@ uports$(O): uports.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+ufiles$(O): ufiles.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 uextras$(O): uextras.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
@@ -267,6 +275,10 @@ data-structures-static$(O): data-structures.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 ports-static$(O): ports.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+files-static$(O): files.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -356,6 +368,10 @@ udata-structures-static$(O): udata-structures.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 uports-static$(O): uports.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+ufiles-static$(O): ufiles.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -925,6 +941,8 @@ data-structures.c: data-structures.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 ports.c: ports.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
+files.c: files.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 extras.c: extras.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 lolevel.c: lolevel.scm
@@ -967,6 +985,8 @@ ueval.c: eval.scm
 udata-structures.c: data-structures.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
 uports.c: ports.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
+ufiles.c: files.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
 uextras.c: extras.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
@@ -1025,10 +1045,10 @@ chicken-bug.c: chicken-bug.scm
 
 .PHONY: distfiles
 
-distfiles: buildsvnrevision library.c eval.c data-structures.c ports.c extras.c lolevel.c utils.c \
+distfiles: buildsvnrevision library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
-	ulibrary.c ueval.c udata-structures.c uports.c uextras.c ulolevel.c \
+	ulibrary.c ueval.c udata-structures.c uports.c ufiles.c uextras.c ulolevel.c \
 	uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c \
 	chicken-profile.c chicken-setup.c csc.c csi.c \
@@ -1060,10 +1080,10 @@ confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
 spotless: distclean
-	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c ports.c \
+	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c ports.c files.c \
 	  extras.c lolevel.c utils.c tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
 	  posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c \
-	  ulibrary.c ueval.c udata-structures.c uports.c uextras.c ulolevel.c \
+	  ulibrary.c ueval.c udata-structures.c uports.c ufiles.c uextras.c ulolevel.c \
 	  uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	  usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c chicken-bug.c \
 	  csc.c csi.c \
@@ -1113,6 +1133,6 @@ bootstrap: bootstrap.tar.gz
 	touch *.scm
 
 bootstrap.tar.gz: distfiles
-	tar cfz bootstrap.tar.gz library.c eval.c data-structures.c uports.c extras.c lolevel.c utils.c tcp.c \
+	tar cfz bootstrap.tar.gz library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c tcp.c \
 	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c posixunix.c posixwin.c regex.c \
 	  scheduler.c profiler.c stub.c match.c $(COMPILER_OBJECTS_1:=.c)

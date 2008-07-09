@@ -58,6 +58,8 @@ data-structures.c
 data-structures.exports
 ports.c
 ports.exports
+files.c
+files.exports
 extras.c
 extras.exports
 library.c
