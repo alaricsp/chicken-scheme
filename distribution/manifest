@@ -96,6 +96,7 @@ ueval.c
 uextras.c
 udata-structures.c
 uports.c
+ufiles.c
 ulibrary.c
 ulolevel.c
 uregex.c
@@ -172,6 +173,7 @@ html/pattern-matching.html
 html/supported-language.html
 html/unit-data-structures.html
 html/unit-ports.html
+html/unit-files.html
 html/unit-eval.html
 html/unit-extras.html
 html/unit-library.html
