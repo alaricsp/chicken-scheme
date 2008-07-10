@@ -1068,7 +1068,7 @@ EOF
 (define (fetch-file ext)
   (and (or *dont-ask*
 	   (yes-or-no?
-	    (sprintf "File ~A.egg or ~A.setup not present in the current directory. ~%Do you want to download .egg archive ?" ext)
+	    (sprintf "File ~A.egg or ~A.setup not present in the current directory. ~%Do you want to download .egg archive ?" ext ext)
 	    "yes") )
        (cond ((pathname-directory ext)
 	      (printf "Warning: no repository index available, trying direct download...~%" ext)
