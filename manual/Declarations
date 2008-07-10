@@ -213,6 +213,15 @@ This declaration will only work if the source file is compiled
 with the {{csc}} compiler driver.
 
 
+=== profile
+
+ [declaration specifier] (profile IDENTIFIER ...)
+
+Enable profiling exclusively for given identifiers. Normally the compiler
+enables profiling decorations for all globally defined procedures. With
+this declaration, profiling can be enabled for selected procedures.
+
+
 === number-type
 === fixnum-arithmetic
 

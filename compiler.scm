@@ -68,6 +68,7 @@
 ; (keep-shadowed-macros)
 ; (import <symbol-or-string> ...)
 ; (unused <symbol> ...)
+; (profile <symbol> ...)
 ;
 ;   <type> = fixnum | generic
 ;
@@ -252,7 +253,7 @@
   profile-info-vector-name finish-foreign-result pending-canonicalizations
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size valid-c-identifier?
+  target-heap-size target-stack-size valid-c-identifier? profiled-procedures
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -366,6 +367,7 @@
 (define use-import-table #f)
 (define undefine-shadowed-macros #t)
 (define constant-declarations '())
+(define profiled-procedures #f)
 
 
 ;;; These are here so that the backend can access them:
@@ -636,7 +638,10 @@
 				(cond ((or (not dest) 
 					   (not (eq? dest (resolve dest ae)))) ; global?
 				       l)
-				      ((and emit-profile (eq? 'lambda name))
+				      ((and (eq? 'lambda name)
+					    emit-profile 
+					    (or (not profiled-procedures)
+						(memq dest profiled-procedures)))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (match body0
@@ -1180,6 +1185,10 @@
 	  (set! use-import-table #t)
 	  (for-each (cut ##sys#hash-table-set! import-table <> "<here>") syms)
 	  (for-each lookup-exports-file strs) ) )
+       ((profile)
+	(set! profiled-procedures
+	  (append (cdr spec)
+		  (or profiled-procedures '()))))
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 
