@@ -65,7 +65,7 @@
 
 (declare
   (unit posix)
-  (uses scheduler regex extras utils)
+  (uses scheduler regex extras utils files)
   (disable-interrupts)
   (usual-integrations)
   (hide ##sys#stat close-handle posix-error
