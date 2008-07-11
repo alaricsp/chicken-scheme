@@ -652,5 +652,5 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
                            "cannot select partial anchor for compiled regular expression") )
                 (%regexp-options-set! rgxp
                                       (bitwise-ior (%regexp-options regexp)
-                                                  (pcre-option->number 'anchored)))
+                                                   (pcre-option->number 'anchored)))
                 rgxp] ) ) ) ) )
