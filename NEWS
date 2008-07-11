@@ -1,5 +1,6 @@
 3.3.2
 
+- support for selective procedure profiling in the compiler
 - unit utils: moved file- and pathname-related procedures to unit files
 - new unit files
 
