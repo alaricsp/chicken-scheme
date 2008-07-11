@@ -173,8 +173,16 @@
     ((newline-any)          PCRE_NEWLINE_ANY)
     ((newline-anycrlf)      PCRE_NEWLINE_ANYCRLF)
     ((bsr-anycrlf)          PCRE_BSR_ANYCRLF)
-    ((bsr-unicode)          PCRE_BSR_UNICODE) ) )
+    ((bsr-unicode)          PCRE_BSR_UNICODE)
+    (else                   0) ) )
 
+(declare (hide pcre-options->number))
+
+(define (pcre-options->number opts)
+  (let loop ([opts opts] [opt 0])
+    (if (null? opts)
+        opt
+        (loop (cdr opts) (+ opt (pcre-option->number (car opts)))) ) ) )
 
 ;;; The regexp structure primitives:
 
@@ -277,19 +285,13 @@ static int C_regex_error_offset;
 
 ;; Compile with subset of options and no tables
 
-(define (regexp pattern . options)
-  (let ([options->integer
-          (lambda ()
-            (if (null? options)
-                0
-                (+ (if (car options) PCRE_CASELESS 0)
-                   (let ((options (cdr options)))
-                     (if (null? options)
-                         0
-                         (+ (if (car options) PCRE_EXTENDED 0)
-                            (let ((options (cdr options)))
-                              (if (and (pair? options) (car options)) PCRE_UTF8 0 ) ) ) ) ) ) ) )])
-    (%make-regexp (re-checked-compile pattern (options->integer) #f 'regexp)) ) )
+(define regexp
+  (let ([optspatt '(caseless extended utf8)])
+    (lambda (pattern . options)
+      (let ([options->integer
+              (lambda ()
+                (pcre-options->number (map (lambda (i o) (if i o 'zero)) options optspatt)))])
+        (%make-regexp (re-checked-compile pattern (options->integer) #f 'regexp)) ) ) ) )
 
 ;; Compile with full options and tables available
 
@@ -298,7 +300,7 @@ static int C_regex_error_offset;
     (##sys#check-string pattern 'regexp*)
     (##sys#check-list options 'regexp*)
     (when tables (##sys#check-chardef-table tables 'regexp*))
-    (%make-regexp (re-checked-compile pattern (pcre-option->number options) tables 'regexp*)) ) )
+    (%make-regexp (re-checked-compile pattern (pcre-options->number options) tables 'regexp*)) ) )
 
 
 ;;; Optimize compiled regular expression:
@@ -667,6 +669,5 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
                   (warning 'make-anchored-pattern
                            "cannot select partial anchor for compiled regular expression") )
                 (%regexp-options-set! rgxp
-                                      (bitwise-ior (%regexp-options regexp)
-                                                  (pcre-option->number 'anchored)))
+                                      (+ (%regexp-options regexp) (pcre-option->number 'anchored)))
                 rgxp] ) ) ) ) )
