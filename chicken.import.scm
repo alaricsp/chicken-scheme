@@ -118,6 +118,7 @@
 	 keyword->string
 	 keyword-style
 	 keyword?
+	 load-relative
 	 machine-byte-order
 	 machine-type
 	 make-blob
