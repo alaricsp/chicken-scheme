@@ -141,6 +141,7 @@ eval.scm
 extras.scm
 data-structures.scm
 ports.scm
+files.scm
 chicken-bug.1
 chicken-bug.scm
 chicken-bug.c
