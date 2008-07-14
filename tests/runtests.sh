@@ -14,22 +14,22 @@ $interpret -s apply-test.scm
 $compile test-gc-hooks.scm && ./a.out
 
 echo "======================================== library tests ..."
-$interpret -w -s library-tests.scm
+$interpret -s library-tests.scm
 
 echo "======================================== syntax tests ..."
-$interpret -w -s syntax-tests.scm
+$interpret -s syntax-tests.scm
 
 echo "======================================== syntax tests (compiled) ..."
 $compile syntax-tests.scm && ./a.out
 
 echo "======================================== syntax tests (matchable) ..."
-$interpret -w matchable.scm -s match-test.scm
+$interpret matchable.scm -s match-test.scm
 
 echo "======================================== syntax tests (loopy-loop) ..."
-$interpret -w -s loopy-test.scm
+$interpret -s loopy-test.scm
 
 echo "======================================== syntax tests (r5rs_pitfalls) ..."
-$interpret -iw -s r5rs_pitfalls.scm
+$interpret -i -s r5rs_pitfalls.scm
 
 echo "======================================== module tests ..."
 $interpret -include-path .. -s module-tests.scm
@@ -47,23 +47,25 @@ $interpret -bn test-chained-modules.so -e '(import m3) (s3)'
 
 echo "======================================== module tests (ec) ..."
 rm -f ec.so ec.import.*
-$interpret -wbqn ec.scm ec-tests.scm
+$interpret -bqn ec.scm ec-tests.scm
 $compile_s ec.scm -emit-import-library ec -o ec.so
 $compile_s ec.import.scm -o ec.import.so 
-$interpret -wbnq ec.so ec-tests.scm
+$interpret -bnq ec.so ec-tests.scm
 # $compile ec-tests.scm && ./a.out        # takes ages to compile
+$interpret -bnq module-tests-2.scm
+$compile module-tests-2.scm && ./a.out
 
 echo "======================================== hash-table tests ..."
-$interpret -w -s hash-table-tests.scm
+$interpret -s hash-table-tests.scm
 
 echo "======================================== port tests ..."
-$interpret -w -s port-tests.scm
+$interpret -s port-tests.scm
 
 echo "======================================== fixnum tests ..."
 $compile fixnum-tests.scm && ./a.out
 
 echo "======================================== srfi-18 tests ..."
-$interpret -w -s srfi-18-tests.scm
+$interpret -s srfi-18-tests.scm
 
 echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out

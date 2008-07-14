@@ -22,6 +22,11 @@ TODO for macro/module system					-*- Outline -*-
 ** import-for-syntax imports value bindings into import-env
    should actually be a distinct meta-import-env.
 *** does it work at all?
+** curried define performs expansion in empty se. problem?
+   (as comment in expand.scm indicated (##sys#register-export))
+
+* documentation
+** later document expander (-> wiki, internals)
 
 * build
 ** chicken.texi needs to be regenerated

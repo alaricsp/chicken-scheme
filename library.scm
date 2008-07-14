@@ -3594,7 +3594,9 @@ EOF
       [(#:warning)
        (##sys#print "Warning: " #f ##sys#standard-error)
        (##sys#print msg #f ##sys#standard-error)
-       (##sys#write-char-0 #\newline ##sys#standard-error)
+       (if (or (null? args) (fx> (length args) 1))
+	   (##sys#write-char-0 #\newline ##sys#standard-error)
+	   (##sys#print ": " #f ##sys#standard-error))
        (for-each
 	(lambda (x)
 	  (##sys#print x #t ##sys#standard-error)

@@ -31,7 +31,7 @@
   (hide match-expression
 	macro-alias module-indirect-exports
 	d dd dm map-se merge-se
-	lookup) )
+	lookup check-for-redef) )
 
 
 (set! ##sys#features
@@ -152,92 +152,90 @@
 
 ;; The basic macro-expander
 
-(define ##sys#expand-0
-  (let ([string-append string-append])
-    (lambda (exp dse)
-      (define (call-handler name handler exp se)
-	(dd "invoking macro: " name)
-	(dd `(STATIC-SE: ,@(map-se se)))
-	(handle-exceptions ex
-	    (##sys#abort
-	     (if (and (##sys#structure? ex 'condition)
-		      (memv 'exn (##sys#slot ex 1)) )
-		 (##sys#make-structure
-		  'condition
-		  (##sys#slot ex 1)
-		  (let copy ([ps (##sys#slot ex 2)])
-		    (if (null? ps)
-			'()
-			(let ([p (car ps)]
-			      [r (cdr ps)])
-			  (if (and (equal? '(exn . message) p)
-				   (pair? r)
-				   (string? (car r)) )
-			      (cons 
-			       '(exn . message)
-			       (cons (string-append
-				      "during expansion of ("
-				      (##sys#slot name 1) 
-				      " ...) - "
-				      (car r) )
-				     (cdr r) ) )
-			      (copy r) ) ) ) ) )
-		 ex) )
-	  (let ((exp2 (handler exp se dse)))
-	    (dd `(,name --> ,exp2))
-	    exp2)))
-      (define (expand head exp mdef)
-	(dd `(EXPAND: 
-	      ,head 
-	      ,(cond ((get head '##core#macro-alias) =>
-		      (lambda (a) (if (symbol? a) a '<macro>)) )
-		     (else '_))
-	      ,exp 
-	      ,(if (pair? mdef)
-		   `(SE: ,@(map-se (car mdef)))
-		   mdef)))
-	(cond ((not (list? exp))
-	       (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
-	      ((pair? mdef)
-	       (values 
-		;; force ref. opaqueness by passing dynamic se  [what is this comment meaning? I forgot]
-		(call-handler head (cadr mdef) exp (car mdef))
-		#t))
-	      (else (values exp #f)) ) )
-      (if (pair? exp)
-	  (let ((head (car exp))
-		(body (cdr exp)) )
-	    (if (symbol? head)
-		(let ((head2 (or (lookup head dse) head)))
-		  (unless (pair? head2)
-		    (set! head2 (or (lookup head2 (##sys#macro-environment)) head2)) )
-		  (cond [(memq head2 '(let ##core#let))
-			 (##sys#check-syntax 'let body '#(_ 2) #f dse)
-			 (let ([bindings (car body)])
-			   (cond [(symbol? bindings)
-				  (##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)) #f dse)
-				  (let ([bs (cadr body)])
-				    (values
-				     `(##core#app
-				       (,(macro-alias 'letrec dse) ;*** correct to use dse?
-					([,bindings (##core#loop-lambda ,(map (lambda (b) (car b)) bs) ,@(cddr body))])
-					,bindings)
-				       ,@(##sys#map cadr bs) )
-				     #t) ) ]
-				 [else (values exp #f)] ) ) ]
-			[(and (memq head2 '(set! ##core#set!))
-			      (pair? body)
-			      (pair? (car body)) )
-			 (let ([dest (car body)])
-			   (##sys#check-syntax 'set! body '(#(_ 1) _) #f dse)
-			   (values
-			    (append (list (list '##sys#setter (car dest)))
-				    (cdr dest)
-				    (cdr body) ) 
-			    #t) ) ]
-			[else (expand head exp head2)] ) )
-		(values exp #f) ) )
-	  (values exp #f) ) ) ) )
+(define (##sys#expand-0 exp dse)
+  (define (call-handler name handler exp se)
+    (dd "invoking macro: " name)
+    (dd `(STATIC-SE: ,@(map-se se)))
+    (handle-exceptions ex
+	(##sys#abort
+	 (if (and (##sys#structure? ex 'condition)
+		  (memv 'exn (##sys#slot ex 1)) )
+	     (##sys#make-structure
+	      'condition
+	      (##sys#slot ex 1)
+	      (let copy ([ps (##sys#slot ex 2)])
+		(if (null? ps)
+		    '()
+		    (let ([p (car ps)]
+			  [r (cdr ps)])
+		      (if (and (equal? '(exn . message) p)
+			       (pair? r)
+			       (string? (car r)) )
+			  (cons 
+			   '(exn . message)
+			   (cons (string-append
+				  "during expansion of ("
+				  (##sys#slot name 1) 
+				  " ...) - "
+				  (car r) )
+				 (cdr r) ) )
+			  (copy r) ) ) ) ) )
+	     ex) )
+      (let ((exp2 (handler exp se dse)))
+	(dd `(,name --> ,exp2))
+	exp2)))
+  (define (expand head exp mdef)
+    (dd `(EXPAND: 
+	  ,head 
+	  ,(cond ((get head '##core#macro-alias) =>
+		  (lambda (a) (if (symbol? a) a '<macro>)) )
+		 (else '_))
+	  ,exp 
+	  ,(if (pair? mdef)
+	       `(SE: ,@(map-se (car mdef)))
+	       mdef)))
+    (cond ((not (list? exp))
+	   (##sys#syntax-error-hook "invalid syntax in macro form" exp) )
+	  ((pair? mdef)
+	   (values 
+	    ;; force ref. opaqueness by passing dynamic se  [what is this comment meaning? I forgot]
+	    (call-handler head (cadr mdef) exp (car mdef))
+	    #t))
+	  (else (values exp #f)) ) )
+  (if (pair? exp)
+      (let ((head (car exp))
+	    (body (cdr exp)) )
+	(if (symbol? head)
+	    (let ((head2 (or (lookup head dse) head)))
+	      (unless (pair? head2)
+		(set! head2 (or (lookup head2 (##sys#macro-environment)) head2)) )
+	      (cond [(memq head2 '(let ##core#let))
+		     (##sys#check-syntax 'let body '#(_ 2) #f dse)
+		     (let ([bindings (car body)])
+		       (cond [(symbol? bindings)
+			      (##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)) #f dse)
+			      (let ([bs (cadr body)])
+				(values
+				 `(##core#app
+				   (,(macro-alias 'letrec dse) ;*** correct to use dse?
+				    ([,bindings (##core#loop-lambda ,(map (lambda (b) (car b)) bs) ,@(cddr body))])
+				    ,bindings)
+				   ,@(##sys#map cadr bs) )
+				 #t) ) ]
+			     [else (values exp #f)] ) ) ]
+		    [(and (memq head2 '(set! ##core#set!))
+			  (pair? body)
+			  (pair? (car body)) )
+		     (let ([dest (car body)])
+		       (##sys#check-syntax 'set! body '(#(_ 1) _) #f dse)
+		       (values
+			(append (list (list '##sys#setter (car dest)))
+				(cdr dest)
+				(cdr body) ) 
+			#t) ) ]
+		    [else (expand head exp head2)] ) )
+	    (values exp #f) ) )
+      (values exp #f) ) )
 
 (define ##sys#enable-runtime-macros #f)
 
@@ -257,9 +255,12 @@
 	     (##sys#module-rename sym (module-name mod))))
 	  (else sym)))
   (cond ((##sys#qualified-symbol? sym) sym)
-	((##sys#get sym '##core#aliased) sym)
+	((##sys#get sym '##core#aliased) 
+	 (dm "marked: " sym)
+	 sym)
 	((assq sym (##sys#current-environment)) =>
 	 (lambda (a)
+	   (dm "in current environment: " sym)
 	   (if (pair? (cdr a))
 	       (mrename sym)
 	       (cdr a) ) ) )
@@ -1263,16 +1264,23 @@
   (and-let* ((mod (##sys#current-module)))
     (set-module-meta-expressions! mod (cons exp (module-meta-expressions mod)))))
 
+(define (check-for-redef sym env senv)
+  (and-let* ((a (assq sym env)))
+    (##sys#warn "redefinition of imported value binding" sym) )
+  (and-let* ((a (assq sym senv)))
+    (##sys#warn "redefinition of imported syntax binding" sym)))
+
 (define (##sys#register-export sym mod)
   (when mod
     (let ((exp (or (eq? #t (module-export-list mod))
 		   (##sys#find-export sym mod #t)))
 	  (ulist (module-undefined-list mod)))
-      (##sys#toplevel-definition-hook
+      (##sys#toplevel-definition-hook	; in compiler, hides unexported bindings
        (##sys#module-rename sym (module-name mod)) 
        mod exp #f)
       (when (memq sym ulist)
 	(set-module-undefined-list! mod (##sys#delq sym ulist)))
+      (check-for-redef sym (##sys#current-environment) (##sys#macro-environment))
       (set-module-exist-list! mod (cons sym (module-exist-list mod)))
       (when exp
 	(dm "defined: " sym)
@@ -1288,7 +1296,8 @@
 	  (ulist (module-undefined-list mod))
 	  (mname (module-name mod)))
       (when (memq sym ulist)
-	(##sys#warn "use of syntax precedes definition" sym mname))
+	(##sys#warn "use of syntax precedes definition" sym))
+      (check-for-redef sym (##sys#current-environment) (##sys#macro-environment))
       (dm "defined syntax: " sym)
       (when exp
 	(set-module-defined-list! 
@@ -1481,11 +1490,7 @@
     (for-each
      (lambda (u)
        (unless (memq u elist)
-	 (##sys#warn 
-	  (string-append
-	   "reference to possibly unbound identifier `" 
-	   (##sys#symbol->string u)
-	   "'"))))
+	 (##sys#warn "reference to possibly unbound identifier" u)))
      (module-undefined-list mod))
     (let* ((exports 
 	    (map (lambda (exp)

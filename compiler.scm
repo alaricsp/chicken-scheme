@@ -502,7 +502,7 @@
 		    (foreign-type-convert-result
 		     (finish-foreign-result ft body)
 		     t) ) ) ]
-	    ((not (assq x0 se)) (##sys#alias-global-hook x #f)) ; only globals
+	    ((not (assq x0 se)) (##sys#alias-global-hook x #f)) ; only if global
 	    (else x))))
   
   (define (eval/meta form)
@@ -694,11 +694,11 @@
 			(##sys#check-syntax 'define-syntax x '(define-syntax variable _) #f se)
 			(let ((name (lookup (cadr x) se))
 			      (tx (caddr x)))
+			  (##sys#register-syntax-export name (##sys#current-module) tx)
 			  (##sys#extend-macro-environment
 			   name
 			   (##sys#current-environment)
 			   (##sys#er-transformer (eval/meta tx)))
-			  (##sys#register-syntax-export name (##sys#current-module) tx)
 			  (walk
 			   (if ##sys#enable-runtime-macros
 			       `(##sys#extend-macro-environment
@@ -777,7 +777,11 @@
 					       (else
 						(loop 
 						 (cdr body)
-						 (cons (walk (car body) se #f) xs))))))))
+						 (cons (walk 
+							(car body)
+							(##sys#current-environment)
+							#f)
+						       xs))))))))
 			    (canonicalize-begin-body
 			     (append
 			      (parameterize ((##sys#current-module #f)

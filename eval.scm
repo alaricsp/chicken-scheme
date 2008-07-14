@@ -294,7 +294,9 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
-			(let ((var (##sys#alias-global-hook j #f)))
+			(let ((var (if (not (assq x se)) ; only if global
+				       (##sys#alias-global-hook j #f)
+				       j)))
 			  (if ##sys#eval-environment
 			      (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
 				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" var))
@@ -603,14 +605,14 @@
 			 ((define-syntax define-compiled-syntax)
 			  (##sys#check-syntax 'define-syntax x '(_ variable _) #f se)
 			  (let ((name (rename (cadr x) se)))
+			    (##sys#register-syntax-export 
+			     name (##sys#current-module)
+			     (caddr x))	;*** not really necessary, it only shouldn't be #f
 			    (##sys#extend-macro-environment
 			     name
 			     (##sys#current-environment)
 			     (##sys#er-transformer
 			      (eval/meta (caddr x))))
-			    (##sys#register-syntax-export 
-			     name (##sys#current-module)
-			     (caddr x))	;*** not really necessary, it only shouldn't be #f
 			    (compile '(##core#undefined) e #f tf cntr se) ) )
 
 			 ((##core#module)
@@ -652,7 +654,10 @@
 							 ((##sys#slot xs 0) v))))))))
 				      (loop 
 				       (cdr body)
-				       (cons (compile (car body) e #f tf cntr se)
+				       (cons (compile 
+					      (car body) 
+					      '() #f tf cntr 
+					      (##sys#current-environment))
 					     xs))))) ) )
 
 			 [(##core#loop-lambda)

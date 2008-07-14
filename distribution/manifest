@@ -201,6 +201,7 @@ tests/test-gc-hook.scm
 tests/matchable.scm
 tests/match-tests.scm
 tests/module-tests.scm
+tests/module-tests-2.scm
 tests/module-tests-compiled.scm
 tests/syntax-tests.scm
 tests/ec.scm
