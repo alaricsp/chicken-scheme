@@ -7590,6 +7590,10 @@ void C_ccall C_string_to_number(C_word c, C_word closure, C_word k, C_word str, 
 
   /* check for rational representation: */
   if((eptr = C_strchr(sptr, '/')) != NULL) {
+    if (eptr == sptr) {
+        n = C_SCHEME_FALSE;
+        goto fini;
+    }
     *eptr = '\0';
     ratp = 1;
 
