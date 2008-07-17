@@ -4,7 +4,7 @@ TODO for macro/module system					-*- Outline -*-
 
 ** macros
 *** expansion of r5rs_pitfall 4.2 incorrect
-    possibly due to a non-aliased implicit "begin", has to be found
+    possibly due to a non-aliased implicit "begin" somewhere
 
 ** modules
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
@@ -13,8 +13,28 @@ TODO for macro/module system					-*- Outline -*-
     (current workaround is to set them to nil by default)
 *** same for ##sys#chicken-ffi-macro-environment
 *** re-exports of syntax doesn't work
-    generating import library requires source (compiled-module-reg.), but 
-    original module is lost after importing
+    generating import library requires source
+    (compiled-module-registration), but original module is lost after
+    importing
+*** indirect reexport problems
+    indirect export for syntax of a binding that would be re-exported isn't handled
+    yet (found by Jim Ursetto):
+
+    (module m1 ((s1 apply))     ; (s1 apply) works
+      (import scheme)
+      (define-syntax s1
+	(syntax-rules ()
+	  ((_ e0 e1 ...)
+	   (##sys#call-with-values
+	    (lambda () e0)
+	    (lambda var
+	      (begin
+		e1 ...
+		(apply ##sys#values var))))))))
+
+    (module m2 ()
+      (import m1)
+      (s1 1 2 3))
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
@@ -36,7 +56,6 @@ TODO for macro/module system					-*- Outline -*-
 
 * modules
 ** checks
-*** redef of imported id
 *** reimport of imported id
 *** unused defs?
 
