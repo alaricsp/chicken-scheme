@@ -25,6 +25,3 @@ This is the user's manual for the Chicken Scheme compiler, version 3.3.4
 ; [[FAQ]] : A list of Frequently Asked Questions about CHICKEN (and their answers!).
 
 ; [[Acknowledgements]] : A list of some of the people that have contributed to make CHICKEN what it is.
-
-; [[Bibliography]] : Links to documents that may be of interest.
-
