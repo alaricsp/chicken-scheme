@@ -22,9 +22,9 @@ for the existence of CHICKEN are:
 
 * CHICKEN is free and can be freely distributed, including its source code.
 
-* CHICKEN allows separate compilation of modules.
-
 * CHICKEN offers better performance than nearly all interpreter based implementations, but still provides full Scheme semantics.
+
+* As far as we know, CHICKEN is the first implementation of Scheme that uses Henry Baker's [[http://home.pipeline.com/~hbaker1/CheneyMTA.html|Cheney on the M.T.A]] concept.
 
 ==== Why call it 'Chicken'?
 
@@ -61,7 +61,7 @@ to register features at compile time.
 ==== Why are constants defined by {{define-constant}} not honoured in {{case}} constructs?
 
 {{case}} expands into a cascaded {{if}} expression, where the first item in each arm
-is treated as a quoted list. So the {{case}} macro can not infer wether
+is treated as a quoted list. So the {{case}} macro can not infer whether
 a symbol is to be treated as a constant-name (defined via {{define-constant}}) or
 a literal symbol.
 
