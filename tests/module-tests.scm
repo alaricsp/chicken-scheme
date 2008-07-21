@@ -125,4 +125,24 @@
 (test-equal "value reexport" m10x 99)
 (test-equal "syntax reexport" (m10y 3) '(3))
 
+;; found by Jim Ursetto;
+
+(module m12 ((begin0 apply))
+  (import scheme)
+  (define-syntax begin0
+    (syntax-rules ()
+      ((_ e0 e1 ...)
+       (##sys#call-with-values
+	(lambda () e0)
+	(lambda var
+	  (begin
+	    e1 ...
+	    (apply ##sys#values var))))))))
+
+(test-equal "primitive indirect value-binding reexport"
+	    (module m13 ()
+	      (import m12)		; note absence of "scheme"
+	      (begin0 1 2 3))
+	    1)
+
 (test-end "modules")

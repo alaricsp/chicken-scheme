@@ -294,9 +294,9 @@
 	(cond [(symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
-			(let ((var (if (not (assq x se)) ; only if global
+			(let ((var (if (not (assq x se)) ; global?
 				       (##sys#alias-global-hook j #f)
-				       j)))
+				       (or (##sys#get j '##core#primitive) j))))
 			  (if ##sys#eval-environment
 			      (let ([loc (##sys#hash-table-location ##sys#eval-environment var #t)])
 				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" var))
@@ -338,7 +338,9 @@
 		 (d `(EVAL/EXPANDED: ,x2))
 		 (if (not (eq? x2 x))
 		     (compile x2 e h tf cntr se)
-		     (let ((head (rename (##sys#slot x 0) se)))
+		     (let ((head (rename (##sys#slot x 0) se))) 
+		       ;; here we did't resolve ##core#primitive, but that is done in compile-call (via 
+		       ;; a normal walking of the operator)
 		       (case head
 
 			 [(quote)

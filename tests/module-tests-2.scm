@@ -9,7 +9,9 @@
 
 (test-begin "modules (II)")
 
-(require-extension ec)			; import into toplevel env
+(require-extension ec)	      ; load code and import into toplevel env
+
+(print "(expect a warning ...)")
 
 (test-error 
  "empty initial module SE"

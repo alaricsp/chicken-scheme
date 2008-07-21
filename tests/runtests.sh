@@ -52,6 +52,8 @@ $compile_s ec.scm -emit-import-library ec -o ec.so
 $compile_s ec.import.scm -o ec.import.so 
 $interpret -bnq ec.so ec-tests.scm
 # $compile ec-tests.scm && ./a.out        # takes ages to compile
+
+echo "======================================== module tests (II) ..."
 $interpret -bnq module-tests-2.scm
 $compile module-tests-2.scm && ./a.out
 

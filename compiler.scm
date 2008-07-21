@@ -503,6 +503,7 @@
 		     (finish-foreign-result ft body)
 		     t) ) ) ]
 	    ((not (assq x0 se)) (##sys#alias-global-hook x #f)) ; only if global
+	    ((##sys#get x '##core#primitive))
 	    (else x))))
   
   (define (eval/meta form)
@@ -529,8 +530,9 @@
 		   (syntax-error (sprintf "(in line ~s) - malformed expression" ln) x)
 		   (syntax-error "malformed expression" x)))
 	     (set! ##sys#syntax-error-culprit x)
-	     (let ((name (lookup (car x) se))
-		   (xexpanded (##sys#expand x se)))
+	     (let* ((name0 (lookup (car x) se))
+		    (name (or (and (symbol? name0) (##sys#get name0 '##core#primitive)) name0))
+		    (xexpanded (##sys#expand x se)))
 	       (cond ((not (eq? x xexpanded))
 		      (walk xexpanded se dest))
 		     

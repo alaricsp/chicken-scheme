@@ -19,30 +19,6 @@ TODO for macro/module system					-*- Outline -*-
     generating import library requires source
     (compiled-module-registration), but original module is lost after
     importing
-*** indirect reexport problems
-    indirect export for syntax of a binding that would be re-exported isn't handled
-    yet (found by Jim Ursetto):
-
-    (module m1 ((s1 apply))     ; (s1 apply) works
-      (import scheme)
-      (define-syntax s1
-	(syntax-rules ()
-	  ((_ e0 e1 ...)
-	   (##sys#call-with-values
-	    (lambda () e0)
-	    (lambda var
-	      (begin
-		e1 ...
-		(apply ##sys#values var))))))))
-
-    (module m2 ()
-      (import m1) ; note absence of "scheme"
-      (s1 1 2 3))
-
-**** this is actually false
-     with a non-primitive module export, everything works - it seems the
-     primitive, non-prefixed "apply" gets renamed again (it's not marked)
-     (this may indicate a general problem)
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
@@ -50,7 +26,7 @@ TODO for macro/module system					-*- Outline -*-
 ** import-for-syntax imports value bindings into import-env
    should actually be a distinct meta-import-env.
 *** does it work at all?
-** curried define performs expansion in empty se. problem?
+** curried define performs expansion in empty se - problem?
    (as comment in expand.scm indicated (##sys#register-export))
 
 * documentation
