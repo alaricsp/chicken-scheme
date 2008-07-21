@@ -1329,25 +1329,46 @@
 
 (define (module-indirect-exports mod)
   (let ((exports (module-export-list mod))
-	(mname (module-name mod)))
+	(mname (module-name mod))
+	(dlist (module-defined-list mod)))
     (define (indirect? id)
       (let loop ((exports exports))
 	(and (not (null? exports))
 	     (or (and (pair? (car exports))
 		      (memq id (cdar exports)))
 		 (loop (cdr exports))))))
+    (define (warn msg id)
+      (##sys#warn
+       (string-append msg " in module `" (symbol->string mname) "'")
+       id))
     (if (eq? #t exports)
 	'()
-	(let loop ((dlist (module-defined-list mod)))
-	  (cond ((null? dlist) '())
-		((indirect? (caar dlist))
-		 (cons 
-		  (cons 
-		   (caar dlist)
-		   (or (cdar dlist)
-		       (##sys#module-rename (caar dlist) mname)))
-		  (loop (cdr dlist))))
-		(else (loop (cdr dlist))))))) )
+	(let loop ((exports exports))	; walk export list
+	  (cond ((null? exports) '())
+		((symbol? (car exports)) (loop (cdr exports))) ; normal export
+		(else
+		 (let loop2 ((iexports (cdar exports))) ; walk indirect exports for a given entry
+		   (cond ((null? iexports) (loop (cdr exports)))
+			 ((assq (car iexports) (##sys#macro-environment))
+			  (warn "indirect export of syntax binding" (car iexports))
+			  (loop2 (cdr iexports)))
+			 ((assq (car iexports) dlist) => ; defined in current module?
+			  (lambda (a) 
+			    (cons 
+			     (cons 
+			      (car iexports)
+			      (or (cdr a) (##sys#module-rename (car iexports) mname)))
+			     (loop2 (cdr iexports)))))
+			 ((assq (car iexports) (##sys#current-environment)) =>
+			  (lambda (a)	; imported in current env.
+			    (cond ((symbol? (cdr a)) ; not syntax
+				   (cons (cons (car iexports) (cdr a)) (loop2 (cdr iexports))) )
+				  (else
+				   (warn "indirect reexport of syntax" (car iexports))
+				   (loop2 (cdr iexports))))))
+			 (else 
+			  (warn "indirect export of unknown binding" (car iexports))
+			  (loop2 (cdr iexports)))))))))))
 
 (define (merge-se . ses)		; later occurrences take precedence to earlier ones
   (let ((se (apply append ses)))
@@ -1482,7 +1503,8 @@
 				      ((not def)
 				       (##sys#warn 
 					(string-append 
-					 "exported identifier for module `" (->string name) 
+					 "exported identifier for module `" 
+					 (symbol->string name)
 					 "' has not been defined")
 					id) )
 				      (else (##sys#module-rename id name)))))))

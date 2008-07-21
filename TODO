@@ -39,6 +39,11 @@ TODO for macro/module system					-*- Outline -*-
       (import m1) ; note absence of "scheme"
       (s1 1 2 3))
 
+**** this is actually false
+     with a non-primitive module export, everything works - it seems the
+     primitive, non-prefixed "apply" gets renamed again (it's not marked)
+     (this may indicate a general problem)
+
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
 ** "scheme" module does not include some special forms ("define-syntax", etc.)
