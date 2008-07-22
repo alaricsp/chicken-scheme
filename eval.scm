@@ -1169,7 +1169,7 @@
       (define (impform x id builtin?)
 	`(begin
 	   ,x
-	   ,@(if (and imp? (or (not builtin?) (not (##sys#current-module))))
+	   ,@(if (and imp? (or (not builtin?) (##sys#current-module)))
 		 `((import ,id))
 		 '())))
       (define (doit id)
@@ -1234,8 +1234,7 @@
 				    (f #f) )
 			   (if (null? specs)
 			       (values `(begin ,@(reverse exps)) f)
-			       (let-values (((exp fi)
-					     (##sys#do-the-right-thing (car specs) comp? imp?)))
+			       (let-values (((exp fi) (##sys#do-the-right-thing (car specs) comp? imp?)))
 				 (loop (cdr specs)
 				       (cons exp exps)
 				       (or fi f) ) ) ) ) )

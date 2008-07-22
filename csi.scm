@@ -530,7 +530,7 @@ EOF
                    Include path:    \t~A~%~
                    Symbol-table load:\t~S~%  ~
                      Avg bucket length:\t~S~%  ~
-                     Total symbols:\t~S~%~
+                     Total symbol count:\t~S~%~
                    Memory:\theap size is ~S bytes~A with ~S bytes currently in use~%~  
                      nursery size is ~S bytes, stack grows ~A~%"
 		    (machine-type)
@@ -621,7 +621,9 @@ EOF
 	     (unless (##sys#symbol-has-toplevel-binding? x) (display "unbound " out))
 	     (when (and (symbol? x) (fx= 0 (##sys#byte (##sys#slot x 1) 0)))
 	       (display "keyword " out) )
-	     (fprintf out "symbol with name ~S~%" (##sys#symbol->string x))
+	     (fprintf out "~asymbol with name ~S~%"
+		      (if (##sys#interned-symbol? x) "" "uninterned ")
+		      (##sys#symbol->string x))
 	     (let ((plist (##sys#slot x 2)))
 	       (unless (null? plist)
 		 (display "  \nproperties:\n\n" out)

@@ -458,8 +458,8 @@ maintainers if you encounter behaviour that you think is
 not correct or that triggers an error where there shouldn't
 be one.
 
-Currently value bindings imported by {{import}} and {{import-for-syntax}}
-share the same import-environment.
+* Reexport of syntax is currently not supported
+* Currently value bindings imported by {{import}} and {{import-for-syntax}} share the same import-environment.
 
 
 Previous: [[Non-standard macros and special forms]]

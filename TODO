@@ -19,6 +19,9 @@ TODO for macro/module system					-*- Outline -*-
     generating import library requires source
     (compiled-module-registration), but original module is lost after
     importing
+*** `require-extension' fails in interpreter when extension is so without import library
+    probably because load and import is in same toplevel form, and the load is performed
+    after the import (at runtime)
 
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
@@ -43,13 +46,8 @@ TODO for macro/module system					-*- Outline -*-
 *** reimport of imported id
 *** unused defs?
 
-* csi
-** describe should print if symbol is interned
-
 * compiler
 ** warn if encountering global ref to "unquote[-splicing]"
-** add command-line option for import
-   should we?
 
 * eggs to be removed
 ** syntax-case

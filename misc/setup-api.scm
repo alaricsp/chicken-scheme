@@ -34,7 +34,7 @@
      (run execute)
      compile
      make make/proc
-     install-extension 
+     install-extension install-program install-script
      setup-verbose-flag
      setup-install-flag installation-prefix chicken-prefix 
      find-library find-header 
@@ -166,6 +166,7 @@
 (define setup-root-directory      (make-parameter *base-directory*))
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
+(define program-path (make-parameter chicken-bin-path))
 
 
 ; Convert a string with a version (such as "1.22.0") to a list of the
@@ -218,7 +219,8 @@
   (string-concatenate
    (map (lambda (c)
 	  (if (or (char-whitespace? c)
-		  (memq c '(#\# #\" #\' #\` #\´ #\~ #\& #\% #\$ #\! #\* #\; #\< #\> #\\)))
+		  (memq c '(#\# #\" #\' #\` #\´ #\~ #\& #\% #\$ #\! #\* #\; #\< #\> #\\
+			    #\( #\) #\[ #\] #\{ #\})))
 	      (string #\\ c)
 	      (string c)))
 	(string->list str))))
@@ -480,10 +482,6 @@
 	(unless *windows-shell* (run (chmod a+r ,(qs setup-file))))
 	write-setup-info)))
 
-(define (chdir dir)
-  (when (setup-verbose-flag) (printf "changing working directory to `~A'~%" dir))
-  (change-directory dir) )
-
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
   (let ((from (if (pair? from) (car from) from))
 	(to (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
@@ -554,6 +552,49 @@
 			   (make-dest-pathname rpath f)))
 		       files) ) )
       (write-info id dests info) ) ) )
+
+(define (install-program id files #!optional (info '()))
+  (define (exify f)
+    (translate-extension
+     f
+     (if *windows-shell* "exe" #f) ) )
+  (when (setup-install-flag)
+    (let* ((files (check-filelist (if (list? files) files (list files))))
+	   (ppath ((lambda (pre) (if pre (make-pathname pre (program-path)) (program-path)))
+		   (installation-prefix)))
+	   (files (if *windows*
+                      (map (lambda (f)
+                             (if (list? f) 
+                                 (list (exify (car f)) (exify (cadr f)))
+                                 (exify f) ) )
+                           files)
+                      files) ) 
+	   (dests (map (lambda (f)
+			 (let ((from (if (pair? f) (car f) f))
+			       (to (make-dest-pathname ppath f)) )
+			   (copy-file from to) 
+			   (unless *windows-shell*
+				   (run (chmod a+r ,(qs to))))
+			   to) )
+		       files) ) )
+      (write-info id dests info) ) ) )
+
+(define (install-script id files #!optional (info '()))
+  (when (setup-install-flag)
+    (let* ((files (check-filelist (if (list? files) files (list files))))
+	   (ppath ((lambda (pre) (if pre (make-pathname pre (program-path)) (program-path)))
+		   (installation-prefix)))
+	   (pfiles (map (lambda (f)
+			  (let ((from (if (pair? f) (car f) f))
+				(to (make-dest-pathname ppath f)) )
+			    (copy-file from to) 
+			    (unless *windows-shell*
+				    (run (chmod a+r ,(qs to))))
+			    to) )
+			files) ) )
+      (unless *windows-shell*
+	(run (chmod a+rx ,(string-intersperse pfiles " "))) )
+      (write-info id pfiles info) ) ) )
 
 
 ;;; More helper stuff
