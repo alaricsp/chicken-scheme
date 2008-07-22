@@ -119,6 +119,7 @@
 	 keyword-style
 	 keyword?
 	 load-relative
+	 load-library
 	 machine-byte-order
 	 machine-type
 	 make-blob

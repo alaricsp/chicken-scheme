@@ -25,7 +25,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library srfi-1 regex utils posix srfi-13)
+(require-library srfi-1 regex utils posix srfi-13 extras ports data-structures)
 
 
 (module setup-api
@@ -33,21 +33,20 @@
     (move-file 
      (run execute)
      compile
-     (make make/proc)
+     make make/proc
      install-extension 
      setup-verbose-flag
      setup-install-flag installation-prefix chicken-prefix 
-     find-library
-     find-header program-path remove-file* 
-     patch yes-or-no? abort-setup
+     find-library find-header 
+     program-path remove-file* 
+     patch yes-or-no? abort-setup qs
      setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
-     required-chicken-version required-extension-version cross-chicken
-     host-extension)
+     required-chicken-version required-extension-version cross-chicken)
 
-  (import scheme chicken extras srfi-1 regex utils posix srfi-13 ports 
-	  data-structures foreign)
-
+  (import scheme chicken foreign
+	  regex utils posix ports extras data-structures
+	  srfi-1 srfi-13)
 
 ;;; Constants, variables and parameters
 
@@ -115,7 +114,6 @@
 
 
 (define-constant setup-file-extension "setup-info")
-(define-constant remote-repository-name "repository")
 
 (define *installed-executables* 
   `(("chicken" . ,(foreign-value "C_CHICKEN_PROGRAM" c-string))
@@ -157,25 +155,13 @@
 	    "/usr/local") ) ) )
 
 (define (cross-chicken) (##sys#fudge 39))
-(define host-extension (make-parameter #f))
 
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
 (define *move-command* (if *windows-shell* 'move 'mv))
-(define *gzip-program* 'gzip)
-(define *tar-program* 'tar)
-(define *builddir-created* #f)
-(define *keep-stuff* #f)
 (define *csc-options* '())
 (define *dont-ask* #f)
-(define *repository-tree* #f)
 (define *base-directory* (current-directory))
-(define *fetch-tree-only* #f)
-(define *svn-repository* #f)
-(define *svn-trunk* #f)
-(define *local-repository* #f)
-(define *repository-hosts* (list (list "www.call-with-current-continuation.org" *default-eggdir* 80)))
-(define *revision* #f)
 
 (define setup-root-directory      (make-parameter *base-directory*))
 (define setup-verbose-flag        (make-parameter #f))
@@ -226,21 +212,16 @@
 	  (create-directory-0 dir) ) 
 	(lambda (dir)
 	  (verb dir)
-	  (system* "mkdir -p ~a" (quotewrap dir) ) ) ) ) )
+	  (system* "mkdir -p ~a" (qs dir) ) ) ) ) )
 
-
-
-;;; Helper stuff
-
-(define (quotewrapped? str)
-  (and (string? str) (string-prefix? "\"" str) (string-suffix? "\"" str) ))
-
-(define (quotewrap str)
-  (cond ((quotewrapped? str) str)
-	((or (string-any char-whitespace? str)
-	     (and *windows-shell* (string-any (lambda (c) (char=? c #\/)) str)))
-	 (string-append "\"" str "\""))
-	(else str)))
+(define (qs str)
+  (string-concatenate
+   (map (lambda (c)
+	  (if (or (char-whitespace? c)
+		  (memq c '(#\# #\" #\' #\` #\´ #\~ #\& #\% #\$ #\! #\* #\; #\< #\> #\\)))
+	      (string #\\ c)
+	      (string c)))
+	(string->list str))))
 
 (define abort-setup 
   (make-parameter exit))
@@ -275,15 +256,15 @@
 		   (loop) ) ) ) ) ) ) )
       (let ((tmp (create-temporary-file)))
 	(patch (list tmp tmp) rx subst)
-	(system* "~A ~A ~A" *move-command* (quotewrap tmp)
-		 (quotewrap which)))))
+	(system* "~A ~A ~A" *move-command* (qs tmp)
+		 (qs which)))))
 
 (define run-verbose (make-parameter #t))
 
 (define (fixpath prg)
   (cond ((string=? prg "csc")
 	 (string-intersperse 
-	  (cons* (quotewrap 
+	  (cons* (qs 
 		  (make-pathname 
 		   chicken-bin-path
 		   (cdr (assoc prg *installed-executables*))))
@@ -291,7 +272,7 @@
 		 *csc-options*) 
 	  " ") )
 	((assoc prg *installed-executables*) =>
-	 (lambda (a) (quotewrap (make-pathname chicken-bin-path (cdr a)))))
+	 (lambda (a) (qs (make-pathname chicken-bin-path (cdr a)))))
 	(else prg) ) )
 
 (define (fixmaketarget file)
@@ -490,18 +471,13 @@
 
 (define (write-info id files info)
     (let ((info `((files ,@files) 
-		,@(or (and-let* (*repository-tree*
-				 (a (assq id *repository-tree*))
-				 (a2 (assq 'date (second a))) )
-			`((release ,(second a2))) )
-		      '() ) 
 		,@info)) )
       (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
       (let* ((sid (->string id))
 	    (setup-file (make-setup-info-pathname sid (repo-path #t)))
 	    (write-setup-info (with-output-to-file setup-file
 				(cut pp info))))
-	(unless *windows-shell* (run (chmod a+r ,(quotewrap setup-file))))
+	(unless *windows-shell* (run (chmod a+r ,(qs setup-file))))
 	write-setup-info)))
 
 (define (chdir dir)
@@ -516,7 +492,7 @@
     (ensure-directory to)
     (cond ((or (glob? from) (file-exists? from))
 	   (begin
-	     (run (,*copy-command* ,(quotewrap from) ,(quotewrap to))) 
+	     (run (,*copy-command* ,(qs from) ,(qs to))) 
 	     to))
 	  (err (error "file does not exist" from))
 	  (else (warning "file does not exist" from)))))
@@ -525,10 +501,10 @@
   (let ((from  (if (pair? from) (car from) from))
 	(to    (if (pair? from) (make-pathname to (cadr from)) to)))
     (ensure-directory to)
-    (run (,*move-command* ,(quotewrap from) ,(quotewrap to)) ) ) )
+    (run (,*move-command* ,(qs from) ,(qs to)) ) ) )
 
 (define (remove-file* dir)
-  (run (,*remove-command* ,(quotewrap dir)) ) )
+  (run (,*remove-command* ,(qs dir)) ) )
 
 (define (make-dest-pathname path file)
   (if (list? file)
@@ -566,15 +542,15 @@
 			       (to (make-dest-pathname rpathd f)) )
 			   (when (and (not *windows*) 
 				      (equal? "so" (pathname-extension to)))
-			     (run (,*remove-command* ,(quotewrap to)) ))
+			     (run (,*remove-command* ,(qs to)) ))
 			   (copy-file from to)
 			   (unless *windows-shell*
-			     (run (chmod a+r ,(quotewrap to))))
+			     (run (chmod a+r ,(qs to))))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) 
 					(equal? (pathname-extension to) "a"))
-			       (run (ranlib ,(quotewrap to)) ) ))
+			       (run (ranlib ,(qs to)) ) ))
 			   (make-dest-pathname rpath f)))
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -597,7 +573,7 @@
 	(begin
 	  (create-directory dir)
 	  (unless *windows-shell*
-		  (run (chmod a+x ,(quotewrap dir))))))))
+		  (run (chmod a+x ,(qs dir))))))))
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
 		     (verb (setup-verbose-flag)) (compile-only #f))
@@ -619,7 +595,7 @@
 		 (when verb (print cmd " ..."))
 		 cmd) ) ) ) )
     (when verb (print (if (zero? r) "succeeded." "failed.")))
-    (system (sprintf "~A ~A" *remove-command* (quotewrap fname)))
+    (system (sprintf "~A ~A" *remove-command* (qs fname)))
     (zero? r) ) )
 
 (define (required-chicken-version v)

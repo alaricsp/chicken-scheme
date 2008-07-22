@@ -127,7 +127,7 @@
 
 ;; found by Jim Ursetto;
 
-(module m12 ((begin0 apply))
+(module m12 (begin0)
   (import scheme)
   (define-syntax begin0
     (syntax-rules ()

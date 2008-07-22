@@ -30,7 +30,7 @@ TODO for macro/module system					-*- Outline -*-
    (as comment in expand.scm indicated (##sys#register-export))
 
 * documentation
-** later document expander (-> wiki, internals)
+** document ("HI/LO") expander (-> wiki, internals)
 
 * build
 ** chicken.texi needs to be regenerated

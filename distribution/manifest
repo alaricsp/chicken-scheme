@@ -206,6 +206,7 @@ tests/module-tests-compiled.scm
 tests/syntax-tests.scm
 tests/ec.scm
 tests/ec-tests.scm
+tests/test-chained-modules.scm
 tweaks.scm
 utils.scm
 pcre/AUTHORS
