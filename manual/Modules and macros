@@ -61,6 +61,14 @@ Similar to {{quote}} but retains syntactical context information for
 embedded identifiers.
 
 
+==== syntax->datum
+
+ [procedure] (syntax->datum EXPRESSION)
+
+Strips all syntactical information from {{EXPRESSION}}, returning a new expression
+where symbols have all context-information removed.
+
+
 === Explicit renaming macros
 
 The low-level macro facility that CHICKEN provides is called "explicit
@@ -217,6 +225,15 @@ A module is initially empty (has no visible bindings). You must at least
 import the {{scheme}} module to do anything useful. To access any
 of the non-standard macros and procedures, import the {{chicken}}
 module.
+
+CHICKEN's module system has the following features and shortcomings:
+
+* Indirect exports for syntax definitions must be listed
+* Separation of copile/expansion-time and run-time code is provided, which allows cross compilation
+* Module-generating code is only created, when needed
+* Supports batch-compilation of separate compilation units
+* No separate "identifier" type is used, all identifiers appearing in code and processed in expansions are symbols
+* The module system is fully optional
 
 
 ==== module
@@ -458,7 +475,8 @@ maintainers if you encounter behaviour that you think is
 not correct or that triggers an error where there shouldn't
 be one.
 
-* Reexport of syntax is currently not supported
+* Reexport of syntactic bindings is currently not supported
+* In evaluated code, loading a file containing module information and importing from a module contained in that file will not work when the loading and import is performed in the same toplevel expression (this does not apply, when import libraries are used) 
 * Currently value bindings imported by {{import}} and {{import-for-syntax}} share the same import-environment.
 
 

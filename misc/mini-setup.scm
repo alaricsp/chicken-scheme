@@ -24,7 +24,7 @@
 
   (define program-path
     (make-parameter 
-     (let ((path (pathname-directory (car (argv)))))
+     (and-let* ((path (pathname-directory (car (argv)))))
        (make-pathname
 	(if (absolute-pathname? path)
 	    path

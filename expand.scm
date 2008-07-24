@@ -107,6 +107,8 @@
 	   (list->vector (map walk (vector->list x))))
 	  (else x))))
 
+(define (syntax->datum exp) (##sys#strip-syntax exp))
+
 
 ;;; Macro handling
 
@@ -157,6 +159,8 @@
     (dd "invoking macro: " name)
     (dd `(STATIC-SE: ,@(map-se se)))
     (handle-exceptions ex
+	;; modify error message in condition object to include 
+	;; currently expanded macro-name
 	(##sys#abort
 	 (if (and (##sys#structure? ex 'condition)
 		  (memv 'exn (##sys#slot ex 1)) )
