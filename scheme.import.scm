@@ -52,5 +52,6 @@
        close-input-port close-output-port load read eof-object? read-char
        peek-char write display write-char newline with-input-from-file
        with-output-to-file dynamic-wind values call-with-values eval
+       char-ready?
        scheme-report-environment null-environment interaction-environment)
  ##sys#default-macro-environment)
