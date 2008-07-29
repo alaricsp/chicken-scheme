@@ -168,6 +168,13 @@
 	  variable to a non-empty value. Only use this feature if you
 	  know what you are doing.
 
+        SRCDIR= 
+          Specifies that CHICKEN should be built outside of its source
+          tree. The SRCDIR variable indicates the location of the
+          CHICKEN source tree. The executables and object files will
+          be generated in the current directory.
+
+
 	To remove CHICKEN from your file-system, enter (probably as
         root):
 
