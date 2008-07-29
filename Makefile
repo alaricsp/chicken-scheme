@@ -27,7 +27,7 @@
 STANDARD_TARGETS \
 	= all clean distclean spotless install uninstall confclean check \
 	  fullcheck dist libs install-libs bootstrap
-srcdir = .
+SRCDIR = .
 
 .PHONY: $(STANDARD_TARGETS)
 
@@ -51,30 +51,30 @@ $(STANDARD_TARGETS):
 	@exit 1
 else
 all:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) all
 clean:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) clean
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) clean
 distclean:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) distclean
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) distclean
 spotless:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) spotless
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) spotless
 install:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) install
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) install
 uninstall:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) uninstall
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) uninstall
 confclean:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) confclean
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) confclean
 check:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) check
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) check
 fullcheck:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) fullcheck
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) fullcheck
 dist:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) distfiles
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) distfiles
 	csi -s scripts/makedist.scm
 libs:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) libs
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) libs
 install-libs:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) install-libs
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) install-libs
 bootstrap:
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) bootstrap
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) bootstrap
 endif

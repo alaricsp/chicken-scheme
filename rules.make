@@ -807,7 +807,7 @@ ifneq ($(POSTINSTALL_STATIC_LIBRARY),true)
 	$(POSTINSTALL_STATIC_LIBRARY) $(POSTINSTALL_STATIC_LIBRARY_FLAGS) \
 	  $(ILIBDIR)/libuchicken$(A)
 endif
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken.h $(DESTDIR)$(IINCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken.h $(DESTDIR)$(IINCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(CHICKEN_CONFIG_H) $(DESTDIR)$(IINCDIR)
 ifndef STATICBUILD
 ifdef DLLSINPATH
@@ -845,7 +845,7 @@ install:
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(CHICKEN_PROGRAM)$(EXE) \
 	  $(CSI_PROGRAM)$(EXE) $(CSC_PROGRAM)$(EXE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
 	  $(CHICKEN_SETUP_PROGRAM)$(EXE)
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) NEEDS_RELINKING=no RUNTIME_LINKER_PATH=$(LIBDIR) install
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) NEEDS_RELINKING=no RUNTIME_LINKER_PATH=$(LIBDIR) install
 	$(MAKE_WRITABLE_COMMAND) $(CHICKEN_PROGRAM)$(EXE) $(CSI_PROGRAM)$(EXE) \
 	  $(CSC_PROGRAM)$(EXE) $(CHICKEN_PROFILE_PROGRAM)$(EXE)
 ifndef STATICBUILD
@@ -880,25 +880,25 @@ ifneq ($(POSTINSTALL_PROGRAM),true)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_SETUP_PROGRAM)
 endif
 endif
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/csi.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/csc.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken-setup.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken-profile.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken-bug.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/csi.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/csc.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-setup.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-profile.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-bug.1 $(DESTDIR)$(IMANDIR)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DESTDIR)$(IDOCDIR)/html
-	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/html/* $(DESTDIR)$(IDOCDIR)/html
-	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken.pdf $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/README $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/LICENSE $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken-ffi-macros.scm $(DESTDIR)$(IDATADIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(srcdir)/chicken-sys-macros.scm $(DESTDIR)$(IDATADIR)
+	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/html/* $(DESTDIR)$(IDOCDIR)/html
+	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken.pdf $(DESTDIR)$(IDOCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/README $(DESTDIR)$(IDOCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/LICENSE $(DESTDIR)$(IDOCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-ffi-macros.scm $(DESTDIR)$(IDATADIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-sys-macros.scm $(DESTDIR)$(IDATADIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) *.exports $(DESTDIR)$(IDATADIR)
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.info $(DESTDIR)$(IINFODIR)
 	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(DESTDIR)$(IINFODIR) chicken.info
 ifdef WINDOWS
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(srcdir)/csibatch.bat $(DESTDIR)$(IBINDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(SRCDIR)/csibatch.bat $(DESTDIR)$(IBINDIR)
 endif
 endif
 
@@ -1105,17 +1105,17 @@ fullcheck: check compiler-check
 
 compiler-check:
 	@echo "======================================== packing ..."
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) dist
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) dist
 	$(REMOVE_COMMAND $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
 	tar -C tests -xzf `ls -t chicken-*.tar.gz | head -1`
 	@echo "======================================== building stage 1 ..."
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	touch tests/chicken-*/*.scm
 	@echo "======================================== building stage 2 ..."
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	cat tests/chicken-*/*.c >tests/stage2.out
 	@echo "======================================== building stage 3 ..."
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	cat tests/chicken-*/*.c >tests/stage3.out
 	diff tests/stage2.out tests/stage3.out >tests/stages.diff
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
@@ -1125,14 +1125,14 @@ compiler-check:
 
 .PHONY: bootstrap bootstrap.tar.gz
 
-bootstrap: $(srcdir)/bootstrap.tar.gz
-	gzip -d -c $(srcdir)/bootstrap.tar.gz | tar xvf -
+bootstrap: $(SRCDIR)/bootstrap.tar.gz
+	gzip -d -c $(SRCDIR)/bootstrap.tar.gz | tar xvf -
 	touch *.c
-	$(MAKE) -f $(srcdir)/Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
 	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 
-$(srcdir)/bootstrap.tar.gz: distfiles
-	tar cfz $(srcdir)/bootstrap.tar.gz library.c eval.c data-structures.c ports.c files.c extras.c \
+$(SRCDIR)/bootstrap.tar.gz: distfiles
+	tar cfz $(SRCDIR)/bootstrap.tar.gz library.c eval.c data-structures.c ports.c files.c extras.c \
         lolevel.c utils.c tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
         posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c $(COMPILER_OBJECTS_1:=.c)

@@ -25,12 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-srcdir = .
-VPATH  = $(srcdir)
+SRCDIR = .
+VPATH  = $(SRCDIR)
 
 # platform configuration
 
-ARCH = $(shell sh $(srcdir)/config-arch.sh)
+ARCH = $(shell sh $(SRCDIR)/config-arch.sh)
 
 # options
 
@@ -55,7 +55,7 @@ CHICKEN_CONFIG_H = chicken-config.h
 
 # select default and internal settings
 
-include $(srcdir)/defaults.make
+include $(SRCDIR)/defaults.make
 
 chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_DIRENT_H 1" >$@
@@ -102,4 +102,4 @@ ifneq ($(USE_HOST_PCRE),)
 endif
 	cat chicken-defaults.h >>$@
 
-include $(srcdir)/rules.make
+include $(SRCDIR)/rules.make

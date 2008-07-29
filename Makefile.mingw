@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-srcdir = .
-VPATH  = $(srcdir)
+SRCDIR = .
+VPATH  = $(SRCDIR)
 
 # platform configuration
 
@@ -74,7 +74,7 @@ POSIXFILE = posixwin
 
 CUSTOM_CHICKEN_DEFAULTS=1
 
-include $(srcdir)/defaults.make
+include $(SRCDIR)/defaults.make
 
 # main target
 
@@ -209,4 +209,4 @@ chicken-defaults.h:
 	echo # define C_BINARY_VERSION $(BINARYVERSION) >>$@
 	echo #endif >>$@
 
-include $(srcdir)/rules.make
+include $(SRCDIR)/rules.make

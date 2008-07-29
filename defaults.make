@@ -39,8 +39,8 @@ endif
 
 # directories
 
-srcdir = .
-VPATH  = $(srcdir)
+SRCDIR = .
+VPATH  = $(SRCDIR)
 
 DESTDIR =
 ifeq ($(PLATFORM),mingw-msys)
@@ -161,7 +161,7 @@ endif
 ifndef NOPTABLES
 C_COMPILER_PTABLES_OPTIONS ?= -DC_ENABLE_PTABLES
 endif
-INCLUDES ?= -I. -I$(srcdir)
+INCLUDES ?= -I. -I$(SRCDIR)
 C_COMPILER_COMPILE_OPTION ?= -c
 C_COMPILER_OUTPUT_OPTION ?= -o
 C_COMPILER_OUTPUT ?= $(C_COMPILER_OUTPUT_OPTION) $@
@@ -274,7 +274,7 @@ CHICKEN = chicken$(EXE)
 
 CHICKEN_OPTIONS = \
 	-quiet -no-trace -optimize-level 2 \
-	-include-path . -include-path $(srcdir)
+	-include-path . -include-path $(SRCDIR)
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
@@ -283,7 +283,7 @@ CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 ifneq ($(USE_HOST_PCRE),)
 CHICKEN_PCRE_LIBRARY_OPTIONS = 
 else
-CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(srcdir)/pcre
+CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)/pcre
 endif
 
 # targets
@@ -329,7 +329,7 @@ all: buildsvnrevision $(TARGETS)
 endif
 
 buildsvnrevision:
-	sh $(srcdir)/svnrevision.sh
+	sh $(SRCDIR)/svnrevision.sh
 
 builddir:
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) pcre

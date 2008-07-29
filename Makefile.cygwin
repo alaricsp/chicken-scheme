@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-srcdir = .
-VPATH  = $(srcdir)
+SRCDIR = .
+VPATH  = $(SRCDIR)
 
 # platform configuration
 
@@ -82,7 +82,7 @@ APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 # select default and internal settings
 
 CUSTOM_CHICKEN_DEFAULTS=1
-include $(srcdir)/defaults.make
+include $(SRCDIR)/defaults.make
 
 chicken-config.h: chicken-defaults.h buildsvnrevision
 	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >$@
@@ -226,4 +226,4 @@ chicken-defaults.h:
 	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
 
-include $(srcdir)/rules.make
+include $(SRCDIR)/rules.make
