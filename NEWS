@@ -1,3 +1,8 @@
+3.3.5
+
+- bug fix for (string->number "/")
+
+
 3.3.2
 
 - support for selective procedure profiling in the compiler

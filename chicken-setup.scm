@@ -196,6 +196,7 @@
 (define *move-command* (if *windows-shell* 'move 'mv))
 (define *gzip-program* 'gzip)
 (define *tar-program* 'tar)
+
 (define *fetch-only* #f)
 (define *builddir-created* #f)
 (define *keep-stuff* #f)

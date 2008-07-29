@@ -25,6 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+srcdir = .
+VPATH  = $(srcdir)
+
 # platform configuration
 
 DLLSINPATH = 1
@@ -72,7 +75,7 @@ POSIXFILE = posixwin
 
 # select default and internal settings
 
-include defaults.make
+include $(srcdir)/defaults.make
 
 # main target
 
@@ -122,4 +125,4 @@ endif
 	echo "#define C_HACKED_APPLY" >>$@
 	cat chicken-defaults.h >>$@
 
-include rules.make
+include $(srcdir)/rules.make

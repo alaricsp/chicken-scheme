@@ -39,6 +39,9 @@ endif
 
 # directories
 
+srcdir = .
+VPATH  = $(srcdir)
+
 DESTDIR =
 ifeq ($(PLATFORM),mingw-msys)
 PREFIX ?= c:/devtools
@@ -151,13 +154,14 @@ PCRE_INCLUDES =
 C_COMPILER_PCRE_OPTIONS =
 PCRE_OBJECTS_1 =
 else
+PCRE_DIR ?= $(VPATH)/pcre
 C_COMPILER_PCRE_OPTIONS = -DPCRE_STATIC
-PCRE_INCLUDES = $(INCLUDES) -Ipcre
+PCRE_INCLUDES = $(INCLUDES) -I$(PCRE_DIR)
 endif
 ifndef NOPTABLES
 C_COMPILER_PTABLES_OPTIONS ?= -DC_ENABLE_PTABLES
 endif
-INCLUDES ?= -I.
+INCLUDES ?= -I. -I$(srcdir)
 C_COMPILER_COMPILE_OPTION ?= -c
 C_COMPILER_OUTPUT_OPTION ?= -o
 C_COMPILER_OUTPUT ?= $(C_COMPILER_OUTPUT_OPTION) $@
@@ -268,7 +272,9 @@ CHICKEN = chicken$(EXE)
 
 # Scheme compiler flags
 
-CHICKEN_OPTIONS = -quiet -no-trace -optimize-level 2 -include-path .
+CHICKEN_OPTIONS = \
+	-quiet -no-trace -optimize-level 2 \
+	-include-path . -include-path $(srcdir)
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
@@ -277,7 +283,7 @@ CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 ifneq ($(USE_HOST_PCRE),)
 CHICKEN_PCRE_LIBRARY_OPTIONS = 
 else
-CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path pcre
+CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(srcdir)/pcre
 endif
 
 # targets
@@ -323,12 +329,15 @@ all: buildsvnrevision $(TARGETS)
 endif
 
 buildsvnrevision:
-	sh svnrevision.sh
+	sh $(srcdir)/svnrevision.sh
+
+builddir:
+	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) pcre
 
 # generic part of chicken-config.h
 
 ifndef CUSTOM_CHICKEN_DEFAULTS
-chicken-defaults.h: buildsvnrevision
+chicken-defaults.h: buildsvnrevision builddir
 	echo "/* generated */" >$@
 	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
 	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >>$@
