@@ -781,6 +781,9 @@ be garbage-collected (with that object as its argument). Note that
 the finalizer will '''not''' be called while interrupts are disabled.
 This procedure returns {{X}}.
 
+Finalizers are invoked asynchronously, in the thread that happens
+to be currently running.
+
 
 ==== set-gc-report!
 

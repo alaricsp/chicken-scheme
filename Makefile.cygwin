@@ -32,6 +32,7 @@ VPATH  = $(SRCDIR)
 
 ARCH = x86
 HACKED_APPLY=1
+DLLSINPATH = 1
 
 # options
 
@@ -68,8 +69,6 @@ LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,--out-implib,libuchicken.dll.a \
 	-Wl,--no-whole-archive
 
 LIBRARIES = -lm 
-LIBCHICKEN_SO_LIBRARIES = -lm 
-LIBUCHICKEN_SO_LIBRARIES = -lm 
 LIBCHICKEN_IMPORT_LIBRARY = libchicken.dll.a
 LIBUCHICKEN_IMPORT_LIBRARY = libuchicken.dll.a
 
@@ -83,6 +82,9 @@ APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 
 CUSTOM_CHICKEN_DEFAULTS=1
 include $(SRCDIR)/defaults.make
+
+LIBCHICKEN_SO_LIBRARIES = $(LIBRARIES)
+LIBUCHICKEN_SO_LIBRARIES = $(LIBRARIES)
 
 chicken-config.h: chicken-defaults.h buildsvnrevision
 	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >$@
