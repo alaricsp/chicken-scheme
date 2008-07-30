@@ -176,5 +176,5 @@
 	 extension-information
 	 repository-path
 	 with-exception-handler
-	 syntax->datum)
+	 strip-syntax)
  ##sys#chicken-macro-environment)	;*** incorrect - won't work in compiled executable

@@ -61,9 +61,9 @@ Similar to {{quote}} but retains syntactical context information for
 embedded identifiers.
 
 
-==== syntax->datum
+==== strip-syntax
 
- [procedure] (syntax->datum EXPRESSION)
+ [procedure] (strip-syntax EXPRESSION)
 
 Strips all syntactical information from {{EXPRESSION}}, returning a new expression
 where symbols have all context-information removed.
@@ -265,6 +265,15 @@ not exported from compiled code.
 
 As a special case, specifying {{*}} instead of an export-list
 will export all definitions.
+
+==== export
+
+ [syntax] (export EXPORT ...)
+
+Allows augmenting module-exports from inside the module-body.
+{{EXPORT}} is if the same form as an export-specifier in a 
+{{module}} export list. An export must precede its first occurrence
+(either use or definition).
 
 ==== import
 

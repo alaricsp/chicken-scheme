@@ -107,7 +107,7 @@
 	   (list->vector (map walk (vector->list x))))
 	  (else x))))
 
-(define (syntax->datum exp) (##sys#strip-syntax exp))
+(define strip-syntax ##sys#strip-syntax)
 
 
 ;;; Macro handling
@@ -1206,6 +1206,31 @@
       (##sys#register-meta-expression `(begin ,@(cdr x))) )
     `(##core#elaborationtimeonly (,(r 'begin) ,@(cdr x))))))
 
+(##sys#extend-macro-environment
+ 'export
+ '()
+ (##sys#er-transformer
+  (lambda (x r c)
+    (let ((exps (cdr x))
+	  (mod (##sys#current-module)))
+      (unless mod
+	(syntax-error 'export "`export' used outside module body"))
+      (for-each
+       (lambda (exp)
+	 (when (and (not (symbol? exp)) 
+		    (let loop ((iexp exp))
+		      (cond ((null? iexp) #f)
+			    ((not (pair? iexp)) #t)
+			    ((not (symbol? (car iexp))) #t)
+			    (else (loop (cdr iexp))))))
+	   (syntax-error 'export "invalid export syntax" exp (module-name mod))))
+       exps)
+      (set-module-export-list! 
+       mod
+       (append (module-export-list mod) 
+	       (map ##sys#strip-syntax exps)))
+      '(##sys#void)))))
+
 
 ;;; syntax-rules
 
@@ -1226,7 +1251,8 @@
   (hide make-module module? %make-module
 	module-name module-vexports module-sexports
 	set-module-vexports! set-module-sexports!
-	module-export-list module-defined-list set-module-defined-list!
+	module-export-list set-module-export-list! 
+	module-defined-list set-module-defined-list!
 	module-import-forms set-module-import-forms!
 	module-meta-import-forms set-module-meta-import-forms!
 	module-exist-list set-module-exist-list!
@@ -1239,7 +1265,7 @@
 		vexports sexports) 
   module?
   (name module-name)			; SYMBOL
-  (export-list module-export-list)	; (SYMBOL | (SYMBOL ...) ...)
+  (export-list module-export-list set-module-export-list!) ; (SYMBOL | (SYMBOL ...) ...)
   (defined-list module-defined-list set-module-defined-list!) ; ((SYMBOL . VALUE) ...)    - *exported* value definitions
   (exist-list module-exist-list set-module-exist-list!)	      ; (SYMBOL ...)    - only for checking refs to undef'd
   (defined-syntax-list module-defined-syntax-list set-module-defined-syntax-list!) ; ((SYMBOL . VALUE) ...)

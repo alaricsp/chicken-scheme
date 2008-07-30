@@ -21,6 +21,8 @@
   been removed
 - the compiler options "-check-imports", "-import" and "-emit-exports"
   have been removed
+- new procedures:
+  strip-syntax
 - the following macros have been removed:
     define-foreign-record
     define-foreign-enum

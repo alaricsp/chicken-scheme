@@ -232,3 +232,25 @@
 ;;; found by Jim Ursetto
 
 (let ((lambda 0)) (define (foo) 1) (foo))
+
+
+;;; define-macro implementation (only usable in a module-free environment)
+
+(define-syntax define-macro
+  (syntax-rules ()
+    ((_ (name . llist) body ...)
+     (define-syntax name
+       (lambda (x r c)
+	 (apply (lambda llist body ...) (strip-syntax (cdr x))))))))
+
+(define-macro (loop . body)
+  (let ((loop (gensym)))
+    `(call/cc
+      (lambda (exit)
+	(let ,loop () ,@body (,loop))))))
+
+(let ((i 1))
+  (loop (when (> i 10) (exit #f))
+	(print* i " ")
+	(set! i (add1 i))))
+(newline)
