@@ -330,14 +330,13 @@ endif
 
 buildsvnrevision:
 	sh $(SRCDIR)/svnrevision.sh
-
-builddir:
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) pcre
+
 
 # generic part of chicken-config.h
 
 ifndef CUSTOM_CHICKEN_DEFAULTS
-chicken-defaults.h: buildsvnrevision builddir
+chicken-defaults.h: buildsvnrevision
 	echo "/* generated */" >$@
 	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
 	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >>$@
