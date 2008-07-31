@@ -6,6 +6,7 @@
 3.3.5
 
 - added support for out-of-tree compilation (via the SRCDIR variable)
+  [thanks to Ivan Shmakov]
 - bug fix for (string->number "/")
 
 
