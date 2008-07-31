@@ -622,22 +622,22 @@
 				 (exports 
 				  (or (eq? #t (caddr x))
 				      (map (lambda (exp)
-					     (cond ((symbol? exp) (rename exp se))
+					     (cond ((symbol? exp) exp)
 						   ((and (pair? exp) 
 							 (let loop ((exp exp))
 							   (or (null? exp)
 							       (and (symbol? (car exp))
 								    (loop (cdr exp))))))
-						    (map (cut rename <> se) exp) )
+						    exp)
 						   (else
 						    (##sys#syntax-error-hook
 						     'module
 						     "invalid export syntax" exp name))))
-					   (caddr x)))))
+					   (##sys#strip-syntax (caddr x))))))
 			    (when (##sys#current-module)
 			      (##sys#syntax-error-hook 'module "modules may not be nested" name))
 			    (parameterize ((##sys#current-module 
-					    (##sys#register-module name exports) )
+					    (##sys#register-module name exports))
 					   (##sys#current-environment '())
 					   (##sys#macro-environment ##sys#initial-macro-environment))
 				(let loop ((body (cdddr x)) (xs '()))

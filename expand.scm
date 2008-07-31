@@ -1193,7 +1193,9 @@
     (##sys#check-syntax 'module x '(_ symbol _ . #(_ 0)))
     `(##core#module 
       ,(cadr x)
-      ,(if (c (r '*) (caddr x)) #t (caddr x))
+      ,(if (c (r '*) (caddr x)) 
+	   #t 
+	   (caddr x))
       ,@(cdddr x)))))
 
 (##sys#extend-macro-environment

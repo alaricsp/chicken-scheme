@@ -732,18 +732,18 @@
 			       (exports 
 				(or (eq? #t (caddr x))
 				    (map (lambda (exp)
-					   (cond ((symbol? exp) (lookup exp se))
+					   (cond ((symbol? exp) exp)
 						 ((and (pair? exp)
 						       (let loop ((exp exp))
 							 (or (null? exp)
 							     (and (symbol? (car exp))
 								  (loop (cdr exp))))))
-						  (map (cut lookup <> se) exp) )
+						  exp)
 						 (else
 						  (##sys#syntax-error-hook
 						   'module
 						   "invalid export syntax" exp name))))
-					 (caddr x)))))
+					 (##sys#strip-syntax (caddr x))))))
 			  (when (##sys#current-module)
 			    (##sys#syntax-error-hook 'module "modules may not be nested" name))
 			  (let-values (((body mreg)

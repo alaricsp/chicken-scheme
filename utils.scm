@@ -439,16 +439,14 @@
 	[make-pathname make-pathname]
 	[file-exists? file-exists?]
 	[call-with-output-file call-with-output-file] )
-    (lambda ext
-      (let ([dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP"))]
-	    [ext (if (pair? ext) (car ext) "tmp")])
+    (lambda (#!optional (ext "tmp"))
+      (let ([dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP") "/tmp")])
 	(##sys#check-string ext 'create-temporary-file)
 	(let loop ()
 	  (let* ([n (##sys#fudge 16)]
 		 [pn (make-pathname dir (##sys#string-append "t" (number->string n 16)) ext)] )
-	    (if (file-exists? pn)
-		(loop)
-		(call-with-output-file pn (lambda (p) pn)) ) ) ) ) ) ) )
+	    (cond ((file-exists? pn) (loop))
+		  (else (call-with-output-file pn (lambda (p) pn)) ) ) ) ) ) ) ) )
 
 ;; Directory string or list only contains path-separators
 ;; and/or current-directory names.
