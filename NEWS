@@ -1,3 +1,8 @@
+3.3.6
+
+- Cygwin build patched to put the runtime libraries in the right place. 
+  [thanks to Nathan Thern]
+
 3.3.5
 
 - added support for out-of-tree compilation (via the SRCDIR variable)
