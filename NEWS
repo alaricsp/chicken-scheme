@@ -23,6 +23,11 @@
   have been removed
 - new procedures:
   strip-syntax
+  expand
+- new macros
+  define-syntax
+  module
+  export
 - the following macros have been removed:
     define-foreign-record
     define-foreign-enum

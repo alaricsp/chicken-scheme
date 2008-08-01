@@ -42,7 +42,8 @@
      patch yes-or-no? abort-setup qs
      setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
-     required-chicken-version required-extension-version cross-chicken)
+     required-chicken-version required-extension-version cross-chicken
+     current-extension-version)
 
   (import scheme chicken foreign
 	  regex utils posix ports extras data-structures
@@ -167,6 +168,7 @@
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
 (define program-path (make-parameter chicken-bin-path))
+(define current-extension-version (make-parameter #f)) ; should be set by invoking process
 
 
 ; Convert a string with a version (such as "1.22.0") to a list of the

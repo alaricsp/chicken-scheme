@@ -32,36 +32,35 @@
 	      (warning "extension has no such version - using trunk" egg version))
 	    (or (and hastrunk trunkdir)
 		eggdir)))))
-
+  
   (define (locate-egg/svn egg repo #!optional version)
-    (let* ((files
-	    (with-input-from-pipe 
-	     (sprintf "svn ls -R '~a/~a'" repo egg)
-	     read-lines))
-	   (hastrunk (member "trunk/" files)) 
-	   (filedir
-	    (or (let ((vs (filter-map
-			   (lambda (f)
-			     (and-let* ((m (string-search "^tags/([^/]+)/" f)))
-			       (cadr m)))
-			   files)))
-		  (if version
-		      (if (member version vs)
-			  (string-append "tags/" version)
-			  (error "version not found" egg version))
-		      (let ((vs (sort vs version>=?)))
-			(and (pair? vs)
-			     (string-append "tags/" (car vs))))))
-		(begin
-		  (when version
-		    (warning "extension has no such version - using trunk" egg version))
-		  (and hastrunk "trunk") )
-		""))
-	   (tmpdir (create-temporary-directory))
-	   (cmd (sprintf "svn co '~a/~a/~a' '~a'" repo egg filedir tmpdir)))
-      (print "  " cmd)
-      (system* cmd)
-      tmpdir))
+    (let ((cmd (sprintf "svn ls -R \"~a/~a\"" repo egg)))
+      (print "checking available versions ...\n  " cmd)
+      (let* ((files (with-input-from-pipe cmd read-lines))
+	     (hastrunk (member "trunk/" files)) 
+	     (filedir
+	      (or (let ((vs (filter-map
+			     (lambda (f)
+			       (and-let* ((m (string-search "^tags/([^/]+)/" f)))
+				 (cadr m)))
+			     files)))
+		    (if version
+			(if (member version vs)
+			    (string-append "tags/" version)
+			    (error "version not found" egg version))
+			(let ((vs (sort vs version>=?)))
+			  (and (pair? vs)
+			       (string-append "tags/" (car vs))))))
+		  (begin
+		    (when version
+		      (warning "extension has no such version - using trunk" egg version))
+		    (and hastrunk "trunk") )
+		  ""))
+	     (tmpdir (create-temporary-directory))
+	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\"" repo egg filedir tmpdir)))
+	(print "  " cmd)
+	(system* cmd)
+	tmpdir)) )
 
   (define (locate-egg/http egg url #!optional version)
     (let* ((tmpdir (create-temporary-directory))

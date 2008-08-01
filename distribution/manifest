@@ -304,3 +304,6 @@ srfi-14.import.c
 tcp.import.c
 srfi-18.import.c
 utils.import.c
+setup-download.scm
+setup-api.scm
+setup-utils.scm
