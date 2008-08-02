@@ -330,8 +330,9 @@ endif
 
 buildsvnrevision:
 	sh $(SRCDIR)/svnrevision.sh
+ifeq ($(USE_HOST_PCRE),)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) pcre
-
+endif
 
 # generic part of chicken-config.h
 
