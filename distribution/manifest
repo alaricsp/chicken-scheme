@@ -307,3 +307,4 @@ utils.import.c
 setup-download.scm
 setup-api.scm
 setup-utils.scm
+chicken-status.scm

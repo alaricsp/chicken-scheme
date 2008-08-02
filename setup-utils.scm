@@ -1,4 +1,27 @@
 ;;;; setup-utils.scm
+;
+; Copyright (c) 2008, The Chicken Team
+; All rights reserved.
+;
+; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
+; conditions are met:
+;
+;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+;     disclaimer. 
+;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
+;     products derived from this software without specific prior written permission. 
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
+; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+; AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR
+; CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+; SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
 
 
 (require-library regex utils ports tcp extras posix 
@@ -10,7 +33,9 @@
 		     create-temporary-directory
 		     remove-directory
 		     outdated-dependencies
-		     yes-or-no?)
+		     yes-or-no?
+		     get-terminal-width
+		     format-string)
   
   (import scheme chicken)
   (import regex utils ports tcp extras posix srfi-1 srfi-13 
@@ -34,6 +59,22 @@
 		  (loop (cdr p1) (cdr p2))))
 	    ((string>=? (car p1) (car p2)) (loop (cdr p1) (cdr p2)))
 	    (else #f))))
+
+  (define (format-string str cols #!optional right (padc #\space))
+    (let* ((len (string-length str))
+	   (pad (make-string (fxmax 0 (fx- cols len)) padc)) )
+      (if right
+	  (string-append pad str)
+	  (string-append str pad) ) ) )
+
+  (define get-terminal-width
+    (let ((default-width 78))	     ; Standard default terminal width
+      (lambda ()
+	(let ((cop (current-output-port)))
+	  (if (terminal-port? cop)
+	      (let ((w (nth-value 1 (terminal-size cop))))
+		(if (zero? w) default-width w))
+	      default-width)))))
 
   (define (http-fetch host port loc dest)
     (let-values (((in out) (tcp-connect host port)))

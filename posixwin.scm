@@ -1731,6 +1731,10 @@ EOF
     (lambda code
       (ex0 (if (pair? code) (car code) 0)) ) ) )
 
+(define (terminal-port? port)
+  (##sys#check-port port 'terminal-port?)
+  #f)
+
 (define-foreign-variable _iofbf int "_IOFBF")
 (define-foreign-variable _iolbf int "_IOLBF")
 (define-foreign-variable _ionbf int "_IONBF")
@@ -2101,7 +2105,6 @@ EOF
 (define-unimplemented signal-masked?)
 (define-unimplemented signal-unmask!)
 (define-unimplemented terminal-name)
-(define-unimplemented terminal-port?)
 (define-unimplemented terminal-size)
 (define-unimplemented unmap-file-from-memory)
 (define-unimplemented user-information)
