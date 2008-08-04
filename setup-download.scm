@@ -24,16 +24,25 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library extras regex posix utils setup-utils srfi-1 data-structures)
+(require-library extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13)
 
 
 (module setup-download (retrieve-extension
 			locate-egg/local
 			locate-egg/svn
-			locate-egg/http)
+			locate-egg/http
+			temporary-directory)
 
   (import scheme chicken)
-  (import extras regex posix utils setup-utils srfi-1 data-structures)
+  (import extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13)
+
+  (define temporary-directory (make-parameter #f))
+
+  (define (get-temporary-directory)
+    (or (temporary-directory)
+	(let ((dir (create-temporary-directory)))
+	  (temporary-directory dir)
+	  dir)))
 
   (define (locate-egg/local egg dir #!optional version)
     (let* ((eggdir (make-pathname dir egg))
@@ -79,36 +88,69 @@
 		      (warning "extension has no such version - using trunk" egg version))
 		    (and hastrunk "trunk") )
 		  ""))
-	     (tmpdir (create-temporary-directory))
+	     (tmpdir (get-temporary-directory))
 	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\"" repo egg filedir tmpdir)))
 	(print "  " cmd)
 	(system* cmd)
 	tmpdir)) )
 
   (define (locate-egg/http egg url #!optional version)
-    (let* ((tmpdir (create-temporary-directory))
-	   (m (string-match "([^/]+)(:([^:/]+))?(/.+)" url))
-	   (host (if m (cadr m) url))
-	   (port (if (and m (caddr m)) 
-		     (or (string->number (cadddr m)) 
-			 (error "not a valid port" (cadddr m)))
+    (let* ((tmpdir (get-temporary-directory))
+	   (m (string-match "(http://)?([^/]+)(:([^:/]+))?(/.+)" url))
+	   (host (if m (caddr m) url))
+	   (port (if (and m (cadddr m)) 
+		     (or (string->number (list-ref m 4)) 
+			 (error "not a valid port" (list-ref m 4)))
 		     80))
 	   (loc (string-append
-		 (if m (list-ref m 4) "/")
+		 (if m (list-ref m 5) "/")
 		 (if version
 		     (string-append "?version=" version)
 		     ""))))
       (http-fetch host port loc tmpdir)
       tmpdir))
 
+  (define (http-fetch host port loc dest)
+    (let-values (((in out) (tcp-connect host port)))
+      (fprintf out "GET ~a HTTP/1.1\r\nConnection: close\r\nUser-Agent: chicken-install ~a\r\nAccept: */*\r\nContent-length: 0\r\n\r\n"
+	       loc (chicken-version))
+      (close-output-port out)
+      (let* ((h1 (read-line in))
+	     (m (string-match "HTTP/[0-9.]+\\s+([0-9]+)\\s+.*" h1)))
+	(print h1)
+	;;*** handle redirects
+	(unless (string=? "200" (cadr m))
+	  (error "invalid response from server" h1))
+	(do () ((string=? "" (read-line in))))
+      (let loop ((files '()))
+	(let ((name (read in)))
+	  (print name)
+	  (cond ((and (pair? name) (eq? 'error (car name)))
+		 (apply error (cdr name)))
+	        ((or (eof-object? name) (not name))
+		 (close-input-port in)
+		 (reverse files) )
+		((not (string? name))
+		 (error "invalid file name - possibly corrupt transmission" name))
+		((string-suffix? "/" name)
+		 (create-directory (make-pathname dest name))
+		 (loop files))
+		(else
+		 (let* ((size (read in))
+			(data (read-string size in)) )
+		   (with-output-to-file (make-pathname dest name)
+		     (lambda ()
+		       (display data) ) ) )
+		 (loop (cons name files)))))))))
+
   (define (retrieve-extension name transport location #!optional version)
     (case transport
       ((local) 
-       (values (locate-egg/local name location version) #f) )
+       (locate-egg/local name location version)) 
       ((svn)
-       (values (locate-egg/svn name location version) #t) )
+       (locate-egg/svn name location version))
       ((http)
-       (values (locate-egg/http name location version) #t) )
+       (locate-egg/http name location version))
       (else (error "unsupported transport" transport))))
 
 )

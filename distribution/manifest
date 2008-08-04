@@ -308,3 +308,6 @@ setup-download.scm
 setup-api.scm
 setup-utils.scm
 chicken-status.scm
+chicken-install.scm
+chicken-uninstall.scm
+DEFAULTS

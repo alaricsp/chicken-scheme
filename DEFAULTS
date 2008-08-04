@@ -1,0 +1,4 @@
+;;;; DEFAULTS for chicken-install -*- Scheme -*-
+
+((location "http://chicken.wiki.br/egg-server.cgi")
+ (transport "http"))

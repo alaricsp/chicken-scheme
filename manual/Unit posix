@@ -1115,6 +1115,16 @@ Returns {{#t}} if {{PORT}} is connected to a terminal and
 {{#f}} otherwise.
 
 
+==== terminal-size
+
+ [procedure] (terminal-size)
+
+Returns two values, the number of columns and rows of the
+current terminal window or {{0}}, {{0}} if the terminal
+size can not be obtained. On Windows, this procedure
+always returns {{0}, {{0}}.
+
+
 === How Scheme procedures relate to UNIX C functions
 
 ; {{change-directory}} : {{chdir}}

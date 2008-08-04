@@ -3,6 +3,10 @@ TODO for macro/module system					-*- Outline -*-
 * trunk merge
   11148 was last
 
+* macros
+** accept `(define-syntax (NAME . LLIST) BODY ...)'
+** at some stage disable debug-output in expand.scm
+
 * bugs
 
 ** macros
@@ -25,6 +29,11 @@ TODO for macro/module system					-*- Outline -*-
     probably because load and import is in same toplevel form, and the load is performed
     after the import (at runtime)
 
+* tests
+** optional longer run (env. var)
+*** syntax-rules-stress-test
+*** fully compiled ec-tests
+
 * module issues
 ** code-duplication in compiler and evaluator for ##core#module
 ** "scheme" module does not include some special forms ("define-syntax", etc.)
@@ -36,19 +45,19 @@ TODO for macro/module system					-*- Outline -*-
 
 * guerrilla-setup
 ** installation
-*** install $REPO/DEFAULTS
-    ((location "chicken.wiki.br/egg-server.cgi")
-     (transport "http"))
-*** build and install setup-{utils,api,download}
+*** install DEFAULTS (in repo)
+*** build and install setup-{utils,api,download} (make var BUILD_SETUP_TOOLS)
 *** install $REPO/setup-tools.setup-info
 ** setup-download
 *** HTTP_PROXY
 ** implement
 *** chicken-install
-**** usage: chicken-install [-help] [-force] [-keep] [-version VERSION] [-location LOC] [-transport TRANSPORT] EGGNAME ...
 **** env. vars: TMPDIR/TMP/...
-*** chicken-uninstall
-**** usage: chicken-uninstall [-help] [-force] PATTERN ...
+** setup-download
+*** handle redirects in http-fetch
+** chicken-install
+*** handle needs/depends of builtin extension
+*** should cache extension-info
 ** integrate into build
 *** setup-{api,utils,download}.so
 *** chicken-{status,install,uninstall}

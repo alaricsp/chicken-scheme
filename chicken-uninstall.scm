@@ -1,4 +1,4 @@
-;;;; chicken-status.scm
+;;;; chicken-uninstall.scm
 ;
 ; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
@@ -24,12 +24,15 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library setup-utils srfi-1 posix data-structures utils ports regex)
+(require-library setup-utils srfi-1 posix data-structures utils ports regex srfi-13)
 
 
 (module main ()
   
-  (import scheme chicken setup-utils srfi-1 posix data-structures utils ports regex)
+  (import scheme chicken setup-utils srfi-1 posix data-structures utils ports regex srfi-13)
+
+  (define *force* #f)
+  (define *sudo* #f)
 
   (define (gather-eggs patterns)
     (let ((eggs (map pathname-file 
@@ -38,69 +41,65 @@
        (concatenate (map (cut grep <> eggs) patterns))
        string=?)))
 
-  (define (list-installed-eggs eggs)
-    (let ((w (quotient (- (get-terminal-width) 2) 2)))
-      (for-each
-       (lambda (egg)
-	 (let ((version (assq 'version (read-info egg))))
-	   (if version
-	       (print
-		(format-string (string-append egg " ") w #f #\.)
-		(format-string 
-		 (string-append " version: " (->string (cadr version)))
-		 w #t #\.))
-	       (print egg))))
-       (sort eggs string<?))))
+  (define (quit code)
+    (print "aborted.")
+    (exit code))
 
-  (define (list-installed-files eggs)
-    (for-each
-     print
-     (sort
-      (append-map
-       (lambda (egg)
-	 (let ((files (assq 'files (read-info egg))))
-	   (if files
-	       (cdr files)
-	       '())))
-       eggs)
-      string<?)))
+  (define (ask eggs)
+    (handle-exceptions ex
+	(if (eq? ex 'aborted)
+	    (quit 1) 
+	    (signal ex))
+      (yes-or-no? 
+       (string-concatenate
+	(append
+	 '("About to delete the following extensions:\n\n")
+	 (map (cut string-append "  " <> "\n") eggs)
+	 '("\nDo you want to proceed?")))
+       default: "no")))
+
+  (define (uninstall pats)
+    (let ((eggs (gather-eggs pats)))
+      (when (or *force* (equal? eggs pats) (ask eggs))
+	(for-each (cut remove-extension <> *sudo*) eggs))))
 
   (define (usage code)
     (print #<<EOF
-usage: chicken-status [OPTION | PATTERN] ...
+usage: chicken-uninstall [OPTION | PATTERN] ...
 
   -h   -help                    show this message
-  -f   -files                   list installed files
+  -f   -force                   don't ask, delete whatever matches
+  -s   -sudo                    use sudo(1) for deleting files
 EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\f))
+  (define *short-options* '(#\h #\f #\s))
 
   (define (main args)
-    (let ((files #f))
-      (let loop ((args args) (pats '()))
-	(if (null? args)
-	    ((cond (files list-installed-files)
-		   (else list-installed-eggs))
-	     (gather-eggs (if (null? pats) '(".*") pats)))
-	    (let ((arg (car args)))
-	      (cond ((or (string=? arg "-help") 
-			 (string=? arg "-h")
-			 (string=? arg "--help"))
-		     (usage 0))
-		    ((or (string=? arg "-f") (string=? arg "-files"))
-		     (set! files #t)
-		     (loop (cdr args) pats))
-		    ((and (positive? (string-length arg))
-			  (char=? #\- (string-ref arg 0)))
-		     (if (> (string-length arg) 2)
-			 (let ((sos (string->list (substring arg 1))))
-			   (if (null? (lset-intersection eq? *short-options* sos))
-			       (loop (append (map (cut string #\- <>) sos) (cdr args)) pats)
-			       (usage 1)))
-			 (usage 1)))
-		    (else (loop (cdr args) (cons arg pats)))))))))
+    (let loop ((args args) (pats '()))
+      (if (null? args)
+	  (uninstall (if (null? pats) (usage 1) (reverse pats)))
+	  (let ((arg (car args)))
+	    (cond ((or (string=? arg "-help") 
+		       (string=? arg "-h")
+		       (string=? arg "--help"))
+		   (usage 0))
+		  ((or (string=? arg "-f") (string=? arg "-force"))
+		   (set! *force* #t)
+		   (loop (cdr args) pats))
+		  ((or (string=? arg "-s") (string=? arg "-sudo"))
+		   (set! *sudo* #t)
+		   (loop (cdr args) pats))
+		  ((and (positive? (string-length arg))
+			(char=? #\- (string-ref arg 0)))
+		   (if (> (string-length arg) 2)
+		       (let ((sos (string->list (substring arg 1))))
+			 (if (null? (lset-intersection eq? *short-options* sos))
+			     (loop (append (map (cut string #\- <>) sos) (cdr args)) pats)
+			     (usage 1)))
+		       (usage 1)))
+		  (else (loop (cdr args) (cons arg pats))))))))
 
   (main (command-line-arguments))
   

@@ -42,7 +42,7 @@
      setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
      required-chicken-version required-extension-version cross-chicken
-     current-extension-version)
+     use-sudo)
 
   (import scheme chicken foreign
 	  regex utils posix ports extras data-structures
@@ -132,6 +132,8 @@
 (define *major-version* (##sys#fudge 41))
 (define *default-eggdir* (conc "eggs/" *major-version*))
 
+(define *sudo* #f)
+
 (define *windows*
   (and (eq? (software-type) 'windows) 
        (build-platform) ) )
@@ -159,6 +161,8 @@
 (define *copy-command* (if *windows-shell* 'copy "cp -r"))
 (define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
 (define *move-command* (if *windows-shell* 'move 'mv))
+(define *chmod-command* "chmod")
+(define *ranlib-command* "ranlib")
 (define *csc-options* '())
 (define *dont-ask* #f)
 (define *base-directory* (current-directory))
@@ -167,8 +171,13 @@
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
 (define program-path (make-parameter chicken-bin-path))
-(define current-extension-version (make-parameter #f)) ; should be set by invoking process
 
+(define (use-sudo)
+  (set! *copy-command* "sudo cp -r")
+  (set! *remove-command* "sudo rm -fr")
+  (set! *move-command* "sudo mv")
+  (set! *chmod-command* "sudo chmod")
+  (set! *ranlib-command* "sudo ranlib"))
 
 ; Convert a string with a version (such as "1.22.0") to a list of the
 ; numbers (such as (1 22 0)). If one of the version components cannot
@@ -473,15 +482,18 @@
 	(and (file-exists? f2) f2) ) ) )
 
 (define (write-info id files info)
-    (let ((info `((files ,@files) 
+  (let ((info `((files ,@files) 
 		,@info)) )
-      (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
-      (let* ((sid (->string id))
-	    (setup-file (make-setup-info-pathname sid (repo-path #t)))
-	    (write-setup-info (with-output-to-file setup-file
-				(cut pp info))))
-	(unless *windows-shell* (run (chmod a+r ,(qs setup-file))))
-	write-setup-info)))
+    (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
+    (let* ((sid (->string id))
+	   (setup-file (make-setup-info-pathname sid (repo-path #t))))
+      (cond (*sudo*
+	     (let ((tmp (create-temporary-file)))
+	       (with-output-to-file tmp (cut pp info))
+	       (run (,*move-command* ,(qs tmp) ,(qs setup-file)))))
+	    (else (with-output-to-file setup-file (cut pp info))))
+      (unless *windows-shell* (run (,*chmod-command* a+r ,(qs setup-file))))
+      write-setup-info)))
 
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
   (let ((from (if (pair? from) (car from) from))
@@ -544,12 +556,12 @@
 			     (run (,*remove-command* ,(qs to)) ))
 			   (copy-file from to)
 			   (unless *windows-shell*
-			     (run (chmod a+r ,(qs to))))
+			     (run (,*chmod-command* a+r ,(qs to))))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) 
 					(equal? (pathname-extension to) "a"))
-			       (run (ranlib ,(qs to)) ) ))
+			       (run (,*ranlib-command* ,(qs to)) ) ))
 			   (make-dest-pathname rpath f)))
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -575,7 +587,7 @@
 			       (to (make-dest-pathname ppath f)) )
 			   (copy-file from to) 
 			   (unless *windows-shell*
-				   (run (chmod a+r ,(qs to))))
+				   (run (,*chmod-command* a+r ,(qs to))))
 			   to) )
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -590,11 +602,11 @@
 				(to (make-dest-pathname ppath f)) )
 			    (copy-file from to) 
 			    (unless *windows-shell*
-				    (run (chmod a+r ,(qs to))))
+				    (run (,*chmod-command* a+r ,(qs to))))
 			    to) )
 			files) ) )
       (unless *windows-shell*
-	(run (chmod a+rx ,(string-intersperse pfiles " "))) )
+	(run (,*chmod-command* a+rx ,(string-intersperse pfiles " "))) )
       (write-info id pfiles info) ) ) )
 
 
@@ -615,7 +627,7 @@
 	(begin
 	  (create-directory dir)
 	  (unless *windows-shell*
-		  (run (chmod a+x ,(qs dir))))))))
+		  (run (,*chmod-command* a+x ,(qs dir))))))))
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
 		     (verb (setup-verbose-flag)) (compile-only #f))
