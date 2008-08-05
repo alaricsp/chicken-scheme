@@ -48,7 +48,7 @@ EOF
     (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	  (make-pathname p "bin") )
 	(cond-expand
-	 (csi "bin")			; just for debugging
+	 (csi (make-pathname (current-directory) "bin"))			; just for debugging
 	 (foreign-value "C_INSTALL_BIN_HOME" c-string) ) ))
 
   (define *default-transport* #f)

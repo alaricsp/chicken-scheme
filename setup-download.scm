@@ -96,7 +96,7 @@
 
   (define (locate-egg/http egg url #!optional version)
     (let* ((tmpdir (get-temporary-directory))
-	   (m (string-match "(http://)?([^/]+)(:([^:/]+))?(/.+)" url))
+	   (m (string-match "(https?://)?([^/]+)(:([^:/]+))?(/.+)" url))
 	   (host (if m (caddr m) url))
 	   (port (if (and m (cadddr m)) 
 		     (or (string->number (list-ref m 4)) 
