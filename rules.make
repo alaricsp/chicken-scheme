@@ -1072,10 +1072,10 @@ clean:
 	  chicken-setup$(EXE) chicken-profile$(EXE) csi-static$(EXE) \
 	  csc-static$(EXE) chicken-static$(EXE) chicken-bug$(EXE) chicken.info *$(O) \
 	  $(LIBCHICKEN_SO_FILE) $(LIBUCHICKEN_SO_FILE) $(LIBCHICKENGUI_SO_FILE) \
-	  libchicken$(A) libuchicken$(A) libchickengui$(A) $(PROGRAM_IMPORT_LIBRARIES) \
-	  $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
-	  $(MSVC_CHICKEN_EXPORT_FILES) chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) \
-	  $(CLEAN_MANIFESTS)
+	  libchicken$(A) libuchicken$(A) libchickengui$(A) libchicken$(SO) libuchicken$(SO) \
+          $(PROGRAM_IMPORT_LIBRARIES) $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) \
+          $(LIBCHICKENGUI_IMPORT_LIBRARY)  $(MSVC_CHICKEN_EXPORT_FILES) \
+          chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) $(CLEAN_MANIFESTS)
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
