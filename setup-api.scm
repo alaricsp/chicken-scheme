@@ -492,8 +492,7 @@
 	       (with-output-to-file tmp (cut pp info))
 	       (run (,*move-command* ,(qs tmp) ,(qs setup-file)))))
 	    (else (with-output-to-file setup-file (cut pp info))))
-      (unless *windows-shell* (run (,*chmod-command* a+r ,(qs setup-file))))
-      write-setup-info)))
+      (unless *windows-shell* (run (,*chmod-command* a+r ,(qs setup-file)))))))
 
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
   (let ((from (if (pair? from) (car from) from))

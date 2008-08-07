@@ -171,6 +171,7 @@ EOF
       (for-each				; we assume the order reflects the dependency tree...
        (lambda (e+d)
 	 (print "installing " (car e+d) " ...")
+	 (print "cd'ing to " (cdr e+d))
 	 (parameterize ((current-directory (cdr e+d)))
 	   (let ((cmd (sprintf
 		       "~a/csi -e \"(require-library setup-api)\" -e \"(import setup-api)\" -e \"~a\" \"~a\""

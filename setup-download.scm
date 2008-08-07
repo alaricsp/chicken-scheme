@@ -73,8 +73,10 @@
 	     (filedir
 	      (or (let ((vs (filter-map
 			     (lambda (f)
-			       (and-let* ((m (string-search "^tags/([^/]+)/" f)))
-				 (cadr m)))
+			       (and-let* ((m (string-search "^tags/([^/]+)/" f))
+					  (v (cadr m)))
+				 (print v)
+				 v))
 			     files)))
 		    (if version
 			(if (member version vs)
@@ -96,7 +98,7 @@
 
   (define (locate-egg/http egg url #!optional version)
     (let* ((tmpdir (get-temporary-directory))
-	   (m (string-match "(https?://)?([^/]+)(:([^:/]+))?(/.+)" url))
+	   (m (string-match "(http://)?([^/]+)(:([^:/]+))?(/.+)" url))
 	   (host (if m (caddr m) url))
 	   (port (if (and m (cadddr m)) 
 		     (or (string->number (list-ref m 4)) 

@@ -86,7 +86,7 @@
     (let ((dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP") "/tmp")))
       (let loop ()
 	(let* ((n (##sys#fudge 16))	; current milliseconds
-	       (pn (make-pathname dir (string-append "setup-" (number->string n 16) "tmp"))))
+	       (pn (make-pathname dir (string-append "setup-" (number->string n 16)) "tmp")))
 	  (cond ((file-exists? pn) (loop))
 		(else (create-directory pn) pn))))))
 
