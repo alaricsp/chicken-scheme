@@ -76,10 +76,18 @@ include defaults.make
 
 # main target
 
+ifndef BUILD_SETUP_TOOLS
 TARGETS = libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
 	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
 	libuchicken$(SO) chicken-setup$(EXE) chicken.info \
 	libchickengui$(SO) chicken-bug$(EXE)
+else
+TARGETS = libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
+	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
+	libuchicken$(SO) chicken-install$(EXE) chicken-uninstall$(EXE) \
+	chicken-status$(EXE) chicken.info \
+	libchickengui$(SO) chicken-bug$(EXE)
+endif
 
 chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_DIRENT_H 1" >$@

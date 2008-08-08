@@ -43,22 +43,26 @@ EOF
   (import scheme chicken srfi-1 posix data-structures utils ports regex ports extras
 	  srfi-13)
   (import setup-utils setup-download)
+  
+  #+(not csi) (import foreign)
 
   (define *program-path*
     (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	  (make-pathname p "bin") )
 	(cond-expand
 	 (csi (make-pathname (current-directory) "bin"))			; just for debugging
-	 (foreign-value "C_INSTALL_BIN_HOME" c-string) ) ))
+	 (else (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )) )
 
   (define *default-transport* #f)
   (define *default-location* #f)
   (define *keep* #f)
   (define *force* #f)
   (define *sudo* #f)
+  (define *prefix* #f)
+  (define *host-extension* #f)
 
   (define (load-defaults)
-    (let* ((deff (make-pathname (repository-path) "DEFAULTS"))
+    (let* ((deff (make-pathname (repository-path) "setup.defaults"))
 	   (def (cond ((file-exists? deff)
 		       (with-input-from-file deff read))
 		      (else '())))
@@ -136,21 +140,22 @@ EOF
 			  (print " missing: " (string-intersperse missing ", "))
 			  (retrieve missing))
 			(when (and (pair? upgrade)
-				   (yes-or-no? 
-				    (string-concatenate
-				     (append
-				      (list "The following installed extensions are outdated, because `"
-					    (car e+d) "' requires later versions:\n")
-				      (map (lambda (e)
-					     (sprintf 
-					      "  ~a (~a -> ~a)~%"
-					      (car e) 
-					      (let ((v (assq 'version (extension-information (car e)))))
-						(if v (cadr v) "???"))
-					      (cdr e)))
-					   upgrade)
-				      '("\nDo you want to replace the existing extensions?")))
-				    "no") )
+				   (or *force*
+				       (yes-or-no? 
+					(string-concatenate
+					 (append
+					  (list "The following installed extensions are outdated, because `"
+						(car e+d) "' requires later versions:\n")
+					  (map (lambda (e)
+						 (sprintf 
+						  "  ~a (~a -> ~a)~%"
+						  (car e) 
+						  (let ((v (assq 'version (extension-information (car e)))))
+						    (if v (cadr v) "???"))
+						  (cdr e)))
+					       upgrade)
+					  '("\nDo you want to replace the existing extensions?")))
+					"no") ) )
 			  (let ((ueggs (unzip1 upgrade)))
 			    (print " upgrade: " (string-intersperse ueggs ", "))
 			    (for-each 
@@ -171,20 +176,26 @@ EOF
       (for-each				; we assume the order reflects the dependency tree...
        (lambda (e+d)
 	 (print "installing " (car e+d) " ...")
-	 (print "cd'ing to " (cdr e+d))
+	 (print "changing current directory to " (cdr e+d))
 	 (parameterize ((current-directory (cdr e+d)))
 	   (let ((cmd (sprintf
-		       "~a/csi -e \"(require-library setup-api)\" -e \"(import setup-api)\" -e \"~a\" \"~a\""
+		       "~a/csi -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a"
 		       *program-path*
-		       (if *sudo* "(use-sudo)" "(begin)")
+		       (if *sudo* "-e \"(sudo-install #t)\"" "")
+		       (if *keep* "-e \"(keep-intermediates #t)\"" "")
+		       (if *host-extension* "-e \"(host-extension #t)\"" "")
+		       (if *prefix* 
+			   (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
+			   "")
 		       (make-pathname (cdr e+d) (car e+d) "setup"))))
 	     (system* cmd))))
        *eggs+dirs*))
 
   (define (cleanup)
-    (and-let* ((tmpdir (temporary-directory)))
-      (print "removing temporary directory " tmpdir)
-      (remove-directory tmpdir)))
+    (unless *keep*
+      (and-let* ((tmpdir (temporary-directory)))
+	(print "removing temporary directory " tmpdir)
+	(remove-directory tmpdir))))
 
   (define (usage code)
     (print #<#EOF
@@ -196,11 +207,13 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
   -l   -location LOCATION       install from given location instead of default (#{*default-location*})
   -t   -transport TRANSPORT     use given transport instead of default (#{*default-transport*})
   -s   -sudo                    use sudo(1) for installing or removing files
+  -p   -prefix PREFIX           change installation prefix to PREFIX
+       -host-extension          when cross-compiling, compile extension for host
 EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\f #\k #\l #\t #\s))
+  (define *short-options* '(#\h #\f #\k #\l #\t #\s #\p))
 
   (define (main args)
     (let ((defaults (load-defaults)))
@@ -236,6 +249,13 @@ EOF
 		    ((or (string=? arg "-t") (string=? arg "-transport"))
 		     (unless (pair? (cdr args)) (usage 1))
 		     (set! *default-transport* (string->symbol (cadr args)))
+		     (loop (cddr args) eggs))
+		    ((or (string=? arg "-p") (string=? arg "-prefix"))
+		     (unless (pair? (cdr args)) (usage 1))
+		     (set! *prefix* (cadr args))
+		     (loop (cddr args) eggs))
+		    ((string=? "-host-extension" arg)
+		     (set! *host-extension* #t)
 		     (loop (cddr args) eggs))
 		    ((and (positive? (string-length arg))
 			  (char=? #\- (string-ref arg 0)))

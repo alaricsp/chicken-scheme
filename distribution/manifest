@@ -310,4 +310,4 @@ setup-utils.scm
 chicken-status.scm
 chicken-install.scm
 chicken-uninstall.scm
-DEFAULTS
+setup.defaults

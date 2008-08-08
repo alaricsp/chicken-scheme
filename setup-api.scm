@@ -33,6 +33,7 @@
      (run execute)
      compile
      make make/proc
+     host-extension
      install-extension install-program install-script
      setup-verbose-flag
      setup-install-flag installation-prefix chicken-prefix 
@@ -42,7 +43,7 @@
      setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
      required-chicken-version required-extension-version cross-chicken
-     use-sudo)
+     sudo-install keep-intermediates)
 
   (import scheme chicken foreign
 	  regex utils posix ports extras data-structures
@@ -99,14 +100,6 @@
 # define C_CSI_PROGRAM   "csi"
 #endif
 
-#ifndef C_CHICKEN_PROFILE_PROGRAM
-# define C_CHICKEN_PROFILE_PROGRAM   "chicken-profile"
-#endif
-
-#ifndef C_CHICKEN_SETUP_PROGRAM
-# define C_CHICKEN_SETUP_PROGRAM   "chicken-setup"
-#endif
-
 #ifndef C_CHICKEN_BUG_PROGRAM
 # define C_CHICKEN_BUG_PROGRAM   "chicken-bug"
 #endif
@@ -119,8 +112,6 @@
   `(("chicken" . ,(foreign-value "C_CHICKEN_PROGRAM" c-string))
     ("csc" . ,(foreign-value "C_CSC_PROGRAM" c-string))
     ("csi" . ,(foreign-value "C_CSI_PROGRAM" c-string))
-    ("chicken-profile" . ,(foreign-value "C_CHICKEN_PROFILE_PROGRAM" c-string))
-    ("chicken-setup" . ,(foreign-value "C_CHICKEN_SETUP_PROGRAM" c-string))
     ("chicken-bug" . ,(foreign-value "C_CHICKEN_BUG_PROGRAM" c-string))))
 
 (define *cc* (foreign-value "C_TARGET_CC" c-string))
@@ -143,6 +134,8 @@
 (define *debug* #f)
 
 (register-feature! 'chicken-setup)
+
+(define host-extension (make-parameter #f))
 
 (define chicken-bin-path
   (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
@@ -171,8 +164,9 @@
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
 (define program-path (make-parameter chicken-bin-path))
+(define keep-intermediates (make-parameter #f))
 
-(define (use-sudo)
+(define (sudo-install)
   (set! *copy-command* "sudo cp -r")
   (set! *remove-command* "sudo rm -fr")
   (set! *move-command* "sudo mv")
@@ -281,6 +275,7 @@
 		   chicken-bin-path
 		   (cdr (assoc prg *installed-executables*))))
 		 "-feature" "compiling-extension"
+		 (if (host-extension) "-host" "")
 		 *csc-options*) 
 	  " ") )
 	((assoc prg *installed-executables*) =>

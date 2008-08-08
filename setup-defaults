@@ -1,4 +1,0 @@
-;;;; DEFAULTS for chicken-install -*- Scheme -*-
-
-((location "https://chicken.wiki.br/henrietta.cgi?prefix=svn/chicken-eggs/release/4")
- (transport "http"))

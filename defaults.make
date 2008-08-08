@@ -301,7 +301,8 @@ CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
-CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -feature chicken-compile-shared -dynamic
+CHICKEN_DYNAMIC_OPTIONS = $(CHICKEN_OPTIONS) -feature chicken-compile-shared -dynamic
+CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_DYNAMIC_OPTIONS)
 
 ifneq ($(USE_HOST_PCRE),)
 CHICKEN_PCRE_LIBRARY_OPTIONS = 
@@ -315,10 +316,19 @@ CHICKEN_PROGRAM = $(PROGRAM_PREFIX)chicken$(PROGRAM_SUFFIX)
 CSC_PROGRAM = $(PROGRAM_PREFIX)csc$(PROGRAM_SUFFIX)
 CSI_PROGRAM = $(PROGRAM_PREFIX)csi$(PROGRAM_SUFFIX)
 CHICKEN_PROFILE_PROGRAM = $(PROGRAM_PREFIX)chicken-profile$(PROGRAM_SUFFIX)
+ifndef BUILD_SETUP_TOOLS
 CHICKEN_SETUP_PROGRAM = $(PROGRAM_PREFIX)chicken-setup$(PROGRAM_SUFFIX)
+else
+CHICKEN_INSTALL_PROGRAM = $(PROGRAM_PREFIX)chicken-install$(PROGRAM_SUFFIX)
+CHICKEN_UNINSTALL_PROGRAM = $(PROGRAM_PREFIX)chicken-uninstall$(PROGRAM_SUFFIX)
+CHICKEN_STATUS_PROGRAM = $(PROGRAM_PREFIX)chicken-status$(PROGRAM_SUFFIX)
+endif
 CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
 IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports posix srfi-13 srfi-69 extras \
 	regex srfi-14 tcp foreign scheme srfi-18 utils csi
+ifdef BUILD_SETUP_TOOLS
+IMPORT_LIBRARIES += setup-api setup-download setup-utils
+endif
 
 ifdef STATICBUILD
 CHICKEN_STATIC_EXECUTABLE = $(CHICKEN_PROGRAM)$(EXE)
@@ -337,11 +347,20 @@ CHICKEN_SHARED_EXECUTABLE = $(CHICKEN_PROGRAM)$(EXE)
 CSI_SHARED_EXECUTABLE = $(CSI_PROGRAM)$(EXE)
 TARGETLIBS ?= libchicken$(A) libuchicken$(A) \
 	$(LIBCHICKEN_SO_FILE) $(LIBUCHICKEN_SO_FILE)
+ifndef BUILD_SETUP_TOOLS
 TARGETS ?= $(TARGETLIBS) $(CHICKEN_SHARED_EXECUTABLE) \
 	$(CSI_SHARED_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
 	$(CSC_PROGRAM)$(EXE) $(CHICKEN_SETUP_PROGRAM)$(EXE) chicken.info \
 	$(CHICKEN_BUG_PROGRAM)$(EXE) \
 	$(IMPORT_LIBRARIES:=.import.so)
+else
+TARGETS ?= $(TARGETLIBS) $(CHICKEN_SHARED_EXECUTABLE) \
+	$(CSI_SHARED_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
+	$(CSC_PROGRAM)$(EXE) $(CHICKEN_INSTALL_PROGRAM)$(EXE) $(CHICKEN_UNINSTALL_PROGRAM)$(EXE) \
+	$(CHICKEN_STATUS_PROGRAM)$(EXE) setup-utils.so setup-download.so setup-api.so \
+	chicken.info $(CHICKEN_BUG_PROGRAM)$(EXE) \
+	$(IMPORT_LIBRARIES:=.import.so)
+endif
 endif
 
 # main rule
@@ -450,12 +469,6 @@ chicken-defaults.h: buildsvnrevision
 	echo "#endif" >>$@
 	echo "#ifndef C_CSI_PROGRAM" >>$@
 	echo "# define C_CSI_PROGRAM \"$(CSI_PROGRAM)\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_CHICKEN_PROFILE_PROGRAM" >>$@
-	echo "# define C_CHICKEN_PROFILE_PROGRAM \"$(CHICKEN_PROFILE_PROGRAM)\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_CHICKEN_SETUP_PROGRAM" >>$@
-	echo "# define C_CHICKEN_SETUP_PROGRAM \"$(CHICKEN_SETUP_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
 	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
