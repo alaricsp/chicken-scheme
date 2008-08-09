@@ -254,3 +254,18 @@
 	(print* i " ")
 	(set! i (add1 i))))
 (newline)
+
+
+;;; alternative define-syntax syntax
+
+(define-syntax (foo . _) '(list 42))
+
+(assert (equal? '(42) (foo)))
+
+(assert
+ (equal? 
+  '(1)
+  (let ()
+    (define-syntax (bar x r c)
+      `(,(r 'list) (,(r 'quote) ,(cadr x))))
+    (bar 1))))

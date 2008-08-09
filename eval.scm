@@ -605,16 +605,24 @@
 			     e #f tf cntr se2)))
 			       
 			 ((define-syntax define-compiled-syntax)
-			  (##sys#check-syntax 'define-syntax x '(_ variable _) #f se)
-			  (let ((name (rename (cadr x) se)))
+			  (##sys#check-syntax
+			   'define-syntax x
+			   (if (and (pair? (cdr x)) (pair? (cadr x)))
+			       '(_ (variable . lambda-list) . #(_ 1))
+			       '(_ variable _))
+			   #f se)
+			  (let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
+				 (body (if (pair? (cadr x))
+					   `(,(rename 'lambda se) ,(cdadr x) ,@(cddr x))
+					   (caddr x)))
+				 (name (rename var se)))
 			    (##sys#register-syntax-export 
 			     name (##sys#current-module)
-			     (caddr x))	;*** not really necessary, it only shouldn't be #f
+			     body)	;*** not really necessary, it only shouldn't be #f
 			    (##sys#extend-macro-environment
 			     name
 			     (##sys#current-environment)
-			     (##sys#er-transformer
-			      (eval/meta (caddr x))))
+			     (##sys#er-transformer (eval/meta body)))
 			    (compile '(##core#undefined) e #f tf cntr se) ) )
 
 			 ((##core#module)

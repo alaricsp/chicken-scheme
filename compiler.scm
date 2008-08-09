@@ -117,7 +117,9 @@
 ; (##coresyntax <exp>)
 ; (<exp> {<exp>})
 ; (define-syntax <symbol> <expr>)
+; (define-syntax (<symbol> . <llist>) <expr> ...)
 ; (define-compiled-syntax <symbol> <expr>)
+; (define-compiled-syntax (<symbol> . <llist>) <expr> ...)
 ; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
 ;
 ; - Core language:
@@ -692,39 +694,54 @@
 			   se2 dest)))
 			       
 		       ((define-syntax)
-			(##sys#check-syntax 'define-syntax x '(define-syntax variable _) #f se)
-			(let ((name (lookup (cadr x) se))
-			      (tx (caddr x)))
-			  (##sys#register-syntax-export name (##sys#current-module) tx)
+			(##sys#check-syntax
+			 'define-syntax x
+			 (if (pair? (cadr x))
+			     '(_ (variable . lambda-list) . #(_ 1))
+			     '(_ variable _) )
+			 #f se)
+			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
+			       (body (if (pair? (cadr x))
+					 `(,(rename 'lambda se) ,(cdadr x) ,@(cddr x))
+					 (caddr x)))
+			       (name (lookup var se)))
+			  (##sys#register-syntax-export name (##sys#current-module) body)
 			  (##sys#extend-macro-environment
 			   name
 			   (##sys#current-environment)
-			   (##sys#er-transformer (eval/meta tx)))
+			   (##sys#er-transformer (eval/meta body)))
 			  (walk
 			   (if ##sys#enable-runtime-macros
 			       `(##sys#extend-macro-environment
-				 ',(cadr x)
+				 ',var
 				 (##sys#current-environment)
-				 (##sys#er-transformer
-				  ,tx)) ;*** possibly wrong se?
+				 (##sys#er-transformer ,body)) ;*** possibly wrong se?
 			       '(##core#undefined) )
 			   se dest)) )
 
 		       ((define-compiled-syntax)
-			(##sys#check-syntax 'define-compiled-syntax x '(_ variable _) #f se)
-			(let ((name (lookup (cadr x) se))
-			      (tx (caddr x)))
+			(##sys#check-syntax
+			 'define-compiled-syntax x
+			 (if (pair? (cadr x))
+			     '(_ (variable . lambda-list) . #(_ 1))
+			     '(_ variable _) )
+			 #f se)
+			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
+			       (body (if (pair? (cadr x))
+					 `(,(rename 'lambda se) ,(cdadr x) ,@(cddr x))
+					 (caddr x)))
+			       (name (lookup var se)))
 			  (##sys#extend-macro-environment
 			   name
 			   (##sys#current-environment)
-			   (##sys#er-transformer (eval/meta tx)))
-			  (##sys#register-syntax-export name (##sys#current-module) tx)
+			   (##sys#er-transformer (eval/meta body)))
+			  (##sys#register-syntax-export name (##sys#current-module) body)
 			  (walk
 			   `(##sys#extend-macro-environment
-			     ',(cadr x)
+			     ',var
 			     (##sys#current-environment)
 			     (##sys#er-transformer
-			      ,tx)) ;*** possibly wrong se?
+			      ,body)) ;*** possibly wrong se?
 			   se dest)))
 
 		       ((##core#module)
