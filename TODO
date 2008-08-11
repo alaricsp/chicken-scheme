@@ -54,20 +54,7 @@ TODO for macro/module system					-*- Outline -*-
 ** chicken-install
 *** handle needs/depends of builtin extension
 *** should cache extension-info
-** integrate into build
-*** setup-{api,utils,download}.so
-*** chicken-{status,install,uninstall}
-** installation
-*** install DEFAULTS (in repo)
-*** install setup-{utils,api,download} (make var BUILD_SETUP_TOOLS)
-*** install $REPO/setup-tools.setup-info
-** henrietta.cgi
-*** extract arguments from QUERY_STRING
-**** version=VERSION (optional)
-**** egg=NAME
-**** prefix=DIRPREFIX (in svn repo, i.e. release branch)
-*** retrieve egg using svn method and transmit
-*** log to stdout (requests + debug)
+** test henrietta
 ** manpages
 *** chicken-{status,install,uninstall}
 ** write manual pages and manual chapters

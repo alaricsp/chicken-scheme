@@ -44,7 +44,7 @@
 	  (temporary-directory dir)
 	  dir)))
 
-  (define (locate-egg/local egg dir #!optional version)
+  (define (locate-egg/local egg dir #!optional version quiet)
     (let* ((eggdir (make-pathname dir egg))
 	   (files (directory eggdir))
 	   (trunkdir (make-pathname eggdir "trunk"))
@@ -65,9 +65,10 @@
 	    (or (and hastrunk trunkdir)
 		eggdir)))))
   
-  (define (locate-egg/svn egg repo #!optional version)
+  (define (locate-egg/svn egg repo #!optional version quiet)
     (let ((cmd (sprintf "svn ls -R \"~a/~a\"" repo egg)))
-      (print "checking available versions ...\n  " cmd)
+      (fprintf (if quiet (current-error-port) (current-output-port)) 
+	       "checking available versions ...\n  ~a~%" cmd)
       (let* ((files (with-input-from-pipe cmd read-lines))
 	     (hastrunk (member "trunk/" files)) 
 	     (filedir
@@ -91,12 +92,13 @@
 		    (and hastrunk "trunk") )
 		  ""))
 	     (tmpdir (get-temporary-directory))
-	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\"" repo egg filedir tmpdir)))
-	(print "  " cmd)
+	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\" ~a" repo egg filedir tmpdir
+			   (if quiet "1>&2" ""))))
+	(fprintf (if quiet (current-error-port) (current-output-port)) "  ~a~%" cmd)
 	(system* cmd)
 	tmpdir)) )
 
-  (define (locate-egg/http egg url #!optional version)
+  (define (locate-egg/http egg url #!optional version quiet)
     (let* ((tmpdir (get-temporary-directory))
 	   (m (string-match "(http://)?([^/]+)(:([^:/]+))?(/.+)" url))
 	   (host (if m (caddr m) url))
@@ -109,10 +111,10 @@
 		 (if version
 		     (string-append "?version=" version)
 		     ""))))
-      (http-fetch host port loc tmpdir)
+      (http-fetch host port loc tmpdir quiet)
       tmpdir))
 
-  (define (http-fetch host port loc dest)
+  (define (http-fetch host port loc dest #!optional quiet)
     (let-values (((in out) (tcp-connect host port)))
       (fprintf out "GET ~a HTTP/1.1\r\nConnection: close\r\nUser-Agent: chicken-install ~a\r\nAccept: */*\r\nContent-length: 0\r\n\r\n"
 	       loc (chicken-version))
@@ -126,7 +128,8 @@
 	(do () ((string=? "" (read-line in))))
       (let loop ((files '()))
 	(let ((name (read in)))
-	  (print name)
+	  (fprintf (if quiet (current-error-port) (current-output-port))
+		   "  ~a~%" name)
 	  (cond ((and (pair? name) (eq? 'error (car name)))
 		 (apply error (cdr name)))
 	        ((or (eof-object? name) (not name))
@@ -145,14 +148,14 @@
 		       (display data) ) ) )
 		 (loop (cons name files)))))))))
 
-  (define (retrieve-extension name transport location #!optional version)
+  (define (retrieve-extension name transport location #!optional version quiet)
     (case transport
       ((local) 
-       (locate-egg/local name location version)) 
+       (locate-egg/local name location version quiet)) 
       ((svn)
-       (locate-egg/svn name location version))
+       (locate-egg/svn name location version quiet))
       ((http)
-       (locate-egg/http name location version))
+       (locate-egg/http name location version quiet))
       (else (error "unsupported transport" transport))))
 
 )
