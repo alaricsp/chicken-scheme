@@ -91,8 +91,9 @@
 		      (warning "extension has no such version - using trunk" egg version))
 		    (and hastrunk "trunk") )
 		  ""))
-	     (tmpdir (get-temporary-directory))
-	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\" ~a" repo egg filedir tmpdir
+	     (tmpdir (make-pathname (get-temporary-directory) egg))
+	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\" ~a" repo egg filedir 
+			   tmpdir
 			   (if quiet "1>&2" ""))))
 	(fprintf (if quiet (current-error-port) (current-output-port)) "  ~a~%" cmd)
 	(system* cmd)
@@ -111,6 +112,7 @@
 		 (if version
 		     (string-append "?version=" version)
 		     ""))))
+      (create-directory (make-pathname tmpdir egg))
       (http-fetch host port loc tmpdir quiet)
       tmpdir))
 

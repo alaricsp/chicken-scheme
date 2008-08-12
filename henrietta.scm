@@ -52,18 +52,17 @@
     (let ((dir (retrieve-extension 
 		name *default-transport* *default-location*
 		version #t)))
-      (let walk ((dir dir) (prefix "./"))
+      (let walk ((dir dir) (prefix "."))
 	(let ((files (directory dir)))
 	  (for-each
 	   (lambda (f)
-	     (cond ((directory? f)
-		    (print "\n#|--------------------|# \"" f "/\" 0\n")
-		    (walk 
-		     (string-append dir "/" f)
-		     (string-append prefix f "/")))
-		   (else
-		    (let ((ff (string-append dir "/" f))) 
-		      (print "\n#|--------------------|# \"" f "\" " (file-size ff) "\n")
+	     (let ((ff (string-append dir "/" f))
+		   (pf (string-append prefix "/" f)))
+	       (cond ((directory? ff)
+		      (print "\n#|--------------------|# \"" pf "/\" 0\n")
+		      (walk ff pf))
+		     (else
+		      (print "\n#|--------------------|# \"" pf "\" " (file-size ff) "\n")
 		      (display (read-all ff))))))
 	   files)))))
 

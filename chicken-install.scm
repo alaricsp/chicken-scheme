@@ -60,6 +60,7 @@ EOF
   (define *sudo* #f)
   (define *prefix* #f)
   (define *host-extension* #f)
+  (define *run-tests* #f)
 
   (define (load-defaults)
     (let* ((deff (make-pathname (repository-path) "setup.defaults"))
@@ -72,10 +73,17 @@ EOF
       (when tr (set! *default-transport* tr))
       (pair? def)))
 
+  (define (deps key meta)
+    (or (and-let* ((d (assq key meta)))
+	  (cdr d))
+	'()))
+
   (define (outdated-dependencies meta)
-    (let ((a (or (assq 'depends meta) 
-		 (assq 'needs meta)) ) )
-      (let loop ((deps (if a (cdr a) '())) (missing '()) (upgrade '()))
+    (let ((ds (append 
+	      (deps 'depends meta) 
+	      (deps 'needs meta)
+	      (if *run-tests* (deps 'test-depends meta) '()))))
+      (let loop ((deps ds) (missing '()) (upgrade '()))
 	(if (null? deps)
 	    (values (reverse missing) (reverse upgrade))
 	    (let ((dep (car deps))
@@ -188,7 +196,15 @@ EOF
 			   (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
 			   "")
 		       (make-pathname (cdr e+d) (car e+d) "setup"))))
-	     (system* cmd))))
+	     (system* cmd))
+	   (when (and *run-tests*
+		      (file-exists? "tests")
+		      (directory? "tests")
+		      (file-exists? "tests/run.scm") )
+	     (current-directory "tests")
+	     (let ((cmd (sprintf "~a/csi -s run.scm ~a" *program-path* (car e+d))))
+	       (print cmd)
+	       (system* cmd)))))
        *eggs+dirs*))
 
   (define (cleanup)
@@ -209,6 +225,7 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
   -s   -sudo                    use sudo(1) for installing or removing files
   -p   -prefix PREFIX           change installation prefix to PREFIX
        -host-extension          when cross-compiling, compile extension for host
+       -test                    run included test-cases, if available
 EOF
 );|
     (exit code))
@@ -254,9 +271,12 @@ EOF
 		     (unless (pair? (cdr args)) (usage 1))
 		     (set! *prefix* (cadr args))
 		     (loop (cddr args) eggs))
+		    ((string=? "-test" arg)
+		     (set! *run-tests* #t)
+		     (loop (cdr args) eggs))
 		    ((string=? "-host-extension" arg)
 		     (set! *host-extension* #t)
-		     (loop (cddr args) eggs))
+		     (loop (cdr args) eggs))
 		    ((and (positive? (string-length arg))
 			  (char=? #\- (string-ref arg 0)))
 		     (if (> (string-length arg) 2)
