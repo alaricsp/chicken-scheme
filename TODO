@@ -55,14 +55,12 @@ TODO for macro/module system					-*- Outline -*-
 ** chicken-install
 *** handle needs/depends of builtin extension
 *** should cache extension-info
-** manpages
-*** chicken-{status,uninstall}
-*** document new .meta entries
-    depends, test-depends
-** write manual pages and manual chapters
+** write manual chapters
 *** remove "manual/chicken-setup", fix links
 *** add "manual/extensions"
-** add .c files to distribution/manifest
+*** document new .meta entries
+    depends, test-depends
+** add .c/.1 files to distribution/manifest
 ** remove all remnants of chicken-setup
 ** note about building setup tools with 
 
