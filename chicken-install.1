@@ -1,0 +1,124 @@
+.\" dummy line
+.TH CHICKEN-INSTALL 1 "13 Aug 2008"
+
+.SH NAME
+
+chicken-install \- download and install extension libraries for Chicken Scheme
+
+.SH SYNOPSIS
+
+chicken-install [OPTION | EXTENSION[:VERSION]]
+
+.SH DESCRIPTION
+
+.I chicken\-install
+is a program that downloads, compiles and installs a prepackaged
+extension library from sources. If no extension name is given on the
+command-line, then any existing 
+.B setup
+scripts in the current
+directory will be executed in some unspecified order.
+See the 
+.B Chicken
+manual for more information.
+
+.SH OPTIONS
+
+.TP
+.B \-h,\ \-help      
+Shows a summary of options and exits.
+
+.TP
+.B \-f,\ \-force
+Do not ask when versions don't match, continue with the installation instead.
+
+.TP
+.B \-k,\ \-keep
+Keep temporary directories after an installation process finished
+(whether successfull or not).
+
+.TP
+.BI \-l,\ \-location \ LOCATION
+Specifies the location from where to retrieve the extension sources.
+Defaults to the current official egg-repository suitable for this
+version of 
+.B CHICKEN
+Depending on the transport used (see below), the 
+.B LOCATION
+may be an svn(1) repository URL, a http URL or a location in the local
+file-system.
+
+.TP
+.BI \-t,\ \-transport \ TRANSPORT
+Selects the mechanism to use to download any extensions that are directly
+or indirectly to be installed. Currently the transports
+.B http
+(the default, retrieve files via the HTTP protocol),
+.B svn
+(retrieve by performing a checkout - requires the svn(1) client to be
+installed) and
+.B local
+(install directly from the local file-system).
+
+.TP
+.B \-s,\ \-sudo
+Perform any installation steps the install files by commands invoked
+with the sudo(1) tool.
+
+.TP
+.BI \-p,\ \-prefix \ PREFIX
+Select an alternative installation prefix.
+
+.TP
+.B \-host\-extension
+Mark this extension as a "host" extension. This is mainly intended
+for cross-compilation.
+
+.TP
+.B \-test
+After successfull installation, invoke any accompanying test-suite,
+if found in the extension sources.
+
+
+.SH ENVIRONMENT\ VARIABLES
+
+.TP
+.B CHICKEN_PREFIX
+The installation prefix where CHICKEN Scheme and its support files and
+libraries are located. Defaults to the installation time prefix given
+when configuring the system.
+
+.TP
+.B CHICKEN_INSTALL_PREFIX
+An alternative installation prefix that will be prepended to extension
+installation paths if specified. 
+
+.TP
+.B CHICKEN_REPOSITORY
+The path where extension libraries are installed. Defaults to the package-library
+path selected during configuration (usually
+.B $prefix/lib/chicken/<binary\-version>
+)
+
+
+.SH DOCUMENTATION
+
+More information can be found in the
+.I Chicken\ User's\ Manual
+
+.SH BUGS
+Submit bug reports by e-mail to
+.I chicken-janitors@nongnu.org
+, preferrably using the
+.B chicken\-bug
+tool.
+
+.SH AUTHORS
+Felix L. Winkelmann and the Chicken Team
+
+.SH SEE ALSO
+.BR chicken-uninstall(1)
+.BR chicken-status(1)
+.BR chicken(1)
+.BR csc(1)
+.BR chicken-bug(1)

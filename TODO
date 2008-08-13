@@ -48,6 +48,7 @@ TODO for macro/module system					-*- Outline -*-
    (as comment in expand.scm indicated (##sys#register-export))
 
 * guerrilla-setup
+** "-version" option for all tools
 ** setup-download
 *** HTTP_PROXY
 *** handle redirects in http-fetch
@@ -55,7 +56,7 @@ TODO for macro/module system					-*- Outline -*-
 *** handle needs/depends of builtin extension
 *** should cache extension-info
 ** manpages
-*** chicken-{status,install,uninstall}
+*** chicken-{status,uninstall}
 *** document new .meta entries
     depends, test-depends
 ** write manual pages and manual chapters
