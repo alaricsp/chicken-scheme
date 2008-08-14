@@ -64,7 +64,8 @@
 		     (else
 		      (print "\n#|--------------------|# \"" pf "\" " (file-size ff) "\n")
 		      (display (read-all ff))))))
-	   files)))))
+	   files)))
+      (print "\n#!eof") ) )
 
   (define (service)
     (let ((qs (getenv "QUERY_STRING")))
