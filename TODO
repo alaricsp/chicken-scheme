@@ -10,6 +10,10 @@ TODO for macro/module system					-*- Outline -*-
 
 * bugs
 
+** compiler
+*** pre-optimization 
+*** changes call-sites and makes them invalid for later pre-optimization
+
 ** macros
 *** expansion of r5rs_pitfall 4.2 incorrect
     possibly due to a non-aliased implicit "begin" somewhere
