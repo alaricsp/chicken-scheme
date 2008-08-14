@@ -27,7 +27,7 @@
 
 (declare
   (block)
-  (uses data-structures ports srfi-1 srfi-13 utils extras ))
+  (uses data-structures ports srfi-1 srfi-13 utils files extras ))
 
 #>
 #ifndef C_TARGET_CC

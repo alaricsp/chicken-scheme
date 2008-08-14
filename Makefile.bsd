@@ -25,9 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+SRCDIR = .
+VPATH  = $(SRCDIR)
+
 # platform configuration
 
-ARCH = $(shell sh config-arch.sh)
+ARCH = $(shell sh $(SRCDIR)/config-arch.sh)
 
 # options
 
@@ -49,7 +52,7 @@ CHICKEN_CONFIG_H = chicken-config.h
 
 # select default and internal settings
 
-include defaults.make
+include $(SRCDIR)/defaults.make
 
 chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_DIRENT_H 1" >$@
@@ -91,4 +94,4 @@ ifneq ($(HACKED_APPLY),)
 endif
 	cat chicken-defaults.h >>$@
 
-include rules.make
+include $(SRCDIR)/rules.make

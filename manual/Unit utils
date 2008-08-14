@@ -4,8 +4,9 @@
 
 == Unit utils
 
-This unit contains file/pathname oriented procedures, apropos, plus acts as a "grab bag" for procedures without a good home,
-and which don't have to be available by default (as compared to the [[Unit extras|extras]] unit).
+This unit contains apropos and functions as a "grab bag" of procedures
+without a good home, and which don't have to be available by default
+(as compared to the [[Unit extras|extras]] unit).
 
 This unit uses the {{extras}} and {{regex}} units.
 

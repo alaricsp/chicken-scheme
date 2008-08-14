@@ -77,6 +77,7 @@ ueval.c
 uextras.c
 udata-structures.c
 uports.c
+ufiles.c
 ulibrary.c
 ulolevel.c
 uregex.c
@@ -119,6 +120,7 @@ eval.scm
 extras.scm
 data-structures.scm
 ports.scm
+files.scm
 chicken-bug.1
 chicken-bug.scm
 chicken-bug.c
@@ -151,6 +153,7 @@ html/parameters.html
 html/supported-language.html
 html/unit-data-structures.html
 html/unit-ports.html
+html/unit-files.html
 html/unit-eval.html
 html/unit-extras.html
 html/unit-library.html

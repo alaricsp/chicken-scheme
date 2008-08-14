@@ -34,34 +34,37 @@
     define-macro
     define-extension
 
-3.2.7
+3.3.8
 
-- a different approach to creating a versioned shared library
+- Bug fix in thread-terminate! [thanks to Joerg Wittenberger]
 
-3.2.6
+3.3.6
 
+- Cygwin build patched to put the runtime libraries in the right place. 
+  [thanks to Nathan Thern]
+
+3.3.5
+
+- added support for out-of-tree compilation (via the SRCDIR variable)
+  [thanks to Ivan Shmakov]
+- bug fix for (string->number "/")
+
+
+3.3.2
+
+- support for selective procedure profiling in the compiler
+- unit utils: moved file- and pathname-related procedures to unit files
+- new unit files
+
+3.3.0
+
+- bug fix for bitwise-or use [Joerg Wittenberger]
 - bug fixes for tickets  393, 430, 436
 - bug fix pointer->address
-
-3.2.5
-
-- bug fix in versioned symlink for shared library in rules.make
-
-3.2.4
-
 - the build system now sets the SONAME field of libchicken.so under Linux
 - fixed an allocation bug in decode_literal
-
-3.2.3
-
 - some fixes to the build system when USE_HOST_PCRE is set
-
-3.2.2
-
 - added use of unit ports to unit extras and chicken-setup
-
-3.2.1
-
 - unit utils and extras: moved port extensions to unit ports
 - new unit ports
 

@@ -3,7 +3,7 @@ TODO for macro/module system					-*- Outline -*-
 * what about thread-terminate! ? (at least note in manual)
 
 * trunk merge
-  11148 was last
+  11635 was last
 
 * macros
 ** at some stage disable debug-output in expand.scm

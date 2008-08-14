@@ -67,6 +67,7 @@
 ; (keep-shadowed-macros)
 ; (import <symbol-or-string> ...)
 ; (unused <symbol> ...)
+; (profile <symbol> ...)
 ;
 ;   <type> = fixnum | generic
 ;
@@ -257,7 +258,7 @@
   profile-info-vector-name finish-foreign-result pending-canonicalizations
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size valid-c-identifier? standalone-executable
+  target-heap-size target-stack-size valid-c-identifier? profiled-procedures standalone-executable
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
@@ -364,6 +365,7 @@
 (define emit-closure-info #t)
 (define undefine-shadowed-macros #t)
 (define constant-declarations '())
+(define profiled-procedures #f)
 (define import-libraries '())
 (define standalone-executable #t)
 
@@ -643,7 +645,10 @@
 				(cond ((or (not dest) 
 					   (not (assq dest se))) ; global?
 				       l)
-				      ((and emit-profile (eq? 'lambda name))
+				      ((and (eq? 'lambda name)
+					    emit-profile 
+					    (or (not profiled-procedures)
+						(memq dest profiled-procedures)))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (if (and (> (length body0) 1)
@@ -702,7 +707,7 @@
 			 #f se)
 			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
 			       (body (if (pair? (cadr x))
-					 `(,(rename 'lambda se) ,(cdadr x) ,@(cddr x))
+					 `(,(macro-alias 'lambda se) ,(cdadr x) ,@(cddr x))
 					 (caddr x)))
 			       (name (lookup var se)))
 			  (##sys#register-syntax-export name (##sys#current-module) body)
@@ -728,7 +733,7 @@
 			 #f se)
 			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
 			       (body (if (pair? (cadr x))
-					 `(,(rename 'lambda se) ,(cdadr x) ,@(cddr x))
+					 `(,(macro-alias 'lambda se) ,(cdadr x) ,@(cddr x))
 					 (caddr x)))
 			       (name (lookup var se)))
 			  (##sys#extend-macro-environment
@@ -1370,6 +1375,10 @@
 			  'syntax
 			  "invalid import-library specification: ~s" il))))
 		(cdr spec)))))
+       ((profile)
+ 	(set! profiled-procedures
+ 	  (append (cdr spec)
+ 		  (or profiled-procedures '()))))
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 

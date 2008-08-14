@@ -39,6 +39,9 @@ endif
 
 # directories
 
+SRCDIR = .
+VPATH  = $(SRCDIR)
+
 DESTDIR =
 ifeq ($(PLATFORM),mingw-msys)
 PREFIX ?= c:/devtools
@@ -156,13 +159,14 @@ PCRE_INCLUDES =
 C_COMPILER_PCRE_OPTIONS =
 PCRE_OBJECTS_1 =
 else
+PCRE_DIR ?= $(VPATH)/pcre
 C_COMPILER_PCRE_OPTIONS = -DPCRE_STATIC
-PCRE_INCLUDES = $(INCLUDES) -Ipcre
+PCRE_INCLUDES = $(INCLUDES) -I$(PCRE_DIR)
 endif
 ifndef NOPTABLES
 C_COMPILER_PTABLES_OPTIONS ?= -DC_ENABLE_PTABLES
 endif
-INCLUDES ?= -I.
+INCLUDES ?= -I. -I$(SRCDIR)
 C_COMPILER_COMPILE_OPTION ?= -c
 C_COMPILER_OUTPUT_OPTION ?= -o
 C_COMPILER_OUTPUT ?= $(C_COMPILER_OUTPUT_OPTION) $@
@@ -296,7 +300,9 @@ CSI ?= csi$(EXE)
 
 # Scheme compiler flags
 
-CHICKEN_OPTIONS = -quiet -no-trace -optimize-level 2 -include-path .
+CHICKEN_OPTIONS = \
+	-quiet -no-trace -optimize-level 2 \
+	-include-path . -include-path $(SRCDIR)
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
@@ -307,7 +313,7 @@ CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_DYNAMIC_OPTIONS)
 ifneq ($(USE_HOST_PCRE),)
 CHICKEN_PCRE_LIBRARY_OPTIONS = 
 else
-CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path pcre
+CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)/pcre
 endif
 
 # targets
@@ -324,7 +330,7 @@ CHICKEN_UNINSTALL_PROGRAM = $(PROGRAM_PREFIX)chicken-uninstall$(PROGRAM_SUFFIX)
 CHICKEN_STATUS_PROGRAM = $(PROGRAM_PREFIX)chicken-status$(PROGRAM_SUFFIX)
 endif
 CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
-IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports posix srfi-13 srfi-69 extras \
+IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports files posix srfi-13 srfi-69 extras \
 	regex srfi-14 tcp foreign scheme srfi-18 utils csi
 ifdef BUILD_SETUP_TOOLS
 IMPORT_LIBRARIES += setup-api setup-download setup-utils
@@ -374,7 +380,10 @@ all: buildsvnrevision $(TARGETS)
 endif
 
 buildsvnrevision:
-	sh svnrevision.sh
+	sh $(SRCDIR)/svnrevision.sh
+ifeq ($(USE_HOST_PCRE),)
+	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) pcre
+endif
 
 # generic part of chicken-config.h
 

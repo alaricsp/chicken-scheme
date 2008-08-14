@@ -1,4 +1,4 @@
-;;;; utils.import.scm - import library for "utils" module
+;;;; files.import.scm - import library for "files" module
 ;
 ; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
@@ -25,10 +25,20 @@
 
 
 (##sys#register-primitive-module
- 'utils
- '(apropos
-   apropos-list
-   for-each-argv-line
-   for-each-line
-   read-all
-   system*))
+ 'files
+ '(delete-file*
+   file-copy
+   file-move
+   make-pathname
+   directory-null?
+   make-absolute-pathname
+   decompose-pathname
+   absolute-pathname?
+   pathname-directory
+   pathname-extension
+   pathname-file
+   pathname-replace-directory
+   pathname-replace-extension
+   pathname-replace-file
+   pathname-strip-directory
+   pathname-strip-extension))

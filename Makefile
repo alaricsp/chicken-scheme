@@ -24,12 +24,15 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+STANDARD_TARGETS \
+	= all clean distclean spotless install uninstall confclean check \
+	  fullcheck dist libs install-libs bootstrap
+SRCDIR = .
 
-.PHONY: all clean distclean spotless install uninstall confclean check dist \
-	libs install-libs fullcheck bootstrap
+.PHONY: $(STANDARD_TARGETS)
 
 ifndef PLATFORM
-all clean spotless distclean install uninstall:
+$(STANDARD_TARGETS):
 	@echo "no PLATFORM given."
 	@echo ""
 	@echo "Please select your target platform by running one of the following commands:"
@@ -48,30 +51,30 @@ all clean spotless distclean install uninstall:
 	@exit 1
 else
 all:
-	$(MAKE) -f Makefile.$(PLATFORM) all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) all
 clean:
-	$(MAKE) -f Makefile.$(PLATFORM) clean
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) clean
 distclean:
-	$(MAKE) -f Makefile.$(PLATFORM) distclean
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) distclean
 spotless:
-	$(MAKE) -f Makefile.$(PLATFORM) spotless
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) spotless
 install:
-	$(MAKE) -f Makefile.$(PLATFORM) install
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) install
 uninstall:
-	$(MAKE) -f Makefile.$(PLATFORM) uninstall
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) uninstall
 confclean:
-	$(MAKE) -f Makefile.$(PLATFORM) confclean
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) confclean
 check:
-	$(MAKE) -f Makefile.$(PLATFORM) check
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) check
 fullcheck:
-	$(MAKE) -f Makefile.$(PLATFORM) fullcheck
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) fullcheck
 dist:
-	$(MAKE) -f Makefile.$(PLATFORM) distfiles
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) distfiles
 	csi -s scripts/makedist.scm
 libs:
-	$(MAKE) -f Makefile.$(PLATFORM) libs
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) libs
 install-libs:
-	$(MAKE) -f Makefile.$(PLATFORM) install-libs
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) install-libs
 bootstrap:
-	$(MAKE) -f Makefile.$(PLATFORM) bootstrap
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) bootstrap
 endif

@@ -28,21 +28,21 @@
 # object files
 
 LIBCHICKEN_OBJECTS_1 = \
-       library eval data-structures ports extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
        profiler stub expand runtime
 LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
 LIBCHICKEN_STATIC_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBUCHICKEN_OBJECTS_1 = \
-       ulibrary ueval udata-structures uports uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
+       ulibrary ueval udata-structures uports ufiles uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
        usrfi-13 usrfi-14 usrfi-18 usrfi-69 u$(POSIXFILE) uregex scheduler \
        profiler stub expand uruntime
 LIBUCHICKEN_SHARED_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=$(O))
 LIBUCHICKEN_STATIC_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBCHICKENGUI_OBJECTS_1 = \
-       library eval data-structures ports extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
        profiler stub expand gui-runtime
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
@@ -108,6 +108,10 @@ ports$(O): ports.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+files$(O): files.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 extras$(O): extras.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
@@ -132,7 +136,7 @@ profiler$(O): profiler.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
-regex$(O): regex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
+regex$(O): regex.c chicken.h $(CHICKEN_CONFIG_H) 
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -193,6 +197,10 @@ uports$(O): uports.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+ufiles$(O): ufiles.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 uextras$(O): uextras.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
@@ -213,7 +221,7 @@ uposixwin$(O): uposixwin.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
-uregex$(O): uregex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
+uregex$(O): uregex.c chicken.h $(CHICKEN_CONFIG_H) 
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -275,6 +283,10 @@ ports-static$(O): ports.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+files-static$(O): files.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 extras-static$(O): extras.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
@@ -299,7 +311,7 @@ profiler-static$(O): profiler.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
-regex-static$(O): regex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
+regex-static$(O): regex.c chicken.h $(CHICKEN_CONFIG_H) 
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -360,6 +372,10 @@ uports-static$(O): uports.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+ufiles-static$(O): ufiles.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 uextras-static$(O): uextras.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
@@ -380,7 +396,7 @@ uposixwin-static$(O): uposixwin.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
-uregex-static$(O): uregex.c chicken.h $(CHICKEN_CONFIG_H) pcre/pcre.h
+uregex-static$(O): uregex.c chicken.h $(CHICKEN_CONFIG_H) 
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(PCRE_INCLUDES) \
 	  $(C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS) $(C_COMPILER_PCRE_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -448,6 +464,10 @@ data-structures.import$(O): data-structures.import.c chicken.h $(CHICKEN_CONFIG_
 	  $(HOST_C_COMPILER_COMPILE_OPTION) $(HOST_C_COMPILER_OPTIMIZATION_OPTIONS) $(HOST_C_COMPILER_SHARED_OPTIONS) \
 	  $(HOST_C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(HOST_C_COMPILER_OUTPUT)
 ports.import$(O): ports.import.c chicken.h $(CHICKEN_CONFIG_H)
+	$(HOST_C_COMPILER) $(HOST_C_COMPILER_OPTIONS) $(HOST_C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
+	  $(HOST_C_COMPILER_COMPILE_OPTION) $(HOST_C_COMPILER_OPTIMIZATION_OPTIONS) $(HOST_C_COMPILER_SHARED_OPTIONS) \
+	  $(HOST_C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(HOST_C_COMPILER_OUTPUT)
+files.import$(O): files.import.c chicken.h $(CHICKEN_CONFIG_H)
 	$(HOST_C_COMPILER) $(HOST_C_COMPILER_OPTIONS) $(HOST_C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) -DC_SHARED \
 	  $(HOST_C_COMPILER_COMPILE_OPTION) $(HOST_C_COMPILER_OPTIMIZATION_OPTIONS) $(HOST_C_COMPILER_SHARED_OPTIONS) \
 	  $(HOST_C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(HOST_C_COMPILER_OUTPUT)
@@ -579,43 +599,43 @@ optimizer-static$(O): optimizer.c chicken.h $(CHICKEN_CONFIG_H)
 
 # pcre objects
 
-pcre/pcre_compile$(O): pcre/pcre_compile.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_compile$(O): $(PCRE_DIR)/pcre_compile.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_config$(O): pcre/pcre_config.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_config$(O): $(PCRE_DIR)/pcre_config.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_dfa_exec$(O): pcre/pcre_dfa_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_dfa_exec$(O): $(PCRE_DIR)/pcre_dfa_exec.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_exec$(O): pcre/pcre_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_exec$(O): $(PCRE_DIR)/pcre_exec.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_fullinfo$(O): pcre/pcre_fullinfo.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_fullinfo$(O): $(PCRE_DIR)/pcre_fullinfo.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_get$(O): pcre/pcre_get.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_get$(O): $(PCRE_DIR)/pcre_get.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_globals$(O): pcre/pcre_globals.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_globals$(O): $(PCRE_DIR)/pcre_globals.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_info$(O): pcre/pcre_info.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_info$(O): $(PCRE_DIR)/pcre_info.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_maketables$(O): pcre/pcre_maketables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_maketables$(O): $(PCRE_DIR)/pcre_maketables.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_newline$(O): pcre/pcre_newline.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)/pcre_newline$(O): $(PCRE_DIR)/pcre_newline.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
@@ -930,7 +950,7 @@ ifneq ($(POSTINSTALL_STATIC_LIBRARY),true)
 	$(POSTINSTALL_STATIC_LIBRARY) $(POSTINSTALL_STATIC_LIBRARY_FLAGS) \
 	  $(ILIBDIR)/libuchicken$(A)
 endif
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.h $(DESTDIR)$(IINCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken.h $(DESTDIR)$(IINCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(CHICKEN_CONFIG_H) $(DESTDIR)$(IINCDIR)
 ifndef STATICBUILD
 ifdef DLLSINPATH
@@ -981,7 +1001,7 @@ else
 	  $(CHICKEN_INSTALL_PROGRAM)$(EXE) $(CHICKEN_UNINSTALL_PROGRAM)$(EXE) \
 	  $(CHICKEN_STATUS_PROGRAM)$(EXE)
 endif
-	$(MAKE) NEEDS_RELINKING=no RUNTIME_LINKER_PATH=$(LIBDIR) install
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) NEEDS_RELINKING=no RUNTIME_LINKER_PATH=$(LIBDIR) install
 	$(MAKE_WRITABLE_COMMAND) $(CHICKEN_PROGRAM)$(EXE) $(CSI_PROGRAM)$(EXE) \
 	  $(CSC_PROGRAM)$(EXE) $(CHICKEN_PROFILE_PROGRAM)$(EXE)
 ifndef STATICBUILD
@@ -1032,6 +1052,7 @@ endif
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-4.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/data-structures.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/ports.import.so
+	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/files.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/posix.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-13.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-69.import.so
@@ -1064,22 +1085,28 @@ else
 endif
 endif
 endif
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) csi.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) csc.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-setup.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-profile.1 $(DESTDIR)$(IMANDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-bug.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/csi.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/csc.1 $(DESTDIR)$(IMANDIR)
+ifndef BUILD_SETUP_TOOLS
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-setup.1 $(DESTDIR)$(IMANDIR)
+else
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-install.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-uninstall.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-status.1 $(DESTDIR)$(IMANDIR)
+endif
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-profile.1 $(DESTDIR)$(IMANDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-bug.1 $(DESTDIR)$(IMANDIR)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DESTDIR)$(IDOCDIR)/html
-	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) html/* $(DESTDIR)$(IDOCDIR)/html
-	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.pdf $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) README $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) LICENSE $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
+	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/html/* $(DESTDIR)$(IDOCDIR)/html
+	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken.pdf $(DESTDIR)$(IDOCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/README $(DESTDIR)$(IDOCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/LICENSE $(DESTDIR)$(IDOCDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)/chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.info $(DESTDIR)$(IINFODIR)
 	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(DESTDIR)$(IINFODIR) chicken.info
 ifdef WINDOWS
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) csibatch.bat $(DESTDIR)$(IBINDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(SRCDIR)/csibatch.bat $(DESTDIR)$(IBINDIR)
 endif
 endif
 
@@ -1161,6 +1188,8 @@ data-structures.c: data-structures.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 ports.c: ports.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
+files.c: files.scm private-namespace.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 extras.c: extras.scm private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend private-namespace.scm
 lolevel.c: lolevel.scm
@@ -1202,6 +1231,8 @@ udata-structures.c: data-structures.scm private-namespace.scm unsafe-declaration
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
 uports.c: ports.scm private-namespace.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@
+ufiles.c: files.scm private-namespace.scm unsafe-declarations.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@
 uextras.c: extras.scm private-namespace.scm unsafe-declarations.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) $(CHICKEN_UNSAFE_OPTIONS) -output-file $@ -extend private-namespace.scm
 ulolevel.c: lolevel.scm unsafe-declarations.scm
@@ -1240,6 +1271,8 @@ srfi-4.import.c: srfi-4.import.scm
 data-structures.import.c: data-structures.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 ports.import.c: ports.import.scm
+	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+files.import.c: files.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 posix.import.c: posix.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
@@ -1322,10 +1355,10 @@ endif
 
 .PHONY: distfiles dist
 
-distfiles: buildsvnrevision library.c eval.c expand.c data-structures.c ports.c extras.c lolevel.c utils.c \
+distfiles: buildsvnrevision library.c eval.c expand.c data-structures.c ports.c files.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c \
-	ulibrary.c ueval.c udata-structures.c uports.c uextras.c ulolevel.c \
+	ulibrary.c ueval.c udata-structures.c uports.c ufiles.c uextras.c ulolevel.c \
 	uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c \
 	chicken-profile.c chicken-setup.c csc.c csi.c \
@@ -1350,9 +1383,10 @@ endif
 clean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
 	  chicken-setup$(EXE) chicken-profile$(EXE) csi-static$(EXE) \
+	  chicken-install$(EXE) chicken-uninstall$(EXE) chicken-status$(EXE) \
 	  csc-static$(EXE) chicken-static$(EXE) chicken-bug$(EXE) chicken.info *$(O) \
 	  $(LIBCHICKEN_SO_FILE) $(LIBUCHICKEN_SO_FILE) $(LIBCHICKENGUI_SO_FILE) \
-	  libchicken$(A) libuchicken$(A) libchickengui$(A) $(PROGRAM_IMPORT_LIBRARIES) \
+	  libchicken$(A) libuchicken$(A) libchickengui$(A) libchicken$(SO) $(PROGRAM_IMPORT_LIBRARIES) \
 	  $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
 	  $(MSVC_CHICKEN_EXPORT_FILES) chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) \
 	  $(CLEAN_MANIFESTS)
@@ -1360,10 +1394,10 @@ confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
 spotless: distclean
-	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c ports.c extras.c lolevel.c utils.c \
+	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c \
 	  tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c expand.c \
 	  posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c \
-	  ulibrary.c ueval.c udata-structures.c uports.c uextras.c ulolevel.c \
+	  ulibrary.c ueval.c udata-structures.c uports.c ufiles.c uextras.c ulolevel.c \
 	  uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	  usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-setup.c chicken-bug.c \
 	  csc.c csi.c \
@@ -1386,17 +1420,17 @@ fullcheck: check compiler-check
 
 compiler-check:
 	@echo "======================================== packing ..."
-	$(MAKE) dist
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) dist
 	$(REMOVE_COMMAND $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
 	tar -C tests -xzf `ls -t chicken-*.tar.gz | head -1`
 	@echo "======================================== building stage 1 ..."
-	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	touch tests/chicken-*/*.scm
 	@echo "======================================== building stage 2 ..."
-	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	cat tests/chicken-*/*.c >tests/stage2.out
 	@echo "======================================== building stage 3 ..."
-	$(MAKE) STATICBUILD=1 -C tests/chicken-* confclean all
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	cat tests/chicken-*/*.c >tests/stage3.out
 	diff tests/stage2.out tests/stage3.out >tests/stages.diff
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
@@ -1407,13 +1441,13 @@ compiler-check:
 .PHONY: bootstrap bootstrap.tar.gz
 
 bootstrap: bootstrap.tar.gz
-	gzip -d -c bootstrap.tar.gz | tar xvf -
+	gzip -d -c $(SRCDIR)/bootstrap.tar.gz | tar xvf -
 	touch *.c
-	$(MAKE) -f Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
 	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 
 bootstrap.tar.gz: posixunix.c posixwin.c $(IMPORT_LIBRARIES:=.import.c)
-	tar cfz bootstrap.tar.gz library.c eval.c data-structures.c ports.c extras.c lolevel.c utils.c tcp.c \
+	tar cfz bootstrap.tar.gz library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c tcp.c \
 	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c posixunix.c posixwin.c regex.c \
 	  scheduler.c profiler.c stub.c expand.c $(COMPILER_OBJECTS_1:=.c)

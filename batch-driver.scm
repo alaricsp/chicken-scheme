@@ -37,7 +37,7 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   compiler-cleanup-hook disabled-warnings
-  file-io-only undefine-shadowed-macros
+  file-io-only undefine-shadowed-macros profiled-procedures
   unit-name insert-timer-checks used-units inline-max-size
   debugging perform-lambda-lifting! disable-stack-overflow-checking
   foreign-declarations emit-trace-info block-compilation line-number-database-size
@@ -358,6 +358,7 @@
     (when profile
       (let ([acc (eq? 'accumulate-profile (car profile))])
 	(set! emit-profile #t)
+	(set! profiled-procedures #f)
 	(set! initforms
 	  (append
 	   initforms
@@ -366,7 +367,7 @@
 	       '((set! ##sys#profile-append-mode #t))
 	       '() ) ) )
 	(when verbose
-	  (printf "Generating ~aprofile~%~!" (if acc "accumulated " "") emit-profile) ) ) )
+	  (printf "Generating ~aprofile~%~!" (if acc "accumulated " "")) ) ) )
 
     (cond ((memq 'version options)
 	   (print-version #t)

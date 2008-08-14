@@ -26,6 +26,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+LANG="C"
+
 if test -d ".svn" ;
 then
     if test -x "`which svn`" ;

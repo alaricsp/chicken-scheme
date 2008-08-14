@@ -250,7 +250,7 @@ EOF
   (##sys#check-structure thread 'thread 'thread-terminate!)
   (when (eq? thread ##sys#primordial-thread)
     ((##sys#exit-handler)) )
-  (##sys#setislot thread 2 (list (##core#undefined)))
+  (##sys#setslot thread 2 (list (##core#undefined)))
   (##sys#setslot thread 7 (##sys#make-structure 'condition '(terminated-thread-exception) '()))
   (##sys#thread-kill! thread 'terminated)
   (when (eq? thread ##sys#current-thread) (##sys#schedule)) )

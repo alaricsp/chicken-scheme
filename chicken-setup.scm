@@ -27,7 +27,7 @@
 
 (declare
   (run-time-macros)			;*** later: compile-syntax
-  (uses srfi-1 regex utils posix tcp srfi-18 srfi-13 ports)
+  (uses srfi-1 regex utils files posix tcp srfi-18 srfi-13 ports)
   (export move-file run:execute make/proc uninstall-extension
 	  install-extension install-program install-script setup-verbose-flag
 	  setup-install-flag installation-prefix chicken-prefix find-library
@@ -198,6 +198,7 @@
 (define *move-command* (if *windows-shell* 'move 'mv))
 (define *gzip-program* 'gzip)
 (define *tar-program* 'tar)
+
 (define *fetch-only* #f)
 (define *builddir-created* #f)
 (define *keep-stuff* #f)
@@ -1088,7 +1089,7 @@ EOF
 (define (fetch-file ext)
   (and (or *dont-ask*
 	   (yes-or-no?
-	    (sprintf "The extension ~A does not exist.~%Do you want to download it ?" ext)
+	    (sprintf "File ~A.egg or ~A.setup not found in the download directory. ~%Do you want to download .egg archive ?" ext ext)
 	    "yes") )
        (cond ((pathname-directory ext)
 	      (printf "Warning: no repository index available, trying direct download...~%" ext)
