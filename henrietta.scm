@@ -34,6 +34,7 @@
 
   (define *default-transport* 'svn)
   (define *default-location* (current-directory))
+  (define *test* #f)
 
   (define (headers)
     (print "Connection: close\r\nContent-type: application/octet-stream\r\n\r\n"))
@@ -80,14 +81,19 @@
 		 (rest (and m (substring qs (cadar m)))))
 	    (cond ((not m)
 		   (headers)		; from here on use `fail'
-		   (if egg
-		       (retrieve egg version)
-		       (fail "no extension name specified") ) )
+		   (cond (*test* 
+			  (fail "test"))
+			 (egg
+			  (retrieve egg version))
+			 (else (fail "no extension name specified") ) ))
 		  ((string=? ms "version")
 		   (set! version (apply substring qs (caddr m)))
 		   (loop rest))
 		  ((string=? ms "name")
 		   (set! egg (apply substring qs (caddr m)))
+		   (loop rest))
+		  ((string=? ms "test")
+		   (set! *test* #t)
 		   (loop rest))
 		  (else
 		   (warning "unrecognized query option" ms)
