@@ -1115,8 +1115,7 @@ compiler-check:
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	cat tests/chicken-*/*.c >tests/stage2.out
 	@echo "======================================== building stage 3 ..."
-	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
-	cat tests/chicken-*/*.c >tests/stage3.out
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all	cat tests/chicken-*/*.c >tests/stage3.out
 	diff tests/stage2.out tests/stage3.out >tests/stages.diff
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
 
@@ -1136,4 +1135,3 @@ $(SRCDIR)/bootstrap.tar.gz: distfiles
 	tar cfz $(SRCDIR)/bootstrap.tar.gz library.c eval.c data-structures.c ports.c files.c extras.c \
         lolevel.c utils.c tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
         posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c match.c $(COMPILER_OBJECTS_1:=.c)
-
