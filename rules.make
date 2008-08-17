@@ -1115,7 +1115,8 @@ compiler-check:
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all
 	cat tests/chicken-*/*.c >tests/stage2.out
 	@echo "======================================== building stage 3 ..."
-	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all	cat tests/chicken-*/*.c >tests/stage3.out
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 -C tests/chicken-* confclean all	
+	cat tests/chicken-*/*.c >tests/stage3.out
 	diff tests/stage2.out tests/stage3.out >tests/stages.diff
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_RECURSIVE_OPTIONS) tests/chicken-*
 
