@@ -100,7 +100,7 @@
 (define-foreign-variable installation-home c-string "C_INSTALL_SHARE_HOME")
 
 (define ##sys#core-library-modules
-  '(extras lolevel utils tcp regex regex-extras posix srfi-1 srfi-4 srfi-13 
+  '(extras lolevel utils files tcp regex regex-extras posix srfi-1 srfi-4 srfi-13 
 	   srfi-14 srfi-18 data-structures ports))
 
 (define ##sys#explicit-library-modules '())

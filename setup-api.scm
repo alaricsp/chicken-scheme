@@ -24,7 +24,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library srfi-1 regex utils posix srfi-13 extras ports data-structures)
+(require-library srfi-1 regex utils posix srfi-13 extras ports data-structures files)
 
 
 (module setup-api
@@ -47,7 +47,7 @@
 
   (import scheme chicken foreign
 	  regex utils posix ports extras data-structures
-	  srfi-1 srfi-13)
+	  srfi-1 srfi-13 files)
 
 ;;; Constants, variables and parameters
 

@@ -32,6 +32,7 @@
    make-pathname
    directory-null?
    make-absolute-pathname
+   create-temporary-file
    decompose-pathname
    absolute-pathname?
    pathname-directory

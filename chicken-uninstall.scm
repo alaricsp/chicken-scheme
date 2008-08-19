@@ -24,12 +24,14 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library setup-utils srfi-1 posix data-structures utils ports regex srfi-13)
+(require-library setup-utils srfi-1 posix data-structures utils ports regex srfi-13
+		 files)
 
 
 (module main ()
   
-  (import scheme chicken setup-utils srfi-1 posix data-structures utils ports regex srfi-13)
+  (import scheme chicken)
+  (import setup-utils srfi-1 posix data-structures utils ports regex srfi-13 files)
 
   (define *force* #f)
   (define *sudo* #f)

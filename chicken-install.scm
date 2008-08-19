@@ -26,7 +26,7 @@
 
 (require-library setup-utils setup-download)
 (require-library srfi-1 posix data-structures utils ports regex ports extras
-		 srfi-13)
+		 srfi-13 files)
 
 
 #+(not csi)
@@ -41,7 +41,7 @@ EOF
 (module main ()
   
   (import scheme chicken srfi-1 posix data-structures utils ports regex ports extras
-	  srfi-13)
+	  srfi-13 files)
   (import setup-utils setup-download)
   
   #+(not csi) (import foreign)

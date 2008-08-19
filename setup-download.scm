@@ -24,7 +24,8 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13)
+(require-library extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13
+		 files)
 
 
 (module setup-download (retrieve-extension
@@ -34,7 +35,7 @@
 			temporary-directory)
 
   (import scheme chicken)
-  (import extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13)
+  (import extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13 files)
 
   (define temporary-directory (make-parameter #f))
 
@@ -66,7 +67,7 @@
 		eggdir)))))
   
   (define (locate-egg/svn egg repo #!optional version quiet)
-    (let ((cmd (sprintf "svn ls -R \"~a/~a\"" repo egg)))
+    (let ((cmd (sprintf "svn ls --username=anonymous --password='' -R \"~a/~a\"" repo egg)))
       (fprintf (if quiet (current-error-port) (current-output-port)) 
 	       "checking available versions ...\n  ~a~%" cmd)
       (let* ((files (with-input-from-pipe cmd read-lines))
@@ -92,7 +93,8 @@
 		    (and hastrunk "trunk") )
 		  ""))
 	     (tmpdir (make-pathname (get-temporary-directory) egg))
-	     (cmd (sprintf "svn co \"~a/~a/~a\" \"~a\" ~a" repo egg filedir 
+	     (cmd (sprintf "svn co --username=anonymous --password='' \"~a/~a/~a\" \"~a\" ~a"
+			   repo egg filedir 
 			   tmpdir
 			   (if quiet "1>&2" ""))))
 	(fprintf (if quiet (current-error-port) (current-output-port)) "  ~a~%" cmd)

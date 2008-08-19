@@ -37,7 +37,7 @@
   (define *test* #f)
 
   (define (headers)
-    (print "Connection: close\r\nContent-type: application/octet-stream\r\n\r\n"))
+    (print "Connection: close\r\nContent-type: text/plain\r\n\r\n"))
 
   (define (fail msg . args)
     (pp `(error ,msg ,@args))
@@ -84,7 +84,8 @@
 		   (cond (*test* 
 			  (fail "test"))
 			 (egg
-			  (retrieve egg version))
+			  (retrieve egg version)
+			  (cleanup) )
 			 (else (fail "no extension name specified") ) ))
 		  ((string=? ms "version")
 		   (set! version (apply substring qs (caddr m)))

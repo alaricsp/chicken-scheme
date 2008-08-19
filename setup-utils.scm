@@ -24,7 +24,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library regex utils ports tcp extras posix 
+(require-library regex utils ports tcp extras posix files
 		 srfi-1 srfi-13 data-structures)
 
 
@@ -40,7 +40,7 @@
   
   (import scheme chicken)
   (import regex utils ports tcp extras posix srfi-1 srfi-13 
-	  data-structures)
+	  data-structures files)
 
   (define (version>=? v1 v2)
     (define (version->list v)
@@ -91,7 +91,6 @@
 		(else (create-directory pn) pn))))))
 
   (define (remove-directory dir #!optional sudo)
-    (print "removing " dir)
     (if sudo
 	(system* "sudo rm -fr '~a'" dir)
 	(let walk ((dir dir))
@@ -127,7 +126,6 @@
     (remove-file (make-pathname (repository-path) egg "setup-info") sudo))
 
   (define (remove-file path #!optional sudo)
-    (print "removing " path)
     (if sudo
 	(system* "sudo rm -f '~a'" path)
 	(delete-file path)))

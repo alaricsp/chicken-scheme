@@ -54,6 +54,7 @@ TODO for macro/module system					-*- Outline -*-
 * guerrilla-setup
 ** "-version" option for all tools
 ** setup-download
+*** allow customization of svn credentials (username/password) instead of hardcoded "anonymous"
 *** HTTP_PROXY
 *** handle redirects in http-fetch
 ** chicken-install
