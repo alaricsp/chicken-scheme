@@ -601,6 +601,7 @@
 	[write write]
 	[cadadr cadadr]
 	[reverse reverse]
+	(keyword? keyword?)
 	[open-output-string open-output-string]
 	[get-output-string get-output-string] 
 	[with-input-from-file with-input-from-file]
@@ -664,28 +665,30 @@
 
       (define (compile x e h tf cntr)
 	(cond [(symbol? x)
-	       (receive (i j) (lookup x e)
-		 (cond [(not i)
-			(let ((x (##sys#alias-global-hook x)))
-			  (if ##sys#eval-environment
-			      (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
-				(unless loc (##sys#syntax-error-hook "reference to undefined identifier" x))
-				(cond-expand 
-				 [unsafe (lambda v (##sys#slot loc 1))]
-				 [else
-				  (lambda v 
-				    (let ([val (##sys#slot loc 1)])
-				      (if (eq? unbound val)
-					  (##sys#error "unbound variable" x)
-					  val) ) ) ] ) )
-			      (cond-expand
-			       [unsafe (lambda v (##core#inline "C_slot" x 0))]
-			       [else
-				(when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
-				  (set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
-				(lambda v (##core#inline "C_retrieve" x))] ) ) ) ]
-		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
-		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
+	       (if (keyword? x)
+		   (lambda v x)
+		   (receive (i j) (lookup x e)
+		     (cond [(not i)
+			    (let ((x (##sys#alias-global-hook x)))
+			      (if ##sys#eval-environment
+				  (let ([loc (##sys#hash-table-location ##sys#eval-environment x #t)])
+				    (unless loc (##sys#syntax-error-hook "reference to undefined identifier" x))
+				    (cond-expand 
+				     [unsafe (lambda v (##sys#slot loc 1))]
+				     [else
+				      (lambda v 
+					(let ([val (##sys#slot loc 1)])
+					  (if (eq? unbound val)
+					      (##sys#error "unbound variable" x)
+					      val) ) ) ] ) )
+				  (cond-expand
+				   [unsafe (lambda v (##core#inline "C_slot" x 0))]
+				   [else
+				    (when (and ##sys#unbound-in-eval (not (##sys#symbol-has-toplevel-binding? x)))
+				      (set! ##sys#unbound-in-eval (cons (cons x cntr) ##sys#unbound-in-eval)) )
+				    (lambda v (##core#inline "C_retrieve" x))] ) ) ) ]
+			   [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
+			   [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ) ]
 	      [(##sys#number? x)
 	       (case x
 		 [(-1) (lambda v -1)]

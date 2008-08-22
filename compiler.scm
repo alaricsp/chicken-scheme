@@ -501,7 +501,8 @@
 
   (define (walk x ae me dest)
     (cond ((symbol? x)
-	   (cond ((assq x ae) => 
+	   (cond ((keyword? x) (walk-literal x ae me dest))
+		 ((assq x ae) => 
 		  (lambda (a)
 		    (let ((alias (cdr a)))
 		      (or (resolve-atom alias ae me dest)
