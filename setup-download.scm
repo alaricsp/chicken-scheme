@@ -171,11 +171,11 @@
 		  ((not (string? name))
 		   (error "invalid file name - possibly corrupt transmission" name))
 		  ((string-suffix? "/" name)
-		   (d "  " name)
+		   (d "  ~a~%" name)
 		   (create-directory (make-pathname dest name))
 		   (loop files))
 		  (else
-		   (d "  " name)
+		   (d "  ~a~%" name)
 		   (let* ((size (read in))
 			  (_ (read-line in))
 			  (data (read-string size in)) )
