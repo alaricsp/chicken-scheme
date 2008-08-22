@@ -206,10 +206,12 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # define ALIGNMENT_HOLE_MARKER         ((C_word)0xfffffffffffffffeL)
 # define FORWARDING_BIT_SHIFT          63
 # define UWORD_FORMAT_STRING           "0x%lx"
+# define UWORD_COUNT_FORMAT_STRING     "%ld"
 #else
 # define ALIGNMENT_HOLE_MARKER         ((C_word)0xfffffffe)
 # define FORWARDING_BIT_SHIFT          31
 # define UWORD_FORMAT_STRING           "0x%x"
+# define UWORD_COUNT_FORMAT_STRING     "%d"
 #endif
 
 #define GC_MINOR           0
@@ -3196,8 +3198,8 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   if(size == heap_size) return;
 
   if(debug_mode) 
-    C_printf(C_text("[debug] resizing heap dynamically from " UWORD_FORMAT_STRING " to " UWORD_FORMAT_STRING " bytes...\n"), 
-	   (C_uword)heap_size, size);
+    C_printf(C_text("[debug] resizing heap dynamically from " UWORD_COUNT_FORMAT_STRING "k to " UWORD_COUNT_FORMAT_STRING "k ...\n"), 
+	     (C_uword)heap_size / 1000, size / 1000);
 
   if(gc_report_flag) {
     C_printf(C_text("(old) fromspace: \tstart=%08lx, \tlimit=%08lx\n"), (long)fromspace_start, (long)C_fromspace_limit);
