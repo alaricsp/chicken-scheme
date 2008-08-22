@@ -56,6 +56,8 @@
 		 (retrieve-extension 
 		  name *default-transport* *default-location*
 		  version #t))))
+      (unless dir 
+	(fail "no such extension or version" name version))
       (let walk ((dir dir) (prefix "."))
 	(let ((files (directory dir)))
 	  (for-each

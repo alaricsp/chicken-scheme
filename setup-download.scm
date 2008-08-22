@@ -74,38 +74,43 @@
 		eggdir)))))
   
   (define (locate-egg/svn egg repo #!optional version destination)
-    (let ((cmd (sprintf "svn ls --username=anonymous --password='' -R \"~a/~a\"" repo egg)))
-      (d "checking available versions ...~%  ~a~%" cmd)
-      (let* ((files (with-input-from-pipe cmd read-lines))
-	     (hastrunk (member "trunk/" files)) 
-	     (filedir
-	      (or (let ((vs (filter-map
-			     (lambda (f)
-			       (and-let* ((m (string-search "^tags/([^/]+)/" f))
-					  (v (cadr m)))
-				 (print v)
-				 v))
-			     files)))
-		    (if version
-			(if (member version vs)
-			    (string-append "tags/" version)
-			    (error "version not found" egg version))
-			(let ((vs (sort vs version>=?)))
-			  (and (pair? vs)
-			       (string-append "tags/" (car vs))))))
-		  (begin
-		    (when version
-		      (warning "extension has no such version - using trunk" egg version))
-		    (and hastrunk "trunk") )
-		  ""))
-	     (tmpdir (make-pathname (or destination (get-temporary-directory)) egg))
-	     (cmd (sprintf "svn co --username=anonymous --password='' \"~a/~a/~a\" \"~a\" ~a"
-			   repo egg filedir 
-			   tmpdir
-			   (if *quiet* "1>&2" ""))))
-	(d "  ~a~%" cmd)
-	(system* cmd)
-	tmpdir)) )
+    (call/cc 
+     (lambda (k)
+       (define (runcmd cmd)
+	 (unless (zero? (system cmd))
+	   (k #f)))
+       (let ((cmd (sprintf "svn ls --username=anonymous --password='' -R \"~a/~a\"" repo egg)))
+	 (d "checking available versions ...~%  ~a~%" cmd)
+	 (let* ((files (with-input-from-pipe cmd read-lines))
+		(hastrunk (member "trunk/" files)) 
+		(filedir
+		 (or (let ((vs (filter-map
+				(lambda (f)
+				  (and-let* ((m (string-search "^tags/([^/]+)/" f))
+					     (v (cadr m)))
+				    (print v)
+				    v))
+				files)))
+		       (if version
+			   (if (member version vs)
+			       (string-append "tags/" version)
+			       (error "version not found" egg version))
+			   (let ((vs (sort vs version>=?)))
+			     (and (pair? vs)
+				  (string-append "tags/" (car vs))))))
+		     (begin
+		       (when version
+			 (warning "extension has no such version - using trunk" egg version))
+		       (and hastrunk "trunk") )
+		     ""))
+		(tmpdir (make-pathname (or destination (get-temporary-directory)) egg))
+		(cmd (sprintf "svn co --username=anonymous --password='' \"~a/~a/~a\" \"~a\" ~a"
+			      repo egg filedir 
+			      tmpdir
+			      (if *quiet* "1>&2" ""))))
+	   (d "  ~a~%" cmd)
+	   (runcmd cmd)
+	   tmpdir)) )))
 
   (define (locate-egg/http egg url #!optional version destination)
     (let* ((tmpdir (or destination (get-temporary-directory)))
@@ -155,18 +160,22 @@
 	(d "reading files ...~%")
 	(let loop ((files '()))
 	  (let ((name (read in)))
-	    (d "  ~a~%" name)
 	    (cond ((and (pair? name) (eq? 'error (car name)))
-		   (apply error (cdr name)))
+		   (apply 
+		    error 
+		    (string-append "[Server] " (cadr name))
+		    (cddr name)))
 		  ((or (eof-object? name) (not name))
 		   (close-input-port in)
 		   (reverse files) )
 		  ((not (string? name))
 		   (error "invalid file name - possibly corrupt transmission" name))
 		  ((string-suffix? "/" name)
+		   (d "  " name)
 		   (create-directory (make-pathname dest name))
 		   (loop files))
 		  (else
+		   (d "  " name)
 		   (let* ((size (read in))
 			  (_ (read-line in))
 			  (data (read-string size in)) )

@@ -134,6 +134,8 @@ EOF
 			name *default-transport* *default-location*
 			version #f 
 			(and *retrieve-only* (current-directory)))))
+	     (unless dir
+	       (error "extension or version not found"))
 	     (print " " name " located at " dir)
 	     (set! *eggs+dirs* (alist-cons name dir *eggs+dirs*)))))
        eggs)
@@ -214,7 +216,6 @@ EOF
   (define (cleanup)
     (unless *keep*
       (and-let* ((tmpdir (temporary-directory)))
-	(print "removing temporary directory " tmpdir)
 	(remove-directory tmpdir))))
 
   (define (usage code)
