@@ -60,6 +60,8 @@ TODO for macro/module system					-*- Outline -*-
 ** chicken-install
 *** handle needs/depends of builtin extension
 *** should cache extension-info
+*** handle connection failure by allowing alternative sites
+*** with "-r", delete output dir on failure
 ** write manual chapters
 *** remove "manual/chicken-setup", fix links
 *** add "manual/extensions"

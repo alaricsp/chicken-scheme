@@ -61,6 +61,7 @@ EOF
   (define *prefix* #f)
   (define *host-extension* #f)
   (define *run-tests* #f)
+  (define *retrieve-only* #f)
 
   (define (load-defaults)
     (let* ((deff (make-pathname (repository-path) "setup.defaults"))
@@ -69,8 +70,8 @@ EOF
 		      (else '())))
 	   (loc (assq 'location def))
 	   (tr (assq 'transport def)))
-      (when loc (set! *default-location* loc))
-      (when tr (set! *default-transport* tr))
+      (when loc (set! *default-location* (cadr loc)))
+      (when tr (set! *default-transport* (cadr tr)))
       (pair? def)))
 
   (define (deps key meta)
@@ -131,81 +132,84 @@ EOF
 		  (version (and (pair? egg) (cdr egg)))
 		  (dir (retrieve-extension 
 			name *default-transport* *default-location*
-			version)))
+			version #f 
+			(and *retrieve-only* (current-directory)))))
 	     (print " " name " located at " dir)
 	     (set! *eggs+dirs* (alist-cons name dir *eggs+dirs*)))))
        eggs)
-      (for-each
-       (lambda (e+d)
-	 (unless (member (car e+d) *checked*)
-	   (set! *checked* (cons (car e+d) *checked*))
-	   (let ((mfile (make-pathname (cdr e+d) (car e+d) "meta")))
-	     (cond ((file-exists? mfile)
-		    (let ((meta (with-input-from-file mfile read)))
-		      (print "checking dependencies for `" (car e+d) "' ...")
-		      (let-values (((missing upgrade) (outdated-dependencies meta)))
-			(when (pair? missing)
-			  (print " missing: " (string-intersperse missing ", "))
-			  (retrieve missing))
-			(when (and (pair? upgrade)
-				   (or *force*
-				       (yes-or-no? 
-					(string-concatenate
-					 (append
-					  (list "The following installed extensions are outdated, because `"
-						(car e+d) "' requires later versions:\n")
-					  (map (lambda (e)
-						 (sprintf 
-						  "  ~a (~a -> ~a)~%"
-						  (car e) 
-						  (let ((v (assq 'version (extension-information (car e)))))
-						    (if v (cadr v) "???"))
-						  (cdr e)))
-					       upgrade)
-					  '("\nDo you want to replace the existing extensions?")))
-					"no") ) )
-			  (let ((ueggs (unzip1 upgrade)))
-			    (print " upgrade: " (string-intersperse ueggs ", "))
-			    (for-each 
-			     (lambda (e)
-			       (print "removing previously installed extension `" e "' ...")
-			       (remove-extension e *sudo*) )
-			     ueggs)
-			    (retrieve ueggs))))))
-		   (else
-		    (warning 
-		     (string-append 
-		      "extension `" (car e+d) "' has no .meta file "
-		      "- assuming it has no dependencies")))))))
-       *eggs+dirs*))
+      (unless *retrieve-only*
+	(for-each
+	 (lambda (e+d)
+	   (unless (member (car e+d) *checked*)
+	     (set! *checked* (cons (car e+d) *checked*))
+	     (let ((mfile (make-pathname (cdr e+d) (car e+d) "meta")))
+	       (cond ((file-exists? mfile)
+		      (let ((meta (with-input-from-file mfile read)))
+			(print "checking dependencies for `" (car e+d) "' ...")
+			(let-values (((missing upgrade) (outdated-dependencies meta)))
+			  (when (pair? missing)
+			    (print " missing: " (string-intersperse missing ", "))
+			    (retrieve missing))
+			  (when (and (pair? upgrade)
+				     (or *force*
+					 (yes-or-no? 
+					  (string-concatenate
+					   (append
+					    (list "The following installed extensions are outdated, because `"
+						  (car e+d) "' requires later versions:\n")
+					    (map (lambda (e)
+						   (sprintf 
+						    "  ~a (~a -> ~a)~%"
+						    (car e) 
+						    (let ((v (assq 'version (extension-information (car e)))))
+						      (if v (cadr v) "???"))
+						    (cdr e)))
+						 upgrade)
+					    '("\nDo you want to replace the existing extensions?")))
+					  "no") ) )
+			    (let ((ueggs (unzip1 upgrade)))
+			      (print " upgrade: " (string-intersperse ueggs ", "))
+			      (for-each 
+			       (lambda (e)
+				 (print "removing previously installed extension `" e "' ...")
+				 (remove-extension e *sudo*) )
+			       ueggs)
+			      (retrieve ueggs))))))
+		     (else
+		      (warning 
+		       (string-append 
+			"extension `" (car e+d) "' has no .meta file "
+			"- assuming it has no dependencies")))))))
+	 *eggs+dirs*)))
 
     (define (install eggs)
       (retrieve eggs)
-      (for-each				; we assume the order reflects the dependency tree...
-       (lambda (e+d)
-	 (print "installing " (car e+d) " ...")
-	 (print "changing current directory to " (cdr e+d))
-	 (parameterize ((current-directory (cdr e+d)))
-	   (let ((cmd (sprintf
-		       "~a/csi -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a"
-		       *program-path*
-		       (if *sudo* "-e \"(sudo-install #t)\"" "")
-		       (if *keep* "-e \"(keep-intermediates #t)\"" "")
-		       (if *host-extension* "-e \"(host-extension #t)\"" "")
-		       (if *prefix* 
-			   (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
-			   "")
-		       (make-pathname (cdr e+d) (car e+d) "setup"))))
-	     (system* cmd))
-	   (when (and *run-tests*
-		      (file-exists? "tests")
-		      (directory? "tests")
-		      (file-exists? "tests/run.scm") )
-	     (current-directory "tests")
-	     (let ((cmd (sprintf "~a/csi -s run.scm ~a" *program-path* (car e+d))))
-	       (print cmd)
-	       (system* cmd)))))
-       *eggs+dirs*))
+      (unless *retrieve-only*
+	(for-each ; we assume the order reflects the dependency tree...
+	 (lambda (e+d)
+	   (print "installing " (car e+d) " ...")
+	   (print "changing current directory to " (cdr e+d))
+	   (parameterize ((current-directory (cdr e+d)))
+	     (let ((cmd (sprintf
+			 "~a/csi -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a"
+			 *program-path*
+			 (if *sudo* "-e \"(sudo-install #t)\"" "")
+			 (if *keep* "-e \"(keep-intermediates #t)\"" "")
+			 (if *host-extension* "-e \"(host-extension #t)\"" "")
+			 (if *prefix* 
+			     (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
+			     "")
+			 (make-pathname (cdr e+d) (car e+d) "setup"))))
+	       (system* cmd))
+	     (when (and *run-tests*
+			(file-exists? "tests")
+			(directory? "tests")
+			(file-exists? "tests/run.scm") )
+	       (current-directory "tests")
+	       (let ((cmd (sprintf "~a/csi -s run.scm ~a" *program-path* (car e+d))))
+		 (print cmd)
+		 (system* cmd)))))
+	 *eggs+dirs*)))
 
   (define (cleanup)
     (unless *keep*
@@ -218,11 +222,12 @@ EOF
 usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
 
   -h   -help                    show this message
-  -f   -force                   don't ask, install even if versions don't match
+       -force                   don't ask, install even if versions don't match
   -k   -keep                    keep temporary files
   -l   -location LOCATION       install from given location instead of default (#{*default-location*})
   -t   -transport TRANSPORT     use given transport instead of default (#{*default-transport*})
   -s   -sudo                    use sudo(1) for installing or removing files
+  -r   -retrieve                only retrieve egg into current directory, don't install
   -p   -prefix PREFIX           change installation prefix to PREFIX
        -host-extension          when cross-compiling, compile extension for host
        -test                    run included test-cases, if available
@@ -230,7 +235,7 @@ EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\f #\k #\l #\t #\s #\p))
+  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r))
 
   (define (main args)
     (let ((defaults (load-defaults)))
@@ -258,7 +263,7 @@ EOF
 			    (string=? arg "-h")
 			    (string=? arg "--help"))
 			(usage 0))
-		       ((or (string=? arg "-f") (string=? arg "-force"))
+		       ((string=? arg "-force")
 			(set! *force* #t)
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-k") (string=? arg "-keep"))
@@ -266,6 +271,9 @@ EOF
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-s") (string=? arg "-sudo"))
 			(set! *sudo* #t)
+			(loop (cdr args) eggs))
+		       ((or (string=? arg "-r") (string=? arg "-retrieve"))
+			(set! *retrieve-only* #t)
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-l") (string=? arg "-location"))
 			(unless (pair? (cdr args)) (usage 1))
@@ -293,7 +301,7 @@ EOF
 				  (loop (append (map (cut string #\- <>) sos) (cdr args)) eggs)
 				  (usage 1)))
 			    (usage 1)))
-		       ((string=? "setup" (pathname-extension arg))
+		       ((equal? "setup" (pathname-extension arg))
 			(let ((egg (pathname-file arg)))
 			  (set! *eggs+dirs*
 			    (alist-cons

@@ -50,9 +50,12 @@
       (remove-directory tmpdir)))
 
   (define (retrieve name version)
-    (let ((dir (retrieve-extension 
-		name *default-transport* *default-location*
-		version #t)))
+    (let ((dir (handle-exceptions ex 
+		   (fail ((condition-property-accessor 'exn 'message) ex)
+			 ((condition-property-accessor 'exn 'arguments) ex))
+		 (retrieve-extension 
+		  name *default-transport* *default-location*
+		  version #t))))
       (let walk ((dir dir) (prefix "."))
 	(let ((files (directory dir)))
 	  (for-each

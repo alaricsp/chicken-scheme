@@ -7,7 +7,7 @@ chicken-install \- download and install extension libraries for Chicken Scheme
 
 .SH SYNOPSIS
 
-chicken-install [OPTION | EXTENSION[:VERSION]]
+chicken-install [OPTION | EXTENSION[:VERSION]] ...
 
 .SH DESCRIPTION
 
@@ -29,7 +29,7 @@ manual for more information.
 Shows a summary of options and exits.
 
 .TP
-.B \-f,\ \-force
+.B \-force
 Do not ask when versions don't match, continue with the installation instead.
 
 .TP
@@ -64,6 +64,10 @@ installed) and
 .B \-s,\ \-sudo
 Perform any installation steps the install files by commands invoked
 with the sudo(1) tool.
+
+.TP
+.B \-r,\ \-retrieve
+Only fetch the extensions, do not install them.
 
 .TP
 .BI \-p,\ \-prefix \ PREFIX

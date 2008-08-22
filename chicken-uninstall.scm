@@ -70,13 +70,13 @@
 usage: chicken-uninstall [OPTION | PATTERN] ...
 
   -h   -help                    show this message
-  -f   -force                   don't ask, delete whatever matches
+       -force                   don't ask, delete whatever matches
   -s   -sudo                    use sudo(1) for deleting files
 EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\f #\s))
+  (define *short-options* '(#\h #\s))
 
   (define (main args)
     (let loop ((args args) (pats '()))
@@ -87,7 +87,7 @@ EOF
 		       (string=? arg "-h")
 		       (string=? arg "--help"))
 		   (usage 0))
-		  ((or (string=? arg "-f") (string=? arg "-force"))
+		  ((string=? arg "-force")
 		   (set! *force* #t)
 		   (loop (cdr args) pats))
 		  ((or (string=? arg "-s") (string=? arg "-sudo"))
