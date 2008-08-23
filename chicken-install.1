@@ -81,7 +81,10 @@ for cross-compilation.
 .TP
 .B \-test
 After successfull installation, invoke any accompanying test-suite,
-if found in the extension sources.
+if found in the extension sources. When this option is given, additional
+dependencies configured in the 
+.B test\-depends
+meta property may be downloaded and installed, if necessary.
 
 
 .SH ENVIRONMENT\ VARIABLES

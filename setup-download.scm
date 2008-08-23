@@ -104,7 +104,7 @@
 		       (and hastrunk "trunk") )
 		     ""))
 		(tmpdir (make-pathname (or destination (get-temporary-directory)) egg))
-		(cmd (sprintf "svn co --username=anonymous --password='' \"~a/~a/~a\" \"~a\" ~a"
+		(cmd (sprintf "svn export --username=anonymous --password='' \"~a/~a/~a\" \"~a\" ~a"
 			      repo egg filedir 
 			      tmpdir
 			      (if *quiet* "1>&2" ""))))
@@ -171,6 +171,7 @@
 		  ((not (string? name))
 		   (error "invalid file name - possibly corrupt transmission" name))
 		  ((string-suffix? "/" name)
+		   (read in)		; skip size
 		   (d "  ~a~%" name)
 		   (create-directory (make-pathname dest name))
 		   (loop files))

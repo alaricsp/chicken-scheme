@@ -47,7 +47,6 @@ batch-driver.c
 c-backend.c
 c-platform.c
 chicken-profile.c
-chicken-setup.c
 chicken.c
 compiler.c
 csc.c
@@ -102,8 +101,6 @@ chicken-ffi-macros.scm
 chicken-more-macros.scm
 chicken-profile.1
 chicken-profile.scm
-chicken-setup.1
-chicken-setup.scm
 chicken.1
 chicken.h
 chicken.ico
@@ -133,7 +130,6 @@ html/bibliography.html
 html/bugs-and-limitations.html
 html/c-interface.html
 html/callbacks.html
-html/chicken-setup.html
 html/data-representation.html
 html/declarations.html
 html/modules-and-macros.html
@@ -311,6 +307,18 @@ setup-download.scm
 setup-api.scm
 setup-utils.scm
 chicken-status.scm
+chicken-status.c
 chicken-install.scm
+chicken-install.c
 chicken-uninstall.scm
+chicken-uninstall.c
 setup.defaults
+chicken-status.1
+chicken-install.1
+chicken-uninstall.1
+setup-download.c
+setup-utils.c
+setup-api.c
+setup-api.import.c
+setup-utils.import.c
+setup-download.import.c

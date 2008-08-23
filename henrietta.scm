@@ -65,10 +65,10 @@
 	     (let ((ff (string-append dir "/" f))
 		   (pf (string-append prefix "/" f)))
 	       (cond ((directory? ff)
-		      (print "\n#|--------------------|# \"" pf "/\" 0\n")
+		      (print "\n#|--------------------|# \"" pf "/\" 0")
 		      (walk ff pf))
 		     (else
-		      (print "\n#|--------------------|# \"" pf "\" " (file-size ff) "\n")
+		      (print "\n#|--------------------|# \"" pf "\" " (file-size ff))
 		      (display (read-all ff))))))
 	   files)))
       (print "\n#!eof") ) )
