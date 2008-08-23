@@ -74,7 +74,10 @@
       (print "\n#!eof") ) )
 
   (define (service)
-    (let ((qs (getenv "QUERY_STRING")))
+    (let ((qs (getenv "QUERY_STRING"))
+	  (ra (getenv "REMOTE_ADDR")))
+      (fprintf (current-error-port) "~%========== serving request from ~a ...~%"
+	       (or ra "<unknown>"))
       (unless qs
 	(error "no QUERY_STRING set"))
       (let ((m (string-match "[^?]+\\?(.+)" qs))
