@@ -46,7 +46,8 @@
 (define dd d)
 (define dm d)
 
-#;(begin
+(cond-expand
+ ((not debugbuild)
   (cond-expand
    (hygienic-macros
     (define-syntax dd (syntax-rules () ((_ . _) (void)))))
@@ -57,6 +58,7 @@
     (define-syntax dm (syntax-rules () ((_ . _) (void)))))
    (else					;*** remove later
     (define-macro (dm . _) '(void)))))
+ (else))
 
 
 ;;; Syntactic environments

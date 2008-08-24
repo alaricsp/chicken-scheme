@@ -493,19 +493,21 @@
 		  (let* ([t (second fv)]
 			 [ft (final-foreign-type t)] 
 			 [body `(##core#inline_ref (,(third fv) ,t))] )
-		    ;;*** must this expansion be walked?
-		    (foreign-type-convert-result
-		     (finish-foreign-result ft body)
-		     t) ) ) ]
+		    (walk
+		     (foreign-type-convert-result
+		      (finish-foreign-result ft body)
+		      t)
+		     se dest)))]
 	    [(assq x location-pointer-map)
 	     => (lambda (a)
 		  (let* ([t (third a)]
 			 [ft (final-foreign-type t)] 
 			 [body `(##core#inline_loc_ref (,t) ,(second a))] )
-		    ;;*** must this expansion be walked?
-		    (foreign-type-convert-result
-		     (finish-foreign-result ft body)
-		     t) ) ) ]
+		    (walk
+		     (foreign-type-convert-result
+		      (finish-foreign-result ft body)
+		      t)
+		     se dest))) ]
 	    ((not (assq x0 se)) (##sys#alias-global-hook x #f)) ; only if global
 	    ((##sys#get x '##core#primitive))
 	    (else x))))
@@ -576,8 +578,16 @@
 				    (set! block-globals (cons var block-globals))
 				    var) ] ) ) )
 
-			((##core#undefined ##core#callunit ##core#primitive ##core#inline_ref 
-					   ##core#inline_loc_ref) x)
+			((##core#undefined ##core#callunit ##core#primitive) x)
+			
+			((##core#inline_ref) 
+			 `(##core#inline_ref 
+			   (,(caadr x) ,(##sys#strip-syntax (cadadr x)))))
+
+			((##core#inline_loc_ref)
+			 `(##core#inline_loc_ref 
+			   ,(##sys#strip-syntax (cadr x))
+			   ,(walk (caddr x) se dest)))
 
 			((##core#require-for-syntax)
 			 (let ([ids (map eval (cdr x))])
@@ -926,13 +936,16 @@
 			 (walk (expand-foreign-primitive x) se dest) )
 
 			((define-foreign-variable)
-			 (let* ([var (second x)]
+			 (let* ([var (##sys#strip-syntax (second x))]
 				[type (third x)]
 				[name (if (pair? (cdddr x))
 					  (fourth x)
 					  (symbol->string var) ) ] )
 			   (set! foreign-variables
-			     (cons (list var type (if (string? name) name (symbol->string name)))
+			     (cons (list var type
+					 (if (string? name)
+					     name 
+					     (symbol->string name)))
 				   foreign-variables))
 			   '(##core#undefined) ) )
 
@@ -980,22 +993,22 @@
 			   (set-real-name! alias var)
 			   (set! location-pointer-map
 			     (cons (list alias store type) location-pointer-map) )
-			   `(let (,(let ([size (words (estimate-foreign-result-location-size type))])
-				     ;; Add 2 words: 1 for the header, 1 for double-alignment:
-				     ;; Note: C_a_i_bytevector takes number of words, not bytes
-				     (list 
-				      store
-				      `(##core#inline_allocate
-					("C_a_i_bytevector" ,(+ 2 size))
-					',size)) ) )
-			      ,(walk
-				`(,(macro-alias 'begin se)
-				   ,@(if init
-					 `((##core#set! ,alias ,init))
-					 '() )
-				   ,(if init (fifth x) (fourth x)) )
-				(alist-cons var alias se)
-				dest) ) ) )
+			   (walk
+			    `(let (,(let ([size (words (estimate-foreign-result-location-size type))])
+				      ;; Add 2 words: 1 for the header, 1 for double-alignment:
+				      ;; Note: C_a_i_bytevector takes number of words, not bytes
+				      (list 
+				       store
+				       `(##core#inline_allocate
+					 ("C_a_i_bytevector" ,(+ 2 size))
+					 ',size)) ) )
+			       (,(macro-alias 'begin se)
+				,@(if init
+				      `((##core#set! ,alias ,init))
+				      '() )
+				,(if init (fifth x) (fourth x)) ) )
+			    (alist-cons var alias se)
+			    dest) ) )
 
 			((##core#define-inline)
 			 (let* ((name (second x))

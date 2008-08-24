@@ -303,6 +303,9 @@ CSI ?= csi$(EXE)
 CHICKEN_OPTIONS = \
 	-quiet -no-trace -optimize-level 2 \
 	-include-path . -include-path $(SRCDIR)
+ifdef DEBUGBUILD
+CHICKEN_OPTIONS += -feature debugbuild
+endif
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
