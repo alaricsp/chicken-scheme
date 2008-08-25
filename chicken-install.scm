@@ -62,6 +62,7 @@ EOF
   (define *host-extension* #f)
   (define *run-tests* #f)
   (define *retrieve-only* #f)
+  (define *no-install* #f)
 
   (define (load-defaults)
     (let* ((deff (make-pathname (repository-path) "setup.defaults"))
@@ -193,10 +194,11 @@ EOF
 	   (print "changing current directory to " (cdr e+d))
 	   (parameterize ((current-directory (cdr e+d)))
 	     (let ((cmd (sprintf
-			 "~a/csi -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a"
+			 "~a/csi -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a ~a"
 			 *program-path*
 			 (if *sudo* "-e \"(sudo-install #t)\"" "")
 			 (if *keep* "-e \"(keep-intermediates #t)\"" "")
+			 (if *no-install* "-e \"(setup-install-flag #f)\"" "")
 			 (if *host-extension* "-e \"(host-extension #t)\"" "")
 			 (if *prefix* 
 			     (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
@@ -229,6 +231,7 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
   -t   -transport TRANSPORT     use given transport instead of default (#{*default-transport*})
   -s   -sudo                    use sudo(1) for installing or removing files
   -r   -retrieve                only retrieve egg into current directory, don't install
+  -n   -no-install              do not install, just build (implies `-keep')
   -p   -prefix PREFIX           change installation prefix to PREFIX
        -host-extension          when cross-compiling, compile extension for host
        -test                    run included test-cases, if available
@@ -236,7 +239,7 @@ EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r))
+  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n))
 
   (define (main args)
     (let ((defaults (load-defaults)))
@@ -288,6 +291,10 @@ EOF
 			(unless (pair? (cdr args)) (usage 1))
 			(set! *prefix* (cadr args))
 			(loop (cddr args) eggs))
+		       ((or (string=? arg "-n") (string=? arg "-no-install"))
+			(set! *keep* #t)
+			(set! *no-install* #t)
+			(loop (cdr args) eggs))
 		       ((string=? "-test" arg)
 			(set! *run-tests* #t)
 			(loop (cdr args) eggs))
