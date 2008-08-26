@@ -1167,6 +1167,7 @@
 					  (walk cx se dest)))))
 				 
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
+; end of clause
 
 	  ((not (proper-list? x))
 	   (syntax-error "malformed expression" x) )
@@ -1176,7 +1177,7 @@
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
 	   (mapwalk x se) )
 
-	  ((and (pair? (car x)) (eq? 'lambda (or (lookup (caar x) se) (caar x))))
+	  ((and (pair? (car x)) (symbol? (caar x)) (eq? 'lambda (or (lookup (caar x) se) (caar x))))
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
 	     (emit-syntax-trace-info x #f)

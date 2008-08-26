@@ -1440,7 +1440,7 @@ compiler-check:
 
 .PHONY: bootstrap bootstrap.tar.gz
 
-bootstrap: bootstrap.tar.gz
+bootstrap: 
 	gzip -d -c $(SRCDIR)/bootstrap.tar.gz | tar xvf -
 	touch *.c
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
