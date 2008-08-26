@@ -1305,26 +1305,30 @@ void CHICKEN_parse_command_line(int argc, char *argv[], C_word *heap, C_word *st
 
 C_word arg_val(C_char *arg)
 {
-  int len = C_strlen(arg);
-
-  if(len < 1) panic(C_text("illegal runtime-option argument"));
-
-  switch(arg[ len - 1 ]) {
-  case 'k':
-  case 'K':
-    return atol(arg) * 1024;
-
-  case 'm':
-  case 'M':
-    return atol(arg) * 1024 * 1024;
-
-  case 'g':
-  case 'G':
-    return atol(arg) * 1024 * 1024 * 1024;
-
-  default:
-    return atol(arg);
-  }
+     int len;
+     
+     if (arg == NULL) panic(C_text("illegal runtime-option argument"));
+     
+     len = C_strlen(arg);
+     
+     if(len < 1) panic(C_text("illegal runtime-option argument"));
+     
+     switch(arg[ len - 1 ]) {
+     case 'k':
+     case 'K':
+	  return atol(arg) * 1024;
+	  
+     case 'm':
+     case 'M':
+	  return atol(arg) * 1024 * 1024;
+	  
+     case 'g':
+     case 'G':
+	  return atol(arg) * 1024 * 1024 * 1024;
+	  
+     default:
+	  return atol(arg);
+     }
 }
 
 
