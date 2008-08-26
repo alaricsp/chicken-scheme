@@ -301,7 +301,7 @@ CSI ?= csi$(EXE)
 # Scheme compiler flags
 
 CHICKEN_OPTIONS = \
-	-quiet -no-trace -optimize-level 2 \
+	-optimize-level 2 \
 	-include-path . -include-path $(SRCDIR)
 ifdef DEBUGBUILD
 CHICKEN_OPTIONS += -feature debugbuild
@@ -361,14 +361,14 @@ TARGETS ?= $(TARGETLIBS) $(CHICKEN_SHARED_EXECUTABLE) \
 	$(CSI_SHARED_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
 	$(CSC_PROGRAM)$(EXE) $(CHICKEN_SETUP_PROGRAM)$(EXE) chicken.info \
 	$(CHICKEN_BUG_PROGRAM)$(EXE) \
-	$(IMPORT_LIBRARIES:=.import.so)
+	$(IMPORT_LIBRARIES:%=%.import.so)
 else
 TARGETS ?= $(TARGETLIBS) $(CHICKEN_SHARED_EXECUTABLE) \
 	$(CSI_SHARED_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
 	$(CSC_PROGRAM)$(EXE) $(CHICKEN_INSTALL_PROGRAM)$(EXE) $(CHICKEN_UNINSTALL_PROGRAM)$(EXE) \
 	$(CHICKEN_STATUS_PROGRAM)$(EXE) setup-utils.so setup-download.so setup-api.so \
 	chicken.info $(CHICKEN_BUG_PROGRAM)$(EXE) \
-	$(IMPORT_LIBRARIES:=.import.so)
+	$(IMPORT_LIBRARIES:%=%.import.so)
 endif
 endif
 
