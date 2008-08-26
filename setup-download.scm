@@ -86,10 +86,8 @@
 		(filedir
 		 (or (let ((vs (filter-map
 				(lambda (f)
-				  (and-let* ((m (string-search "^tags/([^/]+)/" f))
-					     (v (cadr m)))
-				    (print v)
-				    v))
+				  (and-let* ((m (string-search "^tags/([^/]+)/" f)))
+				    (cadr m)))
 				files)))
 		       (if version
 			   (if (member version vs)
