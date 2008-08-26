@@ -301,7 +301,7 @@ CSI ?= csi$(EXE)
 # Scheme compiler flags
 
 CHICKEN_OPTIONS = \
-	-optimize-level 2 \
+	-quiet -no-trace -optimize-level 2 \
 	-include-path . -include-path $(SRCDIR)
 ifdef DEBUGBUILD
 CHICKEN_OPTIONS += -feature debugbuild
