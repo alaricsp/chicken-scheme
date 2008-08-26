@@ -1303,7 +1303,10 @@ void CHICKEN_parse_command_line(int argc, char *argv[], C_word *heap, C_word *st
 
 C_word arg_val(C_char *arg)
 {
-  int len = C_strlen(arg);
+  int len;
+  if (!arg)
+      panic(C_text("required argument missing to runtime option"));
+  len = C_strlen(arg);
 
   if(len < 1) panic(C_text("illegal runtime-option argument"));
 
