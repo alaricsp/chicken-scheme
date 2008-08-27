@@ -73,7 +73,8 @@
     (print #<<EOF
 usage: chicken-uninstall [OPTION | PATTERN] ...
 
-  -h   -help                    show this message
+  -h   -help                    show this message and exit
+  -v   -version                 show version and exit
        -force                   don't ask, delete whatever matches
   -s   -sudo                    use sudo(1) for deleting files
 EOF
@@ -91,6 +92,9 @@ EOF
 		       (string=? arg "-h")
 		       (string=? arg "--help"))
 		   (usage 0))
+		  ((or (string=? arg "-v") (string=? arg "-version"))
+		   (print (chicken-version))
+		   (exit 0))
 		  ((string=? arg "-force")
 		   (set! *force* #t)
 		   (loop (cdr args) pats))

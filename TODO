@@ -19,6 +19,7 @@ TODO for macro/module system					-*- Outline -*-
     possibly due to a non-aliased implicit "begin" somewhere
 
 ** dirty-macros.scm loops when using `defile'
+   possibly due to unrenamed special forms
 
 ** modules
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
@@ -52,9 +53,7 @@ TODO for macro/module system					-*- Outline -*-
    (as comment in expand.scm indicated (##sys#register-export))
 
 * guerrilla-setup
-** "-version" option for all tools
 ** setup-download
-*** allow customization of svn credentials (username/password) instead of hardcoded "anonymous"
 *** HTTP_PROXY
 *** handle redirects in http-fetch
 ** chicken-install
@@ -67,9 +66,7 @@ TODO for macro/module system					-*- Outline -*-
 *** add "manual/extensions"
 *** document new .meta entries
     depends, test-depends
-** add .c/.1 files to distribution/manifest
 ** remove all remnants of chicken-setup
-** note about building setup tools with 
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)

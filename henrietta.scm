@@ -35,6 +35,8 @@
   (define *default-transport* 'svn)
   (define *default-location* (current-directory))
   (define *test* #f)
+  (define *username* #f)
+  (define *password* #f)
 
   (define (headers)
     (print "Connection: close\r\nContent-type: text/plain\r\n\r\n"))
@@ -55,7 +57,8 @@
 			 ((condition-property-accessor 'exn 'arguments) ex))
 		 (retrieve-extension 
 		  name *default-transport* *default-location*
-		  version #t))))
+		  version #t #f
+		  *username* *password*))))
       (unless dir 
 	(fail "no such extension or version" name version))
       (let walk ((dir dir) (prefix "."))
@@ -116,6 +119,8 @@ usage: henrietta [OPTION ...]
   -h   -help                    show this message
   -l   -location LOCATION       install from given location (default: current directory)
   -t   -transport TRANSPORT     use given transport instead of default (#{*default-transport*})
+       -username USER           set username for transports that require this
+       -password PASS           set password for transports that require this
 EOF
 );|
     (exit code))
@@ -138,6 +143,14 @@ EOF
 		  ((or (string=? arg "-t") (string=? arg "-transport"))
 		   (unless (pair? (cdr args)) (usage 1))
 		   (set! *default-transport* (string->symbol (cadr args)))
+		   (loop (cddr args)))
+		  ((string=? "-username" arg)
+		   (unless (pair? (cdr args)) (usage 1))
+		   (set! *username* (cadr args))
+		   (loop (cddr args)))
+		  ((string=? "-password" arg)
+		   (unless (pair? (cdr args)) (usage 1))
+		   (set! *password* (cadr args))
 		   (loop (cddr args)))
 		  ((and (positive? (string-length arg))
 			(char=? #\- (string-ref arg 0)))

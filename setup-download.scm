@@ -52,7 +52,7 @@
 	  (temporary-directory dir)
 	  dir)))
 
-  (define (locate-egg/local egg dir #!optional version destination)
+  (define (locate-egg/local egg dir #!optional version destination username password)
     (let* ((eggdir (make-pathname dir egg))
 	   (files (directory eggdir))
 	   (trunkdir (make-pathname eggdir "trunk"))
@@ -73,13 +73,15 @@
 	    (or (and hastrunk trunkdir)
 		eggdir)))))
   
-  (define (locate-egg/svn egg repo #!optional version destination)
+  (define (locate-egg/svn egg repo #!optional version destination username password)
     (call/cc 
      (lambda (k)
        (define (runcmd cmd)
 	 (unless (zero? (system cmd))
 	   (k #f)))
-       (let ((cmd (sprintf "svn ls --username=anonymous --password='' -R \"~a/~a\"" repo egg)))
+       (let* ((uarg (if username (string-append "--username='" username "'") ""))
+	      (parg (if password (string-append "--password='" password "'") ""))
+	      (cmd (sprintf "svn ls ~a ~a -R \"~a/~a\"" uarg parg repo egg)))
 	 (d "checking available versions ...~%  ~a~%" cmd)
 	 (let* ((files (with-input-from-pipe cmd read-lines))
 		(hastrunk (member "trunk/" files)) 
@@ -102,15 +104,15 @@
 		       (and hastrunk "trunk") )
 		     ""))
 		(tmpdir (make-pathname (or destination (get-temporary-directory)) egg))
-		(cmd (sprintf "svn export --username=anonymous --password='' \"~a/~a/~a\" \"~a\" ~a"
-			      repo egg filedir 
+		(cmd (sprintf "svn export ~a ~a \"~a/~a/~a\" \"~a\" ~a"
+			      uarg parg repo egg filedir 
 			      tmpdir
 			      (if *quiet* "1>&2" ""))))
 	   (d "  ~a~%" cmd)
 	   (runcmd cmd)
 	   tmpdir)) )))
 
-  (define (locate-egg/http egg url #!optional version destination)
+  (define (locate-egg/http egg url #!optional version destination username password)
     (let* ((tmpdir (or destination (get-temporary-directory)))
 	   (m (string-match "(http://)?([^/:]+)(:([^:/]+))?(/.+)" url))
 	   (host (if m (caddr m) url))
@@ -192,7 +194,7 @@
 	      (loop (cons chunk data)))))))
 
   (define (retrieve-extension name transport location #!optional version quiet 
-			      destination)
+			      destination username password)
     (fluid-let ((*quiet* quiet))
       (case transport
 	((local)
@@ -200,7 +202,7 @@
 	   (warning "destination for transport `local' ignored"))
 	 (locate-egg/local name location version destination)) 
 	((svn)
-	 (locate-egg/svn name location version destination))
+	 (locate-egg/svn name location version destination username password))
 	((http)
 	 (locate-egg/http name location version destination))
 	(else (error "unsupported transport" transport)))) )

@@ -63,6 +63,8 @@ EOF
   (define *run-tests* #f)
   (define *retrieve-only* #f)
   (define *no-install* #f)
+  (define *username* #f)
+  (define *password* #f)
 
   (define (load-defaults)
     (let* ((deff (make-pathname (repository-path) "setup.defaults"))
@@ -134,7 +136,8 @@ EOF
 		  (dir (retrieve-extension 
 			name *default-transport* *default-location*
 			version #f 
-			(and *retrieve-only* (current-directory)))))
+			(and *retrieve-only* (current-directory))
+			*username* *password*)))
 	     (unless dir
 	       (error "extension or version not found"))
 	     (print " " name " located at " dir)
@@ -224,7 +227,8 @@ EOF
     (print #<#EOF
 usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
 
-  -h   -help                    show this message
+  -h   -help                    show this message and exit
+  -v   -version                 show version and exit
        -force                   don't ask, install even if versions don't match
   -k   -keep                    keep temporary files
   -l   -location LOCATION       install from given location instead of default (#{*default-location*})
@@ -235,11 +239,13 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
   -p   -prefix PREFIX           change installation prefix to PREFIX
        -host-extension          when cross-compiling, compile extension for host
        -test                    run included test-cases, if available
+       -username USER           set username for transports that require this
+       -password PASS           set password for transports that require this
 EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n))
+  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n #\v))
 
   (define (main args)
     (let ((defaults (load-defaults)))
@@ -295,12 +301,23 @@ EOF
 			(set! *keep* #t)
 			(set! *no-install* #t)
 			(loop (cdr args) eggs))
+		       ((or (string=? arg "-v") (string=? arg "-version"))
+			(print (chicken-version))
+			(exit 0))
 		       ((string=? "-test" arg)
 			(set! *run-tests* #t)
 			(loop (cdr args) eggs))
 		       ((string=? "-host-extension" arg)
 			(set! *host-extension* #t)
 			(loop (cdr args) eggs))
+		       ((string=? "-username" arg)
+			(unless (pair? (cdr args)) (usage 1))
+			(set! *username* (cadr args))
+			(loop (cddr args) eggs))
+		       ((string=? "-password" arg)
+			(unless (pair? (cdr args)) (usage 1))
+			(set! *password* (cadr args))
+			(loop (cddr args) eggs))
 		       ((and (positive? (string-length arg))
 			     (char=? #\- (string-ref arg 0)))
 			(if (> (string-length arg) 2)

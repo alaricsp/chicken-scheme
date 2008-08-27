@@ -72,6 +72,7 @@
 usage: chicken-status [OPTION | PATTERN] ...
 
   -h   -help                    show this message
+  -v   -version                 show version and exit
   -f   -files                   list installed files
 EOF
 );|
@@ -94,6 +95,9 @@ EOF
 		    ((or (string=? arg "-f") (string=? arg "-files"))
 		     (set! files #t)
 		     (loop (cdr args) pats))
+		    ((or (string=? arg "-v") (string=? arg "-version"))
+		     (print (chicken-version))
+		     (exit 0))
 		    ((and (positive? (string-length arg))
 			  (char=? #\- (string-ref arg 0)))
 		     (if (> (string-length arg) 2)
