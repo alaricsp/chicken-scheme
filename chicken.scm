@@ -77,8 +77,10 @@
 
 (define compiler-arguments
   (append
-   (cdr (argv))
-   (remove (lambda (x) (string=? x "")) (string-split (or (getenv "CHICKEN_OPTIONS") ""))) ) )
+   (remove 
+    (lambda (x) (string=? x ""))
+    (string-split (or (getenv "CHICKEN_OPTIONS") "")))
+   (cdr (argv))))
 
 
 ;;; Process command-line options:
