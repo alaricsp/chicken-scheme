@@ -80,7 +80,9 @@
 ; (##core#global-ref <variable>)
 ; (quote <exp>)
 ; (if <exp> <exp> [<exp>])
+; ([##core#]let <variable> ({(<variable> <exp>)}) <body>)
 ; ([##core#]let ({(<variable> <exp>)}) <body>)
+; ([##core#]letrec ({(<variable> <exp>)}) <body>)
 ; (##core#let-location <symbol> <type> [<init>] <exp>)
 ; ([##core#]lambda <variable> <body>)
 ; ([##core#]lambda ({<variable>}+ [. <variable>]) <body>)
@@ -629,6 +631,21 @@
 				   aliases bindings)
 			     ,(walk (##sys#canonicalize-body (cddr x) se2)
 				    se2 dest) ) ) )
+
+			 ((letrec ##core#letrec)
+			  (##sys#check-syntax 'letrec x '(_ #((symbol _) 0) . #(_ 1)))
+			  (let ((bindings (cadr x))
+				(body (cddr x)) )
+			    (walk
+			     `(##core#let
+			       ,(##sys#map (lambda (b)
+					     (list (car b) '(##core#undefined))) 
+					   bindings)
+			       ,@(##sys#map (lambda (b)
+					      `(##core#set! ,(car b) ,(cadr b))) 
+					    bindings)
+			       (##core#let () ,@body) )
+			     se dest)))
 
 			((lambda ##core#lambda)
 			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)

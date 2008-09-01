@@ -1,7 +1,7 @@
 [[tags: manual]]
 [[toc:]]
 
-== chicken-setup
+== Extensions
 
 === Extension libraries
 
@@ -17,21 +17,21 @@ and Windows using Cygwin.
 Note: Extension may also be normal applications or shell scripts, but
 are usually libraries.
 
-{{chicken-setup}} will download the source code for extension
-automatically from the canonical server at
-[[http://www.call-with-current-continuation.org/eggs]] if the
-requested egg does not exist in the current directory. Various
-command-line options exist for customizing the process and/or
-retrieving the egg from other locations or in other formats.
+Extensions are technically nothing but dynamically loadable compiled
+files with added meta-data that describes dependencies to other
+extensions, version information and things like the author/maintainer 
+of the extension. Three tools provide an easy to use interface for
+installing extensions, removing them and querying the current
+status of installed extensions.
 
 
 === Installing extensions
 
-To install an extension library, run the {{chicken-setup}} program
+To install an extension library, run the {{chicken-install}} program
 with the extension name as argument. The extension archive is
 downloaded, its contents extracted and the contained ''setup'' script
 is executed. This setup script is a normal Scheme source file, which
-will be interpreted by {{chicken-setup}}. The complete language
+will be interpreted by {{chicken-install}}. The complete language
 supported by {{csi}} is available, and the library units {{srfi-1
 regex utils posix tcp}} are loaded. Additional libraries can be loaded
 at run-time.
@@ -40,24 +40,32 @@ The setup script should perform all necessary steps to build the new
 library (or application). After a successful build, the extension can
 be installed by invoking one of the procedures {{install-extension}},
 {{install-program}} or {{install-script}}.  These procedures will copy
-a number of given files into the extension repository or in the path
-where the CHICKEN executables are located (in the case of executable
-programs or scripts). Additionally the list of installed files, and
-user-defined metadata is stored in the repository.
+a number of given files into the local extension repository or in the
+path where the CHICKEN executables are located (in the case of
+executable programs or scripts). Additionally the list of installed
+files, and user-defined metadata is stored in the repository.
 
-If no extension name is given on the command-line, and if none of the
-options {{-list}}, {{-version}}, {{-repository}} (without argument),
-{{-program-path}} (without argument), {{-fetch}}, {{-fetch-tree}} or
-{{-docindex}} is given, then all {{.setup}} scripts in the current
-directory are processed.
+If no extension name is given on the command-line, then all {{.setup}}
+scripts in the current directory are processed, in the order given
+on the command line.
 
 ==== Installing extensions that use libraries
 
-Sometimes an extension requires a C library to compile. Compilation can fail when your system has this library in a nonstandard location. Luckily, normally Chicken searches in the default locations {{/usr}} and {{/usr/local}}, and in the prefix where Chicken itself was installed. Sometimes this is not enough, so you'll need to supply chicken-setup with some extra hints to the C compiler/linker. Here's an example:
+Sometimes an extension requires a C library to compile. Compilation
+can fail when your system has this library in a nonstandard
+location. Luckily, normally Chicken searches in the default locations
+{{/usr}} and {{/usr/local}}, and in the prefix where Chicken itself
+was installed. Sometimes this is not enough, so you'll need to supply
+{{chicken-install}} with some extra hints to the C compiler/linker. Here's
+an example:
 
-  chicken-setup -c '-I/usr/pkg/include/mysql' -c '-L/usr/pkg/lib/mysql' -c '-L -R/usr/pkg/lib/mysql' mysql
+  CSC_OPTIONS='-I/usr/pkg/include/mysql -L/usr/pkg/lib/mysql -L -R/usr/pkg/lib/mysql' chicken-install mysql
 
-This installs the mysql egg with the extra compiler options -I and -L to set the include path and the library search path. The second -L switch passes the -R option directly to the linker, which causes the library path to get hardcoded into the resulting extension file (for systems that do not use ld.so.conf).
+This installs the mysql egg with the extra compiler options -I and -L
+to set the include path and the library search path. The second -L
+switch passes the -R option directly to the linker, which causes the
+library path to get hardcoded into the resulting extension file (for
+systems that do not use {{ld.so.conf}}).
 
 === Creating extensions
 
@@ -110,37 +118,6 @@ useful for syntax extensions that need additional support code at runtime.
 
 Specifies version string.
 
-===== documentation
-
- [extension property] (documentation FILENAME)
-
-The filename of a HTML document containing extension-specific documentation.
-This file should be given in the file-list passed to {{install-extension}} and
-a link to it will be automatically included in the index page (accessible via
-{{chicken-setup -docindex}}).
-
-===== examples
-
- [extension property] (examples FILENAME ...)
-
-Copies the given files into the examples directory, which is usually 
-{{$prefix/share/chicken/examples}}
-or {{(make-pathname (chicken-home) "examples")}}).
-
-Note that the files listed in this property should not be listed in the normal
-list of files to install passed to {{install-extension}}. This is the only
-exception - other files that are installed in the repository must be given
-in the file list.
-
-===== exports
-
- [extension property] (exports EXPORT ...)
-
-Add export-information to the generated extension-information. {{EXPORT}} may be
-a symbol naming an exported toplevel variable or a string designating a file with
-exported variables, as generated by the {{-emit-exports}} option or the
-{{emit-exports}} declaration specifier.
-
 ===== static
 
  [extension property] (static STRING)
@@ -181,7 +158,7 @@ files in {{FILELIST}} to executable (for installing shell-scripts).
 
 Runs the shell command {{FORM}}, which is wrapped in an implicit {{quasiquote}}. 
 {{(run (csc ...))}} is treated specially and passes {{-v}} (if {{-verbose}} has been given
-to {{chicken-setup}}) and {{-feature compiling-extension}} options to the compiler.
+to {{chicken-install}}) and {{-feature compiling-extension}} options to the compiler.
 
 ==== compile
 
@@ -291,28 +268,13 @@ path where the CHICKEN binaries ({{chicken}}, {{csi}}, etc.) are installed.
 
 Contains the path of the directory where {{chicken-setup}} was invoked.
 
-==== setup-build-directory
-
- [parameter] (setup-build-directory [PATH])
-
-Contains the path of the directory where the extension is built. This is not necessarily identical
-to {{setup-root-directory}}.
-
-
-==== setup-verbose-flag
-
- [parameter] (setup-verbose-flag [BOOL])
-
-Reflects the setting of the {{-verbose}} option, i.e. is {{#t}}, if {{-verbose}} was
-given.
-
 
 ==== setup-install-flag
 
  [parameter] (setup-install-flag [BOOL])
 
-Reflects the setting of the {{--no-install}} option, i.e. is {{#f}}, if {{-no-install}} was
-given.
+Reflects the setting of the {{-no-install}} option, i.e. is {{#f}}, if {{-no-install}} was
+given to {{chicken-install}}.
 
 ==== required-chicken-version
 
@@ -376,23 +338,35 @@ We need a {{.setup}} script to build and install our nifty extension:
 (install-extension 'hello "hello.so")
 </enscript>
 
+Lastly, we need a file {{hello.meta}} defining a minimal set of properties:
+
+<enscript highlight=scheme>
+;;;; hello.meta
+
+((author "Me")
+ (synopsis "A cool hello-world library")
+ (license "GPLv3")
+ (files "hello.scm" "hello.setup"))
+</enscript>
+
 After entering 
 
- $ chicken-setup hello
+ $ chicken-install
 
 at the shell prompt (and in the same directory where the two files
 exist), the file {{hello.scm}} will be compiled into a dynamically
 loadable library. If the compilation succeeds, {{hello.so}} will
 be stored in the repository, together with a file named
-{{hello.setup-info}} containing an a-list with metadata.
-If no extension name is given to {{chicken-setup}}, it will simply
-execute the first file with the {{.setup}} extension it can find.
+{{hello.setup-info}} containing an a-list with metadata (what
+you stored above in {{hello.meta}}).
+If no extension name is given to {{chicken-install}}, it will simply
+execute the any files with the {{.setup}} extension it can find.
 
 Use it like any other CHICKEN extension:
 
  $ csi -q
  #;1> (require-extension hello)
- ; loading /usr/local/lib/chicken/1/hello.so ...
+ ; loading /usr/local/lib/chicken/4/hello.so ...
  #;2> (hello "me")
  Hello, me!
  #;3>
@@ -416,193 +390,103 @@ We also need a setup script:
 (install-program 'hello2 "hello2") ; name of the extension and files to be installed
 </enscript>
 
-To use it, just run {{chicken-setup}} in the same directory:
+<enscript highlight=scheme>
+;;;; hello2.meta
 
- $ chicken-setup
+((author "Me")
+ (synopsis "A cool hello-world application")
+ (license "proprietary")
+ (files "hello.scm" "hello.setup"))
+</enscript>
+
+To use it, just run {{chicken-install}} in the same directory:
+
+ $ chicken-install
 
 (Here we omit the extension name)
 
 Now the program {{hello2}} will be installed in the same location as
 the other CHICKEN tools (like {{chicken}}, {{csi}}, etc.), which will
 normally be {{/usr/local/bin}}.  Note that you need write-permissions
-for those locations and may have to run {{chicken-setup}} with
-administrative rights.
+for those locations and may have to run {{chicken-install}} with
+administrative rights or use the {{-sudo}} option.
 
-Uninstallation is just as easy:
+De-installation is just as easy - use the {{chicken-uninstall}}
+program to remove one or more extensions from the local repository:
 
- $ chicken-setup -uninstall hello2
+ $ chicken-uninstall hello2
 
-{{chicken-setup}} provides a {{make}} macro, so build operations can
-be of arbitrary complexity. When running {{chicken-setup}} with an
-argument {{NAME}}, for which no associated file {{NAME.setup}},
-{{NAME.egg}} or {{NAME.scm}} exists will ask you to download the
-extension via HTTP from the default URL
-[[http://www.call-with-current-continuation.org/eggs]]. You can use
-the {{-host}} option to specify an alternative source
-location. Extensions that are required to compile and/or use the
-requested extension are downloaded and installed automatically.
+When running {{chicken-install}} with an argument {{NAME}}, for which
+no associated {{.setup}} file exists, then it will try to download the
+extension via HTTP from the CHICKEN code repository at
+[[http://chicken.wiki.br/svn/chicken-eggs/]]. Extensions that are
+required to compile and/or use the requested extension are downloaded
+and installed automatically.
 
-If the given extension name contains a path prefix and the {{-host}}
-option is given, then {{chicken-setup}} can also download and install
-eggs from an arbitrary HTTP server. Alternatively you can pass a full
-URL (including the {{http://}} prefix. Note that no dependency checks
-are done when downloading eggs directly with the URL syntax.
+To query the list of currently installed extensions, use
+{{chicken-status}}. It can list what extensions are installed and
+what files belong to a particular installed extension.
 
-Finally a somewhat more complex example: We want to package a syntax
-extension with additional support code that is to be loaded at
-run-time of any Scheme code that uses that extension. We create a
-''glass'' lambda, a procedure with free variables that can be
-manipulated from outside:
 
-<enscript highlight=scheme>
-;;;; glass.scm
-
-(define-macro (glass-lambda llist vars . body)
-  ;; Low-level macros are fun!
-  (let ([lvar (gensym)]
-	[svar (gensym)] 
-	[x (gensym)]
-	[y (gensym)] 
-	[yn (gensym)] )
-    `(let ,(map (lambda (v) (list v #f)) vars)
-       (define (,svar ,x . ,y)
-	 (let* ([,yn (pair? ,y)]
-		[,y (and ,yn (car ,y))] )
-	   (case ,x
-	     ,@(map (lambda (v)
-		      `([,v] (if ,yn 
-				 (set! ,v ,y)
-				 ,v) ) )
-		    vars)
-	     (else (error "variable not found" ,x)) ) ) )
-       (define ,lvar (lambda ,llist ,@body))
-       (extend-procedure ,lvar ,svar) ) ) )
-</enscript>
-
-Here some support code that needs to be loaded at runtime:
-
-<enscript highlight=scheme>
-;;;; glass-support.scm
-
-(require-extension lolevel)
-
-(define glass-lambda-accessor procedure-data)
-(define (glass-lambda-ref gl v) ((procedure-data gl) v))
-(define (glass-lambda-set! gl v x) ((procedure-data gl) v x))
-</enscript>
-
-The setup script looks like this:
-
-<enscript highlight=scheme>
-(compile -s glass-support.scm)
-
-(install-extension
-  'glass
-  '("glass.scm" "glass-support.so")
-  '((syntax) (require-at-runtime glass-support)) )
-</enscript>
-
-The invocation of {{install-extension}} provides the files that are to
-be copied into the extension repository, and a metadata list that
-specifies that the extension {{glass}} is a syntax extension and that,
-if it is declared to be used by other code (with the
-{{require-extension}} form), then client
-code should perform an implicit {{(require 'glass-support)}} at
-startup.
-
-This can be conveniently packaged as an ''egg'':
-
- $ tar cfz glass.egg glass.setup glass.scm glass-support.scm
-
-And now we use it:
-
- $ chicken-setup glass
- $ csi -quiet
- #;1> (require-extension glass)
- ; loading /usr/local/lib/chicken/1/glass.scm ...
- ; loading /usr/local/lib/chicken/1/glass-support.so ...
- #;2> (define foo (glass-lambda (x) (y) (+ x y)))
- #;3> (glass-lambda-set! foo 'y 99)
- #;4> (foo 33)
- 132
-=== chicken-setup reference
+=== chicken-install reference
 
 Available options:
 
-; {{-h  -help}} : Show usage information and exit.
-; {{-V  -version}} : Display version and exit.
-; {{-R  -repository [PATHNAME]}} : When used without an argument, the path of the extension repository is displayed on standard output. When given an argument, the repository pathname (and the {{repository-path}} parameter) will be set to {{PATHNAME}} for all subsequent operations. The default repository path is the installation library directory (usually {{/usr/local/lib/chicken}}), or (if set) the directory given in the environment variable {{CHICKEN_REPOSITORY}}. {{PATHNAME}} should be an absolute pathname.
-; {{-P  -program-path [PATHNAME]}} : When used without an argument, the path for executables is displayed on standard output. When given an argument, the program path for installing executables and scripts will be set to {{PATHNAME}} for all subsequent operations. {{PATHNAME}} should be an absolute pathname.
-; {{-h  -host HOSTNAME[:PORT]}} : Specifies alternative host for downloading extensions, optionally with a TCP port number (which defaults to 80).
-; {{-u  -uninstall EXTENSION}} : Removes all files that were installed for {{EXTENSION}} from the file-system, together with any metadata that has been stored.
-; {{-l  -list [NAME ...]}} : List all installed extensions or show extension information.
-; {{-r  -run FILENAME}} : Load and execute given file.
-; {{-s  -script FILENAME}} :Executes the given Scheme source file with all remaining arguments and exit. The ''she-bang'' shell script header is recognized, so you can write Scheme scripts that use {{chicken-setup}} just as with {{csi}}.
-; {{-e  -eval EXPRESSION}} : Evaluates the given expression(s)
-; {{-v  -verbose}} : Display additional debug information
-; {{-k  -keep}} : Keep temporary files and directories
-; {{-c  -csc-option OPTION}} : Passes {{OPTION}} as an extra argument to invocations of the compiler-driver ({{csc}}); this works only if {{csc}} is invoked as {{(run (csc ...))}}
-; {{-d  -dont-ask}} : Do not ask the user before trying to download required extensions
-; {{-n  -no-install}} : Do not install generated binaries and/or support files; any invocations of {{install-program}}, {{install-extension}} or {{install-script}} will be be no-ops
-; {{-i  -docindex}} : Displays the path to the index-page of any installed extension-documentation; if the index page does not exist, it is created
-; {{-t  -test EXTENSION ...}} : return success if all given extensions are installed
-; {{-ls EXTENSION}} : List installed files for extension
-; {{-fetch-tree}} : Download and print the repository catalog
-; {{-create-tree DIRECTORY}} : Create a fresh, minimal repository catalog and writes it to stdout
-; {{-t  -test}} : If the extension sources contain a directory named {{tests}} and this directory includes a file named {{run.scm}} then this file is executed (with {{tests}} being the current working directory)
-; {{-tree FILENAME}} : Download and show the repository catalog
-; {{-svn URL}} : Fetch extension from [[http://subversion.tigris.org|Subversion]] repository
-; {{-revision REV}} : Specifies SVN revision to check out
-; {{-local PATHNAME}} : Fetch extension from local file
-; {{-install-prefix PATHNAME}} : Specify alternative installation prefix (for packaging)
-; {{-host-extension}} : Compile extension in "host" mode (sets the parameter {{host-extension}} to {{#f}})
-; {{-build-prefix PATHNAME}} : Location where chicken-setup will create egg build directories  (default: the value of environment variable CHICKEN_TMPDIR, or {{/tmp/chicken-{MAJOR-VERSION-build-{USER}}}})
-; {{-download-path PATHNAME}} : Location where chicken-setup will save downloaded files  (default: {{build-prefix/downloads}})
-; {{--}} : Ignore all following arguments
+; {{-h   -help}} : show this message and exit
+; {{-v   -version}} : show version and exit
+; {{-force}} : don't ask, install even if versions don't match
+; {{-k   -keep}} : keep temporary files
+; {{-l   -location LOCATION}} : install from given location instead of default
+; {{-t   -transport TRANSPORT}} : use given transport instead of default
+; {{-s   -sudo}} : use {{sudo(1)}} for installing or removing files
+; {{-r   -retrieve}} : only retrieve egg into current directory, don't install
+; {{-n   -no-install}} : do not install, just build (implies {{-keep}})
+; {{-p   -prefix PREFIX}} : change installation prefix to {{PREFIX}}
+; {{-host-extension}} : when cross-compiling, compile extension for host
+; {{-test}} : run included test-cases, if available
+; {{-username USER}} : set username for transports that require this
+; {{-password PASS}} : set password for transports that require this
 
-Note that the options are processed exactly in the order in which they appear in the command-line.
+=== chicken-uninstall references
+
+; {{-h   -help}} : show usage information and exit
+; {{-v   -version}} : show version and exit
+; {{-force}} : don't ask, delete whatever matches
+; {{-s   -sudo}} : use {{sudo(1)}} for deleting files
 
 
-=== Windows notes
+=== chicken-status references
 
-{{chicken-setup}} works on Windows, when compiled with Visual C++, but
-depends on the {{tar}} and {{gunzip}} tools to extract the contents of
-an egg. The best way is to download an egg either manually (or with
-{{chicken-setup -fetch}}) and extract its contents with a separate
-program (like {{winzip}}). the {{CHICKEN_REPOSITORY}} environment
-variable has to be set to a
-directory where your compiled extensions should be located.
-
-The {{.setup}} scripts will not always work under Windows, and the
-extensions may require libraries that are not provided for Windows or
-work differently. Under these circumstances it is recommended to
-perform the required steps to build an extension manually.
-
-The required UNIX tools are also available as Windows binaries.
-Google or ask on the CHICKEN mailing list if you need help locating
-them.
+; {{-h   -help}} : show usage information and exit
+; {{-v   -version}} : show version and exit
+; {{-f   -files}} : list installed files
 
 
 === Security
 
 When extensions are downloaded and installed one is executing code
-from potentially compromised systems. This applies also when {{chicken-setup}}
-executes system tests for required extensions. As the code has been 
-retrieved over the network effectively untrusted code is going to be
-evaluated. When {{chicken-setup}} is run as ''root'' the whole system
-is at the mercy of the build instructions (note that this is also
-the case every time you install software via {{sudo make install}}, so this
-is not specific to the CHICKEN extension mechanism).
+from potentially compromised systems. This applies also when
+{{chicken-install}} executes system tests for required extensions. As
+the code has been retrieved over the network effectively untrusted
+code is going to be evaluated. When {{chicken-install}} is run as
+''root'' the whole system is at the mercy of the build instructions
+(note that this is also the case every time you install software via
+{{sudo make install}}, so this is not specific to the CHICKEN
+extension mechanism).
 
-Security-conscious users should never run {{chicken-setup}} as root.
+Security-conscious users should never run {{chicken-install}} as root.
 A simple remedy is to set the environment variable {{CHICKEN_REPOSITORY}},
 which will transparently place the repository at an arbitrary user-selected
 location. Alternatively obtain write/execute access to the default location
 of the repository (usually {{/usr/local/lib/chicken}}) to avoid running
-as root.
+as root. {{chicken-install}} also provides a {{-sudo}} option to perform
+the last installation steps as root user, but do building and other
+.setup script processing as normal.
 
 
 === Other modes of installation
+
+********************************************************************************Ü
 
 It is possible to install extensions directly from a
 [[http://subversion.tigris.org|Subversion]] repository or from a local
@@ -637,10 +521,11 @@ dependency tracking and without being connected to the internet:
  % cd ~/tmp
  % chicken-setup -local /opt/eggs -tree ~/my-repository-file opengl
 
+********************************************************************************
 
 === Linking extensions statically
 
-The compiler and [[chicken-setup]] support statically linked 
+The compiler and {{chicken-install}} support statically linked 
 eggs. The general approach is to generate an object file or static
 library (in addition to the usual
 shared library) in your {{.setup}} script and install it along with the
@@ -658,7 +543,7 @@ linked, when {{csc}} gets passed the {{-static-extensions}} option:
 </enscript>
 
 Note the use of the {{-unit}} option in the second compilation step: static
-linking must use static library units. {{chicken-setup}} will perform 
+linking must use static library units. {{chicken-install}} will perform 
 platform-dependent file-extension translation for the file list, but does currently
 not do that for the {{static}} extension property.
 

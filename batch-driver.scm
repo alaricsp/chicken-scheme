@@ -579,7 +579,7 @@
 			      (end-time "closure conversion")
 			      (print-db "final-analysis" '|8| db i)
 			      (when (and ##sys#warnings-enabled (> (- (cputime) start-time) funny-message-timeout))
-				(display "(do not worry - still compiling...)\n") )
+				(display "(don't worry - still compiling...)\n") )
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 

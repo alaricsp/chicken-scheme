@@ -223,7 +223,7 @@
 			      (let ([bs (cadr body)])
 				(values
 				 `(##core#app
-				   (,(macro-alias 'letrec dse) ;*** correct to use dse?
+				   (##core#letrec
 				    ([,bindings (##core#loop-lambda ,(map (lambda (b) (car b)) bs) ,@(cddr body))])
 				    ,bindings)
 				   ,@(##sys#map cadr bs) )
@@ -280,9 +280,9 @@
 
 ;;; User-level macroexpansion
 
-(define (##sys#expand exp #!optional (me (##sys#current-environment)))
+(define (##sys#expand exp #!optional (se (##sys#current-environment)))
   (let loop ((exp exp))
-    (let-values (((exp2 m) (##sys#expand-0 exp me)))
+    (let-values (((exp2 m) (##sys#expand-0 exp se)))
       (if m
 	  (loop exp2)
 	  exp2) ) ) )
@@ -1010,19 +1010,6 @@
 	(if (eq? bs '())
 	    `(,%let () ,@body)
 	    `(,%let (,(car bs)) ,(expand (cdr bs))) ) ) ) ) ) )
-
-(##sys#extend-macro-environment
- 'letrec
- '()
- (##sys#er-transformer
-  (lambda (form r c)
-    (##sys#check-syntax 'letrec form '(_ #((symbol _) 0) . #(_ 1)))
-    (let ((bindings (cadr form))
-	  (body (cddr form)) 
-	  (%let (r 'let)) )
-      `(,%let ,(##sys#map (lambda (b) (list (car b) '(##core#undefined))) bindings)
-	      ,@(##sys#map (lambda (b) `(##core#set! ,(car b) ,(cadr b))) bindings)
-	      (,%let () ,@body) ) ) ) ) )
 
 (##sys#extend-macro-environment
  'do

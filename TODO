@@ -12,7 +12,7 @@ TODO for macro/module system					-*- Outline -*-
 
 ** compiler
 *** pre-optimization 
-*** changes call-sites and makes them invalid for later pre-optimization
+**** changes call-sites and makes them invalid for later pre-optimization
 
 ** macros
 *** expansion of r5rs_pitfall 4.2 incorrect
@@ -48,7 +48,7 @@ TODO for macro/module system					-*- Outline -*-
 ** "scheme" module does not include some special forms ("define-syntax", etc.)
 ** import-for-syntax imports value bindings into import-env
    should actually be a distinct meta-import-env.
-*** does it work at all?
+   (does it work at all?)
 ** curried define performs expansion in empty se - problem?
    (as comment in expand.scm indicated (##sys#register-export))
 
@@ -60,16 +60,15 @@ TODO for macro/module system					-*- Outline -*-
 *** handle needs/depends of builtin extension
 *** should cache extension-info
 *** handle connection failure by allowing alternative sites
-*** with "-r", delete output dir on failure
 ** write manual chapters
-*** remove "manual/chicken-setup", fix links
-*** add "manual/extensions"
-*** document new .meta entries
-    depends, test-depends
 ** remove all remnants of chicken-setup
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
+** Complete "Extensions" chapter
+*** using other transports
+** document new .meta entries
+   depends, test-depends
 
 * build
 ** chicken.texi needs to be regenerated
@@ -84,12 +83,3 @@ TODO for macro/module system					-*- Outline -*-
 
 * compiler
 ** warn if encountering global ref or assignment to "unquote[-splicing]"
-
-* eggs to be removed
-** syntax-case
-*** sxml-match, others ...
-** codewalk
-*** modules, crunch
-** syntactic-closures
-** simple-macros
-** alexpander

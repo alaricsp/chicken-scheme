@@ -474,6 +474,21 @@
 				       (##sys#setslot v2 i (##core#app (##sys#slot vlist 0) v)) )
 				     (##core#app body (cons v2 v)) ) ) ) ] ) ) ]
 
+			 ((letrec ##core#letrec)
+			  (##sys#check-syntax 'letrec x '(_ #((symbol _) 0) . #(_ 1)))
+			  (let ((bindings (cadr x))
+				(body (cddr x)) )
+			    (compile
+			     `(##core#let
+			       ,(##sys#map (lambda (b)
+					     (list (car b) '(##core#undefined))) 
+					   bindings)
+			       ,@(##sys#map (lambda (b)
+					      `(##core#set! ,(car b) ,(cadr b))) 
+					    bindings)
+			       (##core#let () ,@body) )
+			     e h tf cntr se)))
+
 			 [(lambda ##core#lambda)
 			  (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)
 			  (let* ([llist (cadr x)]

@@ -16,7 +16,7 @@ This is the user's manual for the Chicken Scheme compiler, version 4.0.0x
 
 ; [[Interface to external functions and variables]] : Accessing C and C++ code and data.
 
-; [[chicken-setup]] : Packaging and installing extension libraries.
+; [[Extensions]] : Packaging and installing extension libraries.
 
 ; [[Data representation]] : How Scheme data is internally represented.
 
