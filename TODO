@@ -65,8 +65,6 @@ TODO for macro/module system					-*- Outline -*-
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
-** Complete "Extensions" chapter
-*** using other transports
 ** document new .meta entries
    depends, test-depends
 

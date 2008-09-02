@@ -486,42 +486,22 @@ the last installation steps as root user, but do building and other
 
 === Other modes of installation
 
-********************************************************************************Ü
-
 It is possible to install extensions directly from a
 [[http://subversion.tigris.org|Subversion]] repository or from a local
-checkout by using the {{-svn}} or {{-local}} options. By using
-either the {{svn}} client program (which must be installed) or
-file-system operations, all necessary files will be copied into the
-current directory (creating a subdirectory named
-{{EXTENSIONNAME.egg-dir}}), built and subsequently installed.
+checkout of the repository tree by using the {{-transport}} and
+{{-location}} options when invoking {{chicken-install}}. Three possible
+transport mechanisms are currently supported:
+
+; {{http}} : download extension sources via HTTP from a web-server (this is the default)
+; {{svn}} : perform an {{svn export}} from the central extension repository; this will require a {{svn(1)}} client to be installed on the machine
+; {{local}} : use sources from the local filesystem and build directly in the source directory
+
+The {{-location}} option specifies where to look for the source repository
+and names a web URL, a subversion repository URL or a filesystem path, 
+respectively.
 
 Dependency information, which is necessary to ensure required
-extensions are also installed, is downloaded automatically.  If you
-have no internet connection or don't want to connect, you can also use
-a local file containing the necessary dependency information.  The
-{{-fetch-tree}} option retrieves the canonical ''repository file'' at
-[[http://www.call-with-current-continuation.org/eggs/repository]],
-writing it to stdout. Redirecting this output into a file and passing
-the file via the {{-tree}} option to {{chicken-setup}} allows you now
-to use the local repository file:
-
-Retrieve complete extension repository (big):
-
- % cd /opt
- % svn co https://galinha.ucpel.tche.br/svn/chicken-eggs/release/3 eggs
-
-Get your own copy of the repository file:
-
- % chicken-setup -fetch-tree >~/my-repository-file
-
-Now you can install eggs from your local checkout, with full
-dependency tracking and without being connected to the internet:
-
- % cd ~/tmp
- % chicken-setup -local /opt/eggs -tree ~/my-repository-file opengl
-
-********************************************************************************
+extensions are also installed, is processed automatically.
 
 === Linking extensions statically
 
