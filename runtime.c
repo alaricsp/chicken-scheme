@@ -7773,21 +7773,8 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 #endif
     default: barf(C_BAD_ARGUMENT_TYPE_ERROR, "number->string", C_fix(radix));
     }
-
-  fini:
-    radix = C_strlen(p);
-    
-    if(!C_demand(C_bytestowords(radix) + 1)) {
-      C_save(k);
-      cons_string_trampoline(NULL);
-    }
-
-    a = C_alloc((C_bytestowords(radix) + 1));
-    radix = C_string(&a, radix, p);
-    C_kontinue(k, radix);
   }
-
-  if(!C_immediatep(num) && C_block_header(num) == C_FLONUM_TAG) {
+  else if(!C_immediatep(num) && C_block_header(num) == C_FLONUM_TAG) {
     f = C_flonum_magnitude(num);
 
     if(C_fits_in_unsigned_int_p(num) == C_SCHEME_TRUE) {
@@ -7832,10 +7819,21 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
     }
 
     p = buffer;
-    goto fini;
   }
+  else
+    barf(C_BAD_ARGUMENT_TYPE_ERROR, "number->string", num);
 
-  barf(C_BAD_ARGUMENT_TYPE_ERROR, "number->string", num);
+  fini:
+    radix = C_strlen(p);
+    
+    if(!C_demand(C_bytestowords(radix) + 1)) {
+      C_save(k);
+      cons_string_trampoline(NULL);
+    }
+
+    a = C_alloc((C_bytestowords(radix) + 1));
+    radix = C_string(&a, radix, p);
+    C_kontinue(k, radix);
 }
 
 
