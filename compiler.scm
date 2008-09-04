@@ -295,7 +295,7 @@
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info 
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
-  big-fixnum? import-libraries)
+  big-fixnum? import-libraries unlikely-variables)
 
 
 (include "tweaks")
@@ -525,6 +525,10 @@
 
   (define (walk x se dest)
     (cond ((symbol? x)
+	   (when (memq x unlikely-variables)
+	     (compiler-warning 
+	      'var
+	      "reference to variable `~s' possibly unintended" x) )
 	   (resolve-variable x se dest))
 	  ((not-pair? x)
 	   (if (constant? x)
@@ -863,6 +867,11 @@
 				[var (lookup var0 se)]
 				[ln (get-line x)]
 				[val (walk (caddr x) se var0)] )
+			   (when (memq var unlikely-variables)
+			     (compiler-warning 
+			      'var
+			      "assignment to variable `~s' possibly unintended"
+			      var))
 			   (when (eq? var var0) ; global?
 			     (set! var (##sys#alias-global-hook var #t))
 			     (when safe-globals-flag

@@ -56,6 +56,10 @@
 # define C_INSTALL_BIN_HOME   NULL
 #endif
 
+#ifndef C_INSTALL_SHARE_HOME
+# define C_INSTALL_SHARE_HOME   NULL
+#endif
+
 #ifndef C_INSTALL_CC
 # ifdef _MSC_VER
 #  define C_INSTALL_CC                "cl"
@@ -137,14 +141,21 @@
 
 (define host-extension (make-parameter #f))
 
-(define chicken-bin-path
+(define *chicken-bin-path*
   (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	(make-pathname p "bin") )
       (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
+(define *doc-path*
+  (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
+	(make-pathname p "share/chicken/doc") )
+      (make-pathname
+       (foreign-value "C_INSTALL_SHARE_HOME" c-string) 
+       "doc")))
+
 (define chicken-prefix
   (or (getenv "CHICKEN_PREFIX")
-      (let ((m (string-match "(.*)/bin/?" chicken-bin-path)))
+      (let ((m (string-match "(.*)/bin/?" *chicken-bin-path*)))
 	(if m
 	    (cadr m)
 	    "/usr/local") ) ) )
@@ -163,7 +174,7 @@
 (define setup-root-directory      (make-parameter *base-directory*))
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
-(define program-path (make-parameter chicken-bin-path))
+(define program-path (make-parameter *chicken-bin-path*))
 (define keep-intermediates (make-parameter #f))
 
 (define (sudo-install)
@@ -272,14 +283,14 @@
 	 (string-intersperse 
 	  (cons* (qs 
 		  (make-pathname 
-		   chicken-bin-path
+		   *chicken-bin-path*
 		   (cdr (assoc prg *installed-executables*))))
 		 "-feature" "compiling-extension"
 		 (if (host-extension) "-host" "")
 		 *csc-options*) 
 	  " ") )
 	((assoc prg *installed-executables*) =>
-	 (lambda (a) (qs (make-pathname chicken-bin-path (cdr a)))))
+	 (lambda (a) (qs (make-pathname *chicken-bin-path* (cdr a)))))
 	(else prg) ) )
 
 (define (fixmaketarget file)
@@ -558,6 +569,23 @@
 			       (run (,*ranlib-command* ,(qs to)) ) ))
 			   (make-dest-pathname rpath f)))
 		       files) ) )
+      (and-let* ((docs (assq 'documentation info)))
+	(print "\n* Installing documentation files in " *doc-path* ":")
+	(for-each
+	 (lambda (f)
+	   (copy-file f (make-pathname *doc-path* f) #f) )
+	 (cdr docs))
+	(newline))
+      (and-let* ((exs (assq 'examples info)))
+	(print "\n* Installing example files in " *doc-path* ":")
+	(for-each 
+	 (lambda (f)
+	   (let ((destf (make-pathname *doc-path* f)))
+	     (copy-file f destf #f)
+	     (unless *windows-shell*
+	       (run (chmod a+rx ,(quotewrap destf))) ) ))
+	 (cdr exs))
+	(newline))
       (write-info id dests info) ) ) )
 
 (define (install-program id files #!optional (info '()))

@@ -34,7 +34,7 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home debugging
-  dump-nodes
+  dump-nodes unlikely-variables
   unit-name insert-timer-checks used-units inlining
   foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size 
@@ -103,6 +103,7 @@
 (define words-per-flonum 4)
 (define parameter-limit 1024)
 (define small-parameter-limit 128)
+(define unlikely-variables '(unquote unquote-splicing))
 
 (define eq-inline-operator "C_eqp")
 (define optimizable-rest-argument-operators '(car cadr caddr cadddr length pair? null? list-ref))

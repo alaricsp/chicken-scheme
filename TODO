@@ -56,12 +56,10 @@ TODO for macro/module system					-*- Outline -*-
 ** setup-download
 *** HTTP_PROXY
 *** handle redirects in http-fetch
+*** connect timeout and alternative download location
 ** chicken-install
 *** handle needs/depends of builtin extension
 *** should cache extension-info
-*** handle connection failure by allowing alternative sites
-** write manual chapters
-** remove all remnants of chicken-setup
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
@@ -73,11 +71,10 @@ TODO for macro/module system					-*- Outline -*-
 
 * syntax-error
 ** if ##sys#current-module is set, add name to error message?
+** fluidly keep track of expanded forms (extend meaning of culprit)
+   to pprint pruned expr on error
 
 * modules
 ** checks
 *** reimport of imported id
 *** unused defs?
-
-* compiler
-** warn if encountering global ref or assignment to "unquote[-splicing]"
