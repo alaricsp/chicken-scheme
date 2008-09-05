@@ -4277,6 +4277,22 @@ EOF
 (define ##sys#vector vector)
 (define ##sys#apply apply)
 (define ##sys#values values)
+(define ##sys#equal? equal?)
+(define ##sys#car car)
+(define ##sys#cdr cdr)
+(define ##sys#pair? pair?)
+(define ##sys#vector? vector?)
+(define ##sys#vector->list vector->list)
+(define ##sys#vector-length vector-length)
+(define ##sys#vector-ref vector-length)
+(define ##sys#vector-length vector-length)
+(define ##sys#>= >=)
+(define ##sys#= =)
+(define ##sys#+ +)
+(define ##sys#eq? eq?)
+(define ##sys#list? list?)
+(define ##sys#null? null?)
+(define ##sys#map-n map)
 
 
 ;;; Promises:

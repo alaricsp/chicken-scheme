@@ -186,7 +186,8 @@
     ##sys#call-with-values ##sys#fits-in-int? ##sys#fits-in-unsigned-int? ##sys#flonum-in-fixnum-range? 
     ##sys#fudge ##sys#immediate? ##sys#direct-return ##sys#context-switch
     ##sys#make-structure ##sys#apply ##sys#apply-values ##sys#continuation-graft
-    ##sys#bytevector? ##sys#make-vector ##sys#setter
+    ##sys#bytevector? ##sys#make-vector ##sys#setter ##sys#car ##sys#cdr ##sys#pair?
+    ##sys#eq? ##sys#list? ##sys#vector?
     ##sys#foreign-char-argument ##sys#foreign-fixnum-argument ##sys#foreign-flonum-argument
     ##sys#foreign-block-argument ##sys#foreign-number-vector-argument
     ##sys#foreign-string-argument ##sys#foreign-pointer-argument ##sys#void
@@ -470,6 +471,8 @@
 			 [else (return #f)] ) ) ) ) ) ) ) ) ) )
 
   (rewrite-c..r 'car "C_i_car" "C_u_i_car" 0)
+  (rewrite-c..r '##sys#car "C_i_car" "C_u_i_car" 0)
+  (rewrite-c..r '##sys#cdr "C_i_cdr" "C_u_i_cdr" 0)
   (rewrite-c..r 'cadr "C_i_cadr" "C_u_i_cadr" 1)
   (rewrite-c..r 'caddr "C_i_caddr" "C_u_i_caddr" 2)
   (rewrite-c..r 'cadddr "C_i_cadddr" "C_u_i_cadddr" 3)
@@ -562,11 +565,13 @@
 (rewrite 'cdr 2 1 "C_i_cdr" #t #f)
 
 (rewrite 'eq? 1 2 "C_eqp")
+(rewrite '##sys#eq? 1 2 "C_eqp")
 (rewrite 'eqv? 1 2 "C_i_eqvp")
 
 (rewrite 'list-ref 2 2 "C_u_i_list_ref" #f "C_slot")
 (rewrite 'list-ref 2 2 "C_i_list_ref" #t "C_i_vector_ref")
 (rewrite 'null? 2 1 "C_i_nullp" #t "C_vemptyp")
+(rewrite '##sys#null? 2 1 "C_i_nullp" #t "C_vemptyp")
 (rewrite 'length 2 1 "C_i_length" #t "C_block_size")
 (rewrite 'not 2 1 "C_i_not" #t #f)
 (rewrite 'char? 2 1 "C_charp" #t #f)
@@ -574,7 +579,9 @@
 (rewrite 'locative? 2 1 "C_i_locativep" #t #f)
 (rewrite 'symbol? 2 1 "C_i_symbolp" #t #f)
 (rewrite 'vector? 2 1 "C_i_vectorp" #t #f)
+(rewrite '##sys#vector? 2 1 "C_i_vectorp" #t #f)
 (rewrite 'pair? 2 1 "C_i_pairp" #t "C_notvemptyp")
+(rewrite '##sys#pair? 2 1 "C_i_pairp" #t "C_notvemptyp")
 (rewrite 'procedure? 2 1 "C_i_closurep" #t #f)
 (rewrite 'port? 2 1 "C_i_portp" #t #f)
 (rewrite 'boolean? 2 1 "C_booleanp" #t #f)
@@ -700,6 +707,7 @@
 (rewrite 'integer->char 6 "C_make_character" "C_unfix" #t)
 
 (rewrite 'vector-length 2 1 "C_i_vector_length" #t #f)
+(rewrite '##sys#vector-length 2 1 "C_i_vector_length" #t #f)
 (rewrite 'string-length 2 1 "C_i_string_length" #t #f)
 (rewrite 'inexact->exact 2 1 "C_i_inexact_to_exact" #t #f)
 
@@ -743,6 +751,11 @@
 
 (rewrite 'vector-set! 11 3 '##sys#setslot #f)
 (rewrite 'vector-set! 2 3 "C_i_vector_set" #t #f)
+
+(rewrite '##sys#vector->list 11 1 'vector->list #t)
+(rewrite '##sys#list->vector 11 1 'list->vector #t)
+(rewrite '##sys#>= 11 2 '>= #t)
+(rewrite '##sys#= 11 2 '= #t)
 
 (rewrite 'gcd 12 '##sys#gcd #t 2)
 (rewrite 'lcm 12 '##sys#lcm #t 2)

@@ -15,11 +15,12 @@ TODO for macro/module system					-*- Outline -*-
 **** changes call-sites and makes them invalid for later pre-optimization
 
 ** macros
+*** synrules must refer to internal bindings
+    or renames trigger the usual problem with aliased primitives
 *** expansion of r5rs_pitfall 4.2 incorrect
     possibly due to a non-aliased implicit "begin" somewhere
-
-** dirty-macros.scm loops when using `defile'
-   possibly due to unrenamed special forms
+*** dirty-macros.scm loops when using `defile'
+    possibly due to unrenamed special forms
 
 ** modules
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
@@ -57,6 +58,7 @@ TODO for macro/module system					-*- Outline -*-
 *** HTTP_PROXY
 *** handle redirects in http-fetch
 *** connect timeout and alternative download location
+*** only download tests on demand (-test option)
 ** chicken-install
 *** handle needs/depends of builtin extension
 *** should cache extension-info
