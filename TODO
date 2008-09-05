@@ -9,19 +9,14 @@ TODO for macro/module system					-*- Outline -*-
 ** at some stage disable debug-output in expand.scm
 
 * bugs
-
 ** compiler
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
-
 ** macros
-*** synrules must refer to internal bindings
-    or renames trigger the usual problem with aliased primitives
 *** expansion of r5rs_pitfall 4.2 incorrect
     possibly due to a non-aliased implicit "begin" somewhere
 *** dirty-macros.scm loops when using `defile'
     possibly due to unrenamed special forms
-
 ** modules
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
     ... which is only set, if chicken-more-macros.scm is loaded, which
@@ -60,6 +55,11 @@ TODO for macro/module system					-*- Outline -*-
 *** connect timeout and alternative download location
 *** only download tests on demand (-test option)
 ** chicken-install
+*** dependency-resolution fails
+    installing numbers with an empty repo seems to miss silex; apparently
+    we can't depend on `retrieve' to order dependencies correctly?
+*** passing multiple names doesn't build them in the same order
+    may be related to the point above
 *** handle needs/depends of builtin extension
 *** should cache extension-info
 
@@ -80,3 +80,12 @@ TODO for macro/module system					-*- Outline -*-
 ** checks
 *** reimport of imported id
 *** unused defs?
+
+* eggs
+** numbers 
+   segfaults - something wrong with finalization, may be related to
+   warning on compilation
+** testeez
+   doesn't work: %testeez:body (or whatever) must be made available
+   somehow; if all else fails, export it (including required indirect
+   exports. This is ugly but should at least work)

@@ -236,7 +236,7 @@
 	       (if block
 		   (gen "C_mutate(&lf[" index "]")
 		   (gen "C_mutate((C_word*)lf[" index "]+1") )
-	       (gen " /* " (uncommentify (symbol->string var)) " ...) */,")
+	       (gen " /* (set! " (uncommentify (symbol->string var)) " ...) */,")
 	       (expr (car subs) i)
 	       (gen #\)) ) )
 
