@@ -438,7 +438,14 @@ EOF
 
 (define (##sys#thread-unblock! t)
   (when (eq? 'blocked (##sys#slot t 3))
-    (set! ##sys#timeout-list (##sys#delq t ##sys#timeout-list))
+    (set! ##sys#timeout-list
+      (let loop ((l ##sys#timeout-list))
+	(if (null? l) 
+	    l
+	    (let ((h (##sys#slot l 0)))
+	      (if (eq? (##sys#slot h 1) t)
+		  (##sys#slot l 1)
+		  (cons h (loop (##sys#slot l 1))))))))
     (set! ##sys#fd-list 
       (let loop ([fdl ##sys#fd-list])
 	(if (null? fdl)
