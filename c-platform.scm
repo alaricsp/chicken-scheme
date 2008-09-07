@@ -187,7 +187,7 @@
     ##sys#fudge ##sys#immediate? ##sys#direct-return ##sys#context-switch
     ##sys#make-structure ##sys#apply ##sys#apply-values ##sys#continuation-graft
     ##sys#bytevector? ##sys#make-vector ##sys#setter ##sys#car ##sys#cdr ##sys#pair?
-    ##sys#eq? ##sys#list? ##sys#vector?
+    ##sys#eq? ##sys#list? ##sys#vector? ##sys#eqv?
     ##sys#foreign-char-argument ##sys#foreign-fixnum-argument ##sys#foreign-flonum-argument
     ##sys#foreign-block-argument ##sys#foreign-number-vector-argument
     ##sys#foreign-string-argument ##sys#foreign-pointer-argument ##sys#void
@@ -567,6 +567,7 @@
 (rewrite 'eq? 1 2 "C_eqp")
 (rewrite '##sys#eq? 1 2 "C_eqp")
 (rewrite 'eqv? 1 2 "C_i_eqvp")
+(rewrite '##sys#eqv? 1 2 "C_i_eqvp")
 
 (rewrite 'list-ref 2 2 "C_u_i_list_ref" #f "C_slot")
 (rewrite 'list-ref 2 2 "C_i_list_ref" #t "C_i_vector_ref")

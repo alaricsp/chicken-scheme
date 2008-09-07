@@ -981,7 +981,7 @@
 	    (%begin (r 'begin))
 	    (%if (r 'if))
 	    (%or (r 'or))
-	    (%eqv? (r 'eqv?))
+	    (%eqv? '##sys#eqv?)
 	    (%else (r 'else)))
 	`(let ((,tmp ,exp))
 	   ,(let expand ((clauses body))

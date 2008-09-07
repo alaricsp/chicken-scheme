@@ -4290,6 +4290,7 @@ EOF
 (define ##sys#= =)
 (define ##sys#+ +)
 (define ##sys#eq? eq?)
+(define ##sys#eqv? eqv?)
 (define ##sys#list? list?)
 (define ##sys#null? null?)
 (define ##sys#map-n map)
