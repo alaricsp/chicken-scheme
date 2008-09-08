@@ -39,16 +39,15 @@ endif
 
 # directories
 
-SRCDIR = .
-VPATH  = $(SRCDIR)
+SRCDIR ?= ./
 
-DESTDIR =
+DESTDIR ?=
 
 ifeq ($(PLATFORM),mingw-msys)
 PREFIX ?= c:/devtools
 else
 ifeq ($(PLATFORM),mingw)
-PREFIX ?= c:/devtools
+PREFIX ?= c:\\devtools
 else
 PREFIX ?= /usr/local
 endif
@@ -70,14 +69,14 @@ ifeq ($(PLATFORM),mingw)
 IBINDIR = $(PREFIX)\\bin
 ILIBDIR = $(PREFIX)\\lib
 ISHAREDIR = $(PREFIX)\\share
-IDATADIR = $(SHAREDIR)\\chicken
-ITOPMANDIR = $(SHAREDIR)\\man
-IMANDIR = $(TOPMANDIR)\\man1
-IINFODIR = $(SHAREDIR)\\info
+IDATADIR = $(ISHAREDIR)\\chicken
+ITOPMANDIR = $(ISHAREDIR)\\man
+IMANDIR = $(ITOPMANDIR)\\man1
+IINFODIR = $(ISHAREDIR)\\info
 IINCDIR = $(PREFIX)\\include
-IDOCDIR = $(DATADIR)\\doc
-ICHICKENLIBDIR = $(LIBDIR)\\chicken
-IEGGDIR = $(CHICKENLIBDIR)\\$(BINARYVERSION)
+IDOCDIR = $(IDATADIR)\\doc
+ICHICKENLIBDIR = $(ILIBDIR)\\chicken
+IEGGDIR = $(ICHICKENLIBDIR)\\$(BINARYVERSION)
 else
 IBINDIR = $(BINDIR)
 ILIBDIR = $(LIBDIR)
@@ -155,7 +154,7 @@ PCRE_INCLUDES =
 C_COMPILER_PCRE_OPTIONS =
 PCRE_OBJECTS_1 =
 else
-PCRE_DIR ?= $(VPATH)/pcre
+PCRE_DIR ?= $(SRCDIR)pcre
 C_COMPILER_PCRE_OPTIONS = -DPCRE_STATIC -DHAVE_CONFIG_H
 PCRE_INCLUDES = $(INCLUDES) -I$(PCRE_DIR)
 endif
@@ -284,7 +283,7 @@ CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 ifneq ($(USE_HOST_PCRE),)
 CHICKEN_PCRE_LIBRARY_OPTIONS = 
 else
-CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)/pcre
+CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)pcre
 endif
 
 # targets

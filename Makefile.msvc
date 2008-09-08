@@ -32,7 +32,8 @@
 # 37130 Gleichen
 # Germany
 
-PREFIX = c:/msvc-devtools
+PREFIX = c:\\msvc-devtools
+SRCDIR = .\\
 
 # platform configuration
 
