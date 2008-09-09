@@ -420,7 +420,7 @@
 				 (any (lambda (dep)
 					  (let ((dep2 (fixmaketarget dep)))
 					    (unless (file-exists? dep2)
-					      (error (sprintf "dependancy ~a was not made~%" dep2)))
+					      (error (sprintf "dependency ~a was not made~%" dep2)))
 					    (and (> (file-modification-time dep2) date)
 						 dep2)) )
 					deps))))

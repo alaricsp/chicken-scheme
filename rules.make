@@ -50,26 +50,26 @@ LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
 
 ifeq ($(USE_HOST_PCRE),)
 PCRE_OBJECTS_1 ?= \
-       pcre/pcre_compile \
-       pcre/pcre_config \
-       pcre/pcre_dfa_exec \
-       pcre/pcre_exec \
-       pcre/pcre_fullinfo \
-       pcre/pcre_get \
-       pcre/pcre_globals \
-       pcre/pcre_info \
-       pcre/pcre_maketables \
-       pcre/pcre_newline \
-       pcre/pcre_ord2utf8 \
-       pcre/pcre_refcount \
-       pcre/pcre_study \
-       pcre/pcre_tables \
-       pcre/pcre_try_flipped \
-       pcre/pcre_ucp_searchfuncs \
-       pcre/pcre_valid_utf8 \
-       pcre/pcre_version \
-       pcre/pcre_xclass \
-       pcre/pcre_chartables
+       $(PCRE_DIR)pcre_compile \
+       $(PCRE_DIR)pcre_config \
+       $(PCRE_DIR)pcre_dfa_exec \
+       $(PCRE_DIR)pcre_exec \
+       $(PCRE_DIR)pcre_fullinfo \
+       $(PCRE_DIR)pcre_get \
+       $(PCRE_DIR)pcre_globals \
+       $(PCRE_DIR)pcre_info \
+       $(PCRE_DIR)pcre_maketables \
+       $(PCRE_DIR)pcre_newline \
+       $(PCRE_DIR)pcre_ord2utf8 \
+       $(PCRE_DIR)pcre_refcount \
+       $(PCRE_DIR)pcre_study \
+       $(PCRE_DIR)pcre_tables \
+       $(PCRE_DIR)pcre_try_flipped \
+       $(PCRE_DIR)pcre_ucp_searchfuncs \
+       $(PCRE_DIR)pcre_valid_utf8 \
+       $(PCRE_DIR)pcre_version \
+       $(PCRE_DIR)pcre_xclass \
+       $(PCRE_DIR)pcre_chartables
 PCRE_SHARED_OBJECTS = $(PCRE_OBJECTS_1:=$(O))
 PCRE_STATIC_OBJECTS = $(PCRE_OBJECTS_1:=-static$(O))
 endif
@@ -489,166 +489,166 @@ optimizer-static$(O): optimizer.c chicken.h $(CHICKEN_CONFIG_H)
 
 # pcre objects
 
-$(PCRE_DIR)/pcre_compile$(O): $(PCRE_DIR)/pcre_compile.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_compile$(O): $(PCRE_DIR)pcre_compile.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_config$(O): $(PCRE_DIR)/pcre_config.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_config$(O): $(PCRE_DIR)pcre_config.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_dfa_exec$(O): $(PCRE_DIR)/pcre_dfa_exec.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_dfa_exec$(O): $(PCRE_DIR)pcre_dfa_exec.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_exec$(O): $(PCRE_DIR)/pcre_exec.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_exec$(O): $(PCRE_DIR)pcre_exec.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_fullinfo$(O): $(PCRE_DIR)/pcre_fullinfo.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_fullinfo$(O): $(PCRE_DIR)pcre_fullinfo.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_get$(O): $(PCRE_DIR)/pcre_get.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_get$(O): $(PCRE_DIR)pcre_get.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_globals$(O): $(PCRE_DIR)/pcre_globals.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_globals$(O): $(PCRE_DIR)pcre_globals.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_info$(O): $(PCRE_DIR)/pcre_info.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_info$(O): $(PCRE_DIR)pcre_info.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_maketables$(O): $(PCRE_DIR)/pcre_maketables.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_maketables$(O): $(PCRE_DIR)pcre_maketables.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)/pcre_newline$(O): $(PCRE_DIR)/pcre_newline.c $(PCRE_DIR)/pcre_internal.h $(PCRE_DIR)/config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)/pcre.h $(PCRE_DIR)/ucp.h
+$(PCRE_DIR)pcre_newline$(O): $(PCRE_DIR)pcre_newline.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_ord2utf8$(O): pcre/pcre_ord2utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_ord2utf8$(O): $(PCRE_DIR)pcre_ord2utf8.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_refcount$(O): pcre/pcre_refcount.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_refcount$(O): $(PCRE_DIR)pcre_refcount.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_study$(O): pcre/pcre_study.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_study$(O): $(PCRE_DIR)pcre_study.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_tables$(O): pcre/pcre_tables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_tables$(O): $(PCRE_DIR)pcre_tables.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_try_flipped$(O): pcre/pcre_try_flipped.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_try_flipped$(O): $(PCRE_DIR)pcre_try_flipped.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_ucp_searchfuncs$(O): pcre/pcre_ucp_searchfuncs.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h pcre/ucptable.h pcre/ucpinternal.h
+$(PCRE_DIR)pcre_ucp_searchfuncs$(O): $(PCRE_DIR)pcre_ucp_searchfuncs.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h $(PCRE_DIR)ucptable.h $(PCRE_DIR)ucpinternal.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_valid_utf8$(O): pcre/pcre_valid_utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_valid_utf8$(O): $(PCRE_DIR)pcre_valid_utf8.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_version$(O): pcre/pcre_version.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_version$(O): $(PCRE_DIR)pcre_version.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_xclass$(O): pcre/pcre_xclass.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_xclass$(O): $(PCRE_DIR)pcre_xclass.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_chartables$(O): pcre/pcre_chartables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H)
+$(PCRE_DIR)pcre_chartables$(O): $(PCRE_DIR)pcre_chartables.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
 
 # static pcre objects
 
-pcre/pcre_compile-static$(O): pcre/pcre_compile.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_compile-static$(O): $(PCRE_DIR)pcre_compile.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_config-static$(O): pcre/pcre_config.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_config-static$(O): $(PCRE_DIR)pcre_config.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_dfa_exec-static$(O): pcre/pcre_dfa_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_dfa_exec-static$(O): $(PCRE_DIR)pcre_dfa_exec.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_exec-static$(O): pcre/pcre_exec.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_exec-static$(O): $(PCRE_DIR)pcre_exec.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_fullinfo-static$(O): pcre/pcre_fullinfo.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_fullinfo-static$(O): $(PCRE_DIR)pcre_fullinfo.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_get-static$(O): pcre/pcre_get.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_get-static$(O): $(PCRE_DIR)pcre_get.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_globals-static$(O): pcre/pcre_globals.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_globals-static$(O): $(PCRE_DIR)pcre_globals.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_info-static$(O): pcre/pcre_info.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_info-static$(O): $(PCRE_DIR)pcre_info.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_maketables-static$(O): pcre/pcre_maketables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_maketables-static$(O): $(PCRE_DIR)pcre_maketables.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_newline-static$(O): pcre/pcre_newline.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_newline-static$(O): $(PCRE_DIR)pcre_newline.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_ord2utf8-static$(O): pcre/pcre_ord2utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_ord2utf8-static$(O): $(PCRE_DIR)pcre_ord2utf8.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_refcount-static$(O): pcre/pcre_refcount.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_refcount-static$(O): $(PCRE_DIR)pcre_refcount.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_study-static$(O): pcre/pcre_study.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_study-static$(O): $(PCRE_DIR)pcre_study.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_tables-static$(O): pcre/pcre_tables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_tables-static$(O): $(PCRE_DIR)pcre_tables.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_try_flipped-static$(O): pcre/pcre_try_flipped.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_try_flipped-static$(O): $(PCRE_DIR)pcre_try_flipped.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_ucp_searchfuncs-static$(O): pcre/pcre_ucp_searchfuncs.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h pcre/ucptable.h pcre/ucpinternal.h
+$(PCRE_DIR)pcre_ucp_searchfuncs-static$(O): $(PCRE_DIR)pcre_ucp_searchfuncs.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h $(PCRE_DIR)ucptable.h $(PCRE_DIR)ucpinternal.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_valid_utf8-static$(O): pcre/pcre_valid_utf8.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_valid_utf8-static$(O): $(PCRE_DIR)pcre_valid_utf8.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_version-static$(O): pcre/pcre_version.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_version-static$(O): $(PCRE_DIR)pcre_version.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_xclass-static$(O): pcre/pcre_xclass.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H) pcre/pcre.h pcre/ucp.h
+$(PCRE_DIR)pcre_xclass-static$(O): $(PCRE_DIR)pcre_xclass.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H) $(PCRE_DIR)pcre.h $(PCRE_DIR)ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-pcre/pcre_chartables-static$(O): pcre/pcre_chartables.c pcre/pcre_internal.h pcre/config.h $(CHICKEN_CONFIG_H)
+$(PCRE_DIR)pcre_chartables-static$(O): $(PCRE_DIR)pcre_chartables.c $(PCRE_DIR)pcre_internal.h $(PCRE_DIR)config.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
@@ -1067,10 +1067,10 @@ distfiles: buildsvnrevision library.c eval.c data-structures.c ports.c files.c e
 .PHONY: clean distclean spotless confclean
 
 ifeq ($(PLATFORM),mingw)
-CLEAN_PCRE = pcre\*$(O)
+CLEAN_PCRE = $(PCRE_DIR)*$(O)
 CLEAN_MINGW_LIBS = libchickengui.a libchickengui.dll libchickengui.dll.a
 else
-CLEAN_PCRE = pcre/*$(O)
+CLEAN_PCRE = $(PCRE_DIR)*$(O)
 CLEAN_MINGW_LIBS =
 endif
 

@@ -73,7 +73,7 @@ POSIXFILE = posixwin
 
 CUSTOM_CHICKEN_DEFAULTS=1
 
-include $(SRCDIR)/defaults.make
+include $(SRCDIR)defaults.make
 
 # main target
 
@@ -139,22 +139,22 @@ chicken-defaults.h:
 	echo # define C_INSTALL_LDFLAGS "$(LINKER_OPTIONS) $(LINKER_OPTIMIZATION_OPTIONS)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_SHARE_HOME >>$@
-	echo # define C_INSTALL_SHARE_HOME "$(DATADIR)" >>$@
+	echo # define C_INSTALL_SHARE_HOME "$(IDATADIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_BIN_HOME >>$@
-	echo # define C_INSTALL_BIN_HOME "$(BINDIR)" >>$@
+	echo # define C_INSTALL_BIN_HOME "$(IBINDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_EGG_HOME >>$@
-	echo # define C_INSTALL_EGG_HOME "$(EGGDIR)" >>$@
+	echo # define C_INSTALL_EGG_HOME "$(IEGGDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_LIB_HOME >>$@
-	echo # define C_INSTALL_LIB_HOME "$(LIBDIR)" >>$@
+	echo # define C_INSTALL_LIB_HOME "$(ILIBDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_STATIC_LIB_HOME >>$@
-	echo # define C_INSTALL_STATIC_LIB_HOME "$(LIBDIR)" >>$@
+	echo # define C_INSTALL_STATIC_LIB_HOME "$(ILIBDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_INCLUDE_HOME >>$@
-	echo # define C_INSTALL_INCLUDE_HOME "$(INCDIR)" >>$@
+	echo # define C_INSTALL_INCLUDE_HOME "$(IINCDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_MORE_LIBS >>$@
 	echo # define C_INSTALL_MORE_LIBS "$(LIBRARIES)" >>$@
@@ -190,22 +190,22 @@ chicken-defaults.h:
 	echo # define C_CROSS_CHICKEN $(CROSS_CHICKEN) >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_LIB_HOME >>$@
-	echo # define C_TARGET_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
+	echo # define C_TARGET_LIB_HOME "$(TARGET_PREFIX)\\lib" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_RUN_LIB_HOME >>$@
-	echo # define C_TARGET_RUN_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
+	echo # define C_TARGET_RUN_LIB_HOME "$(TARGET_PREFIX)\\lib" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_SHARE_HOME >>$@
-	echo # define C_TARGET_SHARE_HOME "$(TARGET_PREFIX)/share" >>$@
+	echo # define C_TARGET_SHARE_HOME "$(TARGET_PREFIX)\\share" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_INCLUDE_HOME >>$@
-	echo # define C_TARGET_INCLUDE_HOME "$(TARGET_PREFIX)/include" >>$@
+	echo # define C_TARGET_INCLUDE_HOME "$(TARGET_PREFIX)\\include" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_STATIC_LIB_HOME >>$@
-	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
+	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)\\lib" >>$@
 	echo #endif >>$@
 	echo #ifndef C_BINARY_VERSION >>$@
 	echo # define C_BINARY_VERSION $(BINARYVERSION) >>$@
 	echo #endif >>$@
 
-include $(SRCDIR)/rules.make
+include $(SRCDIR)rules.make
