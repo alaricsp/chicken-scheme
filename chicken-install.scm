@@ -130,18 +130,22 @@ EOF
       (print "retrieving ...")
       (for-each
        (lambda (egg)
-	 (unless (assoc egg *eggs+dirs*)
-	   (let* ((name (if (pair? egg) (car egg) egg))
-		  (version (and (pair? egg) (cdr egg)))
-		  (dir (retrieve-extension 
-			name *default-transport* *default-location*
-			version #f 
-			(and *retrieve-only* (current-directory))
-			*username* *password*)))
-	     (unless dir
-	       (error "extension or version not found"))
-	     (print " " name " located at " dir)
-	     (set! *eggs+dirs* (alist-cons name dir *eggs+dirs*)))))
+	 (cond ((assoc egg *eggs+dirs*) =>
+		(lambda (a)
+		  ;; push to front
+		  (set! *eggs+dirs* (cons a (delete a *eggs+dirs* eq?))) ) )
+	       (else
+		(let* ((name (if (pair? egg) (car egg) egg))
+		       (version (and (pair? egg) (cdr egg)))
+		       (dir (retrieve-extension 
+			     name *default-transport* *default-location*
+			     version #f 
+			     (and *retrieve-only* (current-directory))
+			     *username* *password*)))
+		  (unless dir
+		    (error "extension or version not found"))
+		  (print " " name " located at " dir)
+		  (set! *eggs+dirs* (alist-cons name dir *eggs+dirs*))))) )
        eggs)
       (unless *retrieve-only*
 	(for-each

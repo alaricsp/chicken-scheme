@@ -48,20 +48,18 @@ TODO for macro/module system					-*- Outline -*-
 ** curried define performs expansion in empty se - problem?
    (as comment in expand.scm indicated (##sys#register-export))
 
-* guerrilla-setup
+* setup/install
 ** setup-download
 *** HTTP_PROXY
 *** handle redirects in http-fetch
 *** connect timeout and alternative download location
 *** only download tests on demand (-test option)
 ** chicken-install
-*** dependency-resolution fails
-    installing numbers with an empty repo seems to miss silex; apparently
-    we can't depend on `retrieve' to order dependencies correctly?
-*** passing multiple names doesn't build them in the same order
-    may be related to the point above
 *** handle needs/depends of builtin extension
 *** should cache extension-info
+    necessary?
+** henrietta
+*** parameter "withtests=BOOL" controls whether tests should be downloaded
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
@@ -85,7 +83,4 @@ TODO for macro/module system					-*- Outline -*-
 ** numbers 
    segfaults - something wrong with finalization, may be related to
    warning on compilation
-** testeez
-   doesn't work: %testeez:body (or whatever) must be made available
-   somehow; if all else fails, export it (including required indirect
-   exports. This is ugly but should at least work)
+   (might be fixed with force-finalizers not imported - test with optimizations on)
