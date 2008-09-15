@@ -363,25 +363,26 @@
 	     '##core#call '(#t)
 	     (cons* (make-node '##core#proc '("C_quotient" #t) '()) cont callargs) ) ) ) ) )
 
-(rewrite
- 'eqv? 8
- (lambda (db classargs cont callargs)
-   ;; (eqv? <var> <var>) -> (quote #t)
-   ;; (eqv? ...) -> (##core#inline "C_eqp" ...) [one argument is a constant and not a flonum]
-   (and (= (length callargs) 2)
-	(let ([arg1 (first callargs)]
-	      [arg2 (second callargs)] )
-	  (or (and (eq? '##core#variable (node-class arg1))
-		   (eq? '##core#variable (node-class arg2))
-		   (equal? (node-parameters arg1) (node-parameters arg2))
-		   (make-node '##core#call '(#t) (list cont (qnode #t))) )
-	      (and (or (and (eq? 'quote (node-class arg1))
-			    (not (flonum? (first (node-parameters arg1)))) )
-		       (and (eq? 'quote (node-class arg2))
-			    (not (flonum? (first (node-parameters arg2)))) ) )
-		   (make-node
-		    '##core#call '(#t) 
-		    (list cont (make-node '##core#inline '("C_eqp") callargs)) ) ) ) ) ) ) )
+(let ()
+  (define (eqv?-id db classargs cont callargs)
+    ;; (eqv? <var> <var>) -> (quote #t)
+    ;; (eqv? ...) -> (##core#inline "C_eqp" ...) [one argument is a constant and not a flonum]
+    (and (= (length callargs) 2)
+	 (let ([arg1 (first callargs)]
+	       [arg2 (second callargs)] )
+	   (or (and (eq? '##core#variable (node-class arg1))
+		    (eq? '##core#variable (node-class arg2))
+		    (equal? (node-parameters arg1) (node-parameters arg2))
+		    (make-node '##core#call '(#t) (list cont (qnode #t))) )
+	       (and (or (and (eq? 'quote (node-class arg1))
+			     (not (flonum? (first (node-parameters arg1)))) )
+			(and (eq? 'quote (node-class arg2))
+			     (not (flonum? (first (node-parameters arg2)))) ) )
+		    (make-node
+		     '##core#call '(#t) 
+		     (list cont (make-node '##core#inline '("C_eqp") callargs)) ) ) ) ) ) )
+  (rewrite 'eqv? 8 eqv?-id)
+  (rewrite '##sys#eqv? 8 eqv?-id))
 
 (rewrite
  'equal? 8
