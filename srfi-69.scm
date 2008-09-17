@@ -795,39 +795,39 @@
     (lambda (ht key)
       (##sys#check-structure ht 'hash-table 'hash-table-delete!)
       (let* ([vec (##sys#slot ht 1)]
-	     [len (##sys#size vec)] )
-	(let* ([hash (##sys#slot ht 4)]
-	       [hshidx (hash key len)] )
-	  (let ([test (##sys#slot ht 3)]
-		[newsiz (fx- (##sys#slot ht 2) 1)]
-		[bucket0 (##sys#slot vec hshidx)] )
-	    (if (eq? core-eq? test)
-		; Fast path (eq? is rewritten by the compiler):
-		(let loop ([prev #f] [bucket bucket0])
-		  (and (not (null? bucket))
-		       (let ([pare (##sys#slot bucket 0)]
-			     [nxt (##sys#slot bucket 1)])
-			 (if (eq? key (##sys#slot pare 0))
-			     (begin
-			       (if prev
-				   (##sys#setslot prev 1 nxt)
-				   (##sys#setslot vec hshidx nxt) )
-			       (##sys#setislot ht 2 newsiz)
-			       #t )
-			     (loop bucket nxt) ) ) ) )
-		; Slow path
-		(let loop ([prev #f] [bucket bucket0])
-		  (and (not (null? bucket))
-		       (let ([pare (##sys#slot bucket 0)]
-			     [nxt (##sys#slot bucket 1)])
-			 (if (test key (##sys#slot pare 0))
-			     (begin
-			       (if prev
-				   (##sys#setslot prev 1 nxt)
-				   (##sys#setslot vec hshidx nxt) )
-			       (##sys#setislot ht 2 newsiz)
-			       #t )
-			     (loop bucket nxt) ) ) ) ) ) ) ) ) ) ) )
+             [len (##sys#size vec)]
+             [hash (##sys#slot ht 4)]
+             [hshidx (hash key len)] )
+        (let ([test (##sys#slot ht 3)]
+              [newsiz (fx- (##sys#slot ht 2) 1)]
+              [bucket0 (##sys#slot vec hshidx)] )
+          (if (eq? core-eq? test)
+              ; Fast path (eq? is rewritten by the compiler):
+              (let loop ([prev #f] [bucket bucket0])
+                (and (not (null? bucket))
+                     (let ([pare (##sys#slot bucket 0)]
+                           [nxt (##sys#slot bucket 1)])
+                       (if (eq? key (##sys#slot pare 0))
+                           (begin
+                             (if prev
+                                 (##sys#setslot prev 1 nxt)
+                                 (##sys#setslot vec hshidx nxt) )
+                             (##sys#setislot ht 2 newsiz)
+                             #t )
+                           (loop bucket nxt) ) ) ) )
+              ; Slow path
+              (let loop ([prev #f] [bucket bucket0])
+                (and (not (null? bucket))
+                     (let ([pare (##sys#slot bucket 0)]
+                           [nxt (##sys#slot bucket 1)])
+                       (if (test key (##sys#slot pare 0))
+                           (begin
+                             (if prev
+                                 (##sys#setslot prev 1 nxt)
+                                 (##sys#setslot vec hshidx nxt) )
+                             (##sys#setislot ht 2 newsiz)
+                             #t )
+                           (loop bucket nxt) ) ) ) ) ) ) ) ) ) )
 
 ;; hash-table-remove!:
 
