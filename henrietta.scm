@@ -34,9 +34,9 @@
 
   (define *default-transport* 'svn)
   (define *default-location* (current-directory))
-  (define *test* #f)
   (define *username* #f)
   (define *password* #f)
+  (define *tests* #f)
 
   (define (headers)
     (print "Connection: close\r\nContent-type: text/plain\r\n\r\n"))
@@ -51,28 +51,36 @@
       (fprintf (current-error-port) "removing temporary directory `~a'~%" tmpdir)
       (remove-directory tmpdir)))
 
+  (define (test-file? path)
+    (string-match "(\\./)?tests/.*" path))
+
   (define (retrieve name version)
     (let ((dir (handle-exceptions ex 
 		   (fail ((condition-property-accessor 'exn 'message) ex)
 			 ((condition-property-accessor 'exn 'arguments) ex))
 		 (retrieve-extension 
 		  name *default-transport* *default-location*
-		  version #t #f
-		  *username* *password*))))
+		  version: version 
+		  quiet: #t 
+		  destination: #f
+		  tests: *tests*
+		  username: *username* 
+		  password: *password*))))
       (unless dir 
 	(fail "no such extension or version" name version))
       (let walk ((dir dir) (prefix "."))
 	(let ((files (directory dir)))
 	  (for-each
 	   (lambda (f)
-	     (let ((ff (string-append dir "/" f))
-		   (pf (string-append prefix "/" f)))
-	       (cond ((directory? ff)
-		      (print "\n#|--------------------|# \"" pf "/\" 0")
-		      (walk ff pf))
-		     (else
-		      (print "\n#|--------------------|# \"" pf "\" " (file-size ff))
-		      (display (read-all ff))))))
+	     (unless (test-file? f)
+	       (let ((ff (string-append dir "/" f))
+		     (pf (string-append prefix "/" f)))
+		 (cond ((directory? ff)
+			(print "\n#|--------------------|# \"" pf "/\" 0")
+			(walk ff pf))
+		       (else
+			(print "\n#|--------------------|# \"" pf "\" " (file-size ff))
+			(display (read-all ff)))))))
 	   files)))
       (print "\n#!eof") ) )
 
@@ -92,9 +100,7 @@
 		 (rest (and m (substring qs (cadar m)))))
 	    (cond ((not m)
 		   (headers)		; from here on use `fail'
-		   (cond (*test* 
-			  (fail "test"))
-			 (egg
+		   (cond (egg
 			  (retrieve egg version)
 			  (cleanup) )
 			 (else (fail "no extension name specified") ) ))
@@ -104,8 +110,8 @@
 		  ((string=? ms "name")
 		   (set! egg (apply substring qs (caddr m)))
 		   (loop rest))
-		  ((string=? ms "test")
-		   (set! *test* #t)
+		  ((string=? ms "tests")
+		   (set! *tests* #t)
 		   (loop rest))
 		  (else
 		   (warning "unrecognized query option" ms)

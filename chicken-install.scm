@@ -139,9 +139,11 @@ EOF
 		       (version (and (pair? egg) (cdr egg)))
 		       (dir (retrieve-extension 
 			     name *default-transport* *default-location*
-			     version #f 
-			     (and *retrieve-only* (current-directory))
-			     *username* *password*)))
+			     version: version
+			     destination: (and *retrieve-only* (current-directory))
+			     tests: *run-tests*
+			     username: *username* 
+			     password: *password*)))
 		  (unless dir
 		    (error "extension or version not found"))
 		  (print " " name " located at " dir)

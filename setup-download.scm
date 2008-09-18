@@ -35,7 +35,8 @@
 			temporary-directory)
 
   (import scheme chicken)
-  (import extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13 files)
+  (import extras regex posix utils setup-utils srfi-1 data-structures tcp 
+	  srfi-13 files)
 
   (define *quiet* #f)
 
@@ -52,7 +53,7 @@
 	  (temporary-directory dir)
 	  dir)))
 
-  (define (locate-egg/local egg dir #!optional version destination username password)
+  (define (locate-egg/local egg dir #!optional version destination)
     (let* ((eggdir (make-pathname dir egg))
 	   (files (directory eggdir))
 	   (trunkdir (make-pathname eggdir "trunk"))
@@ -73,7 +74,8 @@
 	    (or (and hastrunk trunkdir)
 		eggdir)))))
   
-  (define (locate-egg/svn egg repo #!optional version destination username password)
+  (define (locate-egg/svn egg repo #!optional version destination username 
+			  password)
     (call/cc 
      (lambda (k)
        (define (runcmd cmd)
@@ -112,7 +114,7 @@
 	   (runcmd cmd)
 	   tmpdir)) )))
 
-  (define (locate-egg/http egg url #!optional version destination username password)
+  (define (locate-egg/http egg url #!optional version destination tests)
     (let* ((tmpdir (or destination (get-temporary-directory)))
 	   (m (string-match "(http://)?([^/:]+)(:([^:/]+))?(/.+)" url))
 	   (host (if m (caddr m) url))
@@ -125,10 +127,13 @@
 		 "?name=" egg
 		 (if version
 		     (string-append "&version=" version)
+		     "")
+		 (if tests
+		     "&tests=yes"
 		     "")))
 	   (eggdir (make-pathname tmpdir egg)))
       (create-directory eggdir)
-      (http-fetch host port loc eggdir)
+      (http-fetch host port loc eggdir tests)
       eggdir))
 
   (define (http-fetch host port loc dest)
@@ -140,7 +145,8 @@
       (close-output-port out)
       (let ((chunked #f))
 	(let* ((h1 (read-line in))
-	       (m (and (string? h1) (string-match "HTTP/[0-9.]+\\s+([0-9]+)\\s+.*" h1))))
+	       (m (and (string? h1)
+		       (string-match "HTTP/[0-9.]+\\s+([0-9]+)\\s+.*" h1))))
 	  (print h1)
 	  ;;*** handle redirects here
 	  (unless (and m (string=? "200" (cadr m)))
@@ -193,8 +199,8 @@
 	      (read-line in)
 	      (loop (cons chunk data)))))))
 
-  (define (retrieve-extension name transport location #!optional version quiet 
-			      destination username password)
+  (define (retrieve-extension name transport location #!key version quiet 
+			      destination username password tests)
     (fluid-let ((*quiet* quiet))
       (case transport
 	((local)
@@ -204,7 +210,7 @@
 	((svn)
 	 (locate-egg/svn name location version destination username password))
 	((http)
-	 (locate-egg/http name location version destination))
+	 (locate-egg/http name location version destination tests))
 	(else (error "unsupported transport" transport)))) )
 
 )
