@@ -4146,10 +4146,10 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     return C_fix(CLOCKS_PER_SEC);
 
   case C_fix(11):
-#ifdef MACINTOSH_GUI
-    return C_SCHEME_TRUE;
-#else
+#if defined(C_NONUNIX) || defined(__CYGWIN__)
     return C_SCHEME_FALSE;
+#else
+    return C_SCHEME_TRUE;
 #endif
 
   case C_fix(12):

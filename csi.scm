@@ -102,6 +102,24 @@ EOF
 ") )
 
 (define (print-banner)
+  (newline)
+  (when (and (tty-input?) (##sys#fudge 11))
+    (let* ((t (string-copy +product+))
+	   (len (string-length t))
+	   (c (make-string len #\x08)))
+      (do ((i (sub1 (* 2 len)) (sub1 i)))
+	  ((zero? i))
+	(let* ((p (abs (- i len)))
+	       (o (string-ref t p)))
+	  (string-set! t p #\@)
+	  (print* t)
+	  (string-set! t p o)
+	  (let ((t0 (+ (current-milliseconds) 40)))
+	    (let loop ()		; crude, but doesn't need srfi-18
+	      (when (< (current-milliseconds) t0)
+		(loop))))
+	  (print* c) ) ) ) )
+  (print +product+)
   (print +banner+ (chicken-version #t) "\n") )
 
 
