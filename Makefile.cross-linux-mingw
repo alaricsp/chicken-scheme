@@ -124,4 +124,4 @@ endif
 	echo "#define C_HACKED_APPLY" >>$@
 	cat chicken-defaults.h >>$@
 
-include $(SRCDIR)/rules.make
+include $(SRCDIR)rules.make

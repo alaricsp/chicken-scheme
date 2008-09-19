@@ -155,7 +155,11 @@ C_COMPILER_PCRE_OPTIONS =
 PCRE_OBJECTS_1 =
 else
 ifdef WINDOWS
+ifneq ($(HOSTSYSTEM),mingw32)
 PCRE_DIR ?= $(SRCDIR)pcre\\
+else
+endif
+PCRE_DIR ?= $(SRCDIR)pcre/
 else
 PCRE_DIR ?= $(SRCDIR)pcre/
 endif
