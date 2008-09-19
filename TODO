@@ -1,7 +1,5 @@
 TODO for macro/module system					-*- Outline -*-
 
-* what about thread-terminate! ? (at least note in manual)
-
 * trunk merge
   11635 was last
 
@@ -26,7 +24,8 @@ TODO for macro/module system					-*- Outline -*-
 *** re-exports of syntax doesn't work
     generating import library requires source
     (compiled-module-registration), but original module is lost after
-    importing.
+    importing. Can we simply pull expander closure out of module from which
+    we imported?
 *** `require-extension' fails in interpreter when extension is .so without import library
     probably because load and import is in same toplevel form, and the
     load is performed after the import (at runtime). A possibly fix
@@ -61,7 +60,7 @@ TODO for macro/module system					-*- Outline -*-
     necessary?
 ** henrietta
 *** parameter "tests=BOOL" controls whether tests should be downloaded
-*** remove "test" parameter
+**** implemented - test
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
@@ -86,4 +85,5 @@ TODO for macro/module system					-*- Outline -*-
    segfaults - something wrong with finalization, may be related to
    warning on compilation
    (might be fixed with force-finalizers not imported - test with optimizations on)
-** test sassy (needs henrietta+test thing!)
+** test sassy (needs henrietta+test thing!, also convert to proper module)
+** port javahack
