@@ -133,7 +133,7 @@
 		     "")))
 	   (eggdir (make-pathname tmpdir egg)))
       (create-directory eggdir)
-      (http-fetch host port loc eggdir tests)
+      (http-fetch host port loc eggdir)
       eggdir))
 
   (define (http-fetch host port loc dest)

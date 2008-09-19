@@ -86,7 +86,7 @@ EOF
 	(if (null? args)
 	    (let ((eggs (gather-eggs (if (null? pats) '(".*") pats))))
 	      (if (null? eggs)
-		  (print "none")
+		  (print "(none)")
 		  ((if files list-installed-files list-installed-eggs)
 		   eggs)))
 	    (let ((arg (car args)))
