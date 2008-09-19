@@ -583,7 +583,7 @@
 	   (let ((destf (make-pathname *doc-path* f)))
 	     (copy-file f destf #f)
 	     (unless *windows-shell*
-	       (run (chmod a+rx ,(quotewrap destf))) ) ))
+	       (run (chmod a+rx ,destf)) ) ))
 	 (cdr exs))
 	(newline))
       (write-info id dests info) ) ) )
