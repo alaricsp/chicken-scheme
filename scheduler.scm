@@ -420,11 +420,27 @@ EOF
 
 
 ;;; Get list of all threads that are ready or waiting for timeout or waiting for I/O:
+;
+; (contributed by Joerg Wittenberger)
 
-(define (##sys#all-threads)
-  (append ##sys#ready-queue-head
-          (apply append (map cdr ##sys#fd-list))
-          (map cdr ##sys#timeout-list)))
+(define (##sys#all-threads #!optional
+			   (cns (lambda (queue arg val init)
+				  (cons val init)))
+			   (init '()))
+  (let loop ((l ##sys#ready-queue-head) (i init))
+    (if (pair? l)
+	(loop (cdr l) (cns 'ready #f (car l) i))
+	(let loop ((l ##sys#fd-list) (i i))
+	  (if (pair? l)
+	      (loop (cdr l)
+		    (let ((fd (caar l)))
+		      (let loop ((l (cdar l)))
+			(if (null? l) i
+			    (cns 'i/o fd (car l) (loop (cdr l)))))))
+	      (let loop ((l ##sys#timeout-list) (i i))
+		(if (pair? l)
+		    (loop (cdr l) (cns 'timeout (caar l) (cdar l) i))
+		    i)))))))
 
 
 ;;; Remove all waiting threads from the relevant queues with the exception of the current thread:
