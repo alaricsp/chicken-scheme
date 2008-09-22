@@ -36,7 +36,7 @@
 	##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer
 	##sys#remove-from-ready-queue ##sys#unblock-threads-for-i/o ##sys#force-primordial
 	##sys#fdset-input-set ##sys#fdset-output-set ##sys#fdset-clear
-	##sys#fdset-select-timeout ##sys#fdset-restore
+	##sys#fdset-select-timeout ##sys#fdset-restore ##sys#remove-from-timeout-list
 	##sys#clear-i/o-state-for-thread!) 
   (foreign-declare #<<EOF
 #ifdef HAVE_ERRNO_H
@@ -212,6 +212,18 @@ EOF
 
 (define ##sys#timeout-list '())
 
+(define (##sys#remove-from-timeout-list t)
+  (let loop ((l ##sys#timeout-list) (prev #f))
+    (if (null? l)
+	l
+	(let ((h (##sys#slot l 0))
+	      (r (##sys#slot l 1)))
+	  (if (eq? (##sys#slot h 1) t)
+	      (if prev
+		  (set-cdr! prev r)
+		  (set! ##sys#timeout-list r))
+	      (loop r l))))))
+
 (define (##sys#thread-block-for-timeout! t tm)
   (dbg t " blocks for " tm)
   ;; This should really use a balanced tree:
@@ -241,6 +253,7 @@ EOF
   (##sys#setislot t 4 #f)
   (##sys#setislot t 11 #f)
   (##sys#setislot t 8 '())
+  (##sys#remove-from-timeout-list t)
   (let ([rs (##sys#slot t 12)])
     (unless (null? rs)
       (for-each
@@ -438,14 +451,7 @@ EOF
 
 (define (##sys#thread-unblock! t)
   (when (eq? 'blocked (##sys#slot t 3))
-    (set! ##sys#timeout-list
-      (let loop ((l ##sys#timeout-list))
-	(if (null? l) 
-	    l
-	    (let ((h (##sys#slot l 0)))
-	      (if (eq? (##sys#slot h 1) t)
-		  (##sys#slot l 1)
-		  (cons h (loop (##sys#slot l 1))))))))
+    (##sys#remove-from-timeout-list t)
     (set! ##sys#fd-list 
       (let loop ([fdl ##sys#fd-list])
 	(if (null? fdl)
