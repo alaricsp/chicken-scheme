@@ -52,7 +52,7 @@
       (remove-directory tmpdir)))
 
   (define (test-file? path)
-    (string-match "(\\./)?tests/.*" path))
+    (string-match "(\\./)?tests(/.*)?" path))
 
   (define (retrieve name version)
     (let ((dir (handle-exceptions ex 
@@ -72,7 +72,7 @@
 	(let ((files (directory dir)))
 	  (for-each
 	   (lambda (f)
-	     (unless (test-file? f)
+	     (when (or *tests* (not (test-file? f)))
 	       (let ((ff (string-append dir "/" f))
 		     (pf (string-append prefix "/" f)))
 		 (cond ((directory? ff)
@@ -95,7 +95,7 @@
 	    (egg #f)
 	    (version #f))
 	(let loop ((qs (if m (cadr m) qs)))
-	  (let* ((m (string-search-positions "^(\\w+)=([^&]+)" qs))
+	  (let* ((m (string-search-positions "^&?(\\w+)=([^&]+)" qs))
 		 (ms (and m (apply substring qs (cadr m))))
 		 (rest (and m (substring qs (cadar m)))))
 	    (cond ((not m)

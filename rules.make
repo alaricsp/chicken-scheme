@@ -1368,7 +1368,8 @@ compiler-check:
 bootstrap: 
 	gzip -d -c $(SRCDIR)/bootstrap.tar.gz | tar xvf -
 	touch *.c
-	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 chicken$(EXE)
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) STATICBUILD=1 DEBUGBUILD=1 \
+	  chicken$(EXE)
 	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 
