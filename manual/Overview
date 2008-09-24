@@ -22,7 +22,7 @@ The generated C code is fully tail-recursive.
 
 Some of the features supported by CHICKEN:
 
-* SRFIs 0, 1, 2, 4, 6, 8-19, 23, 25-31, 37-40, 42, 43, 45, 47, 55, 57, 60-63, 66, 69, 72, 78, 85 and 95.
+* SRFIs 0, 1, 2, 4, 6, 8-19, 23, 25-31, 37-40, 42, 43, 45, 47, 55, 57, 60-63, 66, 69, 72, 78, 85, 95 and 98.
 * Lightweight threads based on first-class continuations
 * Pattern matching with Andrew Wright's {{match}} package
 * Record structures

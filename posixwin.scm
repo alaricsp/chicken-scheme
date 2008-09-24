@@ -1651,6 +1651,7 @@ EOF
 	(##sys#signal-hook #:file-error 'duplicate-fileno "cannot duplicate file descriptor" old) )
       fd) ) )
 
+
 ;;; Environment access:
 
 (define setenv
@@ -1665,7 +1666,7 @@ EOF
   (##core#inline "C_putenv" (##sys#make-c-string var))
   (##core#undefined) )
 
-(define current-environment
+(define get-environment-variables
   (let ([get (foreign-lambda c-string "C_getenventry" int)]
 	[substring substring] )
     (lambda ()
@@ -1677,6 +1678,8 @@ EOF
 		    (cons (cons (substring entry 0 j) (substring entry (fx+ j 1) (##sys#size entry))) (loop (fx+ i 1)))
 		    (scan (fx+ j 1)) ) )
 	      '() ) ) ) ) ) )
+
+(define current-environment get-environment-variables) ; DEPRECATED
 
 ;;; Time related things:
 

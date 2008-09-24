@@ -874,12 +874,12 @@ These variables contain signal codes for use with {{process-signal}},  {{set-sig
 
 === Environment access
 
-==== current-environment
+==== get-environment-variables
 
- [procedure] (current-environment)
+ [procedure] (get-environment-variables)
 
 Returns a association list of the environment variables and their
-current values.
+current values (see also [[http://srfi.schemers.org/srfi-98/|SRFI-98]]).
 
 ==== setenv
 

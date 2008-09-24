@@ -112,7 +112,8 @@
 	 get-keyword
 	 get-output-string
 	 get-properties
-	 getenv
+	 getenv			       
+	 get-environment-variable
 	 getter-with-setter
 	 implicit-exit-handler
 	 keyword->string

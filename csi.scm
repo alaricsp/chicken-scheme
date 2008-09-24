@@ -114,7 +114,7 @@ EOF
 	  (string-set! t p #\@)
 	  (print* t)
 	  (string-set! t p o)
-	  (let ((t0 (+ (current-milliseconds) 40)))
+	  (let ((t0 (+ (current-milliseconds) 30)))
 	    (let loop ()		; crude, but doesn't need srfi-18
 	      (when (< (current-milliseconds) t0)
 		(loop))))

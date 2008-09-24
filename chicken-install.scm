@@ -82,11 +82,22 @@ EOF
 	  (cdr d))
 	'()))
 
+  (define (ext-version x)
+    (cond ((or (eq? x 'chicken)
+	       (equal? x "chicken")
+	       (member (->string x) ##sys#core-library-modules))
+	   (chicken-version) )
+	  ((extension-information x) =>
+	   (lambda (info)
+	     (and-let* ((a (assq 'version info)))
+	       (->string (cadr a)))))
+	  (else #f)))
+
   (define (outdated-dependencies meta)
     (let ((ds (append 
-	      (deps 'depends meta) 
-	      (deps 'needs meta)
-	      (if *run-tests* (deps 'test-depends meta) '()))))
+	       (deps 'depends meta) 
+	       (deps 'needs meta)
+	       (if *run-tests* (deps 'test-depends meta) '()))))
       (let loop ((deps ds) (missing '()) (upgrade '()))
 	(if (null? deps)
 	    (values (reverse missing) (reverse upgrade))
@@ -94,33 +105,32 @@ EOF
 		  (rest (cdr deps)))
 	      (cond ((or (symbol? dep) (string? dep))
 		     (loop rest
-			   (if (or (eq? 'chicken dep)
-				   (equal? "chicken" dep)
-				   (extension-information dep))
+			   (if (ext-version dep)
 			       missing
 			       (cons (->string dep) missing))
 			   upgrade))
 		    ((and (list? dep) (= 2 (length dep))
 			  (or (string? (car dep)) (symbol? (car dep))))
-		     (let ((info (extension-information (car dep))))
-		       (if info
-			   (let ((v (assq 'version info)))
-			     (cond ((not v) 
-				    (warning "installed extension has unknown version - assuming it is outdated" 
-					     (car dep))
-				    (loop rest missing 
-					  (alist-cons 
-					   (->string (car dep))
-					   (->string (cadr dep))
-					   upgrade)))
-				   ((version>=? (->string (cadr dep)) (->string (cadr v)))
-				    (loop rest missing
-					  (alist-cons
-					   (->string (car dep)) (->string (cadr dep))
-					   upgrade)))
-				   (else (loop rest missing upgrade)))))))
+		     (let ((v (ext-version (car dep))))
+		       (cond ((not v) 
+			      (warning
+			       "installed extension has unknown version - assuming it is outdated" 
+			       (car dep))
+			      (loop rest missing 
+				    (alist-cons 
+				     (->string (car dep))
+				     (->string (cadr dep))
+				     upgrade)))
+			     ((version>=? (->string (cadr dep)) v)
+			      (loop rest missing
+				    (alist-cons
+				     (->string (car dep)) (->string (cadr dep))
+				     upgrade)))
+			     (else (loop rest missing upgrade)))))
 		    (else 
-		     (warning "invalid dependency syntax in extension meta information" dep)
+		     (warning
+		      "invalid dependency syntax in extension meta information" 
+		      dep)
 		     (loop rest missing upgrade))))))))
 
     (define *eggs+dirs* '())

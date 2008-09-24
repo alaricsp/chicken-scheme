@@ -44,7 +44,8 @@
    current-effective-group-id
    current-effective-user-id
    current-effective-user-name
-   current-environment
+   current-environment			; DEPRECATED
+   get-environment-variables
    current-group-id
    current-process-id
    current-user-id

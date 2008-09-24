@@ -516,13 +516,14 @@ a full version string is returned.
 Returns the error code of the last system call.
 
 
-==== getenv
+==== get-environment-variable
 
+ [procedure] (get-environment-variable STRING)
  [procedure] (getenv STRING)
 
 Returns the value of the environment variable {{STRING}} or
-{{#f}} if that variable is not defined.
-
+{{#f}} if that variable is not defined. See also [[http://srfi.schemers.org/srfi-98/|SRFI-98]].
+{{getenv}} is an alias for {{get-environment-variable}}.
 
 
 ==== machine-byte-order

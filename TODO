@@ -52,15 +52,9 @@ TODO for macro/module system					-*- Outline -*-
 *** HTTP_PROXY
 *** handle redirects in http-fetch
 *** connect timeout and alternative download location
-*** only download tests on demand (-test option)
-**** implemented - test
 ** chicken-install
-*** handle needs/depends of builtin extension
 *** should cache extension-info
     necessary?
-** henrietta
-*** parameter "tests=BOOL" controls whether tests should be downloaded
-**** implemented - test
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
@@ -81,9 +75,5 @@ TODO for macro/module system					-*- Outline -*-
 *** unused defs?
 
 * eggs
-** numbers 
-   segfaults - something wrong with finalization, may be related to
-   warning on compilation
-   (might be fixed with force-finalizers not imported - test with optimizations on)
-** test sassy (needs henrietta+test thing!, also convert to proper module)
-** port javahack
+** sassy: convert to proper module
+** port javahack, fps

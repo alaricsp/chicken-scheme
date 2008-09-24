@@ -1849,6 +1849,7 @@ EOF
           (fx= 3 (##sys#slot v 4))
           (posix-error #:file-error 'fifo? "file does not exist" filename) ) ) ) )
 
+
 ;;; Environment access:
 
 (define setenv
@@ -1863,7 +1864,7 @@ EOF
   (##core#inline "C_putenv" (##sys#make-c-string var))
   (##core#undefined) )
 
-(define current-environment
+(define get-environment-variables
   (let ([get (foreign-lambda c-string "C_getenventry" int)])
     (lambda ()
       (let loop ([i 0])
@@ -1876,6 +1877,9 @@ EOF
                           (loop (fx+ i 1)))
                     (scan (fx+ j 1)) ) )
               '() ) ) ) ) ) )
+
+(define current-environment get-environment-variables) ; DEPRECATED
+
 
 ;;; Memory mapped I/O:
 

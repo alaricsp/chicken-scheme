@@ -116,12 +116,15 @@
 (define-constant setup-file-extension "setup-info")
 (define-constant repository-environment-variable "CHICKEN_REPOSITORY")
 (define-constant prefix-environment-variable "CHICKEN_PREFIX")
-(define-constant default-binary-version 3)
+(define-constant default-binary-version 4)
 
 ; these are actually in unit extras, but that is used by default
 ; srfi-12 in unit library
+; srfi-98 partically in unit posix
+
 (define-constant builtin-features
-  '(chicken srfi-2 srfi-6 srfi-10 srfi-12 srfi-23 srfi-28 srfi-30 srfi-31 srfi-39 srfi-69) )
+  '(chicken srfi-2 srfi-6 srfi-10 srfi-12 srfi-23 srfi-28 srfi-30 srfi-31 srfi-39 
+	    srfi-69 srfi-98) )
 
 (define-constant builtin-features/compiled
   '(srfi-6 srfi-8 srfi-9 srfi-11 srfi-15 srfi-16 srfi-17 srfi-26 srfi-55) )

@@ -229,7 +229,8 @@ EOF
 (define (current-gc-milliseconds) (##sys#fudge 31))
 (define cpu-time (##core#primitive "C_cpu_time"))
 (define ##sys#decode-seconds (##core#primitive "C_decode_seconds"))
-(define getenv (##core#primitive "C_get_environment_variable"))
+(define get-environment-variable (##core#primitive "C_get_environment_variable"))
+(define getenv get-environment-variable)
 (define (##sys#start-timer) (##core#inline "C_start_timer"))
 (define ##sys#stop-timer (##core#primitive "C_stop_timer"))
 (define (##sys#immediate? x) (not (##core#inline "C_blockp" x)))
@@ -3283,8 +3284,8 @@ EOF
 	    [(symbol? x)  (string->keyword (##sys#symbol->string x))]
 	    [else         (err x)] ) ) ) )
 
-(define ##sys#features '
-  (#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
+(define ##sys#features
+  '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12 #:srfi-98))
 
 ;; Add system features:
 
