@@ -1,32 +1,17 @@
-/* config.h.  From PCRE 7.6 config.h generated from config.h.in by configure.  */
+/* config.h.  From PCRE 7.7 config.h generated from config.h.in by configure.  */
 
-#if defined(HAVE_CONFIG_H) || defined(HAVE_CHICKEN_CONFIG_H)
+/* For HAVE_* macros */
+#ifdef HAVE_CHICKEN_CONFIG_H
 # include "chicken-config.h"
 #endif
 
-/* On Unix-like systems config.h.in is converted by "configure" into config.h.
-Some other environments also support the use of "configure". PCRE is written in
-Standard C, but there are a few non-standard things it can cope with, allowing
-it to run on SunOS4 and other "close to standard" systems.
+/* By default, the \R escape sequence matches any Unicode line ending
+   character or sequence of characters. If BSR_ANYCRLF is defined, this is
+   changed so that backslash-R matches only CR, LF, or CRLF. The build- time
+   default can be overridden by the user of PCRE at runtime. On systems that
+   support it, "configure" can be used to override the default. */
+/* #undef BSR_ANYCRLF */
 
-If you are going to build PCRE "by hand" on a system without "configure" you
-should copy the distributed config.h.generic to config.h, and then set up the
-macro definitions the way you need them. You must then add -DHAVE_CONFIG_H to
-all of your compile commands, so that config.h is included at the start of
-every source.
-
-Alternatively, you can avoid editing by using -D on the compiler command line
-to set the macro values. In this case, you do not have to set -DHAVE_CONFIG_H.
-
-PCRE uses memmove() if HAVE_MEMMOVE is set to 1; otherwise it uses bcopy() if
-HAVE_BCOPY is set to 1. If your system has neither bcopy() nor memmove(), set
-them both to 0; an emulation function will be used. */
-
-/* Define to 1 if you have the `memmove' function. */
-#ifndef HAVE_MEMMOVE
-/* hm... there must be a better way */
-# define HAVE_MEMMOVE 1
-#endif
 
 /* The value of LINK_SIZE determines the number of bytes used to store links
    as offsets within the compiled regex. The default is 2, which allows for
@@ -81,8 +66,20 @@ them both to 0; an emulation function will be used. */
    10. The possible values are 10 (LF), 13 (CR), 3338 (CRLF), -1 (ANY), or -2
    (ANYCRLF). */
 #ifndef NEWLINE
-#define NEWLINE '\n'
+#define NEWLINE 10
 #endif
+
+/* PCRE uses recursive function calls to handle backtracking while matching.
+   This can sometimes be a problem on systems that have stacks of limited
+   size. Define NO_RECURSE to get a version that doesn't use recursion in the
+   match() function; instead it creates its own stack by steam using
+   pcre_recurse_malloc() to obtain memory from the heap. For more detail, see
+   the comments and other stuff just above the match() function. On systems
+   that support it, "configure" can be used to set this in the Makefile (use
+   --disable-stack-for-recursion). */
+/* #undef NO_RECURSE */
+/* Make independent of Chicken stack - KRL */
+#define NO_RECURSE 1
 
 /* Name of package */
 #define PACKAGE "pcre"
@@ -94,13 +91,13 @@ them both to 0; an emulation function will be used. */
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 7.6"
+#define PACKAGE_STRING "PCRE 7.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.6"
+#define PACKAGE_VERSION "7.7"
 
 /* When calling PCRE via the POSIX interface, additional working storage is
    required for holding the pointers to capturing substrings because PCRE
@@ -130,7 +127,7 @@ Makefile (use --disable-stack-for-recursion). */
 #define SUPPORT_UTF8 
 
 /* Version number of package */
-#define VERSION "7.6"
+#define VERSION "7.7"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

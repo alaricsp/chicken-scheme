@@ -206,10 +206,12 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # define ALIGNMENT_HOLE_MARKER         ((C_word)0xfffffffffffffffeL)
 # define FORWARDING_BIT_SHIFT          63
 # define UWORD_FORMAT_STRING           "0x%lx"
+# define UWORD_COUNT_FORMAT_STRING     "%ld"
 #else
 # define ALIGNMENT_HOLE_MARKER         ((C_word)0xfffffffe)
 # define FORWARDING_BIT_SHIFT          31
 # define UWORD_FORMAT_STRING           "0x%x"
+# define UWORD_COUNT_FORMAT_STRING     "%d"
 #endif
 
 #define GC_MINOR           0
@@ -1303,29 +1305,30 @@ void CHICKEN_parse_command_line(int argc, char *argv[], C_word *heap, C_word *st
 
 C_word arg_val(C_char *arg)
 {
-  int len;
-  if (!arg)
-      panic(C_text("required argument missing to runtime option"));
-  len = C_strlen(arg);
-
-  if(len < 1) panic(C_text("illegal runtime-option argument"));
-
-  switch(arg[ len - 1 ]) {
-  case 'k':
-  case 'K':
-    return atol(arg) * 1024;
-
-  case 'm':
-  case 'M':
-    return atol(arg) * 1024 * 1024;
-
-  case 'g':
-  case 'G':
-    return atol(arg) * 1024 * 1024 * 1024;
-
-  default:
-    return atol(arg);
-  }
+      int len;
+      
+      if (arg == NULL) panic(C_text("illegal runtime-option argument"));
+      
+      len = C_strlen(arg);
+      
+      if(len < 1) panic(C_text("illegal runtime-option argument"));
+      
+      switch(arg[ len - 1 ]) {
+      case 'k':
+      case 'K':
+ 	  return atol(arg) * 1024;
+ 	  
+      case 'm':
+      case 'M':
+ 	  return atol(arg) * 1024 * 1024;
+ 	  
+      case 'g':
+      case 'G':
+ 	  return atol(arg) * 1024 * 1024 * 1024;
+ 	  
+      default:
+ 	  return atol(arg);
+      }
 }
 
 
@@ -3204,8 +3207,8 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   if(size == heap_size) return;
 
   if(debug_mode) 
-    C_printf(C_text("[debug] resizing heap dynamically from " UWORD_FORMAT_STRING " to " UWORD_FORMAT_STRING " bytes...\n"), 
-	   (C_uword)heap_size, size);
+    C_printf(C_text("[debug] resizing heap dynamically from " UWORD_COUNT_FORMAT_STRING "k to " UWORD_COUNT_FORMAT_STRING "k ...\n"), 
+	     (C_uword)heap_size / 1000, size / 1000);
 
   if(gc_report_flag) {
     C_printf(C_text("(old) fromspace: \tstart=%08lx, \tlimit=%08lx\n"), (long)fromspace_start, (long)C_fromspace_limit);
@@ -7775,21 +7778,8 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 #endif
     default: barf(C_BAD_ARGUMENT_TYPE_ERROR, "number->string", C_fix(radix));
     }
-
-  fini:
-    radix = C_strlen(p);
-    
-    if(!C_demand(C_bytestowords(radix) + 1)) {
-      C_save(k);
-      cons_string_trampoline(NULL);
-    }
-
-    a = C_alloc((C_bytestowords(radix) + 1));
-    radix = C_string(&a, radix, p);
-    C_kontinue(k, radix);
   }
-
-  if(!C_immediatep(num) && C_block_header(num) == C_FLONUM_TAG) {
+  else if(!C_immediatep(num) && C_block_header(num) == C_FLONUM_TAG) {
     f = C_flonum_magnitude(num);
 
     if(C_fits_in_unsigned_int_p(num) == C_SCHEME_TRUE) {
@@ -7834,10 +7824,21 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
     }
 
     p = buffer;
-    goto fini;
   }
+  else
+    barf(C_BAD_ARGUMENT_TYPE_ERROR, "number->string", num);
 
-  barf(C_BAD_ARGUMENT_TYPE_ERROR, "number->string", num);
+  fini:
+    radix = C_strlen(p);
+    
+    if(!C_demand(C_bytestowords(radix) + 1)) {
+      C_save(k);
+      cons_string_trampoline(NULL);
+    }
+
+    a = C_alloc((C_bytestowords(radix) + 1));
+    radix = C_string(&a, radix, p);
+    C_kontinue(k, radix);
 }
 
 

@@ -27,6 +27,7 @@
 STANDARD_TARGETS \
 	= all clean distclean spotless install uninstall confclean check \
 	  fullcheck dist libs install-libs bootstrap
+
 SRCDIR = .
 
 .PHONY: $(STANDARD_TARGETS)

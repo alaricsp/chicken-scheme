@@ -1,7 +1,7 @@
 TODO for macro/module system					-*- Outline -*-
 
 * trunk merge
-  11635 was last
+  12020 was last
 
 * macros
 ** at some stage disable debug-output in expand.scm
@@ -49,7 +49,7 @@ TODO for macro/module system					-*- Outline -*-
 
 * setup/install
 ** setup-download
-*** HTTP_PROXY
+*** use HTTP_PROXY env. var
 *** handle redirects in http-fetch
 *** connect timeout and alternative download location
 ** chicken-install
@@ -76,4 +76,4 @@ TODO for macro/module system					-*- Outline -*-
 
 * eggs
 ** sassy: convert to proper module
-** port javahack, fps
+** port javahack, fmt, fps

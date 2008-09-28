@@ -292,7 +292,8 @@
 	 '() ) )
 
       (define (compile x e h tf cntr se)
-	(cond [(symbol? x)
+	(cond ((keyword? x) (lambda v x))
+	      ((symbol? x)
 	       (receive (i j) (lookup x e se)
 		 (cond [(not i)
 			(let ((var (if (not (assq x se)) ; global?
@@ -316,7 +317,7 @@
 				  (set! ##sys#unbound-in-eval (cons (cons var cntr) ##sys#unbound-in-eval)) )
 				(lambda v (##core#inline "C_retrieve" var))] ) ) ) ]
 		       [(zero? i) (lambda (v) (##sys#slot (##sys#slot v 0) j))]
-		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) ]
+		       [else (lambda (v) (##sys#slot (##core#inline "C_u_i_list_ref" v i) j))] ) ) )
 	      [(##sys#number? x)
 	       (case x
 		 [(-1) (lambda v -1)]

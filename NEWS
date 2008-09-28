@@ -34,6 +34,14 @@
     define-macro
     define-extension
 
+3.3.13
+
+- Fixes to the MinGW build.
+
+3.3.12
+
+- PCRE 7.7
+
 3.3.8
 
 - Bug fix in thread-terminate! [thanks to Joerg Wittenberger]

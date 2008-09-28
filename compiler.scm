@@ -525,10 +525,11 @@
 
   (define (walk x se dest)
     (cond ((symbol? x)
-	   (when (memq x unlikely-variables)
-	     (compiler-warning 
-	      'var
-	      "reference to variable `~s' possibly unintended" x) )
+	   (cond ((keyword? x) `(quote ,x))
+		 ((memq x unlikely-variables)
+		  (compiler-warning 
+		   'var
+		   "reference to variable `~s' possibly unintended" x) ))
 	   (resolve-variable x se dest))
 	  ((not-pair? x)
 	   (if (constant? x)

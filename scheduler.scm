@@ -35,7 +35,7 @@
 	##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer
 	##sys#remove-from-ready-queue ##sys#unblock-threads-for-i/o ##sys#force-primordial
 	##sys#fdset-input-set ##sys#fdset-output-set ##sys#fdset-clear
-	##sys#fdset-select-timeout ##sys#fdset-restore
+	##sys#fdset-select-timeout ##sys#fdset-restore ##sys#remove-from-timeout-list
 	##sys#clear-i/o-state-for-thread!) 
   (foreign-declare #<<EOF
 #ifdef HAVE_ERRNO_H
@@ -217,6 +217,18 @@ EOF
 
 (define ##sys#timeout-list '())
 
+(define (##sys#remove-from-timeout-list t)
+  (let loop ((l ##sys#timeout-list) (prev #f))
+    (if (null? l)
+	l
+	(let ((h (##sys#slot l 0))
+	      (r (##sys#slot l 1)))
+	  (if (eq? (##sys#slot h 1) t)
+	      (if prev
+		  (set-cdr! prev r)
+		  (set! ##sys#timeout-list r))
+	      (loop r l))))))
+
 (define (##sys#thread-block-for-timeout! t tm)
   (dbg t " blocks for " tm)
   ;; This should really use a balanced tree:
@@ -246,6 +258,7 @@ EOF
   (##sys#setislot t 4 #f)
   (##sys#setislot t 11 #f)
   (##sys#setislot t 8 '())
+  (##sys#remove-from-timeout-list t)
   (let ([rs (##sys#slot t 12)])
     (unless (null? rs)
       (for-each
@@ -412,11 +425,27 @@ EOF
 
 
 ;;; Get list of all threads that are ready or waiting for timeout or waiting for I/O:
+;
+; (contributed by Joerg Wittenberger)
 
-(define (##sys#all-threads)
-  (append ##sys#ready-queue-head
-          (apply append (map cdr ##sys#fd-list))
-          (map cdr ##sys#timeout-list)))
+(define (##sys#all-threads #!optional
+			   (cns (lambda (queue arg val init)
+				  (cons val init)))
+			   (init '()))
+  (let loop ((l ##sys#ready-queue-head) (i init))
+    (if (pair? l)
+	(loop (cdr l) (cns 'ready #f (car l) i))
+	(let loop ((l ##sys#fd-list) (i i))
+	  (if (pair? l)
+	      (loop (cdr l)
+		    (let ((fd (caar l)))
+		      (let loop ((l (cdar l)))
+			(if (null? l) i
+			    (cns 'i/o fd (car l) (loop (cdr l)))))))
+	      (let loop ((l ##sys#timeout-list) (i i))
+		(if (pair? l)
+		    (loop (cdr l) (cns 'timeout (caar l) (cdar l) i))
+		    i)))))))
 
 
 ;;; Remove all waiting threads from the relevant queues with the exception of the current thread:
@@ -443,7 +472,7 @@ EOF
 
 (define (##sys#thread-unblock! t)
   (when (eq? 'blocked (##sys#slot t 3))
-    (set! ##sys#timeout-list (##sys#delq t ##sys#timeout-list))
+    (##sys#remove-from-timeout-list t)
     (set! ##sys#fd-list 
       (let loop ([fdl ##sys#fd-list])
 	(if (null? fdl)

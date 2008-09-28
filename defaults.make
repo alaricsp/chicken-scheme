@@ -39,15 +39,15 @@ endif
 
 # directories
 
-SRCDIR = .
-VPATH  = $(SRCDIR)
+SRCDIR ?= ./
 
-DESTDIR =
+DESTDIR ?=
+
 ifeq ($(PLATFORM),mingw-msys)
 PREFIX ?= c:/devtools
 else
 ifeq ($(PLATFORM),mingw)
-PREFIX ?= c:/devtools
+PREFIX ?= c:\\devtools
 else
 PREFIX ?= /usr/local
 endif
@@ -66,17 +66,17 @@ CHICKENLIBDIR = $(LIBDIR)/chicken
 EGGDIR = $(CHICKENLIBDIR)/$(BINARYVERSION)
 
 ifeq ($(PLATFORM),mingw)
-BINDIR = $(PREFIX)\\bin
-LIBDIR = $(PREFIX)\\lib
-SHAREDIR = $(PREFIX)\\share
-DATADIR = $(SHAREDIR)\\chicken
-TOPMANDIR = $(SHAREDIR)\\man
-MANDIR = $(TOPMANDIR)\\man1
-INFODIR = $(SHAREDIR)\\info
-INCDIR = $(PREFIX)\\include
-DOCDIR = $(DATADIR)\\doc
-CHICKENLIBDIR = $(LIBDIR)\\chicken
-EGGDIR = $(CHICKENLIBDIR)\\$(BINARYVERSION)
+IBINDIR = $(PREFIX)\\bin
+ILIBDIR = $(PREFIX)\\lib
+ISHAREDIR = $(PREFIX)\\share
+IDATADIR = $(ISHAREDIR)\\chicken
+ITOPMANDIR = $(ISHAREDIR)\\man
+IMANDIR = $(ITOPMANDIR)\\man1
+IINFODIR = $(ISHAREDIR)\\info
+IINCDIR = $(PREFIX)\\include
+IDOCDIR = $(IDATADIR)\\doc
+ICHICKENLIBDIR = $(ILIBDIR)\\chicken
+IEGGDIR = $(ICHICKENLIBDIR)\\$(BINARYVERSION)
 else
 IBINDIR = $(BINDIR)
 ILIBDIR = $(LIBDIR)
@@ -159,8 +159,16 @@ PCRE_INCLUDES =
 C_COMPILER_PCRE_OPTIONS =
 PCRE_OBJECTS_1 =
 else
-PCRE_DIR ?= $(VPATH)/pcre
-C_COMPILER_PCRE_OPTIONS = -DPCRE_STATIC
+ifdef WINDOWS
+ifneq ($(HOSTSYSTEM),mingw32)
+PCRE_DIR ?= $(SRCDIR)pcre\\
+else
+endif
+PCRE_DIR ?= $(SRCDIR)pcre/
+else
+PCRE_DIR ?= $(SRCDIR)pcre/
+endif
+C_COMPILER_PCRE_OPTIONS = -DPCRE_STATIC -DHAVE_CONFIG_H
 PCRE_INCLUDES = $(INCLUDES) -I$(PCRE_DIR)
 endif
 ifndef NOPTABLES
@@ -316,7 +324,7 @@ CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_DYNAMIC_OPTIONS)
 ifneq ($(USE_HOST_PCRE),)
 CHICKEN_PCRE_LIBRARY_OPTIONS = 
 else
-CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)/pcre
+CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)pcre
 endif
 
 # targets
@@ -394,22 +402,22 @@ chicken-defaults.h: buildsvnrevision
 	echo "# define C_INSTALL_LDFLAGS \"$(LINKER_OPTIONS) $(LINKER_OPTIMIZATION_OPTIONS)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_SHARE_HOME" >>$@
-	echo "# define C_INSTALL_SHARE_HOME \"$(DATADIR)\"" >>$@
+	echo "# define C_INSTALL_SHARE_HOME \"$(IDATADIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_BIN_HOME" >>$@
-	echo "# define C_INSTALL_BIN_HOME \"$(BINDIR)\"" >>$@
+	echo "# define C_INSTALL_BIN_HOME \"$(IBINDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_EGG_HOME" >>$@
-	echo "# define C_INSTALL_EGG_HOME \"$(EGGDIR)\"" >>$@
+	echo "# define C_INSTALL_EGG_HOME \"$(IEGGDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_LIB_HOME" >>$@
-	echo "# define C_INSTALL_LIB_HOME \"$(LIBDIR)\"" >>$@
+	echo "# define C_INSTALL_LIB_HOME \"$(ILIBDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_STATIC_LIB_HOME" >>$@
-	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(LIBDIR)\"" >>$@
+	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(ILIBDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_INCLUDE_HOME" >>$@
-	echo "# define C_INSTALL_INCLUDE_HOME \"$(INCDIR)\"" >>$@
+	echo "# define C_INSTALL_INCLUDE_HOME \"$(IINCDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_MORE_LIBS" >>$@
 	echo "# define C_INSTALL_MORE_LIBS \"$(LIBRARIES)\"" >>$@
@@ -444,6 +452,23 @@ chicken-defaults.h: buildsvnrevision
 	echo "#ifndef C_CROSS_CHICKEN" >>$@
 	echo "# define C_CROSS_CHICKEN $(CROSS_CHICKEN)" >>$@
 	echo "#endif" >>$@
+ifdef WINDOWS
+	echo "#ifndef C_TARGET_LIB_HOME" >>$@
+	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)\\lib\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_RUN_LIB_HOME" >>$@
+	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_RUN_PREFIX)\\lib\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_SHARE_HOME" >>$@
+	echo "# define C_TARGET_SHARE_HOME \"$(TARGET_PREFIX)\\share\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_INCLUDE_HOME" >>$@
+	echo "# define C_TARGET_INCLUDE_HOME \"$(TARGET_PREFIX)\\include\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_STATIC_LIB_HOME" >>$@
+	echo "# define C_TARGET_STATIC_LIB_HOME \"$(TARGET_PREFIX)\\lib\"" >>$@
+	echo "#endif" >>$@
+else
 	echo "#ifndef C_TARGET_LIB_HOME" >>$@
 	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
 	echo "#endif" >>$@
@@ -459,6 +484,7 @@ chicken-defaults.h: buildsvnrevision
 	echo "#ifndef C_TARGET_STATIC_LIB_HOME" >>$@
 	echo "# define C_TARGET_STATIC_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
 	echo "#endif" >>$@
+endif
 	echo "#ifndef C_CHICKEN_PROGRAM" >>$@
 	echo "# define C_CHICKEN_PROGRAM \"$(CHICKEN_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
