@@ -28,7 +28,7 @@
  'scheme
  '(not boolean? eq? eqv? equal? pair?
        cons car cdr caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr
-       cddar cdddr caaaar caaadr caadar caaddr cadaar cadadr cadddr cdaaar
+       cddar cdddr caaaar caaadr caadar caaddr cadaar cadadr caddar cadddr cdaaar
        cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr set-car! set-cdr!
        null? list? list length list-tail list-ref append reverse memq memv
        member assq assv assoc symbol? symbol->string string->symbol number?
@@ -52,6 +52,6 @@
        close-input-port close-output-port load read eof-object? read-char
        peek-char write display write-char newline with-input-from-file
        with-output-to-file dynamic-wind values call-with-values eval
-       char-ready?
+       char-ready? imag-part real-part magnitude numerator denominator
        scheme-report-environment null-environment interaction-environment)
  ##sys#default-macro-environment)
