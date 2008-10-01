@@ -120,14 +120,13 @@
     fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
     lambda-lift compile-syntax tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
-    emit-external-prototypes-first release disable-compiler-macros
+    emit-external-prototypes-first release
     analyze-only dynamic extension) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
 	  inline-limit profile-name disable-warning emit-exports import
     prelude postlude prologue epilogue nursery extend feature 
-    compress-literals			; DEPRECATED
     emit-import-library
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 

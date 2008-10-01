@@ -46,7 +46,7 @@
   target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
-  broken-constant-nodes inline-substitutions-enabled compiler-macros-enabled
+  broken-constant-nodes inline-substitutions-enabled
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
   direct-call-ids foreign-type-table first-analysis emit-closure-info
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
@@ -226,7 +226,6 @@
 		   (string-append il ".import.scm")))
 	   (collect-options 'emit-import-library)))
     (when (memq 'lambda-lift options) (set! do-lambda-lifting #t))
-    (when (memq 'disable-compiler-macros options) (set! compiler-macros-enabled #f))
     (when (memq 't debugging-chicken) (##sys#start-timer))
     (when (memq 'b debugging-chicken) (set! time-breakdown #t))
     (when (memq 'emit-exports options)
@@ -237,10 +236,10 @@
       (set! initforms '()) )
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
-    (when (memq 'check-imports options)
-      (compiler-warning 'usage "deprecated compiler option: -check-imports"))
-    (when (memq 'import options)
-      (compiler-warning 'usage "deprecated compiler option: -import"))
+    (when (memq 'check-imports options)	;***
+      (compiler-warning 'usage "deprecated compiler option: -check-imports")) ;***
+    (when (memq 'import options)	;***
+      (compiler-warning 'usage "deprecated compiler option: -import")) ;***
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
       (when verbose (printf "Warnings are disabled~%~!"))

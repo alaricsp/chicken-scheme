@@ -68,7 +68,7 @@
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
   constant-declarations process-lambda-documentation big-fixnum?
-  compiler-macro-table register-compiler-macro export-dump-hook
+  export-dump-hook
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
 
 
@@ -1413,30 +1413,6 @@ EOF
 	  (close-output-port csc-control-file)
 	  (old) ) ) ) )
   (fprintf csc-control-file "~S~%" item) )
-
-
-;;; Compiler macro registration
-
-(define (register-compiler-macro name llist body)
-  (unless compiler-macro-table
-    (set! compiler-macro-table (make-vector 301 '())) )
-  (call/cc
-   (lambda (return)
-     (let* ((wvar (gensym))
-	    (llist
-	     (let loop ((llist llist))
-	       (cond ((not (pair? llist)) llist)
-		     ((eq? #:whole (car llist))
-		      (unless (pair? (cdr llist))
-			(return #f) )
-		      (set! wvar (cadr llist))
-		      (cddr llist) )
-		     (else (cons (car llist) (loop (cdr llist)))) ) ) ) )
-       (##sys#hash-table-set!
-	compiler-macro-table
-	name
-	(eval `(lambda (,wvar) (apply (lambda ,llist ,@body) (cdr ,wvar))) ) )
-       #t) ) ) )
 
 
 ;;; 64-bit fixnum?

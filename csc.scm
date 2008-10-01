@@ -175,18 +175,15 @@
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info 
-    -check-imports			; DEPRECATED
     -emit-external-prototypes-first -inline -extension -release -static-extensions
-    -analyze-only -keep-shadowed-macros -disable-compiler-macros))
+    -analyze-only -keep-shadowed-macros))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
     -inline-limit -profile-name -disable-warning 
-    -import 				; DEPRECATED
     -require-static-extension
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
-    -emit-exports -compress-literals		; DEPRECATED
     -emit-import-library))
 
 (define-constant shortcuts
@@ -202,7 +199,6 @@
     (|-K| "-keyword-style")
     (|-X| "-extend")
     (|-N| "-no-usual-integrations")
-    (|-G| "-check-imports")		; DEPRECATED
     (-x "-explicit-use")
     (-u "-unsafe")
     (-j "-emit-import-library")
@@ -390,7 +386,6 @@
     -disable-stack-overflow-checks  disables detection of stack-overflows
     -inline                     enable inlining
     -inline-limit               set inlining threshold
-    -disable-compiler-macros    disable expansion of compiler macros
 
   Configuration options:
 

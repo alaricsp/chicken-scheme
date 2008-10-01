@@ -73,8 +73,6 @@ Possible options are:
 
 ; -disable-interrupts : Equivalent to the {{(disable-interrupts)}} declaration. No interrupt-checks are generated for compiled programs.
 
-; -disable-compiler-macros : disable expansion of compiler macros.
-
 ; -disable-stack-overflow-checks : Disables detection of stack overflows. This is equivalent to running the compiled executable with the {{-:o}} runtime option.
 
 ; -disable-warning CLASS : Disables specific class of warnings, may be given multiple times. The following classes are defined:

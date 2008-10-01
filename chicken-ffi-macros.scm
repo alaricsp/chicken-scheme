@@ -155,26 +155,4 @@
     `(##core#declare (foreign-declare ,@(cdr form))))))
 
 
-;;; Not for general use, yet
-
-(##sys#extend-macro-environment
- 'define-compiler-macro
- '()
- (##sys#er-transformer
-  (lambda (form r c)
-    (##sys#check-syntax 'define-compiler-macro form '(_ . _))
-    (let ((head (cadr form))
-	  (body (cddr form)))
-      (define (bad)
-	(syntax-error
-	 'define-compiler-macro "invalid compiler macro definition" head) )
-      (if (and (pair? head) (symbol? (car head)))
-	  (cond ((memq 'compiling ##sys#features)
-		 (warning "compile macros are not available in interpreted code"
-			  (car head) ) )
-		((not (##compiler#register-compiler-macro (car head) (cdr head) body))
-		 (bad) ) )
-	  (bad) )
-      '(##core#undefined) ) ) ) )
-
 (##sys#macro-subset me0)))

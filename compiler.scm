@@ -269,7 +269,7 @@
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning compiler-macro-table compiler-macros-enabled
+  compiler-warning
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
@@ -414,8 +414,6 @@
 (define file-requirements #f)
 (define postponed-initforms '())
 (define unused-variables '())
-(define compiler-macro-table #f)
-(define compiler-macros-enabled #t)
 (define literal-rewrite-hook #f)
 
 
@@ -1177,17 +1175,7 @@
 					       (walk `(##sys#make-locative ,sym 0 #f 'location) se #f) ] )
 					(walk `(##sys#make-locative ,sym 0 #f 'location) se #f) ) ) ]
 				 
-				 ((and compiler-macros-enabled
-				       compiler-macro-table
-				       (##sys#hash-table-ref compiler-macro-table name)) =>
-				  (lambda (cm)
-				    (let ((cx (cm x)))
-				      (if (equal? cx x)
-					  (handle-call)
-					  (walk cx se dest)))))
-				 
 				 [else (handle-call)] ) ) ) ) ] ) ) ) )
-; end of clause
 
 	  ((not (proper-list? x))
 	   (syntax-error "malformed expression" x) )

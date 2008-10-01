@@ -1061,6 +1061,9 @@
     `(##core#require-extension ,(cdr x) #t))))
 
 
+;;; 
+
+
 ;;; just in case someone forgets
 
 (##sys#extend-macro-environment
@@ -1068,6 +1071,7 @@
  (##sys#er-transformer
   (lambda (form r c)
     (syntax-error 'define-macro "`define-macro' is not supported - please use `define-syntax'"))))
+
 
 (##sys#macro-subset me0)))
 
