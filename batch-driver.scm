@@ -79,6 +79,14 @@
 (define-constant default-inline-max-size 10)
 (define-constant funny-message-timeout 60000)
 
+(define user-options-pass (make-parameter #f))
+(define user-read-pass (make-parameter #f))
+(define user-preprocessor-pass (make-parameter #f))
+(define user-pass (make-parameter #f))
+(define user-pass-2 (make-parameter #f))
+(define user-post-analysis-pass (make-parameter #f))
+(define user-post-optimization-pass (make-parameter #f))
+
 
 ;;; Compile a complete source file:
 
@@ -497,7 +505,7 @@
 				   (canonicalize-begin-body exps) ) ) ) ] 
 		    [proc (user-pass-2)] )
 	       (when (debugging 'M "; requirements:")
-		 (pretty-print (apply append (vector->list file-requirements))))
+		 (pretty-print (concatenate (vector->list file-requirements))))
 	       (when proc
 		 (when verbose (printf "Secondary user pass...~%"))
 		 (begin-time)
@@ -573,6 +581,14 @@
 			   
 			   [else
 			    (print-node "optimized" '|7| node2)
+
+			    (let ((proc (user-post-optimization-pass)))
+			      (when proc
+				(when verbose
+				  (printf "post-optimization user pass...~%"))
+				(begin-time)
+				(proc node2 db)
+				(end-time "post-optimization user pass")))
 
 			    (begin-time)
 			    (let ([node3 (perform-closure-conversion node2 db)])

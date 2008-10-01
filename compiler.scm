@@ -313,13 +313,6 @@
   (define-foreign-variable default-target-heap-size int "C_DEFAULT_TARGET_HEAP_SIZE")
   (define-foreign-variable default-target-stack-size int "C_DEFAULT_TARGET_STACK_SIZE") )
 
-(define user-options-pass (make-parameter #f))
-(define user-read-pass (make-parameter #f))
-(define user-preprocessor-pass (make-parameter #f))
-(define user-pass (make-parameter #f))
-(define user-pass-2 (make-parameter #f))
-(define user-post-analysis-pass (make-parameter #f))
-
 (define-constant foreign-type-table-size 301)
 (define-constant analysis-database-size 3001)
 (define-constant default-line-number-database-size 997)
