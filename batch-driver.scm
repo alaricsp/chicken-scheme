@@ -360,7 +360,7 @@
     (when verbose
       (printf "debugging info: ~A~%~!"
 	      (if emit-trace-info
-		  "stacktrace"
+		  "calltrace"
 		  "none") ) )
     (when profile
       (let ([acc (eq? 'accumulate-profile (car profile))])

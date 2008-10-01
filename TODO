@@ -1,7 +1,4 @@
-TODO for macro/module system					-*- Outline -*-
-
-* trunk merge
-  12020 was last
+TODO for trunk						-*- Outline -*-
 
 * macros
 ** at some stage disable debug-output in expand.scm
@@ -32,6 +29,16 @@ TODO for macro/module system					-*- Outline -*-
     would be to load the extension immediately (at
     compile-/expansion-time), when import is #t and o import lib
     exists.
+
+* compiler
+** self-recursion optimization
+   what MacScheme called "benchmark-mode" (assume self-calls are recursion)
+*** needs declaration or option, >= -O2
+** cross-module inlining
+*** emit <sourcefile>.inline file with "-inline-global" (?)
+*** "-inline-global" slurps *.inline files include-path (?)
+** compiler syntax
+*** hygienic macro-expansion with "escape" option (expand orig. form normally)
 
 * tests
 ** optional longer run (env. var)
@@ -73,7 +80,3 @@ TODO for macro/module system					-*- Outline -*-
 ** checks
 *** reimport of imported id
 *** unused defs?
-
-* eggs
-** sassy: convert to proper module
-** port javahack, fmt, fps
