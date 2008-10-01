@@ -69,24 +69,7 @@ EOF
   (hide
     fprintf0 generic-write ) )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-closure . _) '(##core#undefined))
-    (define-macro (##sys#check-inexact . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "data-structures.exports")) ] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'data-structures)
 
@@ -147,13 +130,15 @@ EOF
 	      h
 	      (lambda (x) (h ((loop t) x))))))))
 
-(define (list-of pred)
+(define (list-of? pred)
   (lambda (lst)
     (let loop ([lst lst])
       (cond [(null? lst) #t]
 	    [(not-pair? lst) #f]
 	    [(pred (##sys#slot lst 0)) (loop (##sys#slot lst 1))]
 	    [else #f] ) ) ) )
+
+(define list-of list-of?)		; DEPRECATED
 
 (define (noop . _) (void))
 
@@ -914,9 +899,9 @@ EOF
 ; Pushes the items in item-list back onto the queue,
 ; so that (car item-list) becomes the next removable item.
 
-(define-macro (last-pair lst0)
-  `(do ((lst ,lst0 (##sys#slot lst 1)))
-       ((eq? (##sys#slot lst 1) '()) lst)))
+(define-inline (last-pair lst0)
+  (do ((lst lst0 (##sys#slot lst 1)))
+      ((eq? (##sys#slot lst 1) '()) lst)))
 
 (define (queue-push-back-list! q itemlist)
   (##sys#check-structure q 'queue 'queue-push-back-list!)

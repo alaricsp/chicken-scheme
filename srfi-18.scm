@@ -50,28 +50,19 @@
      ##sys#current-exception-handler ##sys#abandon-mutexes ##sys#check-structure ##sys#structure? ##sys#make-mutex
      ##sys#delq ##sys#compute-time-limit ##sys#fudge) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "srfi-18.exports"))] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'srfi-18)
 
-(define-macro (dbg . args) #f)
-#;(define-macro (dbg . args)
-  `(print "DBG: " ,@args) )
+(cond-expand
+ (hygienic-macros
+  (define-syntax dbg
+    (syntax-rules ()
+      ((_ . _) #f))) )
+ (else
+  (define-macro (dbg . args) #f)
+  #;(define-macro (dbg . args)
+  `(print "DBG: " ,@args) ) ) )
 
 
 ;;; Helper routines:

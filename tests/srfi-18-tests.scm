@@ -1,18 +1,18 @@
-(use srfi-18)
+(require-extension srfi-18)
 
 (cond-expand (dribble
 (define-for-syntax count 0)
-
-(define-macro (trail loc expr)
-  (set! count (add1 count))
-  `(begin
-     (print "(" ,count ") " ,loc ": " ',expr ": get: " (##sys#slot get-mutex 5) ", put: " (##sys#slot put-mutex 5))
-     (let ((xxx ,expr))
-       (print "  (" ,count ") " ,loc ": " ',expr ": get: " (##sys#slot get-mutex 5) ", put: " (##sys#slot put-mutex 5))
-       xxx) ) )
-)(else
-(define-macro (trail loc expr) expr)
-))
+(define-syntax trail
+  (lambda (form r c)			; doesn't bother much with renaming
+    (let ((loc (cadr form))
+	  (expr (caddr form)))
+      (set! count (add1 count))
+      `(,(r 'begin)
+	(print "(" ,count ") " ,loc ": " ',expr ": get: " (##sys#slot get-mutex 5) ", put: " (##sys#slot put-mutex 5))
+	(let ((xxx ,expr))
+	  (print "  (" ,count ") " ,loc ": " ',expr ": get: " (##sys#slot get-mutex 5) ", put: " (##sys#slot put-mutex 5))
+	  xxx) ) ))))
+(else (define-syntax trail (syntax-rules () ((_ loc expr) expr)))))
 
 (define (tprint . x)
  (printf "~a " (current-milliseconds))

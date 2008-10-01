@@ -44,22 +44,7 @@
      string-parse-start+end substring-spec-ok?)
     (no-bound-checks) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-bytevector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "srfi-13.exports"))] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'srfi-13)
 
@@ -185,7 +170,8 @@
 ;;; Support for START/END substring specs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(eval-when (compile eval)
+(cond-expand
+ ((not hygienic-macros)
   (define-macro (let-string-start+end2 s-e proc s1 s2 args . body)
     (let ([procv (gensym)]
 	  [rest (gensym)] )
@@ -195,6 +181,46 @@
 	  (let-string-start+end 
 	   ,(cddr s-e) ,procv ,s2 ,rest
 	   ,@body) ) ) ) ) )
+ (else
+  (define-syntax let-string-start+end2
+    (syntax-rules ()
+      ((_ (s-e1 s-e2 s-e3 s-e4) proc s1 s2 args . body)
+       (let ((procv proc))
+	 (let-string-start+end 
+	  (s-e1 s-e2 rest) procv s1 args
+	  (let-string-start+end 
+	   (s-e3 s-e4) procv s2 rest
+	   . body) ) ) ) ) ) ) )
+
+(cond-expand
+ ((not hygienic-macros)
+  (define-macro (let-string-start+end s-e-r proc s-exp args-exp . body)
+    (if (pair? (cddr s-e-r))
+	`(receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
+	     (string-parse-start+end ,proc ,s-exp ,args-exp)
+	   ,@body)
+	`(receive ,s-e-r
+	     (string-parse-final-start+end ,proc ,s-exp ,args-exp)
+	   ,@body) ) ) )
+ (else
+  (define-syntax let-string-start+end
+    (lambda (form r c)
+      (##sys#check-syntax 'let-string-start+end form '(_ _ _ _ _ . _))
+      (let ((s-e-r (cadr form))
+	    (proc (caddr form))
+	    (s-exp (cadddr form))
+	    (args-exp (car (cddddr form)))
+	    (body (cdr (cddddr form)))
+	    (%receive (r 'receive))
+	    (%string-parse-start+end (r 'string-parse-start+end))
+	    (%string-parse-final-start+end (r 'string-parse-final-start+end)))
+	(if (pair? (cddr s-e-r))
+	    `(,%receive (,(caddr s-e-r) ,(car s-e-r) ,(cadr s-e-r))
+			(,%string-parse-start+end ,proc ,s-exp ,args-exp)
+			,@body)
+	    `(,%receive ,s-e-r
+			(,%string-parse-final-start+end ,proc ,s-exp ,args-exp)
+			,@body) ) )))) )
 
 
 ;;; Returns three values: rest start end
@@ -272,7 +298,7 @@
   (let ((slen (string-length s)))
 ;    (check-arg (lambda (start) (and (integer? start) (exact? start) (<= 0 start)))
 ;	       start substring/shared)
-    (let ([n (:optional maybe-end slen)])
+    (let ([n (optional maybe-end slen)])
       (##sys#check-exact n 'substring/shared)
       (check-substring-spec 'substring/shared s start n)
       (%substring/shared s start n) ) ) )
@@ -322,8 +348,8 @@
 ;;; You want compiler support for high-level transforms on fold and unfold ops.
 ;;; You'd at least like a lot of inlining for clients of these procedures.
 ;;; Don't hold your breath.
-;;;
-;;; Shut up, Olin.
+
+;;; Shut up, Olin (flw)
 
 (define (string-map proc s . maybe-start+end)
 ;  (check-arg procedure? proc string-map)
@@ -1380,7 +1406,7 @@
 ;;; Searching for an occurrence of a substring
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; this is broken. Thanks, Olin! ;-)
+; this is completely broken and was probably never tested. Thanks, Olin! (flw)
 
 
 ;;; Knuth-Morris-Pratt string searching
@@ -2036,6 +2062,9 @@
 ;;; The KMP string-search code was influenced by implementations written
 ;;; by Stephen Bevan, Brian Dehneyer and Will Fitzgerald. However, this
 ;;; version was written from scratch by myself.
+
+;;; I guessed that much. (flw)
+
 ;;;
 ;;; The remainder of this code was written from scratch by myself for scsh.
 ;;; The scsh copyright is a BSD-style open source copyright. See below for

@@ -36,7 +36,7 @@
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
-  compiler-cleanup-hook check-global-exports disabled-warnings check-global-imports
+  compiler-cleanup-hook disabled-warnings
   file-io-only undefine-shadowed-macros profiled-procedures
   unit-name insert-timer-checks used-units inline-max-size
   debugging perform-lambda-lifting! disable-stack-overflow-checking
@@ -53,7 +53,7 @@
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call emit-unsafe-marker
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! source-filename
+  transform-direct-lambdas! source-filename standalone-executable
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
@@ -64,7 +64,7 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes
-  inline-max-size file-requirements use-import-table lookup-exports-file
+  inline-max-size file-requirements import-libraries
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
@@ -93,12 +93,11 @@
   (initialize-compiler)
   (set! explicit-use-flag (memq 'explicit-use options))
   (let ([initforms `((##core#declare
-		      ,@(map (lambda (x) `(quote ,x))
-			     (append 
-			      default-declarations
-			      (if explicit-use-flag
-				  '()
-				  `((uses ,@units-used-by-default)) ) ) ) ) ) ]
+		      ,@(append 
+			 default-declarations
+			 (if explicit-use-flag
+			     '()
+			     `((uses ,@units-used-by-default)) ) ) ) ) ]
         [verbose (memq 'verbose options)]
 	[outfile (cond [(memq 'output-file options) 
 			=> (lambda (node)
@@ -204,6 +203,8 @@
 
     (when uunit
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
+    (when (or unit-name dynamic)
+      (set! standalone-executable #f))
     (set! debugging-chicken 
       (append-map
        (lambda (do)
@@ -211,31 +212,34 @@
 	      (string->list do) ) )
        (collect-options 'debug) ) )
     (set! dumpnodes (memq '|D| debugging-chicken))
+    (set! import-libraries
+      (map (lambda (il)
+	     (cons (string->symbol il) 
+		   (string-append il ".import.scm")))
+	   (collect-options 'emit-import-library)))
     (when (memq 'lambda-lift options) (set! do-lambda-lifting #t))
     (when (memq 'disable-compiler-macros options) (set! compiler-macros-enabled #f))
     (when (memq 't debugging-chicken) (##sys#start-timer))
     (when (memq 'b debugging-chicken) (set! time-breakdown #t))
-    (and-let* ((xfile (memq 'emit-exports options)))
-      (set! export-file-name (cadr xfile)) )
+    (when (memq 'emit-exports options)
+      (warning "deprecated compiler option: emit-exports") )
     (when (memq 'raw options)
       (set! explicit-use-flag #t)
       (set! cleanup-forms '())
       (set! initforms '()) )
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
-    (set! use-import-table (memq 'check-imports options))
-    (let ((imps (collect-options 'import)))
-      (when (pair? imps)
-	(set! use-import-table #t)
-	(for-each lookup-exports-file imps) ) )
+    (when (memq 'check-imports options)
+      (compiler-warning 'usage "deprecated compiler option: -check-imports"))
+    (when (memq 'import options)
+      (compiler-warning 'usage "deprecated compiler option: -import"))
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
       (when verbose (printf "Warnings are disabled~%~!"))
       (set! ##sys#warnings-enabled #f) )
     (when (memq 'optimize-leaf-routines options) (set! optimize-leaf-routines #t))
     (when (memq 'unsafe options) 
-      (set! unsafe #t)
-      (##match#set-error-control #:fail) )
+      (set! unsafe #t) )
     (when (and dynamic (memq 'unsafe-libraries options))
       (set! emit-unsafe-marker #t) )
     (when (memq 'disable-interrupts options) (set! insert-timer-checks #f))
@@ -291,8 +295,6 @@
     (set! ##sys#features (delete #:compiler-extension ##sys#features eq?))
 
     (set! ##sys#features (cons '#:compiling ##sys#features))
-    (set! ##sys#features (cons #:match ##sys#features))
-    (##sys#provide 'match) 
     (set! upap (user-post-analysis-pass))
 
     ;; Insert postponed initforms:
@@ -310,17 +312,22 @@
 		     (else (quit "no filename available for `-extension' option")) ) ) ) ) ) ) )
 
     ;; Append required extensions to initforms:
-    (let ([ids (lset-difference 
-		eq?
-		(map string->symbol
-		     (append-map
-		      (cut string-split <> ",")
-		      (collect-options 'require-extension)))
-		uses-units)])
+    (let ()
+      (define (ids opt)
+	(lset-difference 
+	 eq?
+	 (map string->symbol
+	      (append-map
+	       (cut string-split <> ",")
+	       (collect-options opt)))
+	 uses-units))
       (set! initforms
-	(append initforms (map (lambda (r) `(##core#require-extension ',r)) ids)) ) )
+	(append 
+	 initforms 
+	 (map (lambda (r) `(##core#require-extension (,r) #t)) 
+	      (ids 'require-extension))))
 
-    (when (memq 'run-time-macros options)
+    (when (memq 'compile-syntax options)
       (set! ##sys#enable-runtime-macros #t) )
     (set! target-heap-size
       (if hsize
@@ -490,7 +497,7 @@
 				   (canonicalize-begin-body exps) ) ) ) ] 
 		    [proc (user-pass-2)] )
 	       (when (debugging 'M "; requirements:")
-		 (pretty-print (##sys#hash-table->alist file-requirements)))
+		 (pretty-print (apply append (vector->list file-requirements))))
 	       (when proc
 		 (when verbose (printf "Secondary user pass...~%"))
 		 (begin-time)
@@ -533,8 +540,6 @@
 		   (begin-time)
 		   (let ([db (analyze 'opt node2 i progress)])
 		     (when first-analysis
-		       (when use-import-table (check-global-imports db))
-		       (check-global-exports db)
 		       (when (memq 'u debugging-chicken)
 			 (dump-undefined-globals db)) )
 		     (set! first-analysis #f)
@@ -574,9 +579,7 @@
 			      (end-time "closure conversion")
 			      (print-db "final-analysis" '|8| db i)
 			      (when (and ##sys#warnings-enabled (> (- (cputime) start-time) funny-message-timeout))
-				(display "(do not worry - still compiling...)\n") )
-			      (when export-file-name
-				(dump-exported-globals db export-file-name) )
+				(display "(don't worry - still compiling...)\n") )
 			      (when a-only (exit 0))
 			      (print-node "closure-converted" '|9| node3)
 
@@ -595,4 +598,4 @@
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
                                 (compiler-cleanup-hook)
                                 (when verbose 
-                                  (printf "compilation finished.~%~!") ) ) ) ] ) ) ) ) ) ) ) ) ) )
+                                  (printf "compilation finished.~%~!") ) ) ) ] ) ) ) ) ) ) ) ) ) ) )

@@ -1,4 +1,4 @@
-(use srfi-1)
+(require-extension srfi-1)
 
 (define *text* #<<EOF
 this is a test

@@ -128,16 +128,16 @@ expressions is only available in the compiler.
 
 Returns {{#t}} if there exists a macro-definition for {{SYMBOL}}.
 
-==== macroexpand
+==== expand
 
- [procedure] (macroexpand X)
+ [procedure] (expand X)
 
 If {{X}} is a macro-form, expand the macro (and repeat expansion
 until expression is a non-macro form).  Returns the resulting expression.
 
-==== macroexpand-1
+==== expand*
 
- [procedure] (macroexpand-1 X)
+ [procedure] (expand* X)
 
 If {{X}} is a macro-form, expand the macro.  Returns the resulting
 expression.
@@ -194,7 +194,6 @@ are currently loaded, or {{#f}} otherwise.
 ==== require
 
  [procedure] (require ID ...)
- [procedure] (require-for-syntax ID ...)
 
 If the extension library {{ID}} is not already loaded into the
 system, then {{require}} will lookup the location of the shared
@@ -207,10 +206,7 @@ from one of the following locations:
 * the current include path, which defaults to the pathnames given in {{CHICKEN_INCLUDE_PATH}}.
 * the current directory
 
-{{ID}} should be a string or a symbol. The difference between {{require}} and 
-{{require-for-syntax}} is the the latter loads the extension library
-at compile-time (the argument is still evaluated), while the former
-loads it at run-time.
+{{ID}} should be a string or a symbol.
 
 ==== set-extension-specifier!
 
@@ -265,4 +261,4 @@ and defaults to the value of {{(interaction-environment)}}.
 
 Previous: [[Unit library]]
 
-Next: [[Unit extras]]
+Next: [[Unit expand]]

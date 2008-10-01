@@ -84,7 +84,7 @@ exec csi -s $0 "$@"
 ;; We need this to keep the order of chapters in the PDF file.
 (define manual-wiki-files
   '("The User's Manual"
-    "Getting started"
+    "Overview"
     "Basic mode of operation"
     "Using the compiler"
     "Using the interpreter"
@@ -93,21 +93,19 @@ exec csi -s $0 "$@"
     "Extensions to the standard"
     "Non-standard read syntax"
     "Non-standard macros and special forms"
-    "Pattern matching"
+    "Modules and macros"
     "Declarations"
     "Parameters"
     "Unit library"
     "Unit eval"
+    "Unit expand"
+    "Unit extras"
     "Unit data-structures"
     "Unit ports"
-    "Unit files"
-    "Unit extras"
     "Unit srfi-1"
     "Unit srfi-4"
     "Unit srfi-13"
     "Unit srfi-14"
-    "Unit srfi-69"
-    "Unit match"
     "Unit regex"
     "Unit srfi-18"
     "Unit posix"
@@ -198,8 +196,8 @@ in `manual-wiki-files' can be found in `*pages*'."
    (if *only* (list *only*) *pages*) ) )
 
 (define (usage code)
-  (print "makehtml --fetch-manual")
-  (print "makehtml --extension-path=EXTPATH [--pdf] [--wikipath=PATH] [--only=PAGENAME]") 
+  (print "makedoc --fetch-manual")
+  (print "makedoc --extension-path=EXTPATH [--pdf] [--wikipath=PATH] [--only=PAGENAME]") 
   (exit code) )
 
 (simple-args)

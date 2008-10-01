@@ -30,7 +30,6 @@
   (unit scheduler)
   (disable-interrupts)
   (usual-integrations)
-  (emit-exports "scheduler.exports")
   (disable-warning var)
   (hide ##sys#ready-queue-head ##sys#ready-queue-tail ##sys#timeout-list
 	##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer
@@ -87,9 +86,15 @@ EOF
   (declare (unsafe)) ] )
 
 
-(define-macro (dbg . args) #f)
-#;(define-macro (dbg . args)
-  `(print "DBG: " ,@args) )
+(cond-expand
+ (hygienic-macros
+  (define-syntax dbg
+    (syntax-rules ()
+      ((_ . _) #f))) )
+ (else
+  (define-macro (dbg . args) #f)
+  #;(define-macro (dbg . args)
+  `(print "DBG: " ,@args) ) ) )
 
 
 (define (##sys#schedule)

@@ -50,21 +50,7 @@
     (no-procedure-checks-for-usual-bindings)
     (no-bound-checks))] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined)))]
- [else
-  (declare (emit-exports "utils.exports"))] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'utils)
 
@@ -96,11 +82,12 @@
       (lambda (patt env) ; env is currently ignored
         (set! patt (makpat patt))
         (let ([ms '()])
-          (##sys#hash-table-for-each
-            (lambda (key val)
-              (when (string-search patt (symbol->string key))
-                (set! ms (cons key ms)) ) )
-            ##sys#macro-environment)
+          (for-each
+	   (lambda (a)
+	     (let ((key (car a)))
+	       (when (string-search patt (symbol->string key))
+		 (set! ms (cons key ms)) ) ) )
+	   (##sys#macro-environment))
           ms ) ) ) ) )
 
 (define (##sys#apropos patt env #!optional macf)
@@ -218,8 +205,7 @@
 ;;; Read file as string from given filename or port:
 
 (define (read-all . file)
-  (let ([file (:optional file ##sys#standard-input)])
+  (let ([file (optional file ##sys#standard-input)])
     (if (port? file)
 	(read-string #f file)
 	(with-input-from-file file (cut read-string #f)) ) ) )
-

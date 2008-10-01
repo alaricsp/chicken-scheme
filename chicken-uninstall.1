@@ -1,0 +1,84 @@
+.\" dummy line
+.TH CHICKEN-UNINSTALL 1 "13 Aug 2008"
+
+.SH NAME
+
+chicken-uninstall \- uninstall extension library
+
+.SH SYNOPSIS
+
+chicken-uninstall [OPTION | PATTERN] ...
+
+.SH DESCRIPTION
+
+.I chicken\-uninstall
+removes one or more already installed extension libraries. 
+.B PATTERN
+may be a regular expression naming multiple extensions or just
+an extension name.
+See the 
+.B Chicken
+manual for more information.
+
+.SH OPTIONS
+
+.TP
+.B \-h,\ \-help      
+Shows a summary of options and exits.
+
+.TP
+.B \-v,\ \-version
+Shows tool version and exits.
+
+.TP
+.B \-force
+Do not ask when multiple extensions match the given patterns, delete
+whatever matches.
+
+.TP
+.B \-s,\ \-sudo
+Perform any uninstallation steps that remove files by commands invoked
+with the sudo(1) tool.
+
+
+.SH ENVIRONMENT\ VARIABLES
+
+.TP
+.B CHICKEN_PREFIX
+The installation prefix where CHICKEN Scheme and its support files and
+libraries are located. Defaults to the installation time prefix given
+when configuring the system.
+
+.TP
+.B CHICKEN_INSTALL_PREFIX
+An alternative installation prefix that will be prepended to extension
+installation paths if specified. 
+
+.TP
+.B CHICKEN_REPOSITORY
+The path where extension libraries are installed. Defaults to the package-library
+path selected during configuration (usually
+.B $prefix/lib/chicken/<binary\-version>
+)
+
+
+.SH DOCUMENTATION
+
+More information can be found in the
+.I Chicken\ User's\ Manual
+
+.SH BUGS
+Submit bug reports by e-mail to
+.I chicken-janitors@nongnu.org
+, preferrably using the
+.B chicken\-bug
+tool.
+
+.SH AUTHORS
+The Chicken Team
+
+.SH SEE ALSO
+.BR chicken-install(1)
+.BR chicken-status(1)
+.BR chicken(1)
+.BR chicken-bug(1)

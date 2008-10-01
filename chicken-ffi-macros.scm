@@ -25,345 +25,156 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(define-macro (define-foreign-type . xs)
-  (##sys#check-syntax 'define-foreign-type xs '(symbol . #(_ 1 3)))
-  `(##core#define-foreign-type
-    ,(list 'quote (car xs))
-    ,(list 'quote (cadr xs))
-    ,@(cddr xs) ) )
+(define ##sys#chicken-ffi-macro-environment
+  (let ((me0 (##sys#macro-environment)))
 
-(define-macro (define-foreign-variable . xs)
-  (##sys#check-syntax 'define-foreign-variable xs '(symbol . #(_ 1)))
-  `(##core#define-foreign-variable ,@(map (lambda (x) (list 'quote x)) xs)) )
-
-(define-macro (foreign-lambda . xs)
-  (##sys#check-syntax 'foreign-lambda xs '(_ _ . #(_ 0)))
-  `(##core#foreign-lambda ,@(map (lambda (x) (list 'quote x)) xs)) )
-
-(define-macro (foreign-lambda* . xs)
-  (##sys#check-syntax 'foreign-lambda* xs '(_ #((_ _) 0) . #(string 1)))
-  `(##core#foreign-lambda* ,@(map (lambda (x) (list 'quote x)) xs)) )
-
-(define-macro (foreign-safe-lambda . xs)
-  (##sys#check-syntax 'foreign-safe-lambda xs '(_ _ . #(_ 0)))
-  `(##core#foreign-callback-lambda ,@(map (lambda (x) (list 'quote x)) xs)) )
-
-(define-macro (foreign-safe-lambda* . xs)
-  (##sys#check-syntax 'foreign-safe-lambda* xs '(_ #((_ _) 0) . #(string 1)))
-  `(##core#foreign-callback-lambda* ,@(map (lambda (x) (list 'quote x)) xs)) )
-
-(define-macro (foreign-primitive . xs)
-  (##sys#check-syntax 'foreign-primitive xs '#(_ 1))
-  `(##core#foreign-primitive ,@(map (lambda (x) (list 'quote x)) xs)) )
-
-(define-macro (foreign-safe-wrapper . form) ; DEPRECATED
-  (##sys#check-syntax 'foreign-safe-wrapper form '(_ string . #(_ 1)))
-  (if (string? (caddr form))
-      (begin
-	(##sys#check-syntax 'foreign-safe-wrapper form '(_ string string _ (lambda lambda-list . #(_ 1))))
-	`(##core#foreign-callback-wrapper
-	  ',(cadr form)
-	  ',(caddr form)
-	  ',(car form)
-	  ',(cadddr form)
-	  ,(cadddr (cdr form)) ) )
-      (begin
-	(##sys#check-syntax 'foreign-safe-wrapper form '(_ string _ (lambda lambda-list . #(_ 1))))
-	`(##core#foreign-callback-wrapper
-	  ',(cadr form)
-	  ',""
-	  ',(car form)
-	  ',(caddr form)
-	  ,(cadddr form) ) ) ) )
-
-(define-macro (define-external . form)
-  (let* ([quals (and (pair? form) (string? (car form)))]
-	 [var (and (not quals) (pair? form) (symbol? (car form)))] )
-    (cond [var
-	   (##sys#check-syntax 'define-external form '(symbol _ . #(_ 0 1)))
-	   (let ([var (car form)])
-	     `(begin
-		(##core#define-foreign-variable ',var ',(cadr form))
-		(##core#define-external-variable ',var ',(cadr form) '#t)
-		,@(if (pair? (cddr form))
-		      `((##core#set! ,var ,(caddr form)))
-		      '() ) ) ) ]
-	  [else
-	   (if quals
-	       (##sys#check-syntax 'define-external form '(string (symbol . #((_ symbol) 0)) _ . #(_ 1)))
-	       (##sys#check-syntax 'define-external form '((symbol . #((_ symbol) 0)) _ . #(_ 1))) )
-	   (let* ([head (if quals (cadr form) (car form))]
-		  [args (cdr head)] )
-	     `(define ,(car head)
-		(##core#foreign-callback-wrapper
-		 ',(car head)
-		 ',(if quals (car form) "")
-		 ',(if quals (caddr form) (cadr form))
-		 ',(map (lambda (a) (car a)) args)
-		 (lambda ,(map (lambda (a) (cadr a)) args) ,@(if quals (cdddr form) (cddr form)) ) ) ) ) ] ) ) )
+(##sys#extend-macro-environment
+ 'define-external
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (let* ((form (cdr form))
+	   (%quote (r 'quote))
+	   (quals (and (pair? form) (string? (car form))))
+	   (var (and (not quals) (pair? form) (symbol? (car form)))) )
+      (cond [var
+	     (##sys#check-syntax 'define-external form '(symbol _ . #(_ 0 1)))
+	     (let ([var (car form)])
+	       `(,(r 'begin)
+		 (,(r 'define-foreign-variable) ,var ,(cadr form))
+		 (,(r 'define-external-variable) ,var ,(cadr form) #t)
+		 ,@(if (pair? (cddr form))
+		       `((##core#set! ,var ,(caddr form)))
+		       '() ) ) ) ]
+	    [else
+	     (if quals
+		 (##sys#check-syntax 'define-external form '(string (symbol . #((_ symbol) 0)) _ . #(_ 1)))
+		 (##sys#check-syntax 'define-external form '((symbol . #((_ symbol) 0)) _ . #(_ 1))) )
+	     (let* ([head (if quals (cadr form) (car form))]
+		    [args (cdr head)] )
+	       `(,(r 'define) ,(car head)
+		 (##core#foreign-callback-wrapper
+		  ',(car head)
+		  ,(if quals (car form) "")
+		  ',(if quals (caddr form) (cadr form))
+		  ',(map (lambda (a) (car a)) args)
+		  (,(r 'lambda) 
+		   ,(map (lambda (a) (cadr a)) args)
+		   ,@(if quals (cdddr form) (cddr form)) ) ) ) ) ] ) ) ) ) )
 
 
 
 ;;; External locations:
 
-(define-macro (define-location var type . init)
-  (let ([name (gensym)])
-    `(begin
-       (##core#define-foreign-variable ',var ',type ',(symbol->string name))
-       (##core#define-external-variable ',var ',type '#f ',name)
-       ,@(if (pair? init)
-	     `((##core#set! ,var ,(car init)))
-	     '() ) ) ) )
+(##sys#extend-macro-environment
+ 'define-location
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-location form '(_ variable _ . #(_ 0 1)))
+    (let ((var (cadr form))
+	  (type (caddr form))
+	  (init (optional (cdddr form) #f))
+	  (name (r (gensym))))
+      `(,(r 'begin)
+	(,(r 'define-foreign-variable) ,var ,type ,(symbol->string name))
+	(,(r 'define-external-variable) ,var ,type #f ,name)
+	,@(if (pair? init)
+	      `((##core#set! ,var ,(car init)))
+	      '() ) ) ) ) ) )
 
-(define-macro (let-location bindings . body)
-  (let ([aliases (map (lambda (_) (gensym)) bindings)])
-    `(let ,(append-map
-	    (lambda (b a)
-	      (if (pair? (cddr b))
-		  (list (cons a (cddr b)))
-		  '() ) )
-	    bindings aliases)
-       ,(fold-right
-	  (lambda (b a rest)
-	    (if (= 3 (length b))
-	       `(##core#let-location
-		 (quote ,(car b))
-		 (quote ,(cadr b))
-		 ,a
-		 ,rest)
-	       `(##core#let-location
-		 (quote ,(car b))
-		 (quote ,(cadr b))
-		 ,rest) ) )
-	  `(let () ,@body)
-	  bindings aliases) ) ) )
+(##sys#extend-macro-environment
+ 'let-location
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'let-location form '(_ #((variable _ . #(_ 0 1)) 0) . _))
+    (let* ((bindings (cadr form))
+	   (body (cddr form))
+	   (%let (r 'let))
+	   [aliases (map (lambda (_) (r (gensym))) bindings)])
+      `(,%let ,(append-map
+		(lambda (b a)
+		  (if (pair? (cddr b))
+		      (list (cons a (cddr b)))
+		      '() ) )
+		bindings aliases)
+	      ,(fold-right
+		(lambda (b a rest)
+		  (if (= 3 (length b))
+		      `(##core#let-location
+			,(car b)
+			,(cadr b)
+			,a
+			,rest)
+		      `(##core#let-location
+			,(car b)
+			,(cadr b)
+			,rest) ) )
+		`(,%let () ,@body)
+		bindings aliases) ) ) ) ) )
 
 
 ;;; Embedding code directly:
 
-(define-macro (foreign-code . strs)
-  (let ([tmp (gensym 'code_)])
-    `(begin
-       (declare
-	 (foreign-declare
-	  ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" tmp (string-intersperse strs "\n")) ) )
-       (##core#inline ,tmp) ) ) )
+(##sys#extend-macro-environment
+ 'foreign-code
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'foreign-code form '(_ . #(string 0)))
+    (let ([tmp (gensym 'code_)])
+      `(,(r 'begin)
+	 (,(r 'declare)
+	  (foreign-declare
+	   ,(sprintf "static C_word ~A() { ~A\n; return C_SCHEME_UNDEFINED; }\n" 
+		     tmp
+		     (string-intersperse (cdr form) "\n")) ) )
+	 (##core#inline ,tmp) ) ) ) ) )
 
-(define-macro (foreign-value str type)
-  (let ([tmp (gensym 'code_)])
-    `(begin
-       (define-foreign-variable ,tmp ,type ,str)
-       ,tmp) ) )
-
-
-;;; Foreign records:
-
-(define-macro (define-foreign-record name . slots)
-  (let ([fname (if (pair? name) (->string (cadr name)) (sprintf "struct ~A" name))]
-	[tname (if (pair? name) (car name) name)]
-	[var (gensym)]
-	[renamer identity]
-	[ctor #f]
-	[dtor #f]
-	[cvar (gensym)]
-	[xvar (gensym)]
-	[svar (gensym)] )
-    (define (stype type)
-      (cond [(not (pair? type)) type]
-	    [(eq? 'const (car type)) (stype (cadr type))]
-	    [(memq (car type) '(struct union)) `(c-pointer ,type)]
-	    [else type] ) )
-    (define (strtype type)
-      (or (eq? type tname)
-	  (and (pair? type)
-	       (or (and (eq? 'const (car type)) (strtype (cadr type)))
-		   (memq (car type) '(struct union)) ) ) ) ) ; handle instances?
-    (do ((slts slots (cdr slts)))
-	((or (null? slts) (not (pair? (car slts))) (not (keyword? (caar slts))))
-	 (set! slots slts) )
-      (case (caar slts)
-	((rename:) (set! renamer (eval (cadar slts))))
-	((constructor:) (set! ctor (cadar slts)))
-	((destructor:) (set! dtor (cadar slts)))
-	(else (syntax-error 'define-foreign-record "invalid foreign record-type specification" (car slts))) ) )
-    (##sys#hash-table-set! ##compiler#foreign-type-table tname `(c-pointer ,fname))
-    `(begin
-       ,@(if (pair? name)
-	     '()
-	     `((declare
-		 (foreign-declare
-		  ,(string-intersperse
-		    (append
-		     (cons
-		      (string-append "struct " (->string name) " { ")
-		      (map (lambda (slot)
-			     (case (length slot)
-			       [(3)
-				(sprintf "~A[~A];"
-					 (##compiler#foreign-type-declaration
-					  (car slot)
-					  (->string (cadr slot)) )
-					 (caddr slot) ) ]
-			       [(2)
-				(sprintf "~A;"
-					 (##compiler#foreign-type-declaration
-					  (car slot)
-					  (->string (cadr slot)) ) ) ]
-			       [else (syntax-error 'define-foreign-record "bad slot spec" slot)] ) )
-			   slots) )
-		     (list "};") )
-		    "\n") ) ) ) )
-       ,@(if (not ctor)
-	     '()
-	     `((define ,ctor
-		 (foreign-lambda* ,tname () ,(sprintf "return((~a *)C_malloc(sizeof(~a)));" fname fname)))))
-       ,@(if (not dtor)
-	     '()
-	     `((define (,dtor ptr) (and ptr (##core#inline "C_qfree" ptr)))) )
-       ,@(map (lambda (slot)
-		(case (length slot)
-		  [(3)
-		   (let* ([type (car slot)]
-			  [sname (cadr slot)]
-			  [size (caddr slot)]
-			  [type2 (stype type)] )
-		     `(begin
-			(define ,(string->symbol (renamer (sprintf "~A-~A" tname sname)))
-			  (let ([,cvar
-				 (foreign-lambda* ,type2 ([,tname ,var] [int ,svar])
-				   ,(sprintf "return(~A~A->~A[~A]);"
-					     (if (not (strtype type)) "" "&")
-					     var sname svar) ) ] )
-			    (lambda (,var ,svar)
-			      (if (##core#check (and (fx>= ,svar 0) (fx< ,svar ,size)))
-				  (,cvar ,var ,svar)
-				  ;; this should signal a range exn...
-				  (syntax-error 'define-foreign-record "array access out of range" ',tname ',svar ,size) ) ) ) )
-			,@(if (and (pair? type) (eq? 'const (car type)))
-			      '()
-			      (if (eq? type type2)
-				  `((define ,(string->symbol (renamer (sprintf "~A-~A-set!" tname sname)))
-				      (let ([,cvar
-					     (foreign-lambda* void ([,tname ,var] [int ,svar] [,type ,xvar])
-					       ,(sprintf "~A->~A[~A] = ~A;" var sname svar xvar) ) ] )
-					(lambda (,var ,svar ,xvar)
-					  (if (##core#check (and (fx>= ,svar 0) (fx< ,svar ,size)))
-					      (,cvar ,var ,svar ,xvar)
-					      (syntax-error
-					       'define-foreign-record
-					       "array access out of range" ',tname ',svar ,size) ) ) ) ) )
-				  '() ) ) ) ) ]
-		  [(2)
-		   (let* ([type (car slot)]
-			  [sname (cadr slot)]
-			  [type2 (stype type)] )
-		     `(begin
-			(define ,(string->symbol (renamer (sprintf "~A-~A" tname sname)))
-			  (foreign-lambda* ,type2 ([,tname ,var])
-			    ,(sprintf "return(~A~A->~A);"
-				      (if (not (strtype type)) "" "&")
-				      var sname) ) )
-			,@(if (and (pair? type) (eq? 'const (car type)))
-			      '()
-			      (if (eq? type type2)
-				  `((define ,(string->symbol (renamer (sprintf "~A-~A-set!" tname sname)))
-				      (foreign-lambda* void ([,tname ,var] [,type ,xvar])
-					,(sprintf "~A->~A = ~A;" var sname xvar) ) ) )
-				  '() ) ) ) ) ]
-		  [else (syntax-error 'define-foreign-record "bad slot spec" slot)] ) )
-	      slots) ) ) )
+(##sys#extend-macro-environment
+ 'foreign-value
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'foreign-value form '(_ string _))
+    (let ([tmp (gensym 'code_)])
+      `(,(r 'begin)
+	(,(r 'define-foreign-variable) ,tmp ,(caddr form) ,(cadr form))
+	,tmp) ) ) ) )
 
 
 ;;; Include/parse foreign code fragments
 
-(define-macro (foreign-declare . strs)
-  `(##core#declare '(foreign-declare ,@strs)))
-
-
-;;; Foreign enumerations (or enum-like constants)
-
-;; (define-foreign-enum TYPE [USE-ALIASES] ENUM ...)
-;; TYPE : TYPENAME or (SCHEMENAME REALTYPE [DEFAULT-SCHEME-VALUE])
-;; USE-ALIAES : boolean, default #t
-;; ENUM : TYPENAME or (SCHEMENAME REALTYPE [SCHEME-VALUE])
-
-(define-macro (define-foreign-enum typespec . enums)
-  (let ([use-aliases (if (pair? enums)
-			 (let ([flag (car enums)])
-			   (if (boolean? flag)
-			       (begin (set! enums (cdr enums)) flag)
-			       #t ) )
-			 #t ) ] )
-    (let ((name typespec)
-	  (type (->string typespec))
-	  (defsymval ''())
-
-	  (symbols (map (lambda (e) (if (pair? e) (car e) e)) enums))
-	  (extvals (map (lambda (e)
-			  (if (pair? e)
-			      (if (pair? (cdr e))
-				  (cadr e)
-				  (syntax-error 'define-foreign-enum
-						"invalid enum specification" e) )
-			      e ) )
-			enums))
-	  (symvals (map (lambda (e)
-			  (if (pair? e)
-			      (if (pair? (cddr e))
-				  (caddr e)
-				  `(quote ,(car e)))
-			      `(quote ,e)))
-			enums)) )
-      (when (list? typespec)
-	(let ([len (length typespec)])
-	  (unless (<= 2 len 3)
-	    (syntax-error 'define-foreign-enum "invalid type specification" typespec) )
-	  (set! name (car typespec))
-	  (set! type (cadr typespec))
-	  (when (= 3 len)
-	    (set! defsymval (caddr typespec)) ) ) )
-      (let ((aliases (if use-aliases (map gensym symbols) symbols))
-	    (s->e (string->symbol (conc name "->number")))
-	    (e->s (string->symbol (conc "number->" name)) ) )
-	`(begin
-	   ,@(map (lambda (a v) `(define-foreign-variable ,a ,type ,(->string v))) aliases extvals)
-	   (define (,s->e syms)
-	     (let loop ((syms (if (symbol? syms) (list syms) syms)) (sum 0))
-	       (if (null? syms)
-		   sum
-		   (loop (cdr syms)
-			 (bitwise-ior
-			  sum
-			  (let ((val (car syms)))
-			    (case val
-			      ,@(map (lambda (a s) `((,s) ,a)) aliases symbols)
-			      (else (error "not a member of enum" val ',name)) ) ) ) ) ) ) )
-	   (define (,e->s val)
-	     (cond
-	      ,@(map (lambda (a sv) `((= val ,a) ,sv)) aliases symvals)
-	      (else ,defsymval) ) )
-	   (define-foreign-type ,name ,type ,s->e ,e->s) ) ) ) ) )
-
-
-;;; Deprecated FFI macros
-
-(define-macro (define-deprecated-macro old new)
-  `(define-macro (,old . args)
-     (warning (sprintf "`~s' is deprecated, use `~s' instead" ',old ',new))
-     (cons ',new args) ) )
+(##sys#extend-macro-environment
+ 'foreign-declare
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'foreign-declare form '(_ . #(string 0)))
+    `(##core#declare (foreign-declare ,@(cdr form))))))
 
 
 ;;; Not for general use, yet
 
-(define-macro (define-compiler-macro head . body)
-  (define (bad)
-    (syntax-error
-     'define-compiler-macro "invalid compiler macro definition" head) )
-  (if (and (pair? head) (symbol? (car head)))
-      (cond ((memq 'compiling ##sys#features)
-	     (warning "compile macros are not available in interpreted code"
-		      (car head) ) )
-	    ((not (##compiler#register-compiler-macro (car head) (cdr head) body))
-	     (bad) ) )
-      (bad) )
-  '(void) )
+(##sys#extend-macro-environment
+ 'define-compiler-macro
+ '()
+ (##sys#er-transformer
+  (lambda (form r c)
+    (##sys#check-syntax 'define-compiler-macro form '(_ . _))
+    (let ((head (cadr form))
+	  (body (cddr form)))
+      (define (bad)
+	(syntax-error
+	 'define-compiler-macro "invalid compiler macro definition" head) )
+      (if (and (pair? head) (symbol? (car head)))
+	  (cond ((memq 'compiling ##sys#features)
+		 (warning "compile macros are not available in interpreted code"
+			  (car head) ) )
+		((not (##compiler#register-compiler-macro (car head) (cdr head) body))
+		 (bad) ) )
+	  (bad) )
+      '(##core#undefined) ) ) ) )
+
+(##sys#macro-subset me0)))

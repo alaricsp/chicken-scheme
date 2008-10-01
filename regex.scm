@@ -67,25 +67,10 @@
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings) ) ] )
 
+(include "unsafe-declarations.scm")
+
 (cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-chardef-table . _) '(##core#undefined))
-    (define-macro (##sys#check-integer . _) '(##core#undefined))
-    (define-macro (##sys#check-blob . _) '(##core#undefined))
-    (define-macro (##sys#check-vector . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
+ ((not unsafe)
   (define (##sys#check-chardef-table x loc)
     (unless (regex-chardef-table? x)
       (##sys#error loc "invalid character definition tables structure" x) ) )
@@ -95,8 +80,8 @@
       ##sys#check-string ##sys#check-list ##sys#check-exact ##sys#check-vector
       ##sys#check-structure ##sys#check-symbol ##sys#check-blob ##sys#check-integer )
     (export
-      ##sys#check-chardef-table )
-    (emit-exports "regex.exports") ) ] )
+      ##sys#check-chardef-table )))
+ (else))
 
 
 ;;;
@@ -133,38 +118,71 @@
 (define-foreign-variable PCRE_CASELESS unsigned-integer)
 (define-foreign-variable PCRE_EXTENDED unsigned-integer)
 (define-foreign-variable PCRE_UTF8 unsigned-integer)
+(define-foreign-variable PCRE_MULTILINE unsigned-integer)
+(define-foreign-variable PCRE_DOTALL unsigned-integer)
+(define-foreign-variable PCRE_ANCHORED unsigned-integer)
+(define-foreign-variable PCRE_DOLLAR_ENDONLY unsigned-integer)
+(define-foreign-variable PCRE_EXTRA unsigned-integer)
+(define-foreign-variable PCRE_NOTBOL unsigned-integer)
+(define-foreign-variable PCRE_NOTEOL unsigned-integer)
+(define-foreign-variable PCRE_UNGREEDY unsigned-integer)
+(define-foreign-variable PCRE_NOTEMPTY unsigned-integer)
+(define-foreign-variable PCRE_NO_AUTO_CAPTURE unsigned-integer)
+(define-foreign-variable PCRE_NO_UTF8_CHECK unsigned-integer)
+(define-foreign-variable PCRE_AUTO_CALLOUT unsigned-integer)
+(define-foreign-variable PCRE_PARTIAL unsigned-integer)
+(define-foreign-variable PCRE_DFA_SHORTEST unsigned-integer)
+(define-foreign-variable PCRE_DFA_RESTART unsigned-integer)
+(define-foreign-variable PCRE_FIRSTLINE unsigned-integer)
+(define-foreign-variable PCRE_DUPNAMES unsigned-integer)
+(define-foreign-variable PCRE_NEWLINE_CR unsigned-integer)
+(define-foreign-variable PCRE_NEWLINE_LF unsigned-integer)
+(define-foreign-variable PCRE_NEWLINE_CRLF unsigned-integer)
+(define-foreign-variable PCRE_NEWLINE_ANY unsigned-integer)
+(define-foreign-variable PCRE_NEWLINE_ANYCRLF unsigned-integer)
+(define-foreign-variable PCRE_BSR_ANYCRLF unsigned-integer)
+(define-foreign-variable PCRE_BSR_UNICODE unsigned-integer)
 
-;FIXME the use of 'define-foreign-enum' causes unused global variable warning!
+(declare (hide pcre-option->number))
 
-(define-foreign-enum (pcre-option unsigned-integer)
-  (caseless             PCRE_CASELESS)
-  (multiline            PCRE_MULTILINE)
-  (dotall               PCRE_DOTALL)
-  (extended             PCRE_EXTENDED)
-  (anchored             PCRE_ANCHORED)
-  (dollar-endonly       PCRE_DOLLAR_ENDONLY)
-  (extra                PCRE_EXTRA)
-  (notbol               PCRE_NOTBOL)
-  (noteol               PCRE_NOTEOL)
-  (ungreedy             PCRE_UNGREEDY)
-  (notempty             PCRE_NOTEMPTY)
-  (utf8                 PCRE_UTF8)
-  (no-auto-capture      PCRE_NO_AUTO_CAPTURE)
-  (no-utf8-check        PCRE_NO_UTF8_CHECK)
-  (auto-callout         PCRE_AUTO_CALLOUT)
-  (partial              PCRE_PARTIAL)
-  (dfa-shortest         PCRE_DFA_SHORTEST)
-  (dfa-restart          PCRE_DFA_RESTART)
-  (firstline            PCRE_FIRSTLINE)
-  (dupnames             PCRE_DUPNAMES)
-  (newline-cr           PCRE_NEWLINE_CR)
-  (newline-lf           PCRE_NEWLINE_LF)
-  (newline-crlf         PCRE_NEWLINE_CRLF)
-  (newline-any          PCRE_NEWLINE_ANY)
-  (newline-anycrlf      PCRE_NEWLINE_ANYCRLF)
-  (bsr-anycrlf          PCRE_BSR_ANYCRLF)
-  (bsr-unicode          PCRE_BSR_UNICODE) )
+(define (pcre-option->number opt)
+  (case opt
+    ((caseless)             PCRE_CASELESS)
+    ((multiline)            PCRE_MULTILINE)
+    ((dotall)               PCRE_DOTALL)
+    ((extended)             PCRE_EXTENDED)
+    ((anchored)             PCRE_ANCHORED)
+    ((dollar-endonly)       PCRE_DOLLAR_ENDONLY)
+    ((extra)                PCRE_EXTRA)
+    ((notbol)               PCRE_NOTBOL)
+    ((noteol)               PCRE_NOTEOL)
+    ((ungreedy)             PCRE_UNGREEDY)
+    ((notempty)             PCRE_NOTEMPTY)
+    ((utf8)                 PCRE_UTF8)
+    ((no-auto-capture)      PCRE_NO_AUTO_CAPTURE)
+    ((no-utf8-check)        PCRE_NO_UTF8_CHECK)
+    ((auto-callout)         PCRE_AUTO_CALLOUT)
+    ((partial)              PCRE_PARTIAL)
+    ((dfa-shortest)         PCRE_DFA_SHORTEST)
+    ((dfa-restart)          PCRE_DFA_RESTART)
+    ((firstline)            PCRE_FIRSTLINE)
+    ((dupnames)             PCRE_DUPNAMES)
+    ((newline-cr)           PCRE_NEWLINE_CR)
+    ((newline-lf)           PCRE_NEWLINE_LF)
+    ((newline-crlf)         PCRE_NEWLINE_CRLF)
+    ((newline-any)          PCRE_NEWLINE_ANY)
+    ((newline-anycrlf)      PCRE_NEWLINE_ANYCRLF)
+    ((bsr-anycrlf)          PCRE_BSR_ANYCRLF)
+    ((bsr-unicode)          PCRE_BSR_UNICODE)
+    (else                   0) ) )
 
+(declare (hide pcre-options->number))
+
+(define (pcre-options->number opts)
+  (let loop ([opts opts] [opt 0])
+    (if (null? opts)
+        opt
+        (loop (cdr opts) (+ opt (pcre-option->number (car opts)))) ) ) )
 
 ;;; The regexp structure primitives:
 
@@ -267,19 +285,13 @@ static int C_regex_error_offset;
 
 ;; Compile with subset of options and no tables
 
-(define (regexp pattern . options)
-  (let ([options->integer
-          (lambda ()
-            (if (null? options)
-                0
-                (+ (if (car options) PCRE_CASELESS 0)
-                   (let ((options (cdr options)))
-                     (if (null? options)
-                         0
-                         (+ (if (car options) PCRE_EXTENDED 0)
-                            (let ((options (cdr options)))
-                              (if (and (pair? options) (car options)) PCRE_UTF8 0 ) ) ) ) ) ) ) )])
-    (%make-regexp (re-checked-compile pattern (options->integer) #f 'regexp)) ) )
+(define regexp
+  (let ([optspatt '(caseless extended utf8)])
+    (lambda (pattern . options)
+      (let ([options->integer
+              (lambda ()
+                (pcre-options->number (map (lambda (i o) (if i o 'zero)) options optspatt)))])
+        (%make-regexp (re-checked-compile pattern (options->integer) #f 'regexp)) ) ) ) )
 
 ;; Compile with full options and tables available
 
@@ -288,7 +300,7 @@ static int C_regex_error_offset;
     (##sys#check-string pattern 'regexp*)
     (##sys#check-list options 'regexp*)
     (when tables (##sys#check-chardef-table tables 'regexp*))
-    (%make-regexp (re-checked-compile pattern (pcre-option->number options) tables 'regexp*)) ) )
+    (%make-regexp (re-checked-compile pattern (pcre-options->number options) tables 'regexp*)) ) )
 
 
 ;;; Optimize compiled regular expression:
@@ -589,13 +601,19 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
                       (cons
                        #\[
                        (let loop2 ((rest rest))
-                         (match rest
-                           [(#\] . more)        (cons #\] (loop more))]
-                           [(#\- c . more)      `(#\- ,c ,@(loop2 more))]
-                           [(c1 #\- c2 . more)  `(,c1 #\- ,c2 ,@(loop2 more))]
-                           [(c . more)          (cons c (loop2 more))]
-                           [()
-                            (error 'glob->regexp "unexpected end of character class" s)] ) ) ) ]
+                         (if (pair? rest)
+			     (cond ((char=? #\] (car rest))
+				    (cons #\] (loop (cdr rest))))
+				   ((and (char=? #\- (car rest)) (pair? (cdr rest)))
+				    `(#\- ,(cadr rest) ,@(loop2 (cddr rest))))
+				   ((and (pair? (cdr rest)) (pair? (cddr rest))
+					 (char=? #\- (cadr rest)) )
+				    `(,(car rest) #\- ,(caddr rest)
+				      ,@(loop2 (cdddr rest))))
+				   ((pair? rest)
+				    (cons (car rest) (loop2 (cdr rest))))
+				   ((null? rest)
+				    (error 'glob->regexp "unexpected end of character class" s))))))]
                      [(or (char-alphabetic? c) (char-numeric? c)) (cons c (loop rest))]
                      [else `(#\\ ,c ,@(loop rest))] ) ) ) ) ) ) ) )
 
@@ -651,6 +669,5 @@ static int C_regex_ovector[OVECTOR_LENGTH_MULTIPLE * STATIC_OVECTOR_LEN];
                   (warning 'make-anchored-pattern
                            "cannot select partial anchor for compiled regular expression") )
                 (%regexp-options-set! rgxp
-                                      (bitwise-ior (%regexp-options regexp)
-                                                   (pcre-option->number 'anchored)))
+                                      (+ (%regexp-options regexp) (pcre-option->number 'anchored)))
                 rgxp] ) ) ) ) )

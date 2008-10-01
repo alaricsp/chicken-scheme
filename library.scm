@@ -121,11 +121,6 @@ fast_read_string_from_file (C_word dest, C_word port, C_word len, C_word pos)
 EOF
 ) )
 
-(cond-expand 
- ((not unsafe)
-  (declare (emit-exports "library.exports")))
- (else) )
-
 (cond-expand
  [paranoia]
  [else
@@ -234,7 +229,8 @@ EOF
 (define (current-gc-milliseconds) (##sys#fudge 31))
 (define cpu-time (##core#primitive "C_cpu_time"))
 (define ##sys#decode-seconds (##core#primitive "C_decode_seconds"))
-(define getenv (##core#primitive "C_get_environment_variable"))
+(define get-environment-variable (##core#primitive "C_get_environment_variable"))
+(define getenv get-environment-variable)
 (define (##sys#start-timer) (##core#inline "C_start_timer"))
 (define ##sys#stop-timer (##core#primitive "C_stop_timer"))
 (define (##sys#immediate? x) (not (##core#inline "C_blockp" x)))
@@ -346,26 +342,7 @@ EOF
       (##core#inline "C_i_check_closure_2" x (car y))
       (##core#inline "C_i_check_closure" x) ) )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-closure . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-port* . _) '(##core#undefined))
-    (define-macro (##sys#check-port-mode . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-special . _) '(##core#undefined))
-    (define-macro (##sys#check-blob . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else] )
+(include "unsafe-declarations.scm")
 
 (define (##sys#force promise)
   (if (##sys#structure? promise 'promise)
@@ -1161,6 +1138,11 @@ EOF
 	     [len (##sys#size str)]
 	     [i (split str len)] )
 	(and i (##sys#substring str 0 i)) ) ) ) )
+
+(define (##sys#qualified-symbol? s)
+  (let ((str (##sys#slot s 1)))
+    (and (fx> (##sys#size str) 0)
+	 (fx<= (##sys#byte str 0) namespace-max-id-len))))
 
 (define ##sys#string->qualified-symbol
   (lambda (prefix str)
@@ -3302,7 +3284,8 @@ EOF
 	    [(symbol? x)  (string->keyword (##sys#symbol->string x))]
 	    [else         (err x)] ) ) ) )
 
-(define ##sys#features '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12))
+(define ##sys#features
+  '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12 #:srfi-98))
 
 ;; Add system features:
 
@@ -3612,7 +3595,9 @@ EOF
       [(#:warning)
        (##sys#print "Warning: " #f ##sys#standard-error)
        (##sys#print msg #f ##sys#standard-error)
-       (##sys#write-char-0 #\newline ##sys#standard-error)
+       (if (or (null? args) (fx> (length args) 1))
+	   (##sys#write-char-0 #\newline ##sys#standard-error)
+	   (##sys#print ": " #f ##sys#standard-error))
        (for-each
 	(lambda (x)
 	  (##sys#print x #t ##sys#standard-error)
@@ -3632,7 +3617,6 @@ EOF
 	   (case mode
 	     [(#:type-error) '(exn type)]
 	     [(#:syntax-error) '(exn syntax)]
-	     [(#:match-error) '(exn match)]
 	     [(#:bounds-error) '(exn bounds)]
 	     [(#:arithmetic-error) '(exn arithmetic)]
 	     [(#:file-error) '(exn i/o file)]
@@ -4294,6 +4278,23 @@ EOF
 (define ##sys#vector vector)
 (define ##sys#apply apply)
 (define ##sys#values values)
+(define ##sys#equal? equal?)
+(define ##sys#car car)
+(define ##sys#cdr cdr)
+(define ##sys#pair? pair?)
+(define ##sys#vector? vector?)
+(define ##sys#vector->list vector->list)
+(define ##sys#vector-length vector-length)
+(define ##sys#vector-ref vector-length)
+(define ##sys#vector-length vector-length)
+(define ##sys#>= >=)
+(define ##sys#= =)
+(define ##sys#+ +)
+(define ##sys#eq? eq?)
+(define ##sys#eqv? eqv?)
+(define ##sys#list? list?)
+(define ##sys#null? null?)
+(define ##sys#map-n map)
 
 
 ;;; Promises:
@@ -4319,45 +4320,6 @@ EOF
 
 (define (promise? x)
   (##sys#structure? x 'promise) )
-
-
-;;; andmap + ormap: DEPRECATED
-
-(define andmap
-  (lambda (f first . rest)
-    (cond ((null? rest)
-	   (let mapf ((l first))
-	     (or (null? l)
-		 (and (f (car l)) (mapf (cdr l))))))
-	  ((null? (cdr rest))
-	   (let mapf ((l1 first) (l2 (car rest)))
-	     (or (null? l1)
-		 (and (f (car l1) (car l2)) (mapf (cdr l1) (cdr l2))))))
-	  (else
-	   (let mapf ((first first) (rest rest))
-	     (or (null? first)
-		 (and (apply f (car first) (map (lambda (x) (car x)) rest))
-		      (mapf (cdr first) (map (lambda (x) (cdr x)) rest)))))))))
-
-(define ormap
-  (lambda (f first . rest)
-    (and (pair? first)
-	 (let ([lists (cons first rest)])
-	   (or (apply f (map (lambda (x) (car x)) lists))
-	       (apply ormap f (map (lambda (x) (cdr x)) lists)) ) ) ) ) )
-
-
-;;; Support code for macro libraries (match):
-
-(define ##sys#match-error
-  (lambda (val . args)
-    (##sys#print "\nFailed match:\n" #f ##sys#standard-error)
-    (for-each
-     (lambda (x)
-       (##sys#print x #t ##sys#standard-error)
-       (##sys#write-char-0 #\newline ##sys#standard-error) )
-     args)
-    (##sys#signal-hook #:match-error "no matching clause for " val)))
 
 
 ;;; Internal string-reader:
@@ -4687,7 +4649,7 @@ EOF
 
 ;;; Property lists
 
-(define (put! sym prop val)
+(define (##sys#put! sym prop val)
   (##sys#check-symbol sym 'put!)
   (let loop ((plist (##sys#slot sym 2)))
     (cond ((null? plist) (##sys#setslot sym 2 (cons prop (cons val (##sys#slot sym 2)))) )
@@ -4695,15 +4657,16 @@ EOF
 	  (else (loop (##sys#slot (##sys#slot plist 1) 1)))) )
   val)
 
-(define get
-  (getter-with-setter
-   (lambda (sym prop . default)
-     (##sys#check-symbol sym 'get)
-     (let loop ((plist (##sys#slot sym 2)))
-       (cond ((null? plist) (optional default #f))
-	     ((eq? (##sys#slot plist 0) prop) (##sys#slot (##sys#slot plist 1) 0))
-	     (else (loop (##sys#slot (##sys#slot plist 1) 1))))) )
-   put!) )
+(define put! ##sys#put!)
+
+(define (##sys#get sym prop . default)
+  (##sys#check-symbol sym 'get)
+  (let loop ((plist (##sys#slot sym 2)))
+    (cond ((null? plist) (optional default #f))
+	  ((eq? (##sys#slot plist 0) prop) (##sys#slot (##sys#slot plist 1) 0))
+	  (else (loop (##sys#slot (##sys#slot plist 1) 1))))) )
+
+(define get (getter-with-setter ##sys#get put!))
 
 (define (remprop! sym prop)
   (##sys#check-symbol sym 'remprop!)

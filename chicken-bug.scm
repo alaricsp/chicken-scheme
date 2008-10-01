@@ -24,7 +24,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(use srfi-13 posix tcp data-structures utils extras)
+(require-extension srfi-13 posix tcp data-structures utils extras)
 
 
 #>
@@ -143,19 +143,22 @@ EOF
     (unless files
       (set! msg (string-append msg "\n\n" (user-input))))
     (newline)
-    (match-let ((#(_ _ _ day mon yr _ _ _ _) (seconds->local-time (current-seconds))))
-        (if stdout
-            (begin
-                (print msg)
-                (collect-info))
-            (try-mail
-                +mxservers+
-                (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day))
-                (mail-headers)
-                (with-output-to-string
-                    (lambda ()
-                        (print msg)
-                        (collect-info))))))))
+    (let* ((lt (seconds->local-time (current-seconds)))
+	   (day (vector-ref lt 3))
+	   (mon (vector-ref lt 4))
+	   (yr (vector-ref lt 5)) )
+      (if stdout
+	  (begin
+	    (print msg)
+	    (collect-info))
+	  (try-mail
+	   +mxservers+
+	   (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day))
+	   (mail-headers)
+	   (with-output-to-string
+	     (lambda ()
+	       (print msg)
+	       (collect-info))))))))
       ;(let* ((file (sprintf +bug-report-file+ (+ 1900 yr) (justify mon) (justify day)))
 	;     (port (if stdout (current-output-port) (open-output-file file))))
 	;(with-output-to-port port

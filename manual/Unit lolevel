@@ -553,7 +553,9 @@ Returns a new instance of the record type {{SYMBOL}}, with its
 slots initialized to {{ARG1 ...}}.  To illustrate:
 
 <enscript highlight=scheme>
-(define-record point x y)
+(define-record-type point (make-point x y) point?
+  (x point-x point-x-set!)
+  (y point-y point-y-set!))
 </enscript>
 
 expands into something quite similar to:

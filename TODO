@@ -1,0 +1,79 @@
+TODO for macro/module system					-*- Outline -*-
+
+* trunk merge
+  12020 was last
+
+* macros
+** at some stage disable debug-output in expand.scm
+
+* bugs
+** compiler
+*** pre-optimization 
+**** changes call-sites and makes them invalid for later pre-optimization
+** macros
+*** expansion of r5rs_pitfall 4.2 incorrect
+    possibly due to a non-aliased implicit "begin" somewhere
+*** dirty-macros.scm loops when using `defile'
+    possibly due to unrenamed special forms
+** modules
+*** chicken.import.scm refers to ##sys#chicken-macro-environment
+    ... which is only set, if chicken-more-macros.scm is loaded, which
+    is of course not the case inside a compiled executable (current
+    workaround is to set them to nil by default)
+*** same for ##sys#chicken-ffi-macro-environment
+*** re-exports of syntax doesn't work
+    generating import library requires source
+    (compiled-module-registration), but original module is lost after
+    importing. Can we simply pull expander closure out of module from which
+    we imported?
+*** `require-extension' fails in interpreter when extension is .so without import library
+    probably because load and import is in same toplevel form, and the
+    load is performed after the import (at runtime). A possibly fix
+    would be to load the extension immediately (at
+    compile-/expansion-time), when import is #t and o import lib
+    exists.
+
+* tests
+** optional longer run (env. var)
+*** syntax-rules-stress-test
+*** fully compiled ec-tests
+
+* module issues
+** code-duplication in compiler and evaluator for ##core#module
+** "scheme" module does not include some special forms ("define-syntax", etc.)
+** import-for-syntax imports value bindings into import-env
+   should actually be a distinct meta-import-env.
+   (does it work at all?)
+** curried define performs expansion in empty se - problem?
+   (as comment in expand.scm indicated (##sys#register-export))
+
+* setup/install
+** setup-download
+*** use HTTP_PROXY env. var
+*** handle redirects in http-fetch
+*** connect timeout and alternative download location
+** chicken-install
+*** should cache extension-info
+    necessary?
+
+* documentation
+** document ("HI/LO") expander (-> wiki, internals)
+** document new .meta entries
+   depends, test-depends
+
+* build
+** chicken.texi needs to be regenerated
+
+* syntax-error
+** if ##sys#current-module is set, add name to error message?
+** fluidly keep track of expanded forms (extend meaning of culprit)
+   to pprint pruned expr on error
+
+* modules
+** checks
+*** reimport of imported id
+*** unused defs?
+
+* eggs
+** sassy: convert to proper module
+** port javahack, fmt, fps

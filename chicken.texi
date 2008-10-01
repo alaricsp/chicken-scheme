@@ -73,7 +73,7 @@ This is the top node.
 @chapter The User's Manual
 
 
-This is the user's manual for the Chicken Scheme compiler, version 3.2.7.
+This is the user's manual for the Chicken Scheme compiler, version 3.2.1.
 
 @table @b
 @item @ref{Getting started, Getting started}

@@ -31,6 +31,7 @@
  (usual-integrations)
  (disable-warning redef)
  (foreign-declare #<<EOF
+#define C_hashptr(x)   C_fix(x & C_MOST_POSITIVE_FIXNUM)
 #define C_mem_compare(to, from, n)   C_fix(C_memcmp(C_c_string(to), C_c_string(from), C_unfix(n)))
 EOF
 ) )
@@ -52,7 +53,7 @@ EOF
       ##sys#print ##sys#check-structure ##sys#make-structure make-parameter
       ##sys#flush-output ##sys#write-char-0 ##sys#number->string
       ##sys#fragments->string ##sys#symbol->qualified-string
-      ##extras#reverse-string-append ##sys#number? ##sys#procedure->string
+      reverse-string-append ##sys#number? ##sys#procedure->string
       ##sys#pointer->string ##sys#user-print-hook ##sys#peek-char-0
       ##sys#read-char-0 ##sys#write-char ##sys#string-append ##sys#gcd ##sys#lcm
       ##sys#fudge ##sys#check-list ##sys#user-read-hook ##sys#check-closure ##sys#check-inexact
@@ -61,32 +62,16 @@ EOF
       make-string string pretty-print-width newline char-name read random
       open-input-string make-string call-with-input-file read-line reverse ) ) ] )
 
-(private extras
-  reverse-string-append
-  fprintf0 generic-write )
-
 (declare
   (hide
-    fprintf0 generic-write ) )
+    fprintf0 generic-write
+    unbound-value-thunk reverse-string-append
+    %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
+    %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
+    %hash-table-for-each %hash-table-fold
+    hash-table-canonical-length hash-table-rehash) )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-closure . _) '(##core#undefined))
-    (define-macro (##sys#check-inexact . _) '(##core#undefined))
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "extras.exports")) ] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'extras)
 
@@ -265,7 +250,7 @@ EOF
   (let ([open-output-string open-output-string]
 	[get-output-string get-output-string] )
     (lambda (pred . port)
-      (let ([port (:optional port ##sys#standard-input)])
+      (let ([port (optional port ##sys#standard-input)])
 	(##sys#check-port port 'read-token)
 	(let ([out (open-output-string)])
 	  (let loop ()
@@ -636,59 +621,61 @@ EOF
 
 (define fprintf0
   (let ((write write)
-        (newline newline)
-        (display display) 
-        (open-output-string open-output-string)
-        (get-output-string get-output-string))
+	(newline newline)
+	(display display) 
+	(open-output-string open-output-string)
+	(get-output-string get-output-string))
     (lambda (loc port msg args)
       (when port (##sys#check-port port loc))
-      (let ((out (if (and port (##sys#tty-port? port)) port (open-output-string))))
-        (let rec ([msg msg] [args args])
-          (##sys#check-string msg loc)
-          (let ((index 0)
-                (len (##sys#size msg)) )
-            (define (fetch)
-              (let ((c (##core#inline "C_subchar" msg index)))
-                (set! index (fx+ index 1))
-                c) )
-            (define (next)
-              (if (cond-expand [unsafe #f] [else (##core#inline "C_eqp" args '())])
-                  (##sys#error loc "too few arguments to formatted output procedure")
-                  (let ((x (##sys#slot args 0)))
-                    (set! args (##sys#slot args 1)) 
-                    x) ) )
-            (let loop ()
-              (unless (fx>= index len)
-                (let ((c (fetch)))
-                  (if (and (eq? c #\~) (fx< index len))
-                      (let ((dchar (fetch)))
-                        (case (char-upcase dchar)
-                          ((#\S) (write (next) out))
-                          ((#\A) (display (next) out))
-                          ((#\C) (##sys#write-char-0 (next) out))
-                          ((#\B) (display (##sys#number->string (next) 2) out))
-                          ((#\O) (display (##sys#number->string (next) 8) out))
-                          ((#\X) (display (##sys#number->string (next) 16) out))
-                          ((#\!) (##sys#flush-output out))
-                          ((#\?)
-                           (let* ([fstr (next)]
-                                  [lst (next)] )
-                             (##sys#check-list lst loc)
-                             (rec fstr lst) ) )
-                          ((#\~) (##sys#write-char-0 #\~ out))
-                          ((#\% #\N) (newline out))
-                          (else
-                           (if (char-whitespace? dchar)
-                               (let skip ((c (fetch)))
-                                 (if (char-whitespace? c)
-                                     (skip (fetch))
-                                     (set! index (fx- index 1)) ) )
-                               (##sys#error loc "illegal format-string character" dchar) ) ) ) )
-                      (##sys#write-char-0 c out) )
-                  (loop) ) ) )
-            (cond ((not port) (get-output-string out))
-                  ((not (eq? out port))
-                   (##sys#print (get-output-string out) #f port) ) ) ) ) ) ) ) )
+      (let ((out (if (and port (##sys#tty-port? port))
+		     port
+		     (open-output-string))))
+      (let rec ([msg msg] [args args])
+	(##sys#check-string msg loc)
+	(let ((index 0)
+	      (len (##sys#size msg)) )
+	  (define (fetch)
+	    (let ((c (##core#inline "C_subchar" msg index)))
+	      (set! index (fx+ index 1))
+	      c) )
+	  (define (next)
+	    (if (cond-expand [unsafe #f] [else (##core#inline "C_eqp" args '())])
+		(##sys#error loc "too few arguments to formatted output procedure")
+		(let ((x (##sys#slot args 0)))
+		  (set! args (##sys#slot args 1)) 
+		  x) ) )
+	  (let loop ()
+	    (unless (fx>= index len)
+	      (let ((c (fetch)))
+		(if (and (eq? c #\~) (fx< index len))
+		    (let ((dchar (fetch)))
+		      (case (char-upcase dchar)
+			((#\S) (write (next) out))
+			((#\A) (display (next) out))
+			((#\C) (##sys#write-char-0 (next) out))
+			((#\B) (display (##sys#number->string (next) 2) out))
+			((#\O) (display (##sys#number->string (next) 8) out))
+			((#\X) (display (##sys#number->string (next) 16) out))
+			((#\!) (##sys#flush-output out))
+			((#\?)
+			 (let* ([fstr (next)]
+				[lst (next)] )
+			   (##sys#check-list lst loc)
+			   (rec fstr lst) out) )
+			((#\~) (##sys#write-char-0 #\~ out))
+			((#\% #\N) (newline out))
+			(else
+			 (if (char-whitespace? dchar)
+			     (let skip ((c (fetch)))
+			       (if (char-whitespace? c)
+				   (skip (fetch))
+				   (set! index (fx- index 1)) ) )
+			     (##sys#error loc "illegal format-string character" dchar) ) ) ) )
+		    (##sys#write-char-0 c out) )
+		(loop) ) ) ) ) )
+      (cond ((not port) (get-output-string out))
+	    ((not (eq? out port))
+	     (##sys#print (get-output-string out) #f port) ) ) ) ) ) )
 
 (define (fprintf port fstr . args)
   (fprintf0 'fprintf port fstr args) )

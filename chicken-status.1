@@ -1,0 +1,72 @@
+.\" dummy line
+.TH CHICKEN-STATUS 1 "13 Aug 2008"
+
+.SH NAME
+
+chicken-status \- list installed extension libraries
+
+.SH SYNOPSIS
+
+chicken-status [OPTION | PATTERN] ...
+
+.SH DESCRIPTION
+
+.I chicken\-status
+lists installed extensions matching the regular expression(s)
+.B PATTERN
+or all, if no pattern has been given.
+See the 
+.B Chicken
+manual for more information.
+
+.SH OPTIONS
+
+.TP
+.B \-h,\ \-help      
+Shows a summary of options and exits.
+
+.TP
+.B \-v,\ \-version
+Shows tool version and exits.
+
+.TP
+.B \-f,\ \-files
+Shows files belonging to the matching extension.
+
+
+.SH ENVIRONMENT\ VARIABLES
+
+.TP
+.B CHICKEN_PREFIX
+The installation prefix where CHICKEN Scheme and its support files and
+libraries are located. Defaults to the installation time prefix given
+when configuring the system.
+
+.TP
+.B CHICKEN_REPOSITORY
+The path where extension libraries are installed. Defaults to the package-library
+path selected during configuration (usually
+.B $prefix/lib/chicken/<binary\-version>
+)
+
+
+.SH DOCUMENTATION
+
+More information can be found in the
+.I Chicken\ User's\ Manual
+
+.SH BUGS
+Submit bug reports by e-mail to
+.I chicken-janitors@nongnu.org
+, preferrably using the
+.B chicken\-bug
+tool.
+
+.SH AUTHORS
+The Chicken Team
+
+.SH SEE ALSO
+.BR chicken-install(1)
+.BR chicken-uninstall(1)
+.BR chicken(1)
+.BR chicken-bug(1)

@@ -1,4 +1,4 @@
-;;;; csc.scm - Driver program for the CHICKEN compiler - felix -*- Hen -*-
+;;;; csc.scm - Driver program for the CHICKEN compiler - felix -*- Scheme -*-
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; Copyright (c) 2008, The Chicken Team
@@ -173,17 +173,21 @@
 (define-constant simple-options
   '(-explicit-use -no-trace -no-warnings -no-usual-integrations -optimize-leaf-routines -unsafe
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
-    -check-syntax -case-insensitive -benchmark-mode -shared -run-time-macros -no-lambda-info
-    -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info -check-imports
+    -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
+    -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info 
+    -check-imports			; DEPRECATED
     -emit-external-prototypes-first -inline -extension -release -static-extensions
-    -analyze-only -keep-shadowed-macros -disable-compiler-macros) )
+    -analyze-only -keep-shadowed-macros -disable-compiler-macros))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -inline-limit -profile-name -disable-warning -import -require-static-extension
-    -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size -emit-exports
-    -compress-literals) )		; DEPRECATED
+    -inline-limit -profile-name -disable-warning 
+    -import 				; DEPRECATED
+    -require-static-extension
+    -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
+    -emit-exports -compress-literals		; DEPRECATED
+    -emit-import-library))
 
 (define-constant shortcuts
   '((-h "-help")
@@ -198,9 +202,10 @@
     (|-K| "-keyword-style")
     (|-X| "-extend")
     (|-N| "-no-usual-integrations")
-    (|-G| "-check-imports")
+    (|-G| "-check-imports")		; DEPRECATED
     (-x "-explicit-use")
     (-u "-unsafe")
+    (-j "-emit-import-library")
     (-b "-block") ) )
 
 (define short-options
@@ -345,7 +350,9 @@
 
     -i -case-insensitive        don't preserve case of read symbols    
     -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
-    -run-time-macros            macros are made available at run-time
+    -compile-syntax             macros are made available at run-time
+    -j -emit-import-library MODULE 
+                                write compile-time module information into separate file
 
   Translation options:
 
@@ -364,9 +371,6 @@
     -accumulate-profile         executable emits profiling information in append mode
     -profile-name FILENAME      name of the generated profile information file
     -emit-debug-info            emit additional debug-information
-    -emit-exports FILENAME      write exported toplevel variables to FILENAME
-    -G  -check-imports          look for undefined toplevel variables
-    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 
@@ -406,7 +410,7 @@
 
     -e  -embedded               compile as embedded (don't generate `main()')
     -W  -windows                compile as Windows GUI application (MSVC only)
-    -R  -require-extension NAME require extension in compiled code
+    -R  -require-extension NAME require extension and import in compiled code
     -E  -extension              compile as extension (dynamic or static)
     -dll -library               compile multiple units into a dynamic library
 
@@ -479,7 +483,7 @@
     (set! translate-options (append translate-options os)) )
 
   (define (check o r . n)
-    (unless (>= (length r) (:optional n 1))
+    (unless (>= (length r) (optional n 1))
       (quit "not enough arguments to option `~A'" o) ) )
 
   (define (shared-build lib)
@@ -787,14 +791,17 @@
 	     (lambda ()
 	       (read-line)
 	       (for-each
-		(match-lambda
- 		  [('post-process commands ...)
- 		   (for-each $system commands) ]
- 		  [('c-options opts ...)
- 		   (set! compile-options (append compile-options opts)) ]
- 		  [('link-options opts ...)
- 		   (set! link-options (append link-options opts)) ]
-		  [x (error "invalid entry in csc control file" x)] )
+		(lambda (cmd)
+		  (unless (list? cmd)
+		    (error "invalid entry in csc control file" cmd))
+		  (case (car cmd)
+		    ((post-process)
+		     (for-each $system (cdr cmd)))
+		    ((c-options)
+		     (set! compile-options (append compile-options (cdr cmd))))
+		    ((link-options)
+		     (set! link-options (append link-options (cdr cmd))))
+		    (else (error "invalid entry in csc control file" cmd))))
 		(read-file) ) ) )
 	   ($delete-file cscf) ) ) ) )
    scheme-files)

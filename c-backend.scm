@@ -219,9 +219,9 @@
 	     (expr (car subs) i) )
 
 	    ((##core#global)
-	     (let ([index (first params)]
-		   [safe (second params)] 
-		   [block (third params)] )
+	     (let ((index (first params))
+		   (safe (second params)) 
+		   (block (third params)) )
 	       (cond [block
 		      (if safe
 			  (gen "lf[" index "]")
@@ -230,23 +230,28 @@
 		     [else (gen "C_retrieve(lf[" index "])")] ) ) )
 
 	    ((##core#setglobal)
-	     (let ([index (first params)]
-		   [block (second params)] )
+	     (let ((index (first params))
+		   (block (second params)) 
+		   (var (third params)))
 	       (if block
-		   (gen "C_mutate(&lf[" index "],")
-		   (gen "C_mutate((C_word*)lf[" index "]+1,") )
+		   (gen "C_mutate(&lf[" index "]")
+		   (gen "C_mutate((C_word*)lf[" index "]+1") )
+	       (gen " /* (set! " (uncommentify (symbol->string var)) " ...) */,")
 	       (expr (car subs) i)
 	       (gen #\)) ) )
 
 	    ((##core#setglobal_i)
-	     (let ([index (first params)]
-		   [block (second params)] )
+	     (let ((index (first params))
+		   (block (second params)) 
+		   (var (third params)) )
 	       (cond [block
-		      (gen "lf[" index "]=")
+		      (gen "lf[" index "] /* "
+			   (uncommentify (symbol->string var)) " */ =")
 		      (expr (car subs) i)
 		      (gen #\;) ]
 		     [else
-		      (gen "C_set_block_item(lf[" index "],0,")
+		      (gen "C_set_block_item(lf[" index "] /* "
+			   (uncommentify (symbol->string var)) " */,0,")
 		      (expr (car subs) i)
 		      (gen #\)) ] ) ) )
 
@@ -446,30 +451,34 @@
 	(if (< n 10)
 	    (string-append "0" (number->string n))
 	    n) )
-      (match (##sys#decode-seconds (current-seconds) #f)
-	[#(_ min hour mday mon year _ _ _ _)
-	  (gen "/* Generated from " source-file " by the CHICKEN compiler" #t
-	       "   http://www.call-with-current-continuation.org" #t
-	       "   " (+ 1900 year) #\- (pad0 (add1 mon)) #\- (pad0 mday) #\space (pad0 hour) #\: (pad0 min) #t
-	       (string-intersperse
-		(map (cut string-append "   " <> "\n") 
-		     (string-split (chicken-version #t) "\n") ) 
-		"")
-	       "   command line: ")
-	  (gen-list compiler-arguments)
+      (let* ((tm (##sys#decode-seconds (current-seconds) #f))
+	     (min (vector-ref tm 1))
+	     (hour (vector-ref tm 2))
+	     (mday (vector-ref tm 3))
+	     (mon (vector-ref tm 4))
+	     (year (vector-ref tm 5)) )
+	(gen "/* Generated from " source-file " by the CHICKEN compiler" #t
+	     "   http://www.call-with-current-continuation.org" #t
+	     "   " (+ 1900 year) #\- (pad0 (add1 mon)) #\- (pad0 mday) #\space (pad0 hour) #\: (pad0 min) #t
+	     (string-intersperse
+	      (map (cut string-append "   " <> "\n") 
+		   (string-split (chicken-version #t) "\n") ) 
+	      "")
+	     "   command line: ")
+	(gen-list compiler-arguments)
+	(gen #t)
+	(cond [unit-name (gen "   unit: " unit-name)]
+	      [else 
+	       (gen "   used units: ")
+	       (gen-list used-units) ] )
+	(gen #t "*/" #t #t "#include \"" target-include-file "\"")
+	(when external-protos-first
+	  (generate-foreign-callback-stub-prototypes foreign-callback-stubs) )
+	(when (pair? foreign-declarations)
 	  (gen #t)
-	  (cond [unit-name (gen "   unit: " unit-name)]
-		[else 
-		 (gen "   used units: ")
-		 (gen-list used-units) ] )
-	  (gen #t "*/" #t #t "#include \"" target-include-file "\"")
-	  (when external-protos-first
-	    (generate-foreign-callback-stub-prototypes foreign-callback-stubs) )
-	  (when (pair? foreign-declarations)
-	    (gen #t)
-	    (for-each (lambda (decl) (gen #t decl)) foreign-declarations) )
-	  (unless external-protos-first
-	    (generate-foreign-callback-stub-prototypes foreign-callback-stubs) ) ] ) )
+	  (for-each (lambda (decl) (gen #t decl)) foreign-declarations) )
+	(unless external-protos-first
+	  (generate-foreign-callback-stub-prototypes foreign-callback-stubs) ) ) )
   
     (define (trailer)
       (gen #t "/* end of file */" #t) )
@@ -967,9 +976,11 @@
 (define (generate-external-variables vars)
   (gen #t)
   (for-each
-   (match-lambda 
-     [#(name type exported)
-      (gen #t (if exported "" "static ") (foreign-type-declaration type name) #\;) ] )
+   (lambda (v)
+     (let ((name (vector-ref v 0))
+	   (type (vector-ref v 1))
+	   (exported (vector-ref v 2)) )
+       (gen #t (if exported "" "static ") (foreign-type-declaration type name) #\;) ) )
    vars) )
 
 
@@ -1164,43 +1175,55 @@
 	      => (lambda (t)
 		   (foreign-type-declaration (if (vector? t) (vector-ref t 0) t) target)) ]
 	     [(string? type) (str type)]
-	     [(pair? type)
-	      (match type
-		[((or 'pointer 'nonnull-pointer 'c-pointer 'nonnull-c-pointer) ptype)
-		 (foreign-type-declaration ptype (string-append "*" target)) ]
-		[('ref rtype)
-		 (foreign-type-declaration rtype (string-append "&" target)) ]
-		[`(template ,t0 ,ts ...)
-		 (str
-		  (string-append 
-		   (foreign-type-declaration t0 "")
-		   "<"
-		   (string-intersperse (map (cut foreign-type-declaration <> "") ts) ",")
-		   "> ") ) ]
-		[`(const ,t) (string-append "const " (foreign-type-declaration t target))]
-		[`(struct ,sname) (string-append "struct " (->string sname) " " target)]
-		[`(union ,uname) (string-append "union " (->string uname) " " target)]
-		[`(enum ,ename) (string-append "enum " (->string ename) " " target)]
-		[((or 'instance 'nonnull-instance) cname sname) (string-append (->string cname) "*" target)]
-		[('instance-ref cname sname) (string-append (->string cname) "&" target)]
-		[`(function ,rtype ,argtypes . ,callconv)
-		 (string-append
-		  (foreign-type-declaration rtype "")
-		  (or (and-let* ([(pair? callconv)]
-				 [cc (car callconv)]
-				 [(string? cc)] )
-			cc)
-		      "")
-		  " (*" target ")("
-		  (string-intersperse
-		   (map (lambda (at)
-			  (if (eq? '... at) 
-			      "..."
-			      (foreign-type-declaration at "") ) )
-			argtypes) 
-		   ",")
-		  ")" ) ]
-		[_ (err)] ) ]
+	     [(list? type)
+	      (let ((len (length type)))
+		(cond 
+		 ((and (= 2 len)
+		       (memq (car type) '(pointer nonnull-pointer c-pointer 
+						  nonnull-c-pointer) ) )
+		  (foreign-type-declaration (cadr type) (string-append "*" target)) )
+		 ((and (= 2 len)
+		       (eq? 'ref (car type)))
+		  (foreign-type-declaration (cadr type) (string-append "&" target)) )
+		 ((and (> len 2)
+		       (eq? 'template (car type)))
+		  (str
+		   (string-append 
+		    (foreign-type-declaration (cadr type) "")
+		    "<"
+		    (string-intersperse
+		     (map (cut foreign-type-declaration <> "") (cddr type))
+		     ",")
+		    "> ") ) )
+		 ((and (= len 2) (eq? 'const (car type)))
+		  (string-append "const " (foreign-type-declaration (cadr type) target)))
+		 ((and (= len 2) (eq? 'struct (car type)))
+		  (string-append "struct " (->string (cadr type)) " " target))
+		 ((and (= len 2) (eq? 'union (car type)))
+		  (string-append "union " (->string (cadr type)) " " target))
+		 ((and (= len 2) (eq? 'enum (car type)))
+		  (string-append "enum " (->string (cadr type)) " " target))
+		 ((and (= len 3) (memq (car type) '(instance nonnull-instance)))
+		  (string-append (->string (cadr type)) "*" target))
+		 ((and (= len 3) (eq? 'instance-ref (car type)))
+		  (string-append (->string (cadr type)) "&" target))
+		 ((and (>= len 3) (eq? 'function (car type)))
+		  (let ((rtype (cadr type))
+			(argtypes (caddr type))
+			(callconv (optional (cdddr type) "")))
+		    (string-append
+		     (foreign-type-declaration rtype "")
+		     callconv
+		     " (*" target ")("
+		     (string-intersperse
+		      (map (lambda (at)
+			     (if (eq? '... at) 
+				 "..."
+				 (foreign-type-declaration at "") ) )
+			   argtypes) 
+		      ",")
+		     ")" ) ) )
+		 (else (err)) ) ) ]
 	     [else (err)] ) ] ) ) )
 
 
@@ -1256,21 +1279,24 @@
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))
 	      => (lambda (t)
 		   (foreign-argument-conversion (if (vector? t) (vector-ref t 0) t)) ) ]
-	     [(pair? type)
-	      (match type
-                ;; pointer and nonnull-pointer are DEPRECATED
-		[('pointer ptype) "C_c_pointer_or_null("]
-		[('nonnull-pointer ptype) "C_c_pointer_nn("]
-		[('c-pointer ptype) "C_c_pointer_or_null("]
-		[('nonnull-c-pointer ptype) "C_c_pointer_nn("]
-		[`(instance ,cname ,sname) "C_c_pointer_or_null("]
-		[`(nonnull-instance ,cname ,sname) "C_c_pointer_nn("]
-		[`(function ,rtype ,@argtypes) "C_c_pointer_or_null("]
-		[`(const ,ctype) (foreign-argument-conversion ctype)]
-		[`(enum ,etype) "C_num_to_int("]
-		[`(ref ,rtype) (string-append "*(" (foreign-type-declaration rtype "*") ")C_c_pointer_nn(")]
-		[`(instance-ref ,cname ,sname) (string-append "*(" cname "*)C_c_pointer_nn(")]
-		[else (err)] ) ]
+	     [(and (list? type) (>= (length type) 2))
+	      (case (car type)
+	       ;; pointer and nonnull-pointer are DEPRECATED
+	       ((pointer) "C_c_pointer_or_null(")
+	       ((nonnull-pointer) "C_c_pointer_nn(")
+	       ((c-pointer) "C_c_pointer_or_null(")
+	       ((nonnull-c-pointer) "C_c_pointer_nn(")
+	       ((instance) "C_c_pointer_or_null(")
+	       ((nonnull-instance) "C_c_pointer_nn(")
+	       ((function) "C_c_pointer_or_null(")
+	       ((const) (foreign-argument-conversion (cadr type)))
+	       ((enum) "C_num_to_int(")
+	       ((ref)
+		(string-append "*(" (foreign-type-declaration (car type) "*")
+			       ")C_c_pointer_nn("))
+	       ((instance-ref)
+		(string-append "*(" (cadr type) "*)C_c_pointer_nn("))
+	       (else (err)) ) ]
 	     [else (err)] ) ) ) ) )
 
 
@@ -1304,24 +1330,24 @@
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))
 	      => (lambda (x)
 		   (foreign-result-conversion (if (vector? x) (vector-ref x 0) x) dest)) ]
-	     [(pair? type)
-	      (match type
-		[((or 'nonnull-pointer 'nonnull-c-pointer) ptype) 
-		 (sprintf "C_mpointer(&~A,(void*)" dest) ]
-		[('ref rtype) 
-		 (sprintf "C_mpointer(&~A,(void*)&" dest) ]
-		[('instance cname sname)
-		 (sprintf "C_mpointer_or_false(&~A,(void*)" dest) ]
-		[('nonnull-instance cname sname)
-		 (sprintf "C_mpointer(&~A,(void*)" dest) ]
-		[('instance-ref cname sname)
-		 (sprintf "C_mpointer(&~A,(void*)&" dest) ]
-		[('const ctype) (foreign-result-conversion ctype dest)]
-		[((or 'pointer 'c-pointer) ptype) 
-		 (sprintf "C_mpointer_or_false(&~a,(void*)" dest) ]
-		[`(function ,rtype ,@argtypes) (sprintf "C_mpointer(&~a,(void*)" dest)]
-		[`(enum ,etype) (sprintf "C_int_to_num(&~a," dest)]
-		[else (err)] ) ]
+	     [(and (list? type) (>= (length type) 2))
+	      (case (car type)
+		((nonnull-pointer nonnull-c-pointer)
+		 (sprintf "C_mpointer(&~A,(void*)" dest) )
+		((ref)
+		 (sprintf "C_mpointer(&~A,(void*)&" dest) )
+		((instance)
+		 (sprintf "C_mpointer_or_false(&~A,(void*)" dest) )
+		((nonnull-instance)
+		 (sprintf "C_mpointer(&~A,(void*)" dest) )
+		((instance-ref)
+		 (sprintf "C_mpointer(&~A,(void*)&" dest) )
+		((const) (foreign-result-conversion (cadr type) dest))
+		((pointer c-pointer)
+		 (sprintf "C_mpointer_or_false(&~a,(void*)" dest) )
+		((function) (sprintf "C_mpointer(&~a,(void*)" dest))
+		((enum) (sprintf "C_int_to_num(&~a," dest))
+		(else (err)) ) ]
 	     [else (err)] ) ) ) ) )
 
 

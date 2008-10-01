@@ -217,12 +217,6 @@ chicken-defaults.h:
 	echo "#ifndef C_CSI_PROGRAM" >>$@
 	echo "# define C_CSI_PROGRAM \"$(CSI_PROGRAM)\"" >>$@
 	echo "#endif" >>$@
-	echo "#ifndef C_CHICKEN_PROFILE_PROGRAM" >>$@
-	echo "# define C_CHICKEN_PROFILE_PROGRAM \"$(CHICKEN_PROFILE_PROGRAM)\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_CHICKEN_SETUP_PROGRAM" >>$@
-	echo "# define C_CHICKEN_SETUP_PROGRAM \"$(CHICKEN_SETUP_PROGRAM)\"" >>$@
-	echo "#endif" >>$@
 	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
 	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
 	echo "#endif" >>$@

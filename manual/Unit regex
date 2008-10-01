@@ -12,7 +12,7 @@ To test that PCRE support has been built into Chicken properly, try:
 
 <enscript highlight=scheme>
 (require 'regex)
-(feature? 'pcre) => #t
+(test-feature? 'pcre) => t
 </enscript>
 
 
@@ -255,6 +255,6 @@ The {{WITHOUT-BOL}} and {WITHOUT-EOL}} arguments are ignored for a precompiled r
 expression.
 
 
-Previous: [[Unit match]]
+Previous: [[Unit srfi-14]]
 
 Next: [[Unit srfi-18]]

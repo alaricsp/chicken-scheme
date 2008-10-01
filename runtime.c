@@ -1305,30 +1305,30 @@ void CHICKEN_parse_command_line(int argc, char *argv[], C_word *heap, C_word *st
 
 C_word arg_val(C_char *arg)
 {
-     int len;
-     
-     if (arg == NULL) panic(C_text("illegal runtime-option argument"));
-     
-     len = C_strlen(arg);
-     
-     if(len < 1) panic(C_text("illegal runtime-option argument"));
-     
-     switch(arg[ len - 1 ]) {
-     case 'k':
-     case 'K':
-	  return atol(arg) * 1024;
-	  
-     case 'm':
-     case 'M':
-	  return atol(arg) * 1024 * 1024;
-	  
-     case 'g':
-     case 'G':
-	  return atol(arg) * 1024 * 1024 * 1024;
-	  
-     default:
-	  return atol(arg);
-     }
+      int len;
+      
+      if (arg == NULL) panic(C_text("illegal runtime-option argument"));
+      
+      len = C_strlen(arg);
+      
+      if(len < 1) panic(C_text("illegal runtime-option argument"));
+      
+      switch(arg[ len - 1 ]) {
+      case 'k':
+      case 'K':
+ 	  return atol(arg) * 1024;
+ 	  
+      case 'm':
+      case 'M':
+ 	  return atol(arg) * 1024 * 1024;
+ 	  
+      case 'g':
+      case 'G':
+ 	  return atol(arg) * 1024 * 1024 * 1024;
+ 	  
+      default:
+ 	  return atol(arg);
+      }
 }
 
 
@@ -2075,9 +2075,14 @@ C_regparm C_word C_fcall C_intern3(C_word **ptr, C_char *str, C_word value)
 
 C_regparm int C_fcall hash_string(int len, C_char *str, unsigned int m)
 {
-  unsigned int key = 2166136261U;
+  unsigned int key = 0;
 
-  while(len--) key = ((key * 16777619U) + (*str++));
+# if 0
+  /* Zbigniew's suggested change for extended significance & ^2 table sizes. */
+  while(len--) key += (key << 5) + *(str++);
+# else
+  while(len--) key = (key << 4) + *(str++);
+# endif
 
   return (int)(key % m);
 }
@@ -3822,11 +3827,11 @@ C_word C_fetch_trace(C_word starti, C_word buffer)
 
 C_regparm C_word C_fcall C_hash_string(C_word str)
 {
-  unsigned C_word key = 2166136261U;
+  unsigned C_word key = 0;
   int len = C_header_size(str);
   C_byte *ptr = C_data_pointer(str);
-
-  while(len--) key = ((key * 16777619U) + (*ptr++));
+// *(ptr++) means you run off the edge.  
+  while(len--) key = (key << 4) + (*ptr++);
 
   return C_fix(key & C_MOST_POSITIVE_FIXNUM);
 }
@@ -3834,11 +3839,11 @@ C_regparm C_word C_fcall C_hash_string(C_word str)
 
 C_regparm C_word C_fcall C_hash_string_ci(C_word str)
 {
-  unsigned C_word key = 2166136261U;
+  unsigned C_word key = 0;
   int len = C_header_size(str);
   C_byte *ptr = C_data_pointer(str);
 
-  while(len--) key = ((key * 16777619U) + C_tolower(*ptr++));
+  while(len--) key = (key << 4) + C_tolower(*ptr++);
 
   return C_fix(key & C_MOST_POSITIVE_FIXNUM);
 }
@@ -4144,10 +4149,10 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     return C_fix(CLOCKS_PER_SEC);
 
   case C_fix(11):
-#ifdef MACINTOSH_GUI
-    return C_SCHEME_TRUE;
-#else
+#if defined(C_NONUNIX) || defined(__CYGWIN__)
     return C_SCHEME_FALSE;
+#else
+    return C_SCHEME_TRUE;
 #endif
 
   case C_fix(12):
@@ -8422,7 +8427,7 @@ void C_ccall C_software_version(C_word c, C_word closure, C_word k)
 
 void C_ccall C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc)
 {
-  if(C_immediatep(x)) C_kontinue(k, x);
+  if(C_immediatep(x)) C_kontinue(k, x );
 
   C_do_register_finalizer(x, proc);
   C_kontinue(k, x);

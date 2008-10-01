@@ -1,4 +1,4 @@
-(use srfi-1)
+(require-extension srfi-1)
 
 (define manyargs (feature? 'manyargs))
 

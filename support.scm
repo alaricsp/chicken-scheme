@@ -37,7 +37,7 @@
   file-io-only banner custom-declare-alist disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
   foreign-declarations block-compilation line-number-database-size
-  target-heap-size target-stack-size check-global-exports check-global-imports
+  target-heap-size target-stack-size
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
@@ -53,8 +53,8 @@
   transform-direct-lambdas! finish-foreign-result csc-control-file
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
-  constant? basic-literal? source-info->string import-table
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
+  constant? basic-literal? source-info->string 
+  collapsable-literal? immediate? canonicalize-begin-body string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
   build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
@@ -64,11 +64,11 @@
   default-declarations units-used-by-default words-per-flonum emit-control-file-item compiler-warning
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  default-optimization-iterations chop-separator chop-extension follow-without-loop dump-exported-globals
+  default-optimization-iterations chop-separator chop-extension follow-without-loop
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  lookup-exports-file constant-declarations process-lambda-documentation big-fixnum?
-  compiler-macro-table register-compiler-macro export-dump-hook export-import-hook
+  constant-declarations process-lambda-documentation big-fixnum?
+  compiler-macro-table register-compiler-macro export-dump-hook
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
 
 
@@ -85,8 +85,8 @@
 
 (define (bomb . msg-and-args)
   (if (pair? msg-and-args)
-      (apply error (string-append "[internal compiler screwup] " (car msg-and-args)) (cdr msg-and-args))
-      (error "[internal compiler screwup]") ) )
+      (apply error (string-append "[internal compiler error] " (car msg-and-args)) (cdr msg-and-args))
+      (error "[internal compiler error]") ) )
 
 (define (debugging mode msg . args)
   (and (memq mode debugging-chicken)
@@ -280,32 +280,6 @@
 	  (else `(let ((,(gensym 't) ,(car xs)))
 		   ,(loop (cdr xs))) ) ) ) )
 
-(define (extract-mutable-constants exp)
-  (let ([mlist '()])
-    (define (walk x)
-      (match x
-	[(? not-pair? x) x]
-	[`(quote ,c)
-	 (if (not (collapsable-literal? c))
-	     (let ([var (make-random-name)])
-	       (set! mlist (alist-cons var c mlist))
-	       var)
-	     x) ]
-	[`(let ((,vars ,vals) ...) . ,body)
-	 `(let ,(map (lambda (var val) (list var (walk val))) vars vals) ,@(map walk body)) ]
-	[(op . args)
-	 (case op
-	   [(##core#include ##core#declare ##core#immutable ##core#undefined ##core#primitive ##core#inline_ref) x]
-	   [(##core#set! set! lambda ##core#inline ##core#inline_allocate ##core#inline_update ##core#inline_loc_ref
-			 ##core#inline_loc_update)
-	    (cons* op (first args) (map walk (cdr args))) ]
-	   [(if ##core#compiletimeonly ##core#compiletimetoo)
-	    (cons op (map walk args)) ]
-	   [else (map walk x)] ) ]
-	[_ x] ) ) 
-    (let ([exp2 (walk exp)])
-      (values exp2 mlist) ) ) )
-
 (define string->expr
   (let ([exn? (condition-predicate 'exn)]
 	[exn-msg (condition-property-accessor 'exn 'message)] )
@@ -485,10 +459,12 @@
 
 ;; Note: much of this stuff will be overridden by the inline-definitions in "tweaks.scm".
 
-(define-record node
-  class					; symbol
-  parameters				; (value...)
-  subexpressions)			; (node...)
+(define-record-type node
+  (make-node class parameters subexpressions)
+  node?
+  (class node-class node-class-set!)	; symbol
+  (parameters node-parameters node-parameters-set!) ; (value...)
+  (subexpressions node-subexpressions node-subexpressions-set!)) ; (node...)
 
 (define (make-node c p s)
   (##sys#make-structure 'node c p s) ) ; this kludge is for allowing the inlined `make-node'
@@ -524,7 +500,8 @@
 		      (make-node 'let (unzip1 bs)
 				 (append (map (lambda (b) (walk (cadr b))) (cadr x))
 					 (list (walk body)) ) ) ) ) )
-	       ((lambda) (make-node 'lambda (list (cadr x)) (list (walk (caddr x)))))
+	       ((lambda ##core#lambda) 
+		(make-node 'lambda (list (cadr x)) (list (walk (caddr x)))))
 	       ((##core#primitive)
 		(let ([arg (cadr x)])
 		  (make-node
@@ -749,30 +726,6 @@
 
 ;;; Some safety checks and database dumping:
 
-(define (export-dump-hook db file) (void))
-
-(define (dump-exported-globals db file)
-  (unless block-compilation
-    (with-output-to-file file
-      (lambda ()
-	(let ((exports '()))
-	  (##sys#hash-table-for-each
-	   (lambda (sym plist)
-	     (when (and (assq 'global plist) 
-			(assq 'assigned plist)
-			(or (and export-list (memq sym export-list))
-			    (not (memq sym block-globals)) ) )
-	       (set! exports (cons sym exports)) ) )
-	   db)
-	  (for-each 
-	   (lambda (s)
-	     (write s)
-	     (newline) )
-	   (sort exports
-		 (lambda (s1 s2)
-		   (string<? (##sys#slot s1 1) (##sys#slot s2 1)))) )
-	  (export-dump-hook db file) ) ) ) ) )
-
 (define (dump-undefined-globals db)
   (##sys#hash-table-for-each
    (lambda (sym plist)
@@ -793,35 +746,15 @@
        db)
       (for-each (cut compiler-warning 'var "exported global variable `~S' is not defined" <>) exps) ) ) )
 
-(define (check-global-imports db)
-  (##sys#hash-table-for-each
-   (lambda (sym plist)
-     (let ((imp (##sys#hash-table-ref import-table sym))
-	   (refs (assq 'references plist))
-	   (assgn (assq 'assigned plist)) )
-       (when (assq 'global plist)
-	 (cond (assgn
-		(when imp
-		  (compiler-warning 'redef "redefinition of imported variable `~s' from `~s'" sym imp) ) )
-	       ((and (pair? refs) (not imp) (not (keyword? sym)))
-		(compiler-warning 'var "variable `~s' used but not imported" sym) ) ) ) ) )
-   db) )
 
-(define (export-import-hook x id) (void))
+;;; change hook function to hide non-exported module bindings
 
-(define (lookup-exports-file id)
-  (and-let* ((xfile (##sys#resolve-include-filename 
-		     (string-append (->string id) ".exports")
-		     #t #t) )
-	     ((file-exists? xfile)) )
-    (when verbose-mode 
-      (printf "loading exports file ~a ...~%" xfile) )
-    (for-each
-     (lambda (exp)
-       (if (symbol? exp)
-	   (##sys#hash-table-set! import-table exp id) 
-	   (export-import-hook exp id) ) )
-     (read-file xfile)) ) )
+(set! ##sys#toplevel-definition-hook
+  (lambda (sym mod exp val)
+    (when (and (not val) (not exp))
+      (debugging 'o "hiding nonexported module bindings" sym)
+      (set! block-globals (cons sym block-globals)) ) ) )
+
 
 
 ;;; Compute general statistics from analysis database:
@@ -969,27 +902,27 @@
 		     => (lambda (t)
 			  (next (if (vector? t) (vector-ref t 0) t)) ) ]
 		    [(pair? t)
-		     (match t
-		       [((or 'ref 'pointer 'function 'c-pointer) . _)
+		     (case (car t)
+		       [(ref pointer function c-pointer)
 			(let ([tmp (gensym)])
 			  `(let ([,tmp ,param])
 			     (if ,tmp
 				 (##sys#foreign-pointer-argument ,tmp)
 				 '#f) ) )  ]
-		       [((or 'instance 'instance-ref) . _)
+		       [(instance instance-ref)
 			(let ([tmp (gensym)])
 			  `(let ([,tmp ,param])
 			     (if ,tmp
 				 (slot-ref ,param 'this)
 				 '#f) ) ) ]
-		       [('nonnull-instance . _)
+		       [(nonnull-instance)
 			`(slot-ref ,param 'this) ]
-		       [('const t) (repeat t)]
-		       [('enum _) 
+		       [(const) (repeat (cadr t))]
+		       [(enum)
 			(if unsafe param `(##sys#foreign-integer-argument ,param))]
-		       [((or 'nonnull-pointer 'nonnull-c-pointer) . _)
+		       [(nonnull-pointer nonnull-c-pointer)
 			`(##sys#foreign-pointer-argument ,param) ]
-		       [_ param] ) ]
+		       [else param] ) ]
 		    [else param] ) ] ) ) )
        (lambda () (quit "foreign type `~S' refers to itself" type)) ) ) ) )
 
@@ -1090,12 +1023,13 @@
     [(c-string-list) `(##sys#peek-c-string-list ,body '#f)]
     [(c-string-list*) `(##sys#peek-and-free-c-string-list ,body '#f)]
     [else
-     (match type
-       [((or 'instance 'instance-ref) cname sname)
-	`(##tinyclos#make-instance-from-pointer ,body ,sname) ] ;XXX eggified, needs better treatment...
-       [('nonnull-instance cname sname)
-	`(make ,sname 'this ,body) ]
-       [_ body] ) ] ) )
+     (cond 
+       [(and (list? type) (= 3 (length type)) 
+	     (memq (car type) '(instance instance-ref)))
+	`(##tinyclos#make-instance-from-pointer ,body ,(caddr type)) ] ;XXX eggified, needs better treatment...
+       [(and (list? type) (= 3 (length type)) (eq? 'nonnull-instance (car type)))
+	`(make ,(caddr type) 'this ,body) ]
+       [else body] ) ] ) )
 
 
 ;;; Scan expression-node for variable usage:
@@ -1251,7 +1185,8 @@ Usage: chicken FILENAME OPTION ...
 
     -case-insensitive           don't preserve case of read symbols
     -keyword-style STYLE        allow alternative keyword syntax (none, prefix or suffix)
-    -run-time-macros            macros are made available at run-time
+    -compile-syntax             macros are made available at run-time
+    -emit-import-library MODULE write compile-time module information into separate file
 
   Translation options:
 
@@ -1269,9 +1204,6 @@ Usage: chicken FILENAME OPTION ...
     -profile-name FILENAME      name of the generated profile information file
     -accumulate-profile         executable emits profiling information in append mode
     -no-lambda-info             omit additional procedure-information
-    -emit-exports FILENAME      write exported toplevel variables to FILENAME
-    -check-imports              look for undefined toplevel variables
-    -import FILENAME            read externally exported symbols from FILENAME
 
   Optimization options:
 
@@ -1284,7 +1216,8 @@ Usage: chicken FILENAME OPTION ...
     -disable-interrupts         disable interrupts in compiled code
     -fixnum-arithmetic          assume all numbers are fixnums
     -benchmark-mode             fixnum mode, no interrupts and opt.-level 3
-    -disable-stack-overflow-checks  disables detection of stack-overflows.
+    -disable-stack-overflow-checks  
+                                disables detection of stack-overflows.
     -inline                     enable inlining
     -inline-limit               set inlining threshold
 
@@ -1304,7 +1237,7 @@ Usage: chicken FILENAME OPTION ...
     -prologue FILENAME          include file before main source file
     -epilogue FILENAME          include file after main source file
     -dynamic                    compile as dynamically loadable code
-    -require-extension NAME     require extension NAME in compiled code
+    -require-extension NAME     require and import extension NAME
     -extension                  compile as extension (dynamic or static)
 
   Obscure options:
@@ -1322,8 +1255,10 @@ EOF
 
 ;;; Special block-variable literal type:
 
-(define-record block-variable-literal 
-  name)					; symbol
+(define-record-type block-variable-literal 
+  (make-block-variable-literal name)
+  block-variable-literal?
+  (name block-variable-literal-name))	; symbol
 
 
 ;;; Generation of random names:
@@ -1331,7 +1266,7 @@ EOF
 (define (make-random-name . prefix)
   (string->symbol
    (sprintf "~A-~A~A"
-	    (:optional prefix (gensym))
+	    (optional prefix (gensym))
 	    (current-seconds)
 	    (random 1000) ) ) )
 
@@ -1379,11 +1314,13 @@ EOF
    real-name-table) )
 
 (define (source-info->string info)
-  (match info
-    ((file ln name)
-     (let ((lns (->string ln)))
-       (conc file ": " lns (make-string (max 0 (- 4 (string-length lns))) #\space) " " name) ) )
-    (_ (and info (->string info))) ) )
+  (if (list? info)
+      (let ((file (car info))
+	    (ln (cadr info))
+	    (name (caddr info)))
+	(let ((lns (->string ln)))
+	  (conc file ": " lns (make-string (max 0 (- 4 (string-length lns))) #\space) " " name) ) )
+      (and info (->string info))) )
 
 
 ;;; We need this for constant folding:

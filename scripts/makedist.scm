@@ -10,7 +10,9 @@
 
 (define BUILDVERSION (with-input-from-file "buildversion" read))
 
-(define *platform* (symbol->string (software-version)))
+(define *platform* 
+  (let ((sv (symbol->string (software-version))))
+    (if (string-match ".*bsd" sv) "bsd" sv)))
 
 (define (release full?)
   (let* ((files (read-lines "distribution/manifest"))
@@ -42,7 +44,7 @@
      (print "usage: makedist [--release] [--test] MAKEOPTION ...")
      (exit 1))) )
 
-(run (make -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
+(run (gmake -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
 (release *release*)
 
 (when *test*

@@ -924,22 +924,7 @@ EOF
      ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer ##sys#process
      ##sys#peek-fixnum ##sys#make-structure ##sys#check-structure ##sys#enable-interrupts) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "posix.exports"))] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'posix)
 
@@ -1666,6 +1651,7 @@ EOF
 	(##sys#signal-hook #:file-error 'duplicate-fileno "cannot duplicate file descriptor" old) )
       fd) ) )
 
+
 ;;; Environment access:
 
 (define setenv
@@ -1680,7 +1666,7 @@ EOF
   (##core#inline "C_putenv" (##sys#make-c-string var))
   (##core#undefined) )
 
-(define current-environment
+(define get-environment-variables
   (let ([get (foreign-lambda c-string "C_getenventry" int)]
 	[substring substring] )
     (lambda ()
@@ -1692,6 +1678,8 @@ EOF
 		    (cons (cons (substring entry 0 j) (substring entry (fx+ j 1) (##sys#size entry))) (loop (fx+ i 1)))
 		    (scan (fx+ j 1)) ) )
 	      '() ) ) ) ) ) )
+
+(define current-environment get-environment-variables) ; DEPRECATED
 
 ;;; Time related things:
 
@@ -1745,6 +1733,10 @@ EOF
   (let ([ex0 (foreign-lambda void "_exit" int)])
     (lambda code
       (ex0 (if (pair? code) (car code) 0)) ) ) )
+
+(define (terminal-port? port)
+  (##sys#check-port port 'terminal-port?)
+  #f)
 
 (define-foreign-variable _iofbf int "_IOFBF")
 (define-foreign-variable _iolbf int "_IOLBF")
@@ -2074,9 +2066,9 @@ EOF
 
 ;;; unimplemented stuff:
 
-(define-macro (define-unimplemented name)
-  `(define (,name . _)
-     (error ',name (##core#immutable '"this function is not available on this platform")) ) )
+(define-inline (define-unimplemented name)
+  (define (,name . _)
+    (error 'name (##core#immutable '"this function is not available on this platform")) ) )
 
 (define-unimplemented change-file-owner)
 (define-unimplemented create-fifo)
@@ -2116,7 +2108,6 @@ EOF
 (define-unimplemented signal-masked?)
 (define-unimplemented signal-unmask!)
 (define-unimplemented terminal-name)
-(define-unimplemented terminal-port?)
 (define-unimplemented terminal-size)
 (define-unimplemented unmap-file-from-memory)
 (define-unimplemented user-information)

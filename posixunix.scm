@@ -488,22 +488,7 @@ EOF
      make-nonblocking-input-port make-nonblocking-output-port 
      canonical-path) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "posix.exports")) ] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'posix)
 
@@ -772,7 +757,7 @@ EOF
       (posix-error #:file-error loc "cannot access file" file) ) ) )
 
 (define (file-stat f . link)
-  (##sys#stat f (:optional link #f) 'file-stat)
+  (##sys#stat f (optional link #f) 'file-stat)
   (vector _stat_st_ino _stat_st_mode _stat_st_nlink
           _stat_st_uid _stat_st_gid _stat_st_size
           _stat_st_atime _stat_st_ctime _stat_st_mtime
@@ -831,19 +816,6 @@ EOF
     (##sys#stat fname #f 'stat-socket?)
     (foreign-value "C_issock" bool))
 
-(define set-file-position!              ; DEPRECATED
-  (lambda (port pos . whence)
-    (let ([whence (if (pair? whence) (car whence) _seek_set)])
-      (##sys#check-exact pos 'set-file-position!)
-      (##sys#check-exact whence 'set-file-position!)
-      (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
-      (unless (cond [(port? port)
-                     (and (eq? (##sys#slot port 7) 'stream)
-                          (##core#inline "C_fseek" port pos whence) ) ]
-                    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
-                    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
-        (posix-error #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) )
-
 (define file-position
   (getter-with-setter
    (lambda (port)
@@ -856,7 +828,17 @@ EOF
       (when (fx< pos 0)
         (posix-error #:file-error 'file-position "cannot retrieve file position of port" port) )
       pos) )
-   set-file-position!) )
+   (lambda (port pos . whence)
+     (let ([whence (if (pair? whence) (car whence) _seek_set)])
+       (##sys#check-exact pos 'set-file-position!)
+       (##sys#check-exact whence 'set-file-position!)
+       (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
+       (unless (cond [(port? port)
+		      (and (eq? (##sys#slot port 7) 'stream)
+			   (##core#inline "C_fseek" port pos whence) ) ]
+		     [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
+		     [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
+	 (posix-error #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) ) )
 
 
 ;;; Directory stuff:
@@ -1259,16 +1241,13 @@ EOF
           _uname-version
           _uname-machine) ) )
 
-(define set-user-id!                  ; DEPRECATED
-  (lambda (id)
-    (when (fx< (##core#inline "C_setuid" id) 0)
-      (##sys#update-errno)
-      (##sys#error 'set-user-id! "cannot set user ID" id) ) ) )
-
 (define current-user-id
   (getter-with-setter
    (foreign-lambda int "C_getuid")
-   set-user-id!) )
+   (lambda (id)
+     (when (fx< (##core#inline "C_setuid" id) 0)
+       (##sys#update-errno)
+       (##sys#error 'set-user-id! "cannot set user ID" id) ) ) ) )
 
 (define current-effective-user-id
   (getter-with-setter
@@ -1279,16 +1258,13 @@ EOF
       (##sys#error 
 	 'effective-user-id!-setter "cannot set effective user ID" id) ) ) ) )
 
-(define set-group-id!                 ; DEPRECATED
-  (lambda (id)
-    (when (fx< (##core#inline "C_setgid" id) 0)
-      (##sys#update-errno)
-      (##sys#error 'set-user-id! "cannot set group ID" id) ) ) )
-
 (define current-group-id
   (getter-with-setter
    (foreign-lambda int "C_getgid")
-   set-group-id!) )
+   (lambda (id)
+    (when (fx< (##core#inline "C_setgid" id) 0)
+      (##sys#update-errno)
+      (##sys#error 'set-user-id! "cannot set group ID" id) ) ) ) )
 
 (define current-effective-group-id
   (getter-with-setter 
@@ -1510,13 +1486,6 @@ EOF
       (##sys#error 'create-session "cannot create session") )
     a) )
 
-(define (set-process-group-id! pid pgid) ; DEPRECATED
-  (##sys#check-exact pid 'set-process-group-id!)
-  (##sys#check-exact pgid 'set-process-group-id!)
-  (when (fx< (##core#inline "C_setpgid" pid pgid) 0)
-    (##sys#update-errno)
-    (##sys#error 'set-process-group-id! "cannot set process group ID" pid pgid) ) )
-
 (define process-group-id
   (getter-with-setter
    (lambda (pid)
@@ -1525,8 +1494,14 @@ EOF
        (when (fx< a 0)
          (##sys#update-errno)
          (##sys#error 'process-group-id "cannot retrieve process group ID" pid) )
-    a) )
-   set-process-group-id!) )
+       a))
+   (lambda (pid pgid)
+     (##sys#check-exact pid 'set-process-group-id!)
+     (##sys#check-exact pgid 'set-process-group-id!)
+     (when (fx< (##core#inline "C_setpgid" pid pgid) 0)
+       (##sys#update-errno)
+       (##sys#error 'set-process-group-id! "cannot set process group ID" pid pgid) ) ) ) )
+
 
 ;;; Hard and symbolic links:
 
@@ -1874,6 +1849,7 @@ EOF
           (fx= 3 (##sys#slot v 4))
           (posix-error #:file-error 'fifo? "file does not exist" filename) ) ) ) )
 
+
 ;;; Environment access:
 
 (define setenv
@@ -1888,7 +1864,7 @@ EOF
   (##core#inline "C_putenv" (##sys#make-c-string var))
   (##core#undefined) )
 
-(define current-environment
+(define get-environment-variables
   (let ([get (foreign-lambda c-string "C_getenventry" int)])
     (lambda ()
       (let loop ([i 0])
@@ -1901,6 +1877,9 @@ EOF
                           (loop (fx+ i 1)))
                     (scan (fx+ j 1)) ) )
               '() ) ) ) ) ) )
+
+(define current-environment get-environment-variables) ; DEPRECATED
+
 
 ;;; Memory mapped I/O:
 

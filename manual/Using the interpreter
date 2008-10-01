@@ -47,6 +47,8 @@ The options recognized by the interpreter are:
 
 ; -s  -script PATHNAME : This is equivalent to {{-batch -quiet -no-init PATHNAME}}. Arguments following {{PATHNAME}} are available by using  {{command-line-arguments}} and are not processed as interpreter options. Extra options in the environment variable {{CSI_OPTIONS}} are ignored.
 
+; -sx PATHNAME : The same as {{-s PATHNAME}} but prints each expression to {{(current-error-port)}} before it is evaluated.
+
 ; -ss PATHNAME : The same as {{-s PATHNAME}} but invokes the procedure {{main}} with the value of {{(command-line-arguments)}} as its single argument. If the main procedure returns an integer result, then the interpreter is terminated, returning the integer as the status code back to the invoking process. Any other result terminates the interpreter with a zero exit status.
 
 ; -R  -require-extension NAME : Equivalent to evaluating {{(require-extension NAME)}}.
@@ -206,7 +208,9 @@ with a record-type object that has the type {{TAG}} (a symbol). {{PROC}} is call
 two arguments: the object to be described and an output-port. It should write a possibly useful
 textual description of the object to the passed output-port. For example:
 
- #;1> (define-record point x y)
+ #;1> (define-record-type point (make-point x y) point?
+        (x point-x)
+	(y point-y))
  #;2> (set-describer! 'point 
         (lambda (pt o)
           (print "a point with x=" (point-x pt) " and y=" (point-y pt))))

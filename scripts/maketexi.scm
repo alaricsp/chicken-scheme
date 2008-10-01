@@ -4,7 +4,6 @@
 
 (require-extension syntax-case)
 (require-extension srfi-1)
-(require-extension srfi-69)
 (require-extension posix)
 (require-extension utils)
 (require-extension srfi-40)
@@ -14,14 +13,13 @@
 
 (define extensions (make-hash-table))
 
-(load-extensions-from-file extensions (or (file-exists? "enscript-texinfo.scm")
-					  (file-exists? "scripts/enscript-texinfo.scm")))
+(load-extensions-from-file extensions "enscript-texinfo.scm")
 
-(define wikipath (optional (command-line-arguments) "manual"))
+(define wikipath (optional (command-line-arguments) "chicken-manual"))
 
 (define file-list (map (lambda (x) (make-pathname wikipath x))
 		       (list "The User's Manual"
-			     "Getting started"
+			     "Overview"
 			     "Basic mode of operation"
 			     "Using the compiler"
 			     "Using the interpreter"
@@ -30,21 +28,19 @@
 			     "Extensions to the standard"
 			     "Non-standard read syntax"
 			     "Non-standard macros and special forms"
-			     "Pattern matching"
+			     "Modules and macros"
 			     "Declarations"
 			     "Parameters"
 			     "Unit library"
 			     "Unit eval"
+			     "Unit expand"
+			     "Unit extras"
 			     "Unit data-structures"
 			     "Unit ports"
-			     "Unit files"
-			     "Unit extras"
 			     "Unit srfi-1"
 			     "Unit srfi-4"
 			     "Unit srfi-13"
 			     "Unit srfi-14"
-			     "Unit srfi-69"
-			     "Unit match"
 			     "Unit regex"
 			     "Unit srfi-18"
 			     "Unit posix"

@@ -25,13 +25,12 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(declare (uses match srfi-69 ports))
-
 (declare
-  (usual-integrations)
+  (uses srfi-69 ports)			; is here because a bootstrap from an older chicken may not make
+  (usual-integrations)			;  this used automatically
   (disable-interrupts)
   (disable-warning var)
-  (run-time-macros)
+  (run-time-macros)			;*** later: compile-syntax
   (foreign-declare #<<EOF
 #if (defined(_MSC_VER) && defined(_WIN32)) || defined(HAVE_DIRECT_H)
 # include <direct.h>
@@ -73,7 +72,7 @@ EOF
 
 (define (print-usage)
   (display
-"Usage: csi {FILENAME | OPTION}
+"usage: csi [FILENAME | OPTION ...]
 
   where OPTION may be one of the following:
 
@@ -95,13 +94,32 @@ EOF
     -k  -keyword-style STYLE    enable alternative keyword-syntax (none, prefix or suffix)
     -s  -script PATHNAME        use interpreter for shell scripts
         -ss PATHNAME            shell script with `main' procedure
-    -R  -require-extension NAME require extension before executing code
+        -sx PATHNAME            same as `-s', but print each expression as it is evaluated
+    -R  -require-extension NAME require extension and import before executing code
     -I  -include-path PATHNAME  add PATHNAME to include path
     --                          ignore all following options
 
 ") )
 
 (define (print-banner)
+  (newline)
+  (when (and (tty-input?) (##sys#fudge 11))
+    (let* ((t (string-copy +product+))
+	   (len (string-length t))
+	   (c (make-string len #\x08)))
+      (do ((i (sub1 (* 2 len)) (sub1 i)))
+	  ((zero? i))
+	(let* ((p (abs (- i len)))
+	       (o (string-ref t p)))
+	  (string-set! t p #\@)
+	  (print* t)
+	  (string-set! t p o)
+	  (let ((t0 (+ (current-milliseconds) 30)))
+	    (let loop ()		; crude, but doesn't need srfi-18
+	      (when (< (current-milliseconds) t0)
+		(loop))))
+	  (print* c) ) ) ) )
+  (print +product+)
   (print +banner+ (chicken-version #t) "\n") )
 
 
@@ -208,29 +226,25 @@ EOF
     (lambda ()
       (when (tty-input?) (old)) ) ) )
 
-(define command-table (make-hash-table eq?))
+(define command-table (make-vector 37 '()))
 
-(define toplevel-command
-  (let ((hash-table-set! hash-table-set!))
-    (lambda (name proc #!optional help)
-      (##sys#check-symbol name 'toplevel-command)
-      (when help (##sys#check-string help 'toplevel-command))
-      (hash-table-set! command-table name (cons proc help)) ) ) )
+(define (toplevel-command name proc #!optional help)
+  (##sys#check-symbol name 'toplevel-command)
+  (when help (##sys#check-string help 'toplevel-command))
+  (##sys#hash-table-set! command-table name (cons proc help)) )
 
 (set! ##sys#repl-eval-hook
-  ;; `macroexpand' is intentionally not shadowed (psyntax redefines it).
   (let ((eval eval)
 	(load-noisily load-noisily)
 	(read read)
 	(singlestep singlestep)
-	(hash-table-ref hash-table-ref)
-	(hash-table-walk hash-table-walk)
 	(read-line read-line)
 	(length length)
 	(display display)
 	(write write)
 	(string-split string-split)
 	(printf printf)
+	(expand expand)
 	(pretty-print pretty-print)
 	(integer? integer?)
 	(values values) )
@@ -240,7 +254,7 @@ EOF
 	    ((and (pair? form)
 		  (eq? 'unquote (##sys#slot form 0)) )
 	     (let ((cmd (cadr form)))
-	       (cond ((and (symbol? cmd) (hash-table-ref/default command-table cmd #f)) =>
+	       (cond ((and (symbol? cmd) (##sys#hash-table-ref command-table cmd)) =>
 		      (lambda (p)
 			((car p))
 			(##sys#void) ) )
@@ -248,7 +262,7 @@ EOF
 		      (case cmd
 			((x)
 			 (let ([x (read)])
-			   (pretty-print (macroexpand x))
+			   (pretty-print (##sys#strip-syntax (expand x)))
 			   (##sys#void) ) )
 			((p)
 			 (let* ([x (read)]
@@ -343,14 +357,14 @@ EOF
  ,step EXPR        Execute EXPR in single-stepping mode
  ,exn              Describe last exception
  ,t EXP            Evaluate form and print elapsed time
- ,x EXP            Pretty print macroexpanded expression EXP\n")
-			 (hash-table-walk
-			  command-table
+ ,x EXP            Pretty print expanded expression EXP\n")
+			 (##sys#hash-table-for-each
 			  (lambda (k v) 
 			    (let ((help (cdr v)))
 			      (if help
 				  (print #\space help)
-				  (print " ," k) ) ) ) )
+				  (print " ," k) ) ) )
+			  command-table)
 			 (##sys#void) )
 			(else
 			 (printf "Undefined toplevel command ~s - enter `,?' for help~%" form) 
@@ -411,7 +425,7 @@ EOF
 	(for-each (lambda (a) (print (car a))) traced-procedures) 
 	(for-each
 	 (lambda (s)
-	   (let ((s (macroexpand s)))
+	   (let ((s (expand s)))
 	     (cond ((assq s traced-procedures)
 		    (##sys#warn "procedure already traced" s) )
 		   ((assq s broken-procedures)
@@ -435,7 +449,7 @@ EOF
   (lambda (names)
     (for-each
      (lambda (s)
-       (let* ((s (macroexpand s))
+       (let* ((s (expand s))
 	      (p (assq s traced-procedures)) )
 	 (cond ((not p) (##sys#warn "procedure not traced" s))
 	       (else
@@ -449,7 +463,7 @@ EOF
 	(for-each (lambda (b) (print (car a))) broken-procedures) 
 	(for-each
 	 (lambda (s)
-	   (let* ((s (macroexpand s))
+	   (let* ((s (expand s))
 		  (a (assq s traced-procedures)))
 	     (when a
 	       (##sys#warn "un-tracing procedure" s)
@@ -470,7 +484,7 @@ EOF
   (lambda (names)
     (for-each
      (lambda (s)
-       (let* ((s (macroexpand s))
+       (let* ((s (expand s))
 	      (p (assq s broken-procedures)) )
 	 (cond ((not p) (##sys#warn "procedure has no breakpoint" s))
 	       (else
@@ -534,7 +548,7 @@ EOF
                    Include path:    \t~A~%~
                    Symbol-table load:\t~S~%  ~
                      Avg bucket length:\t~S~%  ~
-                     Total symbols:\t~S~%~
+                     Total symbol count:\t~S~%~
                    Memory:\theap size is ~S bytes~A with ~S bytes currently in use~%~  
                      nursery size is ~S bytes, stack grows ~A~%"
 		    (machine-type)
@@ -571,7 +585,7 @@ EOF
 
 (define-constant max-describe-lines 40)
 
-(define describer-table (make-hash-table eq?))
+(define describer-table (make-vector 37 '()))
 
 (define describe
   (let ([sprintf sprintf]
@@ -579,137 +593,144 @@ EOF
 	[fprintf fprintf]
 	[length length]
 	[list-ref list-ref]
-	[string-ref string-ref]
-	(hash-table-ref/default hash-table-ref/default)
-	[hash-table-walk hash-table-walk] )
-    (lambda (x . port)
-      (let ([out (:optional port ##sys#standard-output)])
+	[string-ref string-ref])
+    (lambda (x #!optional (out ##sys#standard-output))
+      (define (descseq name plen pref start)
+	(let ((len (fx- (plen x) start)))
+	  (when name (fprintf out "~A of length ~S~%" name len))
+	  (let loop1 ((i 0))
+	    (cond ((fx>= i len))
+		  ((fx>= i max-describe-lines)
+		   (fprintf out "~% (~A elements not displayed)~%" (fx- len i)) )
+		  (else
+		   (let ((v (pref x (fx+ start i))))
+		     (let loop2 ((n 1) (j (fx+ i (fx+ start 1))))
+		       (cond ((fx>= j len)
+			      (fprintf out " ~S: ~S" i v)
+			      (if (fx> n 1)
+				  (fprintf out "\t(followed by ~A identical instance~a)~% ...~%" 
+					   (fx- n 1)
+					   (if (eq? n 2) "" "s"))
+				  (newline out) )
+			      (loop1 (fx+ i n)) )
+			     ((eq? v (pref x j)) (loop2 (fx+ n 1) (fx+ j 1)))
+			     (else (loop2 n len)) ) ) ) ) ) ) ) )
+      (when (##sys#permanent? x)
+	(fprintf out "statically allocated (0x~X) " (##sys#block-address x)) )
+      (cond [(char? x)
+	     (let ([code (char->integer x)])
+	       (fprintf out "character ~S, code: ~S, #x~X, #o~O~%" x code code code) ) ]
+	    [(eq? x #t) (fprintf out "boolean true~%")]
+	    [(eq? x #f) (fprintf out "boolean false~%")]
+	    [(null? x) (fprintf out "empty list~%")]
+	    [(eof-object? x) (fprintf out "end-of-file object~%")]
+	    [(eq? (##sys#void) x) (fprintf out "unspecified object~%")]
+	    [(fixnum? x)
+	     (fprintf out "exact integer ~S, #x~X, #o~O, #b~B" x x x x)
+	     (let ([code (integer->char x)])
+	       (when (fx< code #x10000) (fprintf out ", character ~S" code)) )
+	     (##sys#write-char-0 #\newline ##sys#standard-output) ]
+	    [(eq? x (##sys#slot '##sys#arbitrary-unbound-symbol 0))
+	     (fprintf out "unbound value~%") ]
+	    [(##sys#number? x) (fprintf out "number ~S~%" x)]
+	    [(string? x) (descseq "string" ##sys#size string-ref 0)]
+	    [(vector? x) (descseq "vector" ##sys#size ##sys#slot 0)]
+	    [(symbol? x)
+	     (unless (##sys#symbol-has-toplevel-binding? x) (display "unbound " out))
+	     (when (and (symbol? x) (fx= 0 (##sys#byte (##sys#slot x 1) 0)))
+	       (display "keyword " out) )
+	     (fprintf out "~asymbol with name ~S~%"
+		      (if (##sys#interned-symbol? x) "" "uninterned ")
+		      (##sys#symbol->string x))
+	     (let ((plist (##sys#slot x 2)))
+	       (unless (null? plist)
+		 (display "  \nproperties:\n\n" out)
+		 (do ((plist plist (cddr plist)))
+		     ((null? plist))
+		   (fprintf out "  ~s\t" (car plist))
+		   (##sys#with-print-length-limit
+		    1000
+		    (lambda ()
+		      (write (cadr plist) out) ) )
+		   (newline out) ) ) ) ]
+	    [(list? x) (descseq "list" length list-ref 0)]
+	    [(pair? x) (fprintf out "pair with car ~S and cdr ~S~%" (car x) (cdr x))]
+	    [(procedure? x)
+	     (let ([len (##sys#size x)])
+	       (if (and (> len 3)
+			(memq #:tinyclos ##sys#features)
+			(eq? ##tinyclos#entity-tag (##sys#slot x (fx- len 1))) ) ;XXX handle this in tinyclos egg (difficult)
+		   (describe-object x out)
+		   (descseq 
+		    (sprintf "procedure with code pointer ~X" (##sys#peek-unsigned-integer x 0))
+		    ##sys#size ##sys#slot 1) ) ) ]
+	    [(port? x)
+	     (fprintf out
+		      "~A port of type ~A with name ~S and file pointer ~X~%"
+		      (if (##sys#slot x 1) "input" "output")
+		      (##sys#slot x 7)
+		      (##sys#slot x 3)
+		      (##sys#peek-unsigned-integer x 0) ) ]
+	    [(and (memq #:tinyclos ##sys#features) (instance? x)) ; XXX put into tinyclos egg
+	     (describe-object x out) ]
+	    [(##sys#locative? x)
+	     (fprintf out "locative~%  pointer ~X~%  index ~A~%  type ~A~%"
+		      (##sys#peek-unsigned-integer x 0)
+		      (##sys#slot x 1)
+		      (case (##sys#slot x 2) 
+			[(0) "slot"]
+			[(1) "char"]
+			[(2) "u8vector"]
+			[(3) "s8vector"]
+			[(4) "u16vector"]
+			[(5) "s16vector"]
+			[(6) "u32vector"]
+			[(7) "s32vector"]
+			[(8) "f32vector"]
+			[(9) "f64vector"] ) ) ]
+	    [(##sys#pointer? x) (fprintf out "machine pointer ~X~%" (##sys#peek-unsigned-integer x 0))]
+	    [(##sys#bytevector? x)
+	     (let ([len (##sys#size x)])
+	       (fprintf out "blob of size ~S:~%" len)
+	       (hexdump x len ##sys#byte out) ) ]
+	    [(##core#inline "C_lambdainfop" x)
+	     (fprintf out "lambda information: ~s~%" (##sys#lambda-info->string x)) ]
+	    [(##sys#structure? x 'hash-table)
+	     (let ((n (##sys#slot x 2)))
+	       (fprintf out "hash-table with ~S element~a~%  comparison procedure: ~A~%"
+			n (if (fx= n 1) "" "s")  (##sys#slot x 3)) )
+	     (fprintf out "  hash function: ~a~%" (##sys#slot x 4))
+	     (hash-table-walk		; blindly assumes it is bound
+	      x
+	      (lambda (k v) (fprintf out " ~S\t-> ~S~%" k v)) ) ]
+	    [(##sys#structure? x 'condition)
+	     (fprintf out "condition: ~s~%" (##sys#slot x 1))
+	     (for-each
+	      (lambda (k)
+		(fprintf out " ~s~%" k)
+		(let loop ((props (##sys#slot x 2)))
+		  (unless (null? props)
+		    (when (eq? k (caar props))
+		      (fprintf out "\t~s: ~s~%" (cdar props) (cadr props)) )
+		    (loop (cddr props)) ) ) )
+	      (##sys#slot x 1) ) ]
+	    [(and (##sys#structure? x 'meroon-instance) (provided? 'meroon)) ; XXX put this into meroon egg (really!)
+	     (unveil x out) ]
+	    [(##sys#generic-structure? x)
+	     (let ([st (##sys#slot x 0)])
+	       (cond ((##sys#hash-table-ref describer-table st) => (cut <> x out))
+		     ((assq st bytevector-data) =>
+		      (lambda (data)
+			(apply descseq (append (map eval (cdr data)) (list 0)))) )
+		     (else
+		      (fprintf out "structure of type `~S':~%" (##sys#slot x 0))
+		      (descseq #f ##sys#size ##sys#slot 1) ) ) ) ]
+	    [else (fprintf out "unknown object~%")] )
+      (##sys#void) ) ) )
 
-	(define (descseq name plen pref start)
-	  (let ((len (fx- (plen x) start)))
-	    (when name (fprintf out "~A of length ~S~%" name len))
-	    (let loop1 ((i 0))
-	      (cond ((fx>= i len))
-		    ((fx>= i max-describe-lines)
-		     (fprintf out "~% (~A elements not displayed)~%" (fx- len i)) )
-		    (else
-		     (let ((v (pref x (fx+ start i))))
-		       (let loop2 ((n 1) (j (fx+ i (fx+ start 1))))
-			 (cond ((fx>= j len)
-				(fprintf out " ~S: ~S" i v)
-				(if (fx> n 1)
-				    (fprintf out "\t(followed by ~A identical instance~a)~% ...~%" 
-					     (fx- n 1)
-					     (if (eq? n 2) "" "s"))
-				    (newline out) )
-				(loop1 (fx+ i n)) )
-			       ((eq? v (pref x j)) (loop2 (fx+ n 1) (fx+ j 1)))
-			       (else (loop2 n len)) ) ) ) ) ) ) ) )
-
-	(when (##sys#permanent? x)
-	  (fprintf out "statically allocated (0x~X) " (##sys#block-address x)) )
-	(cond [(char? x)
-	       (let ([code (char->integer x)])
-		 (fprintf out "character ~S, code: ~S, #x~X, #o~O~%" x code code code) ) ]
-	      [(eq? x #t) (fprintf out "boolean true~%")]
-	      [(eq? x #f) (fprintf out "boolean false~%")]
-	      [(null? x) (fprintf out "empty list~%")]
-	      [(eof-object? x) (fprintf out "end-of-file object~%")]
-	      [(eq? (##sys#void) x) (fprintf out "unspecified object~%")]
-	      [(fixnum? x)
-	       (fprintf out "exact integer ~S, #x~X, #o~O, #b~B" x x x x)
-	       (let ([code (integer->char x)])
-		 (when (fx< code #x10000) (fprintf out ", character ~S" code)) )
-	       (##sys#write-char-0 #\newline ##sys#standard-output) ]
-	      [(eq? x (##sys#slot '##sys#arbitrary-unbound-symbol 0))
-	       (fprintf out "unbound value~%") ]
-	      [(##sys#number? x) (fprintf out "number ~S~%" x)]
-	      [(string? x) (descseq "string" ##sys#size string-ref 0)]
-	      [(vector? x) (descseq "vector" ##sys#size ##sys#slot 0)]
-	      [(symbol? x)
-	       (unless (##sys#symbol-has-toplevel-binding? x) (display "unbound " out))
-	       (when (and (symbol? x) (fx= 0 (##sys#byte (##sys#slot x 1) 0)))
-		 (display "keyword " out) )
-	       (fprintf out "symbol with name ~S~%" (##sys#symbol->string x)) ]
-	      [(list? x) (descseq "list" length list-ref 0)]
-	      [(pair? x) (fprintf out "pair with car ~S and cdr ~S~%" (car x) (cdr x))]
-	      [(procedure? x)
-	       (let ([len (##sys#size x)])
-		 (if (and (> len 3)
-			  (memq #:tinyclos ##sys#features)
-			  (eq? ##tinyclos#entity-tag (##sys#slot x (fx- len 1))) ) ;XXX handle this in tinyclos egg (difficult)
-		     (describe-object x out)
-		     (descseq 
-		      (sprintf "procedure with code pointer ~X" (##sys#peek-unsigned-integer x 0))
-		      ##sys#size ##sys#slot 1) ) ) ]
-	      [(port? x)
-	       (fprintf out
-			"~A port of type ~A with name ~S and file pointer ~X~%"
-			(if (##sys#slot x 1) "input" "output")
-			(##sys#slot x 7)
-			(##sys#slot x 3)
-			(##sys#peek-unsigned-integer x 0) ) ]
-	      [(and (memq #:tinyclos ##sys#features) (instance? x)) ; XXX put into tinyclos egg
-	       (describe-object x out) ]
-	      [(##sys#locative? x)
-	       (fprintf out "locative~%  pointer ~X~%  index ~A~%  type ~A~%"
-			(##sys#peek-unsigned-integer x 0)
-			(##sys#slot x 1)
-			(case (##sys#slot x 2) 
-			  [(0) "slot"]
-			  [(1) "char"]
-			  [(2) "u8vector"]
-			  [(3) "s8vector"]
-			  [(4) "u16vector"]
-			  [(5) "s16vector"]
-			  [(6) "u32vector"]
-			  [(7) "s32vector"]
-			  [(8) "f32vector"]
-			  [(9) "f64vector"] ) ) ]
-	      [(##sys#pointer? x) (fprintf out "machine pointer ~X~%" (##sys#peek-unsigned-integer x 0))]
-	      [(##sys#bytevector? x)
-	       (let ([len (##sys#size x)])
-		 (fprintf out "blob of size ~S:~%" len)
-		 (hexdump x len ##sys#byte out) ) ]
-	      [(##core#inline "C_lambdainfop" x)
-	       (fprintf out "lambda information: ~s~%" (##sys#lambda-info->string x)) ]
-	      [(##sys#structure? x 'hash-table)
-	       (let ((n (##sys#slot x 2)))
-		 (fprintf out "hash-table with ~S element~a~%  comparison procedure: ~A~%"
-			  n (if (fx= n 1) "" "s")  (##sys#slot x 3)) )
-	       (fprintf out "  hash function: ~a~%" (##sys#slot x 4))
-	       (hash-table-walk
-		x
-		(lambda (k v) (fprintf out " ~S\t-> ~S~%" k v)) ) ]
-	      [(##sys#structure? x 'condition)
-	       (fprintf out "condition: ~s~%" (##sys#slot x 1))
-	       (for-each
-		(lambda (k)
-		  (fprintf out " ~s~%" k)
-		  (let loop ((props (##sys#slot x 2)))
-		    (unless (null? props)
-		      (when (eq? k (caar props))
-			(fprintf out "\t~s: ~s~%" (cdar props) (cadr props)) )
-		      (loop (cddr props)) ) ) )
-		(##sys#slot x 1) ) ]
-	      [(and (##sys#structure? x 'meroon-instance) (provided? 'meroon)) ; XXX put this into meroon egg (really!)
-	       (unveil x out) ]
-	      [(##sys#generic-structure? x)
-	       (let ([st (##sys#slot x 0)])
-		 (cond ((hash-table-ref/default describer-table st #f) => (cut <> x out))
-		       ((assq st bytevector-data) =>
-			(lambda (data)
-			  (apply descseq (append (map eval (cdr data)) (list 0)))) )
-		       (else
-			(fprintf out "structure of type `~S':~%" (##sys#slot x 0))
-			(descseq #f ##sys#size ##sys#slot 1) ) ) ) ]
-	      [else (fprintf out "unknown object~%")] )
-	(##sys#void) ) ) ) )
-
-(define set-describer!
-  (let ((hash-table-set! hash-table-set!))
-    (lambda (tag proc)
-      (hash-table-set! describer-table tag proc) ) ) )
+(define (set-describer! tag proc)
+  (##sys#check-symbol tag 'symbol 'set-describer!)
+  (##sys#hash-table-set! describer-table tag proc) )
 
 
 ;;; Display hexdump:
@@ -773,7 +794,7 @@ EOF
 ;;; Start interpreting:
 
 (define (deldups lis . maybe-=)
-  (let ((elt= (:optional maybe-= equal?)))
+  (let ((elt= (optional maybe-= equal?)))
     (let recur ((lis lis))
       (if (null? lis) lis
 	  (let* ((x (car lis))
@@ -796,7 +817,7 @@ EOF
   '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" 
     "-eval" "-case-insensitive"
     "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
-    "-include-path" "-release" "-ss"
+    "-include-path" "-release" "-ss" "-sx"
     "-print" "-pretty-print") )
 
 (define (canonicalize-args args)
@@ -827,7 +848,7 @@ EOF
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (command-line-arguments))]
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
-	 [script (member* '("-s" "-ss" "-script") args)])
+	 [script (member* '("-s" "-ss" "-sx" "-script") args)])
     (cond [script
 	   (when (or (not (pair? (cdr script)))
 		     (zero? (string-length (cadr script)))
@@ -899,8 +920,6 @@ EOF
 		 ##sys#include-pathnames
 		 ipath)
 	 string=?) )
-      (set! ##sys#features (cons #:match ##sys#features))
-      (provide 'match)
       (when kwstyle
 	(cond [(not (pair? (cdr kwstyle)))
 	       (##sys#error "missing argument to `-keyword-style' option") ]
@@ -922,12 +941,12 @@ EOF
 		  arg 
 		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script"
 		    "-b" "-q" "-n" "-w" "-s" "-i"
-		    "-case-insensitive" "-ss") ) )
+		    "-case-insensitive" "-ss" "-sx") ) )
 		((member arg '("-feature" "-include-path" "-keyword-style" 
 			       "-D" "-I" "-k"))
 		 (set! args (cdr args)) )
 		((or (string=? "-R" arg) (string=? "-require-extension" arg))
-		 (eval `(##core#require-extension ',(string->symbol (cadr args))))
+		 (eval `(##core#require-extension (,(string->symbol (cadr args))) #t))
 		 (set! args (cdr args)) )
 		((or (string=? "-e" arg) (string=? "-eval" arg))
 		 (evalstring (cadr args))
@@ -943,13 +962,21 @@ EOF
 		  (cut for-each pretty-print <...>) )
 		 (set! args (cdr args)) )
 		(else
-		 (load arg) 
-		 (when (and script (string=? "-ss" (car script)))
-		   (call-with-values (cut main (command-line-arguments))
-		     (lambda results
-		       (exit
-			(if (and (pair? results) (fixnum? (car results)))
-			    (car results)
-			    0) ) ) ) ) ) ) ) ) ) ) )
+		 (let ((scr (and script (car script))))
+		   (##sys#load 
+		    arg 
+		    (and (equal? "-sx" scr)
+			 (lambda (x)
+			   (pretty-print x ##sys#standard-error)
+			   (newline ##sys#standard-error)
+			   (eval x)))
+		    #f)
+		   (when (equal? scr "-ss")
+		     (call-with-values (cut main (command-line-arguments))
+		       (lambda results
+			 (exit
+			  (if (and (pair? results) (fixnum? (car results)))
+			      (car results)
+			      0) ) ) ) ) ) ) ) ) ) ) ) )
 
 (run)

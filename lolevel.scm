@@ -61,24 +61,7 @@ EOF
      extend-procedure ##sys#lambda-decoration ##sys#decorate-lambda ##sys#make-tagged-pointer ##sys#check-special
      ##sys#vector->closure! ##sys#error ##sys#signal-hook ##sys#address->pointer ##sys#pointer->address) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-pointer . _) '(##core#undefined))
-    (define-macro (##sys#check-special . _) '(##core#undefined))
-    (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "lolevel.exports"))] )
+(include "unsafe-declarations.scm")
 
 (register-feature! 'lolevel)
 
@@ -292,130 +275,6 @@ EOF
 	(if (eq? p2 proc)
 	    proc
 	    (##sys#signal-hook #:type-error 'set-procedure-data! "bad argument type - not an extended procedure" proc) ) ) ) ) )
-
-
-;;; Bytevector stuff:
-
-(define byte-vector? blob?)		; DEPRECATED
-
-(define (byte-vector-fill! bv n)	; DEPRECATED
-  (##sys#check-byte-vector bv 'byte-vector-fill!)
-  (##sys#check-exact n 'byte-vector-fill!)
-  (let ([len (##sys#size bv)])
-    (do ([i 0 (fx+ i 1)])
-	((fx>= i len))
-      (##sys#setbyte bv i n) ) ) )
-
-(define make-byte-vector		; DEPRECATED
-    (lambda (size . init)
-      (let ([bv (make-blob size)])
-	(when (pair? init) (byte-vector-fill! bv (car init)))
-	bv) ) )
-
-(define byte-vector			; DEPRECATED
-    (lambda bytes
-      (let* ([n (length bytes)]
-	     [bv (make-byte-vector n)] )
-	(do ([i 0 (fx+ i 1)]
-	     [bytes bytes (##sys#slot bytes 1)] )
-	    ((fx>= i n) bv)
-	  (##sys#setbyte bv i (##sys#slot bytes 0)) ) ) ) )
-
-(define byte-vector-set!		; DEPRECATED
-  (lambda (bv i x)
-    (##sys#check-byte-vector bv 'byte-vector-set!)
-    (##sys#check-exact i 'byte-vector-set!)
-    (##sys#check-exact x 'byte-vector-set!)
-    (let ([n (##sys#size bv)])
-      (if (or (fx< i 0) (fx>= i n))
-	  (##sys#error 'byte-vector-set! "out of range" bv i)
-	  (##sys#setbyte bv i x) ) ) ) )
-
-(define byte-vector-ref			; DEPRECATED
-  (getter-with-setter
-   (lambda (bv i)
-     (##sys#check-byte-vector bv 'byte-vector-ref)
-     (##sys#check-exact i 'byte-vector-ref)
-     (let ([n (##sys#size bv)])
-       (if (or (fx< i 0) (fx>= i n))
-	   (##sys#error 'byte-vector-ref "out of range" bv i)
-	   (##sys#byte bv i) ) ) )
-   byte-vector-set!) )
-
-(define (byte-vector->list bv)		; DEPRECATED
-  (##sys#check-byte-vector bv 'byte-vector->list)
-  (let ([len (##sys#size bv)])
-    (let loop ([i 0])
-      (if (fx>= i len)
-	  '()
-	  (cons (##sys#byte bv i) 
-		(loop (fx+ i 1)) ) ) ) ) )
-
-(define list->byte-vector		; DEPRECATED
-    (lambda (lst)
-      (##sys#check-list lst 'list->byte-vector)
-      (let* ([n (length lst)]
-	     [v (make-byte-vector n)] )
-	(do ([p lst (##sys#slot p 1)]
-	     [i 0 (fx+ i 1)] )
-	    ((eq? p '()) v)
-	  (if (pair? p)
-	      (let ([b (##sys#slot p 0)])
-		(##sys#check-exact b 'list->byte-vector)
-		(##sys#setbyte v i b) )
-	      (##sys#not-a-proper-list-error lst) ) ) ) ) )
-
-(define string->byte-vector string->blob) ; DEPRECATED
-
-(define byte-vector->string blob->string) ; DEPRECATED
-
-(define byte-vector-length blob-size) ; DEPRECATED
-
-(define-foreign-variable _c_header_size_mask int "C_HEADER_SIZE_MASK")
-
-(let ([malloc
-       (foreign-lambda* scheme-object ((int size))
-	 "char *bv;
-           if((bv = (char *)C_malloc(size + 3 + sizeof(C_header))) == NULL) return(C_SCHEME_FALSE);
-           bv = (char *)C_align((C_word)bv);
-           ((C_SCHEME_BLOCK *)bv)->header = C_BYTEVECTOR_TYPE | size;
-           return((C_word)bv);") ] )
-  (define (make size init alloc loc)
-    (##sys#check-exact size loc)
-    (if (fx> size _c_header_size_mask)
-	(##sys#signal-hook #:bounds-error loc "out of range" size _c_header_size_mask)
-	(let ([bv (alloc size)])
-	  (cond [bv
-		 (when (pair? init) (byte-vector-fill! bv (##sys#slot init 0)))
-		 bv]
-		[else (##sys#signal-hook #:runtime-error "can not allocate statically allocated bytevector" size)] ) ) ) )
-  (set! make-static-byte-vector 	; DEPRECATED
-    (lambda (size . init) (make size init malloc 'make-static-byte-vector))))
-
-(define static-byte-vector->pointer 		; DEPRECATED
-  (lambda (bv)
-    (##sys#check-byte-vector bv 'static-byte-vector->pointer)
-    (if (##core#inline "C_permanentp" bv)
-	(let ([p (##sys#make-pointer)])
-	  (##core#inline "C_pointer_to_block" p bv)
-	  p)
-	(##sys#error 'static-byte-vector->pointer "can not coerce non-static blob" bv) ) ) )
-
-(define (byte-vector-move! src src-start src-end dst dst-start) ; DEPRECATED
-  (let ((from (make-locative src src-start))
-        (to   (make-locative dst dst-start)) )
-    (move-memory! from to (- src-end src-start)) ) )
-
-(define (byte-vector-append . vectors)		; DEPRECATED
-  (define (append-rest-at i vectors)
-    (if (pair? vectors)
-        (let* ((src (car vectors))
-               (len (byte-vector-length src))
-               (dst (append-rest-at (+ i len) (cdr vectors))) )
-          (byte-vector-move! src 0 len dst i)
-          dst )
-        (make-byte-vector i) ) )
-  (append-rest-at 0 vectors) )
 
 
 ;;; Accessors for arbitrary block objects:
@@ -655,10 +514,10 @@ EOF
 ;;; locatives:
 
 (define (make-locative obj . index)
-  (##sys#make-locative obj (:optional index 0) #f 'make-locative) )
+  (##sys#make-locative obj (optional index 0) #f 'make-locative) )
 
 (define (make-weak-locative obj . index)
-  (##sys#make-locative obj (:optional index 0) #t 'make-weak-locative) )
+  (##sys#make-locative obj (optional index 0) #t 'make-weak-locative) )
 
 (define (locative-set! x y) (##core#inline "C_i_locative_set" x y))
 (define locative-ref (getter-with-setter (##core#primitive "C_locative_ref") locative-set!))

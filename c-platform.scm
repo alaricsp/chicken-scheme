@@ -34,7 +34,7 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home debugging
-  dump-nodes
+  dump-nodes unlikely-variables
   unit-name insert-timer-checks used-units inlining
   foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size 
@@ -77,7 +77,7 @@
      ##sys#standard-input ##sys#standard-output ##sys#standard-error)
     (bound-to-procedure
      ##sys#for-each ##sys#map ##sys#print ##sys#setter
-     ##sys#setslot ##sys#dynamic-wind ##sys#call-with-values ##sys#match-error
+     ##sys#setslot ##sys#dynamic-wind ##sys#call-with-values
      ##sys#start-timer ##sys#stop-timer ##sys#gcd ##sys#lcm ##sys#make-promise ##sys#structure? ##sys#slot 
      ##sys#allocate-vector ##sys#list->vector ##sys#block-ref ##sys#block-set!
      ##sys#list ##sys#cons ##sys#append ##sys#vector ##sys#foreign-char-argument ##sys#foreign-fixnum-argument
@@ -103,6 +103,7 @@
 (define words-per-flonum 4)
 (define parameter-limit 1024)
 (define small-parameter-limit 128)
+(define unlikely-variables '(unquote unquote-splicing))
 
 (define eq-inline-operator "C_eqp")
 (define optimizable-rest-argument-operators '(car cadr caddr cadddr length pair? null? list-ref))
@@ -117,7 +118,7 @@
     check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
     profile inline keep-shadowed-macros
     fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
-    lambda-lift run-time-macros tag-pointers accumulate-profile
+    lambda-lift compile-syntax tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first release disable-compiler-macros
     analyze-only dynamic extension) )
@@ -127,6 +128,7 @@
 	  inline-limit profile-name disable-warning emit-exports import
     prelude postlude prologue epilogue nursery extend feature 
     compress-literals			; DEPRECATED
+    emit-import-library
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 
@@ -158,9 +160,6 @@
     fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl bit-set?
     arithmetic-shift void flush-output thread-specific thread-specific-set!
     not-pair? atom? null-list? print print* error cpu-time proper-list? call/cc
-    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector ; DEPRECATED
-    u32vector->byte-vector s32vector->byte-vector byte-vector-length ; DEPRECATED
-    f32vector->byte-vector f64vector->byte-vector byte-vector-ref byte-vector-set! ; DEPRECATED
     blob-size u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared
     s16vector->blob/shared u32vector->blob/shared s32vector->blob/shared
     f32vector->blob/shared f64vector->blob/shared
@@ -187,7 +186,8 @@
     ##sys#call-with-values ##sys#fits-in-int? ##sys#fits-in-unsigned-int? ##sys#flonum-in-fixnum-range? 
     ##sys#fudge ##sys#immediate? ##sys#direct-return ##sys#context-switch
     ##sys#make-structure ##sys#apply ##sys#apply-values ##sys#continuation-graft
-    ##sys#bytevector? ##sys#make-vector ##sys#setter
+    ##sys#bytevector? ##sys#make-vector ##sys#setter ##sys#car ##sys#cdr ##sys#pair?
+    ##sys#eq? ##sys#list? ##sys#vector? ##sys#eqv?
     ##sys#foreign-char-argument ##sys#foreign-fixnum-argument ##sys#foreign-flonum-argument
     ##sys#foreign-block-argument ##sys#foreign-number-vector-argument
     ##sys#foreign-string-argument ##sys#foreign-pointer-argument ##sys#void
@@ -213,14 +213,11 @@
 
 (define non-foldable-extended-bindings
   '(##sys#slot ##sys#setslot ##sys#call-with-current-continuation ##sys#fudge flush-output print void
-    u8vector->byte-vector s8vector->byte-vector u16vector->byte-vector s16vector->byte-vector u32vector->byte-vector ; DEPRECATED
-    f32vector->byte-vector f64vector->byte-vector s32vector->byte-vector ;DEPRECATED
     u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared s16vector->blob/shared u32vector->blob/shared
     f32vector->blob/shared f64vector->blob/shared
     s32vector->blob/shared read-string read-string!
     ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
     ##sys#byte ##sys#setbyte 
-    byte-vector-ref byte-vector-set!	; DEPRECATED
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length
     f32vector-length f64vector-length ##sys#apply-values ##sys#setter setter
     u8vector-ref s8vector-ref u16vector-ref s16vector-ref u32vector-ref s32vector-ref
@@ -366,25 +363,26 @@
 	     '##core#call '(#t)
 	     (cons* (make-node '##core#proc '("C_quotient" #t) '()) cont callargs) ) ) ) ) )
 
-(rewrite
- 'eqv? 8
- (lambda (db classargs cont callargs)
-   ;; (eqv? <var> <var>) -> (quote #t)
-   ;; (eqv? ...) -> (##core#inline "C_eqp" ...) [one argument is a constant and not a flonum]
-   (and (= (length callargs) 2)
-	(let ([arg1 (first callargs)]
-	      [arg2 (second callargs)] )
-	  (or (and (eq? '##core#variable (node-class arg1))
-		   (eq? '##core#variable (node-class arg2))
-		   (equal? (node-parameters arg1) (node-parameters arg2))
-		   (make-node '##core#call '(#t) (list cont (qnode #t))) )
-	      (and (or (and (eq? 'quote (node-class arg1))
-			    (not (flonum? (first (node-parameters arg1)))) )
-		       (and (eq? 'quote (node-class arg2))
-			    (not (flonum? (first (node-parameters arg2)))) ) )
-		   (make-node
-		    '##core#call '(#t) 
-		    (list cont (make-node '##core#inline '("C_eqp") callargs)) ) ) ) ) ) ) )
+(let ()
+  (define (eqv?-id db classargs cont callargs)
+    ;; (eqv? <var> <var>) -> (quote #t)
+    ;; (eqv? ...) -> (##core#inline "C_eqp" ...) [one argument is a constant and not a flonum]
+    (and (= (length callargs) 2)
+	 (let ([arg1 (first callargs)]
+	       [arg2 (second callargs)] )
+	   (or (and (eq? '##core#variable (node-class arg1))
+		    (eq? '##core#variable (node-class arg2))
+		    (equal? (node-parameters arg1) (node-parameters arg2))
+		    (make-node '##core#call '(#t) (list cont (qnode #t))) )
+	       (and (or (and (eq? 'quote (node-class arg1))
+			     (not (flonum? (first (node-parameters arg1)))) )
+			(and (eq? 'quote (node-class arg2))
+			     (not (flonum? (first (node-parameters arg2)))) ) )
+		    (make-node
+		     '##core#call '(#t) 
+		     (list cont (make-node '##core#inline '("C_eqp") callargs)) ) ) ) ) ) )
+  (rewrite 'eqv? 8 eqv?-id)
+  (rewrite '##sys#eqv? 8 eqv?-id))
 
 (rewrite
  'equal? 8
@@ -474,6 +472,8 @@
 			 [else (return #f)] ) ) ) ) ) ) ) ) ) )
 
   (rewrite-c..r 'car "C_i_car" "C_u_i_car" 0)
+  (rewrite-c..r '##sys#car "C_i_car" "C_u_i_car" 0)
+  (rewrite-c..r '##sys#cdr "C_i_cdr" "C_u_i_cdr" 0)
   (rewrite-c..r 'cadr "C_i_cadr" "C_u_i_cadr" 1)
   (rewrite-c..r 'caddr "C_i_caddr" "C_u_i_caddr" 2)
   (rewrite-c..r 'cadddr "C_i_cadddr" "C_u_i_cadddr" 3)
@@ -566,11 +566,14 @@
 (rewrite 'cdr 2 1 "C_i_cdr" #t #f)
 
 (rewrite 'eq? 1 2 "C_eqp")
+(rewrite '##sys#eq? 1 2 "C_eqp")
 (rewrite 'eqv? 1 2 "C_i_eqvp")
+(rewrite '##sys#eqv? 1 2 "C_i_eqvp")
 
 (rewrite 'list-ref 2 2 "C_u_i_list_ref" #f "C_slot")
 (rewrite 'list-ref 2 2 "C_i_list_ref" #t "C_i_vector_ref")
 (rewrite 'null? 2 1 "C_i_nullp" #t "C_vemptyp")
+(rewrite '##sys#null? 2 1 "C_i_nullp" #t "C_vemptyp")
 (rewrite 'length 2 1 "C_i_length" #t "C_block_size")
 (rewrite 'not 2 1 "C_i_not" #t #f)
 (rewrite 'char? 2 1 "C_charp" #t #f)
@@ -578,7 +581,9 @@
 (rewrite 'locative? 2 1 "C_i_locativep" #t #f)
 (rewrite 'symbol? 2 1 "C_i_symbolp" #t #f)
 (rewrite 'vector? 2 1 "C_i_vectorp" #t #f)
+(rewrite '##sys#vector? 2 1 "C_i_vectorp" #t #f)
 (rewrite 'pair? 2 1 "C_i_pairp" #t "C_notvemptyp")
+(rewrite '##sys#pair? 2 1 "C_i_pairp" #t "C_notvemptyp")
 (rewrite 'procedure? 2 1 "C_i_closurep" #t #f)
 (rewrite 'port? 2 1 "C_i_portp" #t #f)
 (rewrite 'boolean? 2 1 "C_booleanp" #t #f)
@@ -613,7 +618,7 @@
 (rewrite 'char>=? 2 2 "C_fixnum_greater_or_equal_p" #t #f)
 (rewrite 'char<=? 2 2 "C_fixnum_less_or_equal_p" #t #f)
 (rewrite '##sys#slot 2 2 "C_slot" #t #f)		; consider as safe, the primitive is unsafe anyway.
-(rewrite '##sys#block-ref 2 2 "C_i_block_ref" #t #f) ; must be safe for pattern matcher
+(rewrite '##sys#block-ref 2 2 "C_i_block_ref" #t #f) ;*** must be safe for pattern matcher (anymore?)
 (rewrite '##sys#size 2 1 "C_block_size" #t #f)
 (rewrite 'fxnot 2 1 "C_fixnum_not" #t #f)
 (rewrite 'fx* 2 2 "C_fixnum_times" #t #f)
@@ -704,6 +709,7 @@
 (rewrite 'integer->char 6 "C_make_character" "C_unfix" #t)
 
 (rewrite 'vector-length 2 1 "C_i_vector_length" #t #f)
+(rewrite '##sys#vector-length 2 1 "C_i_vector_length" #t #f)
 (rewrite 'string-length 2 1 "C_i_string_length" #t #f)
 (rewrite 'inexact->exact 2 1 "C_i_inexact_to_exact" #t #f)
 
@@ -747,6 +753,11 @@
 
 (rewrite 'vector-set! 11 3 '##sys#setslot #f)
 (rewrite 'vector-set! 2 3 "C_i_vector_set" #t #f)
+
+(rewrite '##sys#vector->list 11 1 'vector->list #t)
+(rewrite '##sys#list->vector 11 1 'list->vector #t)
+(rewrite '##sys#>= 11 2 '>= #t)
+(rewrite '##sys#= 11 2 '= #t)
 
 (rewrite 'gcd 12 '##sys#gcd #t 2)
 (rewrite 'lcm 12 '##sys#lcm #t 2)
@@ -905,10 +916,7 @@
 (rewrite '##sys#foreign-unsigned-integer-argument 17 1 "C_i_foreign_unsigned_integer_argumentp")
 (rewrite '##sys#direct-return 17 2 "C_direct_return")
 
-(rewrite 'byte-vector-ref 2 2 "C_subbyte" #f #f) ; DEPRECATED
-(rewrite 'byte-vector-set! 2 3 "C_setbyte" #f #f) ; DEPRECATED
-(rewrite 'byte-vector-length 2 1 "C_block_size" #f #f) ; DEPRECATED
-(rewrite 'blob-size 2 1 "C_block_size" #f #f) ; DEPRECATED
+(rewrite 'blob-size 2 1 "C_block_size" #f #f)
 
 (rewrite 'u8vector-ref 2 2 "C_u_i_u8vector_ref" #f #f)
 (rewrite 's8vector-ref 2 2 "C_u_i_s8vector_ref" #f #f)
@@ -937,15 +945,6 @@
 (rewrite 'not-pair? 17 1 "C_i_not_pair_p")
 (rewrite 'atom? 17 1 "C_i_not_pair_p")
 (rewrite 'null-list? 17 1 "C_i_null_list_p" "C_i_nullp")
-
-(rewrite 'u8vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 's8vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 'u16vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 's16vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 'u32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 's32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 'f32vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
-(rewrite 'f64vector->byte-vector 7 1 "C_slot" 1 #f) ; DEPRECATED
 
 (rewrite 'u8vector->blob/shared 7 1 "C_slot" 1 #f)
 (rewrite 's8vector->blob/shared 7 1 "C_slot" 1 #f)
@@ -1017,7 +1016,6 @@
     (cdr . set-cdr!)
     (hash-table-ref . hash-table-set!)
     (block-ref . block-set!)
-    (byte-vector-ref . byte-vector-set!) ; DEPRECATED
     (locative-ref . locative-set!)
     (u8vector-ref . u8vector-set!)
     (s8vector-ref . s8vector-set!)

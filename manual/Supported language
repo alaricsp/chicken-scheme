@@ -7,21 +7,20 @@
 * [[Extensions to the standard]]  
 * [[Non-standard read syntax]]    
 * [[Non-standard macros and special forms]]
-* [[Pattern matching]]
-* [[Declarations]]                
-* [[Parameters]]                  
+* [[Modules and macros]]
+* [[Declarations]]
+* [[Parameters]]
 * [[Unit library]] basic Scheme definitions
-* [[Unit eval]] evaluation and macro-handling
+* [[Unit eval]] evaluation
+* [[Unit expand]] macro- and module handling
 * [[Unit data-structures]] data structures
 * [[Unit ports]] I/O ports
 * [[Unit files]] File and pathname operations
 * [[Unit extras]] useful utility definitions
-* [[Unit srfi-1]] list library
-* [[Unit srfi-4]] homogeneous numeric vectors
-* [[Unit srfi-13]] string library
+* [[Unit srfi-1]] List Library
+* [[Unit srfi-4]] Homogeneous numeric vectors
+* [[Unit srfi-13]] String library
 * [[Unit srfi-14]] character set library              
-* [[Unit srfi-69]] hash tables              
-* [[Unit match]] pattern matching runtime-support
 * [[Unit regex]] regular expressions
 * [[Unit srfi-18]] multithreading
 * [[Unit posix]] Unix-like services

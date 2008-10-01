@@ -79,22 +79,7 @@ EOF
      ##sys#check-range ##sys#error ##sys#signal-hook
      ##sys#not-a-proper-list-error ##sys#print ##sys#allocate-vector) ) ] )
 
-(cond-expand
- [unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure . _) '(##core#undefined))
-    (define-macro (##sys#check-range . _) '(##core#undefined))
-    (define-macro (##sys#check-pair . _) '(##core#undefined))
-    (define-macro (##sys#check-list . _) '(##core#undefined))
-    (define-macro (##sys#check-symbol . _) '(##core#undefined))
-    (define-macro (##sys#check-string . _) '(##core#undefined))
-    (define-macro (##sys#check-char . _) '(##core#undefined))
-    (define-macro (##sys#check-exact . _) '(##core#undefined))
-    (define-macro (##sys#check-port . _) '(##core#undefined))
-    (define-macro (##sys#check-number . _) '(##core#undefined))
-    (define-macro (##sys#check-bytevector . _) '(##core#undefined)) ) ]
- [else
-  (declare (emit-exports "srfi-4.exports"))] )
+(include "unsafe-declarations.scm")
 
 
 ;;; Helper routines:
@@ -526,15 +511,6 @@ EOF
 	     (##core#inline "C_copy_block" str new) )
 	    (##sys#error loc "blob does not have correct size for packing" tag len sz) ) ) ) )
 
-  (set! u8vector->byte-vector (pack 'u8vector 'u8vector->byte-vector)) ; DEPRECATED
-  (set! s8vector->byte-vector (pack 's8vector 's8vector->byte-vector)) ; DEPRECATED
-  (set! u16vector->byte-vector (pack 'u16vector 'u16vector->byte-vector)) ; DEPRECATED
-  (set! s16vector->byte-vector (pack 's16vector 's16vector->byte-vector)) ; DEPRECATED
-  (set! u32vector->byte-vector (pack 'u32vector 'u32vector->byte-vector)) ; DEPRECATED
-  (set! s32vector->byte-vector (pack 's32vector 's32vector->byte-vector)) ; DEPRECATED
-  (set! f32vector->byte-vector (pack 'f32vector 'f32vector->byte-vector)) ; DEPRECATED
-  (set! f64vector->byte-vector (pack 'f64vector 'f64vector->byte-vector)) ; DEPRECATED
-
   (set! u8vector->blob/shared (pack 'u8vector 'u8vector->blob/shared))
   (set! s8vector->blob/shared (pack 's8vector 's8vector->blob/shared))
   (set! u16vector->blob/shared (pack 'u16vector 'u16vector->blob/shared))
@@ -552,15 +528,6 @@ EOF
   (set! s32vector->blob (pack-copy 's32vector 's32vector->blob))
   (set! f32vector->blob (pack-copy 'f32vector 'f32vector->blob))
   (set! f64vector->blob (pack-copy 'f64vector 'f64vector->blob))
-
-  (set! byte-vector->u8vector (unpack 'u8vector #t 'byte-vector->u8vector)) ; DEPRECATED
-  (set! byte-vector->s8vector (unpack 's8vector #t 'byte-vector->s8vector)) ; DEPRECATED
-  (set! byte-vector->u16vector (unpack 'u16vector 2 'byte-vector->u16vector)) ; DEPRECATED
-  (set! byte-vector->s16vector (unpack 's16vector 2 'byte-vector->s16vector)) ; DEPRECATED
-  (set! byte-vector->u32vector (unpack 'u32vector 4 'byte-vector->u32vector)) ; DEPRECATED
-  (set! byte-vector->s32vector (unpack 's32vector 4 'byte-vector->s32vector)) ; DEPRECATED
-  (set! byte-vector->f32vector (unpack 'f32vector 4 'byte-vector->f32vector)) ; DEPRECATED
-  (set! byte-vector->f64vector (unpack 'f64vector 8 'byte-vector->f64vector)) ; DEPRECATED
 
   (set! blob->u8vector/shared (unpack 'u8vector #t 'blob->u8vector/shared))
   (set! blob->s8vector/shared (unpack 's8vector #t 'blob->s8vector/shared))

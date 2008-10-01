@@ -26,8 +26,9 @@
 
 
 (declare
-  (uses srfi-1 match srfi-4 utils files support compiler optimizer driver platform backend)
-  (run-time-macros) )
+  (uses srfi-1 srfi-4 utils files support compiler optimizer driver 
+	platform backend srfi-69)
+  (run-time-macros) )			;*** later: compile-syntax
 
 
 (private compiler
@@ -76,8 +77,10 @@
 
 (define compiler-arguments
   (append
-   (cdr (argv))
-   (remove (lambda (x) (string=? x "")) (string-split (or (getenv "CHICKEN_OPTIONS") ""))) ) )
+   (remove 
+    (lambda (x) (string=? x ""))
+    (string-split (or (getenv "CHICKEN_OPTIONS") "")))
+   (cdr (argv))))
 
 
 ;;; Process command-line options:

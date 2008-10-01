@@ -1,9 +1,11 @@
-.\" dummy line
+-.\" dummy line
 .TH CSI 1 "20 May 2008"
 
-.SH NAME 
+.SH NAME
 
-csi \- Chicken Scheme interpreter
+The
+.I Chicken
+Scheme interpreter
 
 .SH SYNOPSIS
 
@@ -121,6 +123,12 @@ This is equivalent to
 .I pathname
 , but also ignores all arguments after the argument following
 .B \-script
+
+.TP
+.BI \-sx\ pathname
+Similar to
+.B \-script
+but invokes prints each expression before it is evaluated,
 
 .TP
 .BI \-ss\ pathname

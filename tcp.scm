@@ -27,7 +27,7 @@
 
 (declare
   (unit tcp)
-  (uses data-structures ports extras scheduler)
+  (uses extras scheduler)
   (usual-integrations)
   (fixnum-arithmetic)
   (no-bound-checks)
@@ -86,23 +86,9 @@ static char addr_buffer[ 20 ];
 EOF
 ) )
 
-(register-feature! 'tcp)
+(include "unsafe-declarations.scm")
 
-(cond-expand
- (unsafe
-  (eval-when (compile)
-    (define-macro (##sys#check-structure x y . _) '(##core#undefined))
-    (define-macro (##sys#check-range x y z) '(##core#undefined))
-    (define-macro (##sys#check-pair x) '(##core#undefined))
-    (define-macro (##sys#check-list x) '(##core#undefined))
-    (define-macro (##sys#check-symbol x) '(##core#undefined))
-    (define-macro (##sys#check-string x) '(##core#undefined))
-    (define-macro (##sys#check-char x) '(##core#undefined))
-    (define-macro (##sys#check-exact x . _) '(##core#undefined))
-    (define-macro (##sys#check-port x . _) '(##core#undefined))
-    (define-macro (##sys#check-number x) '(##core#undefined))))
- (else
-  (declare (emit-exports "tcp.exports"))) )
+(register-feature! 'tcp)
 
 (define-foreign-variable errno int "errno")
 (define-foreign-variable strerror c-string "strerror(errno)")
@@ -561,7 +547,7 @@ EOF
 (define general-strerror (foreign-lambda c-string "strerror" int))
 
 (define (tcp-connect host . more)
-  (let ((port (:optional more #f))
+  (let ((port (optional more #f))
 	(tmc (tcp-connect-timeout)))
     (##sys#check-string host)
     (unless port

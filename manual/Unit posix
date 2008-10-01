@@ -83,10 +83,9 @@ then {{(current-directory DIR)}} is equivalent to {{(change-directory DIR)}}.
 
 ==== create-directory
 
- [procedure] (create-directory NAME #!optional PARENTS?)
+ [procedure] (create-directory NAME)
 
-Creates a directory with the pathname {{NAME}}.  If the {{PARENTS?}} argument
-is given and not false, any nonextant parent directories are also created.
+Creates a directory with the pathname {{NAME}}.
 
 ==== delete-directory
 
@@ -114,7 +113,10 @@ and if that file is a directory, or {{#f}} otherwise.
 
  [procedure] (glob PATTERN1 ...)
 
-Returns a list of the pathnames of all existing files matching {{PATTERN1 ...}}, which should be strings containing the usual file-patterns (with {{*}} matching zero or more characters and {{?}} matching zero or one character).  Bug: wildcard characters are only recognized in the rightmost portion of the pattern.
+Returns a list of the pathnames of all existing files matching
+{{PATTERN1 ...}}, which should be strings containing the usual
+file-patterns (with {{*}} matching zero or more characters and
+{{?}} matching zero or one character).
 
 ==== canonical-path
 
@@ -799,7 +801,7 @@ after {{SECONDS}} are elapsed.  You can use the
 Establishes the procedure of one argument {{PROC}} as the handler
 for the signal with the code {{SIGNUM}}. {{PROC}} is called
 with the signal number as its sole argument. If the argument {{PROC}} is {{#f}}
-then any signal handler will be removed, and the corresponding signal set to {{SIG_IGN}}.
+then any signal handler will be removed.
 
 Note that is is unspecified in which thread of execution the signal handler will be invoked.
 
@@ -872,12 +874,12 @@ These variables contain signal codes for use with {{process-signal}},  {{set-sig
 
 === Environment access
 
-==== current-environment
+==== get-environment-variables
 
- [procedure] (current-environment)
+ [procedure] (get-environment-variables)
 
 Returns a association list of the environment variables and their
-current values.
+current values (see also [[http://srfi.schemers.org/srfi-98/|SRFI-98]]).
 
 ==== setenv
 
@@ -1111,6 +1113,16 @@ Returns the name of the terminal that is connected to {{PORT}}.
 
 Returns {{#t}} if {{PORT}} is connected to a terminal and
 {{#f}} otherwise.
+
+
+==== terminal-size
+
+ [procedure] (terminal-size)
+
+Returns two values, the number of columns and rows of the
+current terminal window or {{0}}, {{0}} if the terminal
+size can not be obtained. On Windows, this procedure
+always returns {{0}, {{0}}.
 
 
 === How Scheme procedures relate to UNIX C functions

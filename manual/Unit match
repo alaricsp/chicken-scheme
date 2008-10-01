@@ -1,9 +1,0 @@
-[[tags: manual]]
-
-== Unit match
-
-The runtime-support code for the [[http://chicken.wiki.br/Pattern%20matching|Pattern Matching]] extensions. Note that to use the macros in normal compiled code it is not required to declare this unit as used. It is only necessary to do so if forms containing these macros are to be expanded at runtime. 
-
-Previous: [[Unit srfi-14]]
-
-Next: [[Unit regex]]

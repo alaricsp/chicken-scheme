@@ -8,27 +8,26 @@ exec csi -s "$0" "$@"
 (define buildversion (->string (car (read-file "buildversion"))))
 (define buildbinaryversion (car (read-file "buildbinaryversion")))
 
-(define files 
-  '("README" 
-    "manual/The User's Manual"))
+(define files '("README" "manual/The User's Manual"))
 
 (define (patch which rx subst)
-  (match which
-    ((from to) 
-     (print "patching " from " ...")
-     (with-output-to-file to
-       (lambda ()
-	 (with-input-from-file from
-	   (lambda ()
-	     (let loop ()
-	       (let ((ln (read-line)))
-		 (unless (eof-object? ln)
-		   (write-line (string-substitute rx subst ln #t)) 
-		   (loop) ) ) ) ) ) ) ) )
-    (both
-     (let ((tmp (create-temporary-file)))
-       (patch (list both tmp) rx subst)
-       (system* "mv ~S ~S" tmp both ) ) ) ) )
+  (cond ((and (list? which) (= 2 (length which)))
+	 (let ((from (car which))
+	       (to (cadr which)))
+	   (print "patching " from " ...")
+	   (with-output-to-file to
+	     (lambda ()
+	       (with-input-from-file from
+		 (lambda ()
+		   (let loop ()
+		     (let ((ln (read-line)))
+		       (unless (eof-object? ln)
+			 (write-line (string-substitute rx subst ln #t)) 
+			 (loop) ) ) ) ) ) ) ) ) )
+	(else
+	 (let ((tmp (create-temporary-file)))
+	   (patch (list which tmp) rx subst)
+	   (system* "mv ~S ~S" tmp which) ) ) ) )
 
 (define (parse-version v)
   (string-match "(\\d+)\\.(\\d+)\\.(\\d+)(.*)" v) )
@@ -37,9 +36,12 @@ exec csi -s "$0" "$@"
   (cond ((member "-set" args) =>
 	 (lambda (a) (set! buildversion (cadr a))) )
 	((not (member "-noinc" args))
-	 (match (parse-version buildversion)
-	   ((_ maj min pl huh) 
-	    (set! buildversion (conc maj "." min "." (add1 (string->number pl)) huh)) ) ) ) )
+	 (let* ((v (parse-version buildversion))
+		(maj (cadr v))
+		(min (caddr v))
+		(pl (cadddr v))
+		(huh (car (cddddr v))))
+	   (set! buildversion (conc maj "." min "." (add1 (string->number pl)) huh)) ) ) )
   (with-output-to-file "buildversion" (cut display buildversion))
   (with-output-to-file "version.scm" 
     (lambda ()

@@ -551,17 +551,17 @@ Returns its sole argument {{X}}.
 Returns a procedure that returns its {{N}}th argument (starting from 0).
 
 
-==== list-of
+==== list-of?
 
- [procedure] (list-of PRED)
+ [procedure] (list-of? PRED)
 
 Returns a procedure of one argument that returns {{#t}} when
 applied to a list of elements that all satisfy the predicate procedure
 {{PRED}}, or {{#f}} otherwise.
 
 <enscript highlight=scheme>
-((list-of even?) '(1 2 3))   ==> #f
-((list-of number?) '(1 2 3)) ==> #t
+((list-of? even?) '(1 2 3))   ==> #f
+((list-of? number?) '(1 2 3)) ==> #t
 </enscript>
 
 
@@ -617,6 +617,6 @@ searched value is equal to the current item, negative if the searched
 value is ''less'' than the current item, and positive otherwise.
 Returns the index of the found value or {{#f}} otherwise.
 
-Previous: [[Unit eval]]
+Previous: [[Unit expand]]
 
 Next: [[Unit ports]]

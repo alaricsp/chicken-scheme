@@ -1,7 +1,5 @@
 ;;;; hash-table-tests.scm
 
-(use srfi-69)
-
 (print "SRFI 69 procedures")
 (assert (eq? hash equal?-hash))
 (assert (eq? hash-by-identity eq?-hash))
@@ -144,12 +142,3 @@
   (do ([i 0 (fx+ i 1)])
       [(fx= i stress-size)]
     (assert (fx= i (hash-table-ref ht i))) ) )
-
-;; Clear Test
-
-
-(print "HT - Clear!")
-(hash-table-clear! ht)
-(assert (= (hash-table-size ht) 0))
-(assert (null? (hash-table-keys ht)))
-

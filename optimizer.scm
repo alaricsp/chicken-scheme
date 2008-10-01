@@ -67,9 +67,6 @@
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result)
 
 
-(eval-when (compile eval)
-  (match-error-control #:fail) )
-
 (include "tweaks")
 
 (define-constant maximal-number-of-free-variables-for-liftable 16)
@@ -1370,10 +1367,12 @@
 	     [klambdas '()] 
 	     [sites (get db fnvar 'call-sites)] 
 	     [ksites '()] )
-	(match params
-	  [(id _ (kvar vars ...) _)
-	   ;; Remove continuation argument:
-	   (set-car! (cddr params) vars)
+	(if (and (list? params) (= (length params) 4) (list? (caddr params)))
+	    (let ((id (car params))
+		  (kvar (caaddr params))
+		  (vars (cdaddr params)) )
+	      ;; Remove continuation argument:
+	      (set-car! (cddr params) vars)
 	   ;; Make "##core#direct_lambda":
 	   (node-class-set! n '##core#direct_lambda)
 	   ;; Transform recursive calls and remove unused continuations:
@@ -1467,8 +1466,8 @@
 		    (let ([vn (cdr h)])
 		      (node-parameters-set! vn (list (gensym)))
 		      (set-car! (node-subexpressions vn) (make-node '##core#undefined '() '())) ) )
-		  hoistable) ) ) ) ]
-	  [_ (bomb "invalid parameter list" params)] ) ) )
+		  hoistable) ) ) ) )
+	    (bomb "invalid parameter list" params))))
 
     (debugging 'p "direct leaf routine optimization pass...")
     (walk #f node #f)

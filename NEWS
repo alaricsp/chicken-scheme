@@ -1,3 +1,39 @@
+4.0.0x
+
+- the macro system has been completely overhauled and converted 
+  to hygienic macros
+- a macro-aware module system has been added
+- added "-sx" option to csi
+- removed the following deprecated functions:
+   [un]shift!
+   andmap ormap
+   byte-vector? byte-vector-fill!
+   make-byte-vector byte-vector
+   byte-vector-set! byte-vector-ref 
+   byte-vector->list list->byte-vector
+   string->byte-vector byte-vector->string
+   byte-vector-length
+   make-static-byte-vector static-byte-vector->pointer
+   byte-vector-move! byte-vector-append!
+   set-file-position! set-user-id! set-group-id!
+   set-process-group-id!
+- the situation-identifiers "run-time" and "compile-time" have
+  been removed
+- the compiler options "-check-imports", "-import" and "-emit-exports"
+  have been removed
+- new procedures:
+  strip-syntax
+  expand
+- new macros
+  define-syntax
+  module
+  export
+- the following macros have been removed:
+    define-foreign-record
+    define-foreign-enum
+    define-macro
+    define-extension
+
 3.3.13
 
 - Fixes to the MinGW build.
@@ -61,6 +97,7 @@
   directory determined by CHICKEN_TMPDIR or TMPDIR environment
   variables, or by -build-prefix and -download-dir options,
   respectively; -destdir option is replaced with -install-prefix.
+- unit regex: PCRE 7.6
 - unit tcp: use of offset into string rather than substring for faster
   socket write [Jim Ursetto]
 - MSVC can now be used to build the system, when standard UNIX tools (like
