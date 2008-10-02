@@ -1238,7 +1238,7 @@
    (lambda (return)
      (unless (pair? spec)
        (syntax-error "invalid declaration specification" spec) )
-     (pp `(DECLARE: ,(strip spec)))
+     ;(pp `(DECLARE: ,(strip spec)))
      (case (##sys#strip-syntax (car spec)) ; no global aliasing
        ((uses)
 	(let ((us (strip (cdr spec))))

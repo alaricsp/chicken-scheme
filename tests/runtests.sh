@@ -9,6 +9,9 @@ compile="../csc -compiler ../chicken -v -I.. -L.. -include-path .. -o a.out"
 compile_s="../csc -s -compiler ../chicken -v -I.. -L.. -include-path .."
 interpret="../csi -include-path .."
 
+echo "======================================== compiler tests ..."
+$compile compiler-tests.scm && ./a.out
+
 echo "======================================== runtime tests ..."
 $interpret -s apply-test.scm
 $compile test-gc-hooks.scm && ./a.out
