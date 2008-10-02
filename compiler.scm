@@ -1068,9 +1068,7 @@
 			 (walk
 			  `(,(macro-alias 'begin se)
 			     ,@(map (lambda (d)
-				      (process-declaration 
-				       (##sys#strip-syntax d)
-				       se))
+				      (process-declaration d se))
 				    (cdr x) ) )
 			  '() #f) )
 	     
@@ -1232,13 +1230,18 @@
     (let ([n (length (cdr spec))])
       (if (or (< n minlen) (> n (optional maxlen 99999)))
 	  (syntax-error "invalid declaration" spec) ) ) )  
+  (define (stripa x)			; global aliasing
+    (##sys#strip-syntax x se #t))
+  (define (strip x)			; raw symbol
+    (##sys#strip-syntax x se))
   (call-with-current-continuation
    (lambda (return)
      (unless (pair? spec)
        (syntax-error "invalid declaration specification" spec) )
-     (case (car spec)
+     (pp `(DECLARE: ,(strip spec)))
+     (case (##sys#strip-syntax (car spec)) ; no global aliasing
        ((uses)
-	(let ((us (cdr spec)))
+	(let ((us (strip (cdr spec))))
 	  (apply register-feature! us)
 	  (when (pair? us)
 	    (##sys#hash-table-update! file-requirements 'uses (cut lset-union eq? us <>) (lambda () us))
@@ -1246,7 +1249,7 @@
 	      (set! used-units (append used-units units)) ) ) ) )
        ((unit)
 	(check-decl spec 1 1)
-	(let* ([u (cadr spec)]
+	(let* ([u (strip (cadr spec))]
 	       [un (string->c-identifier (stringify u))] )
 	  (##sys#hash-table-set! file-requirements 'unit u)
 	  (when (and unit-name (not (string=? unit-name un)))
@@ -1255,26 +1258,25 @@
        ((standard-bindings)
 	(if (null? (cdr spec))
 	    (set! standard-bindings default-standard-bindings)
-	    (set! standard-bindings (append (cdr spec) standard-bindings)) ) )
+	    (set! standard-bindings (append (stripa (cdr spec)) standard-bindings)) ) )
        ((extended-bindings)
 	(if (null? (cdr spec))
 	    (set! extended-bindings default-extended-bindings)
-	    (set! extended-bindings (append (cdr spec) extended-bindings)) ) )
+	    (set! extended-bindings (append (stripa (cdr spec)) extended-bindings)) ) )
        ((usual-integrations)      
 	(cond [(null? (cdr spec))
 	       (set! standard-bindings default-standard-bindings)
 	       (set! extended-bindings default-extended-bindings) ]
 	      [else
-	       (let ([syms (cdr spec)])
+	       (let ([syms (stripa (cdr spec))])
 		 (set! standard-bindings (lset-intersection eq? syms default-standard-bindings))
 		 (set! extended-bindings (lset-intersection eq? syms default-extended-bindings)) ) ] ) )
        ((number-type)
 	(check-decl spec 1 1)
-	(set! number-type (cadr spec)))
+	(set! number-type (strip (cadr spec))))
        ((fixnum fixnum-arithmetic) (set! number-type 'fixnum))
        ((generic) (set! number-type 'generic))
-       ((unsafe)
-	(set! unsafe #t))
+       ((unsafe) (set! unsafe #t))
        ((safe) (set! unsafe #f))
        ((no-bound-checks) (set! no-bound-checks #t))
        ((no-argc-checks) (set! no-argc-checks #t))
@@ -1283,9 +1285,9 @@
        ((disable-interrupts) (set! insert-timer-checks #f))
        ((disable-warning)
 	(set! disabled-warnings
-	  (append (cdr spec) disabled-warnings)))
+	  (append (strip (cdr spec)) disabled-warnings)))
        ((always-bound) 
-	(set! always-bound (append (cdr spec) always-bound)))
+	(set! always-bound (append (stripa (cdr spec)) always-bound)))
        ((safe-globals) (set! safe-globals-flag #t))
        ((no-procedure-checks-for-usual-bindings)
 	(set! always-bound-to-procedure
@@ -1293,7 +1295,7 @@
 	(set! always-bound
 	  (append default-standard-bindings default-extended-bindings always-bound)) )
        ((bound-to-procedure)
-	(let ((vars (cdr spec)))
+	(let ((vars (stripa (cdr spec))))
 	  (set! always-bound-to-procedure (append vars always-bound-to-procedure))
 	  (set! always-bound (append vars always-bound)) ) )
        ((foreign-declare)
@@ -1306,9 +1308,9 @@
 	    (syntax-error "invalid declaration" spec)
 	    (process-custom-declaration (cadr spec) (cddr spec)) ) )
        ((c-options)
-	(emit-control-file-item `(c-options ,@(cdr spec))) )
+	(emit-control-file-item `(c-options ,@(strip (cdr spec)))) )
        ((link-options)
-	(emit-control-file-item `(link-options ,@(cdr spec))) )
+	(emit-control-file-item `(link-options ,@(strip (cdr spec))) ) )
        ((post-process)
 	(emit-control-file-item
 	 (let ([file (pathname-strip-extension source-filename)])
@@ -1320,49 +1322,48 @@
 	(set! unused-variables (append (cdr spec) unused-variables)))
        ((not)
 	(check-decl spec 1)
-	(case (second spec)
+	(case (strip (second spec))
 	  [(standard-bindings)
 	   (if (null? (cddr spec))
 	       (set! standard-bindings '())
 	       (set! standard-bindings
 		 (lset-difference eq? default-standard-bindings
-				  (cddr spec)))) ]
+				  (stripa (cddr spec))))) ]
 	  [(extended-bindings)
 	   (if (null? (cddr spec))
 	       (set! extended-bindings '())
 	       (set! extended-bindings 
 		 (lset-difference eq? default-extended-bindings
-				  (cddr spec)) )) ]
+				  (stripa (cddr spec))) )) ]
 	  [(inline)
 	   (if (null? (cddr spec))
 	       (set! inline-max-size -1)
 	       (set! not-inline-list (lset-union eq? not-inline-list
-						 (cddr spec))) ) ]
+						 (stripa (cddr spec)))) ) ]
 	  [(usual-integrations)      
 	   (cond [(null? (cddr spec))
 		  (set! standard-bindings '())
 		  (set! extended-bindings '()) ]
 		 [else
-		  (let ([syms (cddr spec)])
+		  (let ([syms (stripa (cddr spec))])
 		    (set! standard-bindings (lset-difference eq? default-standard-bindings syms))
 		    (set! extended-bindings (lset-difference eq? default-extended-bindings syms)) ) ] ) ]
 	  [else
 	   (check-decl spec 1 1)
-	   (let ((id (cadr spec)))
+	   (let ((id (strip (cadr spec))))
 	     (case id
 	       [(interrupts-enabled) (set! insert-timer-checks #f)]
-	       [(safe) 
-		(set! unsafe #t)]
+	       [(safe) (set! unsafe #t)]
 	       [else (compiler-warning 'syntax "illegal declaration specifier `~s'" id)]))]))
        ((compile-syntax)
 	(set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 
-	(let ([syms (cdr spec)])
+	(let ([syms (stripa (cdr spec))])
 	  (when export-list 
 	    (set! export-list (lset-difference eq? export-list syms)) )
 	  (set! block-globals (lset-union eq? syms block-globals)) ) )
        ((export) 
-	(let ((syms (cdr spec)))
+	(let ((syms (stripa (cdr spec))))
 	  (set! block-globals (lset-difference eq? block-globals syms))
 	  (set! export-list (lset-union eq? syms (or export-list '())))))
        ((emit-external-prototypes-first)
@@ -1372,7 +1373,7 @@
 	(if (null? (cdr spec))
 	    (unless (> inline-max-size -1)
 	      (set! inline-max-size default-inline-max-size) )
-	    (set! inline-list (lset-union eq? inline-list (cdr spec)))) ) 
+	    (set! inline-list (lset-union eq? inline-list (stripa (cdr spec)))) ) )
        ((inline-limit)
 	(check-decl spec 1 1)
 	(let ([n (cadr spec)])
@@ -1400,10 +1401,10 @@
 			 (compiler-warning 
 			  'syntax
 			  "invalid import-library specification: ~s" il))))
-		(cdr spec)))))
+		(strip (cdr spec))))))
        ((profile)
  	(set! profiled-procedures
- 	  (append (cdr spec)
+ 	  (append (stripa (cdr spec))
  		  (or profiled-procedures '()))))
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )

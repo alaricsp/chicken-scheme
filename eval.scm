@@ -728,7 +728,7 @@
 
 			 [(##core#declare)
 			  (if (memq #:compiling ##sys#features)
-			      (for-each (lambda (d) (##compiler#process-declaration (cadr d))) (cdr x)) 
+			      (for-each (lambda (d) (##compiler#process-declaration d se)) (cdr x)) 
 			      (##sys#warn "declarations are ignored in interpreted code" x) )
 			  (compile '(##core#undefined) e #f tf cntr se) ]
 

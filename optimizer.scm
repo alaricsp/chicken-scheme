@@ -390,7 +390,8 @@
 		    (make-node '##core#undefined '() '()) ]
 		   [(and (or (not (test var 'global))
 			     block-compilation
-			     (and export-list (not (memq var export-list))) )
+			     (and export-list (not (memq var export-list)))
+			     (memq var block-globals))
 			 (not (test var 'references)) 
 			 (not (expression-has-side-effects? (first subs) db)) )
 		    (touch)

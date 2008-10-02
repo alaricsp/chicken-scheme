@@ -5,6 +5,8 @@ TODO for trunk						-*- Outline -*-
 
 * bugs
 ** compiler
+*** declarations that refer to identifiers may only be partially stripped
+    strip-syntax only declaration-specifier, not arguments
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
 ** macros
@@ -37,8 +39,7 @@ TODO for trunk						-*- Outline -*-
 ** cross-module inlining
 *** emit <sourcefile>.inline file with "-inline-global" (?)
 *** "-inline-global" slurps *.inline files include-path (?)
-** compiler syntax
-*** hygienic macro-expansion with "escape" option (expand orig. form normally)
+** remove "custom-declare" + stuff?
 
 * tests
 ** optional longer run (env. var)
