@@ -889,19 +889,23 @@
 				   => (lambda (fv)
 					(let ([type (second fv)]
 					      [tmp (gensym)] )
-					  `(let ([,tmp ,(foreign-type-convert-argument val type)])
-					     (##core#inline_update 
-					      (,(third fv) ,type)
-					      ,(foreign-type-check tmp type) ) ) ) ) )
+					  (walk
+					   `(let ([,tmp ,(foreign-type-convert-argument val type)])
+					      (##core#inline_update 
+					       (,(third fv) ,type)
+					       ,(foreign-type-check tmp type) ) )
+					   se #f))))
 				 ((assq var location-pointer-map)
 				  => (lambda (a)
 				       (let* ([type (third a)]
 					      [tmp (gensym)] )
-					 `(let ([,tmp ,(foreign-type-convert-argument val type)])
-					    (##core#inline_loc_update 
-					     (,type)
-					     ,(second a)
-					     ,(foreign-type-check tmp type) ) ) ) ) )
+					 (walk
+					  `(let ([,tmp ,(foreign-type-convert-argument val type)])
+					     (##core#inline_loc_update 
+					      (,type)
+					      ,(second a)
+					      ,(foreign-type-check tmp type) ) )
+					  se #f))))
 				 (else `(set! ,var ,val)))))
 
 			((##core#inline)
@@ -1322,7 +1326,7 @@
 	(set! unused-variables (append (cdr spec) unused-variables)))
        ((not)
 	(check-decl spec 1)
-	(case (strip (second spec))
+	(case (##sys#strip-syntax (second spec)) ; strip all
 	  [(standard-bindings)
 	   (if (null? (cddr spec))
 	       (set! standard-bindings '())
@@ -1355,7 +1359,8 @@
 	       [(interrupts-enabled) (set! insert-timer-checks #f)]
 	       [(safe) (set! unsafe #t)]
 	       [else (compiler-warning 'syntax "illegal declaration specifier `~s'" id)]))]))
-       ((compile-syntax)
+       ((compile-syntax 
+	 run-time-macros)		; DEPRECATED
 	(set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 
 	(let ([syms (stripa (cdr spec))])
