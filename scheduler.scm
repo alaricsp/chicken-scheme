@@ -35,7 +35,7 @@
 	##sys#update-thread-state-buffer ##sys#restore-thread-state-buffer
 	##sys#remove-from-ready-queue ##sys#unblock-threads-for-i/o ##sys#force-primordial
 	##sys#fdset-input-set ##sys#fdset-output-set ##sys#fdset-clear
-	##sys#fdset-select-timeout ##sys#fdset-restore ##sys#remove-from-timeout-list
+	##sys#fdset-select-timeout ##sys#fdset-restore
 	##sys#clear-i/o-state-for-thread!) 
   (foreign-declare #<<EOF
 #ifdef HAVE_ERRNO_H

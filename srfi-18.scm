@@ -230,7 +230,10 @@ EOF
 	    ct 1
 	    (lambda ()
 	      (case (##sys#slot thread 3)
-		[(dead) (apply return (##sys#slot thread 2))]
+		[(dead)
+		 (unless (##sys#slot ct 13) ; not unblocked by timeout
+		   (##sys#remove-from-timeout-list ct))
+		 (apply return (##sys#slot thread 2))]
 		[(terminated)
 		 (return 
 		  (##sys#signal
@@ -351,9 +354,11 @@ EOF
 		   ct 1 
 		   (lambda ()
 		     (##sys#setslot mutex 3 (##sys#delq ct (##sys#slot mutex 3)))
-		     (##sys#setslot ##sys#current-thread 8 (cons mutex (##sys#slot ##sys#current-thread 8)))
+		     (unless (##sys#slot ct 13)  ; not unblocked by timeout
+		       (##sys#remove-from-timeout-list ct))
+		     (##sys#setslot ct 8 (cons mutex (##sys#slot ct 8)))
 		     (##sys#setslot mutex 2 thread)
-		     #f) )
+		     (return #f) ))
 		  (##sys#thread-block-for-timeout! ct limit)
 		  (switch) ]
 		 [else
@@ -385,6 +390,8 @@ EOF
 		     ct 1
 		     (lambda () 
 		       (##sys#setslot cvar 2 (##sys#delq ct (##sys#slot cvar 2)))
+		       (unless (##sys#slot ct 13)  ; not unblocked by timeout
+			 (##sys#remove-from-timeout-list ct))
 		       (return #f) ) )
 		    (##sys#thread-block-for-timeout! ct limit) ]
 		   [else 

@@ -9,8 +9,6 @@ TODO for trunk						-*- Outline -*-
     in rev. 12103
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
-** scheduler
-*** apply srfi
 ** expander
 *** expansion of r5rs_pitfall 4.2 incorrect
     possibly due to a non-aliased implicit "begin" somewhere
