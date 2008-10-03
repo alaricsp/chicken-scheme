@@ -631,7 +631,7 @@
 		     [rl2 (append as rl)] )
 		(make-node 
 		 '##core#lambda
-		 (list (first params) (second params) 
+		 (list (gensym 'f) (second params) ; new function-id
 		       (build-lambda-list as argc (and rest (rename rest rl2)))
 		       (fourth params) )
 		 (map (cut walk <> rl2) subs) ) ) ) ) ]
