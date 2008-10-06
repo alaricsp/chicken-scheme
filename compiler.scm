@@ -90,8 +90,7 @@
 ; (##core#let-location <symbol> <type> [<init>] <exp>)
 ; ([##core#]lambda <variable> <body>)
 ; ([##core#]lambda ({<variable>}+ [. <variable>]) <body>)
-; (set! <variable> <exp>)
-; (##core#set! <variable> <exp>)
+; ([##core#]set! <variable> <exp>)
 ; (##core#named-lambda <name> <llist> <body>)
 ; (##core#loop-lambda <llist> <body>)
 ; (##core#undefined)
@@ -1669,7 +1668,8 @@
 	     (unless (memq var localenv)
 	       (grow 1)
 	       (cond ((memq var env) (put! db var 'captured #t))
-		     ((not (get db var 'global)) (put! db var 'global #t) ) ) ) ) )
+		     ((not (get db var 'global)) 
+		      (put! db var 'global #t) ) ) ) ) )
 	  
 	  ((##core#global-ref)
 	   (let ((var (first params)))
@@ -1699,7 +1699,7 @@
 	     (walk (first subs) env localenv here #t)
 	     (walkeach (cdr subs) env localenv here #f) ) )
 
-	  ((let)
+	  ((let ##core#let)
 	   (let ([env2 (append params localenv env)])
 	     (let loop ([vars params] [vals subs])
 	       (if (null? vars)
@@ -1711,7 +1711,7 @@
 		     (walk val env localenv here #f) 
 		     (loop (cdr vars) (cdr vals)) ) ) ) ) )
 
-	  #;((lambda)			;*** will this actually be ever used? aren't all lambdas now ##core#lambdas?
+	  ((lambda)
 	   (grow 1)
 	   (decompose-lambda-list
 	    (first params)
@@ -1754,7 +1754,7 @@
 		  ;; decorate ##core#call node with size
 		  (set-car! (cdddr (node-parameters n)) (- current-program-size size0)) ) ) ) ) )
 	  
-	  ((set!) 
+	  ((set! ##core#set!) 
 	   (let* ([var (first params)]
 		  [val (car subs)] )
 	     (when first-analysis 

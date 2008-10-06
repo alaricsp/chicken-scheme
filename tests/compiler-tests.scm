@@ -9,7 +9,7 @@
 (assert (not (##sys#symbol-has-toplevel-binding? 'foo#bar)))
 
 
-;;; rev. 12103 (reported by Joerg Wittenberger)
+;;; rev. 12104 (reported by Joerg Wittenberger)
 ;
 ; - canonicalization of assignment to location didn't walk expansion recursively
 

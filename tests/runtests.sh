@@ -12,6 +12,9 @@ interpret="../csi -include-path .."
 echo "======================================== compiler tests ..."
 $compile compiler-tests.scm && ./a.out
 
+echo "======================================== compiler tests (2) ..."
+$compile compiler-tests.scm -lambda-lift && ./a.out
+
 echo "======================================== runtime tests ..."
 $interpret -s apply-test.scm
 $compile test-gc-hooks.scm && ./a.out
