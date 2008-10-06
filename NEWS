@@ -34,32 +34,17 @@
     define-macro
     define-extension
 
-3.3.13
+3.4.0
 
 - Fixes to the MinGW build.
-
-3.3.12
-
 - PCRE 7.7
-
-3.3.8
-
+- Bug fix for bitwise-or use [Joerg Wittenberger]
 - Bug fix in thread-terminate! [thanks to Joerg Wittenberger]
-
-3.3.6
-
 - Cygwin build patched to put the runtime libraries in the right place. 
   [thanks to Nathan Thern]
-
-3.3.5
-
 - added support for out-of-tree compilation (via the SRCDIR variable)
   [thanks to Ivan Shmakov]
 - bug fix for (string->number "/")
-
-
-3.3.2
-
 - support for selective procedure profiling in the compiler
 - unit utils: moved file- and pathname-related procedures to unit files
 - new unit files
