@@ -1,0 +1,44 @@
+#!/bin/bash
+### usage: scheme FILENAME
+#
+# variables:
+#
+# AUTOCOMPILE_DEBUG
+
+
+dbgoption=
+cache=$HOME/.cache
+uname=`uname`
+wd=`pwd`
+
+if test -n "$AUTOCOMPILE_DEBUG"; then
+    set -x
+    dbgoption="-v2"
+fi
+
+if test "$#" == 0; then
+    exec csi
+else
+    prg="$1"
+fi
+
+if test $uname = "Darwin"; then
+    prgh=`md5 -q $prg`
+else
+    prgh=`md5sum $prg | sed -n -e 's/\([^[:space:]]*\).*/\1/p'`
+fi
+
+if test \! -d $cache; then
+    mkdir -p $cache
+fi
+
+if test "$prg" -nt "$cache/$prgh"; then
+    csc $dbgoption "$prg" -o "$cache/$prgh"
+fi
+
+if test -x "$cache/$prgh"; then
+    shift
+    exec "$cache/$prgh" "$@"
+else
+    echo "can not run $1"
+fi

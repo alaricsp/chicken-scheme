@@ -185,6 +185,8 @@ stub.scm
 support.scm
 tcp.scm
 tests/library-tests.scm
+tests/compiler-tests.scm
+tests/compiler-tests-2.scm
 tests/locative-stress-test.scm
 tests/r4rstest.scm
 tests/runtests.sh
@@ -266,6 +268,7 @@ scripts/makehtml.scm
 scripts/maketexi.scm
 scripts/enscript-texinfo.scm
 scripts/dpkg-eggs.scm
+scripts/scheme
 svnrevision.sh
 synrules.scm
 expand.scm
