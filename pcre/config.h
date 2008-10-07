@@ -1,8 +1,10 @@
-/* config.h.  From PCRE 7.7 config.h generated from config.h.in by configure.  */
+/* config.h.  From PCRE 7.8 config.h generated from config.h.in by configure.  */
 
 /* For HAVE_* macros */
 #ifdef HAVE_CHICKEN_CONFIG_H
 # include "chicken-config.h"
+#else
+# error "Missing \"chicken-config.h\""
 #endif
 
 /* By default, the \R escape sequence matches any Unicode line ending
@@ -77,9 +79,7 @@
    the comments and other stuff just above the match() function. On systems
    that support it, "configure" can be used to set this in the Makefile (use
    --disable-stack-for-recursion). */
-/* #undef NO_RECURSE */
-/* Make independent of Chicken stack - KRL */
-#define NO_RECURSE 1
+#define NO_RECURSE
 
 /* Name of package */
 #define PACKAGE "pcre"
@@ -91,13 +91,13 @@
 #define PACKAGE_NAME "PCRE"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PCRE 7.7"
+#define PACKAGE_STRING "PCRE 7.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcre"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.7"
+#define PACKAGE_VERSION "7.8"
 
 /* When calling PCRE via the POSIX interface, additional working storage is
    required for holding the pointers to capturing substrings because PCRE
@@ -111,15 +111,6 @@
 #define POSIX_MALLOC_THRESHOLD 10
 #endif
 
-/* PCRE uses recursive function calls to handle backtracking while matching.
-This can sometimes be a problem on systems that have stacks of limited size.
-Define NO_RECURSE to get a version that doesn't use recursion in the match()
-function; instead it creates its own stack by steam using pcre_recurse_malloc
-to get memory. For more detail, see comments and other stuff just above the
-match() function. On Unix systems, "configure" can be used to set this in the
-Makefile (use --disable-stack-for-recursion). */
-/* #define NO_RECURSE */
-
 /* Define to enable support for Unicode properties */
 #define SUPPORT_UCP 
 
@@ -127,10 +118,4 @@ Makefile (use --disable-stack-for-recursion). */
 #define SUPPORT_UTF8 
 
 /* Version number of package */
-#define VERSION "7.7"
-
-/* Define to empty if `const' does not conform to ANSI C. */
-/* #undef const */
-
-/* Define to `unsigned int' if <sys/types.h> does not define. */
-/* #undef size_t */
+#define VERSION "7.8"

@@ -233,16 +233,13 @@ pcre/pcre_refcount.c
 pcre/pcre_study.c
 pcre/pcre_tables.c
 pcre/pcre_try_flipped.c
+pcre/pcre_ucd.c
 pcre/pcre_ucp_findchar.c
-pcre/pcre_ucp_searchfuncs.c
 pcre/pcre_valid_utf8.c
 pcre/pcre_version.c
 pcre/pcre_xclass.c
 pcre/pcre.h
 pcre/ucp.h
-pcre/ucpinternal.h
-pcre/ucptable.c
-pcre/ucptable.h
 apply-hack.x86.s
 apply-hack.x86-64.s
 apply-hack.ppc.darwin.s

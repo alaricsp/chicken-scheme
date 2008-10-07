@@ -51,6 +51,7 @@ LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
 
 ifeq ($(USE_HOST_PCRE),)
 PCRE_OBJECTS_1 ?= \
+       $(PCRE_DIR)pcre_chartables \
        $(PCRE_DIR)pcre_compile \
        $(PCRE_DIR)pcre_config \
        $(PCRE_DIR)pcre_dfa_exec \
@@ -66,11 +67,10 @@ PCRE_OBJECTS_1 ?= \
        $(PCRE_DIR)pcre_study \
        $(PCRE_DIR)pcre_tables \
        $(PCRE_DIR)pcre_try_flipped \
-       $(PCRE_DIR)pcre_ucp_searchfuncs \
+       $(PCRE_DIR)pcre_ucd \
        $(PCRE_DIR)pcre_valid_utf8 \
        $(PCRE_DIR)pcre_version \
-       $(PCRE_DIR)pcre_xclass \
-       $(PCRE_DIR)pcre_chartables
+       $(PCRE_DIR)pcre_xclass
 PCRE_SHARED_OBJECTS = $(PCRE_OBJECTS_1:=$(O))
 PCRE_STATIC_OBJECTS = $(PCRE_OBJECTS_1:=-static$(O))
 endif
@@ -656,7 +656,7 @@ $(PCRE_DIR)pcre_try_flipped$(O): pcre_try_flipped.c pcre_internal.h config.h $(C
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)pcre_ucp_searchfuncs$(O): pcre_ucp_searchfuncs.c pcre_internal.h config.h $(CHICKEN_CONFIG_H) pcre.h ucp.h ucptable.h ucpinternal.h
+$(PCRE_DIR)pcre_ucd$(O): pcre_ucd.c pcre_internal.h config.h $(CHICKEN_CONFIG_H) pcre.h ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
@@ -739,7 +739,7 @@ $(PCRE_DIR)pcre_try_flipped-static$(O): pcre_try_flipped.c pcre_internal.h confi
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
-$(PCRE_DIR)pcre_ucp_searchfuncs-static$(O): pcre_ucp_searchfuncs.c pcre_internal.h config.h $(CHICKEN_CONFIG_H) pcre.h ucp.h ucptable.h ucpinternal.h
+$(PCRE_DIR)pcre_ucd-static$(O): pcre_ucd.c pcre_internal.h config.h $(CHICKEN_CONFIG_H) pcre.h ucp.h
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(PCRE_INCLUDES) $(C_COMPILER_COMPILE_OPTION) \
 	  $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< $(C_COMPILER_OUTPUT) \
 	  $(C_COMPILER_PCRE_OPTIONS)
