@@ -1,5 +1,6 @@
 TODO for trunk						-*- Outline -*-
 
+
 * expander
 ** at some stage disable debug-output in expand.scm
 
@@ -41,6 +42,10 @@ TODO for trunk						-*- Outline -*-
 *** "-inline-global" slurps *.inline files include-path (?)
 *** would inline in other compilation units, but not in current (sort of confusing)
 ** remove "custom-declare" + stuff?
+** "assume-no-redefinitions" mode?
+   like Gambit's block-mode (?): single toplevel assignment makes assigned
+   variable known (and allows inlining/contraction)
+** when inlining, consing arg-list with "list" may make get-keyword possible foldable
 
 * tests
 ** optional longer run (env. var)

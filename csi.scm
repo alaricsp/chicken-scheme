@@ -103,7 +103,7 @@ EOF
 
 (define (print-banner)
   (newline)
-  (when (and (tty-input?) (##sys#fudge 11))
+  #;(when (and (tty-input?) (##sys#fudge 11))
     (let* ((t (string-copy +product+))
 	   (len (string-length t))
 	   (c (make-string len #\x08)))
