@@ -121,6 +121,7 @@
 	 keyword?
 	 load-relative
 	 load-library
+	 load-verbose
 	 machine-byte-order
 	 machine-type
 	 make-blob

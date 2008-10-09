@@ -46,6 +46,7 @@ TODO for trunk						-*- Outline -*-
    like Gambit's block-mode (?): single toplevel assignment makes assigned
    variable known (and allows inlining/contraction)
 ** when inlining, consing arg-list with "list" may make get-keyword possible foldable
+** using plists instead of symbol lists (block-globals, etc.) might speed up things
 
 * tests
 ** optional longer run (env. var)

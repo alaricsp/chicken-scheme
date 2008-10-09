@@ -1202,7 +1202,7 @@
 		   (if comp?
 		       (memq id builtin-features/compiled)
 		       (##sys#feature? id) ) )
-	       (values '(##core#undefined) #t) )
+	       (values (impform '(##core#undefined) id #t) #t) )
 	      ((memq id ##sys#core-library-modules)
 	       (values
 		(impform
