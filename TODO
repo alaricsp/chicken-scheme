@@ -1,6 +1,8 @@
 TODO for trunk						-*- Outline -*-
 
 
+* merge cmi branch and announce changes
+
 * expander
 ** at some stage disable debug-output in expand.scm
 
@@ -70,6 +72,8 @@ TODO for trunk						-*- Outline -*-
 ** chicken-install
 *** should cache extension-info
     necessary?
+** funky: allow CHICKEN_REPOSITORY to be a list and try in order
+*** special name to refer to default repo
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
