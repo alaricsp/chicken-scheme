@@ -25,3 +25,26 @@
      again)))
 
 (print (test-location))
+
+
+;;; rev. 12188 (reported by Jörg Wittenberger)
+;
+; - generated init-assignment refers to alias, but alias isn't seen later)
+
+(module
+ x
+ (bar)
+ (import scheme chicken foreign)
+
+ (define (bar n)
+  (let-location
+   ((off integer 0))
+   (lambda () ((foreign-lambda*
+                void
+                (((c-pointer integer) i))
+                "(*i)++;")
+               (location off)) off)))
+)
+
+(import x)
+(bar 42)

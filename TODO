@@ -8,6 +8,7 @@ TODO for trunk						-*- Outline -*-
 
 * bugs
 ** compiler
+***! another "let-location" bug (see tests/compiler-tests.scm)
 *** lambda-lifting breaks in ##sys#read (r-spaces), reported by Joerg Wittenberger
     in rev. 12103
 *** pre-optimization 
@@ -36,19 +37,19 @@ TODO for trunk						-*- Outline -*-
     exists.
 
 * compiler
+** remove "custom-declare" + stuff?
+
+* optimizations
 ** self-recursion optimization
    what MacScheme called "benchmark-mode" (assume self-calls are recursion)
 *** needs declaration or option, >= -O2
-** cross-module inlining
-*** emit <sourcefile>.inline file with "-inline-global" (?)
-*** "-inline-global" slurps *.inline files include-path (?)
-*** would inline in other compilation units, but not in current (sort of confusing)
-** remove "custom-declare" + stuff?
-** "assume-no-redefinitions" mode?
-   like Gambit's block-mode (?): single toplevel assignment makes assigned
-   variable known (and allows inlining/contraction)
 ** when inlining, consing arg-list with "list" may make get-keyword possible foldable
-** using plists instead of symbol lists (block-globals, etc.) might speed up things
+** local flow analysis
+** lambda-fusion
+** handle optional ags primitively 
+   for example, set to distinguished val (checking argc) on C level, core
+   primitive for checking this - should be quite simple, but llist processing
+   (decompose-lambda-list) will be more expensive and cumbersome.
 
 * tests
 ** optional longer run (env. var)

@@ -861,29 +861,12 @@
 			 (let* ([var0 (cadr x)]
 				[var (lookup var0 se)]
 				[ln (get-line x)]
-				[val (walk (caddr x) se var0)] )
+				[val (caddr x)] )
 			   (when (memq var unlikely-variables)
 			     (compiler-warning 
 			      'var
 			      "assignment to variable `~s' possibly unintended"
 			      var))
-			   (when (eq? var var0) ; global?
-			     (set! var (##sys#alias-global-hook var #t))
-			     (when safe-globals-flag
-			       (set! always-bound-to-procedure
-				 (lset-adjoin eq? always-bound-to-procedure var))
-			       (set! always-bound (lset-adjoin eq? always-bound var)) )
-			     (when (macro? var)
-			       (compiler-warning 
-				'var "assigned global variable `~S' is a macro ~A"
-				var
-				(if ln (sprintf "in line ~S" ln) "") )
-			       (when undefine-shadowed-macros (undefine-macro! var) ) ) )
-			   (when (keyword? var)
-			     (compiler-warning 'syntax "assignment to keyword `~S'" var) )
-			   (when (pair? var) ; macro
-			     (syntax-error
-			      'set! "assignment to syntactic identifier" var))
 			   (cond ((assq var foreign-variables)
 				   => (lambda (fv)
 					(let ([type (second fv)]
@@ -905,7 +888,25 @@
 					      ,(second a)
 					      ,(foreign-type-check tmp type) ) )
 					  se #f))))
-				 (else `(set! ,var ,val)))))
+				 (else 
+				  (when (eq? var var0) ; global?
+				    (set! var (##sys#alias-global-hook var #t))
+				    (when safe-globals-flag
+				      (set! always-bound-to-procedure
+					(lset-adjoin eq? always-bound-to-procedure var))
+				      (set! always-bound (lset-adjoin eq? always-bound var)) )
+				    (when (macro? var)
+				      (compiler-warning 
+				       'var "assigned global variable `~S' is a macro ~A"
+				       var
+				       (if ln (sprintf "in line ~S" ln) "") )
+				      (when undefine-shadowed-macros (undefine-macro! var) ) ) )
+				  (when (keyword? var)
+				    (compiler-warning 'syntax "assignment to keyword `~S'" var) )
+				  (when (pair? var) ; macro
+				    (syntax-error
+				     'set! "assignment to syntactic identifier" var))
+				  `(set! ,var ,(walk val se var0))))))
 
 			((##core#inline)
 			 `(##core#inline ,(unquotify (cadr x) se) ,@(mapwalk (cddr x) se)))
