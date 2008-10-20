@@ -349,6 +349,8 @@ Lastly, we need a file {{hello.meta}} defining a minimal set of properties:
  (files "hello.scm" "hello.setup"))
 </enscript>
 
+(for more information about available properties, see {{Metafile reference}})
+
 After entering 
 
  $ chicken-install

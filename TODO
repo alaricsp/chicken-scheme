@@ -1,16 +1,13 @@
-TODO for trunk						-*- Outline -*-
+TODO for trunk								-*- Outline -*-
 
 
-* merge cmi branch and announce changes
-
-* expander
-** at some stage disable debug-output in expand.scm
+* sort this document by order of importance
+  bugs, tasks, tests, documentation, optimizations
 
 * bugs
+** fprint benchmark crashes (base, out of heap) on 64-bit x86
+   (even with debug info)
 ** compiler
-***! another "let-location" bug (see tests/compiler-tests.scm)
-*** lambda-lifting breaks in ##sys#read (r-spaces), reported by Joerg Wittenberger
-    in rev. 12103
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
 ** expander
@@ -35,6 +32,12 @@ TODO for trunk						-*- Outline -*-
     would be to load the extension immediately (at
     compile-/expansion-time), when import is #t and o import lib
     exists.
+
+* branches
+** merge cmi branch and announce changes
+
+* expander
+** at some stage disable debug-output in expand.scm
 
 * compiler
 ** remove "custom-declare" + stuff?
@@ -64,6 +67,9 @@ TODO for trunk						-*- Outline -*-
    (does it work at all?)
 ** curried define performs expansion in empty se - problem?
    (as comment in expand.scm indicated (##sys#register-export))
+** checks to be implemented
+*** reimport of imported id
+*** unused defs?
 
 * setup/install
 ** setup-download
@@ -75,6 +81,9 @@ TODO for trunk						-*- Outline -*-
     necessary?
 ** funky: allow CHICKEN_REPOSITORY to be a list and try in order
 *** special name to refer to default repo
+
+* library
+** read-mark list should be stored in read-table
 
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
@@ -91,7 +100,6 @@ TODO for trunk						-*- Outline -*-
 ** fluidly keep track of expanded forms (extend meaning of culprit)
    to pprint pruned expr on error
 
-* modules
-** checks
-*** reimport of imported id
-*** unused defs?
+* infrastructure
+** need script to process import libraries for generating indices for doc.callcc.org
+   then tell Toby about it
