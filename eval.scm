@@ -915,7 +915,7 @@
 		    input]
 		   [else
 		    (let ([fname2 (##sys#string-append input ##sys#load-dynamic-extension)])
-		      (if (##sys#file-info fname2)
+		      (if (and (##sys#fudge 24) (##sys#file-info fname2)) ; dload?
 			  fname2
 			  (let ([fname3 (##sys#string-append input source-file-extension)])
 			    (if (##sys#file-info fname3)
@@ -1098,7 +1098,8 @@
     (lambda (p inc?)
 	(define (check path)
 	  (let ([p0 (string-append path "/" p)])
-	    (and (or (file-exists? (##sys#string-append p0 ##sys#load-dynamic-extension))
+	    (and (or (and (##sys#fudge 24) ; dload?
+			  (file-exists? (##sys#string-append p0 ##sys#load-dynamic-extension)))
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
 	(let loop ([paths (##sys#append (list (##sys#repository-path))
@@ -1462,10 +1463,10 @@
 		  (test2 fname (cdr lst)) ) ) ) )
       (define (test fname)
 	(test2 
-	 fname 
-	 (if prefer-source
-	     (list source-file-extension ##sys#load-dynamic-extension)
-	     (list ##sys#load-dynamic-extension source-file-extension) ) ) )
+	 fname
+	 (cond ((not (##sys#fudge 24)) (list source-file-extension)) ; no dload?
+	       (prefer-source (list source-file-extension ##sys#load-dynamic-extension))
+	       (else (list ##sys#load-dynamic-extension source-file-extension) ) ) ))
       (or (test fname)
 	  (let loop ((paths (if repo
 				(##sys#append ##sys#include-pathnames (list (##sys#repository-path)))
