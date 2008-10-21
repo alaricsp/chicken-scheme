@@ -38,6 +38,10 @@
   (import extras regex posix utils setup-utils srfi-1 data-structures tcp 
 	  srfi-13 files)
 
+  (tcp-connect-timeout 10000)		; 10 seconds
+  (tcp-read-timeout 10000)
+  (tcp-write-timeout 10000)
+
   (define *quiet* #f)
 
   (define (d fstr . args)
@@ -132,7 +136,8 @@
 		     "&tests=yes"
 		     "")))
 	   (eggdir (make-pathname tmpdir egg)))
-      (create-directory eggdir)
+      (unless (file-exists? eggdir)
+	(create-directory eggdir))
       (http-fetch host port loc eggdir)
       eggdir))
 

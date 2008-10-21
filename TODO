@@ -43,12 +43,19 @@ TODO for trunk								-*- Outline -*-
 ** remove "custom-declare" + stuff?
 
 * optimizations
+** allocation-estimation in conditionals should take max of both branches, not sum
 ** self-recursion optimization
    what MacScheme called "benchmark-mode" (assume self-calls are recursion)
 *** needs declaration or option, >= -O2
 ** when inlining, consing arg-list with "list" may make get-keyword possible foldable
 ** local flow analysis
-** lambda-fusion
+** lambda-fusion / "fuse-and-dispatch" (suggested by Alex)
+   convert groups of local lambdas referenced to only in operator-position into
+   looping lambda + dispatch (static variable can be used), otherwise similar to
+   a conditional
+*** new forms (after optimization, prepared language)
+    [##core#dispatch LAMBDABODY1 ... BODY]
+    [##core#call/dispatch {INDEX} ARGUMENT1 ...}
 ** handle optional ags primitively 
    for example, set to distinguished val (checking argc) on C level, core
    primitive for checking this - should be quite simple, but llist processing

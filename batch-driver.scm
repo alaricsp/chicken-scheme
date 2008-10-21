@@ -298,7 +298,11 @@
       (when verbose
 	(printf "Loading compiler extensions...~%~!")
 	(load-verbose #t) )
-      (for-each (lambda (f) (load (##sys#resolve-include-filename f #f #t))) extends) )
+      ;; rebind a-g-h to allow extensions in source files to use private-namespace.scm
+      (fluid-let ((##sys#alias-global-hook ##sys#alias-global-hook))
+	(for-each
+	 (lambda (f) (load (##sys#resolve-include-filename f #f #t))) 
+	 extends) ) )
     (set! ##sys#features (delete #:compiler-extension ##sys#features eq?))
 
     (set! ##sys#features (cons '#:compiling ##sys#features))

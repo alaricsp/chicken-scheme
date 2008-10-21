@@ -1323,6 +1323,7 @@ clean:
 	  $(IMPORT_LIBRARIES:=.import.so) $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
 	  $(MSVC_CHICKEN_EXPORT_FILES) chicken.info $(CLEAN_PCRE) $(CLEAN_MINGW_LIBS) \
 	  $(CLEAN_MANIFESTS)
+
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
@@ -1380,6 +1381,7 @@ bootstrap:
 	  chicken$(EXE)
 	cp chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
+	$(MAKE) PLATFORM=$(PLATFORM) confclean
 
 $(SRCDIR)bootstrap.tar.gz: distfiles
 	tar cfz $@ library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c tcp.c \

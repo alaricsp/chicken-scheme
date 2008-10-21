@@ -176,6 +176,7 @@
 ; [##core#updatebox_i {} <exp> <exp>]
 ; [##core#call {<safe-flag> [<debug-info> [<call-id> <customizable-flag>]]} <exp-f> <exp>...]
 ; [##core#callunit {<unitname>} <exp>...]
+; [##core#cond <exp> <exp> <exp>]
 ; [##core#local {<index>}]
 ; [##core#setlocal {<index>} <exp>]
 ; [##core#global {<literal> <safe-flag> <block-mode> [<name>]}]
@@ -2508,6 +2509,9 @@
 			  (else (make-node '##core#literal (list (literal c)) '())) ) )
 		   ((immediate? c) (immediate-literal c))
 		   (else (make-node '##core#literal (list (literal c)) '())) ) ) )
+
+	  ;;*** conditionals (if + ##core#cond) are missing here: allocation
+	  ;; calculation should use max of both branches, not sum.
 
 	  (else (make-node class params (mapwalk subs e here boxes)) ) ) ) )
     

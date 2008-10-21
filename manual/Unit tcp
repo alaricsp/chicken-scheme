@@ -51,7 +51,7 @@ read- and write-operations on the returned ports will use the
 current values (at the time of the connection) of {{tcp-read-timeout}}
 and {{tcp-write-timeout}}, respectively, to determine the maximal
 number of milliseconds to wait for input/output before a timeout
-error is signalled.
+error is signalled by raising an exception of the kinds {{(exn i/o net)}}.
 
 Note: this operation and any I/O on the ports returned will not block
 other running threads.
@@ -93,7 +93,7 @@ read- and write-operations on the returned ports will use the current
 values (at the time of the call to {{tcp-connect}}) of {{tcp-read-timeout}} and
 {{tcp-write-timeout}}, respectively, to determine the maximal number
 of milliseconds to wait for input/output before a timeout error is
-signalled.
+signalled by raising an exception of the kinds {{(exn i/o net)}}.
 
 If the {{TCPPORT}} is omitted, the port is parsed from the {{HOSTNAME}} string.  The format expected is {{HOSTNAME:PORT}}.  The {{PORT}} can either be a string representation of an integer or a service name which is translated to an integer using the POSIX function [[http://www.opengroup.org/onlinepubs/009695399/functions/getservbyname.html|{{getservbyname}}]].
 

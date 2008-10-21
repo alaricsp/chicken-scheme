@@ -53,8 +53,6 @@ EOF
 	 (csi (make-pathname (current-directory) "bin"))			; just for debugging
 	 (else (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )) )
 
-  (define *default-transport* #f)
-  (define *default-location* #f)
   (define *keep* #f)
   (define *force* #f)
   (define *sudo* #f)
@@ -65,17 +63,16 @@ EOF
   (define *no-install* #f)
   (define *username* #f)
   (define *password* #f)
+  (define *default-sources* '())
+  (define *default-location* #f)
+  (define *default-transport* 'http)
 
   (define (load-defaults)
-    (let* ((deff (make-pathname (repository-path) "setup.defaults"))
-	   (def (cond ((file-exists? deff)
-		       (with-input-from-file deff read))
-		      (else '())))
-	   (loc (assq 'location def))
-	   (tr (assq 'transport def)))
-      (when loc (set! *default-location* (cadr loc)))
-      (when tr (set! *default-transport* (cadr tr)))
-      (pair? def)))
+    (let ((deff (make-pathname (repository-path) "setup.defaults")))
+      (cond ((not (file-exists? deff)) '())
+	    (else
+	     (set! *default-sources* (read-file deff))
+	     (pair? *default-sources*)))))
 
   (define (deps key meta)
     (or (and-let* ((d (assq key meta)))
@@ -136,6 +133,31 @@ EOF
     (define *eggs+dirs* '())
     (define *checked* '())
 
+    (define (try name version)
+      (let loop ((defs (if (and *default-location* *default-transport*)
+			   `(((location ,*default-location*)
+			      (transport ,*default-transport*)))
+			   *default-sources*)))
+	(and (pair? defs)
+	     (let* ((def (car defs))
+		    (loc (cadr (or (assq 'location def)
+				   (error "missing location entry" def))))
+		    (trans (cadr (or (assq 'transport def)
+				     (error "missing transport entry" def)))))
+	       (or (condition-case
+		       (retrieve-extension 
+			name trans loc
+			version: version
+			destination: (and *retrieve-only* (current-directory))
+			tests: *run-tests*
+			username: *username* 
+			password: *password*)
+		     ((exn net) 
+		      (print "TCP connect timeout")
+		      #f)
+		     (e () (abort e)))
+		   (loop (cdr defs)))))))
+
     (define (retrieve eggs)
       (print "retrieving ...")
       (for-each
@@ -147,13 +169,7 @@ EOF
 	       (else
 		(let* ((name (if (pair? egg) (car egg) egg))
 		       (version (and (pair? egg) (cdr egg)))
-		       (dir (retrieve-extension 
-			     name *default-transport* *default-location*
-			     version: version
-			     destination: (and *retrieve-only* (current-directory))
-			     tests: *run-tests*
-			     username: *username* 
-			     password: *password*)))
+		       (dir (try name version)))
 		  (unless dir
 		    (error "extension or version not found"))
 		  (print " " name " located at " dir)
@@ -240,15 +256,15 @@ EOF
 	(remove-directory tmpdir))))
 
   (define (usage code)
-    (print #<#EOF
+    (print #<<EOF
 usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
 
   -h   -help                    show this message and exit
   -v   -version                 show version and exit
        -force                   don't ask, install even if versions don't match
   -k   -keep                    keep temporary files
-  -l   -location LOCATION       install from given location instead of default (#{*default-location*})
-  -t   -transport TRANSPORT     use given transport instead of default (#{*default-transport*})
+  -l   -location LOCATION       install from given location instead of default
+  -t   -transport TRANSPORT     use given transport instead of default
   -s   -sudo                    use sudo(1) for installing or removing files
   -r   -retrieve                only retrieve egg into current directory, don't install
   -n   -no-install              do not install, just build (implies `-keep')

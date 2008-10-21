@@ -1,0 +1,4 @@
+#!/bin/sh
+prg=$1
+shift
+LD_LIBRARY_PATH=$PWD DYLD_LIBRARY_PATH=$PWD PATH=.:$PATH ./$prg "$@"
