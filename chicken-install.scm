@@ -29,7 +29,6 @@
 		 srfi-13 files)
 
 
-#+(not csi)
 (foreign-declare #<<EOF
 #ifndef C_INSTALL_BIN_HOME
 # define C_INSTALL_BIN_HOME   NULL
@@ -44,14 +43,36 @@ EOF
 	  srfi-13 files)
   (import setup-utils setup-download)
   
-  #+(not csi) (import foreign)
+  (import foreign)
+
+  (define +default-repository-files+
+    '("setup-api.so" "setup-api.import.so"
+      "setup-utils.so" "setup-utils.import.so"
+      "setup-download.so" "setup-download.import.so"
+      "chicken.import.so"
+      "lolevel.import.so"
+      "srfi-1.import.so"
+      "srfi-4.import.so"
+      "data-structures.import.so"
+      "ports.import.so"
+      "files.import.so"
+      "posix.import.so"
+      "srfi-13.import.so"
+      "srfi-69.import.so"
+      "extras.import.so"
+      "regex.import.so"
+      "srfi-14.import.so"
+      "tcp.import.so"
+      "foreign.import.so"
+      "scheme.import.so"
+      "srfi-18.import.so"
+      "utils.import.so"
+      "csi.import.so"))
 
   (define *program-path*
     (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
 	  (make-pathname p "bin") )
-	(cond-expand
-	 (csi (make-pathname (current-directory) "bin"))			; just for debugging
-	 (else (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )) )
+	(foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
   (define *keep* #f)
   (define *force* #f)
@@ -68,7 +89,7 @@ EOF
   (define *default-transport* 'http)
 
   (define (load-defaults)
-    (let ((deff (make-pathname (repository-path) "setup.defaults")))
+    (let ((deff (make-pathname (chicken-home) "setup.defaults")))
       (cond ((not (file-exists? deff)) '())
 	    (else
 	     (set! *default-sources* (read-file deff))
@@ -78,6 +99,17 @@ EOF
     (or (and-let* ((d (assq key meta)))
 	  (cdr d))
 	'()))
+
+  (define (init-repository dir)
+    (let ((src (repository-path))
+	  (copy (if (or (feature? 'mingw32) (feature? 'msvc))
+		    "copy" 
+		    "cp -r")))
+      (print "copying required files to " dir " ...")
+      (for-each
+       (lambda (f)
+	 (system* "~a ~a ~a" copy (make-pathname src f) dir))
+       +default-repository-files+)))
 
   (define (ext-version x)
     (cond ((or (eq? x 'chicken)
@@ -273,11 +305,12 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
        -test                    run included test-cases, if available
        -username USER           set username for transports that require this
        -password PASS           set password for transports that require this
+  -i   -init DIRECTORY          initialize empty alternative repository
 EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n #\v))
+  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n #\v #\i))
 
   (define (main args)
     (let ((defaults (load-defaults)))
@@ -335,6 +368,10 @@ EOF
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-v") (string=? arg "-version"))
 			(print (chicken-version))
+			(exit 0))
+		       ((or (string=? arg "-i") (string=? arg "-init"))
+			(unless (pair? (cdr args)) (usage 1))
+			(init-repository (cadr args))
 			(exit 0))
 		       ((string=? "-test" arg)
 			(set! *run-tests* #t)

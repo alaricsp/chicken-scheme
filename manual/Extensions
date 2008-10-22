@@ -448,6 +448,8 @@ Available options:
 ; {{-test}} : run included test-cases, if available
 ; {{-username USER}} : set username for transports that require this
 ; {{-password PASS}} : set password for transports that require this
+; {{-i   -init DIRECTORY}} : initialize empty alternative repository
+
 
 === chicken-uninstall references
 
@@ -477,11 +479,13 @@ code is going to be evaluated. When {{chicken-install}} is run as
 extension mechanism).
 
 Security-conscious users should never run {{chicken-install}} as root.
-A simple remedy is to set the environment variable {{CHICKEN_REPOSITORY}},
-which will transparently place the repository at an arbitrary user-selected
-location. Alternatively obtain write/execute access to the default location
-of the repository (usually {{/usr/local/lib/chicken}}) to avoid running
-as root. {{chicken-install}} also provides a {{-sudo}} option to perform
+A simple remedy is to set the environment variable
+{{CHICKEN_REPOSITORY}}, which will transparently place the repository
+at an arbitrary user-selected location (don't forget to initialize it
+first with {{chicken-install -init <directory>}}).  Alternatively
+obtain write/execute access to the default location of the repository
+(usually {{/usr/local/lib/chicken}}) to avoid running as
+root. {{chicken-install}} also provides a {{-sudo}} option to perform
 the last installation steps as root user, but do building and other
 .setup script processing as normal.
 
@@ -498,9 +502,13 @@ transport mechanisms are currently supported:
 ; {{svn}} : perform an {{svn export}} from the central extension repository; this will require a {{svn(1)}} client to be installed on the machine
 ; {{local}} : use sources from the local filesystem and build directly in the source directory
 
-The {{-location}} option specifies where to look for the source repository
-and names a web URL, a subversion repository URL or a filesystem path, 
-respectively.
+The {{-location}} option specifies where to look for the source
+repository and names a web URL, a subversion repository URL or a
+filesystem path, respectively. A list of locations to try when
+retrieving extensions is stored in the file {{setup.defaults}}
+(usually installed in {{/usr/local/share/chicken}}). For {{http}}
+transports, {{chicken-install}} will detect networking timeouts and
+try alternative locations, as listed in the file.
 
 Dependency information, which is necessary to ensure required
 extensions are also installed, is processed automatically.

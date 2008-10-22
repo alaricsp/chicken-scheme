@@ -35,6 +35,7 @@ TODO for trunk								-*- Outline -*-
 
 * branches
 ** merge cmi branch and announce changes
+** test irregular branch
 
 * expander
 ** at some stage disable debug-output in expand.scm
@@ -82,12 +83,6 @@ TODO for trunk								-*- Outline -*-
 ** setup-download
 *** use HTTP_PROXY env. var
 *** handle redirects in http-fetch
-*** connect timeout and alternative download location
-** chicken-install
-*** should cache extension-info
-    necessary?
-** funky: allow CHICKEN_REPOSITORY to be a list and try in order
-*** special name to refer to default repo
 
 * library
 ** read-mark list should be stored in read-table

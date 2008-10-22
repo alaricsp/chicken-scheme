@@ -177,6 +177,7 @@
 	 expand
 	 extension-information
 	 repository-path
+	 chicken-home
 	 with-exception-handler
 	 strip-syntax)
  ##sys#chicken-macro-environment)	;*** incorrect - won't work in compiled executable

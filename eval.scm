@@ -142,11 +142,9 @@
 
 ;;; System settings
 
-(define chicken-home
-  (let ([getenv getenv])
-    (lambda ()
-      (or (##sys#chicken-prefix "share/chicken")
-	  installation-home) ) ) )
+(define (chicken-home)
+  (or (##sys#chicken-prefix "share/chicken")
+      installation-home) )
 
 
 ;;; Lo-level hashtable support:
@@ -1469,7 +1467,9 @@
 	       (else (list ##sys#load-dynamic-extension source-file-extension) ) ) ))
       (or (test fname)
 	  (let loop ((paths (if repo
-				(##sys#append ##sys#include-pathnames (list (##sys#repository-path)))
+				(##sys#append 
+				 ##sys#include-pathnames 
+				 (list (##sys#repository-path)))
 				##sys#include-pathnames) ) )
 	    (cond ((eq? paths '()) fname)
 		  ((test (string-append (##sys#slot paths 0)
