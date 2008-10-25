@@ -26,8 +26,7 @@
 
 (##sys#register-primitive-module
  'srfi-69
- '(%make-hash-table
-   alist->hash-table
+ '(alist->hash-table
    eq?-hash
    equal?-hash
    eqv?-hash
