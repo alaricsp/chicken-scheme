@@ -237,6 +237,7 @@
     (when (memq 'local options)
       (set! local-definitions #t))
     (when (memq 'inline-global options)
+      (set! inline-locally #t)
       (set! inline-globally #t))
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
@@ -601,7 +602,7 @@
 			   [else
 			    (print-node "optimized" '|7| node2)
 
-			    (when (and inline-globally inline-output-file)
+			    (when inline-output-file
 			      (let ((f inline-output-file))
 				(when verbose
 				  (printf "Generating global inline file `~a' ...~%" f))
