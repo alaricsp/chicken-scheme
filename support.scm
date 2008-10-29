@@ -36,15 +36,15 @@
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
   file-io-only banner custom-declare-alist disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
-  foreign-declarations block-compilation line-number-database-size
-  target-heap-size target-stack-size
+  foreign-declarations block-compilation line-number-database-size node->sexpr sexpr->node
+  target-heap-size target-stack-size variable-visible? hide-variable export-variable
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
+  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
   dependency-list broken-constant-nodes inline-substitutions-enabled emit-syntax-trace-info
-  always-bound-to-procedure block-variable-literal? copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
+  block-variable-literal? copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
   direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string
-  make-block-variable-literal block-variable-literal-name
+  make-block-variable-literal block-variable-literal-name variable-mark
   expand-profile-lambda profile-lambda-list profile-lambda-index profile-info-vector-name
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
@@ -53,7 +53,7 @@
   transform-direct-lambdas! finish-foreign-result csc-control-file
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
-  constant? basic-literal? source-info->string 
+  constant? basic-literal? source-info->string mark-variable load-inline-file
   collapsable-literal? immediate? canonicalize-begin-body string->expr get get-all
   put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
   build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
@@ -66,9 +66,9 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   default-optimization-iterations chop-separator chop-extension follow-without-loop
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion final-foreign-type debugging export-list block-globals
-  constant-declarations process-lambda-documentation big-fixnum?
-  export-dump-hook
+  foreign-argument-conversion foreign-result-conversion final-foreign-type debugging
+  constant-declarations process-lambda-documentation big-fixnum? sort-symbols
+  export-dump-hook intrinsic? node->sexpr emit-global-inline-file inline-max-size
   make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
 
 
@@ -230,6 +230,9 @@
 	(abort)
 	(proc x (lambda (x2) (loop x2 (cons x done)))) ) ) )
 
+(define (sort-symbols lst)
+  (sort lst (lambda (s1 s2) (string<? (symbol->string s1) (symbol->string s2)))))
+
 
 ;;; Predicates on expressions and literals:
 
@@ -320,21 +323,23 @@
 ; - 'get' and 'put' shadow the routines in the extras-unit, we use low-level
 ;   symbol-keyed hash-tables here.
 
-(define (initialize-analysis-database db)
-  (for-each
-   (lambda (s) 
-     (put! db s 'standard-binding #t)
-     (when (memq s side-effecting-standard-bindings) (put! db s 'side-effecting #t))
-     (when (memq s foldable-standard-bindings) (put! db s 'foldable #t)) )
-   standard-bindings)
-  (for-each
-   (lambda (s)
-     (put! db s 'extended-binding #t)
-     (when (memq s foldable-extended-bindings) (put! db s 'foldable #t)) )
-   extended-bindings)
-  (for-each
-   (lambda (s) (put! db (car s) 'constant #t))
-   mutable-constants) )
+(define initialize-analysis-database
+  (let ((initial #t))
+    (lambda (db)
+      (for-each
+       (lambda (s) 
+	 (when initial
+	   (mark-variable s '##compiler#intrinsic 'standard))
+	 (when (memq s side-effecting-standard-bindings) (put! db s 'side-effecting #t))
+	 (when (memq s foldable-standard-bindings) (put! db s 'foldable #t)) )
+       standard-bindings)
+      (for-each
+       (lambda (s)
+	 (when initial 
+	   (mark-variable s '##compiler#intrinsic 'extended))
+	 (when (memq s foldable-extended-bindings) (put! db s 'foldable #t)) )
+       extended-bindings) 
+      (set! initial #f))))
 
 (define (get db key prop)
   (let ((plist (##sys#hash-table-ref db key)))
@@ -417,6 +422,7 @@
       (##sys#hash-table-for-each
        (lambda (sym plist)
 	 (let ([val #f]
+	       (lval #f)
 	       [pval #f]
 	       [csites '()]
 	       [refs '()] )
@@ -428,12 +434,14 @@
 		     (case (caar es)
 		       ((captured assigned boxed global contractable standard-binding foldable assigned-locally
 				  side-effecting collapsable removable undefined replacing unused simple inlinable inline-export
-				  has-unused-parameters extended-binding customizable constant boxed-rest)
+				  has-unused-parameters extended-binding customizable constant boxed-rest hidden-refs)
 			(printf "\t~a" (cdr (assq (caar es) names))) )
 		       ((unknown)
 			(set! val 'unknown) )
 		       ((value)
 			(unless (eq? val 'unknown) (set! val (cdar es))) )
+		       ((local-value)
+			(unless (eq? val 'unknown) (set! lval (cdar es))) )
 		       ((potential-value)
 			(set! pval (cdar es)) )
 		       ((replacable home contains contained-in use-expr closure-size rest-parameter
@@ -447,7 +455,9 @@
 		     (loop (cdr es)) ) ) )
 	     (cond [(and val (not (eq? val 'unknown)))
 		    (printf "\tval=~s" (cons (node-class val) (node-parameters val))) ]
-		   [(and pval (not (eq? pval 'unknown)))
+		   [(and lval (not (eq? val 'unknown)))
+		    (printf "\tlval=~s" (cons (node-class lval) (node-parameters lval))) ]
+		   [(and pval (not (eq? val 'unknown)))
 		    (printf "\tpval=~s" (cons (node-class pval) (node-parameters pval)))] )
 	     (when (pair? refs) (printf "\trefs=~s" (length refs)))
 	     (when (pair? csites) (printf "\tcss=~s" (length csites)))
@@ -531,7 +541,7 @@
 		(receive (name ln) (get-line-2 x)
 		  (make-node
 		   '##core#call
-		   (list (cond [(memq name always-bound-to-procedure)
+		   (list (cond [(variable-mark name '##compiler#always-bound-to-procedure)
 				(set! count (add1 count))
 				#t]
 			       [else #f] )
@@ -654,6 +664,60 @@
 	((or (fx>= i len-from) (fx>= i len-to)))
       (##sys#setslot to i (##sys#slot from i)) ) ) )
 
+(define (node->sexpr n)
+  (let walk ((n n))
+    `(,(node-class n)
+      ,(node-parameters n)
+      ,@(map walk (node-subexpressions n)))))
+
+(define (sexpr->node x)
+  (let walk ((x x))
+    (make-node (car x) (cadr x) (map walk (cddr x)))))
+
+(define (emit-global-inline-file filename db)
+  (let ((lst '()))
+    (with-output-to-file filename
+      (lambda ()
+	(print "; GENERATED BY CHICKEN " (chicken-version) " FROM "
+	       source-filename "\n")
+	(##sys#hash-table-for-each
+	 (lambda (sym plist)
+	   (when (variable-visible? sym)
+	     (and-let* ((val (assq 'local-value plist))
+			((not (node? (variable-mark sym '##compiler#inline-global))))
+			((let ((val (assq 'value plist)))
+			   (or (not val)
+			       (not (eq? 'unknown (cdr val))))))
+			((assq 'inlinable plist))
+			(lparams (node-parameters (cdr val)))
+			((get db (first lparams) 'simple)) 
+			((not (get db sym 'hidden-refs)))
+			((case (variable-mark sym '##compiler#inline)
+			   ((yes) #t)
+			   ((no) #f)
+			   (else 
+			    (< (fourth lparams) inline-max-size) ) ) ) )
+	       (set! lst (cons sym lst))
+	       (pp (list sym (node->sexpr (cdr val))))
+	       (newline))))
+	 db)
+	(print "; END OF FILE")))
+    (when (and (pair? lst)
+	       (debugging 'i "the following procedures can be globally inlined:"))
+      (for-each (cut print "  " <>) (sort-symbols lst)))))
+
+(define (load-inline-file fname)
+  (with-input-from-file fname
+    (lambda ()
+      (let loop ()
+	(let ((x (read)))
+	  (unless (eof-object? x)
+	    (mark-variable 
+	     (car x)
+	     '##compiler#inline-global 
+	     (sexpr->node (cadr x)))
+	    (loop)))))))
+
 
 ;;; Match node-structure with pattern:
 
@@ -735,17 +799,6 @@
        (newline) ) )
    db) )
 
-(define (check-global-exports db)
-  (when export-list
-    (let ([exps export-list])
-      (##sys#hash-table-for-each
-       (lambda (sym plist)
-	 (when (and (memq sym exps) (not (assq 'assigned plist)))
-	   (compiler-warning 'var "exported global variable `~S' is used but not defined" sym) )
-	 (set! exps (delete sym exps eq?)) )
-       db)
-      (for-each (cut compiler-warning 'var "exported global variable `~S' is not defined" <>) exps) ) ) )
-
 
 ;;; change hook function to hide non-exported module bindings
 
@@ -753,8 +806,7 @@
   (lambda (sym mod exp val)
     (when (and (not val) (not exp))
       (debugging 'o "hiding nonexported module bindings" sym)
-      (set! block-globals (cons sym block-globals)) ) ) )
-
+      (hide-variable sym))))
 
 
 ;;; Compute general statistics from analysis database:
@@ -1052,7 +1104,8 @@
 ;;; Scan expression-node for free variables (that are not in env):
 
 (define (scan-free-variables node)
-  (let ((vars '()))
+  (let ((vars '())
+	(hvars '()))
 
     (define (walk n e)
       (let ([subs (node-subexpressions n)]
@@ -1061,7 +1114,10 @@
 	  ((quote ##core#undefined ##core#primitive ##core#proc ##core#inline_ref) #f)
 	  ((##core#variable) 
 	   (let ((var (first params)))
-	     (unless (memq var e) (set! vars (lset-adjoin eq? vars var))) ) )
+	     (unless (memq var e)
+	       (set! vars (lset-adjoin eq? vars var))
+	       (unless (variable-visible? var) 
+		 (set! hvars (lset-adjoin eq? hvars var))))))
 	  ((set!)
 	   (let ((var (first params)))
 	     (unless (memq var e) (set! vars (lset-adjoin eq? vars var)))
@@ -1080,7 +1136,7 @@
       (for-each (lambda (n) (walk n e)) ns) )
 
     (walk node '())
-    vars) )
+    (values vars hvars) ) )
 
 
 ;;; Simple topological sort:
@@ -1212,14 +1268,20 @@ Usage: chicken FILENAME OPTION ...
     -lambda-lift                enable lambda-lifting
     -no-usual-integrations      standard procedures may be redefined
     -unsafe                     disable safety checks
+    -local                      assume globals are only modified in current file
     -block                      enable block-compilation
     -disable-interrupts         disable interrupts in compiled code
     -fixnum-arithmetic          assume all numbers are fixnums
-    -benchmark-mode             fixnum mode, no interrupts and opt.-level 3
+    -benchmark-mode             equivalent to '-block -optimize-level 4
+                                 -debug-level 0 -fixnum-arithmetic -lambda-lift 
+                                 -disable-interrupts -inline'
     -disable-stack-overflow-checks  
                                 disables detection of stack-overflows.
     -inline                     enable inlining
     -inline-limit               set inlining threshold
+    -inline-global              enable cross-module inlining
+    -emit-inline-file FILENAME  generate file with globally inlinable procedures
+                                (implies -inline -local)
 
   Configuration options:
 
@@ -1422,3 +1484,27 @@ EOF
        (##sys#fudge 3)			; 64 bit?
        (or (fx> x 1073741823)
 	   (fx< x -1073741824) ) ) )
+
+
+;;; symbol visibility and other global variable properties
+
+(define (hide-variable sym)
+  (mark-variable sym '##compiler#visibility 'hidden))
+
+(define (export-variable sym)
+  (mark-variable sym '##compiler#visibility 'exported))
+
+(define (variable-visible? sym)
+  (let ((p (##sys#get sym '##compiler#visibility)))
+    (case p
+      ((hidden) #f)
+      ((exported) #t)
+      (else (not block-compilation)))))
+
+(define (mark-variable var mark #!optional (val #t))
+  (##sys#put! var mark val) )
+
+(define (variable-mark var mark)
+  (##sys#get var mark) )
+
+(define intrinsic? (cut variable-mark <> '##compiler#intrinsic))

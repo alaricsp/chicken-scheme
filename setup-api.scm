@@ -125,7 +125,6 @@
 (define *target-lib-home* (foreign-value "C_TARGET_LIB_HOME" c-string))
 
 (define *major-version* (##sys#fudge 41))
-(define *default-eggdir* (conc "eggs/" *major-version*))
 
 (define *sudo* #f)
 
@@ -135,7 +134,6 @@
 
 (define *windows-shell* (or (eq? *windows* 'mingw32)
                             (eq? *windows* 'msvc)))
-(define *debug* #f)
 
 (register-feature! 'chicken-setup)
 
@@ -168,7 +166,6 @@
 (define *chmod-command* "chmod")
 (define *ranlib-command* "ranlib")
 (define *csc-options* '())
-(define *dont-ask* #f)
 (define *base-directory* (current-directory))
 
 (define setup-root-directory      (make-parameter *base-directory*))
@@ -188,7 +185,7 @@
 ; numbers (such as (1 22 0)). If one of the version components cannot
 ; be converted to a number, then it is kept as a string.
 
-(define (version-string->numbers string)
+#;(define (version-string->numbers string)
   (map (lambda (x) (or (string->number x) (->string x))) 
        (string-split string ".")))
 

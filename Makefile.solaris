@@ -29,7 +29,7 @@ SRCDIR = ./
 
 # platform configuration
 
-ARCH = $(shell sh $SRCDIR/config-arch.sh)
+ARCH = $(shell sh $(SRCDIR)/config-arch.sh)
 
 # options
 
@@ -40,8 +40,10 @@ else
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
 endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
-LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(LIBDIR)
+LINKER_LINK_DLOADABLE_OPTIONS = -shared -Wl,-R$(RUNTIME_LINKER_PATH) -Wl,-L.
+LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(RUNTIME_LINKER_PATH)
 LIBRARIES = -lrt -lsocket -lnsl -lm -ldl
+NEEDS_RELINKING = yes
 
 # special files
 

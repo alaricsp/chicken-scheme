@@ -43,7 +43,7 @@ specifying the {{-block}} option.
 Declares that the toplevel bindings for {{SYMBOL ...}}
 should not be accessible from code in other compilation units or by
 {{eval}}. Access to toplevel bindings declared as block global is
-also more efficient.
+also more efficient. {{(declare (hide))}} is equivalent to {{(declare (block))}}.
 
 
 === bound-to-procedure
@@ -141,11 +141,28 @@ The negated forms {{(not inline)}} and {{(not inline IDENTIFIER)}} disable globa
 the given global procedures only, respectively.
 
 
+=== inline-global
+
+  [declaration specifier] (inline-global)
+  [declaration specifier] (not inline-global)
+  [declaration specifier] (inline-global IDENTIFIER ...)
+  [declaration specifier] (not inline-global IDENTIFIER ...)
+
+Declare that then given toplevel procedures (or all) are subject to
+cross-module inlining. Potentially inlinable procedures in the current
+compilation unit will be written to an external
+{{<source-filename>.inline}} file in the current directory. Globally
+inlinable procedures from other compilation units referred to via
+{{(declare (uses ...))}} or {{require-extension}} are loaded from
+{{.inline}} files (if available in the current include path) and inlined
+in the current compilation unit.
+
+
 === inline-limit
 
  [declaration specifier] (inline-limit THRESHOLD)
 
-Sets the maximum size of procedures which may potentially be inlined. The default threshold is {{10}}.
+Sets the maximum size of procedures which may potentially be inlined. The default threshold is {{20}}.
 
 
 === interrupts-enabled
@@ -178,6 +195,16 @@ Declares additional linker compiler options that are to be passed to the subsequ
 that links the generated code into an executable or library. 
 This declaration will only work if the source file is compiled
 with the {{csc}} compiler driver.
+
+
+=== local
+
+ [declaration specifier] (local)
+ [declaration specifier] (local SYMBOL ...)
+
+Declares that the listed (or all) toplevel variables defined in the
+current compilation unit are not modified from code outside of this
+compilation unit.
 
 
 === no-argc-checks

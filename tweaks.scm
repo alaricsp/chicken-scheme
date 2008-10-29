@@ -42,7 +42,16 @@
     (disable-interrupts) ) ] )
 
 
+(define-inline (node? x) (##sys#structure? x 'node))
 (define-inline (make-node c p s) (##sys#make-structure 'node c p s))
 (define-inline (node-class n) (##sys#slot n 1))
 (define-inline (node-parameters n) (##sys#slot n 2))
 (define-inline (node-subexpressions n) (##sys#slot n 3))
+
+(define-inline (intrinsic? sym) (##sys#get sym '##compiler#intrinsic))
+
+(define-inline (mark-variable var mark #!optional (val #t))
+  (##sys#put! var mark val) )
+
+(define-inline (variable-mark var mark)
+  (##sys#get var mark) )

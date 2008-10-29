@@ -149,10 +149,6 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # undef C_HACKED_APPLY
 #endif
 
-#ifdef C_LOCK_TOSPACE
-#include <sys/mman.h>
-#endif
-
 #define BITWISE_UINT_ONLY
 
 /* Parameters: */
@@ -528,7 +524,6 @@ static C_word C_fcall intern0(C_char *name) C_regparm;
 static void C_fcall update_locative_table(int mode) C_regparm;
 static C_word get_unbound_variable_value(C_word sym);
 static LF_LIST *find_module_handle(C_char *name);
-static void lock_tospace(int lock);
 
 static C_ccall void call_cc_wrapper(C_word c, C_word closure, C_word k, C_word result) C_noret;
 static C_ccall void call_cc_values_wrapper(C_word c, C_word closure, C_word k, ...) C_noret;
@@ -657,12 +652,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   if((symbol_table = C_new_symbol_table(".", symbols ? symbols : DEFAULT_SYMBOL_TABLE_SIZE)) == NULL)
     return 0;
 
-#ifdef C_LOCK_TOSPACE
-  page_size = sysconf(_SC_PAGESIZE);
-  assert(page_size > -1);
-#else
   page_size = 0;
-#endif
   stack_size = stack ? stack : DEFAULT_STACK_SIZE;
   C_set_or_change_heap_size(heap ? heap : DEFAULT_HEAP_SIZE, 0);
 
@@ -1036,63 +1026,43 @@ void global_signal_handler(int signum)
 
 /* Align memory to page boundary */
 
-#ifndef C_LOCK_TOSPACE
 static void *align_to_page(void *mem)
 {
   return (void *)C_align((C_uword)mem);
 }
-#endif
+
 
 static C_byte *
 heap_alloc (size_t size, C_byte **page_aligned)
 {
   C_byte *p;
-#ifdef C_LOCK_TOSPACE
-  p = (C_byte *)mmap (NULL, size, (PROT_READ | PROT_WRITE),
-                      (MAP_PRIVATE | MAP_ANON), -1, 0);
-  if (p != NULL && page_aligned) *page_aligned = p;
-#else
   p = (C_byte *)C_malloc (size + page_size);
-  if (p != NULL && page_aligned) *page_aligned = align_to_page (p);
-#endif
 
-  /* . */
+  if (p != NULL && page_aligned) *page_aligned = align_to_page (p);
+
   return p;
 }
+
 
 static void
 heap_free (C_byte *ptr, size_t size)
 {
-#ifdef C_LOCK_TOSPACE
-  int r = munmap (ptr, size);
-  assert (r == 0);
-#else
   C_free (ptr);
-#endif
-  /* . */
 }
+
 
 static C_byte *
 heap_realloc (C_byte *ptr, size_t old_size,
 	      size_t new_size, C_byte **page_aligned)
 {
   C_byte *p;
-#ifdef C_LOCK_TOSPACE
-  p = (C_byte *)mmap (NULL, new_size, (PROT_READ | PROT_WRITE),
-                      (MAP_PRIVATE | MAP_ANON), -1, 0);
-  if (ptr != NULL) {
-    memcpy (p, ptr, old_size);
-    heap_free (ptr, old_size);
-  }
-  if (p != NULL && page_aligned) *page_aligned = p;
-#else
   p = (C_byte *)C_realloc (ptr, new_size + page_size);
-  if (p != NULL && page_aligned) *page_aligned = align_to_page (p);
-#endif
 
-  /* . */
+  if (p != NULL && page_aligned) *page_aligned = align_to_page (p);
+
   return p;
 }
+
 
 /* Modify heap size at runtime: */
 
@@ -1126,7 +1096,6 @@ void C_set_or_change_heap_size(C_word heap, int reintern)
   tospace_top = tospace_start;
   tospace_limit = tospace_start + size;
   mutation_stack_top = mutation_stack_bottom;
-  lock_tospace(1);
 
   if(reintern) initialize_symbol_table();
 }
@@ -2707,19 +2676,6 @@ void C_save_and_reclaim(void *trampoline, void *proc, int n, ...)
 }
 
 
-static void lock_tospace(int lock)
-{
-#ifdef C_LOCK_TOSPACE
-  int r;
-
-  r = mprotect(tospace_start, (heap_size / 2), 
-	       lock ? PROT_NONE : (PROT_READ | PROT_WRITE));
-
-  if(r == -1) panic(strerror(errno));
-#endif
-}
-
-
 C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 {
   int i, j, n, fcount, weakn;
@@ -2745,7 +2701,6 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
   /* Note: the mode argument will always be GC_MINOR or GC_REALLOC. */
   if(C_pre_gc_hook != NULL) C_pre_gc_hook(GC_MINOR);
 
-  lock_tospace(0);
   finalizers_checked = 0;
   C_restart_trampoline = (TRAMPOLINE)trampoline;
   C_restart_address = proc;
@@ -3014,7 +2969,6 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 
   if(C_post_gc_hook != NULL) C_post_gc_hook(gc_mode, tgc);
 
-  lock_tospace(1);
   /* Jump from the Empire State Building... */
   C_longjmp(C_restart, 1);
 }
@@ -3194,8 +3148,6 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   C_byte *new_heapspace;
   size_t  new_heapspace_size;
 
-  lock_tospace(0);
-
   if(C_pre_gc_hook != NULL) C_pre_gc_hook(GC_REALLOC);
 
   if(double_plus) size = heap_size * 2 + size;
@@ -3322,7 +3274,6 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   fromspace_start = new_tospace_start;
   C_fromspace_top = new_tospace_top;
   C_fromspace_limit = new_tospace_limit;
-  lock_tospace(1);
 
   if(gc_report_flag) {
     C_printf(C_text("[GC] resized heap to %d bytes\n"), heap_size);
@@ -4192,12 +4143,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
   case C_fix(21):
     return C_fix(C_MOST_POSITIVE_FIXNUM);
 
-  case C_fix(22):
-#ifdef C_LOCK_TOSPACE
-    return C_SCHEME_TRUE;
-#else
-    return C_SCHEME_FALSE;
-#endif
+    /* 22 */
 
   case C_fix(23):
     return C_fix(C_startup_time_seconds);

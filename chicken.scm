@@ -43,7 +43,7 @@
   target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
+  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
   broken-constant-nodes inline-substitutions-enabled compiler-warning
   direct-call-ids foreign-type-table first-analysis
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
@@ -117,13 +117,15 @@
 		 (case level
 		   [(0) #f]
 		   [(1)
-		    (set! options (cons* 'optimize-leaf-routines options)) ]
+		    (set! options (cons 'optimize-leaf-routines options)) ]
 		   [(2)
-		    (set! options
-		      (cons 'optimize-leaf-routines options) ) ] 
+		    (set! options (cons 'optimize-leaf-routines options)) ] 
 		   [(3)
 		    (set! options
-		      (cons* 'optimize-leaf-routines 'unsafe options) ) ]
+		      (cons* 'optimize-leaf-routines 'local 'inline options) ) ]
+		   [(4)
+		    (set! options
+		      (cons* 'optimize-leaf-routines 'local 'inline 'unsafe options) ) ]
 		   [else (compiler-warning 'usage "invalid optimization level ~S - ignored" (car rest))] )
 		 (loop (cdr rest)) ) ]
 	      [(eq? 'debug-level o)
@@ -138,6 +140,7 @@
 	       (set! options 
 		 (cons* 'fixnum-arithmetic 'disable-interrupts 'no-trace 'unsafe
 			'optimize-leaf-routines 'block 'lambda-lift 'no-lambda-info
+			'inline
 			options) )
 	       (loop rest) ]
 	      [(memq o valid-compiler-options) (loop rest)]

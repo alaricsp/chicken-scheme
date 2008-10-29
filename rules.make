@@ -1247,19 +1247,19 @@ setup-download.import.c: $(SRCDIR)setup-download.import.scm $(SRCDIR)setup-downl
 setup-utils.import.c: $(SRCDIR)setup-utils.import.scm $(SRCDIR)setup-utils.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 
-chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-more-macros.scm $(SRCDIR)chicken-ffi-macros.scm $(SRCDIR)private-namespace.scm
+chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-more-macros.scm $(SRCDIR)chicken-ffi-macros.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-support.c: $(SRCDIR)support.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm
+support.c: $(SRCDIR)support.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-compiler.c: $(SRCDIR)compiler.scm $(SRCDIR)private-namespace.scm
+compiler.c: $(SRCDIR)compiler.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-optimizer.c: $(SRCDIR)optimizer.scm $(SRCDIR)private-namespace.scm
+optimizer.c: $(SRCDIR)optimizer.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-batch-driver.c: $(SRCDIR)batch-driver.scm $(SRCDIR)private-namespace.scm
+batch-driver.c: $(SRCDIR)batch-driver.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-c-platform.c: $(SRCDIR)c-platform.scm $(SRCDIR)private-namespace.scm
+c-platform.c: $(SRCDIR)c-platform.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-c-backend.c: $(SRCDIR)c-backend.scm $(SRCDIR)private-namespace.scm
+c-backend.c: $(SRCDIR)c-backend.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 
 csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)chicken-more-macros.scm $(SRCDIR)private-namespace.scm
@@ -1387,3 +1387,14 @@ $(SRCDIR)bootstrap.tar.gz: distfiles
 	tar cfz $@ library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c tcp.c \
 	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c posixunix.c posixwin.c regex.c \
 	  scheduler.c profiler.c stub.c expand.c $(COMPILER_OBJECTS_1:=.c)
+
+
+# benchmarking
+
+.PHONY: bench
+
+bench:
+	here=`pwd`; \
+	cd $(SRCDIR)benchmarks; \
+	LD_LIBRARY_PATH=$$here DYLD_LIBRARY_PATH=$$here PATH=$$here:$$PATH \
+	csi -s cscbench.scm $(BENCHMARK_OPTIONS)

@@ -91,6 +91,8 @@ ICHICKENLIBDIR = $(CHICKENLIBDIR)
 IEGGDIR = $(EGGDIR)
 endif
 
+RUNTIME_LINKER_PATH ?= .
+
 # commands
 
 ifdef HOSTSYSTEM
@@ -315,7 +317,7 @@ ifdef DEBUGBUILD
 CHICKEN_OPTIONS += -feature debugbuild
 endif
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
-CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info
+CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info -inline -local
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 CHICKEN_DYNAMIC_OPTIONS = $(CHICKEN_OPTIONS) -feature chicken-compile-shared -dynamic

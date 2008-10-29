@@ -33,14 +33,14 @@
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
-  installation-home debugging
+  installation-home debugging intrinsic?
   dump-nodes unlikely-variables
   unit-name insert-timer-checks used-units inlining
   foreign-declarations block-compilation line-number-database-size
   target-heap-size target-stack-size 
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
+  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
   broken-constant-nodes inline-substitutions-enabled
   direct-call-ids foreign-type-table first-analysis
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
@@ -95,8 +95,8 @@
 
 (define default-profiling-declarations
   '((##core#declare
-     '(uses profiler)
-     '(bound-to-procedure
+     (uses profiler)
+     (bound-to-procedure
        ##sys#profile-entry ##sys#profile-exit) ) ) )
 
 (define units-used-by-default '(library eval data-structures ports extras srfi-69)) 
@@ -117,17 +117,17 @@
   '(-help h help version verbose explicit-use quiet no-trace no-warnings unsafe block
     check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
     profile inline keep-shadowed-macros
-    fixnum-arithmetic disable-interrupts optimize-leaf-routines check-imports
+    fixnum-arithmetic disable-interrupts optimize-leaf-routines
     lambda-lift compile-syntax tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
-    emit-external-prototypes-first release
+    emit-external-prototypes-first release local inline-global
     analyze-only dynamic extension) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
-	  inline-limit profile-name disable-warning emit-exports import
+	  inline-limit profile-name disable-warning
     prelude postlude prologue epilogue nursery extend feature 
-    emit-import-library
+    emit-import-library emit-inline-file
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 
@@ -428,8 +428,7 @@
 			(= 2 (length callargs))
 			(let ([name (car (node-parameters proc))])
 			  (and (memq name '(values ##sys#values))
-			       (or (get db name 'standard-binding)
-				   (get db name 'extended-binding) )
+			       (intrinsic? name)
 			       (make-node
 				'##core#call '(#t)
 				(list (make-node '##core#proc '("C_apply_values" #t) '())
@@ -1044,8 +1043,7 @@
 	(let ((arg (car callargs)))
 	  (and (eq? '##core#variable (node-class arg))
 	       (let ((sym (car (node-parameters arg))))
-		 (and (or (get db sym 'standard-binding)
-			  (get db sym 'extended-binding))
+		 (and (intrinsic? sym)
 		      (and-let* ((a (assq sym setter-map)))
 			(make-node
 			 '##core#call '(#t)

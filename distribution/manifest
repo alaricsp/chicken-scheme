@@ -8,6 +8,10 @@ README
 config-arch.sh
 banner.scm
 batch-driver.scm
+benchmarks/0.scm
+benchmarks/cscbench.scm
+benchmarks/nbody.scm
+benchmarks/binarytrees.scm
 benchmarks/boyer.scm
 benchmarks/browse.scm
 benchmarks/conform.scm
@@ -109,7 +113,6 @@ chicken.scm
 compiler.scm
 csc.1
 csc.scm
-cscbench.scm
 csi.1
 csi.scm
 csibatch.bat

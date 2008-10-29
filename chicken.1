@@ -132,6 +132,11 @@ the a Scheme program has to access the callbacks. By default the prototypes are 
 after foreign declarations.
 
 .TP
+.I \-emit\-inline\-file\ FILENAME
+Write procedures that can be globally inlined in internal form to FILENAME,
+if global inlining is enabled. Implies "-inline -local".
+
+.TP
 .B \-explicit\-use
 Disables automatic use of the units
 .I library
@@ -215,6 +220,10 @@ pathnames separated by
 Enables procedure inlining.
 
 .TP
+.B \-inline\-global
+Enable cross-module inlining.
+
+.TP
 .BI \-inline\-limit threshold
 Sets the maximum size of potentially inlinable procedures.
 
@@ -235,6 +244,11 @@ Any other value is ignored. The default is \texttt{suffix}.
 .TP
 .B \-lambda\-lift
 Enable the optimization known as lambda-lifting.
+
+.TP
+.B \-local
+Assume toplevel variables defined in the current compilation unit are
+not externally modified.
 
 .TP
 .B \-no\-trace

@@ -36,16 +36,16 @@
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
-  compiler-cleanup-hook disabled-warnings
+  compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
   file-io-only undefine-shadowed-macros profiled-procedures
-  unit-name insert-timer-checks used-units inline-max-size
+  unit-name insert-timer-checks used-units inline-max-size inline-locally
   debugging perform-lambda-lifting! disable-stack-overflow-checking
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
+  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used
   broken-constant-nodes inline-substitutions-enabled
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
   direct-call-ids foreign-type-table first-analysis emit-closure-info
@@ -64,19 +64,18 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes
-  inline-max-size file-requirements import-libraries
+  file-requirements import-libraries inline-globally
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  export-list do-lambda-lifting compiler-warning export-file-name
+  do-lambda-lifting compiler-warning emit-global-inline-file load-inline-file
   foreign-argument-conversion foreign-result-conversion)
 
 
 (include "tweaks")
 
 (define-constant default-profile-name "PROFILE")
-(define-constant default-inline-max-size 10)
 (define-constant funny-message-timeout 60000)
 
 (define user-options-pass (make-parameter #f))
@@ -85,7 +84,6 @@
 (define user-pass (make-parameter #f))
 (define user-pass-2 (make-parameter #f))
 (define user-post-analysis-pass (make-parameter #f))
-(define user-post-optimization-pass (make-parameter #f))
 
 
 ;;; Compile a complete source file:
@@ -236,10 +234,10 @@
       (set! initforms '()) )
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
-    (when (memq 'check-imports options)	;***
-      (compiler-warning 'usage "deprecated compiler option: -check-imports")) ;***
-    (when (memq 'import options)	;***
-      (compiler-warning 'usage "deprecated compiler option: -import")) ;***
+    (when (memq 'local options)
+      (set! local-definitions #t))
+    (when (memq 'inline-global options)
+      (set! inline-globally #t))
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
       (when verbose (printf "Warnings are disabled~%~!"))
@@ -252,8 +250,13 @@
     (when (memq 'disable-interrupts options) (set! insert-timer-checks #f))
     (when (memq 'fixnum-arithmetic options) (set! number-type 'fixnum))
     (when (memq 'block options) (set! block-compilation #t))
-    (when (memq 'emit-external-prototypes-first options) (set! external-protos-first #t))
-    (when (memq 'inline options) (set! inline-max-size default-inline-max-size))
+    (when (memq 'emit-external-prototypes-first options)
+      (set! external-protos-first #t))
+    (when (memq 'inline options) (set! inline-locally #t))
+    (and-let* ((ifile (memq 'emit-inline-file options)))
+      (set! inline-locally #t)		; otherwise this option makes no sense
+      (set! local-definitions #t)
+      (set! inline-output-file (option-arg ifile)))
     (and-let* ([inlimit (memq 'inline-limit options)])
       (set! inline-max-size 
 	(let ([arg (option-arg inlimit)])
@@ -369,7 +372,6 @@
     (when profile
       (let ([acc (eq? 'accumulate-profile (car profile))])
 	(set! emit-profile #t)
-	(set! profiled-procedures #f)
 	(set! initforms
 	  (append
 	   initforms
@@ -502,13 +504,26 @@
 		 (set! exps (map proc exps))
 		 (end-time "user pass") ) )
 
+	     (let ((req (concatenate (vector->list file-requirements))))
+	       (when (debugging 'M "; requirements:")
+		 (pp req))
+	       (when inline-globally
+		 (for-each
+		  (lambda (id)
+		    (and-let* ((ifile (##sys#resolve-include-filename 
+				       (make-pathname #f (symbol->string id) "inline")
+				       #f #t))
+			       ((file-exists? ifile)))
+		      (when verbose
+			(print "Loading inline file " ifile " ..."))
+		      (load-inline-file ifile)))
+		  (concatenate (map cdr req)))))
+
 	     (let* ([node0 (make-node
 			    'lambda '(())
 			    (list (build-node-graph
 				   (canonicalize-begin-body exps) ) ) ) ] 
 		    [proc (user-pass-2)] )
-	       (when (debugging 'M "; requirements:")
-		 (pretty-print (concatenate (vector->list file-requirements))))
 	       (when proc
 		 (when verbose (printf "Secondary user pass...~%"))
 		 (begin-time)
@@ -563,7 +578,8 @@
 			    (debugging 'p "optimization pass" i)
 
 			    (begin-time)
-			    (receive (node2 progress-flag) (perform-high-level-optimizations node2 db)
+			    (receive (node2 progress-flag)
+				(perform-high-level-optimizations node2 db)
 			      (end-time "optimization")
 			      (print-node "optimized-iteration" '|5| node2)
 
@@ -585,13 +601,11 @@
 			   [else
 			    (print-node "optimized" '|7| node2)
 
-			    (let ((proc (user-post-optimization-pass)))
-			      (when proc
+			    (when (and inline-globally inline-output-file)
+			      (let ((f inline-output-file))
 				(when verbose
-				  (printf "post-optimization user pass...~%"))
-				(begin-time)
-				(proc node2 db)
-				(end-time "post-optimization user pass")))
+				  (printf "Generating global inline file `~a' ...~%" f))
+				(emit-global-inline-file f db) ) )
 
 			    (begin-time)
 			    (let ([node3 (perform-closure-conversion node2 db)])

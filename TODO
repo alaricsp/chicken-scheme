@@ -87,6 +87,16 @@ TODO for trunk								-*- Outline -*-
 * library
 ** read-mark list should be stored in read-table
 
+* runtime
+** pre-hashed symbols (extra symbol slot)
+   The memory usage should be acceptable, performance gain is hard to guess.
+   Some experiments indicate that hashing the string is cheaper than it appears,
+   but low-level hashtables should get the most of this (and thus speed up
+   the compiler)
+
+* benchmarks
+** add more realistic benchmarks
+
 * documentation
 ** document ("HI/LO") expander (-> wiki, internals)
    will we ever have the time for that?

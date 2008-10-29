@@ -78,4 +78,6 @@ install-libs:
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) install-libs
 bootstrap:
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) bootstrap
+bench:
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) bench
 endif

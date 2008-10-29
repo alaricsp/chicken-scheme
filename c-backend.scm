@@ -43,7 +43,7 @@
   target-initial-heap-size disable-stack-overflow-checking
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  mutable-constants encode-literal
+  encode-literal
   broken-constant-nodes inline-substitutions-enabled
   direct-call-ids foreign-type-table first-analysis block-variable-literal?
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database 

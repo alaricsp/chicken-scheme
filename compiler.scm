@@ -40,6 +40,8 @@
 ; ([not] safe)
 ; ([not] standard-bindings {<name>})
 ; ([not] usual-integrations {<name>})
+; (local {<name> ...})
+; ([not] inline-global {<name>})
 ; ([number-type] <type>)
 ; (always-bound {<name>})
 ; (block)
@@ -55,7 +57,6 @@
 ; (fixnum-arithmetic)
 ; (foreign-declare {<string>})
 ; (hide {<name>})
-; (import <symbol-or-string> ...)
 ; (inline-limit <limit>)
 ; (keep-shadowed-macros)
 ; (lambda-lift)
@@ -74,7 +75,20 @@
 ; (uses {<unitname>})
 ;
 ;   <type> = fixnum | generic
+
+; - Global symbol properties:
 ;
+;   ##compiler#always-bound -> BOOL
+;   ##compiler#always-bound-to-procedure -> BOOL
+;   ##compiler#local -> BOOL
+;   ##compiler#visibility -> #f | 'hidden | 'exported
+;   ##compiler#constant -> BOOL
+;   ##compiler#intrinsic -> #f | 'standard | 'extended
+;   ##compiler#inline -> 'no | 'yes
+;   ##compiler#inline-global -> 'yes | 'no | <node>
+;   ##compiler#profile -> BOOL
+;   ##compiler#unused -> BOOL
+
 ; - Source language:
 ;
 ; <variable>
@@ -127,7 +141,7 @@
 ; (define-compiled-syntax <symbol> <expr>)
 ; (define-compiled-syntax (<symbol> . <llist>) <expr> ...)
 ; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
-;
+
 ; - Core language:
 ;
 ; [##core#variable {<variable>}]
@@ -153,7 +167,7 @@
 ; [##core#return <exp>]
 ; [##core#direct_call {<safe-flag> <debug-info> <call-id> <words>} <exp-f> <exp>...]
 ; [##core#direct_lambda {<id> <mode> (<variable>... [. <variable>]) <size>} <exp>]
-;
+
 ; - Closure converted/prepared language:
 ;
 ; [if {} <exp> <exp> <exp>]
@@ -188,8 +202,7 @@
 ; [##core#recurse {<tail-flag> <call-id>} <exp1> ...]
 ; [##core#return <exp>]
 ; [##core#direct_call {<safe-flag> <debug-info> <call-id> <words>} <exp-f> <exp>...]
-;
-;
+
 ; Analysis database entries:
 ;
 ; <variable>:
@@ -203,6 +216,7 @@
 ;   assigned-locally -> <boolean>            If true: variable has been assigned inside user lambda
 ;   undefined -> <boolean>                   If true: variable is unknown yet but can be known later
 ;   value -> <node>                          Variable has a known value
+;   local-value -> <node>                    Variable is declared local and has value
 ;   potential-value -> <node>                Global variable was assigned this value
 ;   references -> (<node> ...)               Nodes that are accesses of this variable (##core#variable nodes)
 ;   side-effecting -> <boolean>              If true: variable names side-effecting standard-binding
@@ -220,6 +234,7 @@
 ;   rest-parameter -> #f | 'vector | 'list   If true: variable holds rest-argument list mode
 ;   o-r/access-count -> <n>                  Contains number of references as arguments of optimizable rest operators
 ;   constant -> <boolean>                    If true: variable has fixed value
+;   hidden-refs -> <boolean>                 If true: procedure that refers to hidden global variables
 ; 
 ; <lambda-id>:
 ;
@@ -254,7 +269,7 @@
 
 
 (private compiler
-  compiler-arguments process-command-line explicit-use-flag inline-list not-inline-list
+  compiler-arguments process-command-line explicit-use-flag
   default-standard-bindings default-extended-bindings side-effecting-standard-bindings
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
@@ -263,17 +278,17 @@
   unit-name insert-timer-checks used-units external-variables require-imports-flag custom-declare-alist
   profile-info-vector-name finish-foreign-result pending-canonicalizations
   foreign-declarations emit-trace-info block-compilation line-number-database-size
-  always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
+  make-block-variable-literal block-variable-literal? block-variable-literal-name
   target-heap-size target-stack-size valid-c-identifier? profiled-procedures standalone-executable
   target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
+  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
   broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis callback-names disabled-warnings
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning
+  compiler-warning variable-visible? hide-variable mark-variable inline-locally
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
@@ -287,14 +302,15 @@
   build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
-  topological-sort print-version print-usage initialize-analysis-database export-list csc-control-file
-  estimate-foreign-result-location-size unused-variables
+  topological-sort print-version print-usage initialize-analysis-database csc-control-file
+  estimate-foreign-result-location-size inline-output-file
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
   units-used-by-default words-per-flonum disable-stack-overflow-checking
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
-  location-pointer-map literal-rewrite-hook
+  location-pointer-map literal-rewrite-hook inline-globally
+  local-definitions export-variable variable-mark intrinsic?
   undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   process-custom-declaration do-lambda-lifting file-requirements emit-closure-info 
@@ -324,7 +340,7 @@
 (define-constant constant-table-size 301)
 (define-constant file-requirements-size 301)
 (define-constant real-name-table-size 997)
-(define-constant default-inline-max-size 10)
+(define-constant default-inline-max-size 20)
 
 
 ;;; Global variables containing compilation parameters:
@@ -336,8 +352,6 @@
 (define insert-timer-checks #t)
 (define used-units '())
 (define unsafe #f)
-(define always-bound '())
-(define always-bound-to-procedure '())
 (define foreign-declarations '())
 (define emit-trace-info #f)
 (define block-compilation #f)
@@ -350,9 +364,7 @@
 (define no-bound-checks #f)
 (define no-argc-checks #f)
 (define no-procedure-checks #f)
-(define block-globals '())
 (define source-filename #f)
-(define export-list #f)
 (define safe-globals-flag #f)
 (define explicit-use-flag #f)
 (define disable-stack-overflow-checking #f)
@@ -360,13 +372,17 @@
 (define emit-unsafe-marker #f)
 (define external-protos-first #f)
 (define do-lambda-lifting #f)
-(define inline-max-size -1)
+(define inline-max-size default-inline-max-size)
 (define emit-closure-info #t)
 (define undefine-shadowed-macros #t)
 (define constant-declarations '())
 (define profiled-procedures #f)
 (define import-libraries '())
 (define standalone-executable #t)
+(define local-definitions #f)
+(define inline-globally #f)
+(define inline-locally #f)
+(define inline-output-file #f)
 
 
 ;;; These are here so that the backend can access them:
@@ -387,7 +403,6 @@
 (define inline-table-used #f)
 (define constant-table #f)
 (define constants-used #f)
-(define mutable-constants '())
 (define broken-constant-nodes '())
 (define inline-substitutions-enabled #f)
 (define direct-call-ids '())
@@ -413,11 +428,8 @@
 (define custom-declare-alist '())
 (define csc-control-file #f)
 (define data-declarations '())
-(define inline-list '())
-(define not-inline-list '())
 (define file-requirements #f)
 (define postponed-initforms '())
-(define unused-variables '())
 (define literal-rewrite-hook #f)
 
 
@@ -576,8 +588,8 @@
 				 [else
 				  (let ([var (gensym 'c)])
 				    (set! immutable-constants (alist-cons c var immutable-constants))
-				    (set! always-bound (cons var always-bound))
-				    (set! block-globals (cons var block-globals))
+				    (mark-variable var '##compiler#always-bound)
+				    (hide-variable var)
 				    var) ] ) ) )
 
 			((##core#undefined ##core#callunit ##core#primitive) x)
@@ -595,7 +607,8 @@
 			 (let ([ids (map eval (cdr x))])
 			   (apply ##sys#require ids)
 			   (##sys#hash-table-update! 
-			    file-requirements 'syntax-requirements (cut lset-union eq? <> ids)
+			    file-requirements 'dynamic/syntax 
+			    (cut lset-union eq? <> ids)
 			    (lambda () ids) )
 			   '(##core#undefined) ) )
 
@@ -670,23 +683,23 @@
 				     (l `(lambda ,llist2 ,body)) )
 				(set-real-names! aliases vars)
 				(cond ((or (not dest) 
-					   (not (assq dest se))) ; global?
+					   (assq dest se)) ; not global?
 				       l)
-				      ((and (eq? 'lambda name)
+				      ((and (eq? 'lambda (or (lookup name se) name))
 					    emit-profile 
-					    (or (not profiled-procedures)
-						(memq dest profiled-procedures)))
+					    (or profiled-procedures
+						(variable-mark dest '##compiler#profile)))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (if (and (> (length body0) 1)
 						(symbol? (car body0))
-						(eq? 'begin (lookup (car body0) se))
+						(eq? 'begin (or (lookup (car body0) se) (car body0)))
 						(let ((x1 (cadr body0)))
 						  (or (string? x1)
 						      (and (list? x1)
 							   (= (length x1) 2)
 							   (symbol? (car x1))
-							   (eq? 'quote (lookup (car x1) se))))))
+							   (eq? 'quote (or (lookup (car x1) se) (car x1)))))))
 					   (process-lambda-documentation
 					    dest (cadr body) l) 
 					   l))))))))
@@ -893,9 +906,8 @@
 				  (when (eq? var var0) ; global?
 				    (set! var (##sys#alias-global-hook var #t))
 				    (when safe-globals-flag
-				      (set! always-bound-to-procedure
-					(lset-adjoin eq? always-bound-to-procedure var))
-				      (set! always-bound (lset-adjoin eq? always-bound var)) )
+				      (mark-variable var '##compiler#always-bound-to-procedure)
+				      (mark-variable var '##compiler#always-bound))
 				    (when (macro? var)
 				      (compiler-warning 
 				       'var "assigned global variable `~S' is a macro ~A"
@@ -984,8 +996,10 @@
 				  (let ([arg (gensym)]
 					[ret (gensym)] )
 				    (##sys#hash-table-set! foreign-type-table name (vector type arg ret))
-				    (set! always-bound (cons* arg ret always-bound))
-				    (set! block-globals (cons* arg ret block-globals))
+				    (mark-variable arg '##compiler#always-bound)
+				    (mark-variable ret '##compiler#always-bound)
+				    (hide-variable arg)
+				    (hide-variable ret)
 				    (walk
 				     `(,(macro-alias 'begin se)
 					(define ,arg ,(first conv))
@@ -1064,9 +1078,9 @@
 				 [else
 				  (let ([var (gensym "constant")])
 				    (##sys#hash-table-set! constant-table name (list var))
-				    (set! mutable-constants (alist-cons var val mutable-constants))
-				    (set! block-globals (cons var block-globals))
-				    (set! always-bound (cons var always-bound))
+				    (hide-variable var)
+				    (mark-variable var '##compiler#constant)
+				    (mark-variable var '##compiler#always-bound)
 				    (walk `(define ,var ',val) se #f) ) ] ) ) )
 
 			((##core#declare)
@@ -1192,7 +1206,9 @@
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
 	   (mapwalk x se) )
 
-	  ((and (pair? (car x)) (symbol? (caar x)) (eq? 'lambda (or (lookup (caar x) se) (caar x))))
+	  ((and (pair? (car x))
+		(symbol? (caar x))
+		(eq? 'lambda (or (lookup (caar x) se) (caar x))))
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
 	     (emit-syntax-trace-info x #f)
@@ -1249,14 +1265,16 @@
 	(let ((us (strip (cdr spec))))
 	  (apply register-feature! us)
 	  (when (pair? us)
-	    (##sys#hash-table-update! file-requirements 'uses (cut lset-union eq? us <>) (lambda () us))
+	    (##sys#hash-table-update! 
+	     file-requirements 'static
+	     (cut lset-union eq? us <>) 
+	     (lambda () us))
 	    (let ((units (map (lambda (u) (string->c-identifier (stringify u))) us)))
 	      (set! used-units (append used-units units)) ) ) ) )
        ((unit)
 	(check-decl spec 1 1)
 	(let* ([u (strip (cadr spec))]
 	       [un (string->c-identifier (stringify u))] )
-	  (##sys#hash-table-set! file-requirements 'unit u)
 	  (when (and unit-name (not (string=? unit-name un)))
 	    (compiler-warning 'usage "unit was already given a name (new name is ignored)") )
 	  (set! unit-name un) ) )
@@ -1292,17 +1310,19 @@
 	(set! disabled-warnings
 	  (append (strip (cdr spec)) disabled-warnings)))
        ((always-bound) 
-	(set! always-bound (append (stripa (cdr spec)) always-bound)))
+	(for-each (cut mark-variable <> '##compiler#always-bound) (stripa (cdr spec))))
        ((safe-globals) (set! safe-globals-flag #t))
        ((no-procedure-checks-for-usual-bindings)
-	(set! always-bound-to-procedure
-	  (append default-standard-bindings default-extended-bindings always-bound-to-procedure))
-	(set! always-bound
-	  (append default-standard-bindings default-extended-bindings always-bound)) )
+	(for-each 
+	 (cut mark-variable <> '##compiler#always-bound-to-procedure)
+	 (append default-standard-bindings default-extended-bindings))
+	(for-each
+	 (cut mark-variable <> '##compiler#always-bound)
+	 (append default-standard-bindings default-extended-bindings)))
        ((bound-to-procedure)
 	(let ((vars (stripa (cdr spec))))
-	  (set! always-bound-to-procedure (append vars always-bound-to-procedure))
-	  (set! always-bound (append vars always-bound)) ) )
+	  (for-each (cut mark-variable <> '##compiler#always-bound-to-procedure) vars)
+	  (for-each (cut mark-variable <> '##compiler#always-bound) vars)))
        ((foreign-declare)
 	(let ([fds (cdr spec)])
 	  (if (every string? fds)
@@ -1324,7 +1344,7 @@
        ((separate) (set! block-compilation #f))
        ((keep-shadowed-macros) (set! undefine-shadowed-macros #f))
        ((unused)
-	(set! unused-variables (append (cdr spec) unused-variables)))
+	(for-each (cut mark-variable <> '##compiler#unused) (stripa (cdr spec))))
        ((not)
 	(check-decl spec 1)
 	(case (##sys#strip-syntax (second spec)) ; strip all
@@ -1342,9 +1362,10 @@
 				  (stripa (cddr spec))) )) ]
 	  [(inline)
 	   (if (null? (cddr spec))
-	       (set! inline-max-size -1)
-	       (set! not-inline-list (lset-union eq? not-inline-list
-						 (stripa (cddr spec)))) ) ]
+	       (set! inline-locally #f)
+	       (for-each 
+		(cut mark-variable <> '##compiler#inline 'no)
+		(stripa (cddr spec)))) ]
 	  [(usual-integrations)      
 	   (cond [(null? (cddr spec))
 		  (set! standard-bindings '())
@@ -1353,6 +1374,12 @@
 		  (let ([syms (stripa (cddr spec))])
 		    (set! standard-bindings (lset-difference eq? default-standard-bindings syms))
 		    (set! extended-bindings (lset-difference eq? default-extended-bindings syms)) ) ] ) ]
+	  ((inline-global)
+	   (if (null? (cddr spec))
+	       (set! inline-globally #f)
+	       (for-each
+		(cut mark-variable <> '##compiler#inline-global 'no)
+		(stripa (cddr spec)))))
 	  [else
 	   (check-decl spec 1 1)
 	   (let ((id (strip (cadr spec))))
@@ -1365,21 +1392,21 @@
 	(set! ##sys#enable-runtime-macros #t))
        ((block-global hide) 
 	(let ([syms (stripa (cdr spec))])
-	  (when export-list 
-	    (set! export-list (lset-difference eq? export-list syms)) )
-	  (set! block-globals (lset-union eq? syms block-globals)) ) )
+	  (if (null? syms)
+	      (set! block-compilation #t)
+	      (for-each hide-variable syms))))
        ((export) 
 	(let ((syms (stripa (cdr spec))))
-	  (set! block-globals (lset-difference eq? block-globals syms))
-	  (set! export-list (lset-union eq? syms (or export-list '())))))
+	  (for-each export-variable syms)))
        ((emit-external-prototypes-first)
 	(set! external-protos-first #t) )
        ((lambda-lift) (set! do-lambda-lifting #t))
        ((inline)
 	(if (null? (cdr spec))
-	    (unless (> inline-max-size -1)
-	      (set! inline-max-size default-inline-max-size) )
-	    (set! inline-list (lset-union eq? inline-list (stripa (cdr spec)))) ) )
+	    (set! inline-locally #t)
+	    (for-each
+	     (cut mark-variable <> '##compiler#inline 'yes)
+	     (stripa (cdr spec)))))
        ((inline-limit)
 	(check-decl spec 1 1)
 	(let ([n (cadr spec)])
@@ -1409,9 +1436,24 @@
 			  "invalid import-library specification: ~s" il))))
 		(strip (cdr spec))))))
        ((profile)
- 	(set! profiled-procedures
- 	  (append (stripa (cdr spec))
- 		  (or profiled-procedures '()))))
+	(if (null? (cdr spec))
+	    (set! profiled-procedures #t)
+	    (for-each 
+	     (cut mark-variable <> '##compiler#profile)
+	     (stripa (cdr spec)))))
+       ((local)
+	(cond ((null? (cdr spec))
+	       (set! local-definitions #t) )
+	      (else
+	       (for-each 
+		(cut mark-variable <> '##compiler#local)
+		(stripa (cdr spec))))))
+       ((inline-global)
+	(if (null? (cdr spec))
+	    (set! inline-globally #t)
+	    (for-each
+	     (cut mark-variable <> '##compiler#inline-global 'yes)
+	     (stripa (cdr spec)))))
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 
@@ -1690,7 +1732,7 @@
 		 (let ([name (first (node-parameters fun))])
 		   (collect! db name 'call-sites (cons here n))
 		   ;; If call to standard-binding & optimizable rest-arg operator: decrease access count:
-		   (if (and (get db name 'standard-binding)
+		   (if (and (intrinsic? name)
 			    (memq name optimizable-rest-argument-operators) )
 		       (for-each
 			(lambda (arg)
@@ -1760,17 +1802,15 @@
 	   (let* ([var (first params)]
 		  [val (car subs)] )
 	     (when first-analysis 
-	       (cond [(get db var 'standard-binding)
-		      (compiler-warning 'redef "redefinition of standard binding `~S'" var) ]
-		     [(get db var 'extended-binding)
-		      (compiler-warning 'redef "redefinition of extended binding `~S'" var) ] )
+	       (case (variable-mark var '##compiler#intrinsic)
+		 ((standard)
+		  (compiler-warning 'redef "redefinition of standard binding `~S'" var) )
+		 ((extended)
+		  (compiler-warning 'redef "redefinition of extended binding `~S'" var) ) )
 	       (put! db var 'potential-value val) )
 	     (when (and (not (memq var localenv)) 
 			(not (memq var env)) )
 	       (grow 1)
-	       (when first-analysis
-		 (when (or block-compilation (and export-list (not (memq var export-list))))
-		   (set! block-globals (lset-adjoin eq? block-globals var)) ) )
 	       (put! db var 'global #t) )
 	     (assign var val (append localenv env) here)
 	     (unless toplevel-scope (put! db var 'assigned-locally #t))
@@ -1795,9 +1835,8 @@
 		  (eq? var (first (node-parameters val))) ) )
 	    ((or block-compilation
 		 (memq var env)
-		 (get db var 'constant)
-		 ;;(memq var inline-list)       - would be nice, but might be customized...
-		 (memq var block-globals) )
+		 (variable-mark var '##compiler#constant)
+		 (not (variable-visible? var)))
 	     (let ((props (get-all db var 'unknown 'value))
 		   (home (get db var 'home)) )
 	       (unless (assq 'unknown props)
@@ -1806,6 +1845,13 @@
 		     (if (or (not home) (eq? here home))
 			 (put! db var 'value val)
 			 (put! db var 'unknown #t) ) ) ) ) )
+	    ((and (or local-definitions
+		      (variable-mark var '##compiler#local))
+		  (not (get db var 'unknown)))
+	     (let ((home (get db var 'home)))
+	       (if (or (not home) (eq? here home))
+		   (put! db var 'local-value val)	       
+		   (put! db var 'unknown #t))))
 	    (else (put! db var 'unknown #t)) ) )
     
     (define (ref var node)
@@ -1835,6 +1881,7 @@
      (lambda (sym plist)
        (let ([unknown #f]
 	     [value #f]
+	     [local-value #f]
 	     [pvalue #f]
 	     [references '()]
 	     [captured #f]
@@ -1865,6 +1912,7 @@
 	      [(undefined) (set! undefined #t)]
 	      [(global) (set! global #t)]
 	      [(value) (set! value (cdr prop))]
+	      [(local-value) (set! local-value (cdr prop))]
 	      [(o-r/access-count) (set! o-r/access-count (cdr prop))]
 	      [(rest-parameter) (set! rest-parameter #t)] ) )
 	  plist)
@@ -1884,12 +1932,11 @@
 	 (when (and first-analysis 
 		    global
 		    (null? references)
-		    (not (memq sym unused-variables)))
+		    (not (variable-mark sym '##compiler#unused)))
 	   (when assigned-locally
 	     (compiler-warning 'var "local assignment to unused variable `~S' may be unintended" sym) )
-	   (when (and (or block-compilation
-			  (and export-list (not (memq sym export-list))) )
-		      (not (assq sym mutable-constants)) )
+	   (when (and (not (variable-visible? sym))
+		      (not (variable-mark sym '##compiler#constant)) )
 	     (compiler-warning 'var "global variable `~S' is never used" sym) ) )
 
  	 ;; Make 'boxed, if 'assigned & 'captured:
@@ -1899,14 +1946,42 @@
 	 ;; Make 'contractable, if it has a procedure as known value, has only one use and one call-site and
 	 ;;  if the lambda has no free non-global variables or is an internal lambda. Make 'inlinable if
 	 ;;  use/call count is not 1:
-	 (when value
-	   (let ((valparams (node-parameters value)))
-	     (when (and (eq? '##core#lambda (node-class value))
-			(or (not (second valparams))
-			    (every (lambda (v) (get db v 'global)) (scan-free-variables value)) ) )
-	       (if (and (= 1 nreferences) (= 1 ncall-sites))
-		   (quick-put! plist 'contractable #t)
-		   (quick-put! plist 'inlinable #t) ) ) ) )
+	 (cond (value
+		(let ((valparams (node-parameters value)))
+		  (when (and (eq? '##core#lambda (node-class value))
+			     (or (not (second valparams))
+				 (every 
+				  (lambda (v) (get db v 'global))
+				  (nth-value 0 (scan-free-variables value)) ) ) )
+		    (if (and (= 1 nreferences) (= 1 ncall-sites))
+			(quick-put! plist 'contractable #t)
+			(quick-put! plist 'inlinable #t) ) ) ) )
+	       (local-value
+		;; Make 'inlinable, if it is declared local and has a value
+		(let ((valparams (node-parameters local-value)))
+		  (when (eq? '##core#lambda (node-class local-value))
+		    (let-values (((vars hvars) (scan-free-variables local-value)))
+		      (when (and (get db sym 'global)
+				 (pair? hvars))
+			(quick-put! plist 'hidden-refs #t))
+		      (when (or (not (second valparams))
+				(every 
+				 (lambda (v) (get db v 'global)) 
+				 vars))
+			(quick-put! plist 'inlinable #t) ) ) ) ) )
+	       ((variable-mark sym '##compiler#inline-global) =>
+		(lambda (n)
+		  (when (node? n)
+		    (cond (assigned
+			   (debugging
+			    'i "global inline candidate was assigned and will not be inlined"
+			    sym)
+			   (mark-variable sym '##compiler#inline-global 'no))
+			  (else
+			   (let ((lparams (node-parameters n)))
+			     (put! db (first lparams) 'simple #t)
+			     (quick-put! plist 'inlinable #t)
+			     (quick-put! plist 'local-value n))))))))
 
 	 ;; Make 'collapsable, if it has a known constant value which is either collapsable or is only
 	 ;;  referenced once and if no assignments are made:
@@ -2322,10 +2397,10 @@
       (let* ([safe (or sf 
 		       no-bound-checks
 		       unsafe
-		       (memq var always-bound)
-		       (get db var 'standard-binding)
-		       (get db var 'extended-binding) ) ]
-	     [blockvar (memq var block-globals)] )
+		       (variable-mark var '##compiler#always-bound)
+		       (intrinsic? var))]
+	     [blockvar (and (get db var 'assigned)
+			    (not (variable-visible? var)))])
 	(when blockvar (set! fastrefs (add1 fastrefs)))
 	(make-node
 	 '##core#global
@@ -2467,10 +2542,9 @@
 		    (let* ([cval (node-class val)]
 			   [safe (not (or no-bound-checks
 					  unsafe
-					  (memq var always-bound)
-					  (get db var 'standard-binding)
-					  (get db var 'extended-binding) ) ) ]
-			   [blockvar (memq var block-globals)]
+					  (variable-mark var '##compiler#always-bound)
+					  (intrinsic? var)))]
+			   [blockvar (not (variable-visible? var))]
 			   [immf (or (and (eq? cval 'quote) (immediate? (first (node-parameters val))))
 				     (eq? '##core#undefined cval) ) ] )
 		      (when blockvar (set! fastsets (add1 fastsets)))

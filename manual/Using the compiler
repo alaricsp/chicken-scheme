@@ -26,7 +26,7 @@ Possible options are:
 
 ; -analyze-only : Stop compilation after first analysis pass.
 
-; -benchmark-mode : Equivalent to {{-no-trace -no-lambda-info -optimize-level 3}} {{-fixnum-arithmetic -disable-interrupts -block -lambda-lift}}.
+; -benchmark-mode : Equivalent to {{-no-trace -no-lambda-info -optimize-level 4}} {{-fixnum-arithmetic -disable-interrupts -block -inline -lambda-lift}}.
 
 ; -block : Enable block-compilation. When this option is specified, the compiler assumes that global variables are not modified outside this compilation-unit.  Specifically, toplevel bindings are not seen by {{eval}} and unused toplevel bindings are removed.
 
@@ -54,7 +54,7 @@ Possible options are:
      U          show expressions after the secondary user pass
      0          show database before lambda-lifting pass
      L          show expressions after lambda-lifting
-     M          show unit-information and syntax-/runtime-requirements
+     M          show syntax-/runtime-requirements
      1          show source expressions
      2          show canonicalized expressions
      3          show expressions converted into CPS
@@ -95,6 +95,8 @@ Possible options are:
 
 ; -emit-import-library MODULE : Specifies that an import library named {{MODULE.import.scm}} for the named module should be generated (equivalent to using the {{emit-import-library}} declaration).
 
+; -emit-inline-file FILENAME : Write procedures that can be globally inlined in internal form to {{FILENAME}}, if global inlining is enabled. Implies {{-inline -local}}.
+
 ; -explicit-use : Disables automatic use of the units {{library, eval}} and {{extras}}. Use this option if compiling a library unit instead of an application unit.
 
 ; -extend FILENAME : Loads a Scheme source file or compiled Scheme program (on systems that support it) before compilation commences. This feature can be used to extend the compiler.  This option may be given multiple times. The file is also searched in the current include path and in the extension-repository.
@@ -119,13 +121,17 @@ Possible options are:
 
 ; -inline : Enable procedure inlining for known procedures of a size below the threshold (which can be set through the {{-inline-limit}} option).
 
-; -inline-limit THRESHOLD : Sets the maximum size of a potentially inlinable procedure. The default threshold is {{10}}.
+; -inline-global : Enable cross-module inlining.
+
+; -inline-limit THRESHOLD : Sets the maximum size of a potentially inlinable procedure. The default threshold is {{20}}.
 
 ; -keyword-style STYLE : Enables alternative keyword syntax, where {{STYLE}} may be either {{prefix}} (as in Common Lisp), {{suffix}} (as in DSSSL) or {{none}}. Any other value is ignored. The default is {{suffix}}.
 
 ; -keep-shadowed-macros : Do not remove macro definitions with the same name as assigned toplevel variables (the default is to remove the macro definition).
 
 ; -lambda-lift : Enable the optimization known as lambda-lifting.
+
+; -local : Assume toplevel variables defined in the current compilation unit are not externally modified.
 
 ; -no-lambda-info : Don't emit additional information for each {{lambda}} expression (currently the argument-list, after alpha-conversion/renaming).
 
@@ -143,7 +149,8 @@ Possible options are:
      -optimize-level 0          does nothing.
      -optimize-level 1          is equivalent to -optimize-leaf-routines
      -optimize-level 2          is currently the same as -optimize-level 1
-     -optimize-level 3          is equivalent to -optimize-leaf-routines -unsafe
+     -optimize-level 3          is equivalent to -optimize-leaf-routines -local -inline
+     -optimize-level 4          is equivalent to -optimize-leaf-routines -local -inline -unsafe
 
 ; -output-file FILENAME : Specifies the pathname of the generated C file. Default is {{FILENAME.c}}.
 

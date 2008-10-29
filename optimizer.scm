@@ -33,15 +33,15 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home decompose-lambda-list external-to-pointer
-  copy-node! export-list inline-list not-inline-list
-  unit-name insert-timer-checks used-units external-variables
+  copy-node! variable-visible? mark-variable intrinsic?
+  unit-name insert-timer-checks used-units external-variables hide-variable
   debug-info-index debug-info-vector-name profile-info-vector-name
   foreign-declarations emit-trace-info block-compilation line-number-database-size
-  always-bound-to-procedure block-globals make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size constant-declarations
+  make-block-variable-literal block-variable-literal? block-variable-literal-name
+  target-heap-size target-stack-size constant-declarations variable-mark
   default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used mutable-constants
+  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used
   broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
   profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
   direct-call-ids foreign-type-table first-analysis expand-debug-lambda expand-debug-assignment expand-debug-call
@@ -59,7 +59,7 @@
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
-  units-used-by-default words-per-flonum rewrite
+  units-used-by-default words-per-flonum rewrite inline-locally
   parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type inline-max-size simplified-ops
@@ -119,7 +119,7 @@
 
        (scan node '()) ) )
     (debugging 'o "safe globals" safe)
-    (set! always-bound (append safe always-bound)) ) )
+    (for-each (cut mark-variable <> '##compiler#always-bound) safe)))
 
 
 ;;; Do some optimizations:
@@ -192,8 +192,7 @@
 	       ((##core#call)
 		(if (eq? '##core#variable (node-class (car subs)))
 		    (let ((var (first (node-parameters (car subs)))))
-		      (if (and (or (test var 'standard-binding)
-				   (test var 'extended-binding) )
+		      (if (and (intrinsic? var)
 			       (test var 'foldable)
 			       (every constant-node? (cddr subs)) )
 			  (let ((form (cons var (map (lambda (arg) `(quote ,(node-value arg)))
@@ -285,7 +284,9 @@
 	       [(##core#variable)
 		;; Call to named procedure:
 		(let* ([var (first (node-parameters fun))]
-		       [lval (and (not (test var 'unknown)) (test var 'value))]
+		       [lval (and (not (test var 'unknown)) 
+				  (or (test var 'value)
+				      (test var 'local-value)))]
 		       [args (cdr subs)] )
 		  (cond [(test var 'contractable)
 			 (let* ([lparams (node-parameters lval)]
@@ -310,19 +311,28 @@
 				'##core#call '(#t)
 				(list k (make-node '##core#undefined '() '())) ) ) 
 			     (walk-generic n class params subs)) ]
-			[(and lval (eq? '##core#lambda (node-class lval)))
+			[(and lval
+			      (eq? '##core#lambda (node-class lval)))
 			 (let* ([lparams (node-parameters lval)]
 				[llist (third lparams)] )
 			   (decompose-lambda-list
 			    llist
 			    (lambda (vars argc rest)
 			      (let ([fid (first lparams)])
-				(cond [(and (test fid 'simple)
+				(cond [(and inline-locally 
+					    (test fid 'simple)
 					    (test var 'inlinable)
-					    (not (memq var not-inline-list))
-					    (or (memq var inline-list)
-						(< (fourth lparams) inline-max-size) ) )
-				       (debugging 'i "procedure inlinable" var fid (fourth lparams))
+					    (case (variable-mark var '##compiler#inline) 
+					      ((yes) #t)
+					      ((no) #f)
+					      (else 
+					       (< (fourth lparams) inline-max-size) ) ))
+				       (debugging 
+					'i
+					(if (node? (variable-mark var '##compiler#inline-global))
+					    "procedure can be inlined (globally)" 
+					    "procedure can be inlined")
+					var fid (fourth lparams))
 				       (check-signature var args llist)
 				       (debugging 'o "inlining procedure" var)
 				       (touch)
@@ -389,9 +399,7 @@
 		    (touch)
 		    (make-node '##core#undefined '() '()) ]
 		   [(and (or (not (test var 'global))
-			     block-compilation
-			     (and export-list (not (memq var export-list)))
-			     (memq var block-globals))
+			     (not (variable-visible? var)))
 			 (not (test var 'references)) 
 			 (not (expression-has-side-effects? (first subs) db)) )
 		    (touch)
@@ -444,7 +452,7 @@
     (debugging 'p "pre-optimization phase...")
 
     ;; Handle '(if (not ...) ...)':
-    (if (test 'not 'standard-binding)
+    (if (intrinsic? 'not)
 	(for-each 
 	 (lambda (site)
 	   (let* ((n (cdr site))
@@ -485,7 +493,7 @@
     ;; Handle '(if (<func> <a> ...) ...)', where <func> never returns false:
     (for-each
      (lambda (varname)
-       (if (test varname 'standard-binding)
+       (if (intrinsic? varname)
 	   (for-each
 	    (lambda (site)
 	      (let* ((n (cdr site))
@@ -852,7 +860,7 @@
     ;; (eq?/eqv?/equal? <var> <var>) -> (quote #t)
     ;; (eq?/eqv?/equal? ...) -> (##core#inline <iop> ...)
     ((1) ; classargs = (<argc> <iop>)
-     (and (test name 'standard-binding)
+     (and (intrinsic? name)
 	  (or (and (= (length callargs) (first classargs))
 		   (let ((arg1 (first callargs))
 			 (arg2 (second callargs)) )
@@ -870,7 +878,7 @@
     ((2) ; classargs = (<argc> <iop> <safe> <iopv>)
      (and inline-substitutions-enabled
 	  (= (length callargs) (first classargs))
-	  (or (test name 'extended-binding) (test name 'standard-binding))
+	  (intrinsic? name)
 	  (or (third classargs) unsafe)
 	  (let ([arg1 (first callargs)]
 		[iopv (fourth classargs)] )
@@ -888,7 +896,7 @@
     ((3) ; classargs = (<var>)
      (and inline-substitutions-enabled
 	  (null? callargs)
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (make-node '##core#call '(#t) (list cont (varnode (first classargs)))) ) )
 
     ;; (<op> a b) -> (<primitiveop> a (quote <i>) b)
@@ -896,7 +904,7 @@
      (and inline-substitutions-enabled
 	  unsafe
 	  (= 2 (length callargs))
-	  (test name 'standard-binding)
+	  (intrinsic? name)
 	  (make-node '##core#call (list #f (first classargs))
 		     (list (varnode (first classargs))
 			   cont
@@ -908,8 +916,7 @@
     ((5) ; classargs = (<iop> <x> <numtype>)
      ;; - <numtype> may be #f
      (and inline-substitutions-enabled
-	  (or (test name 'extended-binding)
-	      (test name 'standard-binding) )
+	  (intrinsic? name)
 	  (= 1 (length callargs))
 	  (let ((ntype (third classargs)))
 	    (or (not ntype) (eq? ntype number-type)) )
@@ -924,7 +931,7 @@
       (and (or (third classargs) unsafe)
 	   inline-substitutions-enabled
 	   (= 1 (length callargs))
-	   (test name 'standard-binding)
+	   (intrinsic? name)
 	   (make-node '##core#call '(#t)
 		      (list cont
 			    (make-node '##core#inline (list (first classargs))
@@ -936,7 +943,7 @@
      (and (or (fourth classargs) unsafe)
 	  inline-substitutions-enabled
 	  (= (length callargs) (first classargs))
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (make-node '##core#call '(#t)
 		     (list cont
 			   (make-node '##core#inline (list (second classargs))
@@ -946,15 +953,14 @@
     ;; (<op> ...) -> <<call procedure <proc> with <classargs>, <cont> and <callargs> >>
     ((8) ; classargs = (<proc> ...)
      (and inline-substitutions-enabled
-	  (or (test name 'standard-binding)
-	      (test name 'extended-binding) )
+	  (intrinsic? name)
 	  ((first classargs) db classargs cont callargs) ) )
 
     ;; (<op> <x1> ...) -> (##core#inline "C_and" (##core#inline <iop> <x1> <x2>) ...)
     ;; (<op> [<x>]) -> (quote #t)
     ((9) ; classargs = (<iop-fixnum> <iop-flonum> <fixnum-safe> <flonum-safe>)
      (and inline-substitutions-enabled
-	  (test name 'standard-binding)
+	  (intrinsic? name)
 	  (if (< (length callargs) 2)
 	      (make-node '##core#call '(#t) (list cont (qnode #t)))
 	      (and (or (and unsafe (not (eq? number-type 'generic)))
@@ -981,7 +987,7 @@
     ((10) ; classargs = (<primitiveop> <i> <bvar> <safe>)
      (and inline-substitutions-enabled
 	  (or (fourth classargs) unsafe)
-	  (test name 'standard-binding)
+	  (intrinsic? name)
 	  (let ((n (length callargs)))
 	    (and (< 0 n 3)
 		 (make-node '##core#call (list #f (first classargs))
@@ -998,7 +1004,7 @@
      ;; <argc> may be #f.
      (and inline-substitutions-enabled
 	  (or (third classargs) unsafe)
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (let ([argc (first classargs)])
 	    (and (or (not argc)
 		     (= (length callargs) (first classargs)) )
@@ -1011,7 +1017,7 @@
     ;; (<op> ...) -> (<primitiveop> ...)
     ((12) ; classargs = (<primitiveop> <safe> <maxargc>)
      (and inline-substitutions-enabled
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (or (second classargs) unsafe)
 	  (let ((n (length callargs)))
 	    (and (<= n (third classargs))
@@ -1024,7 +1030,7 @@
     ;; (<op> ...) -> ((##core#proc <primitiveop>) ...)
     ((13) ; classargs = (<primitiveop> <safe>)
      (and inline-substitutions-enabled
-	  (or (test name 'extended-binding) (test name 'standard-binding))
+	  (intrinsic? name)
 	  (or (second classargs) unsafe)
 	  (let ((pname (first classargs)))
 	    (make-node '##core#call (if (pair? params) (cons #t (cdr params)) params)
@@ -1035,8 +1041,7 @@
     ((14) ; classargs = (<numtype> <argc> <iop-safe> <iop-unsafe>)
      (and inline-substitutions-enabled
 	  (= (second classargs) (length callargs))
-	  (or (test name 'extended-binding)
-	      (test name 'standard-binding) )
+	  (intrinsic? name)
 	  (eq? number-type (first classargs))
 	  (or (fourth classargs) unsafe)
 	  (make-node
@@ -1053,8 +1058,7 @@
      (and inline-substitutions-enabled
 	  (= 1 (length callargs))
 	  (or unsafe (fourth classargs))
-	  (or (test name 'extended-binding)
-	      (test name 'standard-binding) )
+	  (intrinsic? name)
 	  (cond ((eq? number-type (first classargs))
 		 (make-node '##core#call (list #t (third classargs))
 			    (cons* (varnode (third classargs)) cont callargs) ) )
@@ -1074,7 +1078,7 @@
 	   [w (fourth classargs)] )
        (and inline-substitutions-enabled
 	    (or (not argc) (= rargc argc))
-	    (or (test name 'extended-binding) (test name 'standard-binding))
+	    (intrinsic? name)
 	    (or (third classargs) unsafe)
 	    (make-node
 	     '##core#call '(#t)
@@ -1091,7 +1095,7 @@
     ((17) ; classargs = (<argc> <iop-safe> [<iop-unsafe>])
      (and inline-substitutions-enabled
 	  (= (length callargs) (first classargs))
-	  (or (test name 'extended-binding) (test name 'standard-binding))
+	  (intrinsic? name)
 	  (make-node
 	   '##core#call '(#t)
 	   (list cont
@@ -1105,7 +1109,7 @@
     ((18) ; classargs = (<null>)
      (and inline-substitutions-enabled
 	  (null? callargs)
-	  (or (test name 'extended-binding) (test name 'standard-binding))
+	  (intrinsic? name)
 	  (make-node '##core#call '(#t) (list cont (qnode (first classargs))) ) ) )
 
     ;; (<op>) -> <id>
@@ -1115,7 +1119,7 @@
     ;; - Remove "<id>" from arguments.
     ((19) ; classargs = (<id> <fixop> <ufixop> <fixmode>)
      (and inline-substitutions-enabled
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (let* ([id (first classargs)]
 		 [fixop (if unsafe (third classargs) (second classargs))]
 		 [callargs 
@@ -1144,7 +1148,7 @@
        (and (or (fourth classargs) unsafe)
 	    inline-substitutions-enabled
 	    (= n (first classargs))
-	    (or (test name 'standard-binding) (test name 'extended-binding))
+	    (intrinsic? name)
 	    (make-node
 	     '##core#call '(#t)
 	     (list cont
@@ -1162,7 +1166,7 @@
     ;; - Remove "<id>" from arguments.
     ((21) ; classargs = (<id> <fixop> <ufixop> <genop> <words>)
      (and inline-substitutions-enabled
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (let* ([id (first classargs)]
 		 [words (fifth classargs)]
 		 [genop (fourth classargs)]
@@ -1196,7 +1200,7 @@
 	   [w (fourth classargs)] )
        (and inline-substitutions-enabled
 	    (= rargc argc)
-	    (or (test name 'extended-binding) (test name 'standard-binding))
+	    (intrinsic? name)
 	    (or (third classargs) unsafe)
 	    (make-node
 	     '##core#call '(#t)
@@ -1217,7 +1221,7 @@
     ;;   quoted literal
     ((23) ; classargs = (<minargc> <primitiveop> <literal1>|<varable1> ...)
      (and inline-substitutions-enabled
-	  (or (test name 'standard-binding) (test name 'extended-binding))
+	  (intrinsic? name)
 	  (let ([argc (first classargs)])
 	    (and (>= (length callargs) (first classargs))
 		 (make-node 
@@ -1719,7 +1723,7 @@
 	 (lambda (gn body)
 	   (let* ([name (car gn)]
 		  [lval (get db name 'value)] )
-	     (set! block-globals (cons name block-globals))
+	     (hide-variable name)
 	     (decompose-lambda-list
 	      (first (node-parameters lval))
 	      (lambda (vars argc rest)

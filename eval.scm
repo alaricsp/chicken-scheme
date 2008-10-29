@@ -1183,11 +1183,11 @@
 (define ##sys#do-the-right-thing
   (let ((vector->list vector->list))
     (lambda (id comp? imp?)
-      (define (add-req id)
+      (define (add-req id syntax?)
 	(when comp?
-	  (##sys#hash-table-update! 		; assumes compiler has extras available - will break in the interpreter
+	  (##sys#hash-table-update! ; assumes compiler has extras available - will break in the interpreter
 	   ##compiler#file-requirements
-	   'syntax-requirements
+	   (if syntax? 'dynamic/syntax 'dynamic)
 	   (cut lset-adjoin eq? <> id) 
 	   (lambda () (list id)))))
       (define (impform x id builtin?)
@@ -1227,7 +1227,7 @@
 		 (cond (info
 			(let ((s (assq 'syntax info))
 			      (rr (assq 'require-at-runtime info)) )
-			  (when s (add-req id))
+			  (when s (add-req id #t))
 			  (values 
 			   (impform
 			    `(begin
@@ -1241,7 +1241,7 @@
 			    id #f)
 			   #t) ) )
 		       (else
-			(add-req id)
+			(add-req id #f)
 			(values
 			 (impform
 			  `(##sys#require ',id) 

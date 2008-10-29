@@ -174,15 +174,15 @@
   '(-explicit-use -no-trace -no-warnings -no-usual-integrations -optimize-leaf-routines -unsafe
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
-    -lambda-lift -dynamic -disable-stack-overflow-checks -emit-debug-info 
+    -lambda-lift -dynamic -disable-stack-overflow-checks -local
     -emit-external-prototypes-first -inline -extension -release -static-extensions
-    -analyze-only -keep-shadowed-macros))
+    -analyze-only -keep-shadowed-macros -inline-global))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
     -inline-limit -profile-name -disable-warning 
-    -require-static-extension
+    -require-static-extension -emit-inline-file
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
     -emit-import-library))
 
@@ -202,6 +202,7 @@
     (-x "-explicit-use")
     (-u "-unsafe")
     (-j "-emit-import-library")
+    (-n "-emit-inline-file")
     (-b "-block") ) )
 
 (define short-options
@@ -366,26 +367,30 @@
     -profile                    executable emits profiling information 
     -accumulate-profile         executable emits profiling information in append mode
     -profile-name FILENAME      name of the generated profile information file
-    -emit-debug-info            emit additional debug-information
 
   Optimization options:
 
-    -O -O1 -O2 -O3 -optimize-level NUMBER
+    -O -O1 -O2 -O3 -O4 -optimize-level NUMBER
 			        enable certain sets of optimization options
     -optimize-leaf-routines     enable leaf routine optimization
     -N  -no-usual-integrations  standard procedures may be redefined
     -u  -unsafe                 disable safety checks
+    -local                      assume globals are only modified in current file
     -b  -block                  enable block-compilation
     -disable-interrupts         disable interrupts in compiled code
     -f  -fixnum-arithmetic      assume all numbers are fixnums
-    -Ob  -benchmark-mode        equivalent to '-block -optimize-level 3 
+    -Ob  -benchmark-mode        equivalent to '-block -optimize-level 4
                                  -debug-level 0 -fixnum-arithmetic -lambda-lift 
-                                 -disable-interrupts'
+                                 -disable-interrupts -inline'
     -lambda-lift                perform lambda-lifting
     -unsafe-libraries           link with unsafe runtime system
     -disable-stack-overflow-checks  disables detection of stack-overflows
     -inline                     enable inlining
     -inline-limit               set inlining threshold
+    -inline-global              enable cross-module inlining
+    -n -emit-inline-file FILENAME  
+                                generate file with globally inlinable procedures
+                                (implies -inline -local)
 
   Configuration options:
 
@@ -629,6 +634,7 @@
 	       [(|-O| |-O1|) (set! rest (cons* "-optimize-level" "1" rest))]
 	       [(|-O2|) (set! rest (cons* "-optimize-level" "2" rest))]
 	       [(|-O3|) (set! rest (cons* "-optimize-level" "3" rest))]
+	       [(|-O4|) (set! rest (cons* "-optimize-level" "4" rest))]
 	       [(-d0) (set! rest (cons* "-debug-level" "0" rest))]
 	       [(-d1) (set! rest (cons* "-debug-level" "1" rest))]
 	       [(-d2) (set! rest (cons* "-debug-level" "2" rest))]

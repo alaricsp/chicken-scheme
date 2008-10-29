@@ -33,6 +33,15 @@
     define-foreign-enum
     define-macro
     define-extension
+- "local" mode, in which locally defined exported toplevel variables can
+  be inlined
+- new options and declarations "[-]local", "[-]inline-global" and "-emit-inline-file"
+- optimization levels changed to use inlining:
+  -optimize-level 3: enables -inline -local (but *not* -unsafe)
+  -optimize-level 4: enables -inline -local -unsafe
+- increased default inlining-limit to 20
+- support for cross-module inlining
+- "make <VARIABLES> bench" runs the benchmark suite
 
 3.4.0
 
