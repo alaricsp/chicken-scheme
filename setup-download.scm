@@ -141,6 +141,14 @@
       (http-fetch host port loc eggdir)
       eggdir))
 
+  (define (network-failure msg . args)
+    (signal
+     (make-composite-condition
+      (make-property-condition
+       'exn 'message "invalid response from server" 
+       'arguments args)
+      (make-property-condition 'http-fetch))))
+
   (define (http-fetch host port loc dest)
     (d "connecting to host ~s, port ~a ...~%" host port)
     (let-values (((in out) (tcp-connect host port)))
@@ -155,7 +163,7 @@
 	  (print h1)
 	  ;;*** handle redirects here
 	  (unless (and m (string=? "200" (cadr m)))
-	    (error "invalid response from server" h1))
+	    (network-failure "invalid response from server" h1))
 	  (let loop ()
 	    (let ((ln (read-line in)))
 	      (unless (equal? "" ln)

@@ -62,12 +62,14 @@
 
   (define (uninstall pats)
     (let ((eggs (gather-eggs pats)))
-      (when (or *force* (equal? eggs pats) (ask eggs))
-	(for-each
-	 (lambda (e)
-	   (print "removing " e)
-	   (remove-extension e *sudo*) )
-	 eggs))))
+      (cond ((null? eggs)
+	     (print "nothing to remove.") )
+	    ((or *force* (equal? eggs pats) (ask eggs))
+	     (for-each
+	      (lambda (e)
+		(print "removing " e)
+		(remove-extension e *sudo*) )
+	      eggs)))))
 
   (define (usage code)
     (print #<<EOF

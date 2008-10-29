@@ -1,4 +1,7 @@
-;;;; DEFAULTS for chicken-install -*- Scheme -*-
+;;;; setup.defaults - defaults for chicken-install -*- Scheme -*-
 
 ((location "http://galinha.ucpel.tche.br/cgi-bin/henrietta")
+ (transport http))
+
+((location "http://chicken.kitten-technologies.co.uk/henrietta.cgi")
  (transport http))

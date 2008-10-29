@@ -187,6 +187,9 @@ EOF
 		     ((exn net) 
 		      (print "TCP connect timeout")
 		      #f)
+		     ((exn http-fetch)
+		      (print "HTTP protocol error")
+		      #f)
 		     (e () (abort e)))
 		   (loop (cdr defs)))))))
 
