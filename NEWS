@@ -42,6 +42,13 @@
 - increased default inlining-limit to 20
 - support for cross-module inlining
 - "make <VARIABLES> bench" runs the benchmark suite
+- "chicken-setup" has been replaced by new command line tools
+  "chicken-install", "chicken-uninstall" and "chicken-status", which are
+  more flexible and allow greater freedom when creating local or application-
+  specific repositories
+- extension-installation can be done directly from SVN repositories or a local
+  file tree.
+- enabled chicken mirror site as alternative download location
 
 3.4.0
 
