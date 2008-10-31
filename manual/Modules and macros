@@ -229,7 +229,7 @@ module.
 CHICKEN's module system has the following features and shortcomings:
 
 * Indirect exports for syntax definitions must be listed
-* Separation of copile/expansion-time and run-time code is provided, which allows cross compilation
+* Separation of compile/expansion-time and run-time code is provided, which allows cross compilation
 * Module-generating code is only created, when needed
 * Supports batch-compilation of separate compilation units
 * No separate "identifier" type is used, all identifiers appearing in code and processed in expansions are symbols
