@@ -152,7 +152,7 @@ EOF
      open-output-string get-output-string print-call-chain ##sys#symbol-has-toplevel-binding? repl
      argv condition-property-accessor ##sys#decorate-lambda ##sys#become! ##sys#lambda-decoration
      getter-with-setter ##sys#lambda-info ##sys#lambda-info->string open-input-string ##sys#gc
-     ##sys#memory-info ##sys#make-c-string ##sys#find-symbol-table array:make-locative display
+     ##sys#memory-info ##sys#make-c-string ##sys#find-symbol-table display
      newline string-append ##sys#with-print-length-limit write print vector-fill! ##sys#context-switch
      ##sys#set-finalizer! open-output-string get-output-string read ##sys#make-pointer
      ##sys#pointer->address number->string ##sys#flush-output ##sys#break-entry ##sys#step
@@ -4401,8 +4401,6 @@ EOF
 	 (##core#inline_allocate ("C_a_i_make_locative" 5) 2 obj index weak?) ]
 	[(##sys#generic-structure? obj)
 	 (case (##sys#slot obj 0)
-	   [(array) 
-	    (array:make-locative obj index weak?) ]
 	   [(u8vector)
 	    (let ([v (##sys#slot obj 1)])
 	      (##sys#check-range index 0 (##sys#size v) loc)
