@@ -3252,14 +3252,15 @@ EOF
 		   (if (##sys#fudge 39) " cross" "") ) ) )
 	(string-append 
 	 "Version " +build-version+
-	 " - " (get-config)
-	 (if (eq? 0 (##sys#size spec))
-	     ""
-	     (string-append "\t[" spec " ]") )
 	 (if (not (zero? rev)) 
 	     (string-append 
-	      "\nSVN rev. " (number->string rev) "\t")
+	      " - SVN rev. " (number->string rev) "\n")
 	     "\n")
+	 (get-config)
+	 (if (zero? (##sys#size spec))
+	     ""
+	     (string-append " [" spec " ]") )
+	 "\n"
 	 +build-tag+))
       +build-version+) )
 
