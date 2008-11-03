@@ -1284,6 +1284,8 @@
 	(err (error 'import "module not found" name))
 	(else #f)))
 
+(declare (not inline ##sys#toplevel-definition-hook))
+
 (define (##sys#toplevel-definition-hook sym mod exp val) #f)
 
 (define (##sys#register-meta-expression exp)

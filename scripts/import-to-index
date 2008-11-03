@@ -1,0 +1,45 @@
+#!/bin/sh
+#| import-to-index - convert import-library to documentation-index -*- Scheme -*-
+exec csi -s "$0" "$@"
+|#
+
+(define (usage code)
+  (print "usage: import-to-index [-p PREFIX] [-s SUFFIX] [-l LINK] IMPORTLIB ...")
+  (exit code))
+
+(define (main args)
+  (let ((prefix "")
+	(suffix "")
+	(link #f))
+    (let loop ((args args) (libs '()))
+      (cond ((null? args) 
+	     (for-each
+	      (lambda (lib)
+		;; those slot accesses are naturally highly implementation dependent
+		(let* ((mod (##sys#find-module (string->symbol lib)))
+		       (exports (map car (append (##sys#slot mod 10) (##sys#slot mod 11)))))
+		  (define (make-name s)
+		    (or link (conc prefix s suffix)))
+		  (print "; " lib)
+		  (for-each
+		   (lambda (s) 
+		     (if (symbol? s)
+			 (pp (cons s (make-name s)))
+			 (pp (cons (car s) (make-name (car s))))))
+		   exports)))
+	      (reverse libs)))
+	    ((string=? "-p" (car args))
+	     (set! prefix (cadr args))
+	     (loop (cddr args) libs))
+	    ((string=? "-s" (car args))
+	     (set! suffix (cadr args))
+	     (loop (cddr args) libs))
+	    ((string=? "-l" (car args))
+	     (set! link (cadr args))
+	     (loop (cddr args) libs))
+	    (else
+	     (let ((lib (car args)))
+	       (eval `(import ,(string->symbol lib)))
+	       (loop (cdr args) (cons lib libs))))))))
+
+(main (command-line-arguments))
