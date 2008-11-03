@@ -1423,30 +1423,6 @@
 ;;; This algorithm is O(m + n) where m and n are the 
 ;;; lengths of the pattern and string respectively
 
-;;; KMP search source[start,end) for PATTERN. Return starting index of
-;;; leftmost match or #f.
-
-(define (%kmp-search pattern text c= p-start p-end t-start t-end)
-  (let ((plen (- p-end p-start))
-	(rv (make-kmp-restart-vector pattern c= p-start p-end)))
-
-    ;; The search loop. TJ & PJ are redundant state.
-    (let lp ((ti t-start) (pi 0)
-	     (tj (- t-end t-start))	; (- tlen ti) -- how many chars left.
-	     (pj plen))			; (- plen pi) -- how many chars left.
-
-      (if (= pi plen) (- ti plen)			; Win.
-	  
-	  (and (<= pj tj)				; Lose.
-		 
-	       (if (c= (string-ref text ti)		; Search.
-		       (string-ref pattern (+ p-start pi)))
-		   (lp (+ 1 ti) (+ 1 pi) (- tj 1) (- pj 1))	; Advance.
-		   
-		   (let ((pi (vector-ref rv pi)))		; Retreat.
-		     (if (= pi -1)
-			 (lp (+ ti 1)  0   (- tj 1)  plen)	; Punt.
-			 (lp ti        pi  tj        (- plen pi))))))))))
 
 ;;; (make-kmp-restart-vector pattern [c= start end]) -> integer-vector
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

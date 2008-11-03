@@ -739,7 +739,7 @@
       (let* ((mname (resolve spec))
 	     (mod (##sys#find-module mname #f)))
 	(unless mod
-	  (let ((il (##sys#find-extension 
+	  (let ((il (##sys#find-extension
 		     (string-append (symbol->string mname) ".import")
 		     #t)))
 	    (cond (il (parameterize ((##sys#current-module #f)

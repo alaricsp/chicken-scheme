@@ -68,7 +68,7 @@
   (uses scheduler regex extras utils files)
   (disable-interrupts)
   (usual-integrations)
-  (hide ##sys#stat close-handle posix-error
+  (hide ##sys#stat posix-error
 	$quote-args-list $exec-setup $exec-teardown)
   (foreign-declare #<<EOF
 #ifndef WIN32_LEAN_AND_MEAN
@@ -1901,9 +1901,6 @@ EOF
 (define-foreign-variable _rdbuf char "C_rdbuf")
 (define-foreign-variable _wr0 int "C_wr0_")
 (define-foreign-variable _rd1 int "C_rd1_")
-
-(define close-handle
-  (foreign-lambda int "close_handle" bool))
 
 ; from original by Mejedi
 ;; ##sys#process

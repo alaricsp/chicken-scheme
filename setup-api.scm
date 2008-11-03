@@ -124,8 +124,6 @@
 (define *target-libs* (foreign-value "C_TARGET_MORE_LIBS" c-string))
 (define *target-lib-home* (foreign-value "C_TARGET_LIB_HOME" c-string))
 
-(define *major-version* (##sys#fudge 41))
-
 (define *sudo* #f)
 
 (define *windows*
@@ -476,13 +474,6 @@
 
 (define installation-prefix
   (make-parameter (or (getenv "CHICKEN_INSTALL_PREFIX") #f)))
-
-(define (with-ext filename ext)
-  (if (and (equal? (pathname-extension filename) ext)
-	   (file-exists? filename) )
-      filename
-      (let ((f2 (pathname-replace-extension filename ext)))
-	(and (file-exists? f2) f2) ) ) )
 
 (define (write-info id files info)
   (let ((info `((files ,@files) 
