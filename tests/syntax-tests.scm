@@ -141,6 +141,8 @@
       (bar foo))))
 )
 
+;;; alternative ellipsis test
+
 (define-syntax foo
   (syntax-rules 
       ___ () 
@@ -149,6 +151,19 @@
 (t '(... 1 2 3)
    (foo 1 2 3)
 )
+
+(define-syntax defalias
+  (syntax-rules ___ ()
+    ((_ new old)
+     (define-syntax new
+       (syntax-rules ()
+	 ((_ args ...) (old args ...)))))))
+
+(defalias inc add1)
+
+(t 3 (inc 2))
+
+;;;
 
 (define-syntax usetmp
   (syntax-rules ()
@@ -254,18 +269,3 @@
 	(print* i " ")
 	(set! i (add1 i))))
 (newline)
-
-
-;;; alternative define-syntax syntax
-
-(define-syntax (foo . _) '(list 42))
-
-(assert (equal? '(42) (foo)))
-
-(assert
- (equal? 
-  '(1)
-  (let ()
-    (define-syntax (bar x r c)
-      `(,(r 'list) (,(r 'quote) ,(cadr x))))
-    (bar 1))))

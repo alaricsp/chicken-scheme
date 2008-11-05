@@ -191,7 +191,9 @@ EOF
 		      (print "HTTP protocol error")
 		      #f)
 		     (e () (abort e)))
-		   (loop (cdr defs)))))))
+		   (begin
+		     (set! *default-sources* (delete def *default-sources* eq?))
+		     (loop (cdr defs))))))))
 
     (define (retrieve eggs)
       (print "retrieving ...")

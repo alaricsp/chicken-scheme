@@ -98,6 +98,10 @@
   (define %tail (r 'tail))
   (define %temp (r 'temp))
   (define %syntax-error '##sys#syntax-error-hook)
+  (define %ellipsis (r ellipsis))
+
+  (define (ellipsis? x)
+    (c x %ellipsis))
 
   (define (make-transformer rules)
     `(,%lambda (,%input ,%rename ,%compare)
@@ -156,8 +160,7 @@
    (define (process-vector-match input pattern)
      (let* ((len (vector-length pattern))
             (segment? (and (>= len 2)
-                           (eq? (vector-ref pattern (- len 1))
-				ellipsis))))
+                           (ellipsis? (vector-ref pattern (- len 1))))))
        `((,%let ((,%temp ,input))
           (,%and (,%vector? ,%temp)
                  ,(if segment?
@@ -201,8 +204,7 @@
           ((vector? pattern)
            (let* ((len (vector-length pattern))
                   (segment? (and (>= len 2)
-                                 (eq? (vector-ref pattern (- len 1))
-				      ellipsis))))
+                                 (ellipsis? (vector-ref pattern (- len 1))))))
              (if segment?
                  (process-pattern (vector->list pattern) 
                                   `(,%vector->list ,path)
@@ -310,7 +312,7 @@
   (define (segment-template? pattern)
     (and (pair? pattern)
 	 (pair? (cdr pattern))
-	 (eq? (cadr pattern) ellipsis)))
+	 (ellipsis? (cadr pattern))))
 
   ;; Count the number of `...'s in PATTERN.
 
@@ -324,7 +326,7 @@
   (define (segment-tail pattern)
     (let loop ((pattern (cdr pattern)))
       (if (and (pair? pattern)
-	       (eq? (car pattern) ellipsis))
+	       (ellipsis? (car pattern)))
 	  (loop (cdr pattern))
 	  pattern)))
 
