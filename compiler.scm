@@ -2584,8 +2584,34 @@
 		   ((immediate? c) (immediate-literal c))
 		   (else (make-node '##core#literal (list (literal c)) '())) ) ) )
 
-	  ;;*** conditionals (if + ##core#cond) are missing here: allocation
-	  ;; calculation should use max of both branches, not sum.
+	  ((if ##core#cond)
+	   (let* ((test (walk (first subs) e here boxes))
+		  (a0 allocated)
+		  (x1 (walk (second subs) e here boxes))
+		  (a1 allocated)
+		  (x2 (walk (third subs) e here boxes)))
+	     (set! allocated (+ a0 (max (- allocated a1) (- a1 a0))))
+	     (make-node class params (list test x1 x2))))
+
+	  ((##core#switch)
+	   (let* ((exp (walk (first subs) e here boxes))
+		  (a0 allocated))
+	     (make-node
+	      class
+	      params
+	      (cons 
+	       exp
+	       (let loop ((j (first params)) (subs (cdr subs)) (ma 0))
+		 (set! allocated a0)
+		 (if (zero? j)
+		     (let ((def (walk (car subs) e here boxes)))
+		       (set! allocated (+ a0 (max ma (- allocated a0))))
+		       (list def))
+		     (let* ((const (walk (car subs) e here boxes))
+			    (body (walk (cadr subs) e here boxes)))
+		       (cons* 
+			const body
+			(loop (sub1 j) (cddr subs) (max (- allocated a0) ma))))))))))
 
 	  (else (make-node class params (mapwalk subs e here boxes)) ) ) ) )
     

@@ -6,6 +6,7 @@ TODO for trunk								-*- Outline -*-
 ** compiler
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
+
 ** expander
 *** when import-libraries are used, reference to unexported syntax in exported syntax fails
     it seems that we have to add unexported syntax to the import lib, in case it is referenced
@@ -14,6 +15,7 @@ TODO for trunk								-*- Outline -*-
     possibly due to a non-aliased implicit "begin" somewhere
 *** dirty-macros.scm loops when using `defile'
     possibly due to unrenamed special forms
+
 ** modules
 *** chicken.import.scm refers to ##sys#chicken-macro-environment
     ... which is only set, if chicken-more-macros.scm is loaded, which
@@ -57,6 +59,10 @@ TODO for trunk								-*- Outline -*-
 
 ** compiler
 *** remove "custom-declare" + stuff?
+*** generate object-files in /tmp (or TMPDIR)?
+
+** csc
+*** automatically compile import-libraries?
 
 ** setup/install
 *** setup-download
@@ -93,8 +99,6 @@ TODO for trunk								-*- Outline -*-
 
 
 * optimizations
-
-** allocation-estimation in conditionals should take max of both branches, not sum
 
 ** self-recursion optimization
    what MacScheme called "benchmark-mode" (assume self-calls are recursion)
