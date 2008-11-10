@@ -1334,7 +1334,7 @@
 	       (module-defined-list mod))) )
       (set-module-defined-syntax-list! 
        mod
-       (cons sym (module-defined-syntax-list mod))))))
+       (cons (cons sym val) (module-defined-syntax-list mod))))))
 
 (define (##sys#register-undefined sym mod)
   (when mod
@@ -1413,6 +1413,7 @@
   (let ((dlist (module-defined-list mod))
 	(mname (module-name mod))
 	(ifs (module-import-forms mod))
+	(sexports (module-sexports mod))
 	(mifs (module-meta-import-forms mod)))
     `(,@(if (pair? ifs) `((eval '(import ,@ifs))) '())
       ,@(if (pair? mifs) `((import ,@mifs)) '())
@@ -1433,9 +1434,18 @@
 		   (unless (pair? a)
 		     (error 'module "(internal) exported syntax has no source" name mname))
 		   `(cons ',(car sexport) ,(cdr a))))
-	       (module-sexports mod)))))))
+	       sexports))
+       (list 
+	,@(let loop ((sd (module-defined-syntax-list mod)))
+	    (cond ((null? sd) '())
+		  ((assq (caar sd) sexports) (loop (cdr sd)))
+		  (else
+		   (let ((name (caar sd)))
+		     (cons `(cons ',(caar sd) ,(cdar sd))
+			   (loop (cdr sd))))))))))))
 
-(define (##sys#register-compiled-module name iexports vexports sexports)
+(define (##sys#register-compiled-module name iexports vexports sexports #!optional
+					(sdefs '()))
   (let* ((sexps
 	  (map (lambda (se)
 		 (list (car se) #f (##sys#er-transformer (cdr se))))
@@ -1446,21 +1456,29 @@
 		     (list (car ie) (cadr ie) (##sys#er-transformer (caddr ie)))
 		     ie))
 	       iexports))
+	 (nexps
+	  (map (lambda (ne)
+		 (list (car ne) #f (##sys#er-transformer (cdr ne))))
+	       sdefs))
 	 (mod (make-module name '() vexports sexps))
-	 (exports (merge-se 
-		   (##sys#macro-environment)
-		   (##sys#current-environment)
-		   iexps vexports sexps)))
+	 (senv (merge-se 
+		(##sys#macro-environment)
+		(##sys#current-environment)
+		iexps vexports sexps nexps)))
     (##sys#mark-imported-symbols iexps)
     (for-each
      (lambda (sexp)
-       (set-car! (cdr sexp) exports))
+       (set-car! (cdr sexp) senv))
      sexps)
     (for-each
      (lambda (iexp)
        (when (pair? (cdr iexp))
-	 (set-car! (cdr iexp) exports)))
+	 (set-car! (cdr iexp) senv)))
      iexps)
+    (for-each
+     (lambda (nexp)
+       (set-car! (cdr nexp) senv))
+     nexps)
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
@@ -1502,12 +1520,11 @@
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
 	 (elist (module-exist-list mod))
-	 (sdlist (map (lambda (sym) (assq sym (##sys#macro-environment)))
+	 (sdlist (map (lambda (sym) (assq (car sym) (##sys#macro-environment)))
 		      (module-defined-syntax-list mod)))
 	 (sexports
 	  (if (eq? #t explist)
-	      (map (lambda (sd) (assq (car sd) (##sys#macro-environment)))
-		   sdlist)
+	      sdlist
 	      (let loop ((me (##sys#macro-environment)))
 		(cond ((null? me) '())
 		      ((##sys#find-export (caar me) mod #f)

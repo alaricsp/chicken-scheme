@@ -28,6 +28,14 @@ $interpret -s syntax-tests.scm
 echo "======================================== syntax tests (compiled) ..."
 $compile syntax-tests.scm && ./a.out
 
+echo "======================================== import library tests ..."
+rm -f foo.import.*
+$compile import-library-test1.scm -emit-import-library foo
+$interpret -s import-library-test2.scm
+$compile_s -s foo.import.scm -o foo.import.so
+$interpret -s import-library-test2.scm
+$compile import-library-test2.scm && ./a.out
+
 echo "======================================== syntax tests (matchable) ..."
 $interpret matchable.scm -s match-test.scm
 
