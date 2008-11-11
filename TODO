@@ -123,3 +123,8 @@ TODO for trunk								-*- Outline -*-
    Some experiments indicate that hashing the string is cheaper than it appears,
    but low-level hashtables should get the most of this (and thus speed up
    the compiler)
+
+** Lisp2-hack by Dybvig
+*** add function-cell to symbol, call on direct call without checks
+*** initialized to trap function on set!/define, which does fixup
+*** would also allow inline-caching hacks

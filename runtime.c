@@ -361,9 +361,9 @@ C_TLS int C_entry_point_status;
 C_TLS int (*C_gc_mutation_hook)(C_word *slot, C_word val);
 C_TLS void (*C_gc_trace_hook)(C_word *var, int mode);
 C_TLS C_word(*C_get_unbound_variable_value_hook)(C_word sym);
-C_TLS void (*C_panic_hook)(C_char *msg);
-C_TLS void (*C_pre_gc_hook)(int mode);
-C_TLS void (*C_post_gc_hook)(int mode, long ms);
+C_TLS void (*C_panic_hook)(C_char *msg) = NULL;
+C_TLS void (*C_pre_gc_hook)(int mode) = NULL;
+C_TLS void (*C_post_gc_hook)(int mode, long ms) = NULL;
 C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
 
 C_TLS int
@@ -1376,7 +1376,8 @@ void C_ccall termination_continuation(C_word c, C_word self, C_word result)
 
 void panic(C_char *msg)
 {
-  C_panic_hook(msg);
+  if(C_panic_hook != NULL) C_panic_hook(msg);
+
   usual_panic(msg);
 }
 
