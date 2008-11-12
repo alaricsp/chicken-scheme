@@ -597,9 +597,13 @@ EOF
       (##net#io-ports s) ) ) )
 
 (define (##sys#tcp-port->fileno p)
-  (##sys#slot (##sys#port-data p) 0) )
+  (let ((data (##sys#port-data p)))
+    (if (vector? data)			; a meagre test, but better than nothing
+	(##sys#slot data 0)
+	(error '##sys#tcp-port->fileno "argument does not appear to be a TCP port" p))))
 
 (define (tcp-addresses p)
+  (##sys#check-port p 'tcp-addresses)
   (let ((fd (##sys#tcp-port->fileno p)))
     (values 
      (or (##net#getsockname fd)
@@ -608,12 +612,13 @@ EOF
 	 (##sys#signal-hook #:network-error 'tcp-addresses (##sys#string-append "can not compute remote address - " strerror) p) ) ) ) )
 
 (define (tcp-port-numbers p)
- (let ((fd (##sys#tcp-port->fileno p)))
-   (values
-    (or (##net#getsockport fd)
-        (##sys#signal-hook #:network-error 'tcp-port-numbers (##sys#string-append "can not compute local port - " strerror) p) )
-    (or (##net#getpeerport fd)
-        (##sys#signal-hook #:network-error 'tcp-port-numbers (##sys#string-append "can not compute remote port - " strerror) p) ) ) ) )
+  (##sys#check-port p 'tcp-port-numbers)
+  (let ((fd (##sys#tcp-port->fileno p)))
+    (values
+     (or (##net#getsockport fd)
+	 (##sys#signal-hook #:network-error 'tcp-port-numbers (##sys#string-append "can not compute local port - " strerror) p) )
+     (or (##net#getpeerport fd)
+	 (##sys#signal-hook #:network-error 'tcp-port-numbers (##sys#string-append "can not compute remote port - " strerror) p) ) ) ) )
 
 (define (tcp-listener-port tcpl)
   (##sys#check-structure tcpl 'tcp-listener 'tcp-listener-port)
