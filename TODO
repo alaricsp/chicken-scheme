@@ -19,11 +19,6 @@ TODO for trunk								-*- Outline -*-
     is of course not the case inside a compiled executable (current
     workaround is to set them to nil by default)
 *** same for ##sys#chicken-ffi-macro-environment
-*** re-exports of syntax doesn't work
-    generating import library requires source
-    (compiled-module-registration), but original module is lost after
-    importing. Can we simply pull expander closure out of module from which
-    we imported?
 *** `require-extension' fails in interpreter when extension is .so without import library
     probably because load and import is in same toplevel form, and the
     load is performed after the import (at runtime). A possibly fix
@@ -66,8 +61,9 @@ TODO for trunk								-*- Outline -*-
 **** use HTTP_PROXY env. var
 **** handle redirects in http-fetch
 
-** library
+** library units
 *** read-mark list should be stored in read-table
+*** ports should have indicator slot about exact type (tcp, file, ...)
 
 ** syntax-error
 *** if ##sys#current-module is set, add name to error message?

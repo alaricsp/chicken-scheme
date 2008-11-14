@@ -1431,9 +1431,11 @@
 	,@(map (lambda (sexport)
 		 (let* ((name (car sexport))
 			(a (assq name dlist)))
-		   (unless (pair? a)
-		     (error 'module "(internal) exported syntax has no source" name mname))
-		   `(cons ',(car sexport) ,(cdr a))))
+		   (cond ((pair? a) 
+			  `(cons ',(car sexport) ,(cdr a)))
+			 (else
+			  (dm "re-exported syntax" name mname)
+			  `',name))))
 	       sexports))
        (list 
 	,@(let loop ((sd (module-defined-syntax-list mod)))
@@ -1446,9 +1448,18 @@
 
 (define (##sys#register-compiled-module name iexports vexports sexports #!optional
 					(sdefs '()))
+  (define (find-reexport name)
+    (let ((a (assq name (##sys#macro-environment))))
+      (if (pair? (cdr a))
+	  a
+	  (##sys#error
+	   'import "can not find implementation of re-exported syntax"
+	   name))))
   (let* ((sexps
 	  (map (lambda (se)
-		 (list (car se) #f (##sys#er-transformer (cdr se))))
+		 (if (symbol? se)
+		     (find-reexport se)
+		     (list (car se) #f (##sys#er-transformer (cdr se)))))
 	       sexports))
 	 (iexps 
 	  (map (lambda (ie)

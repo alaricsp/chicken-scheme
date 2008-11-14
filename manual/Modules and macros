@@ -484,7 +484,6 @@ maintainers if you encounter behaviour that you think is
 not correct or that triggers an error where there shouldn't
 be one.
 
-* Reexport of syntactic bindings is currently not supported
 * In evaluated code, loading a file containing module information and importing from a module contained in that file will not work when the loading and import is performed in the same toplevel expression (this does not apply, when import libraries are used) 
 * Currently value bindings imported by {{import}} and {{import-for-syntax}} share the same import-environment.
 

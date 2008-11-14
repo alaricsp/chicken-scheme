@@ -1,5 +1,5 @@
-(module foo (foo)
-  (import scheme)
+(module foo (foo xcase)
+  (import (rename scheme (case xcase)))
   (define-syntax foo 
     (syntax-rules ()
       ((_) (bar))))
