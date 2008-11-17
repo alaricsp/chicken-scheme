@@ -1438,13 +1438,15 @@
 			  `',name))))
 	       sexports))
        (list 
-	,@(let loop ((sd (module-defined-syntax-list mod)))
-	    (cond ((null? sd) '())
-		  ((assq (caar sd) sexports) (loop (cdr sd)))
-		  (else
-		   (let ((name (caar sd)))
-		     (cons `(cons ',(caar sd) ,(cdar sd))
-			   (loop (cdr sd))))))))))))
+	,@(if (null? sexports)
+	      '() 			; no syntax exported - no more info needed
+	      (let loop ((sd (module-defined-syntax-list mod)))
+		(cond ((null? sd) '())
+		      ((assq (caar sd) sexports) (loop (cdr sd)))
+		      (else
+		       (let ((name (caar sd)))
+			 (cons `(cons ',(caar sd) ,(cdar sd))
+			       (loop (cdr sd)))))))))))))
 
 (define (##sys#register-compiled-module name iexports vexports sexports #!optional
 					(sdefs '()))

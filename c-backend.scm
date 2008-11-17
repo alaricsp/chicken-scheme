@@ -923,7 +923,7 @@
       ((null? ll)
        (gen #t "{NULL,NULL}};") )
     (let ((id (lambda-literal-id (car ll))))
-      (gen #t "{\"" id sf "\",(void*)")
+      (gen #t "{\"" id #\: (string->c-identifier sf) "\",(void*)")
       (if (eq? 'toplevel id)
 	  (if unit-name
 	      (gen "C_" unit-name "_toplevel},")
