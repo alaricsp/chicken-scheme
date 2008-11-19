@@ -72,22 +72,12 @@ To enable the {{read}} procedure to read symbols and identifiers case sensitive,
 parameter {{case-sensitivity}} to {{#t}}.
 
 
-==== How can I change {{match-error-control}} during compilation?
-
-Use {{eval-when}}, like this:
-
-<enscript highlight=scheme>
-(eval-when (compile)
-(match-error-control #:unspecified) )
-</enscript>
-
-
 ==== Why doesn't CHICKEN support the full numeric tower by default?
 
 The short answer:
 
 <enscript highlight=scheme>
-% chicken-setup numbers
+% chicken-install numbers
 % csi -q
 #;1> (use numbers)
 </enscript>
@@ -194,7 +184,7 @@ is not running under control of a terminal and doesn't print the prompt and does
 
 Code compiled into a DLL to be loaded dynamically must be linked with the same runtime system as the loading
 application. That means that all dynamically loaded entities (including extensions built and installed with
-{{chicken-setup}}) must be compiled with the {{-windows}} {{csc}} option.
+{{chicken-install}}) must be compiled with the {{-windows}} {{csc}} option.
 
 ==== On Windows, {{csc.exe}} seems to be doing something wrong.
 
@@ -263,7 +253,7 @@ just like source files (see {{load}} in the User's Manual).
 
 === Compiled macros
 
-==== Why is {{define-macro}} complaining about unbound variables?
+==== Why are low-level macros defined with {{define-syntax}} complaining about unbound variables?
 
 Macro bodies that are defined and used in a compiled source-file are
 evaluated during compilation and so have no access to anything created with {{define}}. Use {{define-for-syntax}} instead.
@@ -588,6 +578,16 @@ runtime and, if the file loaded is a Scheme source code file
 (instead of a shared object), it will be
 interpreted (even if the caller program is compiled).
 
+==== How do I use extended (non-standard) syntax in evaluated code at run-time?
+
+Normally, only standard Scheme syntax is available to the evaluator. To
+use the extensions provided in the CHICKEN compiler and interpreter,
+add:
+
+<enscript highlight=scheme>
+(require-library chicken-syntax)
+</enscript>
+
 === Extensions 
 
 ==== How can I install Chicken eggs to a non-default location?
@@ -596,7 +596,7 @@ You can just set the {{CHICKEN_REPOSITORY}} environment variable.
 It should contain the path where you want eggs to be installed:
 
  $ export CHICKEN_REPOSITORY=~/chicken/
- $ chicken-setup extensionname
+ $ chicken-install extensionname
 
 In order to make programs (including csi) see these eggs, you should set this variable when you run them.
 Alternatively, you can call the {{repository-path}} Scheme procedure before loading the eggs, as in:

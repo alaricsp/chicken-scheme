@@ -101,7 +101,7 @@
 
 (define ##sys#core-library-modules
   '(extras lolevel utils files tcp regex regex-extras posix srfi-1 srfi-4 srfi-13 
-	   srfi-14 srfi-18 data-structures ports))
+	   srfi-14 srfi-18 data-structures ports chicken-syntax))
 
 (define ##sys#explicit-library-modules '())
 

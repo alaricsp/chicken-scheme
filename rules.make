@@ -31,21 +31,21 @@ VPATH=$(SRCDIR):$(SRCDIR)pcre
 LIBCHICKEN_OBJECTS_1 = \
        library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
-       profiler stub expand runtime
+       profiler stub expand chicken-syntax runtime
 LIBCHICKEN_SHARED_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=$(O))
 LIBCHICKEN_STATIC_OBJECTS = $(LIBCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBUCHICKEN_OBJECTS_1 = \
        ulibrary ueval udata-structures uports ufiles uextras ulolevel uutils utcp usrfi-1 usrfi-4 \
        usrfi-13 usrfi-14 usrfi-18 usrfi-69 u$(POSIXFILE) uregex scheduler \
-       profiler stub expand uruntime
+       profiler stub expand chicken-syntax uruntime
 LIBUCHICKEN_SHARED_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=$(O))
 LIBUCHICKEN_STATIC_OBJECTS = $(LIBUCHICKEN_OBJECTS_1:=-static$(O))
 
 LIBCHICKENGUI_OBJECTS_1 = \
        library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
        srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
-       profiler stub expand gui-runtime
+       profiler stub expand chicken-syntax gui-runtime
 LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
 LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
 
@@ -98,6 +98,10 @@ eval$(O): eval.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 expand$(O): expand.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+chicken-syntax$(O): chicken-syntax.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -273,6 +277,10 @@ eval-static$(O): eval.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
 expand-static$(O): expand.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
+	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
+chicken-syntax-static$(O): chicken-syntax.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) \
 	  $(C_COMPILER_BUILD_RUNTIME_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -1061,7 +1069,6 @@ endif
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken.pdf $(DESTDIR)$(IDOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)README $(DESTDIR)$(IDOCDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)LICENSE $(DESTDIR)$(IDOCDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken-more-macros.scm $(DESTDIR)$(IDATADIR)
 	-$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) chicken.info $(DESTDIR)$(IINFODIR)
 	$(INSTALLINFO_PROGRAM) $(INSTALLINFO_PROGRAM_OPTIONS) --infodir=$(DESTDIR)$(IINFODIR) chicken.info
 ifdef WINDOWS
@@ -1125,6 +1132,8 @@ library.c: $(SRCDIR)library.scm $(SRCDIR)version.scm $(SRCDIR)banner.scm
 eval.c: $(SRCDIR)eval.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
 expand.c: $(SRCDIR)expand.scm $(SRCDIR)synrules.scm
+	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@
+chicken-syntax.c: $(SRCDIR)chicken-syntax.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@
 data-structures.c: $(SRCDIR)data-structures.scm $(SRCDIR)private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ -extend $(SRCDIR)private-namespace.scm
@@ -1240,14 +1249,14 @@ srfi-18.import.c: $(SRCDIR)srfi-18.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 utils.import.c: $(SRCDIR)utils.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
-setup-api.import.c: $(SRCDIR)setup-api.import.scm $(SRCDIR)setup-api.scm
+setup-api.import.c: $(SRCDIR)setup-api.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
-setup-download.import.c: $(SRCDIR)setup-download.import.scm $(SRCDIR)setup-download.scm
+setup-download.import.c: $(SRCDIR)setup-download.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
-setup-utils.import.c: $(SRCDIR)setup-utils.import.scm $(SRCDIR)setup-utils.scm
+setup-utils.import.c: $(SRCDIR)setup-utils.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 
-chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-more-macros.scm $(SRCDIR)chicken-ffi-macros.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-ffi-syntax.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 support.c: $(SRCDIR)support.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
@@ -1262,7 +1271,7 @@ c-platform.c: $(SRCDIR)c-platform.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tw
 c-backend.c: $(SRCDIR)c-backend.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 
-csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)chicken-more-macros.scm $(SRCDIR)private-namespace.scm
+csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ -extend $(SRCDIR)private-namespace.scm
 chicken-profile.c: $(SRCDIR)chicken-profile.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
@@ -1288,7 +1297,8 @@ setup-utils.c: $(SRCDIR)setup-utils.scm
 
 .PHONY: distfiles dist
 
-distfiles: buildsvnrevision library.c eval.c expand.c data-structures.c ports.c files.c extras.c lolevel.c utils.c \
+distfiles: buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
+	data-structures.c ports.c files.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c \
 	ulibrary.c ueval.c udata-structures.c uports.c ufiles.c uextras.c ulolevel.c \
@@ -1328,7 +1338,8 @@ confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
 spotless: distclean
-	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c \
+	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c \
+	  ports.c files.c extras.c lolevel.c utils.c chicken-syntax.c \
 	  tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c expand.c \
 	  posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c \
 	  ulibrary.c ueval.c udata-structures.c uports.c ufiles.c uextras.c ulolevel.c \
@@ -1386,7 +1397,8 @@ bootstrap:
 $(SRCDIR)bootstrap.tar.gz: distfiles
 	tar cfz $@ library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c tcp.c \
 	  srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c posixunix.c posixwin.c regex.c \
-	  scheduler.c profiler.c stub.c expand.c $(COMPILER_OBJECTS_1:=.c)
+	  scheduler.c profiler.c stub.c expand.c chicken-syntax.c \
+	  $(COMPILER_OBJECTS_1:=.c)
 
 
 # benchmarking

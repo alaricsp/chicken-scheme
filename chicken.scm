@@ -26,7 +26,7 @@
 
 
 (declare
-  (uses srfi-1 srfi-4 utils files support compiler optimizer driver 
+  (uses chicken-syntax srfi-1 srfi-4 utils files support compiler optimizer driver 
 	platform backend srfi-69)
   (run-time-macros) )			;*** later: compile-syntax
 
@@ -69,8 +69,7 @@
 (include "tweaks")
 
 (eval-when (load) 
-  (include "chicken-more-macros")
-  (include "chicken-ffi-macros") )
+  (include "chicken-ffi-syntax") )
 
 
 ;;; Prefix argument list with default options:

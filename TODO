@@ -14,11 +14,6 @@ TODO for trunk								-*- Outline -*-
     possibly due to unrenamed special forms
 
 ** modules
-*** chicken.import.scm refers to ##sys#chicken-macro-environment
-    ... which is only set, if chicken-more-macros.scm is loaded, which
-    is of course not the case inside a compiled executable (current
-    workaround is to set them to nil by default)
-*** same for ##sys#chicken-ffi-macro-environment
 *** `require-extension' fails in interpreter when extension is .so without import library
     probably because load and import is in same toplevel form, and the
     load is performed after the import (at runtime). A possibly fix

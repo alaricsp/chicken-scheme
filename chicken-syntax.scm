@@ -1,4 +1,4 @@
-;;;; chicken-more-macros.scm - More syntax extensions
+;;;; chicken-syntax.scm - non-standard syntax extensions
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; Copyright (c) 2008, The Chicken Team
@@ -25,7 +25,12 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(##sys#provide 'chicken-more-macros)
+(declare
+  (unit chicken-syntax)
+  (disable-interrupts)
+  (fixnum) )
+
+(##sys#provide 'chicken-more-macros 'chicken-syntax)
 
 
 ;;; Non-standard macros:

@@ -26,7 +26,7 @@
 
 
 (declare
-  (uses srfi-69 ports)			; is here because a bootstrap from an older chicken may not make
+  (uses chicken-syntax srfi-69 ports) ; is here because a bootstrap from an older chicken may not make
   (usual-integrations)			;  this used automatically
   (disable-interrupts)
   (disable-warning var)
@@ -40,7 +40,6 @@
 EOF
 ) )
 
-(include "chicken-more-macros")
 (include "banner")
 
 (private csi 

@@ -1,11 +1,13 @@
-(module ec (do-ec do-ec:do ec-simplify :do :let :parallel
+(module ec (do-ec do-ec:do :do :let :parallel
 		     :parallel-1 :while :while-1 :while-2
-		     :until :until-1 :list :string :vector
-		     ec-:vector-filter :integers :range
+		     :until :until-1 :list :string 
+		     (:vector ec-:vector-filter)
+		     :integers :range
 		     :real-range :char-range :port :dispatched
 		     :generator-proc dispatch-union
-		     make-initial-:-dispatch :-dispatch
-		     :-dispatch-ref :-dispatch-set! :
+		     make-initial-:-dispatch 
+		     (: :-dispatch)
+		     :-dispatch-ref :-dispatch-set!
 		     fold3-ec fold-ec list-ec append-ec
 		     string-ec string-append-ec vector-ec
 		     vector-of-length-ec sum-ec product-ec

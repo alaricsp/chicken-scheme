@@ -1,4 +1,4 @@
-;;;; chicken-ffi-macros.scm
+;;;; chicken-ffi-syntax.scm
 ;
 ; Copyright (c) 2000-2007, Felix L. Winkelmann
 ; Copyright (c) 2008, The Chicken Team

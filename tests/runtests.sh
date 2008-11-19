@@ -28,6 +28,9 @@ $interpret -s syntax-tests.scm
 echo "======================================== syntax tests (compiled) ..."
 $compile syntax-tests.scm && ./a.out
 
+echo "======================================== syntax tests (2, compiled) ..."
+$compile syntax-tests-2.scm && ./a.out
+
 echo "======================================== import library tests ..."
 rm -f foo.import.*
 $compile import-library-test1.scm -emit-import-library foo
