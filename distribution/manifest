@@ -58,6 +58,7 @@ csi.c
 eval.c
 data-structures.c
 ports.c
+files.c
 extras.c
 library.c
 lolevel.c
