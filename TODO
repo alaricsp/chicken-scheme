@@ -40,6 +40,9 @@ TODO for trunk								-*- Outline -*-
     (does it work at all?)
 *** curried define performs expansion in empty se - problem?
     (as comment in expand.scm indicated (##sys#register-export))
+*** check phase separation and module access
+**** interaction for define-for-syntax, begin-for-syntax, and macros
+     also check for different execution modes (compile-time, run-time, csi, ...)
 *** checks to be implemented
 **** reimport of imported id
 **** unused defs?

@@ -1432,7 +1432,7 @@
 		 (let* ((name (car sexport))
 			(a (assq name dlist)))
 		   (cond ((pair? a) 
-			  `(cons ',(car sexport) ,(cdr a)))
+			  `(cons ',(car sexport) ,(##sys#strip-syntax (cdr a))))
 			 (else
 			  (dm "re-exported syntax" name mname)
 			  `',name))))
@@ -1445,7 +1445,7 @@
 		      ((assq (caar sd) sexports) (loop (cdr sd)))
 		      (else
 		       (let ((name (caar sd)))
-			 (cons `(cons ',(caar sd) ,(cdar sd))
+			 (cons `(cons ',(caar sd) ,(##sys#strip-syntax (cdar sd)))
 			       (loop (cdr sd)))))))))))))
 
 (define (##sys#register-compiled-module name iexports vexports sexports #!optional
