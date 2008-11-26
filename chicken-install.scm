@@ -297,11 +297,12 @@ EOF
 		      (glob (make-pathname (repository-path) "*.import.*"))
 		      files) ) 
 	   (dbfile (make-pathname (repository-path) "db")))
-      (for-each
-       (lambda (f)
-	 (let ((m (string-match ".*/([^/]+)\\.import\\.(scm|so)" f)))
-	   (eval `(import ,(string->symbol (cadr m))))))
-       files)
+      (fluid-let ((##sys#warnings-enabled #f))
+	(for-each
+	 (lambda (f)
+	   (let ((m (string-match ".*/([^/]+)\\.import\\.(scm|so)" f)))
+	     (eval `(import ,(string->symbol (cadr m))))))
+	 files))
       (print "generating database " dbfile)
       (let ((db
 	     (sort

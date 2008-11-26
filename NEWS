@@ -1,3 +1,9 @@
+4.0.0x3
+
+- removed custom declarations and "link-options" and "c-options" declarations
+- deprecated "-quiet"
+- added "-update-db" option to chicken-install
+
 4.0.0x
 
 - the macro system has been completely overhauled and converted 

@@ -24,6 +24,10 @@ TODO for trunk								-*- Outline -*-
 
 * tasks
 
+** NEWS
+*** document changes between now and last time, this was updated
+    (4.0.0x2 doesn't appear, for example)
+
 ** branches
 *** test irregular branch, merge if performance is acceptable
 
@@ -48,15 +52,16 @@ TODO for trunk								-*- Outline -*-
 **** unused defs?
 
 ** compiler
+*** use ##core#db information
+    either automatically add use/require code (tricky) or at least warn and suggest
+    use
 *** generate object-files in /tmp (or TMPDIR)?
-
-** csc
-*** automatically compile import-libraries?
 
 ** setup/install
 *** setup-download
 **** use HTTP_PROXY env. var
 **** handle redirects in http-fetch
+*** automatically update db after extension installation?
 
 ** library units
 *** read-mark list should be stored in read-table

@@ -381,7 +381,7 @@
 	(dribble "Generating ~aprofile" (if acc "accumulated " "")) ) )
 
     (and-let* ((dbfile (file-exists? (make-pathname (repository-path) "db"))))
-      (dribble "loading database ~a" dbfile)
+      (dribble "loading database ~a ..." dbfile)
       (for-each
        (lambda (e)
 	 (##sys#put! 

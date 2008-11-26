@@ -840,7 +840,11 @@
 							   (null? xs)
 							   (pair? (car body))
 							   (symbol? (caar body))
-							   (not (eq? 'import (or (lookup (caar body) se) (caar body)))))
+							   (let ((imp (or (lookup (caar body) se) (caar body))))
+							     (and (not (memq imp '(import import-for-syntax)))
+								  ;; can it get any uglier? yes, it can
+								  (not (eq? imp (cdr (assq 'import ##sys#initial-macro-environment))))
+								  (not (eq? imp (cdr (assq 'import-for-syntax ##sys#initial-macro-environment)))))))
 						  (compiler-warning 
 						   'syntax
 						   "module `~s' does not begin with `import' form - maybe unintended?"
