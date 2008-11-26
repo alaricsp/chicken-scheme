@@ -75,6 +75,7 @@ EOF
 
 (register-feature! 'extras)
 
+
 ;;; Read expressions from file:
 
 (define read-file
@@ -90,7 +91,6 @@ EOF
       (if (port? port)
 	  (slurp port)
 	  (call-with-input-file port slurp) ) ) ) )
-
 
 
 ;;; Random numbers:

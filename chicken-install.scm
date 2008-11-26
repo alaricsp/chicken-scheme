@@ -292,6 +292,35 @@ EOF
       (and-let* ((tmpdir (temporary-directory)))
 	(remove-directory tmpdir))))
 
+  (define (update-db files)
+    (let* ((files (if (null? files)
+		      (glob (make-pathname (repository-path) "*.import.*"))
+		      files) ) 
+	   (dbfile (make-pathname (repository-path) "db")))
+      (for-each
+       (lambda (f)
+	 (let ((m (string-match ".*/([^/]+)\\.import\\.(scm|so)" f)))
+	   (eval `(import ,(string->symbol (cadr m))))))
+       files)
+      (print "generating database " dbfile)
+      (let ((db
+	     (sort
+	      (append-map
+	       (lambda (m)
+		 (let* ((mod (cdr m))
+			(mname (##sys#module-name mod)))
+		   (print "  " mname)
+		   (let-values (((_ ve se) (##sys#module-exports mod)))
+		     (append 
+		      (map (lambda (se) (list (car se) 'syntax mname)) se)
+		      (map (lambda (ve) (list (car ve) 'value mname)) ve)))))
+	       ##sys#module-table) 
+	      (lambda (e1 e2)
+		(string<? (symbol->string (car e1)) (symbol->string (car e2)))))))
+	(with-output-to-file (make-pathname (repository-path) "db")
+	  (lambda ()
+	    (for-each (lambda (x) (write x) (newline)) db))))))
+
   (define (usage code)
     (print #<<EOF
 usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
@@ -311,11 +340,12 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
        -username USER           set username for transports that require this
        -password PASS           set password for transports that require this
   -i   -init DIRECTORY          initialize empty alternative repository
+  -u   -update-db [FILENAME ...]  update export database
 EOF
 );|
     (exit code))
 
-  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n #\v #\i))
+  (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n #\v #\i #\u))
 
   (define (main args)
     (let ((defaults (load-defaults)))
@@ -373,6 +403,9 @@ EOF
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-v") (string=? arg "-version"))
 			(print (chicken-version))
+			(exit 0))
+		       ((or (string=? arg "-u") (string=? arg "-update-db"))
+			(update-db (cdr args))
 			(exit 0))
 		       ((or (string=? arg "-i") (string=? arg "-init"))
 			(unless (pair? (cdr args)) (usage 1))

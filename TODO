@@ -48,7 +48,6 @@ TODO for trunk								-*- Outline -*-
 **** unused defs?
 
 ** compiler
-*** remove "custom-declare" + stuff?
 *** generate object-files in /tmp (or TMPDIR)?
 
 ** csc

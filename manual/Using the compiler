@@ -165,8 +165,6 @@ Possible options are:
 
 ; -prologue FILENAME : Includes the file named {{FILENAME}} at the start of the compiled source file.  The include-path is not searched. This option may be given multiple times.
 
-; -quiet : Disables output of compile information.
-
 ; -raw : Disables the generation of any implicit code that uses the Scheme libraries (that is all runtime system files besides {{runtime.c}} and {{chicken.h}}).
 
 ; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}. Multiple names may be given and should be separated by {{,}}.

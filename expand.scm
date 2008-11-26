@@ -1276,6 +1276,14 @@
   (vexports module-vexports set-module-vexports!)	      ; (SYMBOL . SYMBOL)
   (sexports module-sexports set-module-sexports!) )	      ; ((SYMBOL SE TRANSFORMER) ...)
 
+(define ##sys#module-name module-name)
+
+(define (##sys#module-exports m)
+  (values 
+   (module-export-list m)
+   (module-vexports m)
+   (module-sexports m)))
+
 (define (make-module name explist vexports sexports)
   (%make-module name explist '() '() '() '() '() '() '() vexports sexports))
 

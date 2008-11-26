@@ -131,15 +131,17 @@
 	[a-only (memq 'analyze-only options)]
 	[dynamic (memq 'dynamic options)]
 	[dumpnodes #f]
-	[quiet (memq 'quiet options)]
 	[start-time #f]
 	(upap #f)
 	[ssize (or (memq 'nursery options) (memq 'stack-size options))] )
 
     (define (cputime) (##sys#fudge 6))
 
+    (define (dribble fstr . args)
+      (when verbose (printf "~?~%~!" fstr args)))
+
     (define (print-header mode dbgmode)
-      (when verbose (printf "pass: ~a~%~!" mode))
+      (dribble "pass: ~a" mode)
       (and (memq dbgmode debugging-chicken)
 	   (begin
 	     (printf "[~a]~%" mode)
@@ -241,7 +243,7 @@
       (set! inline-globally #t))
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
     (when (memq 'no-warnings options) 
-      (when verbose (printf "Warnings are disabled~%~!"))
+      (dribble "Warnings are disabled")
       (set! ##sys#warnings-enabled #f) )
     (when (memq 'optimize-leaf-routines options) (set! optimize-leaf-routines #t))
     (when (memq 'unsafe options) 
@@ -264,7 +266,7 @@
 	  (or (string->number arg)
 	      (quit "invalid argument to `-inline-limit' option: `~A'" arg) ) ) ) )
     (when (memq 'case-insensitive options) 
-      (when verbose (printf "Identifiers and symbols are case insensitive~%~!"))
+      (dribble "Identifiers and symbols are case insensitive")
       (register-feature! 'case-insensitive)
       (case-sensitive #f) )
     (when (memq 'compress-literals options)
@@ -299,9 +301,8 @@
     ;; Load extensions:
     (set! ##sys#features (cons #:compiler-extension ##sys#features))
     (let ([extends (collect-options 'extend)])
-      (when verbose
-	(printf "Loading compiler extensions...~%~!")
-	(load-verbose #t) )
+      (dribble "Loading compiler extensions...")
+      (when verbose (load-verbose #t))
       (for-each
        (lambda (f) (load (##sys#resolve-include-filename f #f #t))) 
        extends) )
@@ -363,11 +364,10 @@
     (unless (memq 'no-usual-integrations options)
       (set! standard-bindings default-standard-bindings)
       (set! extended-bindings default-extended-bindings) )
-    (when verbose
-      (printf "debugging info: ~A~%~!"
-	      (if emit-trace-info
-		  "calltrace"
-		  "none") ) )
+    (dribble "debugging info: ~A"
+	     (if emit-trace-info
+		 "calltrace"
+		 "none") )
     (when profile
       (let ([acc (eq? 'accumulate-profile (car profile))])
 	(set! emit-profile #t)
@@ -378,8 +378,16 @@
 	   (if acc
 	       '((set! ##sys#profile-append-mode #t))
 	       '() ) ) )
-	(when verbose
-	  (printf "Generating ~aprofile~%~!" (if acc "accumulated " "")) ) ) )
+	(dribble "Generating ~aprofile" (if acc "accumulated " "")) ) )
+
+    (and-let* ((dbfile (file-exists? (make-pathname (repository-path) "db"))))
+      (dribble "loading database ~a" dbfile)
+      (for-each
+       (lambda (e)
+	 (##sys#put! 
+	  (car e) '##core#db
+	  (append (or (##sys#get (car e) '##core#db) '()) (cdr e))) )
+       (read-file dbfile)))
 
     (cond ((memq 'version options)
 	   (print-version #t)
@@ -390,14 +398,12 @@
 	   (display (chicken-version)) 
 	   (newline) )
 	  ((not filename)
-	   (unless quiet
-	     (print-version #t)
-	     (display "\nEnter \"chicken -help\" for information on how to use it.\n") ) )
+	   (print-version #t)
+	   (display "\nEnter \"chicken -help\" for information on how to use it.\n") )
 	  (else
 
 	   ;; Display header:
-	   (unless quiet
-	     (printf "compiling `~a' ...~%" filename) )
+	   (dribble "compiling `~a' ..." filename)
 	   (set! source-filename filename)
 	   (debugging 'r "options" options)
 	   (debugging 'r "debugging options" debugging-chicken)
@@ -416,7 +422,7 @@
 
 	     (let ([proc (user-read-pass)])
 	       (cond [proc
-		      (when verbose (printf "User read pass...~%~!"))
+		      (dribble "User read pass...")
 		      (set! forms (proc prelude files postlude)) ]
 		     [else
 		      (do ([files files (cdr files)])
@@ -437,7 +443,7 @@
 	   ;; Start compilation passes:
 	   (let ([proc (user-preprocessor-pass)])
 	     (when proc
-	       (when verbose (printf "User preprocessing pass...~%~!"))
+	       (dribble "User preprocessing pass...")
 	       (set! forms (map proc forms))))
 
 	   (print-expr "source" '|1| forms)
@@ -498,7 +504,7 @@
 
 	     (let ([proc (user-pass)])
 	       (when proc
-		 (when verbose (printf "User pass...~%~!"))
+		 (dribble "User pass...")
 		 (begin-time)
 		 (set! exps (map proc exps))
 		 (end-time "user pass") ) )
@@ -513,8 +519,7 @@
 				       (make-pathname #f (symbol->string id) "inline")
 				       #f #t))
 			       ((file-exists? ifile)))
-		      (when verbose
-			(print "Loading inline file " ifile " ..."))
+		      (dribble "Loading inline file ~a ..." ifile)
 		      (load-inline-file ifile)))
 		  (concatenate (map cdr req)))))
 
@@ -524,7 +529,7 @@
 				   (canonicalize-begin-body exps) ) ) ) ] 
 		    [proc (user-pass-2)] )
 	       (when proc
-		 (when verbose (printf "Secondary user pass...~%"))
+		 (dribble "Secondary user pass...")
 		 (begin-time)
 		 (set! first-analysis #f)
 		 (let ([db (analyze 'user node0)])
@@ -602,8 +607,7 @@
 
 			    (when inline-output-file
 			      (let ((f inline-output-file))
-				(when verbose
-				  (printf "Generating global inline file `~a' ...~%" f))
+				(dribble "Generating global inline file `~a' ..." f)
 				(emit-global-inline-file f db) ) )
 
 			    (begin-time)
@@ -622,12 +626,10 @@
 
                                 (begin-time)
 				(let ((out (if outfile (open-output-file outfile) (current-output-port))) )
-				  (unless quiet
-				    (printf "generating `~A' ...~%" outfile) )
+				  (dribble "generating `~A' ..." outfile)
 				  (generate-code literals lliterals lambdas out filename dynamic db)
 				  (when outfile (close-output-port out)))
                                 (end-time "code generation")
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
                                 (compiler-cleanup-hook)
-                                (when verbose 
-                                  (printf "compilation finished.~%~!") ) ) ) ] ) ) ) ) ) ) ) ) ) ) )
+                                (dribble "compilation finished.") ) ) ] ) ) ) ) ) ) ) ) ) ) )

@@ -259,7 +259,7 @@
 (define library-files default-library-files)
 (define shared-library-files default-shared-library-files)
 
-(define translate-options '("-quiet"))
+(define translate-options '())
 
 (define include-dir
   (let ((id (prefix "" "include" 
@@ -759,52 +759,29 @@
 (define (run-translation)
   (for-each
    (lambda (f)
-     (let ([cscf (pathname-replace-extension f "csc")])
-       (when (and (file-exists? cscf)
-		  (let ([x (with-input-from-file cscf read-line)])
-		    (or (eof-object? x) (string=? "#%eof" x)) ) )
-	 ($delete-file cscf) )
-       (let ([fc (pathname-replace-extension
-		  (if (= 1 (length scheme-files))
-		      target-filename
-		      f)
-		  (cond (cpp-mode "cpp")
-			(objc-mode "m")
-			(else "c") ) ) ] )
-	 (unless (zero?
-		  ($system 
-		   (string-intersperse 
-		    (cons* translator (cleanup-filename f) 
-			   (append 
-			    (if to-stdout 
-				'("-to-stdout")
-				`("-output-file" ,(cleanup-filename fc)) )
-			    (if (or static static-libs static-extensions)
-				(map (lambda (e) (conc "-uses " e)) required-extensions)
-				'() )
-			    (map quote-option (append translate-options translation-optimization-options)) ) )
-		    " ") ) )
-	   (exit last-exit-code) )
-	 (set! c-files (append (list fc) c-files))
-	 (set! generated-c-files (append (list fc) generated-c-files))
-	 (when (file-exists? cscf)
-	   (with-input-from-file cscf
-	     (lambda ()
-	       (read-line)
-	       (for-each
-		(lambda (cmd)
-		  (unless (list? cmd)
-		    (error "invalid entry in csc control file" cmd))
-		  (case (car cmd)
-		    ((post-process)
-		     (for-each $system (cdr cmd)))
-		    ((c-options)
-		     (set! compile-options (append compile-options (cdr cmd))))
-		    ((link-options)
-		     (set! link-options (append link-options (cdr cmd))))
-		    (else (error "invalid entry in csc control file" cmd))))
-		(read-file) ) ) )
-	   ($delete-file cscf) ) ) ) )
+     (let ([fc (pathname-replace-extension
+		(if (= 1 (length scheme-files))
+		    target-filename
+		    f)
+		(cond (cpp-mode "cpp")
+		      (objc-mode "m")
+		      (else "c") ) ) ] )
+       (unless (zero?
+		($system 
+		 (string-intersperse 
+		  (cons* translator (cleanup-filename f) 
+			 (append 
+			  (if to-stdout 
+			      '("-to-stdout")
+			      `("-output-file" ,(cleanup-filename fc)) )
+			  (if (or static static-libs static-extensions)
+			      (map (lambda (e) (conc "-uses " e)) required-extensions)
+			      '() )
+			  (map quote-option (append translate-options translation-optimization-options)) ) )
+		  " ") ) )
+	 (exit last-exit-code) )
+       (set! c-files (append (list fc) c-files))
+       (set! generated-c-files (append (list fc) generated-c-files))))
    scheme-files)
   (unless keep-files (for-each $delete-file generated-scheme-files)) )
 

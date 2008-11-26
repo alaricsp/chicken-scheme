@@ -49,7 +49,6 @@
 ; (bound-to-procedure {<var>})
 ; (c-options {<opt>})
 ; (compile-syntax)
-; (custom-declare (<tag> <name> <filename> <arg> ...) <string> ...)
 ; (disable-interrupts)
 ; (disable-warning <class> ...)
 ; (emit-import-library {<module> | (<module> <filename>)})
@@ -275,7 +274,7 @@
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
   copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
-  unit-name insert-timer-checks used-units external-variables require-imports-flag custom-declare-alist
+  unit-name insert-timer-checks used-units external-variables require-imports-flag
   profile-info-vector-name finish-foreign-result pending-canonicalizations
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   make-block-variable-literal block-variable-literal? block-variable-literal-name
@@ -313,7 +312,7 @@
   local-definitions export-variable variable-mark intrinsic?
   undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  process-custom-declaration do-lambda-lifting file-requirements emit-closure-info 
+  do-lambda-lifting file-requirements emit-closure-info 
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
   big-fixnum? import-libraries unlikely-variables)
 
@@ -425,7 +424,6 @@
 (define callback-names '())
 (define toplevel-scope #t)
 (define toplevel-lambda-id #f)
-(define custom-declare-alist '())
 (define csc-control-file #f)
 (define data-declarations '())
 (define file-requirements #f)
@@ -838,6 +836,15 @@
 							    '()
 							    (##sys#compiled-module-registration (##sys#current-module)))))))
 					       (else
+						(when (and (pair? body)
+							   (null? xs)
+							   (pair? (car body))
+							   (symbol? (caar body))
+							   (not (eq? 'import (or (lookup (caar body) se) (caar body)))))
+						  (compiler-warning 
+						   'syntax
+						   "module `~s' does not begin with `import' form - maybe unintended?"
+						   name))
 						(loop 
 						 (cdr body)
 						 (cons (walk 
@@ -1328,10 +1335,6 @@
 	  (if (every string? fds)
 	      (set! foreign-declarations (append foreign-declarations fds))
 	      (syntax-error "invalid declaration" spec) ) ) )
-       ((custom-declare)
-	(if (or (not (list? spec)) (not (list? (cadr spec))) (< (length (cadr spec)) 3))
-	    (syntax-error "invalid declaration" spec)
-	    (process-custom-declaration (cadr spec) (cddr spec)) ) )
        ((c-options)
 	(emit-control-file-item `(c-options ,@(strip (cdr spec)))) )
        ((link-options)

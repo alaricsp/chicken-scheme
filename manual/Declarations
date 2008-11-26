@@ -53,15 +53,6 @@ also more efficient. {{(declare (hide))}} is equivalent to {{(declare (block))}}
 Declares that the given identifiers are always bound to procedure values.
 
 
-=== c-options
-
- [declaration specifier] (c-options STRING ...)
-
-Declares additional C/C++ compiler options that are to be passed to the subsequent compilation pass
-that translates C to machine code. This declaration will only work if the source file is compiled
-with the {{csc}} compiler driver.
-
-
 === check-c-syntax
 
  [declaration specifier] (check-c-syntax)
@@ -185,16 +176,6 @@ will be removed (in addition to showing a warning). This declaration will disabl
  [declaration specifier] (lambda-lift)
 
 Enables lambda-lifting (equivalent to the {{-lambda-lift}} option).
-
-
-=== link-options
-
- [declaration specifier] (link-options STRING ...)
-
-Declares additional linker compiler options that are to be passed to the subsequent compilation pass
-that links the generated code into an executable or library. 
-This declaration will only work if the source file is compiled
-with the {{csc}} compiler driver.
 
 
 === local

@@ -34,7 +34,7 @@
   non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
   standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
-  file-io-only banner custom-declare-alist disabled-warnings internal-bindings
+  file-io-only banner disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
   foreign-declarations block-compilation line-number-database-size node->sexpr sexpr->node
   target-heap-size target-stack-size variable-visible? hide-variable export-variable
@@ -69,7 +69,7 @@
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging
   constant-declarations process-lambda-documentation big-fixnum? sort-symbols
   export-dump-hook intrinsic? node->sexpr emit-global-inline-file inline-max-size
-  make-random-name foreign-type-convert-result foreign-type-convert-argument process-custom-declaration)
+  make-random-name foreign-type-convert-result foreign-type-convert-argument)
 
 
 (include "tweaks")
@@ -1225,7 +1225,6 @@ Usage: chicken FILENAME OPTION ...
     -version                    display compiler version and exit
     -release                    print release number and exit
     -verbose                    display information on compilation progress
-    -quiet                      do not display compile information
 
   File and pathname options:
 
@@ -1442,39 +1441,6 @@ EOF
 	      [else
 	       (write-char c out)
 	       (loop) ] ) ) ) ) )
-
-
-;;; Custom declarations:
-
-(define (process-custom-declaration spec strings)
-  (let* ([tag (car spec)]
-	 [name (cadr spec)]
-	 [fname (caddr spec)]
-	 [args (cdddr spec)] 
-	 [id (cons tag name)]
-	 [a (assoc id custom-declare-alist)] )
-    (unless a
-      (let ([out (open-output-file fname)])
-	(set! a (cons id out))
-	(set! custom-declare-alist (cons a custom-declare-alist))
-	(set! compiler-cleanup-hook
-	  (let ([old compiler-cleanup-hook])
-	    (lambda ()
-	      (close-output-port out)
-	      (old) ) ) )
-	(emit-control-file-item (cons* tag name fname args)) ) )
-    (for-each (cute display <> (cdr a)) strings) ) )
-
-(define (emit-control-file-item item)
-  (unless csc-control-file
-    (set! csc-control-file (open-output-file (pathname-replace-extension source-filename "csc")))
-    (display "#%csc\n" csc-control-file) 
-    (set! compiler-cleanup-hook
-      (let ([old compiler-cleanup-hook])
-	(lambda ()
-	  (close-output-port csc-control-file)
-	  (old) ) ) ) )
-  (fprintf csc-control-file "~S~%" item) )
 
 
 ;;; 64-bit fixnum?
