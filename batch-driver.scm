@@ -371,6 +371,7 @@
     (when profile
       (let ([acc (eq? 'accumulate-profile (car profile))])
 	(set! emit-profile #t)
+	(set! profiled-procedures 'all)
 	(set! initforms
 	  (append
 	   initforms

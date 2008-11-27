@@ -684,9 +684,11 @@
 					   (assq dest se)) ; not global?
 				       l)
 				      ((and (eq? 'lambda (or (lookup name se) name))
-					    emit-profile 
-					    (or profiled-procedures
-						(variable-mark dest '##compiler#profile)))
+					    emit-profile
+					    (or (eq? profiled-procedures 'all)
+						(and
+						 (eq? profiled-procedures 'some)
+						 (variable-mark dest '##compiler#profile))))
 				       (expand-profile-lambda dest llist2 body) )
 				      (else
 				       (if (and (> (length body0) 1)
@@ -1443,11 +1445,14 @@
 			  "invalid import-library specification: ~s" il))))
 		(strip (cdr spec))))))
        ((profile)
-	(if (null? (cdr spec))
-	    (set! profiled-procedures #t)
-	    (for-each 
-	     (cut mark-variable <> '##compiler#profile)
-	     (stripa (cdr spec)))))
+	(set! emit-profile #t)
+	(cond ((null? (cdr spec))
+	       (set! profiled-procedures 'all) )
+	      (else
+	       (set! profiled-propcedures 'some)
+	       (for-each 
+		(cut mark-variable <> '##compiler#profile)
+		(stripa (cdr spec))))))
        ((local)
 	(cond ((null? (cdr spec))
 	       (set! local-definitions #t) )
