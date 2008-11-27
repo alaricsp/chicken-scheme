@@ -1577,12 +1577,32 @@
 					 "' has not been defined")
 					id) )
 				      (else (##sys#module-rename id name)))))))
-		       (loop (cdr xl)))))))))
+		       (loop (cdr xl))))))))
+	 (suggest '()))
+    (define (join lst)
+      (string-append
+       (symbol->string (car lst))
+       (let loop ((lst (cdr lst)))
+	 (if (null? lst)
+	     ""
+	     (string-append " " (symbol->string (car lst)) (loop (cdr lst)))))))
     (for-each
      (lambda (u)
        (unless (memq u elist)
-	 (##sys#warn "reference to possibly unbound identifier" u)))
+	 (##sys#warn "reference to possibly unbound identifier" u)
+	 (and-let* ((a (##sys#get u '##core#db)))
+	   (let ((m (cadr a)))
+	     (unless (memq m suggest)
+	       (set! suggest (cons m suggest)))))))
      (module-undefined-list mod))
+    (when (pair? suggest)
+      (##sys#warn 
+       (string-append
+	"suggesting to add `(import "
+	(join suggest)
+	")' to module `"
+	(symbol->string name)
+	"'")))
     (let* ((exports 
 	    (map (lambda (exp)
 		   (cond ((symbol? (cdr exp)) exp)

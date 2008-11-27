@@ -847,7 +847,7 @@
 								  (not (eq? imp (cdr (assq 'import-for-syntax ##sys#initial-macro-environment)))))))
 						  (compiler-warning 
 						   'syntax
-						   "module `~s' does not begin with `import' form - maybe unintended?"
+						   "module body of `~s' does not begin with `import' form - maybe unintended?"
 						   name))
 						(loop 
 						 (cdr body)

@@ -88,8 +88,11 @@ EOF
   (define *default-location* #f)
   (define *default-transport* 'http)
 
+  (define-constant +module-db+ "modules.db")
+  (define-constant +defaults-file+ "setup.defaults")
+
   (define (load-defaults)
-    (let ((deff (make-pathname (chicken-home) "setup.defaults")))
+    (let ((deff (make-pathname (chicken-home) +defaults-file+)))
       (cond ((not (file-exists? deff)) '())
 	    (else
 	     (set! *default-sources* (read-file deff))
@@ -292,11 +295,9 @@ EOF
       (and-let* ((tmpdir (temporary-directory)))
 	(remove-directory tmpdir))))
 
-  (define (update-db files)
-    (let* ((files (if (null? files)
-		      (glob (make-pathname (repository-path) "*.import.*"))
-		      files) ) 
-	   (dbfile (make-pathname (repository-path) "db")))
+  (define (update-db)
+    (let ((files (glob (make-pathname (repository-path) "*.import.*")))
+	  (dbfile (make-pathname (repository-path) +module-db+)))
       (fluid-let ((##sys#warnings-enabled #f))
 	(for-each
 	 (lambda (f)
@@ -318,7 +319,7 @@ EOF
 	       ##sys#module-table) 
 	      (lambda (e1 e2)
 		(string<? (symbol->string (car e1)) (symbol->string (car e2)))))))
-	(with-output-to-file (make-pathname (repository-path) "db")
+	(with-output-to-file (make-pathname (repository-path) +module-db+)
 	  (lambda ()
 	    (for-each (lambda (x) (write x) (newline)) db))))))
 
@@ -341,7 +342,7 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
        -username USER           set username for transports that require this
        -password PASS           set password for transports that require this
   -i   -init DIRECTORY          initialize empty alternative repository
-  -u   -update-db [FILENAME ...]  update export database
+  -u   -update-db               update export database
 EOF
 );|
     (exit code))
@@ -349,25 +350,28 @@ EOF
   (define *short-options* '(#\h #\k #\l #\t #\s #\p #\r #\n #\v #\i #\u))
 
   (define (main args)
-    (let ((defaults (load-defaults)))
+    (let ((defaults (load-defaults))
+	  (update #f))
       (let loop ((args args) (eggs '()))
 	(cond ((null? args)
-	       (when (null? eggs)
-		 (let ((setups (glob "*.setup")))
-		   (cond ((pair? setups)
-			  (set! *eggs+dirs*
-			    (append
-			     (map (lambda (s) (cons (pathname-file s) ".")) setups)
-			     *eggs+dirs*)))
-			 (else
-			  (print "no setup-scripts to process")
-			  (exit 1))) ) )
-	       (unless defaults
-		 (unless *default-transport* 
-		   (error "no default transport defined - please use `-transport' option"))
-		 (unless *default-location* 
-		   (error "no default location defined - please use `-location' option")))
-	       (install (reverse eggs)))
+	       (cond (update (update-db))
+		     (else
+		      (when (null? eggs)
+			(let ((setups (glob "*.setup")))
+			  (cond ((pair? setups)
+				 (set! *eggs+dirs*
+				   (append
+				    (map (lambda (s) (cons (pathname-file s) ".")) setups)
+				    *eggs+dirs*)))
+				(else
+				 (print "no setup-scripts to process")
+				 (exit 1))) ) )
+		      (unless defaults
+			(unless *default-transport* 
+			  (error "no default transport defined - please use `-transport' option"))
+			(unless *default-location* 
+			  (error "no default location defined - please use `-location' option")))
+		      (install (reverse eggs)))))
 	      (else
 	       (let ((arg (car args)))
 		 (cond ((or (string=? arg "-help") 
@@ -406,8 +410,8 @@ EOF
 			(print (chicken-version))
 			(exit 0))
 		       ((or (string=? arg "-u") (string=? arg "-update-db"))
-			(update-db (cdr args))
-			(exit 0))
+			(set! update #t)
+			(loop (cdr args) eggs))
 		       ((or (string=? arg "-i") (string=? arg "-init"))
 			(unless (pair? (cdr args)) (usage 1))
 			(init-repository (cadr args))

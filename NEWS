@@ -1,10 +1,22 @@
 4.0.0x3
 
 - removed custom declarations and "link-options" and "c-options" declarations
-- deprecated "-quiet"
+- deprecated "-quiet" option to "chicken" program
 - added "-update-db" option to chicken-install
+- the compiler now suggests possibly required module-imports
 
-4.0.0x
+4.0.0x2
+
+- moved non-standard syntax-definitions into "chicken-syntax" library unit
+- the pretty-printer prints the end-of-file object readably now
+- alternative conditional execution paths have separate allocation computation
+  (previously the allocation of all alternatives was coalesced)
+- removed unused "%kmp-search" from "srfi-13" library unit
+- expander handles syntax-reexports and makes unexported syntax available
+  for exported expanders in import libraries
+- added checks in some procedures in the the "tcp" library unit.
+
+4.0.0x1
 
 - the macro system has been completely overhauled and converted 
   to hygienic macros
