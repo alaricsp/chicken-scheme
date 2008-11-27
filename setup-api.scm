@@ -158,11 +158,6 @@
 
 (define (cross-chicken) (##sys#fudge 39))
 
-(define *copy-command* (if *windows-shell* 'copy "cp -r"))
-(define *remove-command* (if *windows-shell* "del /Q /S" "rm -fr"))
-(define *move-command* (if *windows-shell* 'move 'mv))
-(define *chmod-command* "chmod")
-(define *ranlib-command* "ranlib")
 (define *csc-options* '())
 (define *base-directory* (current-directory))
 
@@ -172,12 +167,58 @@
 (define program-path (make-parameter *chicken-bin-path*))
 (define keep-intermediates (make-parameter #f))
 
-(define (sudo-install)
-  (set! *copy-command* "sudo cp -r")
-  (set! *remove-command* "sudo rm -fr")
-  (set! *move-command* "sudo mv")
-  (set! *chmod-command* "sudo chmod")
-  (set! *ranlib-command* "sudo ranlib"))
+; Setup shell commands
+
+(define *copy-command*)
+(define *remove-command*)
+(define *move-command*)
+(define *chmod-command*)
+(define *ranlib-command*)
+
+(define (windows-user-install-setup)
+  (set! *copy-command*        'copy)
+  (set! *remove-command*      "del /Q /S")
+  (set! *move-command*        'move)
+  (set! *chmod-command*       "chmod")
+  (set! *ranlib-command*      "ranlib") )
+
+(define (unix-user-install-setup)
+  (set! *copy-command*        "cp -r")
+  (set! *remove-command*      "rm -fr")
+  (set! *move-command*        'mv)
+  (set! *chmod-command*       "chmod")
+  (set! *ranlib-command*      "ranlib") )
+
+(define (windows-sudo-install-setup)
+  (set! *sudo* #f)
+  (print "Warning: can not install as superuser with Windows") )
+
+(define (unix-sudo-install-setup)
+  (set! *copy-command*        "sudo cp -r")
+  (set! *remove-command*      "sudo rm -fr")
+  (set! *move-command*        "sudo mv")
+  (set! *chmod-command*       "sudo chmod")
+  (set! *ranlib-command*      "sudo ranlib") )
+
+(define (user-install-setup)
+  (set! *sudo* #f)
+  (if *windows-shell*
+      (windows-user-install-setup)
+      (unix-user-install-setup) ) )
+
+(define (sudo-install-setup)
+  (set! *sudo* #t)
+  (if *windows-shell*
+      (windows-sudo-install-setup)
+      (unix-sudo-install-setup) ) )
+
+(define (sudo-install . args)
+  (cond ((null? args)   *sudo*)
+        ((car args)     (sudo-install-setup))
+        (else           (user-install-setup)) ) )
+
+; User setup by default
+(user-install-setup)
 
 ; Convert a string with a version (such as "1.22.0") to a list of the
 ; numbers (such as (1 22 0)). If one of the version components cannot
