@@ -339,6 +339,11 @@
 	   (mark-variable s '##compiler#intrinsic 'extended))
 	 (when (memq s foldable-extended-bindings) (put! db s 'foldable #t)) )
        extended-bindings) 
+      (when initial
+	(for-each
+	 (lambda (s)
+	   (mark-variable s '##compiler#intrinsic 'internal))
+	 internal-bindings))
       (set! initial #f))))
 
 (define (get db key prop)
