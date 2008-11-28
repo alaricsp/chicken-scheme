@@ -1607,8 +1607,12 @@ EOF
         (let (
             [ready?
               (lambda ()
-                (when (fx= -1 (##sys#file-select-one fd))
-                  (posix-error #:file-error loc "cannot select" fd nam) ) )]
+                (let ((res (##sys#file-select-one fd)))
+                  (if (fx= -1 res)
+                      (if (fx= _errno _ewouldblock)
+                          #f
+                          (posix-error #:file-error loc "cannot select" fd nam))
+                      (fx= 1 res))))]
             [peek
               (lambda ()
                 (if (fx>= bufpos buflen)
