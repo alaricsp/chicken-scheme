@@ -28,6 +28,8 @@
 (declare
   (unit chicken-syntax)
   (disable-interrupts)
+  (no-bound-checks)
+  (no-procedure-checks)
   (fixnum) )
 
 (##sys#provide 'chicken-more-macros 'chicken-syntax)
