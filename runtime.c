@@ -3559,7 +3559,7 @@ void handle_interrupt(void *trampoline, void *proc)
 
 C_regparm C_word C_fcall C_retrieve(C_word sym)
 {
-  C_word val = C_u_i_car(sym);
+  C_word val = C_block_item(sym, 0);
 
   if(val == C_SCHEME_UNBOUND)
     return C_get_unbound_variable_value_hook(sym);
@@ -3618,6 +3618,52 @@ static C_word resolve_procedure(C_word closure, C_char *where)
 C_regparm void *C_fcall C_retrieve_proc(C_word closure)
 {
   closure = resolve_procedure(closure, NULL);
+
+#ifndef C_NO_APPLY_HOOK
+  if(C_block_item(apply_hook_symbol, 0) != C_SCHEME_FALSE) {
+    C_mutate(&C_block_item(last_applied_procedure_symbol, 0), closure);
+    return (void *)C_block_item(C_block_item(apply_hook_symbol, 0), 0);
+  }
+#endif
+
+  return (void *)C_block_item(closure, 0);
+}
+
+
+C_regparm void *C_fcall C_retrieve_symbol_proc(C_word sym)
+{
+  C_word val = C_block_item(sym, 0);
+  C_word closure;
+
+  if(val == C_SCHEME_UNBOUND)
+    val = C_get_unbound_variable_value_hook(sym);
+
+  closure = resolve_procedure(val, NULL);
+
+#ifndef C_NO_APPLY_HOOK
+  if(C_block_item(apply_hook_symbol, 0) != C_SCHEME_FALSE) {
+    C_mutate(&C_block_item(last_applied_procedure_symbol, 0), closure);
+    return (void *)C_block_item(C_block_item(apply_hook_symbol, 0), 0);
+  }
+#endif
+
+  return (void *)C_block_item(closure, 0);
+}
+
+
+C_regparm void *C_fcall C_retrieve2_symbol_proc(C_word val, char *name)
+{
+  C_word closure;
+  C_word *p;
+  int len;
+
+  if(val == C_SCHEME_UNBOUND) {
+    len = C_strlen(name);
+    p = C_alloc(C_SIZEOF_STRING(len));	/* this is ok: we won't return from `C_retrieve2' (or the value isn't needed). */
+    val = get_unbound_variable_value(C_string2(&p, name));
+  }
+
+  closure = resolve_procedure(val, NULL);
 
 #ifndef C_NO_APPLY_HOOK
   if(C_block_item(apply_hook_symbol, 0) != C_SCHEME_FALSE) {

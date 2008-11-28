@@ -1262,6 +1262,8 @@ C_fctexport void C_fcall C_rereclaim2(C_uword size, int double_plus) C_regparm;
 C_fctexport C_word C_fcall C_retrieve(C_word sym) C_regparm;
 C_fctexport C_word C_fcall C_retrieve2(C_word val, char *name) C_regparm;
 C_fctexport void *C_fcall C_retrieve_proc(C_word closure) C_regparm;
+C_fctexport void *C_fcall C_retrieve_symbol_proc(C_word sym) C_regparm;
+C_fctexport void *C_fcall C_retrieve2_symbol_proc(C_word val, char *name) C_regparm;
 C_fctexport C_word C_fcall C_permanentp(C_word x) C_regparm;
 C_fctexport int C_in_stackp(C_word x) C_regparm;
 C_fctexport int C_fcall C_in_heapp(C_word x) C_regparm;

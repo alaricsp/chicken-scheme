@@ -1259,11 +1259,11 @@ srfi-18.import.c: $(SRCDIR)srfi-18.import.scm
 utils.import.c: $(SRCDIR)utils.import.scm
 	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 setup-api.import.c: $(SRCDIR)setup-api.scm
-	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+	$(CHICKEN) $(SRCDIR)setup-api.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 setup-download.import.c: $(SRCDIR)setup-download.scm
-	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+	$(CHICKEN) $(SRCDIR)setup-download.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 setup-utils.import.c: $(SRCDIR)setup-utils.scm
-	$(CHICKEN) $< $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
+	$(CHICKEN) $(SRCDIR)setup-utils.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 
 chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-ffi-syntax.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 

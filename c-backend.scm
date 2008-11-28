@@ -304,6 +304,33 @@
 			     (unless empty-closure (gen #\t nc #\,))
 			     (expr-args args i)
 			     (gen ");") ) ) )
+		     ((and (eq? '##core#global (node-class fn))
+			   (not unsafe) 
+			   (not no-procedure-checks)
+			   (not (first params)))
+		      (let* ((gparams (node-parameters fn))
+			     (index (first gparams))
+			     (safe (second gparams)) 
+			     (block (third gparams)) 
+			     (carg #f))
+			(gen #t "((C_proc" nf ")")
+			(cond (block
+			       (set! carg (string-append "lf[" (number->string index) "]"))
+			       (if safe
+				   (gen "C_retrieve_proc(" carg ")")
+				   (gen "C_retrieve2_symbol_proc(" carg "," 
+					(c-ify-string (symbol->string (fourth gparams))) #\)) ) )
+			      (safe 
+			       (set! carg 
+				 (string-append "*((C_word*)lf[" (number->string index) "]+1)"))
+			       (gen "C_retrieve_proc(" carg ")"))
+			      (else
+			       (set! carg 
+				 (string-append "*((C_word*)lf[" (number->string index) "]+1)"))
+			       (gen "C_retrieve_symbol_proc(lf[" index "])") ))
+			(gen ")(" nf #\, carg #\,)
+			(expr-args args i)
+			(gen ");") ) )
 		     (else
 		      (gen #t #\t nc #\=)
 		      (expr fn i)

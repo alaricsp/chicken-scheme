@@ -48,6 +48,9 @@
 
 (cond-expand
  ((not debugbuild)
+  (declare 
+    (no-bound-checks)
+    (no-procedure-checks))
   (cond-expand
    (hygienic-macros
     (define-syntax dd (syntax-rules () ((_ . _) (void)))))
