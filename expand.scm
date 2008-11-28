@@ -1592,7 +1592,7 @@
 	 (##sys#warn "reference to possibly unbound identifier" u)
 	 (and-let* ((a (##sys#get u '##core#db)))
 	   (let ((m (cadr a)))
-	     (unless (memq m suggest)
+	     (when (and (= (length a) 2) (not (memq m suggest)))
 	       (set! suggest (cons m suggest)))))))
      (module-undefined-list mod))
     (when (pair? suggest)

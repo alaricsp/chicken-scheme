@@ -381,7 +381,8 @@
 	       '() ) ) )
 	(dribble "Generating ~aprofile" (if acc "accumulated " "")) ) )
 
-    (and-let* ((dbfile (file-exists? (make-pathname (repository-path) "db"))))
+    ;;*** hardcoded "modules.db" is bad (also used in chicken-install.scm)
+    (and-let* ((dbfile (file-exists? (make-pathname (repository-path) "modules.db"))))
       (dribble "loading database ~a ..." dbfile)
       (for-each
        (lambda (e)

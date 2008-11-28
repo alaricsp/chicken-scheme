@@ -1058,6 +1058,10 @@ endif
 ifneq ($(CROSS_CHICKEN),1)
 ifeq ($(DESTDIR),)
 	$(DESTDIR)$(IBINDIR)/$(CHICKEN_INSTALL_PROGRAM) -update-db
+else
+	@echo
+	@echo "Warning: can not run `chicken-install -u\' when DESTDIR is set"
+	@echo
 endif
 endif
 endif

@@ -311,7 +311,7 @@ EOF
 	       (lambda (m)
 		 (let* ((mod (cdr m))
 			(mname (##sys#module-name mod)))
-		   (print "  " mname)
+		   (print* " " mname)
 		   (let-values (((_ ve se) (##sys#module-exports mod)))
 		     (append 
 		      (map (lambda (se) (list (car se) 'syntax mname)) se)
@@ -319,6 +319,7 @@ EOF
 	       ##sys#module-table) 
 	      (lambda (e1 e2)
 		(string<? (symbol->string (car e1)) (symbol->string (car e2)))))))
+	(newline)
 	(with-output-to-file (make-pathname (repository-path) +module-db+)
 	  (lambda ()
 	    (for-each (lambda (x) (write x) (newline)) db))))))

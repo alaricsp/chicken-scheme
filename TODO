@@ -137,10 +137,6 @@ TODO for trunk								-*- Outline -*-
 
 * tasks
 
-** NEWS
-*** document changes between now and last time, this was updated
-    (4.0.0x2 doesn't appear, for example)
-
 ** branches
 *** test irregular branch, merge if performance is acceptable
 
