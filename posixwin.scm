@@ -69,7 +69,8 @@
   (disable-interrupts)
   (usual-integrations)
   (hide ##sys#stat posix-error
-	$quote-args-list $exec-setup $exec-teardown)
+	$quote-args-list $exec-setup $exec-teardown
+	check-time-vector)
   (foreign-declare #<<EOF
 #ifndef WIN32_LEAN_AND_MEAN
 # define WIN32_LEAN_AND_MEAN
@@ -1683,6 +1684,11 @@ EOF
 
 ;;; Time related things:
 
+(define (check-time-vector loc tm)
+  (##sys#check-vector tm loc)
+  (when (fx< (##sys#size tm) 10)
+    (##sys#error loc "time vector too short" tm) ) )
+
 (define (seconds->local-time secs)
   (##sys#check-number secs 'seconds->local-time)
   (##sys#decode-seconds secs #f) )
@@ -1703,8 +1709,7 @@ EOF
   (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)]
         [strftime (foreign-lambda c-string "C_strftime" scheme-object scheme-object)])
     (lambda (tm #!optional fmt)
-      (##sys#check-vector tm 'time->string)
-      (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
+      (check-time-vector 'time->string tm)
       (if fmt
           (begin
             (##sys#check-string fmt 'time->string)
@@ -1716,15 +1721,14 @@ EOF
                 (##sys#error 'time->string "cannot convert time vector to string" tm) ) ) ) ) ) )
 
 (define (local-time->seconds tm)
-  (##sys#check-vector tm 'local-time->seconds)
-  (when (fx< (##sys#size tm) 10) (##sys#error 'local-time->seconds "time vector too short" tm))
+  (check-time-vector 'local-time->seconds tm)
   (if (##core#inline "C_mktime" tm)
       (##sys#cons-flonum)
       (##sys#error 'local-time->seconds "cannot convert time vector to seconds" tm) ) )
 
 (define local-timezone-abbreviation
   (foreign-lambda* c-string ()
-   "char *z = (daylight ? _tzname[1] : _tzname[0]);"
+   "char *z = (_daylight ? _tzname[1] : _tzname[0]);\n"
    "return(z);") )
 
 ;;; Other things:

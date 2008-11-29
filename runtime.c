@@ -633,12 +633,22 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
 {
   int i;
 
-#ifndef C_NONUNIX
+  /*FIXME Should have C_tzset in chicken.h? */
+#ifdef C_NONUNIX
+  C_startup_time_seconds = (time_t)0;
+# if defined(_MSC_VER) || defined(__MINGW32__)
+  /* Make sure _tzname, _timezone, and _daylight are set */
+  _tzset();
+# elif defined(__WATCOMC__) || defined(__DJGPP__)
+  /* Make sure tzname, timezone, and daylight are set */
+  tzset();
+# endif
+#else
   struct timeval tv;
   C_gettimeofday(&tv, NULL);
   C_startup_time_seconds = tv.tv_sec;
-#else
-  C_startup_time_seconds = (time_t)0;
+  /* Make sure tzname, timezone, and daylight are set */
+  tzset();
 #endif
 
   if(chicken_is_initialized) return 1;

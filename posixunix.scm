@@ -31,7 +31,8 @@
   (disable-interrupts)
   (usual-integrations)
   (hide ##sys#stat group-member _get-groups _ensure-groups posix-error
-	##sys#terminal-check)
+	      ##sys#terminal-check
+	      check-time-vector)
   (foreign-declare #<<EOF
 #include <signal.h>
 #include <errno.h>
@@ -356,66 +357,72 @@ static time_t timegm(struct tm *t)
 }
 #endif
 
-#define C_tm_set_08(v) \
-        (memset(&C_tm, 0, sizeof(struct tm)), \
-        C_tm.tm_sec = C_unfix(C_block_item(v, 0)), \
-        C_tm.tm_min = C_unfix(C_block_item(v, 1)), \
-        C_tm.tm_hour = C_unfix(C_block_item(v, 2)), \
-        C_tm.tm_mday = C_unfix(C_block_item(v, 3)), \
-        C_tm.tm_mon = C_unfix(C_block_item(v, 4)), \
-        C_tm.tm_year = C_unfix(C_block_item(v, 5)), \
-        C_tm.tm_wday = C_unfix(C_block_item(v, 6)), \
-        C_tm.tm_yday = C_unfix(C_block_item(v, 7)), \
-        C_tm.tm_isdst = (C_block_item(v, 8) != C_SCHEME_FALSE))
+#define cpy_tmvec_to_tmstc08(ptm, v) \
+    (memset((ptm), 0, sizeof(struct tm)), \
+    (ptm)->tm_sec = C_unfix(C_block_item((v), 0)), \
+    (ptm)->tm_min = C_unfix(C_block_item((v), 1)), \
+    (ptm)->tm_hour = C_unfix(C_block_item((v), 2)), \
+    (ptm)->tm_mday = C_unfix(C_block_item((v), 3)), \
+    (ptm)->tm_mon = C_unfix(C_block_item((v), 4)), \
+    (ptm)->tm_year = C_unfix(C_block_item((v), 5)), \
+    (ptm)->tm_wday = C_unfix(C_block_item((v), 6)), \
+    (ptm)->tm_yday = C_unfix(C_block_item((v), 7)), \
+    (ptm)->tm_isdst = (C_block_item((v), 8) != C_SCHEME_FALSE))
 
-#define C_tm_set_9(v) \
-        (C_tm.tm_gmtoff = C_unfix(C_block_item(v, 9)))
+#define cpy_tmvec_to_tmstc9(ptm, v) \
+    (((struct tm *)ptm)->tm_gmtoff = C_unfix(C_block_item((v), 9)))
 
-#define C_tm_get_08(v) \
-        (C_set_block_item(v, 0, C_fix(C_tm.tm_sec)), \
-        C_set_block_item(v, 1, C_fix(C_tm.tm_min)), \
-        C_set_block_item(v, 2, C_fix(C_tm.tm_hour)), \
-        C_set_block_item(v, 3, C_fix(C_tm.tm_mday)), \
-        C_set_block_item(v, 4, C_fix(C_tm.tm_mon)), \
-        C_set_block_item(v, 5, C_fix(C_tm.tm_year)), \
-        C_set_block_item(v, 6, C_fix(C_tm.tm_wday)), \
-        C_set_block_item(v, 7, C_fix(C_tm.tm_yday)), \
-        C_set_block_item(v, 8, (C_tm.tm_isdst ? C_SCHEME_TRUE : C_SCHEME_FALSE)))
+#define cpy_tmstc08_to_tmvec(v, ptm) \
+    (C_set_block_item((v), 0, C_fix(((struct tm *)ptm)->tm_sec)), \
+    C_set_block_item((v), 1, C_fix((ptm)->tm_min)), \
+    C_set_block_item((v), 2, C_fix((ptm)->tm_hour)), \
+    C_set_block_item((v), 3, C_fix((ptm)->tm_mday)), \
+    C_set_block_item((v), 4, C_fix((ptm)->tm_mon)), \
+    C_set_block_item((v), 5, C_fix((ptm)->tm_year)), \
+    C_set_block_item((v), 6, C_fix((ptm)->tm_wday)), \
+    C_set_block_item((v), 7, C_fix((ptm)->tm_yday)), \
+    C_set_block_item((v), 8, ((ptm)->tm_isdst ? C_SCHEME_TRUE : C_SCHEME_FALSE)))
 
-#define C_tm_get_9(v) \
-        (C_set_block_item(v, 9, C_fix(C_tm.tm_gmtoff)))
+#define cpy_tmstc9_to_tmvec(v, ptm) \
+    (C_set_block_item((v), 9, C_fix((ptm)->tm_gmtoff)))
+
+#define C_tm_set_08(v)  cpy_tmvec_to_tmstc08( &C_tm, (v) )
+#define C_tm_set_9(v)   cpy_tmvec_to_tmstc9( &C_tm, (v) )
+
+#define C_tm_get_08(v)  cpy_tmstc08_to_tmvec( (v), &C_tm )
+#define C_tm_get_9(v)   cpy_tmstc9_to_tmvec( (v), &C_tm )
 
 #if !defined(C_GNU_ENV) || defined(__CYGWIN__) || defined(__uClinux__)
 
 static struct tm *
-C_tm_set (C_word v)
+C_tm_set( C_word v )
 {
-  C_tm_set_08 (v);
+  C_tm_set_08( v );
   return &C_tm;
 }
 
 static C_word
-C_tm_get (C_word v)
+C_tm_get( C_word v )
 {
-  C_tm_get_08 (v);
+  C_tm_get_08( v );
   return v;
 }
 
 #else
 
 static struct tm *
-C_tm_set (C_word v)
+C_tm_set( C_word v )
 {
-  C_tm_set_08 (v);
-  C_tm_set_9 (v);
+  C_tm_set_08( v );
+  C_tm_set_9( v );
   return &C_tm;
 }
 
 static C_word
-C_tm_get (C_word v)
+C_tm_get( C_word v )
 {
-  C_tm_get_08 (v);
-  C_tm_get_9 (v);
+  C_tm_get_08( v );
+  C_tm_get_9( v );
   return v;
 }
 
@@ -1938,6 +1945,11 @@ EOF
 
 ;;; Time related things:
 
+(define (check-time-vector loc tm)
+  (##sys#check-vector tm loc)
+  (when (fx< (##sys#size tm) 10)
+    (##sys#error loc "time vector too short" tm) ) )
+
 (define (seconds->local-time secs)
   (##sys#check-number secs 'seconds->local-time)
   (##sys#decode-seconds secs #f) )
@@ -1949,6 +1961,7 @@ EOF
 (define seconds->string
   (let ([ctime (foreign-lambda c-string "C_ctime" integer)])
     (lambda (secs)
+      (##sys#check-number secs 'seconds->string)
       (let ([str (ctime secs)])
         (if str
             (##sys#substring str 0 (fx- (##sys#size str) 1))
@@ -1958,8 +1971,7 @@ EOF
   (let ([asctime (foreign-lambda c-string "C_asctime" scheme-object)]
         [strftime (foreign-lambda c-string "C_strftime" scheme-object scheme-object)])
     (lambda (tm #!optional fmt)
-      (##sys#check-vector tm 'time->string)
-      (when (fx< (##sys#size tm) 10) (##sys#error 'time->string "time vector too short" tm))
+      (check-time-vector 'time->string tm)
       (if fmt
           (begin
             (##sys#check-string fmt 'time->string)
@@ -1978,15 +1990,13 @@ EOF
       (strptime (##sys#make-c-string tim) (##sys#make-c-string fmt) (make-vector 10 #f)) ) ) )
 
 (define (local-time->seconds tm)
-  (##sys#check-vector tm 'local-time->seconds)
-  (when (fx< (##sys#size tm) 10) (##sys#error 'local-time->seconds "time vector too short" tm))
+  (check-time-vector 'local-time->seconds tm)
   (if (##core#inline "C_mktime" tm)
       (##sys#cons-flonum)
       (##sys#error 'local-time->seconds "cannot convert time vector to seconds" tm) ) )
 
 (define (utc-time->seconds tm)
-  (##sys#check-vector tm 'utc-time->seconds)
-  (when (fx< (##sys#size tm) 10) (##sys#error 'utc-time->seconds "time vector too short" tm))
+  (check-time-vector 'utc-time->seconds tm)
   (if (##core#inline "C_timegm" tm)
       (##sys#cons-flonum)
       (##sys#error 'utc-time->seconds "cannot convert time vector to seconds" tm) ) )
