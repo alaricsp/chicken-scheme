@@ -8,8 +8,10 @@ TODO for trunk								-*- Outline -*-
 **** changes call-sites and makes them invalid for later pre-optimization
 *** check profiling (-profile vs. profile-declaration)
 **** this doesn't always seem to work, in particular with library units
-**** ##sys#finish-profile should always be written
+**** ##sys#finish-profile should always be invoked
      is it in `exit'?
+*** when re-defining intrinsics, the compiler should warn and disable re-writes
+    add declaration to keep re-writes enabled for core library files
 
 ** expander
 *** expansion of r5rs_pitfall 4.2 incorrect
