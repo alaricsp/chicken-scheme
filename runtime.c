@@ -54,23 +54,7 @@
 # define EX_SOFTWARE  70
 #endif
 
-#ifdef __WATCOMC__
-# define NSIG (_SIGMAX - _SIGMIN + 1)
-#endif
-
-#if defined(__MWERKS__) && !defined(__INTEL__)
-
-# include <stat.h>
-# ifndef MACINTOSH_GUI
-#  include <console.h>
-#  include <SIOUX.h>
-# endif
-
-# define NSIG                          32
-# define EINVAL                        ERANGE
-static C_TLS int timezone;
-
-#elif !defined(C_NONUNIX)
+#if !defined(C_NONUNIX)
 
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -555,11 +539,7 @@ int CHICKEN_main(int argc, char *argv[], void *toplevel)
 {
   C_word h, s, n;
 
-#if defined(__MWERKS__) && !defined(__INTEL__) && !defined(MACINTOSH_GUI)
-  argc = ccommand(&argv);
-  SIOUXSettings.asktosaveonclose = 0;
-  SIOUXSettings.autocloseonquit = 1;
-#elif defined(C_WINDOWS_GUI)
+#if defined(C_WINDOWS_GUI)
   parse_argv(GetCommandLine());
   argc = C_main_argc;
   argv = C_main_argv;
@@ -612,21 +592,6 @@ void parse_argv(C_char *cmds)
 #endif
 
 
-#if defined(__MWERKS__) && !defined(__INTEL__)
-int strncasecmp(const C_char *one, const C_char *two, size_t n)
-{
-  int c;
-
-  while(n--) {
-    if((c = C_tolower(*(one++)) - C_tolower(*(two++))) < 0) return -1;
-    else if(c > 0) return 1;
-  }
-
-  return 0;
-}
-#endif
-
-
 /* Initialize runtime system: */
 
 int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
@@ -639,9 +604,6 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
 # if defined(_MSC_VER) || defined(__MINGW32__)
   /* Make sure _tzname, _timezone, and _daylight are set */
   _tzset();
-# elif defined(__WATCOMC__) || defined(__DJGPP__)
-  /* Make sure tzname, timezone, and daylight are set */
-  tzset();
 # endif
 #else
   struct timeval tv;
@@ -1406,12 +1368,6 @@ void usual_panic(C_char *msg)
 #else
   C_fprintf(C_stderr, C_text("\n%s - execution terminated\n\n%s"), msg, dmp);
   
-# if defined(__MWERKS__) && !defined(__INTEL__) && !defined(MACINTOSH_GUI)
-  C_printf("\n[press RETURN to exit...]");
-  C_fflush(C_stdout);
-  C_getchar();
-# endif
-
   C_exit(1);
 #endif
 }
@@ -1429,12 +1385,6 @@ void horror(C_char *msg)
 #else
   C_fprintf(C_stderr, C_text("\n%s - execution terminated"), msg);
   
-# if defined(__MWERKS__) && !defined(__INTEL__) && !defined(MACINTOSH_GUI)
-  C_printf("\n[press RETURN to exit...]");
-  C_fflush(C_stdout);
-  C_getchar();
-# endif
-
   C_exit(1);
 #endif
 }
@@ -8340,15 +8290,9 @@ void C_ccall C_build_platform(C_word c, C_word closure, C_word k)
 #elif defined(__GNUC__)
   a = C_alloc(2 + C_bytestowords(3));
   s = C_string2(&a, "gnu");
-#elif defined(__MWERKS__)
-  a = C_alloc(2 + C_bytestowords(10));
-  s = C_string2(&a, "metrowerks");
 #elif defined(__INTEL_COMPILER)
   a = C_alloc(2 + C_bytestowords(5));
   s = C_string2(&a, "intel");
-#elif defined(__WATCOMC__)
-  a = C_alloc(2 + C_bytestowords(7));
-  s = C_string2(&a, "watcom");
 #else
   a = C_alloc(2 + C_bytestowords(7));
   s = C_string2(&a, "unknown");

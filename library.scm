@@ -45,7 +45,7 @@
 # include <sysexits.h>
 #endif
 
-#if !defined(_MSC_VER) && !defined(__DJGPP__) && !defined(__MWERKS__)
+#if !defined(_MSC_VER)
 # include <unistd.h>
 #endif
 

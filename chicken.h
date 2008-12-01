@@ -175,7 +175,7 @@ char *alloca ();
 # define C_GNU_ENV
 #endif
 
-#if defined(_MSC_VER) || defined(__MWERKS__) || defined(__DJGPP__) || defined(__MINGW32__) || defined(__WATCOMC__)
+#if defined(_MSC_VER) || defined(__MINGW32__)
 # define C_NONUNIX
 #endif
 
@@ -938,11 +938,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 #define C_poke_pointer_or_null(b, i, x) (C_set_block_item(b, C_unfix(i), (C_word)C_data_pointer_or_null(x)), C_SCHEME_UNDEFINED)
 #define C_qfree(ptr)                    (C_free(C_c_pointer_nn(ptr)), C_SCHEME_UNDEFINED)
 
-#if defined(__MWERKS__) && !defined(__INTEL__)
-# define C_tty_portp(p)                 C_SCHEME_FALSE
-#else
-# define C_tty_portp(p)                 C_mk_bool(isatty(fileno(C_port_file(p))))
-#endif
+#define C_tty_portp(p)                 C_mk_bool(isatty(fileno(C_port_file(p))))
 
 #define C_emit_eval_trace_info(x, y, z) C_emit_trace_info2("<eval>", x, y, z)
 #define C_emit_syntax_trace_info(x, y, z) C_emit_trace_info2("<syntax>", x, y, z)

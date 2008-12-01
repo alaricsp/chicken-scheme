@@ -128,6 +128,6 @@
   (define (remove-file path #!optional sudo)
     (if sudo
 	(system* "sudo rm -f '~a'" path)
-	(delete-file path)))
+	(delete-file* path)))
 
 )
