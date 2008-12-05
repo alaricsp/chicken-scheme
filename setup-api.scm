@@ -43,8 +43,13 @@
      setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
      required-chicken-version required-extension-version cross-chicken
-     sudo-install keep-intermediates)
-
+     sudo-install keep-intermediates
+     version>=?
+     create-temporary-directory
+     remove-directory
+     remove-extension
+     read-info)
+  
   (import scheme chicken foreign
 	  regex utils posix ports extras data-structures
 	  srfi-1 srfi-13 files)
@@ -123,7 +128,6 @@
 (define *target-cflags* (foreign-value "C_TARGET_CFLAGS" c-string))
 (define *target-libs* (foreign-value "C_TARGET_MORE_LIBS" c-string))
 (define *target-lib-home* (foreign-value "C_TARGET_LIB_HOME" c-string))
-
 (define *sudo* #f)
 
 (define *windows*
@@ -220,31 +224,6 @@
 ; User setup by default
 (user-install-setup)
 
-; Convert a string with a version (such as "1.22.0") to a list of the
-; numbers (such as (1 22 0)). If one of the version components cannot
-; be converted to a number, then it is kept as a string.
-
-#;(define (version-string->numbers string)
-  (map (lambda (x) (or (string->number x) (->string x))) 
-       (string-split string ".")))
-
-; Given two lists with numbers corresponding to a software version (as returned
-; by version-string->numbers), check if the first is greater than the second.
-
-(define (version-numbers> a b)
-  (cond ((null? a) #f)
-	((null? b)  #t)
-	((and (pair? a) (pair? b))
-	 (let ((a1 (car a))
-	       (an (cdr a))
-	       (b1 (car b))
-	       (bn (cdr b)))
-	  (cond ((and (number? a1) (number? b1))
-		 (cond ((> a1 b1) #t) ((= a1 b1) (version-numbers> an bn)) (else #f)))
-		((and (string? a1) (string? b1))  
-		 (cond ((string> a1 b1) #t) ((string= a1 b1) (version-numbers> an bn)) (else #f)))
-		(else (version-numbers> (cons (->string a1) an) (cons (->string b1) bn))))) )
-	(else (error 'version-numbers> "invalid revisions: " a b))))
 
 (define create-directory-0
   (let ([create-directory create-directory])
@@ -279,22 +258,21 @@
 (define abort-setup 
   (make-parameter exit))
 
-(define (yes-or-no? str . default)
-  (let ((def (optional default #f)))
-    (let loop ()
-      (printf "~%~A (yes/no/abort) " str)
-      (when def (printf "[~A] " def))
-      (flush-output)
-      (let ((ln (read-line)))
-	(cond ((eof-object? ln) (set! ln "abort"))
-	      ((and def (string=? "" ln)) (set! ln def)) )
-	(cond ((string-ci=? "yes" ln) #t)
-	      ((string-ci=? "no" ln) #f)
-	      ((string-ci=? "abort" ln) ((abort-setup)))
-	      (else
-	       (printf "~%Please enter \"yes\", \"no\" or \"abort\".~%")
-	       (loop) ) ) ) ) ) )
-
+(define (yes-or-no? str #!key default (abort (abort-setup)))
+  (let loop ()
+    (printf "~%~A (yes/no/abort) " str)
+    (when default (printf "[~A] " default))
+    (flush-output)
+    (let ((ln (read-line)))
+      (cond ((eof-object? ln) (set! ln "abort"))
+	    ((and default (string=? "" ln)) (set! ln default)) )
+      (cond ((string-ci=? "yes" ln) #t)
+	    ((string-ci=? "no" ln) #f)
+	    ((string-ci=? "abort" ln) (abort))
+	    (else
+	     (printf "~%Please enter \"yes\", \"no\" or \"abort\".~%")
+	     (loop) ) ) ) ) )
+  
 (define (patch which rx subst)
   (when (setup-verbose-flag) (printf "patching ~A ...~%" which))
   (if (list? which)
@@ -746,5 +724,62 @@
   (test-compile
    (sprintf "#include <~a>\nint main() { return 0; }\n" name)
    compile-only: #t) )
+
+(define (version>=? v1 v2)
+  (define (version->list v)
+    (map (lambda (x) (or (string->number x) x))
+	 (string-split-fields "[-\\._]" v #:infix)))
+  (let loop ((p1 (version->list v1))
+	     (p2 (version->list v2)))
+    (cond ((null? p1) (null? p2))
+	  ((null? p2))
+	  ((number? (car p1))
+	   (and (if (number? (car p2))
+		    (>= (car p1) (car p2))
+		    (string>=? (number->string (car p1)) (car p2)))
+		(loop (cdr p1) (cdr p2))))
+	  ((number? (car p2))
+	   (and (string>=? (car p1) (number->string (car p2)))
+		(loop (cdr p1) (cdr p2))))
+	  ((string>=? (car p1) (car p2)) (loop (cdr p1) (cdr p2)))
+	  (else #f))))
+
+(define (read-info egg)
+  (with-input-from-file 
+      (make-pathname (repository-path) egg ".setup-info")
+    read))
+
+(define (create-temporary-directory)
+  (let ((dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP") "/tmp")))
+    (let loop ()
+      (let* ((n (##sys#fudge 16))	; current milliseconds
+	     (pn (make-pathname dir (string-append "setup-" (number->string n 16)) "tmp")))
+	(cond ((file-exists? pn) (loop))
+	      (else (create-directory pn) pn))))))
+
+(define (remove-directory dir #!optional (strict #t))
+  (cond ((not (file-exists? dir))
+	 (if strict
+	     (error 'remove-directory "can not remove - directory not found" dir)
+	     #f))
+	(*sudo*
+	 (system* "sudo rm -fr '~a'" dir))
+	(else
+	 (let walk ((dir dir))
+	   (let ((files (directory dir #t)))
+	     (for-each
+	      (lambda (f)
+		(unless (or (string=? "." f) (string=? ".." f))
+		  (let ((p (make-pathname dir f)))
+		    (if (directory? p)
+			(walk p) 
+			(delete-file p)))))
+	      files)
+	     (delete-directory dir)))) ))
+
+(define (remove-extension egg)
+  (and-let* ((files (assq 'files (read-info egg))))
+    (for-each remove-file* (cdr files)))
+  (remove-file* (make-pathname (repository-path) egg "setup-info")))
 
 )

@@ -24,17 +24,18 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library setup-utils srfi-1 posix data-structures utils ports regex srfi-13
-		 files)
+(require-library
+ setup-api
+ srfi-1 posix data-structures utils ports regex srfi-13 files)
 
 
 (module main ()
   
   (import scheme chicken)
-  (import setup-utils srfi-1 posix data-structures utils ports regex srfi-13 files)
+  (import setup-api)
+  (import srfi-1 posix data-structures utils ports regex srfi-13 files)
 
   (define *force* #f)
-  (define *sudo* #f)
 
   (define (gather-eggs patterns)
     (let ((eggs (map pathname-file 
@@ -68,7 +69,7 @@
 	     (for-each
 	      (lambda (e)
 		(print "removing " e)
-		(remove-extension e *sudo*) )
+		(remove-extension e) )
 	      eggs)))))
 
   (define (usage code)
@@ -101,7 +102,7 @@ EOF
 		   (set! *force* #t)
 		   (loop (cdr args) pats))
 		  ((or (string=? arg "-s") (string=? arg "-sudo"))
-		   (set! *sudo* #t)
+		   (sudo-install #t)
 		   (loop (cdr args) pats))
 		  ((and (positive? (string-length arg))
 			(char=? #\- (string-ref arg 0)))

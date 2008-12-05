@@ -40,6 +40,22 @@
        (concatenate (map (cut grep <> eggs) patterns))
        string=?)))
 
+  (define (format-string str cols #!optional right (padc #\space))
+    (let* ((len (string-length str))
+	   (pad (make-string (fxmax 0 (fx- cols len)) padc)) )
+      (if right
+	  (string-append pad str)
+	  (string-append str pad) ) ) )
+
+  (define get-terminal-width
+    (let ((default-width 80))	     ; Standard default terminal width
+      (lambda ()
+	(let ((cop (current-output-port)))
+	  (if (terminal-port? cop)
+	      (let ((w (nth-value 1 (terminal-size cop))))
+		(if (zero? w) default-width w))
+	      default-width)))))
+
   (define (list-installed-eggs eggs)
     (let ((w (quotient (- (get-terminal-width) 2) 2)))
       (for-each

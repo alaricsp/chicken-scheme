@@ -24,7 +24,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library setup-utils setup-download)
+(require-library setup-download setup-api)
 (require-library srfi-1 posix data-structures utils ports regex ports extras
 		 srfi-13 files)
 
@@ -41,7 +41,7 @@ EOF
   
   (import scheme chicken srfi-1 posix data-structures utils ports regex ports extras
 	  srfi-13 files)
-  (import setup-utils setup-download)
+  (import setup-download setup-api)
   
   (import foreign)
 
@@ -76,7 +76,6 @@ EOF
 
   (define *keep* #f)
   (define *force* #f)
-  (define *sudo* #f)
   (define *prefix* #f)
   (define *host-extension* #f)
   (define *run-tests* #f)
@@ -250,7 +249,7 @@ EOF
 			      (for-each 
 			       (lambda (e)
 				 (print "removing previously installed extension `" e "' ...")
-				 (remove-extension e *sudo*) )
+				 (remove-extension e) )
 			       ueggs)
 			      (retrieve ueggs))))))
 		     (else
@@ -271,7 +270,7 @@ EOF
 	     (let ((cmd (sprintf
 			 "~a/csi -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a ~a"
 			 *program-path*
-			 (if *sudo* "-e \"(sudo-install #t)\"" "")
+			 (if (sudo-install) "-e \"(sudo-install #t)\"" "")
 			 (if *keep* "-e \"(keep-intermediates #t)\"" "")
 			 (if *no-install* "-e \"(setup-install-flag #f)\"" "")
 			 (if *host-extension* "-e \"(host-extension #t)\"" "")
@@ -296,15 +295,16 @@ EOF
 	(remove-directory tmpdir))))
 
   (define (update-db)
-    (let ((files (glob (make-pathname (repository-path) "*.import.*")))
-	  (dbfile (make-pathname (repository-path) +module-db+)))
+    (let* ((files (glob (make-pathname (repository-path) "*.import.*")))
+	   (tmpdir (create-temporary-directory))
+	   (dbfile (make-pathname tmpdir +module-db+)))
       (fluid-let ((##sys#warnings-enabled #f))
 	(for-each
 	 (lambda (f)
 	   (let ((m (string-match ".*/([^/]+)\\.import\\.(scm|so)" f)))
 	     (eval `(import ,(string->symbol (cadr m))))))
 	 files))
-      (print "generating database " dbfile)
+      (print "generating database")
       (let ((db
 	     (sort
 	      (append-map
@@ -320,9 +320,11 @@ EOF
 	      (lambda (e1 e2)
 		(string<? (symbol->string (car e1)) (symbol->string (car e2)))))))
 	(newline)
-	(with-output-to-file (make-pathname (repository-path) +module-db+)
+	(with-output-to-file dbfile
 	  (lambda ()
-	    (for-each (lambda (x) (write x) (newline)) db))))))
+	    (for-each (lambda (x) (write x) (newline)) db)))
+	(copy-file dbfile (make-pathname (repository-path) +module-db+))
+	(remove-directory tmpdir))))
 
   (define (usage code)
     (print #<<EOF
@@ -386,7 +388,7 @@ EOF
 			(set! *keep* #t)
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-s") (string=? arg "-sudo"))
-			(set! *sudo* #t)
+			(sudo-install #t)
 			(loop (cdr args) eggs))
 		       ((or (string=? arg "-r") (string=? arg "-retrieve"))
 			(set! *retrieve-only* #t)

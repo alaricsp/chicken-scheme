@@ -18,6 +18,8 @@ TODO for trunk								-*- Outline -*-
     possibly due to a non-aliased implicit "begin" somewhere
 *** dirty-macros.scm loops when using `defile'
     possibly due to unrenamed special forms
+*** extended lambda-lists refer to `optional' and `let-optionals[*]'
+    this will break, when these macros are renamed on import
 *** slow
     compiling dynamic.scm with profile-hacked expand:
 
@@ -129,12 +131,24 @@ TODO for trunk								-*- Outline -*-
     process-command-line                1    0.000    0.000    0.000
 
 ** modules
+*** import lib holds undefined in expansions for undefined but exported bindings
 *** `require-extension' fails in interpreter when extension is .so without import library
     probably because load and import is in same toplevel form, and the
     load is performed after the import (at runtime). A possibly fix
     would be to load the extension immediately (at
     compile-/expansion-time), when import is #t and o import lib
     exists.
+
+** setup/install
+*** qs: automatically quote with #\" and replace #\/ with #\\ on windows?
+
+** build
+*** compiling chicken-install/-uninstall must use invalid or disabled existing repository
+    otherwise we use stale import libraries
+
+** libraries/build
+*** check use of paths with windows builds: proper handling of quoting and
+    slashed on all shell configurations?
 
 
 * tasks
@@ -154,14 +168,14 @@ TODO for trunk								-*- Outline -*-
 *** import-for-syntax imports value bindings into import-env
     should actually be a distinct meta-import-env.
     (does it work at all?)
+    example: we nbeed `(import-for-syntax chicken)' to have access to
+    `receive' in a procedural syntax definition.
 *** curried define performs expansion in empty se - problem?
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
 **** interaction for define-for-syntax, begin-for-syntax, and macros
-     also check for different execution modes (compile-time, run-time, csi, ...)
-*** checks to be implemented
-**** reimport of imported id
-**** unused defs?
+***** check for different execution modes (compile-time, run-time, csi, ...)
+***** figure out visibility
 
 ** compiler
 *** generate object-files in /tmp (or TMPDIR)?
@@ -171,6 +185,11 @@ TODO for trunk								-*- Outline -*-
 **** use HTTP_PROXY env. var
 **** handle redirects in http-fetch
 *** automatically update db after extension installation?
+*** test sudo
+
+** henrietta
+*** mode that responses with list of available eggs (ls + check for .meta files)
+*** mode that responses only with .meta information
 
 ** library units
 *** read-mark list should be stored in read-table

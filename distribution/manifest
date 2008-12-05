@@ -325,7 +325,6 @@ csi.import.scm
 csi.import.c
 setup-download.scm
 setup-api.scm
-setup-utils.scm
 chicken-status.scm
 chicken-status.c
 chicken-install.scm
@@ -337,8 +336,6 @@ chicken-status.1
 chicken-install.1
 chicken-uninstall.1
 setup-download.c
-setup-utils.c
 setup-api.c
 setup-api.import.c
-setup-utils.import.c
 setup-download.import.c

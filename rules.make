@@ -1022,10 +1022,8 @@ ifneq ($(POSTINSTALL_PROGRAM),true)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_BUG_PROGRAM)
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/setup-api.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/setup-download.so
-	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/setup-utils.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/setup-api.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/setup-download.import.so
-	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/setup-utils.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/chicken.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/lolevel.import.so
 	$(POSTINSTALL_PROGRAM) $(POSTINSTALL_PROGRAM_FLAGS) $(DESTDIR)$(IEGGDIR)/srfi-1.import.so
@@ -1097,7 +1095,6 @@ install-setup-files:
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)setup.defaults $(DESTDIR)$(IDATADIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) setup-api.so $(DESTDIR)$(IEGGDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) setup-download.so $(DESTDIR)$(IEGGDIR)
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) setup-utils.so $(DESTDIR)$(IEGGDIR)
 
 uninstall:
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_PROGRAM)$(EXE) \
@@ -1262,8 +1259,6 @@ setup-api.import.c: $(SRCDIR)setup-api.scm
 	$(CHICKEN) $(SRCDIR)setup-api.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 setup-download.import.c: $(SRCDIR)setup-download.scm
 	$(CHICKEN) $(SRCDIR)setup-download.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
-setup-utils.import.c: $(SRCDIR)setup-utils.scm
-	$(CHICKEN) $(SRCDIR)setup-utils.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) -output-file $@ 
 
 chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-ffi-syntax.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
@@ -1284,23 +1279,21 @@ csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ -extend $(SRCDIR)private-namespace.scm
 chicken-profile.c: $(SRCDIR)chicken-profile.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-chicken-install.c: $(SRCDIR)chicken-install.scm setup-download.c setup-utils.c
+chicken-install.c: $(SRCDIR)chicken-install.scm setup-download.c
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-chicken-uninstall.c: $(SRCDIR)chicken-uninstall.scm setup-utils.c
+chicken-uninstall.c: $(SRCDIR)chicken-uninstall.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-chicken-status.c: $(SRCDIR)chicken-status.scm setup-utils.c
+chicken-status.c: $(SRCDIR)chicken-status.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
 csc.c: $(SRCDIR)csc.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
 chicken-bug.c: $(SRCDIR)chicken-bug.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
 
-setup-api.c: $(SRCDIR)setup-api.scm setup-utils.c
+setup-api.c: $(SRCDIR)setup-api.scm
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-api -output-file $@ 
-setup-download.c: $(SRCDIR)setup-download.scm setup-utils.c
+setup-download.c: $(SRCDIR)setup-download.scm
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-download -output-file $@ 
-setup-utils.c: $(SRCDIR)setup-utils.scm
-	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-utils -output-file $@ 
 
 # distribution files
 
