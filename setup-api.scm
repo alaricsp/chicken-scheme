@@ -26,6 +26,10 @@
 
 (require-library srfi-1 regex utils posix srfi-13 extras ports data-structures files)
 
+; This code is partially quite messy and the API is not overly consistent,
+; mainly because it has grown "organically" while the old chicken-setup program
+; evolved. The code was extracted and put into this module, without much
+; cleaning up. Nevertheless, it should work.
 
 (module setup-api
 

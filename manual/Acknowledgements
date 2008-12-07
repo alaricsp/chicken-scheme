@@ -30,17 +30,17 @@ Pavlovsky, Levi Pearson, Nicolas Pelletier, Carlos Pita, Robin Lee
 Powell, Pupeno, Davide Puricelli, Doug Quale, Eric Raible, Ivan
 Raikov, Joel Reymont, Eric Rochester, Andreas Rottman, David Rush,
 Lars Rustemeier, Daniel Sadilek, Oskar Schirmer, Burton Samograd, Reed
-Sheridan, Ronald Schroeder, Spencer Schumann, Alex Shinn, Ivan
-Shmakov, Shmul, Tony Sidaway, Jeffrey B. Siegal, Andrey Sidorenko,
-Michele Simionato, Volker Stolz, Jon Strait, Dorai Sitaram, Robert
-Skeels, Jason Songhurst, Clifford Stein, Sunnan, Zbigniew Szadkowski,
-Rick Taube, Nathan Thern, Mike Thomas, Minh Thu, Christian Tismer,
-Andre van Tonder, John Tobey, Henrik Tramberend, Vladimir Tsichevsky,
-Neil van Dyke, Sander Vesik, Jaques Vidrine, Panagiotis Vossos, Shawn
-Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas Weidner, Goeran
-Weinholt, Matthew Welland, Drake Wilson, Joerg Wittenberger, Peter
-Wright, Mark Wutka, Richard Zidlicky and Houman Zolfaghari for
-bug-fixes, tips and suggestions.
+Sheridan, Ronald Schroeder, Spencer Schumann, Ivan Shcheklein, Alex
+Shinn, Ivan Shmakov, Shmul, Tony Sidaway, Jeffrey B. Siegal, Andrey
+Sidorenko, Michele Simionato, Volker Stolz, Jon Strait, Dorai Sitaram,
+Robert Skeels, Jason Songhurst, Clifford Stein, Sunnan, Zbigniew
+Szadkowski, Rick Taube, Nathan Thern, Mike Thomas, Minh Thu, Christian
+Tismer, Andre van Tonder, John Tobey, Henrik Tramberend, Vladimir
+Tsichevsky, Neil van Dyke, Sander Vesik, Jaques Vidrine, Panagiotis
+Vossos, Shawn Wagner, Peter Wang, Ed Watkeys, Brad Watson, Thomas
+Weidner, Goeran Weinholt, Matthew Welland, Drake Wilson, Joerg
+Wittenberger, Peter Wright, Mark Wutka, Richard Zidlicky and Houman
+Zolfaghari for bug-fixes, tips and suggestions.
 
 CHICKEN uses the PCRE regular expression package ([[http://www.pcre.org]]),
 which is written by Philip Hazel.

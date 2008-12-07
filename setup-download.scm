@@ -24,7 +24,7 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library extras regex posix utils setup-utils srfi-1 data-structures tcp srfi-13
+(require-library extras regex posix utils setup-api srfi-1 data-structures tcp srfi-13
 		 files)
 
 
@@ -35,8 +35,8 @@
 			temporary-directory)
 
   (import scheme chicken)
-  (import extras regex posix utils setup-utils srfi-1 data-structures tcp 
-	  srfi-13 files)
+  (import extras regex posix utils srfi-1 data-structures tcp 
+	  srfi-13 files setup-api)
 
   (tcp-connect-timeout 10000)		; 10 seconds
   (tcp-read-timeout 10000)

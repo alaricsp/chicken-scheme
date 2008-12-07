@@ -30,7 +30,7 @@
 (module main ()
 
   (import scheme chicken regex extras utils ports srfi-1 posix)
-  (import setup-utils setup-download)
+  (import setup-download)
 
   (define *default-transport* 'svn)
   (define *default-location* (current-directory))

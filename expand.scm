@@ -1544,6 +1544,7 @@
 	 (name (module-name mod))
 	 (dlist (module-defined-list mod))
 	 (elist (module-exist-list mod))
+	 (missing #f)
 	 (sdlist (map (lambda (sym) (assq (car sym) (##sys#macro-environment)))
 		      (module-defined-syntax-list mod)))
 	 (sexports
@@ -1573,12 +1574,14 @@
 				       (dm "reexporting: " id " -> " (cdr a))
 				       (cdr a)) 
 				      ((not def)
+				       (set! missing #t)
 				       (##sys#warn 
 					(string-append 
 					 "exported identifier for module `" 
 					 (symbol->string name)
 					 "' has not been defined")
-					id) )
+					id)
+				       #f)
 				      (else (##sys#module-rename id name)))))))
 		       (loop (cdr xl))))))))
 	 (suggest '()))
@@ -1592,6 +1595,7 @@
     (for-each
      (lambda (u)
        (unless (memq u elist)
+	 (set! missing #t)
 	 (##sys#warn "reference to possibly unbound identifier" u)
 	 (and-let* ((a (##sys#get u '##core#db)))
 	   (let ((m (cadr a)))
@@ -1606,6 +1610,8 @@
 	")' to module `"
 	(symbol->string name)
 	"'")))
+    (when missing
+      (##sys#error "module unresolved"))
     (let* ((exports 
 	    (map (lambda (exp)
 		   (cond ((symbol? (cdr exp)) exp)

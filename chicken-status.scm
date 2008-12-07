@@ -24,14 +24,14 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(require-library setup-utils srfi-1 posix data-structures utils ports regex files)
+(require-library setup-api srfi-1 posix data-structures utils ports regex files)
 
 
 (module main ()
   
   (import scheme chicken)
-  (import setup-utils srfi-1 posix data-structures utils ports regex
-	  files)
+  (import srfi-1 posix data-structures utils ports regex
+	  files setup-api)
 
   (define (gather-eggs patterns)
     (let ((eggs (map pathname-file 

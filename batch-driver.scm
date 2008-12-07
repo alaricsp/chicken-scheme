@@ -213,6 +213,8 @@
       (set! unit-name (string->c-identifier (stringify (option-arg uunit)))) )
     (when (or unit-name dynamic)
       (set! standalone-executable #f))
+    (when (memq 'ignore-repository options)
+      (repository-path #f))
     (set! debugging-chicken 
       (append-map
        (lambda (do)
@@ -382,7 +384,8 @@
 	(dribble "Generating ~aprofile" (if acc "accumulated " "")) ) )
 
     ;;*** hardcoded "modules.db" is bad (also used in chicken-install.scm)
-    (and-let* ((dbfile (file-exists? (make-pathname (repository-path) "modules.db"))))
+    (and-let* ((rp (repository-path))
+	       (dbfile (file-exists? (make-pathname rp "modules.db"))))
       (dribble "loading database ~a ..." dbfile)
       (for-each
        (lambda (e)

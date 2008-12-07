@@ -1094,18 +1094,20 @@
   (let ([file-exists? file-exists?]
 	[string-append string-append] )
     (lambda (p inc?)
+      (let ((rp (##sys#repository-path)))
 	(define (check path)
 	  (let ([p0 (string-append path "/" p)])
-	    (and (or (and (##sys#fudge 24) ; dload?
+	    (and (or (and rp (##sys#fudge 24) ; dload?
 			  (file-exists? (##sys#string-append p0 ##sys#load-dynamic-extension)))
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
-	(let loop ([paths (##sys#append (list (##sys#repository-path))
-					(if inc? (##sys#append ##sys#include-pathnames '(".")) '()) ) ] )
-	  (and (pair? paths)
-	       (let ([pa (##sys#slot paths 0)])
-		 (or (check pa)
-		     (loop (##sys#slot paths 1)) ) ) ) ) ) ) )
+	  (let loop ([paths (##sys#append
+			     (if rp (list rp) '())
+			     (if inc? (##sys#append ##sys#include-pathnames '(".")) '()) ) ] )
+	    (and (pair? paths)
+		 (let ([pa (##sys#slot paths 0)])
+		   (or (check pa)
+		       (loop (##sys#slot paths 1)) ) ) ) ) ) ) ))
 
 (define ##sys#loaded-extensions '())
 
@@ -1157,11 +1159,12 @@
 	[string-append string-append]
 	[read read] )
     (lambda (id loc)
-      (let* ((p (##sys#canonicalize-extension-path id loc))
-	     (rpath (string-append (##sys#repository-path) "/" p ".")) )
-	(cond ((file-exists? (string-append rpath setup-file-extension))
-	       => (cut with-input-from-file <> read) )
-	      (else #f) ) ) ) ) )
+      (and-let* ((rp (##sys#repository-path)))
+	(let* ((p (##sys#canonicalize-extension-path id loc))
+	       (rpath (string-append rp "/" p ".")) )
+	  (cond ((file-exists? (string-append rpath setup-file-extension))
+		 => (cut with-input-from-file <> read) )
+		(else #f) ) ) ) ) ))
 
 (define (extension-information ext)
   (##sys#extension-information ext 'extension-information) )
@@ -1469,7 +1472,10 @@
 	  (let loop ((paths (if repo
 				(##sys#append 
 				 ##sys#include-pathnames 
-				 (list (##sys#repository-path)))
+				 (let ((rp (##sys#repository-path)))
+				   (if rp
+				       (list (##sys#repository-path))
+				       '())))
 				##sys#include-pathnames) ) )
 	    (cond ((eq? paths '()) fname)
 		  ((test (string-append (##sys#slot paths 0)

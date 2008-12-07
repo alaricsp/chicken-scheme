@@ -341,7 +341,7 @@ CHICKEN_STATUS_PROGRAM = $(PROGRAM_PREFIX)chicken-status$(PROGRAM_SUFFIX)
 CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
 IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports files posix srfi-13 srfi-69 extras \
 	regex srfi-14 tcp foreign scheme srfi-18 utils csi
-IMPORT_LIBRARIES += setup-api setup-download setup-utils
+IMPORT_LIBRARIES += setup-api setup-download
 
 ifdef STATICBUILD
 CHICKEN_STATIC_EXECUTABLE = $(CHICKEN_PROGRAM)$(EXE)
@@ -363,7 +363,7 @@ TARGETLIBS ?= libchicken$(A) libuchicken$(A) \
 TARGETS ?= $(TARGETLIBS) $(CHICKEN_SHARED_EXECUTABLE) \
 	$(CSI_SHARED_EXECUTABLE) $(CHICKEN_PROFILE_PROGRAM)$(EXE) \
 	$(CSC_PROGRAM)$(EXE) $(CHICKEN_INSTALL_PROGRAM)$(EXE) $(CHICKEN_UNINSTALL_PROGRAM)$(EXE) \
-	$(CHICKEN_STATUS_PROGRAM)$(EXE) setup-utils.so setup-download.so setup-api.so \
+	$(CHICKEN_STATUS_PROGRAM)$(EXE) setup-download.so setup-api.so \
 	chicken.info $(CHICKEN_BUG_PROGRAM)$(EXE) \
 	$(IMPORT_LIBRARIES:%=%.import.so)
 endif

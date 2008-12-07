@@ -176,7 +176,7 @@
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
     -emit-external-prototypes-first -inline -extension -release -static-extensions
-    -analyze-only -keep-shadowed-macros -inline-global))
+    -analyze-only -keep-shadowed-macros -inline-global) -ignore-repository)
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
@@ -407,6 +407,7 @@
     -postlude EXPRESSION        add expression to end of source file
     -prologue FILENAME          include file before main source file
     -epilogue FILENAME          include file after main source file
+    -ignore-repository          do not refer to repository for extensions
 
     -e  -embedded               compile as embedded (don't generate `main()')
     -W  -windows                compile as Windows GUI application (MSVC only)
@@ -854,7 +855,7 @@
 
 (define (static-extension-info)
   (let ((rpath (repository-path)))
-    (if (or static static-libs static-extensions)
+    (if (and rpath (or static static-libs static-extensions))
 	(let loop ((exts required-extensions) (libs '()) (opts '()))
 	  (if (null? exts)
 	      (values (reverse libs) (reverse opts))

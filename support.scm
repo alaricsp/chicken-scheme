@@ -1305,6 +1305,7 @@ Usage: chicken FILENAME OPTION ...
     -dynamic                    compile as dynamically loadable code
     -require-extension NAME     require and import extension NAME
     -extension                  compile as extension (dynamic or static)
+    -ignore-repository          do not refer to repository for extensions
 
   Obscure options:
 
