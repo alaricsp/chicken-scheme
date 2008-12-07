@@ -1000,11 +1000,23 @@ the number of seconds since the first of January, 1970 UTC.
 
 ==== time->string
 
- [procedure] (time->string VECTOR)
+ [procedure] (time->string VECTOR [FORMAT])
 
 Converts the broken down time represented in the 10 element vector
-{{VECTOR}} into a string of the form {{"Tue May 21 13:46:22
-1991"}}.
+{{VECTOR}} into a string of the form represented by the {{FORMAT}}
+string. The default time form produces something like {{"Tue May 21 13:46:22 1991"}}.
+
+The {{FORMAT}} string follows the rules for the C library procedure {{strftime}}. The default {{FORMAT}} string is "%a %b %e %H:%M:%S %Z %Y".
+
+==== string->time
+
+ [procedure] (string->time TIME [FORMAT])
+
+Converts a string of the form represented by the {{FORMAT}} string
+into the broken down time represented in a 10 element vector. The
+default time form understands something like {{"Tue May 21 13:46:22 1991"}}.
+
+The {{FORMAT}} string follows the rules for the C library procedure {{strptime}}. The default {{FORMAT}} string is "%a %b %e %H:%M:%S %Z %Y".
 
 
 === Raw exit
@@ -1264,6 +1276,7 @@ Microsoft tools or with MinGW):
  parent-process-id
  set-root-directory!
  utc-time->seconds
+ string->time
 
 ==== Additional Definitions
 
