@@ -117,6 +117,8 @@ Possible options are:
 
 ; -help : Print a summary of available options and the format of the command line parameters and exit the compiler.
 
+; -ignore-repository : Do not load any extensions from the repository (treat repository as empty). Also do not consult compiled (only interpreted) import libraries in {{import}} forms.
+
 ; -include-path PATHNAME : Specifies an additional search path for files included via the {{include}} special form. This option may be given multiple times. If the environment variable {{CHICKEN_INCLUDE_PATH}} is set, it should contain a list of alternative include pathnames separated by {{;}}.
 
 ; -inline : Enable procedure inlining for known procedures of a size below the threshold (which can be set through the {{-inline-limit}} option).

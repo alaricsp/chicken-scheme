@@ -1611,7 +1611,7 @@
 	(symbol->string name)
 	"'")))
     (when missing
-      (##sys#error "module unresolved"))
+      (##sys#error "module unresolved" name))
     (let* ((exports 
 	    (map (lambda (exp)
 		   (cond ((symbol? (cdr exp)) exp)

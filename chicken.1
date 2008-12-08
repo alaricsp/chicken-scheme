@@ -201,7 +201,10 @@ Print a summary of available options and the format of the command-line paramete
 
 .TP
 .B \-ignore\-repository
-Do not load any extensions from the repository (treat repository as empty).
+Do not load any extensions from the repository (treat repository as empty). Also
+do not consult compiled (only interpreted) import libraries in 
+.B import
+forms.
 
 .TP
 .BI \-import\ pathname
