@@ -391,7 +391,7 @@
        (lambda (e)
 	 (##sys#put! 
 	  (car e) '##core#db
-	  (append (or (##sys#get (car e) '##core#db) '()) (cdr e))) )
+	  (append (or (##sys#get (car e) '##core#db) '()) (list (cdr e))) ))
        (read-file dbfile)))
 
     (cond ((memq 'version options)

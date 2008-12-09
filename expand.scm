@@ -1583,33 +1583,28 @@
 					id)
 				       #f)
 				      (else (##sys#module-rename id name)))))))
-		       (loop (cdr xl))))))))
-	 (suggest '()))
-    (define (join lst)
-      (string-append
-       (symbol->string (car lst))
-       (let loop ((lst (cdr lst)))
-	 (if (null? lst)
-	     ""
-	     (string-append " " (symbol->string (car lst)) (loop (cdr lst)))))))
+		       (loop (cdr xl)))))))))
     (for-each
      (lambda (u)
        (unless (memq u elist)
 	 (set! missing #t)
 	 (##sys#warn "reference to possibly unbound identifier" u)
 	 (and-let* ((a (##sys#get u '##core#db)))
-	   (let ((m (cadr a)))
-	     (when (and (= (length a) 2) (not (memq m suggest)))
-	       (set! suggest (cons m suggest)))))))
+	   (if (= 1 (length a))
+	       (##sys#warn
+		(string-append 
+		 "  suggesting: `(import " (symbol->string (cadar a)) 
+		 ")'"))
+	       (##sys#warn
+		(string-append
+		 "  suggesting one of:\n"
+		 (let loop ((lst a))
+		   (if (null? lst)
+		       ""
+		       (string-append
+			"Warning:     `(import " (symbol->string (cadar lst)) ")'\n"
+			(loop (cdr lst)))))))))))
      (module-undefined-list mod))
-    (when (pair? suggest)
-      (##sys#warn 
-       (string-append
-	"suggesting to add `(import "
-	(join suggest)
-	")' to module `"
-	(symbol->string name)
-	"'")))
     (when missing
       (##sys#error "module unresolved" name))
     (let* ((exports 
