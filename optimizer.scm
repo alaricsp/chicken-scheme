@@ -29,9 +29,8 @@
 
 (private compiler
   compiler-arguments process-command-line perform-lambda-lifting!
-  default-standard-bindings default-extended-bindings side-effecting-standard-bindings
-  non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
-  standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
+  default-standard-bindings default-extended-bindings
+  foldable-bindings
   installation-home decompose-lambda-list external-to-pointer
   copy-node! variable-visible? mark-variable intrinsic?
   unit-name insert-timer-checks used-units external-variables hide-variable
@@ -193,7 +192,7 @@
 		(if (eq? '##core#variable (node-class (car subs)))
 		    (let ((var (first (node-parameters (car subs)))))
 		      (if (and (intrinsic? var)
-			       (test var 'foldable)
+			       (foldable? var)
 			       (every constant-node? (cddr subs)) )
 			  (let ((form (cons var (map (lambda (arg) `(quote ,(node-value arg)))
 						     (cddr subs) ) ) ) )
@@ -490,45 +489,6 @@
 				     (touch) ) ) ) ) ) ) ) ) ) )
 	 (or (test 'not 'call-sites) '()) ) )
     
-    ;; Handle '(if (<func> <a> ...) ...)', where <func> never returns false:
-    (for-each
-     (lambda (varname)
-       (if (intrinsic? varname)
-	   (for-each
-	    (lambda (site)
-	      (let* ((n (cdr site))
-		     (subs (node-subexpressions n))
-		     (kont (first (node-parameters (second subs)))) 
-		     (krefs (test kont 'references)) 
-		     (lnode (and (not (test kont 'unknown)) (test kont 'value))) )
-		;; Call-site has side-effect-free arguments and a known continuation that has only one use?
-		(if (and lnode
-			 (eq? '##core#lambda (node-class lnode))
-			 krefs (= 1 (length krefs))
-			 (not (any (lambda (sn) (expression-has-side-effects? sn db)) (cddr subs))) )
-		    (let* ((llist (third (node-parameters lnode)))
-			   (body (first (node-subexpressions lnode))) )
-		      ;; Continuation has one parameter and contains an 'if' node?
-		      (if (and (proper-list? llist)
-			       (null? (cdr llist))
-			       (eq? 'if (node-class body)) )
-			  (let* ((var (car llist))
-				 (refs (test var 'references)) 
-				 (iftest (first (node-subexpressions body))) )
-			    ;; Parameter is used only once and is the test-argument?
-			    (if (and refs (= 1 (length refs))
-				     (eq? '##core#variable (node-class iftest))
-				     (eq? var (first (node-parameters iftest))) )
-				(let ((bodysubs (node-subexpressions body)))
-				  ;; Modify call-site to call continuation directly and swap branches
-				  ;;  in the conditional:
-				  (debugging 'o "removed call in test-context" varname)
-				  (node-parameters-set! n '(#t))
-				  (node-subexpressions-set! n (list (second subs) (qnode #t)))
-				  (touch) ) ) ) ) ) ) ) )
-	    (or (test varname 'call-sites) '()) ) ) )
-     side-effect-free-standard-bindings-that-never-return-false)
-
     (when (> removed-nots 0) (debugging 'o "Removed `not' forms" removed-nots))
     dirty) )
 

@@ -295,6 +295,8 @@ chicken.import.scm
 chicken.import.c
 foreign.import.scm
 foreign.import.c
+compiler.import.scm
+compiler.import.c
 lolevel.import.scm
 srfi-1.import.scm
 srfi-4.import.scm

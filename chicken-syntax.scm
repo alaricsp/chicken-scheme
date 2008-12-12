@@ -1071,7 +1071,7 @@
 ;;; 
 
 
-;;; just in case someone forgets
+;;; Just in case someone forgets
 
 (##sys#extend-macro-environment
  'define-macro '()

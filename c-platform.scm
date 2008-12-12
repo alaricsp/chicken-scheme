@@ -30,9 +30,8 @@
 
 (private compiler
   compiler-arguments process-command-line
-  default-standard-bindings default-extended-bindings side-effecting-standard-bindings
-  non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
-  standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
+  default-standard-bindings default-extended-bindings
+  foldable-bindings non-foldable-bindings
   installation-home debugging intrinsic?
   dump-nodes unlikely-variables
   unit-name insert-timer-checks used-units inlining
@@ -196,24 +195,16 @@
     ##sys#peek-fixnum ##sys#setislot ##sys#poke-integer ##sys#permanent? ##sys#values ##sys#poke-double
     ##sys#intern-symbol ##sys#make-symbol ##sys#null-pointer? ##sys#peek-byte) )
 
-(define side-effecting-standard-bindings
-  '(apply call-with-current-continuation set-car! set-cdr! write-char newline write display
+(define non-foldable-bindings
+  '(vector
+    cons list string make-vector make-string string->symbol values current-input-port current-output-port
+    read-char write-char
+    apply call-with-current-continuation set-car! set-cdr! write-char newline write display
     peek-char char-ready?
     read read-char for-each map string-set! vector-set! string-fill! vector-fill! open-input-file
     open-output-file close-input-port close-output-port call-with-input-port call-with-output-port
-    call-with-values eval) )
-
-(define non-foldable-standard-bindings
-  '(vector cons list string make-vector make-string string->symbol values current-input-port current-output-port
-	   read-char write-char) )
-
-(define foldable-standard-bindings
-  (lset-difference 
-   eq? default-standard-bindings 
-   side-effecting-standard-bindings non-foldable-standard-bindings) )
-
-(define non-foldable-extended-bindings
-  '(##sys#slot ##sys#setslot ##sys#call-with-current-continuation ##sys#fudge flush-output print void
+    call-with-values eval
+    ##sys#slot ##sys#setslot ##sys#call-with-current-continuation ##sys#fudge flush-output print void
     u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared s16vector->blob/shared u32vector->blob/shared
     f32vector->blob/shared f64vector->blob/shared
     s32vector->blob/shared read-string read-string!
@@ -225,22 +216,11 @@
     u8vector-set! s8vector-set! u16vector-set! s16vector-set! u32vector-set! s32vector-set!
     ##sys#intern-symbol ##sys#make-symbol make-record-instance error cpu-time ##sys#block-set!) )
 
-(define foldable-extended-bindings
-  (lset-difference
-   eq? default-extended-bindings non-foldable-extended-bindings) )
-
-(define standard-bindings-that-never-return-false
-  '(cons list length * - + / current-output-port current-input-port append symbol->string char->integer
-    integer->char vector-length string-length string-ref gcd lcm reverse string->symbol max min
-    quotient remainder modulo floor ceiling truncate round exact->inexact inexact->exact exp log sin
-    cons tan atan expt sqrt asin acos number->string char-upcase char-downcase string-append string
-    string->list list->string vector->list list->vector read-char substring make-string make-vector
-    open-input-file open-output-file vector write-char) )
-
-(define side-effect-free-standard-bindings-that-never-return-false
-  (lset-difference
-   eq? standard-bindings-that-never-return-false
-   side-effecting-standard-bindings) )
+(define foldable-bindings
+  (lset-difference 
+   eq?
+   (lset-union eq? default-standard-bindings default-extended-bindings)
+   non-foldable-bindings) )
 
 
 ;;; Rewriting-definitions for this platform:

@@ -33,9 +33,8 @@
 
 (private compiler
   compiler-arguments
-  default-standard-bindings default-extended-bindings side-effecting-standard-bindings
-  non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
-  standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
+  default-standard-bindings default-extended-bindings
+  foldable-bindings
   installation-home optimization-iterations process-command-line
   file-io-only nonwinding-call/cc debugging
   unit-name insert-timer-checks used-units zap-strings-flag

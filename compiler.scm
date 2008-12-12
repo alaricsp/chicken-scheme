@@ -87,6 +87,7 @@
 ;   ##compiler#inline-global -> 'yes | 'no | <node>
 ;   ##compiler#profile -> BOOL
 ;   ##compiler#unused -> BOOL
+;   ##compiler#foldable -> BOOL
 
 ; - Source language:
 ;
@@ -140,6 +141,7 @@
 ; (define-compiled-syntax <symbol> <expr>)
 ; (define-compiled-syntax (<symbol> . <llist>) <expr> ...)
 ; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
+; (##core#define-rewrite-rule <symbol> <expr>)
 
 ; - Core language:
 ;
@@ -218,8 +220,6 @@
 ;   local-value -> <node>                    Variable is declared local and has value
 ;   potential-value -> <node>                Global variable was assigned this value
 ;   references -> (<node> ...)               Nodes that are accesses of this variable (##core#variable nodes)
-;   side-effecting -> <boolean>              If true: variable names side-effecting standard-binding
-;   foldable -> <boolean>                    If true: variable names foldable standard-binding
 ;   boxed -> <boolean>                       If true: variable has to be boxed after closure-conversion
 ;   contractable -> <boolean>                If true: variable names contractable procedure
 ;   inlinable -> <boolean>                   If true: variable names potentially inlinable procedure
@@ -269,9 +269,8 @@
 
 (private compiler
   compiler-arguments process-command-line explicit-use-flag
-  default-standard-bindings default-extended-bindings side-effecting-standard-bindings
-  non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
-  standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
+  default-standard-bindings default-extended-bindings
+  foldable-bindings
   installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
   copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
   unit-name insert-timer-checks used-units external-variables require-imports-flag
@@ -292,7 +291,7 @@
   reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
   expand-foreign-lambda* data-declarations emit-control-file-item expand-foreign-primitive
-  process-declaration external-protos-first basic-literal?
+  process-declaration external-protos-first basic-literal? rewrite
   transform-direct-lambdas! expand-foreign-callback-lambda* debugging emit-unsafe-marker
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
@@ -788,6 +787,15 @@
 			     (##sys#er-transformer
 			      ,body)) ;*** possibly wrong se?
 			   se dest)))
+
+		       ((##core#define-rewrite-rule)
+			(let ((name (##sys#strip-syntax (cadr x) se #t))
+			      (re (caddr x)))
+			  (##sys#put! name '##compiler#intrinsic 'rewrite)
+			  (rewrite 
+			   name 8 
+			   (eval/meta re))
+			  '(##core#undefined)))
 
 		       ((##core#module)
 			(let* ((name (lookup (cadr x) se))

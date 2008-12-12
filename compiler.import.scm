@@ -1,4 +1,4 @@
-;;;; foreign.import.scm - import library for "foreign" pseudo module
+;;;; compiler.import.scm - import library for "compiler" pseudo-module
 ;
 ; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
@@ -25,6 +25,6 @@
 
 
 (##sys#register-primitive-module
- 'foreign
+ 'compiler
  '()
- ##sys#chicken-ffi-macro-environment)
+ ##compiler#compiler-macro-environment)

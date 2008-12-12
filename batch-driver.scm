@@ -33,9 +33,8 @@
 (private
  compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
-  default-standard-bindings default-extended-bindings side-effecting-standard-bindings
-  non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
-  standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
+  default-standard-bindings default-extended-bindings
+  foldable-bindings
   compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
   file-io-only undefine-shadowed-macros profiled-procedures
   unit-name insert-timer-checks used-units inline-max-size inline-locally

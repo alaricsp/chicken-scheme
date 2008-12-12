@@ -30,9 +30,8 @@
 
 (private compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
-  default-standard-bindings default-extended-bindings side-effecting-standard-bindings
-  non-foldable-standard-bindings foldable-standard-bindings non-foldable-extended-bindings foldable-extended-bindings
-  standard-bindings-that-never-return-false side-effect-free-standard-bindings-that-never-return-false
+  default-standard-bindings default-extended-bindings
+  foldable-bindings compiler-macro-environment
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
   file-io-only banner disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
@@ -322,24 +321,23 @@
 ;
 ; - 'get' and 'put' shadow the routines in the extras-unit, we use low-level
 ;   symbol-keyed hash-tables here.
+; - does currently nothing after the first invocation, but we leave it
+;   this way to have the option to add default entries for each new db.
 
 (define initialize-analysis-database
   (let ((initial #t))
     (lambda (db)
-      (for-each
-       (lambda (s) 
-	 (when initial
-	   (mark-variable s '##compiler#intrinsic 'standard))
-	 (when (memq s side-effecting-standard-bindings) (put! db s 'side-effecting #t))
-	 (when (memq s foldable-standard-bindings) (put! db s 'foldable #t)) )
-       standard-bindings)
-      (for-each
-       (lambda (s)
-	 (when initial 
-	   (mark-variable s '##compiler#intrinsic 'extended))
-	 (when (memq s foldable-extended-bindings) (put! db s 'foldable #t)) )
-       extended-bindings) 
       (when initial
+	(for-each
+	 (lambda (s) 
+	   (mark-variable s '##compiler#intrinsic 'standard)
+	   (when (memq s foldable-bindings)
+	     (mark-variable s '##compiler#foldable #t)))
+	 standard-bindings)
+	(for-each
+	 (lambda (s)
+	   (mark-variable s '##compiler#intrinsic 'extended))
+	 extended-bindings)
 	(for-each
 	 (lambda (s)
 	   (mark-variable s '##compiler#intrinsic 'internal))
@@ -413,8 +411,8 @@
 
 (define display-analysis-database
   (let ((names '((captured . cpt) (assigned . set) (boxed . box) (global . glo) (assigned-locally . stl)
-		 (contractable . con) (standard-binding . stb) (foldable . fld) (simple . sim) (inlinable . inl)
-		 (side-effecting . sef) (collapsable . col) (removable . rem) (constant . con)
+		 (contractable . con) (standard-binding . stb) (simple . sim) (inlinable . inl)
+		 (collapsable . col) (removable . rem) (constant . con)
 		 (undefined . und) (replacing . rpg) (unused . uud) (extended-binding . xtb) (inline-export . ilx)
 		 (customizable . cst) (has-unused-parameters . hup) (boxed-rest . bxr) ) ) 
 	(omit #f))
@@ -437,8 +435,8 @@
 	       (if (pair? es)
 		   (begin
 		     (case (caar es)
-		       ((captured assigned boxed global contractable standard-binding foldable assigned-locally
-				  side-effecting collapsable removable undefined replacing unused simple inlinable inline-export
+		       ((captured assigned boxed global contractable standard-binding assigned-locally
+				  collapsable removable undefined replacing unused simple inlinable inline-export
 				  has-unused-parameters extended-binding customizable constant boxed-rest hidden-refs)
 			(printf "\t~a" (cdr (assq (caar es) names))) )
 		       ((unknown)
@@ -1480,3 +1478,19 @@ EOF
   (##sys#get var mark) )
 
 (define intrinsic? (cut variable-mark <> '##compiler#intrinsic))
+(define foldable? (cut variable-mark <> '##compiler#foldable))
+
+
+;;; compiler-specific syntax
+
+(define compiler-macro-environment
+  (let ((me0 (##sys#macro-environment)))
+    (##sys#extend-macro-environment
+     'define-rewrite-rule
+     '()
+     (##sys#er-transformer
+      (lambda (form r c)
+	(##sys#check-syntax 'define-rewrite-rule form '(_ (symbol . _) . #(_ 1)))
+	`(##core#define-rewrite-rule
+	  ,(caadr form) (,(r 'lambda) ,(cdadr form) ,@(cddr form))))))
+    (##sys#macro-subset me0)))
