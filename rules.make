@@ -1128,7 +1128,7 @@ ifeq ($(DESTDIR),)
 	$(DESTDIR)$(IBINDIR)/$(CHICKEN_INSTALL_PROGRAM) -update-db
 else
 	@echo
-	@echo "Warning: can not run `chicken-install -update-db\' when DESTDIR is set"
+	@echo "Warning: can not run chicken-install -update-db when DESTDIR is set"
 	@echo
 endif
 endif
@@ -1202,6 +1202,10 @@ endif
 # bootstrapping c sources
 
 .SUFFIXES: .scm
+.SECONDARY: setup-api.import.scm setup-download.import.scm
+
+setup-api.import.scm: setup-api.c
+setup-download.import.scm: setup-download.c
 
 library.c: $(SRCDIR)library.scm $(SRCDIR)version.scm $(SRCDIR)banner.scm
 	$(CHICKEN) $< $(CHICKEN_LIBRARY_OPTIONS) -output-file $@ 
@@ -1353,7 +1357,7 @@ csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ -extend $(SRCDIR)private-namespace.scm
 chicken-profile.c: $(SRCDIR)chicken-profile.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-chicken-install.c: $(SRCDIR)chicken-install.scm setup-download.c
+chicken-install.c: $(SRCDIR)chicken-install.scm setup-download.import.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -ignore-repository -output-file $@ 
 chicken-uninstall.c: $(SRCDIR)chicken-uninstall.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -ignore-repository -output-file $@ 
@@ -1367,7 +1371,7 @@ chicken-bug.c: $(SRCDIR)chicken-bug.scm
 setup-api.c: $(SRCDIR)setup-api.scm
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-api \
 	  -ignore-repository -output-file $@ 
-setup-download.c: $(SRCDIR)setup-download.scm setup-api.c
+setup-download.c: $(SRCDIR)setup-download.scm setup-api.import.scm
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-download \
 	  -ignore-repository -output-file $@ 
 
