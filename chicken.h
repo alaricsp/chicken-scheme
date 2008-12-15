@@ -39,7 +39,7 @@
 # include "chicken-config.h"
 #endif
 
-#if !defined(__GNUC__) && !defined(__WATCOMC__)
+#if !defined(__GNUC__)
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
 # else

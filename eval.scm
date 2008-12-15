@@ -1102,7 +1102,7 @@
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
 	  (let loop ([paths (##sys#append
-			     (if rp (list rp) '())
+			     (if rp (list rp) '("."))
 			     (if inc? (##sys#append ##sys#include-pathnames '(".")) '()) ) ] )
 	    (and (pair? paths)
 		 (let ([pa (##sys#slot paths 0)])

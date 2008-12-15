@@ -67,7 +67,8 @@ EOF
       "scheme.import.so"
       "srfi-18.import.so"
       "utils.import.so"
-      "csi.import.so"))
+      "csi.import.so"
+      "compiler.import.so"))
 
   (define *program-path*
     (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
@@ -346,6 +347,7 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
        -password PASS           set password for transports that require this
   -i   -init DIRECTORY          initialize empty alternative repository
   -u   -update-db               update export database
+  -r   -repository DIRECTORY    specify alternative extension repository
 EOF
 );|
     (exit code))
@@ -433,6 +435,10 @@ EOF
 			(unless (pair? (cdr args)) (usage 1))
 			(set! *password* (cadr args))
 			(loop (cddr args) eggs))
+		       ((or (string=? arg "-r") (string=? arg "-repository"))
+			(if (pair? (cdr args))
+			    (repository-path (cadr args))
+			    (usage 1)))
 		       ((and (positive? (string-length arg))
 			     (char=? #\- (string-ref arg 0)))
 			(if (> (string-length arg) 2)
@@ -458,6 +464,9 @@ EOF
 			(lambda (m)
 			  (loop (cdr args) (alist-cons (cadr m) (caddr m) eggs))))
 		       (else (loop (cdr args) (cons arg eggs))))))))))
+
+  (register-feature! 'chicken-install)
+  (define ##compiler#compiler-macro-environment '()) ; only to make `compiler' import work
 
   (handle-exceptions ex
       (begin

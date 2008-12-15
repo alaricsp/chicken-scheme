@@ -1494,3 +1494,9 @@ EOF
 	`(##core#define-rewrite-rule
 	  ,(caadr form) (,(r 'lambda) ,(cdadr form) ,@(cddr form))))))
     (##sys#macro-subset me0)))
+
+
+;;; not qualified, for use in `define-rewrite-rule'
+
+(define cdb-get get)
+(define cdb-put! put!)

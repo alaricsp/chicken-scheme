@@ -1367,7 +1367,7 @@ chicken-bug.c: $(SRCDIR)chicken-bug.scm
 setup-api.c: $(SRCDIR)setup-api.scm
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-api \
 	  -ignore-repository -output-file $@ 
-setup-download.c: $(SRCDIR)setup-download.scm
+setup-download.c: $(SRCDIR)setup-download.scm setup-api.c
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-download \
 	  -ignore-repository -output-file $@ 
 

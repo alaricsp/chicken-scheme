@@ -80,6 +80,7 @@ usage: chicken-uninstall [OPTION | PATTERN] ...
   -v   -version                 show version and exit
        -force                   don't ask, delete whatever matches
   -s   -sudo                    use sudo(1) for deleting files
+  -r   -repository DIRECTORY    specify alternative extension repository
 EOF
 );|
     (exit code))
@@ -101,6 +102,10 @@ EOF
 		  ((string=? arg "-force")
 		   (set! *force* #t)
 		   (loop (cdr args) pats))
+		  ((or (string=? arg "-r") (string=? arg "-repository"))
+		   (if (pair? (cdr args))
+		       (repository-path (cadr args))
+		       (usage 1)))
 		  ((or (string=? arg "-s") (string=? arg "-sudo"))
 		   (sudo-install #t)
 		   (loop (cdr args) pats))
