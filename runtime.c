@@ -2701,7 +2701,8 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
     /* Mark collectibles: */
     for(msp = collectibles; msp < collectibles_top; ++msp)
       if(*msp != NULL) mark(*msp);
-    
+
+    /* mark GC roots: */
     for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next)
       mark(&gcrp->value);
 
@@ -2779,6 +2780,9 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       else {
 	j = fcount = 0;
 
+	for(flist = finalizer_list; flist != NULL; flist = flist->next) 
+	  mark(&flist->finalizer);
+
 	for(flist = finalizer_list; flist != NULL; flist = flist->next) {
 	  if(j < C_max_pending_finalizers) {
 	    if(!is_fptr(C_block_header(flist->item))) 
@@ -2786,7 +2790,6 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 	  }
 
 	  mark(&flist->item);
-	  mark(&flist->finalizer);
 	}
       }
 

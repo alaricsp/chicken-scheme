@@ -217,6 +217,8 @@ TODO for trunk								-*- Outline -*-
 ** optional longer run (env. var)
 *** syntax-rules-stress-test
 *** fully compiled ec-tests
+** 3-stage bootstrap with compiler-output comparison
+** install numbers egg into temporary repo and run tests
 
 
 * documentation

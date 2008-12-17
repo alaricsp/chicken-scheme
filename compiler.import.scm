@@ -24,10 +24,6 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(if (and (not (memq #:compiling ##sys#features))
-	 (not (memq #:chicken-install ##sys#features)))
-    (error 'import "`compiler' module only available in compiled code"))
-
 (##sys#register-primitive-module
  'compiler
  '(node? 

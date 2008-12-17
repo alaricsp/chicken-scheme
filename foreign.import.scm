@@ -24,10 +24,6 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 
-(if (and (not (memq #:compiling ##sys#features))
-	 (not (memq #:chicken-install ##sys#features)))
-    (error 'import "`foreign' module only available in compiled code"))
-
 (##sys#register-primitive-module
  'foreign
  '()

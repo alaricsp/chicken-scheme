@@ -449,21 +449,25 @@ Available options:
 ; {{-username USER}} : set username for transports that require this
 ; {{-password PASS}} : set password for transports that require this
 ; {{-i   -init DIRECTORY}} : initialize empty alternative repository
+; {{-u   -update-db}} : update export database
+; {{-r   -repository DIRECTORY}} : specify alternative extension repository
 
 
-=== chicken-uninstall references
+=== chicken-uninstall reference
 
 ; {{-h   -help}} : show usage information and exit
 ; {{-v   -version}} : show version and exit
 ; {{-force}} : don't ask, delete whatever matches
 ; {{-s   -sudo}} : use {{sudo(1)}} for deleting files
+; {{-r   -repository DIRECTORY}} : specify alternative extension repository
 
 
-=== chicken-status references
+=== chicken-status reference
 
 ; {{-h   -help}} : show usage information and exit
 ; {{-v   -version}} : show version and exit
 ; {{-f   -files}} : list installed files
+; {{-r   -repository DIRECTORY}} : specify alternative extension repository
 
 
 === Security

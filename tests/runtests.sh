@@ -70,10 +70,6 @@ $compile_s ec.import.scm -o ec.import.so
 $interpret -bnq ec.so ec-tests.scm
 # $compile ec-tests.scm && ./a.out        # takes ages to compile
 
-echo "======================================== module tests (II) ..."
-$interpret -bnq module-tests-2.scm
-$compile module-tests-2.scm && ./a.out
-
 echo "======================================== hash-table tests ..."
 $interpret -s hash-table-tests.scm
 
@@ -93,6 +89,9 @@ echo "======================================== r4rstest ..."
 $interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
   -i -s r4rstest.scm >r4rstest.log
 diff -u r4rstest.out r4rstest.log
+
+echo "======================================== finalizer tests ..."
+$interpret -s test-finalizers.scm
 
 echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
