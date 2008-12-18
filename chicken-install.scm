@@ -347,7 +347,6 @@ usage: chicken-install [OPTION | EXTENSION[:VERSION]] ...
        -password PASS           set password for transports that require this
   -i   -init DIRECTORY          initialize empty alternative repository
   -u   -update-db               update export database
-  -r   -repository DIRECTORY    specify alternative extension repository
 EOF
 );|
     (exit code))
@@ -435,10 +434,6 @@ EOF
 			(unless (pair? (cdr args)) (usage 1))
 			(set! *password* (cadr args))
 			(loop (cddr args) eggs))
-		       ((or (string=? arg "-r") (string=? arg "-repository"))
-			(if (pair? (cdr args))
-			    (repository-path (cadr args))
-			    (usage 1)))
 		       ((and (positive? (string-length arg))
 			     (char=? #\- (string-ref arg 0)))
 			(if (> (string-length arg) 2)

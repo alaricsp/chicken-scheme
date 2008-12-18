@@ -90,7 +90,6 @@ usage: chicken-status [OPTION | PATTERN] ...
   -h   -help                    show this message
   -v   -version                 show version and exit
   -f   -files                   list installed files
-  -r   -repository DIRECTORY    specify alternative extension repository
 EOF
 );|
     (exit code))
@@ -114,10 +113,6 @@ EOF
 		    ((or (string=? arg "-f") (string=? arg "-files"))
 		     (set! files #t)
 		     (loop (cdr args) pats))
-		    ((or (string=? arg "-r") (string=? arg "-repository"))
-		     (if (pair? (cdr args))
-			 (repository-path (cadr args))
-			 (usage 1)))
 		    ((or (string=? arg "-v") (string=? arg "-version"))
 		     (print (chicken-version))
 		     (exit 0))
