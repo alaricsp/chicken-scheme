@@ -1125,7 +1125,7 @@ ifneq ($(POSTINSTALL_PROGRAM),true)
 endif
 ifneq ($(CROSS_CHICKEN),1)
 ifeq ($(DESTDIR),)
-	$(DESTDIR)$(IBINDIR)/$(CHICKEN_INSTALL_PROGRAM) -update-db
+	-$(DESTDIR)$(IBINDIR)/$(CHICKEN_INSTALL_PROGRAM) -update-db
 else
 	@echo
 	@echo "Warning: can not run chicken-install -update-db when DESTDIR is set"
