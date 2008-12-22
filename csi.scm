@@ -55,7 +55,7 @@ EOF
   (always-bound
     ##sys#windows-platform)
   (hide parse-option-string bytevector-data member* canonicalize-args do-trace do-untrace
-	traced-procedures describer-table dirseparator?
+	traced-procedures describer-table dirseparator? resolve-var
 	findall trace-indent command-table do-break do-unbreak broken-procedures) )
 
 
@@ -297,10 +297,10 @@ EOF
 			   (receive rs (time (eval x))
 			     (history-add rs)
 			     (apply values rs) ) ) )
-			((tr) (do-trace (map string->symbol (string-split (read-line)))))
-			((utr) (do-untrace (map string->symbol (string-split (read-line)))))
-			((br) (do-break (map string->symbol (string-split (read-line)))))
-			((ubr) (do-unbreak (map string->symbol (string-split (read-line)))))
+			((tr) (do-trace (map resolve-var (string-split (read-line)))))
+			((utr) (do-untrace (map resolve-var (string-split (read-line)))))
+			((br) (do-break (map resolve-var (string-split (read-line)))))
+			((ubr) (do-unbreak (map resolve-var (string-split (read-line)))))
 			((uba) (do-unbreak-all))
 			((breakall) 
 			 (set! ##sys#break-in-thread #f) ) 
@@ -372,6 +372,9 @@ EOF
 	     (receive rs (eval form)
 	       (history-add rs)
 	       (apply values rs) ) ) ) ) ) )
+
+(define (resolve-var str)
+  (##sys#strip-syntax (string->symbol str) (##sys#current-environment) #t))
 
 
 ;;; Tracing:
