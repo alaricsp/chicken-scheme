@@ -2706,6 +2706,10 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
     for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next)
       mark(&gcrp->value);
 
+    /* mark finalizer procedures: */
+    for(flist = finalizer_list; flist != NULL; flist = flist->next) 
+      mark(&flist->finalizer);
+
     mark_system_globals();
   }
   else {
@@ -2770,7 +2774,6 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 
 	for(flist = finalizer_list; flist != NULL; flist = flist->next) {
 	  mark(&flist->item);
-	  mark(&flist->finalizer);
 	  ++fcount;
 	}
 
@@ -2779,9 +2782,6 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       }
       else {
 	j = fcount = 0;
-
-	for(flist = finalizer_list; flist != NULL; flist = flist->next) 
-	  mark(&flist->finalizer);
 
 	for(flist = finalizer_list; flist != NULL; flist = flist->next) {
 	  if(j < C_max_pending_finalizers) {
@@ -2797,7 +2797,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       finalizers_checked = 1;
 
       if(pending_finalizer_count > 0 && gc_report_flag)
-	C_printf(C_text("[GC] finalizers pending for rescan: %d (%d live)\n"), 
+	C_printf(C_text("[GC] finalizers pending: %d (%d live)\n"), 
 		 pending_finalizer_count, live_finalizer_count);
 
       goto rescan;

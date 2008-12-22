@@ -9,7 +9,7 @@
   (set-finalizer! 
    x
    (lambda (o)
-     (format #t "Delete: ~A~%" o)
+     (format #t "Delete: ~A (y: ~a)~%" o y-f)
      (set! x-f #t)))
   #t) 
 (begin 
@@ -25,8 +25,9 @@
 (assert (not y-f))
 (set! x #f)
 (gc #t)
-(assert x-f)
+(assert (not x-f))
 (assert (not y-f))
 (set! y #f)
 (gc #t)
+(assert y-f)
 (assert x-f)
