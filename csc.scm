@@ -175,16 +175,15 @@
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
-    -emit-external-prototypes-first -inline -extension -release -static-extensions
+    -emit-external-prototypes-first -inline -extension -release
     -analyze-only -keep-shadowed-macros -inline-global) -ignore-repository)
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -inline-limit -profile-name -disable-warning 
-    -require-static-extension -emit-inline-file
+    -inline-limit -profile-name -disable-warning -emit-inline-file
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
-    -emit-import-library))
+    -emit-import-library -static-extension))
 
 (define-constant shortcuts
   '((-h "-help")
@@ -206,7 +205,7 @@
     (-b "-block") ) )
 
 (define short-options
-  (string->list "PHhsfiENxubvwAOeWkctgG") )
+  (string->list "PHhsfiENxubvwAOeWkctg") )
 
 
 ;;; Variables:
@@ -305,7 +304,7 @@
 (define shared #f)
 (define static #f)
 (define static-libs #f)
-(define static-extensions #f)
+(define static-extensions '())
 (define required-extensions '())
 (define gui #f)
 
@@ -431,7 +430,7 @@
                                  `LIBNAME.lib' on Windows)                                
     -static-libs                link with static CHICKEN libraries
     -static                     generate completely statically linked executable
-    -static-extensions          link with static extensions (if available)
+    -static-extension NAME      link extension NAME statically (if available)
     -F<DIR>                     pass \"-F<DIR>\" to C compiler (add framework 
                                  header path on Mac OS X)
     -framework NAME             passed to linker on Mac OS X
@@ -564,8 +563,6 @@
 	       [(-static-libs) 
 		(set! translate-options (cons* "-feature" "chicken-compile-static" translate-options))
 		(set! static-libs #t) ]
-	       [(-static-extensions)
-		(set! static-extensions #t) ]
 	       [(-cflags)
 		(set! inquiry-only #t) 
 		(set! show-cflags #t) ]
@@ -609,6 +606,11 @@
 		(check s rest)
 		(set! required-extensions (append required-extensions (list (car rest))))
 		(t-options "-require-extension" (car rest))
+		(set! rest (cdr rest)) ]
+	       [(-static-extension)
+		(check s rest)
+		(set! static-extensions (append static-extensions (list (car rest))))
+		(t-options "-static-extension" (car rest))
 		(set! rest (cdr rest)) ]
 	       [(-windows |-W|)
 		(set! gui #t)
@@ -775,9 +777,6 @@
 			  (if to-stdout 
 			      '("-to-stdout")
 			      `("-output-file" ,(cleanup-filename fc)) )
-			  (if (or static static-libs static-extensions)
-			      (map (lambda (e) (conc "-uses " e)) required-extensions)
-			      '() )
 			  (map quote-option (append translate-options translation-optimization-options)) ) )
 		  " ") ) )
 	 (exit last-exit-code) )
@@ -855,8 +854,8 @@
 
 (define (static-extension-info)
   (let ((rpath (repository-path)))
-    (if (and rpath (or static static-libs static-extensions))
-	(let loop ((exts required-extensions) (libs '()) (opts '()))
+    (if (and rpath (pair? static-extensions))
+	(let loop ((exts static-extensions) (libs '()) (opts '()))
 	  (if (null? exts)
 	      (values (reverse libs) (reverse opts))
 	      (let ((info (extension-information (car exts))))
@@ -908,9 +907,9 @@
 	s) ) )
 
 (define (quote-option x)
-  (if (any (lambda (c)
-	     (or (char-whitespace? c) (memq c +hairy-chars+)) )
-	   (string->list x) )
+  (if (string-any (lambda (c)
+		    (or (char-whitespace? c) (memq c +hairy-chars+)) )
+		  x)
       (cleanup x)
       x) )
 

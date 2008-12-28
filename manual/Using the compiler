@@ -101,8 +101,6 @@ Possible options are:
 
 ; -extend FILENAME : Loads a Scheme source file or compiled Scheme program (on systems that support it) before compilation commences. This feature can be used to extend the compiler.  This option may be given multiple times. The file is also searched in the current include path and in the extension-repository.
 
-; -extension : Mostly equivalent to {{-prelude '(define-extension <NAME>)'}}, where {{<NAME>}} is the basename of the currently compiled file. Note that if you want to compile a file as a normal (dynamically loadable) extension library, you should also pass the {{-shared}} option.
-
 ; -feature SYMBOL : Registers {{SYMBOL}} to be a valid feature identifier for {{cond-expand}}. Multiple symbols may be given, if comma-separated.
 
 ; -fixnum-arithmetic : Equivalent to {{(fixnum-arithmetic)}} declaration. Assume all mathematical operations use small integer arguments.
@@ -170,6 +168,8 @@ Possible options are:
 ; -raw : Disables the generation of any implicit code that uses the Scheme libraries (that is all runtime system files besides {{runtime.c}} and {{chicken.h}}).
 
 ; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}. Multiple names may be given and should be separated by {{,}}.
+
+; -static-extension NAME : similar to {{-require-extension NAME}}, but links extension statically (also applies for an explicit {{(require-extension NAME)}}).
 
 ; -compile-syntax : Makes macros also available at run-time. By default macros are not available at run-time.
 

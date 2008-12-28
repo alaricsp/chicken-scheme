@@ -122,13 +122,13 @@
     lambda-lift compile-syntax tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first release local inline-global
-    analyze-only dynamic extension) )
+    analyze-only dynamic) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
 	  inline-limit profile-name disable-warning
     prelude postlude prologue epilogue nursery extend feature 
-    emit-import-library emit-inline-file
+    emit-import-library emit-inline-file static-extension
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 

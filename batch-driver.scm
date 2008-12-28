@@ -286,11 +286,7 @@
 	      ipath) )
     (when (and outfile filename (string=? outfile filename))
       (quit "source- and output-filename are the same") )
-    (set! uses-units
-      (map string->symbol 
-	   (append-map
-	    (cut string-split <> ",")
-	    (collect-options 'uses))))
+    (set! uses-units (map string->symbol (collect-options 'uses)))
     (when (memq 'keep-shadowed-macros options)
       (set! undefine-shadowed-macros #f) )
 
@@ -315,32 +311,17 @@
     ;; Insert postponed initforms:
     (set! initforms (append initforms postponed-initforms))
 
-    ;; Handle `-extension' options:
-    (when (memq 'extension options)
-      (set! initforms 
-	(append 
-	 initforms
-	 `((define-extension 
-	     ,(string->symbol
-	       (cond (outfile (pathname-file outfile))
-		     (filename (pathname-file filename))
-		     (else (quit "no filename available for `-extension' option")) ) ) ) ) ) ) )
-
-    ;; Append required extensions to initforms:
-    (let ()
-      (define (ids opt)
-	(lset-difference 
-	 eq?
-	 (map string->symbol
-	      (append-map
-	       (cut string-split <> ",")
-	       (collect-options opt)))
-	 uses-units))
+    (let ((se (map string->symbol (collect-options 'static-extension))))
+      ;; Append required extensions to initforms:
       (set! initforms
 	(append 
 	 initforms 
 	 (map (lambda (r) `(##core#require-extension (,r) #t)) 
-	      (ids 'require-extension))))
+	      (append se (collect-options 'require-extension)))))
+
+      ;; add static-extensions as used units:
+      (set! ##sys#explicit-library-modules
+	(append ##sys#explicit-library-modules se)))
 
     (when (memq 'compile-syntax options)
       (set! ##sys#enable-runtime-macros #t) )
@@ -636,4 +617,4 @@
                                 (end-time "code generation")
                                 (when (memq 't debugging-chicken) (##sys#display-times (##sys#stop-timer)))
                                 (compiler-cleanup-hook)
-                                (dribble "compilation finished.") ) ) ] ) ) ) ) ) ) ) ) ) ) )
+                                (dribble "compilation finished.") ) ) ] ) ) ) ) ) ) ) ) ) )

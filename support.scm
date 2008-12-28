@@ -1302,6 +1302,7 @@ Usage: chicken FILENAME OPTION ...
     -epilogue FILENAME          include file after main source file
     -dynamic                    compile as dynamically loadable code
     -require-extension NAME     require and import extension NAME
+    -static-extension NAME      import extension NAME but link statically (if available)
     -extension                  compile as extension (dynamic or static)
     -ignore-repository          do not refer to repository for extensions
 
