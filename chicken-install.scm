@@ -68,6 +68,7 @@ EOF
       "srfi-18.import.so"
       "utils.import.so"
       "csi.import.so"
+      "irregex.import.so"
       "compiler.import.so"))
 
   (define *program-path*
