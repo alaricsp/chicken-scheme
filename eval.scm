@@ -862,6 +862,7 @@
 (define (##sys#abort-load) #f)
 (define ##sys#current-source-filename #f)
 (define ##sys#current-load-path "")
+(define ##sys#dload-disabled #f)
 
 (define-foreign-variable _dlerror c-string "C_dlerror")
 
@@ -913,7 +914,9 @@
 		    input]
 		   [else
 		    (let ([fname2 (##sys#string-append input ##sys#load-dynamic-extension)])
-		      (if (and (##sys#fudge 24) (##sys#file-info fname2)) ; dload?
+		      (if (and (not ##sys#dload-disabled)
+			       (##sys#fudge 24) ; dload?
+			       (##sys#file-info fname2))
 			  fname2
 			  (let ([fname3 (##sys#string-append input source-file-extension)])
 			    (if (##sys#file-info fname3)
@@ -1097,7 +1100,9 @@
       (let ((rp (##sys#repository-path)))
 	(define (check path)
 	  (let ([p0 (string-append path "/" p)])
-	    (and (or (and rp (##sys#fudge 24) ; dload?
+	    (and (or (and rp
+			  (not ##sys#dload-disabled)
+			  (##sys#fudge 24) ; dload?
 			  (file-exists? (##sys#string-append p0 ##sys#load-dynamic-extension)))
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )

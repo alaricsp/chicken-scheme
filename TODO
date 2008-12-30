@@ -1,8 +1,6 @@
 TODO for trunk								-*- Outline -*-
 
 
-* bugs
-
 ** compiler
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
@@ -22,115 +20,6 @@ TODO for trunk								-*- Outline -*-
     possibly due to unrenamed special forms
 *** extended lambda-lists refer to `optional' and `let-optionals[*]'
     this will break, when these macros are renamed on import
-*** slow
-    compiling dynamic.scm with profile-hacked expand:
-
-    procedure                       calls  seconds  average  percent
-    ----------------------------------------------------------------
-    ##sys#expand                     4659    0.276    0.000  100.000
-    ##sys#expand-0                   5574    0.228    0.000   82.608
-    lookup                          15878    0.144    0.000   52.173
-    ##sys#check-syntax               3328    0.128    0.000   46.376
-    body1099                         3328    0.080    0.000   28.985
-    ##sys#canonicalize-body           462    0.044    0.000   15.942
-    ##sys#alias-global-hook          2388    0.024    0.000    8.695
-    def-culprit1101                   683    0.020    0.000    7.246
-    def-se1102                        683    0.016    0.000    5.797
-    macro-alias                       958    0.012    0.000    4.347
-    macro?                            248    0.008    0.000    2.898
-    body187                           403    0.004    0.000    1.449
-    ##sys#strip-syntax                403    0.004    0.000    1.449
-    def-alias190                      401    0.004    0.000    1.449
-    def-se189                         400    0.004    0.000    1.449
-    ##sys#extended-lambda-list?       672    0.000    0.000    0.000
-    ##sys#register-export             229    0.000    0.000    0.000
-    ##sys#extend-macro-environment     60    0.000    0.000    0.000
-    ##sys#macro-subset                  2    0.000    0.000    0.000
-    process-command-line                1    0.000    0.000    0.000
-
-    wrapped into a module exporting `*':
-
-    procedure                        calls  seconds  average  percent
-    -----------------------------------------------------------------
-    ##sys#expand-0                    5357    0.564    0.000  100.000
-    ##sys#expand                      4440    0.556    0.000   98.581
-    lookup                           15232    0.432    0.000   76.595
-    ##sys#check-syntax                3105    0.236    0.000   41.843
-    ##sys#canonicalize-body            462    0.220    0.000   39.007
-    body1099                          3105    0.176    0.000   31.205
-    ##sys#alias-global-hook           1463    0.140    0.000   24.822
-    ##sys#register-undefined          1009    0.052    0.000    9.219
-    macro-alias                        963    0.052    0.000    9.219
-    ##sys#module-rename               1715    0.048    0.000    8.510
-    def-culprit1101                    685    0.044    0.000    7.801
-    module-undefined-list             1239    0.040    0.000    7.092
-    ##sys#register-export              229    0.028    0.000    4.964
-    def-se1102                         685    0.024    0.000    4.255
-    ##sys#expand-import                  1    0.024    0.024    4.255
-    module-name                       1488    0.016    0.000    2.836
-    macro?                             248    0.016    0.000    2.836
-    ##sys#strip-syntax                 407    0.012    0.000    2.127
-    body187                            407    0.008    0.000    1.418
-    def-alias190                       405    0.008    0.000    1.418
-    def-se189                          404    0.008    0.000    1.418
-    set-module-exist-list!             229    0.008    0.000    1.418
-    ##sys#finalize-module                1    0.008    0.008    1.418
-    ##sys#extended-lambda-list?        672    0.004    0.000    0.709
-    module-export-list                 231    0.004    0.000    0.709
-    check-for-redef                    229    0.004    0.000    0.709
-    ##sys#mark-imported-symbols          3    0.004    0.001    0.709
-    merge-se                             1    0.004    0.004    0.709
-    set-module-undefined-list!         304    0.000    0.000    0.000
-    module-defined-list                231    0.000    0.000    0.000
-    module-exist-list                  230    0.000    0.000    0.000
-    set-module-defined-list!           229    0.000    0.000    0.000
-    ##sys#extend-macro-environment      60    0.000    0.000    0.000
-    ##sys#find-module                    4    0.000    0.000    0.000
-    swap1473                             4    0.000    0.000    0.000
-    %make-module                         3    0.000    0.000    0.000
-    make-module                          3    0.000    0.000    0.000
-    ##sys#macro-subset                   2    0.000    0.000    0.000
-    module-vexports                      2    0.000    0.000    0.000
-    module-sexports                      2    0.000    0.000    0.000
-    ##sys#register-primitive-module      2    0.000    0.000    0.000
-    body3068                             1    0.000    0.000    0.000
-    set-module-vexports!                 1    0.000    0.000    0.000
-    set-module-sexports!                 1    0.000    0.000    0.000
-    ##sys#register-module                1    0.000    0.000    0.000
-    process-command-line                 1    0.000    0.000    0.000
-    module-import-forms                  1    0.000    0.000    0.000
-    module-indirect-exports              1    0.000    0.000    0.000
-    def-sexports3071                     1    0.000    0.000    0.000
-    def-vexports3070                     1    0.000    0.000    0.000
-    set-module-import-forms!             1    0.000    0.000    0.000
-    module-defined-syntax-list           1    0.000    0.000    0.000
-
-    compiling match-test.scm, with matchable.scm and test.scm included:
-
-    procedure                       calls  seconds  average  percent
-    ----------------------------------------------------------------
-    ##sys#expand-0                  27576    2.896    0.000  100.000
-    ##sys#expand                    20616    2.504    0.000   86.464
-    lookup                          96736    1.916    0.000   66.160
-    ##sys#canonicalize-body          3203    1.188    0.000   41.022
-    ##sys#check-syntax              15942    0.680    0.000   23.480
-    macro-alias                     12350    0.404    0.000   13.950
-    body1099                        15942    0.384    0.000   13.259
-    ##sys#process-syntax-rules        115    0.208    0.001    7.182
-    ##sys#alias-global-hook          7950    0.088    0.000    3.038
-    def-culprit1101                   861    0.048    0.000    1.657
-    ##sys#strip-syntax                933    0.036    0.000    1.243
-    def-alias190                      931    0.036    0.000    1.243
-    def-se189                         930    0.036    0.000    1.243
-    def-se1102                        861    0.028    0.000    0.966
-    body187                           933    0.008    0.000    0.276
-    ##sys#extended-lambda-list?       581    0.000    0.000    0.000
-    ##sys#extend-macro-environment     93    0.000    0.000    0.000
-    ##sys#register-syntax-export       33    0.000    0.000    0.000
-    macro?                             16    0.000    0.000    0.000
-    ##sys#register-export              11    0.000    0.000    0.000
-    ##sys#macro-subset                  2    0.000    0.000    0.000
-    process-command-line                1    0.000    0.000    0.000
 
 ** modules
 *** import lib holds undefined in expansions for undefined but exported bindings
@@ -145,6 +34,7 @@ TODO for trunk								-*- Outline -*-
 *** qs: automatically quote with #\" and replace #\/ with #\\ on windows?
 
 ** build
+*** fix mingw build, quickly
 *** compiling chicken-install/-uninstall must use invalid or disabled existing repository
     otherwise we use stale import libraries
 
@@ -155,8 +45,10 @@ TODO for trunk								-*- Outline -*-
 
 * tasks
 
+** documentation
+*** update NEWS
+
 ** branches
-*** test irregular branch, merge if performance is acceptable
 *** try to improve performance in lazy-gensyms
 
 ** expander
@@ -212,13 +104,14 @@ TODO for trunk								-*- Outline -*-
     touching .c files caused chicken-install to be rebuilt; did using
     .SECONDARY help?
 
+** "weak" gc roots (as suggested by Alejo)
+
 * tests
 
 ** optional longer run (env. var)
 *** syntax-rules-stress-test
 *** fully compiled ec-tests
 ** 3-stage bootstrap with compiler-output comparison
-** install numbers egg into temporary repo and run tests
 
 
 * documentation

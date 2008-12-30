@@ -1,4 +1,4 @@
-;;;; regex.import.scm - import library for "regex" module
+;;;; irregex.import.scm - import library for "regex" module (irregex API)
 ;
 ; Copyright (c) 2008, The Chicken Team
 ; All rights reserved.
@@ -25,21 +25,11 @@
 
 
 (##sys#register-primitive-module
- 'regex
- '(glob->regexp
-   glob?
-   grep
-   regex-chardef-table
-   regex-chardef-table?
-   regexp
-   regexp*
-   regexp-escape
-   regexp-optimize
-   regexp?
-   string-match
-   string-match-positions
-   string-search
-   string-search-positions
-   string-split-fields
-   string-substitute
-   string-substitute*))
+ 'irregex
+ '(irregex string->irregex sre->irregex irregex? irregex-match-data?
+    irregex-new-matches irregex-reset-matches!
+    irregex-match-start irregex-match-end irregex-match-substring
+    irregex-search irregex-search/matches irregex-match irregex-match-string
+    irregex-replace irregex-replace/all
+    irregex-dfa irregex-dfa/search irregex-dfa/extract
+    irregex-nfa irregex-flags irregex-submatches irregex-lengths irregex-names))

@@ -96,9 +96,6 @@ endif
 ifneq ($(HACKED_APPLY),)
 	echo "#define C_HACKED_APPLY" >>$@
 endif
-ifneq ($(USE_HOST_PCRE),)
-	echo "#define C_USE_HOST_PCRE" >>$@
-endif
 	cat chicken-defaults.h >>$@
 
 include $(SRCDIR)/rules.make

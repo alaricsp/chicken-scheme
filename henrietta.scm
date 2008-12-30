@@ -51,8 +51,9 @@
       (fprintf (current-error-port) "removing temporary directory `~a'~%" tmpdir)
       (remove-directory tmpdir)))
 
-  (define (test-file? path)
-    (string-match "(\\./)?tests(/.*)?" path))
+  (define test-file?
+    (let ((rx (regexp "(\\./)?tests(/.*)?")))
+      (lambda (path) (string-match rx path))))
 
   (define (retrieve name version)
     (let ((dir (handle-exceptions ex 
@@ -84,6 +85,9 @@
 	   files)))
       (print "\n#!eof") ) )
 
+  (define query-string-rx (regexp "[^?]+\\?(.+)"))
+  (define query-arg-rx (regexp "^&?(\\w+)=([^&]+)"))
+
   (define (service)
     (let ((qs (getenv "QUERY_STRING"))
 	  (ra (getenv "REMOTE_ADDR")))
@@ -91,11 +95,11 @@
 	       (or ra "<unknown>") qs)
       (unless qs
 	(error "no QUERY_STRING set"))
-      (let ((m (string-match "[^?]+\\?(.+)" qs))
+      (let ((m (string-match query-string-rx qs))
 	    (egg #f)
 	    (version #f))
 	(let loop ((qs (if m (cadr m) qs)))
-	  (let* ((m (string-search-positions "^&?(\\w+)=([^&]+)" qs))
+	  (let* ((m (string-search-positions query-arg-rx qs))
 		 (ms (and m (apply substring qs (cadr m))))
 		 (rest (and m (substring qs (cadar m)))))
 	    (cond ((not m)

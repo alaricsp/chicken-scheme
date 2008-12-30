@@ -1,3 +1,10 @@
+4.0.0x5
+
+- replaced PCRE regex engine with Alex Shinn's "irregex" regular expression
+  package
+- removed `-extension' option
+- removed `-static-extensions' csc option and added `-static-extension NAME'
+
 4.0.0x3
 
 - removed custom declarations and "link-options" and "c-options" declarations

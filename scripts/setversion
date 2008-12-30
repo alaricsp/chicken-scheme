@@ -10,6 +10,10 @@ exec csi -s "$0" "$@"
 
 (define files '("README" "manual/The User's Manual"))
 
+(define-syntax rx
+  (syntax-rules ()
+    ((_ r) (force (delay (regexp r))))))
+
 (define (patch which rx subst)
   (cond ((and (list? which) (= 2 (length which)))
 	 (let ((from (car which))
@@ -30,7 +34,7 @@ exec csi -s "$0" "$@"
 	   (system* "mv ~S ~S" tmp which) ) ) ) )
 
 (define (parse-version v)
-  (string-match "(\\d+)\\.(\\d+)\\.(\\d+)(.*)" v) )
+  (string-match (rx "(\\d+)\\.(\\d+)\\.(\\d+)(.*)") v) )
 
 (define (main args)
   (cond ((member "-set" args) =>
@@ -49,7 +53,7 @@ exec csi -s "$0" "$@"
       (newline) ) )
   (system* "cat version.scm")
   (let ([vstr (sprintf "version ~A" buildversion)])
-    (for-each (cut patch <> "version [0-9][-.0-9a-zA-Z]+" vstr) files) )
+    (for-each (cut patch <> (rx "version [0-9][-.0-9a-zA-Z]+") vstr) files) )
   (with-output-to-file "DONE" (cut print "- version is " buildversion))
   0)
 

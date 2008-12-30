@@ -121,8 +121,10 @@ EOF
 	   (chicken-version) )
 	  ((extension-information x) =>
 	   (lambda (info)
-	     (and-let* ((a (assq 'version info)))
-	       (->string (cadr a)))))
+	     (let ((a (assq 'version info)))
+	       (if a
+		   (->string (cadr a))
+		   "1.0.0"))))
 	  (else #f)))
 
   (define (outdated-dependencies meta)
@@ -298,11 +300,12 @@ EOF
   (define (update-db)
     (let* ((files (glob (make-pathname (repository-path) "*.import.*")))
 	   (tmpdir (create-temporary-directory))
-	   (dbfile (make-pathname tmpdir +module-db+)))
+	   (dbfile (make-pathname tmpdir +module-db+))
+	   (rx (regexp ".*/([^/]+)\\.import\\.(scm|so)")))
       (fluid-let ((##sys#warnings-enabled #f))
 	(for-each
 	 (lambda (f)
-	   (let ((m (string-match ".*/([^/]+)\\.import\\.(scm|so)" f)))
+	   (let ((m (string-match rx f)))
 	     (eval `(import ,(string->symbol (cadr m))))))
 	 files))
       (print "generating database")
@@ -355,7 +358,8 @@ EOF
 
   (define (main args)
     (let ((defaults (load-defaults))
-	  (update #f))
+	  (update #f)
+	  (rx "([^:]+):(.+)"))
       (let loop ((args args) (eggs '()))
 	(cond ((null? args)
 	       (cond (update (update-db))
@@ -455,7 +459,7 @@ EOF
 				   (current-directory)))
 			     *eggs+dirs*))
 			  (loop (cdr args) (cons egg eggs))))
-		       ((string-match "([^:]+):(.+)" arg) =>
+		       ((string-match rx arg) =>
 			(lambda (m)
 			  (loop (cdr args) (alist-cons (cadr m) (caddr m) eggs))))
 		       (else (loop (cdr args) (cons arg eggs))))))))))

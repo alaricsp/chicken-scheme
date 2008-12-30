@@ -4224,12 +4224,7 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
     debug_mode = !debug_mode;
     return C_mk_bool(debug_mode);
 
-  case C_fix(37):
-#ifdef C_USE_HOST_PCRE
-    return C_SCHEME_TRUE;
-#else
-    return C_SCHEME_FALSE;
-#endif
+    /* 37 */
 
   case C_fix(38):
 #ifdef C_SVN_REVISION

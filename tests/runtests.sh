@@ -85,6 +85,9 @@ $interpret -s srfi-18-tests.scm
 echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out
 
+echo "======================================== regular expression tests ..."
+$interpret -bnq test-irregex.scm
+
 echo "======================================== r4rstest ..."
 $interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
   -i -s r4rstest.scm >r4rstest.log

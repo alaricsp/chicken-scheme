@@ -42,8 +42,7 @@ Watson, Thomas Weidner, Goeran Weinholt, Matthew Welland, Drake
 Wilson, Joerg Wittenberger, Peter Wright, Mark Wutka, Richard Zidlicky
 and Houman Zolfaghari for bug-fixes, tips and suggestions.
 
-CHICKEN uses the PCRE regular expression package ([[http://www.pcre.org]]),
-which is written by Philip Hazel.
+CHICKEN uses the "irregex" regular expression package written by Alex Shinn.
 
 Special thanks to Brandon van Every for contributing the (now defunct)
 [[http://www.cmake.org|CMake]] support and for helping with Windows

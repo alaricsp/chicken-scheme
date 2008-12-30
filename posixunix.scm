@@ -481,7 +481,7 @@ EOF
     (no-bound-checks)
     (no-procedure-checks-for-usual-bindings)
     (bound-to-procedure
-     string-match glob->regexp regexp make-anchored-pattern
+     string-match glob->regexp regexp 
      ##sys#thread-yield! ##sys#make-string
      ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port
      ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer make-pathname glob directory?
@@ -2091,7 +2091,6 @@ EOF
 
 (define glob
   (let ([regexp regexp]
-        [make-anchored-pattern make-anchored-pattern]
         [string-match string-match]
         [glob->regexp glob->regexp]
         [directory directory]
@@ -2103,8 +2102,7 @@ EOF
             '()
             (let ([path (car paths)])
               (let-values ([(dir fil ext) (decompose-pathname path)])
-                (let* ([fnpatt (glob->regexp (make-pathname #f (or fil "*") ext))]
-                       [patt (make-anchored-pattern fnpatt)]
+                (let* ([patt (glob->regexp (make-pathname #f (or fil "*") ext))]
                        [rx (regexp patt)])
                   (let loop ([fns (directory (or dir ".") #t)])
                     (cond [(null? fns) (conc-loop (cdr paths))]

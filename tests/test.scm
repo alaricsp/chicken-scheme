@@ -86,3 +86,14 @@
       name
       (lambda () (handle-exceptions ex *fail-token* expr)) *fail-token* eq?) )
     ((_ expr) (test-error 'expr expr))))
+
+(define-syntax test-assert
+  (syntax-rules ()
+    ((_ name expr) (run-equal name (lambda () (if expr #t #f)) #t eq?))))
+
+(define-syntax test-group
+  (syntax-rules ()
+    ((_ name body ...)
+     (begin
+       (print "\n" name ":\n")
+       body ...))))

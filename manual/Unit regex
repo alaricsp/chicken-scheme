@@ -4,16 +4,12 @@
 == Unit regex
 
 This library unit provides support for regular expressions. The regular 
-expression package used is {{PCRE}} (''Perl Compatible Regular Expressions'') 
-written by Philip Hazel. See [[http://www.pcre.org]] for information about
-the particular regexp flavor and extensions provided by this library.
+expression package used is {{irregex}}
+written by Alex Shinn. Irregex supports most Perl-extensions and is
+written completely in Scheme.
 
-To test that PCRE support has been built into Chicken properly, try:
-
-<enscript highlight=scheme>
-(require 'regex)
-(test-feature? 'pcre) => t
-</enscript>
+This library unit exposes two APIs: the one listed below and the
+original irregex API. To use the latter, import from the {{irregex}} module.
 
 
 === grep

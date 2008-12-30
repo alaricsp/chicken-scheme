@@ -213,6 +213,7 @@
     (when (or unit-name dynamic)
       (set! standalone-executable #f))
     (when (memq 'ignore-repository options)
+      (set! ##sys#dload-disabled #t)
       (repository-path #f))
     (set! debugging-chicken 
       (append-map
@@ -464,12 +465,6 @@
 	       (display-real-name-table) )
 	     (when (debugging 'n "line number database:")
 	       (display-line-number-database) )
-
-	     (when (and block-compilation unit-name)
-	       (compiler-warning 
-		'usage
-		"compilation of library unit `~a' in block-mode - globals may not be accessible outside this unit"
-		unit-name) )
 
 	     (when (and unit-name dynamic)
 	       (compiler-warning 'usage "library unit `~a' compiled in dynamic mode" unit-name) )

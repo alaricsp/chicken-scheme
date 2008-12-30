@@ -171,7 +171,7 @@
         [regexp regexp]
         [string-append string-append])
     (let* ([drv (if ##sys#windows-platform "([A-Za-z]:)?" "")]
-           [patt (make-anchored-pattern (string-append drv "[\\/\\\\].*"))]
+           [patt (string-append drv "[\\/\\\\].*")]
 	   [rx (regexp patt)] )
       (lambda (pn)
         (##sys#check-string pn 'absolute-pathname?)

@@ -155,24 +155,6 @@ endif
 
 # options
 
-ifneq ($(USE_HOST_PCRE),)
-LIBRARIES += -lpcre
-PCRE_INCLUDES =
-C_COMPILER_PCRE_OPTIONS =
-PCRE_OBJECTS_1 =
-else
-ifdef WINDOWS
-ifneq ($(HOSTSYSTEM),mingw32)
-PCRE_DIR ?= $(SRCDIR)pcre\\
-else
-endif
-PCRE_DIR ?= $(SRCDIR)pcre/
-else
-PCRE_DIR ?= $(SRCDIR)pcre/
-endif
-C_COMPILER_PCRE_OPTIONS = -DPCRE_STATIC -DHAVE_CONFIG_H
-PCRE_INCLUDES = $(INCLUDES) -I$(PCRE_DIR)
-endif
 ifndef NOPTABLES
 C_COMPILER_PTABLES_OPTIONS ?= -DC_ENABLE_PTABLES
 endif
@@ -323,12 +305,6 @@ CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 CHICKEN_DYNAMIC_OPTIONS = $(CHICKEN_OPTIONS) -feature chicken-compile-shared -dynamic
 CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_DYNAMIC_OPTIONS)
 
-ifneq ($(USE_HOST_PCRE),)
-CHICKEN_PCRE_LIBRARY_OPTIONS = 
-else
-CHICKEN_PCRE_LIBRARY_OPTIONS = -include-path $(SRCDIR)pcre
-endif
-
 # targets
 
 CHICKEN_PROGRAM = $(PROGRAM_PREFIX)chicken$(PROGRAM_SUFFIX)
@@ -340,7 +316,7 @@ CHICKEN_UNINSTALL_PROGRAM = $(PROGRAM_PREFIX)chicken-uninstall$(PROGRAM_SUFFIX)
 CHICKEN_STATUS_PROGRAM = $(PROGRAM_PREFIX)chicken-status$(PROGRAM_SUFFIX)
 CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
 IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports files posix srfi-13 srfi-69 extras \
-	regex srfi-14 tcp foreign compiler scheme srfi-18 utils csi
+	regex srfi-14 tcp foreign compiler scheme srfi-18 utils csi irregex
 IMPORT_LIBRARIES += setup-api setup-download
 
 ifdef STATICBUILD
@@ -380,9 +356,6 @@ endif
 
 buildsvnrevision:
 	sh $(SRCDIR)/svnrevision.sh
-ifeq ($(USE_HOST_PCRE),)
-	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) pcre
-endif
 
 # generic part of chicken-config.h
 
