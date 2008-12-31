@@ -32,9 +32,7 @@
    regex-chardef-table
    regex-chardef-table?
    regexp
-   regexp*
    regexp-escape
-   regexp-optimize
    regexp?
    string-match
    string-match-positions

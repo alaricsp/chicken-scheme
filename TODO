@@ -22,7 +22,6 @@ TODO for trunk								-*- Outline -*-
     this will break, when these macros are renamed on import
 
 ** modules
-*** import lib holds undefined in expansions for undefined but exported bindings
 *** `require-extension' fails in interpreter when extension is .so without import library
     probably because load and import is in same toplevel form, and the
     load is performed after the import (at runtime). A possibly fix
@@ -35,8 +34,6 @@ TODO for trunk								-*- Outline -*-
 
 ** build
 *** fix mingw build, quickly
-*** compiling chicken-install/-uninstall must use invalid or disabled existing repository
-    otherwise we use stale import libraries
 
 ** libraries/build
 *** check use of paths with windows builds: proper handling of quoting and
@@ -44,9 +41,6 @@ TODO for trunk								-*- Outline -*-
 
 
 * tasks
-
-** documentation
-*** update NEWS
 
 ** branches
 *** try to improve performance in lazy-gensyms
@@ -73,8 +67,7 @@ TODO for trunk								-*- Outline -*-
 
 ** compiler
 *** test define-rewrite-rule
-**** use declarative interface?
-*** generate object-files in /tmp (or TMPDIR)?
+*** (csc) generate object-files in /tmp (or TMPDIR)?
 
 ** setup/install
 *** setup-download
@@ -84,6 +77,7 @@ TODO for trunk								-*- Outline -*-
 *** test sudo
 
 ** henrietta
+*** test (regex changes)
 *** mode that responses with list of available eggs (ls + check for .meta files)
 *** mode that responses only with .meta information
 

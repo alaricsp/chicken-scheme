@@ -65,46 +65,10 @@ specify whether the regular expression should be matched with case- or whitespac
 ignored, or whether the string should be treated as containing UTF-8 encoded
 characters, respectively.
 
-
-=== regexp*
-
- [procedure] (regexp* STRING [OPTIONS [TABLES]])
-
-Returns a precompiled regular expression object for {{string}}. The optional
-argument {{OPTIONS}} must be a list of option symbols. The optional argument
-{{TABLES}} must be a character definitions table (not defined here).
-
-
-Option Symbols:
-
-; caseless : Character case insensitive match
-; multiline : Equivalent to Perl's /m option
-; dotall : Equivalent to Perl's /s option
-; extended : Ignore whitespace
-; anchored : Anchor pattern match
-; dollar-endonly : `$' metacharacter in the pattern matches only at the end of the subject string
-; extra : Currently of very little use
-; notbol : First character of the string is not the beginning of a line
-; noteol : End of the string is not the end of a line
-; ungreedy : Inverts the "greediness" of the quantifiers so that they are not greedy by default
-; notempty : The empty string is not considered to be a valid match
-; utf8 : UTF-8 encoded characters
-; no-auto-capture : Disables the use of numbered capturing parentheses
-; no-utf8-check : Skip valid UTF-8 sequence check
-; auto-callout : Automatically inserts callout items (not defined here)
-; partial : Partial match ok
-; firstline : An unanchored pattern is required to match before or at the first newline
-; dupnames : Names used to identify capturing subpatterns need not be unique
-; newline-cr : Newline definition is `\r'
-; newline-lf : Newline definition is `\n'
-; newline-crlf : Newline definition is `\r\n'
-; newline-anycrlf : Newline definition is any of `\r', `\n', or `\r\n'
-; newline-any : Newline definition is any Unicode newline sequence
-; bsr-anycrlf : `\R' escape sequence matches only CR, LF, or CRLF
-; bsr-unicode : `\R' escape sequence matches only Unicode newline sequence
-
-; dfa-shortest : Currently unused
-; dfa-restart : Currently unused
+Note that code that uses regular expressions heavily should always
+use them in precompiled form, which is likely to be much faster than
+passing strings to any of the regular-expression routines described
+below.
 
 
 === regexp?
@@ -113,14 +77,6 @@ Option Symbols:
 
 Returns {{#t}} if {{X}} is a precompiled regular expression,
 or {{#f}} otherwise.
-
-
-=== regexp-optimize
-
- [procedure] (regexp-optimize RX)
- 
-Perform available optimizations for the precompiled regular expression {{RX}}.
-Returns {{#t}} when optimization performed, and {{#f}} otherwise.
 
 
 === string-match
