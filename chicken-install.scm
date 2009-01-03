@@ -283,7 +283,6 @@ EOF
 			     (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
 			     "")
 			 (make-pathname (cdr e+d) (car e+d) "setup"))))
-	       (print cmd)
 	       (system* (sprintf "~a" cmd)))
 	     (when (and *run-tests*
 			(file-exists? "tests")
@@ -291,7 +290,6 @@ EOF
 			(file-exists? "tests/run.scm") )
 	       (current-directory "tests")
 	       (let ((cmd (sprintf "~a -s run.scm ~a" *csi* (car e+d))))
-		 (print cmd)
 		 (system* (sprintf "~a" cmd))))))
 	 *eggs+dirs*)))
 
