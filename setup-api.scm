@@ -43,7 +43,7 @@
      setup-install-flag installation-prefix chicken-prefix 
      find-library find-header 
      program-path remove-file* 
-     patch yes-or-no? abort-setup qs
+     patch yes-or-no? abort-setup
      setup-root-directory create-directory/parents
      test-compile try-compile copy-file run-verbose
      required-chicken-version required-extension-version cross-chicken
@@ -52,7 +52,8 @@
      create-temporary-directory
      remove-directory
      remove-extension
-     read-info)
+     read-info
+     shellpath)
   
   (import scheme chicken foreign
 	  regex utils posix ports extras data-structures
@@ -164,6 +165,9 @@
 	    (cadr m)
 	    "/usr/local") ) ) )
 
+(define (shellpath str)
+  (qs (normalize-pathname str)))
+
 (define (cross-chicken) (##sys#fudge 39))
 
 (define *csc-options* '())
@@ -229,16 +233,15 @@
 (user-install-setup)
 
 
-(define create-directory-0
-  (let ([create-directory create-directory])
-    (lambda (dir)
-      (let loop ([dir dir])
-        (when (and dir (not (directory? dir)))
-          (loop (pathname-directory dir))
-          (create-directory dir))) ) ) )
-
 (define create-directory/parents
   (let ()
+    (define create-directory-0
+      (let ([create-directory create-directory])
+	(lambda (dir)
+	  (let loop ([dir dir])
+	    (when (and dir (not (directory? dir)))
+	      (loop (pathname-directory dir))
+	      (create-directory dir))) ) ) )
     (define (verb dir)
       (when (setup-verbose-flag) (printf "  creating directory `~a'~%~!" dir)) )
     (if *windows-shell*
@@ -247,17 +250,7 @@
 	  (create-directory-0 dir) ) 
 	(lambda (dir)
 	  (verb dir)
-	  (system* "mkdir -p ~a" (qs dir) ) ) ) ) )
-
-(define (qs str)
-  (string-concatenate
-   (map (lambda (c)
-	  (if (or (char-whitespace? c)
-		  (memq c '(#\# #\" #\' #\` #\´ #\~ #\& #\% #\$ #\! #\* #\; #\< #\> #\\
-			    #\( #\) #\[ #\] #\{ #\})))
-	      (string #\\ c)
-	      (string c)))
-	(string->list str))))
+	  (system* "mkdir -p ~a" (shellpath dir) ) ) ) ) )
 
 (define abort-setup 
   (make-parameter exit))
@@ -291,15 +284,15 @@
 		   (loop) ) ) ) ) ) ) )
       (let ((tmp (create-temporary-file)))
 	(patch (list tmp tmp) rx subst)
-	(system* "~A ~A ~A" *move-command* (qs tmp)
-		 (qs which)))))
+	(system* "~A ~A ~A" *move-command* (shellpath tmp)
+		 (shellpath which)))))
 
 (define run-verbose (make-parameter #t))
 
 (define (fixpath prg)
   (cond ((string=? prg "csc")
 	 (string-intersperse 
-	  (cons* (qs 
+	  (cons* (shellpath 
 		  (make-pathname 
 		   *chicken-bin-path*
 		   (cdr (assoc prg *installed-executables*))))
@@ -308,7 +301,7 @@
 		 *csc-options*) 
 	  " ") )
 	((assoc prg *installed-executables*) =>
-	 (lambda (a) (qs (make-pathname *chicken-bin-path* (cdr a)))))
+	 (lambda (a) (shellpath (make-pathname *chicken-bin-path* (cdr a)))))
 	(else prg) ) )
 
 (define (fixmaketarget file)
@@ -507,9 +500,9 @@
       (cond (*sudo*
 	     (let ((tmp (create-temporary-file)))
 	       (with-output-to-file tmp (cut pp info))
-	       (run (,*move-command* ,(qs tmp) ,(qs setup-file)))))
+	       (run (,*move-command* ,(shellpath tmp) ,(shellpath setup-file)))))
 	    (else (with-output-to-file setup-file (cut pp info))))
-      (unless *windows-shell* (run (,*chmod-command* a+r ,(qs setup-file)))))))
+      (unless *windows-shell* (run (,*chmod-command* a+r ,(shellpath setup-file)))))))
 
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
   (let ((from (if (pair? from) (car from) from))
@@ -519,7 +512,7 @@
     (ensure-directory to)
     (cond ((or (glob? from) (file-exists? from))
 	   (begin
-	     (run (,*copy-command* ,(qs from) ,(qs to))) 
+	     (run (,*copy-command* ,(shellpath from) ,(shellpath to))) 
 	     to))
 	  (err (error "file does not exist" from))
 	  (else (warning "file does not exist" from)))))
@@ -528,10 +521,10 @@
   (let ((from  (if (pair? from) (car from) from))
 	(to    (if (pair? from) (make-pathname to (cadr from)) to)))
     (ensure-directory to)
-    (run (,*move-command* ,(qs from) ,(qs to)) ) ) )
+    (run (,*move-command* ,(shellpath from) ,(shellpath to)) ) ) )
 
 (define (remove-file* dir)
-  (run (,*remove-command* ,(qs dir)) ) )
+  (run (,*remove-command* ,(shellpath dir)) ) )
 
 (define (make-dest-pathname path file)
   (if (list? file)
@@ -569,15 +562,15 @@
 			       (to (make-dest-pathname rpathd f)) )
 			   (when (and (not *windows*) 
 				      (equal? "so" (pathname-extension to)))
-			     (run (,*remove-command* ,(qs to)) ))
+			     (run (,*remove-command* ,(shellpath to)) ))
 			   (copy-file from to)
 			   (unless *windows-shell*
-			     (run (,*chmod-command* a+r ,(qs to))))
+			     (run (,*chmod-command* a+r ,(shellpath to))))
 			   (and-let* ((static (assq 'static info)))
 			     (when (and (eq? (software-version) 'macosx)
 					(equal? (cadr static) from) 
 					(equal? (pathname-extension to) "a"))
-			       (run (,*ranlib-command* ,(qs to)) ) ))
+			       (run (,*ranlib-command* ,(shellpath to)) ) ))
 			   (make-dest-pathname rpath f)))
 		       files) ) )
       (and-let* ((docs (assq 'documentation info)))
@@ -620,7 +613,7 @@
 			       (to (make-dest-pathname ppath f)) )
 			   (copy-file from to) 
 			   (unless *windows-shell*
-				   (run (,*chmod-command* a+r ,(qs to))))
+				   (run (,*chmod-command* a+r ,(shellpath to))))
 			   to) )
 		       files) ) )
       (write-info id dests info) ) ) )
@@ -635,7 +628,7 @@
 				(to (make-dest-pathname ppath f)) )
 			    (copy-file from to) 
 			    (unless *windows-shell*
-				    (run (,*chmod-command* a+r ,(qs to))))
+				    (run (,*chmod-command* a+r ,(shellpath to))))
 			    to) )
 			files) ) )
       (unless *windows-shell*
@@ -660,7 +653,7 @@
 	(begin
 	  (create-directory dir)
 	  (unless *windows-shell*
-		  (run (,*chmod-command* a+x ,(qs dir))))))))
+		  (run (,*chmod-command* a+x ,(shellpath dir))))))))
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
 		     (verb (setup-verbose-flag)) (compile-only #f))
@@ -682,7 +675,7 @@
 		 (when verb (print cmd " ..."))
 		 cmd) ) ) ) )
     (when verb (print (if (zero? r) "succeeded." "failed.")))
-    (system (sprintf "~A ~A" *remove-command* (qs fname)))
+    (system (sprintf "~A ~A" *remove-command* (shellpath fname)))
     (zero? r) ) )
 
 (define (required-chicken-version v)

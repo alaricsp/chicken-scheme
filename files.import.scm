@@ -42,4 +42,5 @@
    pathname-replace-extension
    pathname-replace-file
    pathname-strip-directory
-   pathname-strip-extension))
+   pathname-strip-extension
+   normalize-pathname))

@@ -27,7 +27,7 @@
 
 (declare
   (block)
-  (uses data-structures ports srfi-1 srfi-13 utils files extras ))
+  (uses data-structures ports srfi-1 srfi-13 utils files extras))
 
 #>
 #ifndef C_TARGET_CC
@@ -124,9 +124,7 @@
       default) )
 
 (define (quotewrap str)
-  (if (string-any char-whitespace? str)
-      (string-append "\"" str "\"") 
-      str) )
+  (qs (normalize-pathname str)))
 
 (define home
   (quotewrap 
@@ -535,7 +533,10 @@
 	       (when (member target-filename scheme-files)
 		 (printf "Warning: output file will overwrite source file `~A' - renaming source to `~A.old'~%"
 			 target-filename target-filename)
-		 (unless (zero? ($system (sprintf "mv ~A ~A.old" target-filename target-filename)))
+		 (unless (zero? ($system (sprintf "~A ~A ~A" 
+						  (if (or msvc mingw) "move" "mv")
+						  (quotewrap target-filename)
+						  (quotewrap (string-append target-filename ".old")))))
 		   (exit last-exit-code) ) )
 	       (run-linking)) ) ]
 	  [else

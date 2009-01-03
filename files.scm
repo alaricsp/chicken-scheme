@@ -36,7 +36,7 @@
 
 (declare
   (unit files)
-  (uses regex)
+  (uses regex data-structures)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)
@@ -340,6 +340,16 @@
 	    (if (file-exists? pn)
 		(loop)
 		(call-with-output-file pn (lambda (p) pn)) ) ) ) ) ) ) )
+
+
+;;; normalize pathname for a particular platform
+
+(define (normalize-pathname path #!optional (platform (build-platform)))
+  (case platform
+    ((mingw32 msvc)
+     (string-translate path "/" "\\"))
+    (else path)))
+
 
 ;; Directory string or list only contains path-separators
 ;; and/or current-directory names.

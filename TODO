@@ -29,9 +29,6 @@ TODO for trunk								-*- Outline -*-
     compile-/expansion-time), when import is #t and o import lib
     exists.
 
-** setup/install
-*** qs: automatically quote with #\" and replace #\/ with #\\ on windows?
-
 ** build
 *** fix mingw build, quickly
 
@@ -97,6 +94,9 @@ TODO for trunk								-*- Outline -*-
 *** test special status of setup-api.import.scm and setup-download.import.scm
     touching .c files caused chicken-install to be rebuilt; did using
     .SECONDARY help?
+
+** documentation
+*** document qs, normalize-pathname
 
 ** "weak" gc roots (as suggested by Alejo)
 

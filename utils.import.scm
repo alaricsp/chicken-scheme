@@ -31,4 +31,5 @@
    for-each-argv-line
    for-each-line
    read-all
-   system*))
+   system*
+   qs))

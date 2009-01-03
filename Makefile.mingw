@@ -25,7 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-SRCDIR = .\\
+SEP = \\
+SRCDIR =.$(SEP)
 
 # platform configuration
 
@@ -33,7 +34,7 @@ DLLSINPATH = 1
 ARCH = x86
 HACKED_APPLY = 1
 WINDOWS = 1
-NO_UNIX_SHELL = 1
+WINDOWS_SHELL = 1
 
 # file extensions
 
@@ -79,8 +80,8 @@ include $(SRCDIR)defaults.make
 
 all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
 	csc$(EXE) libchicken$(SO) \
-	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE) \
-	chicken.info
+	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-install$(EXE) \
+	chicken-status$(EXE) chicken-uninstall$(EXE) chicken.info
 
 chicken-config.h: chicken-defaults.h
 	echo #define HAVE_DIRENT_H 1 >$@
@@ -139,22 +140,22 @@ chicken-defaults.h:
 	echo # define C_INSTALL_LDFLAGS "$(LINKER_OPTIONS) $(LINKER_OPTIMIZATION_OPTIONS)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_SHARE_HOME >>$@
-	echo # define C_INSTALL_SHARE_HOME "$(IDATADIR)" >>$@
+	echo # define C_INSTALL_SHARE_HOME "$(DATADIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_BIN_HOME >>$@
-	echo # define C_INSTALL_BIN_HOME "$(IBINDIR)" >>$@
+	echo # define C_INSTALL_BIN_HOME "$(BINDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_EGG_HOME >>$@
-	echo # define C_INSTALL_EGG_HOME "$(IEGGDIR)" >>$@
+	echo # define C_INSTALL_EGG_HOME "$(EGGDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_LIB_HOME >>$@
-	echo # define C_INSTALL_LIB_HOME "$(ILIBDIR)" >>$@
+	echo # define C_INSTALL_LIB_HOME "$(LIBDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_STATIC_LIB_HOME >>$@
-	echo # define C_INSTALL_STATIC_LIB_HOME "$(ILIBDIR)" >>$@
+	echo # define C_INSTALL_STATIC_LIB_HOME "$(LIBDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_INCLUDE_HOME >>$@
-	echo # define C_INSTALL_INCLUDE_HOME "$(IINCDIR)" >>$@
+	echo # define C_INSTALL_INCLUDE_HOME "$(INCDIR)" >>$@
 	echo #endif >>$@
 	echo #ifndef C_INSTALL_MORE_LIBS >>$@
 	echo # define C_INSTALL_MORE_LIBS "$(LIBRARIES)" >>$@
@@ -190,19 +191,19 @@ chicken-defaults.h:
 	echo # define C_CROSS_CHICKEN $(CROSS_CHICKEN) >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_LIB_HOME >>$@
-	echo # define C_TARGET_LIB_HOME "$(TARGET_PREFIX)\\lib" >>$@
+	echo # define C_TARGET_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_RUN_LIB_HOME >>$@
-	echo # define C_TARGET_RUN_LIB_HOME "$(TARGET_PREFIX)\\lib" >>$@
+	echo # define C_TARGET_RUN_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_SHARE_HOME >>$@
-	echo # define C_TARGET_SHARE_HOME "$(TARGET_PREFIX)\\share" >>$@
+	echo # define C_TARGET_SHARE_HOME "$(TARGET_PREFIX)/share" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_INCLUDE_HOME >>$@
-	echo # define C_TARGET_INCLUDE_HOME "$(TARGET_PREFIX)\\include" >>$@
+	echo # define C_TARGET_INCLUDE_HOME "$(TARGET_PREFIX)/include" >>$@
 	echo #endif >>$@
 	echo #ifndef C_TARGET_STATIC_LIB_HOME >>$@
-	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)\\lib" >>$@
+	echo # define C_TARGET_STATIC_LIB_HOME "$(TARGET_PREFIX)/lib" >>$@
 	echo #endif >>$@
 	echo #ifndef C_BINARY_VERSION >>$@
 	echo # define C_BINARY_VERSION $(BINARYVERSION) >>$@

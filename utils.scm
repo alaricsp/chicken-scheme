@@ -27,7 +27,7 @@
 
 (declare
   (unit utils)
-  (uses regex data-structures extras files)
+  (uses regex data-structures extras files srfi-13)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)
@@ -209,3 +209,22 @@
     (if (port? file)
 	(read-string #f file)
 	(with-input-from-file file (cut read-string #f)) ) ) )
+
+
+;;; Quote string for shell
+
+(define (qs str #!optional (platform (build-platform)))
+  (case platform
+    ((mingw32 msvc)
+     (string-append "\"" str "\""))
+    (else
+     (if (zero? (string-length str))
+	 "''"
+	 (string-concatenate
+	  (map (lambda (c)
+		 (if (or (char-whitespace? c)
+			 (memq c '(#\# #\" #\' #\` #\´ #\~ #\& #\% #\$ #\! #\* #\; #\< #\> #\\
+				   #\( #\) #\[ #\] #\{ #\})))
+		     (string #\\ c)
+		     (string c)))
+	       (string->list str)))))))

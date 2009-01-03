@@ -39,19 +39,10 @@ endif
 
 # directories
 
-SRCDIR ?= ./
-
+SEP ?= /
+SRCDIR ?= .$(SEP)
 DESTDIR ?=
-
-ifeq ($(PLATFORM),mingw-msys)
-PREFIX ?= c:/devtools
-else
-ifeq ($(PLATFORM),mingw)
-PREFIX ?= c:\\devtools
-else
 PREFIX ?= /usr/local
-endif
-endif
 
 BINDIR = $(PREFIX)/bin
 LIBDIR = $(PREFIX)/lib
@@ -65,19 +56,21 @@ DOCDIR = $(DATADIR)/doc
 CHICKENLIBDIR = $(LIBDIR)/chicken
 EGGDIR = $(CHICKENLIBDIR)/$(BINARYVERSION)
 
-ifeq ($(PLATFORM),mingw)
-IBINDIR = $(PREFIX)\\bin
-ILIBDIR = $(PREFIX)\\lib
-ISHAREDIR = $(PREFIX)\\share
-IDATADIR = $(ISHAREDIR)\\chicken
-ITOPMANDIR = $(ISHAREDIR)\\man
-IMANDIR = $(ITOPMANDIR)\\man1
-IINFODIR = $(ISHAREDIR)\\info
-IINCDIR = $(PREFIX)\\include
-IDOCDIR = $(IDATADIR)\\doc
-ICHICKENLIBDIR = $(ILIBDIR)\\chicken
-IEGGDIR = $(ICHICKENLIBDIR)\\$(BINARYVERSION)
+ifdef WINDOWS_SHELL
+SPREFIX = $(subst /,\\,$(PREFIX))
+IBINDIR = $(SPREFIX)$(SEP)bin
+ILIBDIR = $(SPREFIX)$(SEP)lib
+ISHAREDIR = $(SPREFIX)$(SEP)share
+IDATADIR = $(ISHAREDIR)$(SEP)chicken
+ITOPMANDIR = $(ISHAREDIR)$(SEP)man
+IMANDIR = $(ITOPMANDIR)$(SEP)man1
+IINFODIR = $(ISHAREDIR)$(SEP)info
+IINCDIR = $(SPREFIX)$(SEP)include
+IDOCDIR = $(IDATADIR)$(SEP)doc
+ICHICKENLIBDIR = $(ILIBDIR)$(SEP)chicken
+IEGGDIR = $(ICHICKENLIBDIR)$(SEP)$(BINARYVERSION)
 else
+SPREFIX = $(PREFIX)
 IBINDIR = $(BINDIR)
 ILIBDIR = $(LIBDIR)
 ISHAREDIR = $(SHAREDIR)
@@ -105,14 +98,14 @@ CXX_COMPILER ?= g++
 LIBRARIAN ?= ar
 endif
 LINKER ?= $(C_COMPILER)
-ifeq ($(PLATFORM),mingw)
+ifdef WINDOWS_SHELL
 REMOVE_COMMAND ?= del
 else
 REMOVE_COMMAND ?= rm
 endif
 ASSEMBLER ?= $(C_COMPILER)
 MAKEINFO_PROGRAM ?= -makeinfo
-ifeq ($(PLATFORM),mingw)
+ifdef WINDOWS_SHELL
 INSTALL_PROGRAM ?= copy
 MAKEDIR_COMMAND ?= -mkdir
 else
@@ -187,7 +180,7 @@ LIBRARIAN_OPTIONS ?= cru
 LIBRARIAN_OUTPUT_OPTION ?=
 LIBRARIAN_OUTPUT ?= $(LIBRARIAN_OUTPUT_OPTION) $@
 LIBRARIES ?= -lm
-ifeq ($(PLATFORM),mingw)
+ifdef WINDOWS_SHELL
 REMOVE_COMMAND_OPTIONS ?= /f /q
 REMOVE_COMMAND_RECURSIVE_OPTIONS ?= /f /s /q
 MAKE_WRITABLE_COMMAND ?= rem
@@ -197,7 +190,7 @@ REMOVE_COMMAND_RECURSIVE_OPTIONS ?= -fr
 MAKE_WRITABLE_COMMAND ?= chmod 0755
 endif
 MAKEINFO_PROGRAM_OPTIONS ?= --no-split 
-ifneq ($(PLATFORM),mingw)
+ifndef WINDOWS_SHELL
 INSTALL_PROGRAM_SHARED_LIBRARY_OPTIONS ?= -m755
 INSTALL_PROGRAM_STATIC_LIBRARY_OPTIONS ?= -m644
 INSTALL_PROGRAM_EXECUTABLE_OPTIONS ?= -m755
@@ -249,7 +242,7 @@ HOST_LIBRARIES ?= $(LIBRARIES)
 # other settings
 
 HOSTNAME ?= $(shell hostname)
-ifeq ($(PLATFORM),mingw)
+ifdef WINDOWS_SHELL
 BUILD_TIME ?= $(shell date /t)
 UNAME_SYS ?= MinGW
 else
@@ -257,10 +250,7 @@ BUILD_TIME ?= $(shell date +%Y-%m-%d)
 UNAME_SYS ?= $(shell uname)
 endif
 BUILD_TAG ?= compiled $(BUILD_TIME) on $(HOSTNAME) ($(UNAME_SYS))
-
-ifdef LOCKTOSPACE
-C_COMPILER_BUILD_RUNTIME_OPTIONS += -DC_LOCK_TOSPACE
-endif
+COPYMANY =
 
 
 # file extensions
@@ -348,7 +338,7 @@ endif
 
 .PHONY: all
 
-ifdef NO_UNIX_SHELL
+ifdef WINDOWS_SHELL
 all: $(TARGETS)
 else
 all: buildsvnrevision $(TARGETS)
@@ -377,22 +367,22 @@ chicken-defaults.h: buildsvnrevision
 	echo "# define C_INSTALL_LDFLAGS \"$(LINKER_OPTIONS) $(LINKER_OPTIMIZATION_OPTIONS)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_SHARE_HOME" >>$@
-	echo "# define C_INSTALL_SHARE_HOME \"$(IDATADIR)\"" >>$@
+	echo "# define C_INSTALL_SHARE_HOME \"$(DATADIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_BIN_HOME" >>$@
-	echo "# define C_INSTALL_BIN_HOME \"$(IBINDIR)\"" >>$@
+	echo "# define C_INSTALL_BIN_HOME \"$(BINDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_EGG_HOME" >>$@
-	echo "# define C_INSTALL_EGG_HOME \"$(IEGGDIR)\"" >>$@
+	echo "# define C_INSTALL_EGG_HOME \"$(EGGDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_LIB_HOME" >>$@
-	echo "# define C_INSTALL_LIB_HOME \"$(ILIBDIR)\"" >>$@
+	echo "# define C_INSTALL_LIB_HOME \"$(LIBDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_STATIC_LIB_HOME" >>$@
-	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(ILIBDIR)\"" >>$@
+	echo "# define C_INSTALL_STATIC_LIB_HOME \"$(LIBDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_INCLUDE_HOME" >>$@
-	echo "# define C_INSTALL_INCLUDE_HOME \"$(IINCDIR)\"" >>$@
+	echo "# define C_INSTALL_INCLUDE_HOME \"$(INCDIR)\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_INSTALL_MORE_LIBS" >>$@
 	echo "# define C_INSTALL_MORE_LIBS \"$(LIBRARIES)\"" >>$@
@@ -427,23 +417,6 @@ chicken-defaults.h: buildsvnrevision
 	echo "#ifndef C_CROSS_CHICKEN" >>$@
 	echo "# define C_CROSS_CHICKEN $(CROSS_CHICKEN)" >>$@
 	echo "#endif" >>$@
-ifdef WINDOWS
-	echo "#ifndef C_TARGET_LIB_HOME" >>$@
-	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)\\lib\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_TARGET_RUN_LIB_HOME" >>$@
-	echo "# define C_TARGET_RUN_LIB_HOME \"$(TARGET_RUN_PREFIX)\\lib\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_TARGET_SHARE_HOME" >>$@
-	echo "# define C_TARGET_SHARE_HOME \"$(TARGET_PREFIX)\\share\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_TARGET_INCLUDE_HOME" >>$@
-	echo "# define C_TARGET_INCLUDE_HOME \"$(TARGET_PREFIX)\\include\"" >>$@
-	echo "#endif" >>$@
-	echo "#ifndef C_TARGET_STATIC_LIB_HOME" >>$@
-	echo "# define C_TARGET_STATIC_LIB_HOME \"$(TARGET_PREFIX)\\lib\"" >>$@
-	echo "#endif" >>$@
-else
 	echo "#ifndef C_TARGET_LIB_HOME" >>$@
 	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
 	echo "#endif" >>$@
@@ -459,7 +432,6 @@ else
 	echo "#ifndef C_TARGET_STATIC_LIB_HOME" >>$@
 	echo "# define C_TARGET_STATIC_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
 	echo "#endif" >>$@
-endif
 	echo "#ifndef C_CHICKEN_PROGRAM" >>$@
 	echo "# define C_CHICKEN_PROGRAM \"$(CHICKEN_PROGRAM)\"" >>$@
 	echo "#endif" >>$@

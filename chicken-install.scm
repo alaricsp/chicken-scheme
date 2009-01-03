@@ -170,6 +170,7 @@ EOF
 
     (define *eggs+dirs* '())
     (define *checked* '())
+    (define *csi* (shellpath (make-pathname *program-path* "csi")))
 
     (define (try name version)
       (let loop ((defs (if (and *default-location* *default-transport*)
@@ -272,8 +273,8 @@ EOF
 	   (print "changing current directory to " (cdr e+d))
 	   (parameterize ((current-directory (cdr e+d)))
 	     (let ((cmd (sprintf
-			 "~a/csi -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a ~a"
-			 *program-path*
+			 "~a -bnq -e \"(require-library setup-api)\" -e \"(import setup-api)\" ~a ~a ~a ~a ~a ~a"
+			 *csi*
 			 (if (sudo-install) "-e \"(sudo-install #t)\"" "")
 			 (if *keep* "-e \"(keep-intermediates #t)\"" "")
 			 (if *no-install* "-e \"(setup-install-flag #f)\"" "")
@@ -282,15 +283,16 @@ EOF
 			     (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
 			     "")
 			 (make-pathname (cdr e+d) (car e+d) "setup"))))
-	       (system* cmd))
+	       (print cmd)
+	       (system* (sprintf "~a" cmd)))
 	     (when (and *run-tests*
 			(file-exists? "tests")
 			(directory? "tests")
 			(file-exists? "tests/run.scm") )
 	       (current-directory "tests")
-	       (let ((cmd (sprintf "~a/csi -s run.scm ~a" *program-path* (car e+d))))
+	       (let ((cmd (sprintf "~a -s run.scm ~a" *csi* (car e+d))))
 		 (print cmd)
-		 (system* cmd)))))
+		 (system* (sprintf "~a" cmd))))))
 	 *eggs+dirs*)))
 
   (define (cleanup)
