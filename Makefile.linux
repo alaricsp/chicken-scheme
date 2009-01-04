@@ -1,7 +1,7 @@
 # Makefile.linux - configuration for Linux -*- Makefile -*-
 #
 # Copyright (c) 2007, Felix L. Winkelmann
-# Copyright (c) 2008, The Chicken Team
+# Copyright (c) 2008-2009, The Chicken Team
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -43,7 +43,7 @@ else
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -Os -fomit-frame-pointer
 endif
 LINKER_LINK_SHARED_LIBRARY_OPTIONS = -shared
-LINKER_LINK_SHARED_DLOADABLE_OPTIONS = -shared -Wl,-R$(RUNTIME_LINKER_PATH)
+LINKER_LINK_SHARED_DLOADABLE_OPTIONS = -L. -shared -Wl,-R$(RUNTIME_LINKER_PATH)
 LINKER_LINK_SHARED_PROGRAM_OPTIONS = -Wl,-R$(RUNTIME_LINKER_PATH)
 LIBRARIES = -lm -ldl
 NEEDS_RELINKING = yes
