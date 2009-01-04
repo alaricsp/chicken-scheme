@@ -1,6 +1,6 @@
 ;;;; chicken-install.scm
 ;
-; Copyright (c) 2008, The Chicken Team
+; Copyright (c) 2008-2009, The Chicken Team
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following
@@ -282,15 +282,17 @@ EOF
 			 (if *prefix* 
 			     (sprintf "-e \"(installation-prefix \\\"~a\\\")\"" *prefix*)
 			     "")
-			 (make-pathname (cdr e+d) (car e+d) "setup"))))
-	       (system* (sprintf "~a" cmd)))
+			 (shellpath (make-pathname (cdr e+d) (car e+d) "setup")))))
+	       (print "  " cmd)
+	       (system* "~a" cmd)
 	     (when (and *run-tests*
 			(file-exists? "tests")
 			(directory? "tests")
 			(file-exists? "tests/run.scm") )
 	       (current-directory "tests")
 	       (let ((cmd (sprintf "~a -s run.scm ~a" *csi* (car e+d))))
-		 (system* (sprintf "~a" cmd))))))
+		 (print "  " cmd)
+		 (system* "~a" cmd))))) )
 	 *eggs+dirs*)))
 
   (define (cleanup)
