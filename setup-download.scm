@@ -32,6 +32,7 @@
 			locate-egg/local
 			locate-egg/svn
 			locate-egg/http
+			list-extensions
 			temporary-directory)
 
   (import scheme chicken)
@@ -57,6 +58,11 @@
 	  (temporary-directory dir)
 	  dir)))
 
+  (define (list-eggs/local dir)
+    (string-concatenate
+     (map (cut string-append <> "\n")
+	  (directory dir))))
+
   (define (locate-egg/local egg dir #!optional version destination)
     (let* ((eggdir (make-pathname dir egg))
 	   (files (directory eggdir))
@@ -77,6 +83,20 @@
 	      (warning "extension has no such version - using trunk" egg version))
 	    (or (and hastrunk trunkdir)
 		eggdir)))))
+
+  (define (list-eggs/svn repo #!optional username password)
+    (call/cc 
+     (lambda (k)
+       (define (runcmd cmd)
+	 (unless (zero? (system cmd))
+	   (k #f)))
+       (let* ((uarg (if username (string-append "--username='" username "'") ""))
+	      (parg (if password (string-append "--password='" password "'") ""))
+	      (cmd (sprintf "svn ls ~a ~a ~a" uarg parg (qs repo))))
+	 (d "listing extension directory ...~%  ~a~%" cmd)
+	 (string-concatenate
+	  (map (lambda (str) (string-append (string-chomp str "/") "\n"))
+	       (with-input-from-pipe cmd read-lines)))))))
   
   (define (locate-egg/svn egg repo #!optional version destination username 
 			  password)
@@ -87,7 +107,7 @@
 	   (k #f)))
        (let* ((uarg (if username (string-append "--username='" username "'") ""))
 	      (parg (if password (string-append "--password='" password "'") ""))
-	      (cmd (sprintf "svn ls ~a ~a -R \"~a/~a\"" uarg parg repo egg)))
+	      (cmd (sprintf "svn ls ~a ~a -R ~a" uarg parg (qs (make-pathname repo egg)))))
 	 (d "checking available versions ...~%  ~a~%" cmd)
 	 (let* ((files (with-input-from-pipe cmd read-lines))
 		(hastrunk (member "trunk/" files)) 
@@ -118,28 +138,33 @@
 	   (runcmd cmd)
 	   tmpdir)) )))
 
+  (define (deconstruct-url url)
+    (let ((m (string-match "(http://)?([^/:]+)(:([^:/]+))?(/.+)" url)))
+      (values
+       (if m (caddr m) url)
+       (if (and m (cadddr m)) 
+	   (or (string->number (list-ref m 4)) 
+	       (error "not a valid port" (list-ref m 4)))
+	   80)
+       (if m (list-ref m 5) "/"))))
+
   (define (locate-egg/http egg url #!optional version destination tests)
-    (let* ((tmpdir (or destination (get-temporary-directory)))
-	   (m (string-match "(http://)?([^/:]+)(:([^:/]+))?(/.+)" url))
-	   (host (if m (caddr m) url))
-	   (port (if (and m (cadddr m)) 
-		     (or (string->number (list-ref m 4)) 
-			 (error "not a valid port" (list-ref m 4)))
-		     80))
-	   (loc (string-append
-		 (if m (list-ref m 5) "/")
-		 "?name=" egg
-		 (if version
-		     (string-append "&version=" version)
-		     "")
-		 (if tests
-		     "&tests=yes"
-		     "")))
-	   (eggdir (make-pathname tmpdir egg)))
-      (unless (file-exists? eggdir)
-	(create-directory eggdir))
-      (http-fetch host port loc eggdir)
-      eggdir))
+    (let ((tmpdir (or destination (get-temporary-directory))))
+      (let-values (((host port loc) (deconstruct-url url)))
+	(let ((loc (string-append
+		    loc
+		    "?name=" egg
+		    (if version
+			(string-append "&version=" version)
+			"")
+		    (if tests
+			"&tests=yes"
+			"")))
+	      (eggdir (make-pathname tmpdir egg)))
+	  (unless (file-exists? eggdir)
+	    (create-directory eggdir))
+	  (http-fetch host port loc eggdir)
+	  eggdir))))
 
   (define (network-failure msg . args)
     (signal
@@ -224,6 +249,15 @@
 	 (locate-egg/svn name location version destination username password))
 	((http)
 	 (locate-egg/http name location version destination tests))
-	(else (error "unsupported transport" transport)))) )
+	(else (error "can not retrieve extension unsupported transport" transport)))) )
+
+  (define (list-extensions transport location #!key quiet username password)
+    (fluid-let ((*quiet* quiet))
+      (case transport
+	((local)
+	 (list-eggs/local location)) 
+	((svn)
+	 (list-eggs/svn location username password))
+	(else (error "can not list extensions - unsupported transport" transport)))) )
 
 )

@@ -23,6 +23,18 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
+; used environment variables:
+;
+; QUERY_STRING
+; REMOTE_ADDR (optional)
+
+; URL arguments:
+;
+; version=<version>
+; name=<name>
+; tests
+; list
+
 
 (require-library setup-download regex extras utils ports srfi-1 posix)
 
@@ -30,7 +42,7 @@
 (module main ()
 
   (import scheme chicken regex extras utils ports srfi-1 posix)
-  (import setup-download)
+  (import setup-api setup-download)
 
   (define *default-transport* 'svn)
   (define *default-location* (current-directory))
@@ -85,6 +97,19 @@
 	   files)))
       (print "\n#!eof") ) )
 
+  (define (listing)
+    (let ((dir (handle-exceptions ex 
+		   (fail ((condition-property-accessor 'exn 'message) ex)
+			 ((condition-property-accessor 'exn 'arguments) ex))
+		 (list-extensions
+		  *default-transport* *default-location*
+		  quiet: #t 
+		  username: *username* 
+		  password: *password*))))
+      (if dir 
+	  (display dir)
+	  (fail "unable to retrieve extension-list"))))
+
   (define query-string-rx (regexp "[^?]+\\?(.+)"))
   (define query-arg-rx (regexp "^&?(\\w+)=([^&]+)"))
 
@@ -117,6 +142,8 @@
 		  ((string=? ms "tests")
 		   (set! *tests* #t)
 		   (loop rest))
+		  ((string=? ms "list")
+		   (listing))
 		  (else
 		   (warning "unrecognized query option" ms)
 		   (loop rest))))))))

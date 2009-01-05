@@ -75,11 +75,6 @@ TODO for trunk								-*- Outline -*-
 *** automatically update db after extension installation?
 *** test sudo
 
-** henrietta
-*** test (regex changes)
-*** mode that responses with list of available eggs (ls + check for .meta files)
-*** mode that responses only with .meta information
-
 ** library units
 *** read-mark list should be stored in read-table
 *** ports should have indicator slot about exact type (tcp, file, ...)
