@@ -9,7 +9,7 @@ END-INFO-DIR-ENTRY
 @end format
 @end ifinfo
 @copying
-Copyright 2007-2008 Felix Winkelmann and the Chicken Team
+Copyright 2007-2009 Felix Winkelmann and the Chicken Team
 @end copying
 @titlepage
 @sp 10

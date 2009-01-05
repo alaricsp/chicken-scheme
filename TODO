@@ -35,6 +35,8 @@ TODO for trunk								-*- Outline -*-
 ** libraries/build
 *** check use of paths with windows builds: proper handling of quoting and
     slashes on all shell configurations?
+*** utility function for converting slashes to backslashes
+    (or some other "canonicalization" operation)
 
 
 * tasks

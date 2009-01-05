@@ -68,7 +68,7 @@
  (texi-page 
   "Felix Winkelmann and the Chicken Team"
   "Chicken Scheme Reference Manual"
-  "Copyright 2007-2008 Felix Winkelmann and the Chicken Team"
+  "Copyright 2007-2009 Felix Winkelmann and the Chicken Team"
   "The User's Manual"
   (wiki->texi str
 	      stream-null ;; tail
