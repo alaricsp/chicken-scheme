@@ -96,6 +96,9 @@ diff -u r4rstest.out r4rstest.log
 echo "======================================== finalizer tests ..."
 $interpret -s test-finalizers.scm
 
+echo "======================================== finalizer tests (2) ..."
+$compile test-finalizers-2.scm && ./a.out
+
 echo "======================================== locative stress test ..."
 $compile locative-stress-test.scm && ./a.out
 

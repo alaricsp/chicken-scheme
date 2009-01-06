@@ -1,6 +1,8 @@
 TODO for trunk								-*- Outline -*-
 
 
+* bugs
+
 ** compiler
 *** pre-optimization 
 **** changes call-sites and makes them invalid for later pre-optimization
@@ -29,14 +31,10 @@ TODO for trunk								-*- Outline -*-
     compile-/expansion-time), when import is #t and o import lib
     exists.
 
-** build
-*** fix mingw build, quickly
-
 ** libraries/build
-*** check use of paths with windows builds: proper handling of quoting and
-    slashes on all shell configurations?
-*** utility function for converting slashes to backslashes
-    (or some other "canonicalization" operation)
+*** path-handling for process invocation
+**** try Lars Nilsson's suggestion
+**** append ".exe" on windows
 
 
 * tasks
@@ -45,7 +43,7 @@ TODO for trunk								-*- Outline -*-
 *** try to improve performance in lazy-gensyms
 
 ** expander
-*** at some stage disable debug-output in expand.scm
+*** at some stage remove debug-output in expand.scm
 
 ** module issues
 *** need a way to omit generating module registration without generating import lib
@@ -70,7 +68,7 @@ TODO for trunk								-*- Outline -*-
 
 ** setup/install
 *** setup-download
-**** use HTTP_PROXY env. var
+**** use "HTTP_PROXY"/"http_proxy" env. var
 **** handle redirects in http-fetch
 *** automatically update db after extension installation?
 *** test sudo
@@ -95,7 +93,6 @@ TODO for trunk								-*- Outline -*-
 ** documentation
 *** document qs, normalize-pathname
 
-** "weak" gc roots (as suggested by Alejo)
 
 * tests
 

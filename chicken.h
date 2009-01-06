@@ -549,6 +549,7 @@ typedef struct C_gc_root_struct
 {
   C_word value;
   struct C_gc_root_struct *next, *prev;
+  int finalizable;
 } C_GC_ROOT;
 
 typedef struct C_ptable_entry_struct
@@ -1161,6 +1162,8 @@ C_fctexport int CHICKEN_initialize(int heap, int stack, int symbols, void *tople
 C_fctexport C_word CHICKEN_run(void *toplevel);
 C_fctexport C_word CHICKEN_continue(C_word k);
 C_fctexport void *CHICKEN_new_gc_root();
+C_fctexport void *CHICKEN_new_finalizable_gc_root();
+C_fctexport void *CHICKEN_new_gc_root_2(int finalizable);
 C_fctexport void CHICKEN_delete_gc_root(void *root);
 C_fctexport void *CHICKEN_global_lookup(char *name);
 C_fctexport int CHICKEN_is_running();

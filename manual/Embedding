@@ -279,6 +279,16 @@ that will always be valid, even after a garbage collection. The content of the g
 an unspecified value.
 
 
+=== CHICKEN_new_finalizable_gc_root
+
+ [C function] void* CHICKEN_new_finalizable_gc_root ()
+
+Similar to {{CHICKEN_new_gc_root}}, but allows the stored value to
+be finalized: if this gc root holds reference to an otherwise
+unreferenced data object that has a finalizer, the finalizer is still
+invoked.
+
+
 === CHICKEN_delete_gc_root
 
  [C function] void CHICKEN_delete_gc_root (void *root)

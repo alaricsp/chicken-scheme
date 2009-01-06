@@ -807,7 +807,7 @@ static C_PTABLE_ENTRY *create_initial_ptable()
 }
 
 
-void *CHICKEN_new_gc_root()
+void *CHICKEN_new_gc_root_2(int finalizable)
 {
   C_GC_ROOT *r = (C_GC_ROOT *)C_malloc(sizeof(C_GC_ROOT));
 
@@ -817,11 +817,24 @@ void *CHICKEN_new_gc_root()
   r->value = C_SCHEME_UNDEFINED;
   r->next = gc_root_list;
   r->prev = NULL;
+  r->finalizable = finalizable;
 
   if(gc_root_list != NULL) gc_root_list->prev = r;
 
   gc_root_list = r;
   return (void *)r;
+}
+
+
+void *CHICKEN_new_gc_root()
+{
+  return CHICKEN_new_gc_root_2(0);
+}
+
+
+void *CHICKEN_new_finalizable_gc_root()
+{
+  return CHICKEN_new_gc_root_2(1);
 }
 
 
@@ -2702,9 +2715,10 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
     for(msp = collectibles; msp < collectibles_top; ++msp)
       if(*msp != NULL) mark(*msp);
 
-    /* mark GC roots: */
-    for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next)
-      mark(&gcrp->value);
+    /* mark normal GC roots: */
+    for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next) {
+      if(!gcrp->finalizable) mark(&gcrp->value);
+    }
 
     /* mark finalizer procedures: */
     for(flist = finalizer_list; flist != NULL; flist = flist->next) 
@@ -2777,6 +2791,11 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 	  ++fcount;
 	}
 
+	/* mark finalizable GC roots: */
+	for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next) {
+	  if(gcrp->finalizable) mark(&gcrp->value);
+	}
+
 	if(gc_report_flag && fcount > 0)
 	  C_printf(C_text("[GC] %d finalizer value(s) marked\n"), fcount);
       }
@@ -2790,6 +2809,11 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 	  }
 
 	  mark(&flist->item);
+	}
+
+	/* mark finalizable GC roots: */
+	for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next) {
+	  if(gcrp->finalizable) mark(&gcrp->value);
 	}
       }
 

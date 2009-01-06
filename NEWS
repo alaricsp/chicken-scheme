@@ -4,6 +4,8 @@
   package
 - removed `-extension' option
 - removed `-static-extensions' csc option and added `-static-extension NAME'
+- `regex' unit: removed `regexp*' and `regex-optimize'
+- added `CHICKEN_new_finalizable_gc_root()'
 
 4.0.0x3
 
