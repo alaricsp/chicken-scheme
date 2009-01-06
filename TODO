@@ -33,8 +33,10 @@ TODO for trunk								-*- Outline -*-
 
 ** libraries/build
 *** path-handling for process invocation
-**** try Lars Nilsson's suggestion
+**** try Lars Nilsson's suggestion or Tobia's CreateProcess 
 **** append ".exe" on windows
+*** library/runtime: cyclic list checks for assq/assv/assoc/memq/memv/member
+    and C_i_list_tail
 
 
 * tasks

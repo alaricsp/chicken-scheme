@@ -450,6 +450,7 @@ typedef unsigned __int64   uint64_t;
 #define C_OUT_OF_RANGE_ERROR                          8
 #define C_NOT_A_CLOSURE_ERROR                         9
 #define C_CONTINUATION_CANT_RECEIVE_VALUES_ERROR      10
+#define C_BAD_ARGUMENT_TYPE_CYCLIC_LIST_ERROR         11
 #define C_TOO_DEEP_RECURSION_ERROR                    12
 #define C_CANT_REPRESENT_INEXACT_ERROR                13
 #define C_NOT_A_PROPER_LIST_ERROR                     14
@@ -1445,6 +1446,7 @@ C_fctexport C_word C_fcall C_u_i_memq(C_word x, C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_memv(C_word x, C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_member(C_word x, C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_length(C_word lst) C_regparm;
+C_fctexport C_word C_fcall C_u_i_length(C_word lst) C_regparm;
 C_fctexport C_word C_fcall C_i_inexact_to_exact(C_word n) C_regparm;
 C_fctexport C_word C_fcall C_i_check_closure_2(C_word x, C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_i_check_exact_2(C_word x, C_word loc) C_regparm;

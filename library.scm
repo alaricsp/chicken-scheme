@@ -3771,6 +3771,7 @@ EOF
 	((8) (apply ##sys#signal-hook #:bounds-error loc "out of range" args))
 	((9) (apply ##sys#signal-hook #:type-error loc "call of non-procedure" args))
 	((10) (apply ##sys#error loc "continuation can not receive multiple values" args))
+	((11) (apply ##sys#error loc "argument is cyclic" args))
 	((12) (apply ##sys#signal-hook #:limit-error loc "recursion too deep" args))
 	((13) (apply ##sys#signal-hook #:type-error loc "inexact number can not be represented as an exact number" args))
 	((14) (apply ##sys#signal-hook #:type-error loc "argument is not a proper list" args))
