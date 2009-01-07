@@ -22,6 +22,7 @@ TODO for trunk								-*- Outline -*-
     possibly due to unrenamed special forms
 *** extended lambda-lists refer to `optional' and `let-optionals[*]'
     this will break, when these macros are renamed on import
+*** define-for-syntax: eval body in what env?
 
 ** modules
 *** `require-extension' fails in interpreter when extension is .so without import library

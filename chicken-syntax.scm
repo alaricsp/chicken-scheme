@@ -1050,7 +1050,7 @@
 		       `(,(r 'lambda) ,(cdr head) ,@body)
 		       (car body))))
 	(if (symbol? name)
-	    (##sys#setslot name 0 (eval body))
+	    (##sys#setslot name 0 (eval body)) ;*** this is likely to be incorrect
 	    (syntax-error 'define-for-syntax "invalid identifier" name) )
 	(##sys#register-meta-expression `(define ,name ,body))
 	(if ##sys#enable-runtime-macros

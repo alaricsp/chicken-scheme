@@ -1205,8 +1205,7 @@
  (##sys#er-transformer
   (lambda (x r c)
     (##sys#check-syntax 'begin-for-syntax x '(_ . #(_ 0)))
-    (and-let* ((mod (##sys#current-module)))
-      (##sys#register-meta-expression `(begin ,@(cdr x))) )
+    (##sys#register-meta-expression `(begin ,@(cdr x)))
     `(##core#elaborationtimeonly (,(r 'begin) ,@(cdr x))))))
 
 (##sys#extend-macro-environment
