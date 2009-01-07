@@ -61,65 +61,6 @@
 
 ;;; Constants, variables and parameters
 
-#>
-#ifndef C_INSTALL_BIN_HOME
-# define C_INSTALL_BIN_HOME   NULL
-#endif
-
-#ifndef C_INSTALL_SHARE_HOME
-# define C_INSTALL_SHARE_HOME   NULL
-#endif
-
-#ifndef C_INSTALL_CC
-# ifdef _MSC_VER
-#  define C_INSTALL_CC                "cl"
-# else
-#  ifdef __GNUC__
-#   define C_INSTALL_CC                "gcc"
-#  else
-#   define C_INSTALL_CC                "cc"
-#  endif
-# endif
-#endif
-
-#ifndef C_TARGET_CC
-# define C_TARGET_CC  C_INSTALL_CC
-#endif
-
-#ifndef C_TARGET_CXX
-# define C_TARGET_CXX  C_INSTALL_CXX
-#endif
-
-#ifndef C_TARGET_CFLAGS
-# define C_TARGET_CFLAGS  C_INSTALL_CFLAGS
-#endif
-
-#ifndef C_TARGET_MORE_LIBS
-# define C_TARGET_MORE_LIBS  C_INSTALL_LIB_HOME
-#endif
-
-#ifndef C_TARGET_LIB_HOME
-# define C_TARGET_LIB_HOME  C_INSTALL_LIB_HOME
-#endif
-
-#ifndef C_CHICKEN_PROGRAM
-# define C_CHICKEN_PROGRAM   "chicken"
-#endif
-
-#ifndef C_CSC_PROGRAM
-# define C_CSC_PROGRAM   "csc"
-#endif
-
-#ifndef C_CSI_PROGRAM
-# define C_CSI_PROGRAM   "csi"
-#endif
-
-#ifndef C_CHICKEN_BUG_PROGRAM
-# define C_CHICKEN_BUG_PROGRAM   "chicken-bug"
-#endif
-<#
-
-
 (define-constant setup-file-extension "setup-info")
 
 (define *installed-executables* 
@@ -134,13 +75,11 @@
 (define *target-libs* (foreign-value "C_TARGET_MORE_LIBS" c-string))
 (define *target-lib-home* (foreign-value "C_TARGET_LIB_HOME" c-string))
 (define *sudo* #f)
+(define *windows-shell* (foreign-value "C_WINDOWS_SHELL" bool))
 
 (define *windows*
   (and (eq? (software-type) 'windows) 
        (build-platform) ) )
-
-(define *windows-shell* (or (eq? *windows* 'mingw32)
-                            (eq? *windows* 'msvc)))
 
 (register-feature! 'chicken-setup)
 
@@ -250,7 +189,7 @@
 	  (create-directory-0 dir) ) 
 	(lambda (dir)
 	  (verb dir)
-	  (system* "mkdir -p ~a" (shellpath dir) ) ) ) ) )
+	  ($system (sprintf "mkdir -p ~a" (shellpath dir) ) ) ) ) ) )
 
 (define abort-setup 
   (make-parameter exit))
@@ -284,8 +223,9 @@
 		   (loop) ) ) ) ) ) ) )
       (let ((tmp (create-temporary-file)))
 	(patch (list tmp tmp) rx subst)
-	(system* "~A ~A ~A" *move-command* (shellpath tmp)
-		 (shellpath which)))))
+	($system 
+	 (sprintf "~A ~A ~A" *move-command* (shellpath tmp)
+		  (shellpath which))))))
 
 (define run-verbose (make-parameter #t))
 
@@ -317,7 +257,7 @@
   (for-each
    (lambda (cmd)
      (when (run-verbose) (printf "  ~A~%~!" cmd))
-     (system* "~a" cmd) )
+     ($system cmd))
    (map smooth explist) ) )
 
 (define-syntax run
@@ -675,7 +615,7 @@
 		 (when verb (print cmd " ..."))
 		 cmd) ) ) ) )
     (when verb (print (if (zero? r) "succeeded." "failed.")))
-    (system (sprintf "~A ~A" *remove-command* (shellpath fname)))
+    ($system (sprintf "~A ~A" *remove-command* (shellpath fname)))
     (zero? r) ) )
 
 (define (required-chicken-version v)
@@ -760,7 +700,7 @@
 	     (error 'remove-directory "can not remove - directory not found" dir)
 	     #f))
 	(*sudo*
-	 (system* "sudo rm -fr '~a'" dir))
+	 ($system (sprintf "sudo rm -fr ~a" (shellpath dir))))
 	(else
 	 (let walk ((dir dir))
 	   (let ((files (directory dir #t)))
@@ -778,5 +718,13 @@
   (and-let* ((files (assq 'files (read-info egg))))
     (for-each remove-file* (cdr files)))
   (remove-file* (make-pathname (repository-path) egg "setup-info")))
+
+(define ($system str)
+  (let ((r (system
+	    (if *windows-shell*
+		(string-append "\"" str "\"")	; double quotes, yes - thanks to Matthew Flatt
+		str))))
+    (unless (zero? r)
+      (error "shell command failed with nonzero exit status" r str))))
 
 )

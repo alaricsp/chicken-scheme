@@ -29,14 +29,6 @@
 		 srfi-13 files)
 
 
-(foreign-declare #<<EOF
-#ifndef C_INSTALL_BIN_HOME
-# define C_INSTALL_BIN_HOME   NULL
-#endif
-EOF
-)
-
-
 (module main ()
   
   (import scheme chicken srfi-1 posix data-structures utils ports regex ports extras
@@ -88,6 +80,7 @@ EOF
   (define *default-sources* '())
   (define *default-location* #f)
   (define *default-transport* 'http)
+  (define *windows-shell* (foreign-value "C_WINDOWS_SHELL" bool))
 
   (define-constant +module-db+ "modules.db")
   (define-constant +defaults-file+ "setup.defaults")
@@ -106,15 +99,15 @@ EOF
 
   (define (init-repository dir)
     (let ((src (repository-path))
-	  (copy (if (or (feature? 'mingw32) (feature? 'msvc))
+	  (copy (if *windows-shell*
 		    "copy" 
 		    "cp -r")))
       (print "copying required files to " dir " ...")
       (for-each
        (lambda (f)
-	 (system* "~a ~a ~a" copy (make-pathname src f) dir))
+	 ($system (sprintf "~a ~a ~a" copy (shellpath (make-pathname src f)) (shellpath dir))))
        +default-repository-files+)))
-
+  
   (define (ext-version x)
     (cond ((or (eq? x 'chicken)
 	       (equal? x "chicken")
@@ -284,7 +277,7 @@ EOF
 			     "")
 			 (shellpath (make-pathname (cdr e+d) (car e+d) "setup")))))
 	       (print "  " cmd)
-	       (system* "~a" cmd)
+	       ($system cmd))
 	     (when (and *run-tests*
 			(file-exists? "tests")
 			(directory? "tests")
@@ -292,7 +285,7 @@ EOF
 	       (current-directory "tests")
 	       (let ((cmd (sprintf "~a -s run.scm ~a" *csi* (car e+d))))
 		 (print "  " cmd)
-		 (system* "~a" cmd))))) )
+		 ($system cmd))))) 
 	 *eggs+dirs*)))
 
   (define (cleanup)
@@ -332,6 +325,14 @@ EOF
 	    (for-each (lambda (x) (write x) (newline)) db)))
 	(copy-file dbfile (make-pathname (repository-path) +module-db+))
 	(remove-directory tmpdir))))
+
+  (define ($system str)
+    (let ((r (system
+	      (if *windows-shell*
+		  (string-append "\"" str "\"")
+		  str))))
+      (unless (zero? r)
+	(error "shell command terminated with nonzero exit code" r str))))
 
   (define (usage code)
     (print #<<EOF

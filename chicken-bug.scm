@@ -27,17 +27,6 @@
 (require-extension srfi-13 posix tcp data-structures utils extras)
 
 
-#>
-#ifndef C_TARGET_CC
-# define C_TARGET_CC  C_INSTALL_CC
-#endif
-
-#ifndef C_TARGET_CXX
-# define C_TARGET_CXX  C_INSTALL_CXX
-#endif
-<#
-
-
 (define-constant +bug-report-file+ "chicken-bug-report.~a-~a-~a")
 
 (define-constant +fallbackdestinations+ 

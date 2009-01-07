@@ -29,52 +29,6 @@
   (block)
   (uses data-structures ports srfi-1 srfi-13 utils files extras))
 
-#>
-#ifndef C_TARGET_CC
-# define C_TARGET_CC  C_INSTALL_CC
-#endif
-
-#ifndef C_TARGET_CXX
-# define C_TARGET_CXX  C_INSTALL_CXX
-#endif
-
-#ifndef C_TARGET_CFLAGS
-# define C_TARGET_CFLAGS  C_INSTALL_CFLAGS
-#endif
-
-#ifndef C_TARGET_LDFLAGS
-# define C_TARGET_LDFLAGS  C_INSTALL_LDFLAGS
-#endif
-
-#ifndef C_TARGET_BIN_HOME
-# define C_TARGET_BIN_HOME  C_INSTALL_BIN_HOME
-#endif
-
-#ifndef C_TARGET_LIB_HOME
-# define C_TARGET_LIB_HOME  C_INSTALL_LIB_HOME
-#endif
-
-#ifndef C_TARGET_STATIC_LIB_HOME
-# define C_TARGET_STATIC_LIB_HOME  C_INSTALL_STATIC_LIB_HOME
-#endif
-
-#ifndef C_TARGET_INCLUDE_HOME
-# define C_TARGET_INCLUDE_HOME  C_INSTALL_INCLUDE_HOME
-#endif
-
-#ifndef C_TARGET_SHARE_HOME
-# define C_TARGET_SHARE_HOME  C_INSTALL_SHARE_HOME
-#endif
-
-#ifndef C_TARGET_RUN_LIB_HOME
-# define C_TARGET_RUN_LIB_HOME    C_TARGET_LIB_HOME
-#endif
-
-#ifndef C_CHICKEN_PROGRAM
-# define C_CHICKEN_PROGRAM     "chicken"
-#endif
-<#
-
 (define-foreign-variable INSTALL_BIN_HOME c-string "C_INSTALL_BIN_HOME")
 (define-foreign-variable INSTALL_CC c-string "C_INSTALL_CC")
 (define-foreign-variable INSTALL_CXX c-string "C_INSTALL_CXX")
@@ -99,6 +53,7 @@
 (define-foreign-variable TARGET_STATIC_LIB_HOME c-string "C_TARGET_STATIC_LIB_HOME")
 (define-foreign-variable TARGET_RUN_LIB_HOME c-string "C_TARGET_RUN_LIB_HOME")
 (define-foreign-variable CHICKEN_PROGRAM c-string "C_CHICKEN_PROGRAM")
+(define-foreign-variable WINDOWS_SHELL bool "C_WINDOWS_SHELL")
 
 
 ;;; Parameters:
@@ -150,6 +105,7 @@
 (define shared-library-extension ##sys#load-dynamic-extension)
 (define default-translation-optimization-options '())
 (define pic-options (if (or mingw msvc) '("-DPIC") '("-fPIC" "-DPIC")))
+(define windows-shell WINDOWS_SHELL)
 
 (define default-library (string-append
                          (if msvc "libchicken-static." "libchicken.")
@@ -158,10 +114,7 @@
                                 (if msvc "libuchicken-static." "libuchicken.")
                                 library-extension))
 
-(define cleanup-filename
-  (if (not mingw)
-      (lambda (s) (quotewrap s)) ; allow filenames w/ whitespace
-      (lambda (s) s)))
+(define cleanup-filename quotewrap)
 
 (define default-compilation-optimization-options (string-split (if host-mode INSTALL_CFLAGS TARGET_CFLAGS)))
 (define best-compilation-optimization-options default-compilation-optimization-options)
@@ -918,15 +871,16 @@
 
 (define ($system str)
   (when verbose (print str))
-  (set! last-exit-code
-    (if dry-run 
-	0
-	(if (zero? (system str))
-	    0
-	    1)))
-  (unless (zero? last-exit-code)
-    (printf "*** Shell command terminated with exit status ~S: ~A~%" last-exit-code str) )
-  last-exit-code)
+  (let ((str (if windows-shell
+		 (string-append "\"" str "\"")
+		 str)))
+    (set! last-exit-code
+      (if dry-run 
+	  0
+	  (system str)))
+    (unless (zero? last-exit-code)
+      (printf "Error: shell command terminated with non-zero exit status ~S: ~A~%" last-exit-code str) )
+    last-exit-code))
 
 (define ($delete-file str)
   (when verbose 

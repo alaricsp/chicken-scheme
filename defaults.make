@@ -353,6 +353,7 @@ ifndef CUSTOM_CHICKEN_DEFAULTS
 chicken-defaults.h: buildsvnrevision
 	echo "/* generated */" >$@
 	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
+	echo "#define C_CHICKEN_PROGRAM \"chicken.exe\"" >>$@
 	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >>$@
 	echo "#ifndef C_INSTALL_CC" >>$@
 	echo "# define C_INSTALL_CC \"$(C_COMPILER)\"" >>$@
@@ -393,6 +394,9 @@ chicken-defaults.h: buildsvnrevision
 	echo "#ifndef C_DEFAULT_TARGET_STACK_SIZE" >>$@
 	echo "# define C_DEFAULT_TARGET_STACK_SIZE $(NURSERY)" >>$@
 	echo "#endif" >>$@
+	echo "#ifndef C_DEFAULT_TARGET_HEAP_SIZE" >>$@
+	echo "# define C_DEFAULT_TARGET_HEAP_SIZE 0" >>$@
+	echo "#endif" >>$@
 	echo "#ifndef C_STACK_GROWS_DOWNWARD" >>$@
 	echo "# define C_STACK_GROWS_DOWNWARD $(STACKDIRECTION)" >>$@
 	echo "#endif" >>$@
@@ -416,6 +420,9 @@ chicken-defaults.h: buildsvnrevision
 	echo "#endif" >>$@
 	echo "#ifndef C_CROSS_CHICKEN" >>$@
 	echo "# define C_CROSS_CHICKEN $(CROSS_CHICKEN)" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_TARGET_BIN_HOME" >>$@
+	echo "# define C_TARGET_BIN_HOME \"$(TARGET_PREFIX)/bin\"" >>$@
 	echo "#endif" >>$@
 	echo "#ifndef C_TARGET_LIB_HOME" >>$@
 	echo "# define C_TARGET_LIB_HOME \"$(TARGET_PREFIX)/lib\"" >>$@
@@ -443,6 +450,13 @@ chicken-defaults.h: buildsvnrevision
 	echo "#endif" >>$@
 	echo "#ifndef C_CHICKEN_BUG_PROGRAM" >>$@
 	echo "# define C_CHICKEN_BUG_PROGRAM \"$(CHICKEN_BUG_PROGRAM)\"" >>$@
+	echo "#endif" >>$@
+	echo "#ifndef C_WINDOWS_SHELL" >>$@
+ifdef WINDOWS_SHELL
+	echo "# define C_WINDOWS_SHELL 1" >>$@
+else
+	echo "# define C_WINDOWS_SHELL 0" >>$@
+endif
 	echo "#endif" >>$@
 	echo "#ifndef C_BINARY_VERSION" >>$@
 	echo "# define C_BINARY_VERSION $(BINARYVERSION)" >>$@

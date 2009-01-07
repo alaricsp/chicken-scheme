@@ -252,20 +252,6 @@
  (unit compiler)
  (disable-warning var) )
 
-#>
-#ifndef C_INSTALL_SHARE_HOME
-# define C_INSTALL_SHARE_HOME NULL
-#endif
-
-#ifndef C_DEFAULT_TARGET_STACK_SIZE
-# define C_DEFAULT_TARGET_STACK_SIZE 0
-#endif
-
-#ifndef C_DEFAULT_TARGET_HEAP_SIZE
-# define C_DEFAULT_TARGET_HEAP_SIZE 0
-#endif
-<#
-
 
 (private compiler
   compiler-arguments process-command-line explicit-use-flag
