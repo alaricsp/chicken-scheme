@@ -270,7 +270,7 @@
 (private compiler
   compiler-arguments process-command-line explicit-use-flag
   default-standard-bindings default-extended-bindings
-  foldable-bindings
+  foldable-bindings llist-length
   installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
   copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
   unit-name insert-timer-checks used-units external-variables require-imports-flag
@@ -1235,7 +1235,7 @@
 	     (emit-syntax-trace-info x #f)
 	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)) #f se)
 	     (let ([llist (cadr lexp)])
-	       (if (and (proper-list? llist) (= (length llist) (length args)))
+	       (if (and (proper-list? llist) (= (llist-length llist) (length args)))
 		   (walk `(,(macro-alias 'let se)
 			   ,(map list llist args) ,@(cddr lexp)) se dest)
 		   (let ((var (gensym 't)))
@@ -2175,7 +2175,9 @@
 						(and refs sites
 						     (= (length refs) (length sites)) 
 						     (proper-list? llist) ) ] )
-					  (when (and name custom (not (= (length llist) (length (cdr subs)))))
+					  (when (and name 
+						     custom
+						     (not (= (llist-length llist) (length (cdr subs)))))
 					    (quit
 					     "known procedure called with wrong number of arguments: ~A" 
 					     (source-info->string name) ) )

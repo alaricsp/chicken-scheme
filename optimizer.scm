@@ -30,7 +30,7 @@
 (private compiler
   compiler-arguments process-command-line perform-lambda-lifting!
   default-standard-bindings default-extended-bindings
-  foldable-bindings
+  foldable-bindings llist-length
   installation-home decompose-lambda-list external-to-pointer
   copy-node! variable-visible? mark-variable intrinsic?
   unit-name insert-timer-checks used-units external-variables hide-variable
@@ -362,7 +362,7 @@
 							       (cons (car args) used) ) ] ) ) ) ]
 				      [(and (test fid 'explicit-rest)
 					    (not (memq n rest-consers)) ) ; make sure we haven't inlined rest-list already
-				       (let ([n (length llist)])
+				       (let ([n (llist-length llist)])
 					 (if (< (length args) n)
 					     (walk-generic n class params subs)
 					     (begin

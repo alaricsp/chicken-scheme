@@ -66,7 +66,7 @@
   default-optimization-iterations chop-separator chop-extension follow-without-loop
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging
-  constant-declarations process-lambda-documentation big-fixnum? sort-symbols
+  constant-declarations process-lambda-documentation big-fixnum? sort-symbols llist-length
   export-dump-hook intrinsic? node->sexpr emit-global-inline-file inline-max-size
   make-random-name foreign-type-convert-result foreign-type-convert-argument)
 
@@ -301,6 +301,9 @@
 
 (define (process-lambda-documentation id doc proc)
   proc)					; Hook this
+
+(define (llist-length llist)
+  (##core#inline "C_u_i_length" llist))
 
 
 ;;; Profiling instrumentation:
