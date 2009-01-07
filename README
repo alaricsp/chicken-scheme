@@ -281,6 +281,9 @@
         - When installing under the mingw-msys platform, PREFIX must be an
           absolute path name (i.e. it must include the drive letter).
 
+ 	- When installing under mingw, with a windows shell ("cmd.exe"),
+	  pass an absolute pathname as PREFIX and use forward slashes.
+
 	- Cygwin will not be able to find the chicken shared libraries
           until Windows is rebooted.
 
