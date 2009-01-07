@@ -7843,16 +7843,6 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 }
 
 
-void cons_string_trampoline(void *dummy)
-{
-  int len = C_strlen(buffer);
-  C_word k = C_restore,
-      *a = C_alloc(C_bytestowords(len) + 1);
-
-  C_kontinue(k, C_string(&a, len, buffer));
-}
-
-
 void C_ccall C_get_argv(C_word c, C_word closure, C_word k)
 {
   int i, cells;
