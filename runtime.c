@@ -514,7 +514,6 @@ static C_ccall void call_cc_values_wrapper(C_word c, C_word closure, C_word k, .
 static void cons_flonum_trampoline(void *dummy) C_noret;
 static void gc_2(void *dummy) C_noret;
 static void allocate_vector_2(void *dummy) C_noret;
-static void cons_string_trampoline(void *dummy) C_noret;
 static void get_argv_2(void *dummy) C_noret;
 static void make_structure_2(void *dummy) C_noret;
 static void generic_trampoline(void *dummy) C_noret;
@@ -7838,12 +7837,6 @@ void C_ccall C_number_to_string(C_word c, C_word closure, C_word k, C_word num, 
 
   fini:
     radix = C_strlen(p);
-    
-    if(!C_demand(C_bytestowords(radix) + 1)) {
-      C_save(k);
-      cons_string_trampoline(NULL);
-    }
-
     a = C_alloc((C_bytestowords(radix) + 1));
     radix = C_string(&a, radix, p);
     C_kontinue(k, radix);
