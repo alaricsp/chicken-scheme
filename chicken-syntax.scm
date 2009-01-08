@@ -1042,20 +1042,8 @@
  (##sys#er-transformer
   (lambda (form r c)
     (##sys#check-syntax 'define-for-syntax form '(_ _ . _))
-    (let ((head (cadr form))
-	  (body (cddr form)))
-      (let* ((body (if (null? body) '((##core#undefined)) body))
-	     (name (if (pair? head) (car head) head)) 
-	     (body (if (pair? head)
-		       `(,(r 'lambda) ,(cdr head) ,@body)
-		       (car body))))
-	(if (symbol? name)
-	    (##sys#setslot name 0 (eval body)) ;*** this is likely to be incorrect
-	    (syntax-error 'define-for-syntax "invalid identifier" name) )
-	(##sys#register-meta-expression `(define ,name ,body))
-	(if ##sys#enable-runtime-macros
-	    `(,(r 'define) ,name ,body)
-	    '(##core#undefined)))))))
+    `(,(r 'begin-for-syntax)
+      (,(r 'define) ,@(cdr form))))))
 
 
 ;;; Just for backwards compatibility
