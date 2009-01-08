@@ -22,7 +22,6 @@ TODO for trunk								-*- Outline -*-
     possibly due to unrenamed special forms
 *** extended lambda-lists refer to `optional' and `let-optionals[*]'
     this will break, when these macros are renamed on import
-*** define-for-syntax: eval body in what env?
 
 ** modules
 *** `require-extension' fails in interpreter when extension is .so without import library
@@ -46,6 +45,10 @@ TODO for trunk								-*- Outline -*-
 *** try to improve performance in lazy-gensyms
 
 ** expander
+*** test new implementation of `define-for-syntax'
+**** test "numbers" egg
+**** is s48-modules still working?
+**** port xlib egg
 *** at some stage remove debug-output in expand.scm
 
 ** module issues
@@ -61,6 +64,7 @@ TODO for trunk								-*- Outline -*-
 *** curried define performs expansion in empty se - problem?
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
+**** see "expander" above
 **** interaction for define-for-syntax, begin-for-syntax, and macros
 ***** check for different execution modes (compile-time, run-time, csi, ...)
 ***** figure out visibility
