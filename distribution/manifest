@@ -211,6 +211,7 @@ tests/test-finalizers.scm
 tests/module-tests-compiled.scm
 tests/syntax-tests.scm
 tests/syntax-tests-2.scm
+tests/meta-syntax-test.scm
 tests/ec.scm
 tests/ec-tests.scm
 tests/test-chained-modules.scm

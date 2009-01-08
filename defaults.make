@@ -353,7 +353,7 @@ ifndef CUSTOM_CHICKEN_DEFAULTS
 chicken-defaults.h: buildsvnrevision
 	echo "/* generated */" >$@
 	echo "#define C_BUILD_TAG \"$(BUILD_TAG)\"" >>$@
-	echo "#define C_CHICKEN_PROGRAM \"chicken.exe\"" >>$@
+	echo "#define C_CHICKEN_PROGRAM \"$(CHICKEN_PROGRAM)$(EXE)\"" >>$@
 	echo "#define C_SVN_REVISION $(shell cat buildsvnrevision)" >>$@
 	echo "#ifndef C_INSTALL_CC" >>$@
 	echo "# define C_INSTALL_CC \"$(C_COMPILER)\"" >>$@
