@@ -30,6 +30,8 @@ TODO for trunk								-*- Outline -*-
     would be to load the extension immediately (at
     compile-/expansion-time), when import is #t and o import lib
     exists.
+*** mark import-source (module) on plist of imported symbols and use in re-import warning
+    doesn't work that easily, try to find another solution
 
 ** libraries/build
 *** path-handling for process invocation

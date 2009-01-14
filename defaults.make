@@ -345,7 +345,7 @@ all: buildsvnrevision $(TARGETS)
 endif
 
 buildsvnrevision:
-	sh $(SRCDIR)/svnrevision.sh
+	sh $(SRCDIR)svnrevision.sh
 
 # generic part of chicken-config.h
 
