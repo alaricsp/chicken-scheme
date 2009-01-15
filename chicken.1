@@ -36,11 +36,13 @@ Equivalent to
 
 .TP
 .B \-block
-Enable block-compilation. When this option is specified, the compiler assumes that global variables are not modified outside this compilation-unit.
+Enable block-compilation. When this option is specified, the compiler assumes
+that global variables are not modified outside this compilation-unit.
 
 .TP
 .B \-case\-insensitive
-Enables the reader to read symbols case-insensitive. The default is to read case-sensitive (in violation of R5RS).
+Enables the reader to read symbols case-insensitive. The default is to read
+case-sensitive (in violation of R5RS).
 This option registers the
 .B case\-insensitive
 feature identifier.
@@ -55,7 +57,8 @@ Aborts compilation process after macro-expansion and syntax checks.
 
 .TP
 .BI \-database\-size \ number
-Specifies the initial size of the analysis-database. Should only be used if extremely large files are to be compiled.
+Specifies the initial size of the analysis-database. Should only be used if
+extremely large files are to be compiled.
 
 .TP
 .BI \-debug \ modes
@@ -88,14 +91,15 @@ Disable expansion of compiler macros.
 .TP
 .B \-disable\-interrupts
 Equivalent to
-.B \-prelude\ "(declare\ (interrupts-disabled))"
+.B \-prelude\ \'(declare\ (interrupts-disabled))\'
+\.
 
 .TP
 .B \-disable\-stack\-overflow\-checks
 Disables detection of stack-overflows.
 
 .TP
-.B \-disable\-warning\ class
+.BI \-disable\-warning \ class
 Disables specific class of warnings, may be given multiple times.
 
 .TP
@@ -111,19 +115,20 @@ at the end of the compiled source file.
 The include-path is not searched. This option may be given multiple times.
 
 .TP
-.I \-emit\-debug\-info
+.B \-emit\-debug\-info
 Emit additional information for each 
 .B lambda
 expression (currently the argument-list,
 after alpha-conversion/renaming).
 
 .TP
-.BI \-emit\-exports\ filename
+.BI \-emit\-exports \ filename
 Write exported toplevel variables to file
-.B filename
+.I filename
+\.
 
 .TP
-.I \-emit\-external\-prototypes\-first
+.B \-emit\-external\-prototypes\-first
 Emit prototypes for callbacks defined with 
 .B define\-external 
 before any
@@ -132,9 +137,10 @@ the a Scheme program has to access the callbacks. By default the prototypes are 
 after foreign declarations.
 
 .TP
-.I \-emit\-inline\-file\ FILENAME
-Write procedures that can be globally inlined in internal form to FILENAME,
-if global inlining is enabled. Implies "-inline -local".
+.BI \-emit\-inline\-file \ filename
+Write procedures that can be globally inlined in internal form to
+.I filename
+, if global inlining is enabled. Implies "-inline -local".
 
 .TP
 .B \-explicit\-use
@@ -147,17 +153,19 @@ instead of an application unit.
 
 .TP
 .BI \-extend \ filename
-Loads a Scheme file before compilation commences. This feature can be used to extend the compiler.
+Loads a Scheme file,
+.I filename
+, before compilation commences. This feature can be used to extend the compiler.
 
 .TP
 .B \-extension
 Mostly equivalent to 
-.B \-prelude\ \'\(define-extension\ NAME\)\'
+.B \-prelude\ \'(define-extension\ NAME)\'
 where 
 .B NAME
 is the basename of the currently compiled file. Note that if you want to compile a file
 as a normal (dynamically loadable) extension library, you should also pass the
-.I \-shared
+.B \-shared
 option.
 
 .TP
@@ -170,7 +178,8 @@ to be a valid feature identifier for
 .TP
 .B \-fixnum\-arithmetic
 Equivalent to
-.B \-prelude\ "(declare\ (fixnum))"
+.B \-prelude\ \'(declare\ (fixnum))\'
+\.
 
 .TP
 .BI \-heap\-size \ number
@@ -181,7 +190,7 @@ followed by a
 .B M
 or
 .B K
-suffix which stand for mega- and kilobytes, respectively. The default heap-size is 16 megabytes.
+suffix which stand for mega- and kilo-bytes, respectively. The default heap-size is 16 megabytes.
 
 .TP
 .BI \-heap\-initial\-size \ number
@@ -197,13 +206,14 @@ Sets the heap-shrinkage rate for the compiled program at compile time.
 
 .TP
 .B \-help
-Print a summary of available options and the format of the command-line parameters and exit the compiler.
+Print a summary of available options and the format of the command-line
+parameters and exit the compiler.
 
 .TP
 .B \-ignore\-repository
 Do not load any extensions from the repository (treat repository as empty). Also
 do not consult compiled (only interpreted) import libraries in 
-.B import
+.I import
 forms.
 
 .TP
@@ -215,12 +225,7 @@ Read exports from linked or loaded libraries from given file. Implies
 .BI \-include\-path \ pathname
 Specifies an additional search path for files included via the 
 .I include
-special form. This option may be given multiple times. If the environment variable
-.B CHICKEN_INCLUDE_PATH
-is set, it should contain a list of alternative include
-pathnames separated by
-.I \;
-\.
+special form. This option may be given multiple times.
 
 .TP
 .B \-inline
@@ -231,22 +236,25 @@ Enables procedure inlining.
 Enable cross-module inlining.
 
 .TP
-.BI \-inline\-limit threshold
+.BI \-inline\-limit \ threshold
 Sets the maximum size of potentially inlinable procedures.
 
 .TP
 .BI \-keep\-shadowed\-macros
-Do not remove macro definitions with the same name as assigned toplevel variables (the default is to remove the macro definition).
+Do not remove macro definitions with the same name as assigned toplevel
+variables (the default is to remove the macro definition).
 
 .TP
-.BI \-keyword\-style style
+.BI \-keyword\-style \ style
 Enables alternative keyword syntax, where style may be either
 .B prefix
 (as in Common Lisp), 
 .B suffix
 (as in DSSSL) or
 .B none
-Any other value is ignored. The default is \texttt{suffix}.
+Any other value is ignored. The default is 
+.B suffix
+\.
 
 .TP
 .B \-lambda\-lift
@@ -259,11 +267,13 @@ not externally modified.
 
 .TP
 .B \-no\-trace
-Disable generation of tracing information. If a compiled executable should halt due to a runtime error,
-then a file containing a stack-trace will be written to the current directory under the name 
+Disable generation of tracing information. If a compiled executable should halt
+due to a runtime error, then a file containing a stack-trace will be written to
+the current directory under the name
 .I STACKTRACE
-\. Each line in the created file gives the name and the line-number (if available) of a procedure call.
-With this option given, the generated code is slightly faster.
+\. Each line in the created file gives the name and the line-number (if
+available) of a procedure call. With this option given, the generated code is
+slightly faster.
 
 .TP
 .B \-no\-warnings
@@ -271,6 +281,7 @@ Disable generation of compiler warnings.
 
 .TP
 .BI \-nursery \ number
+
 .TP
 .BI \-stack\-size \ number
 Sets the size of the first heap-generation of the generated executable to 
@@ -317,7 +328,8 @@ Specifies the pathname of the generated C file. Default is
 Add
 .I expressions
 after all other toplevel expressions in the compiled file.
-This option may be given multiple times. Processing of this option takes place after processing of
+This option may be given multiple times. Processing of this option takes place
+after processing of
 .BI \-epilogue
 \.
 
@@ -326,15 +338,16 @@ This option may be given multiple times. Processing of this option takes place a
 Add
 .I expressions
 before all other toplevel expressions in the compiled file.
-This option may be given multiple times. Processing of this option takes place before processing of
+This option may be given multiple times. Processing of this option takes place
+before processing of
 .B \-prologue
 \.
 
 .TP
 .B \-profile
 .B \-accumulate\-profile
-Instruments the source code to count procedure calls and execution times. After the program terminates
-(either via an explicit 
+Instruments the source code to count procedure calls and execution times. After
+the program terminates (either via an explicit 
 .B exit
 or implicitly), profiling statistics are written to a file named
 .B PROFILE.<PID>
@@ -345,7 +358,7 @@ the number of calls and the time spent executing it. Use the
 program to display the profiling information in a more user-friendly form.
 
 .TP
-.B \-profile\-name\ filename
+.BI \-profile\-name \ filename
 Specifies the name of the generated profile information file. Only useful
 in combination with the 
 .B \-profile
@@ -379,7 +392,7 @@ Makes low-level macros (defined with
 .B define\-macro
 also available at run-time. By default
 low-level macros are not available at run-time. Note that highlevel-macros ("syntax-case")
- defined in compiled code are never available at run-time.
+defined in compiled code are never available at run-time.
 
 .TP
 .B \-to\-stdout
@@ -429,7 +442,8 @@ Is used as a prefix directory for support files, include-files and libraries.
 
 .TP
 .B CHICKEN_INCLUDE_PATH
-Contains one or more pathnames where the compiler should additionally look for include-files, separated by 
+Contains one or more pathnames where the compiler should additionally look for
+include-files, separated by
 .B \;
 characters.
 
@@ -438,6 +452,127 @@ characters.
 Holds a string of default compiler options that should apply to every invocation of
 .B chicken
 \.
+
+.SH RUNTIME\ OPTIONS
+After successful compilation a C source file is generated and can be compiled
+with a C compiler. Executables generated with 
+.B chicken
+(and the
+.B chicken
+program itself) accept a small set of runtime options.
+
+.TP
+.B \-:?
+Shows a list of the available runtime options and exits the program.
+
+.TP
+.B \-:aNUMBER
+Specifies the length of the buffer for recording a trace of the last invoked
+procedures. Defaults to 8.
+
+.TP
+.B \-:b
+Enter a read-eval-print-loop when an error is encountered.
+
+.TP
+.B \-:B
+Sounds a bell (ASCII 7) on every major garbage collection.
+
+.TP
+.B \-:c
+Forces console mode. Currently this is only used in the interpreter (csi) to
+force output of the
+.I #;N>
+prompt even if stdin is not a terminal (for example if running in an emacs buffer under Windows).
+
+.TP
+.B \-:d
+Prints some debug-information at runtime.
+
+.TP
+.B \-:D
+Prints some more debug-information at runtime.
+
+.TP
+.B \-:fNUMBER
+Specifies the maximal number of currently pending finalizers before finalization is forced.
+
+.TP
+.B \-:hNUMBER
+Specifies fixed heap size
+
+.TP
+.B \-:hgPERCENTAGE
+Sets the growth rate of the heap in percent. If the heap is exhausted, then it
+will grow by
+.B PERCENTAGE
+\. The default is 200.
+
+.TP
+.B \-:hiNUMBER
+Specifies the initial heap size
+
+.TP
+.B \-:hmNUMBER
+Specifies a maximal heap size. The default is (2GB - 15).
+
+.TP
+.B \-:hsPERCENTAGE
+Sets the shrink rate of the heap in percent. If no more than a quarter of
+.B PERCENTAGE
+of the heap is used, then it will shrink to
+.B PERCENTAGE
+\. The default
+is 50. Note: If you want to make sure that the heap never shrinks, specify a
+value of 0. (this can be useful in situations where an optimal heap-size is
+known in advance).
+
+.TP
+.B \-:o
+Disables detection of stack overflows at run-time.
+
+.TP
+.B \-:r
+Writes trace output to stderr. This option has no effect with in files compiled with the
+.B -no-trace
+options.
+
+.TP
+.B \-:sNUMBER
+Specifies stack size.
+
+.TP
+.B \-:tNUMBER
+Specifies symbol table size.
+
+.TP
+.B \-:w
+Enables garbage collection of unused symbols. By default unused and unbound
+symbols are not garbage collected.
+
+.TP
+.B \-:x
+Raises uncaught exceptions of separately spawned threads in primordial thread.
+By default uncaught exceptions in separate threads are not handled, unless the
+primordial one explicitly joins them. When warnings are enabled (the default)
+and
+.B \-:x
+is not given, a warning will be shown, though.
+
+.P
+The
+.B NUMBER
+argument values may be given in bytes, in kilobytes (suffixed with K or k),
+in megabytes (suffixed with M or m), or in gigabytes (suffixed with G or g).
+Runtime options may be combined, like
+.B \-:dc
+, but everything following a
+.B NUMBER
+argument is ignored. So 
+.B \-:wh64m
+is OK, but
+.B \-:h64mw
+will not enable GC of unused symbols.
 
 .SH DOCUMENTATION
 
