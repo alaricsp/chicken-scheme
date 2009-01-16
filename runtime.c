@@ -8517,7 +8517,8 @@ void dload_2(void *dummy)
    */
 
   if(C_truep(reloadable) && (reload_lf = find_module_handle(mname)) != NULL) {
-    shl_unload((shl_t)reload_lf->module_handle); /*** failure currently not handled - what does shl_unload() return ? */
+    if(shl_unload((shl_t)reload_lf->module_handle) != 0)
+      panic(C_text("Unable to unload previously loaded compiled code"));
   }
   else reload_lf = NULL;
 
@@ -8660,7 +8661,8 @@ void dload_2(void *dummy)
   }
 
   if(C_truep(reloadable) && (reload_lf = find_module_handle((char *)C_data_pointer(name))) != NULL) {
-    FreeLibrary((HINSTANCE)reload_lf->module_handle); /*** failure currently not handled - what does FreeLibrary() return ? */
+    if(FreeLibrary((HINSTANCE)reload_lf->module_handle) == 0)
+      panic(C_text("Unable to unload previously loaded compiled code"));
   }
   else reload_lf = NULL;
 
@@ -8714,11 +8716,11 @@ C_word C_ccall C_dunload(C_word name)
 
 #ifndef NO_DLOAD2
 # if defined(__hpux__) && defined(HAVE_DL_H)
-  shl_unload((shl_t)m->module_handle);
+  if(shl_unload((shl_t)m->module_handle) != 0) return C_SCHEME_FALSE;
 # elif defined(HAVE_DLFCN_H)
   if(dlclose(m->module_handle) != 0) return C_SCHEME_FALSE;
 # elif defined(HAVE_LOADLIBRARY)
-  FreeLibrary(m->module_handle);
+  if(FreeLibrary(m->module_handle) == 0) return C_SCHEME_FALSE;
 # else
   return C_SCHEME_FALSE;
 # endif
