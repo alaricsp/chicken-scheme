@@ -25,13 +25,13 @@
 
 
 (require-library setup-download setup-api)
-(require-library srfi-1 posix data-structures utils ports regex ports extras
+(require-library srfi-1 posix data-structures utils regex ports extras
 		 srfi-13 files)
 
 
 (module main ()
   
-  (import scheme chicken srfi-1 posix data-structures utils ports regex ports extras
+  (import scheme chicken srfi-1 posix data-structures utils regex ports extras
 	  srfi-13 files)
   (import setup-download setup-api)
   
