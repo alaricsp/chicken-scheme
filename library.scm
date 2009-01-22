@@ -1395,13 +1395,11 @@ EOF
 
 (define (char-upcase c)
   (##sys#check-char c 'char-upcase)
-  (##core#inline "C_make_character"
-	     (##core#inline toupper (##core#inline "C_character_code" c)) ) )
+  (##core#inline "C_u_i_char_upcase" c))
 
 (define (char-downcase c)
   (##sys#check-char c 'char-downcase)
-  (##core#inline "C_make_character"
-	     (##core#inline tolower (##core#inline "C_character_code" c)) ) )
+  (##core#inline "C_u_i_char_downcase" x))
 
 (define char-ci=?)
 (define char-ci>?)

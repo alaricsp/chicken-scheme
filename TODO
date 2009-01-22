@@ -33,12 +33,16 @@ TODO for trunk								-*- Outline -*-
 *** mark import-source (module) on plist of imported symbols and use in re-import warning
     doesn't work that easily, try to find another solution
 
-** libraries/build
-*** path-handling for process invocation
-**** try Lars Nilsson's suggestion or Tobia's CreateProcess 
-**** append ".exe" on windows
+** libraries
 *** library/runtime: cyclic list checks for assq/assv/assoc/memq/memv/member
     and C_i_list_tail
+
+** setup/install
+*** broken on cygwin/mingw (vista): gets #!eof from server
+    Vista security paranoia?
+
+** henrietta
+*** installed version on kitten-tech seems not to work?
 
 
 * tasks
@@ -63,6 +67,7 @@ TODO for trunk								-*- Outline -*-
     (does it work at all?)
     example: we need `(import-for-syntax chicken)' to have access to
     `receive' in a procedural syntax definition.
+**** could be tested with xlib egg
 *** curried define performs expansion in empty se - problem?
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
@@ -85,6 +90,7 @@ TODO for trunk								-*- Outline -*-
 ** library units
 *** read-mark list should be stored in read-table
 *** ports should have indicator slot about exact type (tcp, file, ...)
+*** normalize-pathname: return short name on windows? (mingw/msvc)
 
 ** syntax-error
 *** if ##sys#current-module is set, add name to error message?
