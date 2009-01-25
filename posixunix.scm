@@ -1527,7 +1527,7 @@ EOF
 
 (define read-symbolic-link
   (let ([substring substring]
-      [buf (make-string (fx+ _filename_max 1))] )
+        [buf (make-string (fx+ _filename_max 1))] )
     (lambda (fname)
       (##sys#check-string fname 'read-symbolic-link)
       (let ([len (##core#inline "C_readlink" (##sys#make-c-string (##sys#expand-home-path fname)) buf)])
