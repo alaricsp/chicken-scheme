@@ -1399,7 +1399,7 @@ EOF
 
 (define (char-downcase c)
   (##sys#check-char c 'char-downcase)
-  (##core#inline "C_u_i_char_downcase" x))
+  (##core#inline "C_u_i_char_downcase" c))
 
 (define char-ci=?)
 (define char-ci>?)

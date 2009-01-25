@@ -1,3 +1,5 @@
+;;; currently disabled, need to compile matchable properly
+
 (module foo (bar)
   (import scheme chicken)
   (import-for-syntax matchable)
