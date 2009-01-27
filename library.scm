@@ -181,7 +181,6 @@ EOF
 (define-foreign-variable +build-tag+ c-string "C_BUILD_TAG")
 
 
-
 ;;; System routines:
 
 (define (exit . code) (apply (##sys#exit-handler) code))
@@ -263,81 +262,81 @@ EOF
   (##core#inline "C_get_current_seconds" #f)
   (##sys#cons-flonum) )
 
-(define (##sys#check-structure x y . z) 
-  (if (pair? z)
-      (##core#inline "C_i_check_structure_2" x y (car z))
+(define (##sys#check-structure x y . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_structure_2" x y (car loc))
       (##core#inline "C_i_check_structure" x y) ) )
 
-(define (##sys#check-blob x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_bytevector_2" x (car y))
+(define (##sys#check-blob x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_bytevector_2" x (car loc))
       (##core#inline "C_i_check_bytevector" x) ) )
 
 (define ##sys#check-byte-vector ##sys#check-blob)
 
-(define (##sys#check-pair x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_pair_2" x (car y))
+(define (##sys#check-pair x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_pair_2" x (car loc))
       (##core#inline "C_i_check_pair" x) ) )
 
-(define (##sys#check-list x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_list_2" x (car y))
+(define (##sys#check-list x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_list_2" x (car loc))
       (##core#inline "C_i_check_list" x) ) )
 
-(define (##sys#check-string x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_string_2" x (car y))
+(define (##sys#check-string x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_string_2" x (car loc))
       (##core#inline "C_i_check_string" x) ) )
 
-(define (##sys#check-number x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_number_2" x (car y))
+(define (##sys#check-number x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_number_2" x (car loc))
       (##core#inline "C_i_check_number" x) ) )
 
-(define (##sys#check-exact x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_exact_2" x (car y))
+(define (##sys#check-exact x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_exact_2" x (car loc))
       (##core#inline "C_i_check_exact" x) ) )
 
-(define (##sys#check-inexact x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_inexact_2" x (car y))
+(define (##sys#check-inexact x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_inexact_2" x (car loc))
       (##core#inline "C_i_check_inexact" x) ) )
 
-(define (##sys#check-symbol x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_symbol_2" x (car y))
+(define (##sys#check-symbol x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_symbol_2" x (car loc))
       (##core#inline "C_i_check_symbol" x) ) )
 
-(define (##sys#check-vector x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_vector_2" x (car y))
+(define (##sys#check-vector x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_vector_2" x (car loc))
       (##core#inline "C_i_check_vector" x) ) )
 
-(define (##sys#check-char x . y) 
-  (if (pair? y)
-      (##core#inline "C_i_check_char_2" x (car y))
+(define (##sys#check-char x . loc) 
+  (if (pair? loc)
+      (##core#inline "C_i_check_char_2" x (car loc))
       (##core#inline "C_i_check_char" x) ) )
 
-(define (##sys#check-integer x . y)
+(define (##sys#check-integer x . loc)
   (unless (##core#inline "C_i_integerp" x) 
     (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_INTEGER_ERROR" int)
-		      (if (pair? y) (car y) #f) x) ) )
+		      (and (pair? loc) (car loc)) x) ) )
 
-(define (##sys#check-range i from to . y)
+(define (##sys#check-range i from to . loc)
   (##sys#check-exact i loc)
   (unless (and (fx<= from i) (fx< i to))
     (##sys#error-hook (foreign-value "C_OUT_OF_RANGE_ERROR" int)
-		      (if (pair? y) (car y) #f) i from to) ) )
+		      (and (pair? loc) (car loc)) i from to) ) )
 
-(define (##sys#check-special ptr . y)
+(define (##sys#check-special ptr . loc)
   (unless (and (##core#inline "C_blockp" ptr) (##core#inline "C_specialp" ptr))
-    (##sys#signal-hook #:type-error (if (pair? y) (car y) #f) "bad argument type - not a pointer-like object" ptr) ) )
+    (##sys#signal-hook #:type-error (and (pair? loc) (car loc)) "bad argument type - not a pointer-like object" ptr) ) )
 
-(define (##sys#check-closure x . y)
-  (if (pair? y)
-      (##core#inline "C_i_check_closure_2" x (car y))
+(define (##sys#check-closure x . loc)
+  (if (pair? loc)
+      (##core#inline "C_i_check_closure_2" x (car loc))
       (##core#inline "C_i_check_closure" x) ) )
 
 (include "unsafe-declarations.scm")
@@ -363,7 +362,7 @@ EOF
 (define ##sys#dload (##core#primitive "C_dload"))
 (define ##sys#set-dlopen-flags! (##core#primitive "C_set_dlopen_flags"))
 
-;; not available on all platforms and to be used with caution...
+;; Dynamic Unload not available on all platforms and to be used with caution!
 (define (##sys#dunload name)
   (and-let* ((r (##core#inline "C_dunload" (##sys#make-c-string name))))
     (##sys#gc #t) 
@@ -436,40 +435,38 @@ EOF
 
 (define (##sys#not-a-proper-list-error arg . loc)
   (##sys#error-hook (foreign-value "C_NOT_A_PROPER_LIST_ERROR" int)
-		    (if (pair? loc) (car loc) #f) arg) )
+		    (and (pair? loc) (car loc)) arg) )
 
-(define append
-  (lambda lsts
-    (if (eq? lsts '())
-	lsts
-	(let loop ((lsts lsts))
-	  (if (eq? (##sys#slot lsts 1) '())
-	      (##sys#slot lsts 0)
-	      (let copy ((node (##sys#slot lsts 0)))
-		(cond-expand
-		 [unsafe
-		  (if (eq? node '()) 
-		      (loop (##sys#slot lsts 1))
-		      (cons (##sys#slot node 0) (copy (##sys#slot node 1))) ) ]
-		 [else
-		  (cond ((eq? node '()) (loop (##sys#slot lsts 1)))
-			((pair? node)
-			 (cons (##sys#slot node 0) (copy (##sys#slot node 1))) )
-			(else (##sys#not-a-proper-list-error (##sys#slot lsts 0) 'append)) ) ] ) ) ) ) ) ) )
+(define (append . lsts)
+  (if (eq? lsts '())
+      lsts
+      (let loop ((lsts lsts))
+	(if (eq? (##sys#slot lsts 1) '())
+	    (##sys#slot lsts 0)
+	    (let copy ((node (##sys#slot lsts 0)))
+	      (cond-expand
+	       [unsafe
+		(if (eq? node '()) 
+		    (loop (##sys#slot lsts 1))
+		    (cons (##sys#slot node 0) (copy (##sys#slot node 1))) ) ]
+	       [else
+		(cond ((eq? node '()) (loop (##sys#slot lsts 1)))
+		      ((pair? node)
+		       (cons (##sys#slot node 0) (copy (##sys#slot node 1))) )
+		      (else (##sys#not-a-proper-list-error (##sys#slot lsts 0) 'append)) ) ] ) ) ) ) ) )
 
-(define reverse 
-  (lambda (lst0)
-    (let loop ((lst lst0) (rest '()))
-      (cond-expand
-       [unsafe
-	(if (eq? lst '()) 
-	    rest
-	    (loop (##sys#slot lst 1) (cons (##sys#slot lst 0) rest))  ) ]
+(define (reverse lst0)
+  (let loop ((lst lst0) (rest '()))
+    (cond-expand
+     [unsafe
+      (if (eq? lst '()) 
+	  rest
+	  (loop (##sys#slot lst 1) (cons (##sys#slot lst 0) rest))  ) ]
        [else
 	(cond ((eq? lst '()) rest)
 	      ((pair? lst)
 	       (loop (##sys#slot lst 1) (cons (##sys#slot lst 0) rest)) )
-	      (else (##sys#not-a-proper-list-error lst0 'reverse)) ) ] ) ) ) )
+	      (else (##sys#not-a-proper-list-error lst0 'reverse)) ) ] ) ) )
 
 (define (memq x lst) (##core#inline "C_i_memq" x lst))
 (define (memv x lst) (##core#inline "C_i_memv" x lst))
@@ -593,21 +590,19 @@ EOF
 		   end) 
 		 (##sys#size s) ) ] )
     (cond-expand
-      [unsafe (##sys#substring s start end)]
-      [else
-	(let ([len (##sys#size s)])
-	  (if (and (fx<= start end)
-		   (fx>= start 0)
-		   (fx<= end len) )
-	      (##sys#substring s start end)
-	      (##sys#error-hook (foreign-value "C_OUT_OF_RANGE_ERROR" int)
-				'substring start end) ) ) ] ) ) )
+     [unsafe (##sys#substring s start end)]
+     [else
+      (let ([len (##sys#size s)])
+       (if (and (fx<= start end)
+		(fx>= start 0)
+		(fx<= end len) )
+	  (##sys#substring s start end)
+	  (##sys#error-hook (foreign-value "C_OUT_OF_RANGE_ERROR" int) 'substring start end) ) ) ] ) ) )
 
-(define ##sys#substring
-  (lambda (s start end)
-    (let ([s2 (##sys#make-string (fx- end start))])
-      (##core#inline "C_substring_copy" s s2 start end 0)
-      s2) ) )
+(define (##sys#substring s start end)
+  (let ([s2 (##sys#make-string (fx- end start))])
+    (##core#inline "C_substring_copy" s s2 start end 0)
+    s2 ) )
 
 (define (string=? x y)
   (cond-expand [unsafe (##core#inline "C_u_i_string_equal_p" x y)]
@@ -707,18 +702,17 @@ EOF
     (##core#inline "C_substring_copy" y z 0 s2 s1)
     z) )
 
-(define string-append
-  (lambda all
-    (let ([snew #f])
-      (let loop ([strs all] [n 0])
-	(if (eq? strs '())
-	    (set! snew (##sys#make-string n))
-	    (let ([s (##sys#slot strs 0)])
-	      (##sys#check-string s 'string-append)
-	      (let ([len (##sys#size s)])
-		(loop (##sys#slot strs 1) (fx+ n len))
-		(##core#inline "C_substring_copy" s snew 0 len n) ) ) ) )
-      snew) ) )
+(define (string-append .  all)
+  (let ([snew #f])
+    (let loop ([strs all] [n 0])
+      (if (eq? strs '())
+	  (set! snew (##sys#make-string n))
+	  (let ([s (##sys#slot strs 0)])
+	    (##sys#check-string s 'string-append)
+	    (let ([len (##sys#size s)])
+	      (loop (##sys#slot strs 1) (fx+ n len))
+	      (##core#inline "C_substring_copy" s snew 0 len n) ) ) ) )
+    snew ) )
 
 (define string
   (let ([list->string list->string])
@@ -785,8 +779,8 @@ EOF
     (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR" int) loc x) ) )
 
 (define-inline (fp-check-flonums x y loc)
-  (unless (and (flonum? x) (flonum? y)
-    (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR" int) loc x y) )
+  (unless (and (flonum? x) (flonum? y))
+    (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR" int) loc x y) ) )
 
 (define (fp+ x y) 
   (cond-expand
@@ -808,6 +802,13 @@ EOF
    [else 
     (fp-check-flonums x y 'fp*)
     (##core#inline_allocate ("C_a_i_flonum_times" 4) x y) ] ) )
+
+(define (fp/ x y)
+  (cond-expand
+   [unsafe (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y)]
+   [else
+    (fp-check-flonums x y 'fp/)
+    (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y) ] ) )
 
 (define (fp= x y) 
   (cond-expand
@@ -864,13 +865,6 @@ EOF
    [else 
     (fp-check-flonums x y 'fpmin)
     (##core#inline "C_i_flonum_min" x y) ] ) )
-
-(define (fp/ x y)
-  (cond-expand
-   [unsafe (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y)]
-   [else
-    (fp-check-flonums x y 'fp/)
-    (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y) ] ) )
 
 (define * (##core#primitive "C_times"))
 (define - (##core#primitive "C_minus"))
@@ -1207,16 +1201,15 @@ EOF
 	  (##sys#symbol->string kw)
 	  (##sys#signal-hook #:type-error 'keyword->string "bad argument type - not a keyword" kw) ) ) ) )
 
-(define ##sys#get-keyword 
-  (lambda (key args0 . default)
-    (##sys#check-list args0 'get-keyword)
-    (let ([a (memq key args0)])
-      (if a
-	  (let ([r (##sys#slot a 1)])
-	    (if (pair? r)
-		(##sys#slot r 0)
-		(##sys#error 'get-keyword "missing keyword argument" args0 key) ) )
-	  (and (pair? default) ((car default))) ) ) ) )
+(define (##sys#get-keyword key args0 . default)
+  (##sys#check-list args0 'get-keyword)
+  (let ([a (memq key args0)])
+    (if a
+	(let ([r (##sys#slot a 1)])
+	  (if (pair? r)
+	      (##sys#slot r 0)
+	      (##sys#error 'get-keyword "missing keyword argument" args0 key) ) )
+	(and (pair? default) ((car default))) ) ) )
 
 (define get-keyword ##sys#get-keyword)
 
@@ -1307,18 +1300,17 @@ EOF
 	      (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) ) )]
     ))
 
-(define vector->list
-  (lambda (v)
-    (##sys#check-vector v 'vector->list)
-    (let ((len (##core#inline "C_block_size" v)))
-      (let loop ((i 0))
-	(if (fx>= i len)
-	    '()
-	    (cons (##sys#slot v i)
-		  (loop (fx+ i 1)) ) ) ) ) ) )
+(define (vector->list v)
+  (##sys#check-vector v 'vector->list)
+  (let ((len (##core#inline "C_block_size" v)))
+    (let loop ((i 0))
+      (if (fx>= i len)
+	  '()
+	  (cons (##sys#slot v i)
+		(loop (fx+ i 1)) ) ) ) ) )
 
-(define vector
-  (lambda xs (##sys#list->vector xs)) )
+(define (vector . xs)
+  (##sys#list->vector xs) )
 
 (define (vector-fill! v x)
   (##sys#check-vector v 'vector-fill!)
@@ -1327,37 +1319,35 @@ EOF
 	((fx>= i len))
       (##sys#setslot v i x) ) ) )
 
-(define vector-copy!
-  (lambda (from to . n)
-    (##sys#check-vector from 'vector-copy!)
-    (##sys#check-vector to 'vector-copy!)
-    (let* ([len-from (##sys#size from)]
-	   [len-to (##sys#size to)] 
-	   [n (if (pair? n) (car n) (fxmin len-to len-from))] )
-      (##sys#check-exact n 'vector-copy!)
-      (cond-expand
-       [(not unsafe)
-	(when (or (fx> n len-to) (fx> n len-from))
-	  (##sys#signal-hook 
-	   #:bounds-error 'vector-copy!
-	   "can not copy vector - count exceeds length" from to n) ) ]
-       [else] )
-      (do ([i 0 (fx+ i 1)])
-	  ((fx>= i n))
-	(##sys#setslot to i (##sys#slot from i)) ) ) ) )
+(define (vector-copy! from to . n)
+  (##sys#check-vector from 'vector-copy!)
+  (##sys#check-vector to 'vector-copy!)
+  (let* ([len-from (##sys#size from)]
+	 [len-to (##sys#size to)] 
+	 [n (if (pair? n) (car n) (fxmin len-to len-from))] )
+    (##sys#check-exact n 'vector-copy!)
+    (cond-expand
+     [(not unsafe)
+      (when (or (fx> n len-to) (fx> n len-from))
+	(##sys#signal-hook 
+	 #:bounds-error 'vector-copy!
+	 "can not copy vector - count exceeds length" from to n) ) ]
+     [else] )
+    (do ([i 0 (fx+ i 1)])
+	((fx>= i n))
+      (##sys#setslot to i (##sys#slot from i)) ) ) )
 
 (define (vector-resize v n #!optional init)
   (##sys#check-vector v 'vector-resize)
   (##sys#check-exact n 'vector-resize)
   (##sys#grow-vector v n init) )
 
-(define ##sys#grow-vector 
-  (lambda (v n init)
-    (let ([v2 (##sys#make-vector n init)]
-	  [len (##sys#size v)] )
-      (do ([i 0 (fx+ i 1)])
-	  ((fx>= i len) v2)
-	(##sys#setslot v2 i (##sys#slot v i)) ) ) ) )
+(define (##sys#grow-vector v n init)
+  (let ([v2 (##sys#make-vector n init)]
+	[len (##sys#size v)] )
+    (do ([i 0 (fx+ i 1)])
+	((fx>= i len) v2)
+      (##sys#setslot v2 i (##sys#slot v i)) ) ) )
 	
 
 ;;; Characters:
@@ -1595,29 +1585,27 @@ EOF
 
 (define ##sys#dynamic-winds '())
 
-(define dynamic-wind
-  (lambda (before thunk after)
-    (before)
-    (set! ##sys#dynamic-winds (cons (cons before after) ##sys#dynamic-winds))
-    (##sys#call-with-values
-     thunk
-     (lambda results
-       (set! ##sys#dynamic-winds (##sys#slot ##sys#dynamic-winds 1))
-       (after)
-       (apply ##sys#values results) ) ) ) )
+(define (dynamic-wind before thunk after)
+  (before)
+  (set! ##sys#dynamic-winds (cons (cons before after) ##sys#dynamic-winds))
+  (##sys#call-with-values
+   thunk
+   (lambda results
+     (set! ##sys#dynamic-winds (##sys#slot ##sys#dynamic-winds 1))
+     (after)
+     (apply ##sys#values results) ) ) )
 
 (define ##sys#dynamic-wind dynamic-wind)
 
-(define call-with-current-continuation
-  (lambda (proc)
-    (let ((winds ##sys#dynamic-winds))
-      (##sys#call-with-current-continuation
-       (lambda (cont)
-	 (proc
-	  (lambda results
-	    (unless (eq? ##sys#dynamic-winds winds)
-	      (##sys#dynamic-unwind winds (fx- (length ##sys#dynamic-winds) (length winds))) )
-	    (apply cont results) ) ) ) ) ) ) )
+(define (call-with-current-continuation proc)
+  (let ((winds ##sys#dynamic-winds))
+    (##sys#call-with-current-continuation
+     (lambda (cont)
+       (proc
+	(lambda results
+	  (unless (eq? ##sys#dynamic-winds winds)
+	    (##sys#dynamic-unwind winds (fx- (length ##sys#dynamic-winds) (length winds))) )
+	  (apply cont results) ) ) ) ) ) )
 
 (define call/cc call-with-current-continuation)
 
@@ -1661,14 +1649,16 @@ EOF
 
 (define (port? x) (##core#inline "C_i_portp" x))
 
-(define (input-port? x)
+(define-inline (%port? x)
   (and (##core#inline "C_blockp" x)
-       (##core#inline "C_portp" x)
+       (##core#inline "C_portp" x)) )
+
+(define (input-port? x)
+  (and (%port? x)
        (##sys#slot x 1) ) )
 
 (define (output-port? x)
-  (and (##core#inline "C_blockp" x)
-       (##core#inline "C_portp" x)
+  (and (%port? x)
        (not (##sys#slot x 1)) ) )
 
 ;;; Port layout:
@@ -1769,24 +1759,21 @@ EOF
 (##sys#open-file-port ##sys#standard-output 1 #f)
 (##sys#open-file-port ##sys#standard-error 2 #f)
 
-(define ##sys#check-port
-  (lambda (x . loc)
-    (if (or (not (##core#inline "C_blockp" x))
-	    (not (##core#inline "C_portp" x)) )
-	(##sys#signal-hook #:type-error (if (pair? loc) (car loc) #f) "argument is not a port" x) ) ) )
+(define (##sys#check-port x . loc)
+  (unless (%port? x)
+    (##sys#signal-hook #:type-error (and (pair? loc) (car loc)) "argument is not a port" x) ) )
 
-(define ##sys#check-port-mode
-  (lambda (port mode . loc)
-    (unless (eq? mode (##sys#slot port 1))
-      (##sys#signal-hook 
-       #:type-error (if (pair? loc) (car loc) #f)
-       (if mode "port is not an input port" "port is not an output-port") ) ) ) )
+(define (##sys#check-port-mode port mode . loc)
+  (unless (eq? mode (##sys#slot port 1))
+    (##sys#signal-hook
+     #:type-error (and (pair? loc) (car loc))
+     (if mode "port is not an input port" "port is not an output-port") port) ) )
 
 (define (##sys#check-port* p loc)
   (##sys#check-port p)
   (when (##sys#slot p 8)
     (##sys#signal-hook #:file-error loc "port already closed" p) )
-  p)
+  p )
 
 (define (current-input-port . arg)
   (if (pair? arg)
@@ -1965,10 +1952,9 @@ EOF
   (##sys#check-port-mode port #f 'flush-output)
   (##sys#flush-output port) )
 
-(define port-name
-  (lambda (#!optional (port ##sys#standard-input))
-    (##sys#check-port port 'port-name)
-    (##sys#slot port 3) ) )
+(define (port-name #!optional (port ##sys#standard-input))
+  (##sys#check-port port 'port-name)
+  (##sys#slot port 3) )
 
 (define (set-port-name! port name)
   (##sys#check-port port 'set-port-name!)
@@ -1979,38 +1965,39 @@ EOF
   (and (##sys#slot port 1) 
        (##sys#slot port 4) ) )
 
-(define port-position
-  (lambda (#!optional (port ##sys#standard-input))
-    (##sys#check-port port 'port-position)
-    (if (##sys#slot port 1) 
-	(##sys#values (##sys#slot port 4) (##sys#slot port 5))
-	(##sys#error 'port-position "can not compute position of port" port) ) ) )
+(define (port-position #!optional (port ##sys#standard-input))
+  (##sys#check-port port 'port-position)
+  (if (##sys#slot port 1) 
+      (##sys#values (##sys#slot port 4) (##sys#slot port 5))
+      (##sys#error 'port-position "can not compute position of port" port) ) )
 
-(define delete-file
-  (lambda (filename)
-    (##sys#check-string filename 'delete-file)
-    (##sys#pathname-resolution
-     filename
-     (lambda (filename)
-       (unless (eq? 0 (##core#inline "C_delete_file" (##sys#make-c-string filename)))
-	 (##sys#update-errno)
-	 (##sys#signal-hook #:file-error 'delete-file (##sys#string-append "can not delete file - " strerror) filename) ) )
-     #:delete) ) )
+(define (delete-file filename)
+  (##sys#check-string filename 'delete-file)
+  (##sys#pathname-resolution
+   filename
+   (lambda (filename)
+     (unless (eq? 0 (##core#inline "C_delete_file" (##sys#make-c-string filename)))
+       (##sys#update-errno)
+       (##sys#signal-hook
+	#:file-error 'delete-file
+	(##sys#string-append "can not delete file - " strerror) filename) ) )
+   #:delete) )
 
-(define rename-file
-  (lambda (old new)
-    (##sys#check-string old 'rename-file)
-    (##sys#check-string new 'rename-file)
-    (##sys#pathname-resolution
-     old
-     (lambda (old)
-       (##sys#pathname-resolution
-	new
-	(lambda (new)
-	  (unless (eq? 0 (##core#inline "C_rename_file" (##sys#make-c-string old) (##sys#make-c-string new)))
-	    (##sys#update-errno)
-	    (##sys#signal-hook #:file-error 'rename-file (##sys#string-append "can not rename file - " strerror) old new) ) ) ) )
-     #:rename new) ) )
+(define (rename-file old new)
+  (##sys#check-string old 'rename-file)
+  (##sys#check-string new 'rename-file)
+  (##sys#pathname-resolution
+   old
+   (lambda (old)
+     (##sys#pathname-resolution
+      new
+      (lambda (new)
+	(unless (eq? 0 (##core#inline "C_rename_file" (##sys#make-c-string old) (##sys#make-c-string new)))
+	  (##sys#update-errno)
+	  (##sys#signal-hook
+	   #:file-error 'rename-file
+	   (##sys#string-append "can not rename file - " strerror) old new) ) ) ) )
+   #:rename new) )
 
 
 ;;; Parameters:
@@ -2624,13 +2611,12 @@ EOF
 ;   your character then call the previous handler.
 ; - Don't forget to read 'char', it's only peeked at this point.
 
-(define ##sys#user-read-hook
-  (lambda (char port)
-    (case char
-      ;; I put it here, so the SRFI-4 unit can intercept '#f...'
-      ((#\f #\F) (##sys#read-char-0 port) #f)
-      ((#\t #\T) (##sys#read-char-0 port) #t)
-      (else (##sys#read-error port "invalid sharp-sign read syntax" char) ) ) ) )
+(define (##sys#user-read-hook char port)
+  (case char
+    ;; I put it here, so the SRFI-4 unit can intercept '#f...'
+    ((#\f #\F) (##sys#read-char-0 port) #f)
+    ((#\t #\T) (##sys#read-char-0 port) #t)
+    (else (##sys#read-error port "invalid sharp-sign read syntax" char) ) ) )
 
 
 ;;; Table for specially handled read-syntax:
@@ -3147,30 +3133,28 @@ EOF
       (when pos
 	(loop (##sys#scan-buffer-line buf lim pos bumper)) ) ) ) )
 
-(define open-input-string 
-  (lambda (string)
-    (##sys#check-string string 'open-input-string)
-    (let ([port (##sys#make-port #t ##sys#string-port-class "(string)" 'string)])
-      (##sys#setislot port 11 (##core#inline "C_block_size" string))
-      (##sys#setislot port 10 0)
-      (##sys#setslot port 12 string)
-      port) ) )
+(define (open-input-string string)
+  (##sys#check-string string 'open-input-string)
+  (let ([port (##sys#make-port #t ##sys#string-port-class "(string)" 'string)])
+    (##sys#setislot port 11 (##core#inline "C_block_size" string))
+    (##sys#setislot port 10 0)
+    (##sys#setslot port 12 string)
+    port ) )
 
-(define open-output-string
-  (lambda ()
-    (let ([port (##sys#make-port #f ##sys#string-port-class "(string)" 'string)])
-      (##sys#setislot port 10 0)
-      (##sys#setislot port 11 output-string-initial-size)
-      (##sys#setslot port 12 (##sys#make-string output-string-initial-size))
-      port) ) )
+(define (open-output-string)
+  (let ([port (##sys#make-port #f ##sys#string-port-class "(string)" 'string)])
+    (##sys#setislot port 10 0)
+    (##sys#setislot port 11 output-string-initial-size)
+    (##sys#setslot port 12 (##sys#make-string output-string-initial-size))
+    port ) )
 
-(define get-output-string
-  (lambda (port)
-    (##sys#check-port port 'get-output-string)
-    (##sys#check-port-mode port #f 'get-output-string)
-    (if (not (eq? 'string (##sys#slot port 7)))
-	(##sys#signal-hook #:type-error 'get-output-string "argument is not a string-output-port" port) 
-	(##sys#substring (##sys#slot port 12) 0 (##sys#slot port 10)) ) ) )
+(define (get-output-string port)
+  (##sys#check-port port 'get-output-string)
+  (##sys#check-port-mode port #f 'get-output-string)
+  (if (not (eq? 'string (##sys#slot port 7)))
+      (##sys#signal-hook
+       #:type-error 'get-output-string "argument is not a string-output-port" port) 
+      (##sys#substring (##sys#slot port 12) 0 (##sys#slot port 10)) ) )
 
 (define ##sys#print-to-string
   (let ([get-output-string get-output-string]
@@ -3379,13 +3363,13 @@ EOF
      chain)
     (##sys#print "\t<--\n" #f port) ) )
 
-(define print-call-chain
-  (lambda (#!optional (port ##sys#standard-output) (start 0) (thread ##sys#current-thread)
-		      (header "\n\tCall history:\n") )
-    (##sys#check-port port 'print-call-chain)
-    (##sys#check-exact start 'print-call-chain)
-    (##sys#check-string header 'print-call-chain)
-    (##sys#really-print-call-chain port (##sys#get-call-chain start thread) header) ) )
+(define (print-call-chain #!optional (port ##sys#standard-output) (start 0)
+				     (thread ##sys#current-thread)
+				     (header "\n\tCall history:\n") )
+  (##sys#check-port port 'print-call-chain)
+  (##sys#check-exact start 'print-call-chain)
+  (##sys#check-string header 'print-call-chain)
+  (##sys#really-print-call-chain port (##sys#get-call-chain start thread) header) )
 
 (define get-call-chain ##sys#get-call-chain)
 
@@ -3583,54 +3567,53 @@ EOF
 
 ;;; Condition handling:
 
-(define ##sys#signal-hook 
-  (lambda (mode msg . args)
-    (##core#inline "C_dbg_hook" #f)
-    (case mode
-      [(#:user-interrupt)
+(define (##sys#signal-hook mode msg . args)
+  (##core#inline "C_dbg_hook" #f)
+  (case mode
+    [(#:user-interrupt)
+     (##sys#abort
+      (##sys#make-structure
+       'condition
+       '(user-interrupt) ) ) ]
+    [(#:warning)
+     (##sys#print "Warning: " #f ##sys#standard-error)
+     (##sys#print msg #f ##sys#standard-error)
+     (if (or (null? args) (fx> (length args) 1))
+	 (##sys#write-char-0 #\newline ##sys#standard-error)
+	 (##sys#print ": " #f ##sys#standard-error))
+     (for-each
+      (lambda (x)
+	(##sys#print x #t ##sys#standard-error)
+	(##sys#write-char-0 #\newline ##sys#standard-error) )
+      args) 
+     (##sys#flush-output ##sys#standard-error) ] 
+    [else
+     (when (and (symbol? msg) (null? args))
+       (set! msg (##sys#symbol->string msg)) )
+     (let* ([hasloc (and (or (not msg) (symbol? msg)) (pair? args))]
+	    [loc (and hasloc msg)]
+	    [msg (if hasloc (##sys#slot args 0) msg)]
+	    [args (if hasloc (##sys#slot args 1) args)] )
        (##sys#abort
 	(##sys#make-structure
-	 'condition
-	 '(user-interrupt) ) ) ]
-      [(#:warning)
-       (##sys#print "Warning: " #f ##sys#standard-error)
-       (##sys#print msg #f ##sys#standard-error)
-       (if (or (null? args) (fx> (length args) 1))
-	   (##sys#write-char-0 #\newline ##sys#standard-error)
-	   (##sys#print ": " #f ##sys#standard-error))
-       (for-each
-	(lambda (x)
-	  (##sys#print x #t ##sys#standard-error)
-	  (##sys#write-char-0 #\newline ##sys#standard-error) )
-	args) 
-       (##sys#flush-output ##sys#standard-error) ] 
-      [else
-       (when (and (symbol? msg) (null? args))
-	 (set! msg (##sys#symbol->string msg)) )
-       (let* ([hasloc (and (or (not msg) (symbol? msg)) (pair? args))]
-	      [loc (and hasloc msg)]
-	      [msg (if hasloc (##sys#slot args 0) msg)]
-	      [args (if hasloc (##sys#slot args 1) args)] )
-	 (##sys#abort
-	  (##sys#make-structure
-	   'condition 
-	   (case mode
-	     [(#:type-error) '(exn type)]
-	     [(#:syntax-error) '(exn syntax)]
-	     [(#:bounds-error) '(exn bounds)]
-	     [(#:arithmetic-error) '(exn arithmetic)]
-	     [(#:file-error) '(exn i/o file)]
-	     [(#:runtime-error) '(exn runtime)]
-	     [(#:process-error) '(exn process)]
-	     [(#:network-error) '(exn i/o net)]
-	     [(#:limit-error) '(exn runtime limit)]
-	     [(#:arity-error) '(exn arity)]
-	     [(#:access-error) '(exn access)]
-	     [(#:domain-error) '(exn domain)]
-	     [else '(exn)] )
-	   (list '(exn . message) msg
-		 '(exn . arguments) args
-		 '(exn . location) loc) ) ) ) ] ) ) )
+	 'condition 
+	 (case mode
+	   [(#:type-error)		'(exn type)]
+	   [(#:syntax-error)		'(exn syntax)]
+	   [(#:bounds-error)		'(exn bounds)]
+	   [(#:arithmetic-error)	'(exn arithmetic)]
+	   [(#:file-error)		'(exn i/o file)]
+	   [(#:runtime-error)		'(exn runtime)]
+	   [(#:process-error)		'(exn process)]
+	   [(#:network-error)		'(exn i/o net)]
+	   [(#:limit-error)		'(exn runtime limit)]
+	   [(#:arity-error)		'(exn arity)]
+	   [(#:access-error)		'(exn access)]
+	   [(#:domain-error)		'(exn domain)]
+	   [else			'(exn)] )
+	 (list '(exn . message) msg
+	       '(exn . arguments) args
+	       '(exn . location) loc) ) ) ) ] ) )
 
 (define (##sys#abort x)
   (##sys#current-exception-handler x)
@@ -3710,14 +3693,13 @@ EOF
 	 '()
 	 (cons (cons kind (car props)) (cons (cadr props) (loop (cddr props)))) ) ) ) )
 
-(define make-composite-condition
-  (lambda (c1 . conds)
-    (let ([conds (cons c1 conds)])
-      (for-each (lambda (c) (##sys#check-structure c 'condition 'make-composite-condition)) conds)
-      (##sys#make-structure
-       'condition
-       (apply ##sys#append (map (lambda (c) (##sys#slot c 1)) conds))
-       (apply ##sys#append (map (lambda (c) (##sys#slot c 2)) conds)) ) ) ) )
+(define (make-composite-condition c1 . conds)
+  (let ([conds (cons c1 conds)])
+    (for-each (lambda (c) (##sys#check-structure c 'condition 'make-composite-condition)) conds)
+    (##sys#make-structure
+     'condition
+     (apply ##sys#append (map (lambda (c) (##sys#slot c 1)) conds))
+     (apply ##sys#append (map (lambda (c) (##sys#slot c 2)) conds)) ) ) )
 
 (define (condition? x) (##sys#structure? x 'condition))
 
@@ -3765,14 +3747,14 @@ EOF
 			       (##sys#number->string c) )
 		(if fn (list fn) '()))))
 	((3) (apply ##sys#signal-hook #:type-error loc "bad argument type" args))
-	((4) (apply ##sys#error loc "unbound variable" args))
+	((4) (apply ##sys#signal-hook #:runtime-error loc "unbound variable" args))
 	((5) (apply ##sys#signal-hook #:limit-error loc "parameter limit exceeded" args))
 	((6) (apply ##sys#signal-hook #:limit-error loc "out of memory" args))
 	((7) (apply ##sys#signal-hook #:arithmetic-error loc "division by zero" args))
 	((8) (apply ##sys#signal-hook #:bounds-error loc "out of range" args))
 	((9) (apply ##sys#signal-hook #:type-error loc "call of non-procedure" args))
-	((10) (apply ##sys#error loc "continuation can not receive multiple values" args))
-	((11) (apply ##sys#error loc "argument is cyclic" args))
+	((10) (apply ##sys#signal-hook #:arity-error loc "continuation can not receive multiple values" args))
+	((11) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a non-cyclic list" args))
 	((12) (apply ##sys#signal-hook #:limit-error loc "recursion too deep" args))
 	((13) (apply ##sys#signal-hook #:type-error loc "inexact number can not be represented as an exact number" args))
 	((14) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a proper list" args))
@@ -3788,12 +3770,12 @@ EOF
 	((24) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a structure of the required type" args))
 	((25) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a blob" args))
 	((26) (apply ##sys#signal-hook #:type-error loc "locative refers to reclaimed object" args))
-	((27) (apply ##sys#signal-hook #:type-error loc "bad argument type - non-immediate value expected" args))
-	((28) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a number-vector or not of the correct type" args))
+	((27) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a non-immediate value" args))
+	((28) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a number vector" args))
 	((29) (apply ##sys#signal-hook #:type-error loc "bad argument type - not an integer" args))
 	((30) (apply ##sys#signal-hook #:type-error loc "bad argument type - not an unsigned integer" args))
 	((31) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a pointer" args))
-	((32) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a tagged pointer or not of the correct type" args))
+	((32) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a tagged pointer" args))
 	((33) (apply ##sys#signal-hook #:runtime-error loc
 		     "code to load dynamically was linked with safe runtime libraries, but executing runtime was not"
 		     args) )
@@ -3838,9 +3820,10 @@ EOF
   ;; *** '4' is platform dependent!
   (##core#inline_allocate ("C_a_unsigned_int_to_num" 4) (##sys#slot ptr 0)) )
 
-(define ##sys#make-c-string 
-  (lambda (str)
-    (##sys#string-append str (string (##core#inline "C_make_character" (##core#inline "C_unfix" 0)))) ) )
+(define (##sys#make-c-string str)
+  (##sys#string-append
+   str
+   (string (##core#inline "C_make_character" (##core#inline "C_unfix" 0)))) )
 
 (define ##sys#peek-signed-integer (##core#primitive "C_peek_signed_integer"))
 (define ##sys#peek-unsigned-integer (##core#primitive "C_peek_unsigned_integer"))
@@ -3853,37 +3836,33 @@ EOF
   (##core#inline "C_f64peek" b i)
   (##sys#cons-flonum) )
 
-(define ##sys#peek-c-string
-    (lambda (b i)
-      (and (not (##sys#null-pointer? b))
-	   (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
-		  [str2 (##sys#make-string len)] )
-	     (##core#inline "C_peek_c_string" b i str2 len)
-	     str2) ) ) )
+(define (##sys#peek-c-string b i)
+  (and (not (##sys#null-pointer? b))
+       (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
+	      [str2 (##sys#make-string len)] )
+	 (##core#inline "C_peek_c_string" b i str2 len)
+	 str2 ) ) )
 
-(define ##sys#peek-nonnull-c-string
-    (lambda (b i)
-      (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
-	     [str2 (##sys#make-string len)] )
-	(##core#inline "C_peek_c_string" b i str2 len)
-	str2) ) )
+(define (##sys#peek-nonnull-c-string b i)
+  (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
+	 [str2 (##sys#make-string len)] )
+    (##core#inline "C_peek_c_string" b i str2 len)
+    str2 ) )
 
-(define ##sys#peek-and-free-c-string
-    (lambda (b i)
-      (and (not (##sys#null-pointer? b))
-	   (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
-		  [str2 (##sys#make-string len)] )
-	     (##core#inline "C_peek_c_string" b i str2 len)
-	     (##core#inline "C_free_mptr" b i)
-	     str2) ) ) )
+(define (##sys#peek-and-free-c-string b i)
+  (and (not (##sys#null-pointer? b))
+       (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
+	      [str2 (##sys#make-string len)] )
+	 (##core#inline "C_peek_c_string" b i str2 len)
+	 (##core#inline "C_free_mptr" b i)
+	 str2 ) ) )
 
-(define ##sys#peek-and-free-nonnull-c-string
-    (lambda (b i)
-      (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
-	     [str2 (##sys#make-string len)] )
-	(##core#inline "C_peek_c_string" b i str2 len)
-	(##core#inline "C_free_mptr" b i)
-	str2) ) )
+(define (##sys#peek-and-free-nonnull-c-string b i)
+  (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
+	 [str2 (##sys#make-string len)] )
+    (##core#inline "C_peek_c_string" b i str2 len)
+    (##core#inline "C_free_mptr" b i)
+    str2 ) )
 
 (define (##sys#poke-c-string b i s) 
   (##core#inline "C_poke_c_string" b i (##sys#make-c-string s)) )
@@ -4300,24 +4279,23 @@ EOF
 
 ;;; Promises:
 
-(define ##sys#make-promise
-    (lambda (proc)
-      (let ([result-ready #f]
-	    [results #f] )
-	(##sys#make-structure
-	 'promise
-	 (lambda ()
-	   (if result-ready
-	       (apply ##sys#values results)
-	       (##sys#call-with-values 
-		proc
-		(lambda xs
-		  (if result-ready
-		      (apply ##sys#values results)
-		      (begin
-			(set! result-ready #t)
-			(set! results xs)
-			(apply ##sys#values results) ) ) ) ) ) ) ) ) ) )
+(define (##sys#make-promise proc)
+  (let ([result-ready #f]
+	[results #f] )
+    (##sys#make-structure
+     'promise
+     (lambda ()
+       (if result-ready
+	   (apply ##sys#values results)
+	   (##sys#call-with-values 
+	    proc
+	    (lambda xs
+	      (if result-ready
+		  (apply ##sys#values results)
+		  (begin
+		    (set! result-ready #t)
+		    (set! results xs)
+		    (apply ##sys#values results) ) ) ) ) ) ) ) ) )
 
 (define (promise? x)
   (##sys#structure? x 'promise) )

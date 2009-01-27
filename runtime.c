@@ -1421,12 +1421,12 @@ void barf(int code, char *loc, ...)
 
   switch(code) {
   case C_BAD_ARGUMENT_COUNT_ERROR:
-    msg = C_text("wrong number of arguments in function call");
+    msg = C_text("bad argument count");
     c = 3;
     break;
 
   case C_BAD_MINIMUM_ARGUMENT_COUNT_ERROR:
-    msg = C_text("too few arguments in function call");
+    msg = C_text("too few arguments");
     c = 3;
     break;
   
@@ -1471,7 +1471,7 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_BAD_ARGUMENT_TYPE_CYCLIC_LIST_ERROR:
-    msg = C_text("argument is cyclic");
+    msg = C_text("bad argument type - not a non-cyclic list");
     c = 1;
     break;
 
@@ -1486,7 +1486,7 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_NOT_A_PROPER_LIST_ERROR:
-    msg = C_text("argument is not a proper list");
+    msg = C_text("bad argument type - not a proper list");
     c = 1;
     break;
 
@@ -1551,32 +1551,32 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_BLOCK_ERROR:
-    msg = C_text("bad argument type - immediate value expected");
+    msg = C_text("bad argument type - not a non-immediate value");
     c = 1;
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_NUMBER_VECTOR_ERROR:
-    msg = C_text("bad argument type - number vector expected");
+    msg = C_text("bad argument type - not a number vector");
     c = 2;
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_INTEGER_ERROR:
-    msg = C_text("bad argument type - integer expected");
+    msg = C_text("bad argument type - not an integer");
     c = 1;
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_UINTEGER_ERROR:
-    msg = C_text("bad argument type - unsigned integer expected");
+    msg = C_text("bad argument type - not an unsigned integer");
     c = 1;
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_POINTER_ERROR:
-    msg = C_text("bad argument type - pointer expected");
+    msg = C_text("bad argument type - not a pointer");
     c = 1;
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_TAGGED_POINTER_ERROR:
-    msg = C_text("bad argument type - tagged pointer expected");
+    msg = C_text("bad argument type - not a tagged pointer");
     c = 2;
     break;
 
@@ -1591,12 +1591,12 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR:
-    msg = C_text("bad argument type - floating-point number expected");
+    msg = C_text("bad argument type - not a flonum");
     c = 1;
     break;
 
   case C_BAD_ARGUMENT_TYPE_NO_CLOSURE_ERROR:
-    msg = C_text("bad argument type - procedure expected");
+    msg = C_text("bad argument type - not a procedure");
     c = 1;
     break;
 
