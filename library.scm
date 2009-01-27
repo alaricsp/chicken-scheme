@@ -34,7 +34,7 @@
 	##sys#grow-vector ##sys#default-parameter-vector 
 	print-length-limit current-print-length setter-tag read-marks
 	##sys#print-exit
-        ##sys#format-here-doc-warning)
+	##sys#format-here-doc-warning)
   (foreign-declare #<<EOF
 #include <string.h>
 #include <ctype.h>
@@ -50,15 +50,15 @@
 #endif
 
 #ifndef EX_SOFTWARE
-# define EX_SOFTWARE    70
+# define EX_SOFTWARE	70
 #endif
 
 #ifndef C_BUILD_TAG
-# define C_BUILD_TAG    ""
+# define C_BUILD_TAG	""
 #endif
 
-#define C_close_file(p)       (C_fclose((C_FILEPTR)(C_port_file(p))), C_SCHEME_UNDEFINED)
-#define C_f64peek(b, i)       (C_temporary_flonum = ((double *)C_data_pointer(b))[ C_unfix(i) ], C_SCHEME_UNDEFINED)
+#define C_close_file(p)	      (C_fclose((C_FILEPTR)(C_port_file(p))), C_SCHEME_UNDEFINED)
+#define C_f64peek(b, i)	      (C_temporary_flonum = ((double *)C_data_pointer(b))[ C_unfix(i) ], C_SCHEME_UNDEFINED)
 #define C_fetch_c_strlen(b, i) C_fix(strlen((C_char *)C_block_item(b, C_unfix(i))))
 #define C_peek_c_string(b, i, to, len) (C_memcpy(C_data_pointer(to), (C_char *)C_block_item(b, C_unfix(i)), C_unfix(len)), C_SCHEME_UNDEFINED)
 #define C_free_mptr(p, i)     (C_free((void *)C_block_item(p, C_unfix(i))), C_SCHEME_UNDEFINED)
@@ -84,9 +84,9 @@ static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
   for (i = 0; i < n; i++) {
     c = getc(fp);
     switch (c) {
-    case '\r':  if ((c = getc(fp)) != '\n') ungetc(c, fp);
-    case EOF:   clearerr(fp);
-    case '\n':  return C_fix(i);
+    case '\r':	if ((c = getc(fp)) != '\n') ungetc(c, fp);
+    case EOF:	clearerr(fp);
+    case '\n':	return C_fix(i);
     }
     buf[i] = c;
   }
@@ -106,12 +106,12 @@ fast_read_string_from_file (C_word dest, C_word port, C_word len, C_word pos)
     if (feof (fp)) {
       clearerr (fp);
       if (0 == m)
-        return C_SCHEME_END_OF_FILE;
+	return C_SCHEME_END_OF_FILE;
     } else if (ferror (fp)) {
       if (0 == m) {
-        return C_SCHEME_FALSE;
+	return C_SCHEME_FALSE;
       } else {
-        clearerr (fp);
+	clearerr (fp);
       }
     }
   }
@@ -241,8 +241,6 @@ EOF
 (define void ##sys#void)
 (define ##sys#undefined-value (##core#undefined))
 (define (##sys#halt) (##core#inline "C_halt" #f))
-(define ##sys#dload (##core#primitive "C_dload"))
-(define ##sys#set-dlopen-flags! (##core#primitive "C_set_dlopen_flags"))
 (define (##sys#flo2fix n) (##core#inline "C_quickflonumtruncate" n))
 (define ##sys#become! (##core#primitive "C_become"))
 (define (##sys#block-ref x i) (##core#inline "C_i_block_ref" x i))
@@ -324,18 +322,18 @@ EOF
 
 (define (##sys#check-integer x . y)
   (unless (##core#inline "C_i_integerp" x) 
-    (##sys#signal-hook #:type-error (if (pair? y) (car y) #f) "bad argument type - not an integer" x) ) )
+    (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_INTEGER_ERROR" int)
+		      (if (pair? y) (car y) #f) x) ) )
 
-(define ##sys#check-range 
-  (lambda (i from to loc)
-    (##sys#check-exact i loc)
-    (if (or (not (fx>= i from))
-	    (not (fx< i to)) ) 
-	(##sys#signal-hook #:bounds-error loc "out of range" i from to) ) ) )
+(define (##sys#check-range i from to . y)
+  (##sys#check-exact i loc)
+  (unless (and (fx<= from i) (fx< i to))
+    (##sys#error-hook (foreign-value "C_OUT_OF_RANGE_ERROR" int)
+		      (if (pair? y) (car y) #f) i from to) ) )
 
-(define (##sys#check-special ptr loc)
+(define (##sys#check-special ptr . y)
   (unless (and (##core#inline "C_blockp" ptr) (##core#inline "C_specialp" ptr))
-    (##sys#signal-hook #:type-error loc "bad argument type - not a pointer-like object" ptr) ) )
+    (##sys#signal-hook #:type-error (if (pair? y) (car y) #f) "bad argument type - not a pointer-like object" ptr) ) )
 
 (define (##sys#check-closure x . y)
   (if (pair? y)
@@ -358,6 +356,18 @@ EOF
 	   (##sys#update-errno)
 	   (##sys#signal-hook #:process-error 'system "`system' invocation failed" cmd) )
 	  (else r) ) ) )
+
+
+;;; Dynamic Load
+
+(define ##sys#dload (##core#primitive "C_dload"))
+(define ##sys#set-dlopen-flags! (##core#primitive "C_set_dlopen_flags"))
+
+;; not available on all platforms and to be used with caution...
+(define (##sys#dunload name)
+  (and-let* ((r (##core#inline "C_dunload" (##sys#make-c-string name))))
+    (##sys#gc #t) 
+    #t ) )
 
 
 ;;; Operations on booleans:
@@ -424,9 +434,9 @@ EOF
 	  ((eq? x (##sys#slot lst 0)) (##sys#slot lst 1))
 	  (else (cons (##sys#slot lst 0) (loop (##sys#slot lst 1)))) ) ) )
 
-(define ##sys#not-a-proper-list-error
-  (lambda (arg . loc)
-    (##sys#signal-hook #:type-error (if (pair? loc) (car loc) #f) "argument is not a proper list" arg) ) )
+(define (##sys#not-a-proper-list-error arg . loc)
+  (##sys#error-hook (foreign-value "C_NOT_A_PROPER_LIST_ERROR" int)
+		    (if (pair? loc) (car loc) #f) arg) )
 
 (define append
   (lambda lsts
@@ -490,11 +500,11 @@ EOF
   (when (fx< size 0)
     (##sys#signal-hook #:bounds-error 'make-string "size is negative" size))
   (%make-string size
-                (if (null? fill)
-                    #\space
-                    (let ((c (car fill)))
-                      (##sys#check-char c 'make-string)
-                      c ) ) ) )
+		(if (null? fill)
+		    #\space
+		    (let ((c (car fill)))
+		      (##sys#check-char c 'make-string)
+		      c ) ) ) )
 
 (define ##sys#string->list 
   (lambda (s)
@@ -512,22 +522,22 @@ EOF
   (cond-expand
     [unsafe
     (let* ([len (length lst0)]
-           [s (##sys#make-string len)] )
+	   [s (##sys#make-string len)] )
       (do ([i 0 (fx+ i 1)]
-           [lst lst0 (##sys#slot lst 1)] )
-        ((fx>= i len) s)
-        (##core#inline "C_setsubchar" s i (##sys#slot lst 0)) ) )]
+	   [lst lst0 (##sys#slot lst 1)] )
+	((fx>= i len) s)
+	(##core#inline "C_setsubchar" s i (##sys#slot lst 0)) ) )]
     [else
     (if (not (list? lst0))
       (##sys#not-a-proper-list-error lst0 'list->string)
       (let* ([len (length lst0)]
-             [s (##sys#make-string len)] )
-        (do ([i 0 (fx+ i 1)]
-             [lst lst0 (##sys#slot lst 1)] )
-          ((fx>= i len) s)
-          (let ([c (##sys#slot lst 0)])
-            (##sys#check-char c 'list->string)
-            (##core#inline "C_setsubchar" s i c) ) ) ) )]
+	     [s (##sys#make-string len)] )
+	(do ([i 0 (fx+ i 1)]
+	     [lst lst0 (##sys#slot lst 1)] )
+	  ((fx>= i len) s)
+	  (let ([c (##sys#slot lst 0)])
+	    (##sys#check-char c 'list->string)
+	    (##core#inline "C_setsubchar" s i c) ) ) ) )]
     ))
 
 (define list->string ##sys#list->string)
@@ -538,23 +548,23 @@ EOF
   (cond-expand
     [unsafe
     (let* ((n (length l))
-           (s (##sys#make-string n)))
+	   (s (##sys#make-string n)))
       (let iter ((l2 l) (n2 (fx- n 1)))
-        (cond ((fx>= n2 0)
-               (##core#inline "C_setsubchar" s n2 (##sys#slot l2 0))
-               (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
+	(cond ((fx>= n2 0)
+	       (##core#inline "C_setsubchar" s n2 (##sys#slot l2 0))
+	       (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
       s ) ]
     [else
     (if (list? l)
       (let* ((n (length l))
-             (s (##sys#make-string n)))
-        (let iter ((l2 l) (n2 (fx- n 1)))
-          (cond ((fx>= n2 0)
-                 (let ((c (##sys#slot l2 0)))
-                   (##sys#check-char c 'reverse-list->string)
-                   (##core#inline "C_setsubchar" s n2 c) )
-                 (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
-        s )
+	     (s (##sys#make-string n)))
+	(let iter ((l2 l) (n2 (fx- n 1)))
+	  (cond ((fx>= n2 0)
+		 (let ((c (##sys#slot l2 0)))
+		   (##sys#check-char c 'reverse-list->string)
+		   (##core#inline "C_setsubchar" s n2 c) )
+		 (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
+	s )
       (##sys#not-a-proper-list-error l 'reverse-list->string) ) ]
     ) )
 
@@ -574,24 +584,24 @@ EOF
       (##core#inline "C_copy_memory" s2 s len)
       s2) ) )
 
-(define substring
-  (lambda (s start . end)
-    (##sys#check-string s 'substring)
-    (##sys#check-exact start 'substring)
-    (let ([end (if (pair? end) 
-		   (let ([end (car end)])
-		     (##sys#check-exact end 'substring)
-		     end) 
-		   (##sys#size s) ) ] )
-      (cond-expand
-       [unsafe (##sys#substring s start end)]
-       [else
+(define (substring s start . end)
+  (##sys#check-string s 'substring)
+  (##sys#check-exact start 'substring)
+  (let ([end (if (pair? end) 
+		 (let ([end (car end)])
+		   (##sys#check-exact end 'substring)
+		   end) 
+		 (##sys#size s) ) ] )
+    (cond-expand
+      [unsafe (##sys#substring s start end)]
+      [else
 	(let ([len (##sys#size s)])
 	  (if (and (fx<= start end)
 		   (fx>= start 0)
 		   (fx<= end len) )
 	      (##sys#substring s start end)
-	      (##sys#signal-hook #:bounds-error 'substring "index out of bounds" start end) ) ) ] ) ) ) )
+	      (##sys#error-hook (foreign-value "C_OUT_OF_RANGE_ERROR" int)
+				'substring start end) ) ) ] ) ) )
 
 (define ##sys#substring
   (lambda (s start end)
@@ -746,23 +756,23 @@ EOF
 (define (fxshl x y) (##core#inline "C_fixnum_shift_left" x y))
 (define (fxshr x y) (##core#inline "C_fixnum_shift_right" x y))
 
-(define fx/
-  (lambda (x y)
-    (cond-expand
-     [unsafe (##core#inline "C_fixnum_divide" x y)]
-     [else
-      (if (eq? y 0)
-	  (##sys#signal-hook #:arithmetic-error 'fx/ "division by zero" x y)
-	  (##core#inline "C_fixnum_divide" x y) ) ] ) ) )
+(define-inline (fx-check-divison-by-zero x y loc)
+  (when (eq? 0 y)
+    (##sys#error-hook (foreign-value "C_DIVISION_BY_ZERO_ERROR" int) loc x y) ) )
 
-(define fxmod
-  (lambda (x y)
-    (cond-expand
-     [unsafe (##core#inline "C_fixnum_modulo" x y)]
-     [else
-      (if (eq? y 0)
-	  (##sys#signal-hook #:arithmetic-error 'fxmod "division by zero" x y)
-	  (##core#inline "C_fixnum_modulo" x y) ) ] ) ) )
+(define (fx/ x y)
+  (cond-expand
+   [unsafe (##core#inline "C_fixnum_divide" x y)]
+   [else
+    (fx-check-divison-by-zero x y 'fx/)
+    (##core#inline "C_fixnum_divide" x y) ] ) )
+
+(define (fxmod x y)
+  (cond-expand
+   [unsafe (##core#inline "C_fixnum_modulo" x y)]
+   [else
+    (fx-check-divison-by-zero x y 'fxmod)
+    (##core#inline "C_fixnum_modulo" x y) ] ) )
 
 (define (flonum? x) (##core#inline "C_i_flonump" x))
 
@@ -770,103 +780,97 @@ EOF
   (##sys#check-number x 'finite?)
   (##core#inline "C_i_finitep" x) )
 
+(define-inline (fp-check-flonum x loc)
+  (unless (flonum? x)
+    (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR" int) loc x) ) )
+
+(define-inline (fp-check-flonums x y loc)
+  (unless (and (flonum? x) (flonum? y)
+    (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_FLONUM_ERROR" int) loc x y) )
+
 (define (fp+ x y) 
   (cond-expand
-   (unsafe (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y))
-   (else 
-    (if (and (flonum? x)
-             (flonum? y))
-        (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y)
-        (##sys#signal-hook #:type-error 'fp+ "not flonums" x y)))))
+   [unsafe (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y)]
+   [else 
+    (fp-check-flonums x y 'fp+)
+    (##core#inline_allocate ("C_a_i_flonum_plus" 4) x y) ] ) )
 
 (define (fp- x y) 
   (cond-expand
-   (unsafe (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y))
-   (else 
-    (if (and (flonum? x)
-             (flonum? y))
-        (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y)
-        (##sys#signal-hook #:type-error 'fp- "not flonums" x y)))))
+   [unsafe (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y)]
+   [else 
+    (fp-check-flonums x y 'fp-)
+    (##core#inline_allocate ("C_a_i_flonum_difference" 4) x y) ] ) )
 
 (define (fp* x y) 
   (cond-expand
-   (unsafe (##core#inline_allocate ("C_a_i_flonum_times" 4) x y))
-   (else 
-    (if (and (flonum? x)
-             (flonum? y))
-        (##core#inline_allocate ("C_a_i_flonum_times" 4) x y)
-        (##sys#signal-hook #:type-error 'fp* "not flonums" x y)))))
+   [unsafe (##core#inline_allocate ("C_a_i_flonum_times" 4) x y)]
+   [else 
+    (fp-check-flonums x y 'fp*)
+    (##core#inline_allocate ("C_a_i_flonum_times" 4) x y) ] ) )
 
 (define (fp= x y) 
   (cond-expand
-   (unsafe (##core#inline "C_flonum_equalp" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_flonum_equalp" x y)
-             (##sys#signal-hook #:type-error 'fp= "not flonums" x y)))))
+   [unsafe (##core#inline "C_flonum_equalp" x y)]
+   [else
+    (fp-check-flonums x y 'fp=)
+    (##core#inline "C_flonum_equalp" x y) ] ) )
 
 (define (fp> x y) 
   (cond-expand
-   (unsafe (##core#inline "C_flonum_greaterp" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_flonum_greaterp" x y)
-             (##sys#signal-hook #:type-error 'fp> "not flonums" x y)))))
+   [unsafe (##core#inline "C_flonum_greaterp" x y)]
+   [else
+    (fp-check-flonums x y 'fp>)
+    (##core#inline "C_flonum_greaterp" x y) ] ) )
 
 (define (fp< x y) 
   (cond-expand 
-   (unsafe (##core#inline "C_flonum_lessp" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_flonum_lessp" x y)
-             (##sys#signal-hook #:type-error 'fp< "not flonums" x y)))))
+   [unsafe (##core#inline "C_flonum_lessp" x y)]
+   [else
+    (fp-check-flonums x y 'fp<)
+    (##core#inline "C_flonum_lessp" x y) ] ) )
 
 (define (fp>= x y) 
   (cond-expand
-   (unsafe (##core#inline "C_flonum_greater_or_equal_p" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_flonum_greater_or_equal_p" x y)
-             (##sys#signal-hook #:type-error 'fp>= "not flonums" x y)))))
+   [unsafe (##core#inline "C_flonum_greater_or_equal_p" x y)]
+   [else
+    (fp-check-flonums x y 'fp>=)
+    (##core#inline "C_flonum_greater_or_equal_p" x y) ] ) )
 
 (define (fp<= x y) 
   (cond-expand
-   (unsafe (##core#inline "C_flonum_less_or_equal_p" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_flonum_less_or_equal_p" x y)
-             (##sys#signal-hook #:type-error 'fp<= "not flonums" x y)))))
+   [unsafe (##core#inline "C_flonum_less_or_equal_p" x y)]
+   [else
+    (fp-check-flonums x y 'fp<=)
+    (##core#inline "C_flonum_less_or_equal_p" x y) ] ) )
 
 (define (fpneg x) 
   (cond-expand
-   (unsafe (##core#inline_allocate ("C_a_i_flonum_negate" 4) x))
-   (else (if (flonum? x)
-             (##core#inline_allocate ("C_a_i_flonum_negate" 4) x)
-             (##sys#signal-hook #:type-error 'fpneg "not flonums" x)))))
+   [unsafe (##core#inline_allocate ("C_a_i_flonum_negate" 4) x)]
+   [else
+    (fp-check-flonum x 'fpneg)
+    (##core#inline_allocate ("C_a_i_flonum_negate" 4) x) ] ) )
 
 (define (fpmax x y) 
   (cond-expand
-   (unsafe (##core#inline "C_i_flonum_max" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_i_flonum_max" x y)
-             (##sys#signal-hook #:type-error 'fpmax "not flonums" x y)))))
+   [unsafe (##core#inline "C_i_flonum_max" x y)]
+   [else
+    (fp-check-flonums x y 'fpmax)
+    (##core#inline "C_i_flonum_max" x y) ] ) )
 
 (define (fpmin x y) 
   (cond-expand
-   (unsafe (##core#inline "C_i_flonum_min" x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline "C_i_flonum_min" x y)
-             (##sys#signal-hook #:type-error 'fpmin "not flonums" x y)))))
+   [unsafe (##core#inline "C_i_flonum_min" x y)]
+   [else 
+    (fp-check-flonums x y 'fpmin)
+    (##core#inline "C_i_flonum_min" x y) ] ) )
 
 (define (fp/ x y)
   (cond-expand
-   (unsafe (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y))
-   (else (if (and (flonum? x)
-                  (flonum? y))
-             (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y)
-             (##sys#signal-hook #:type-error 'fp/ "not flonums" x y)))))
+   [unsafe (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y)]
+   [else
+    (fp-check-flonums x y 'fp/)
+    (##core#inline_allocate ("C_a_i_flonum_quotient" 4) x y) ] ) )
 
 (define * (##core#primitive "C_times"))
 (define - (##core#primitive "C_minus"))
@@ -1239,14 +1243,14 @@ EOF
 (define (string->blob s)
   (##sys#check-string s 'string->blob)
   (let* ([n (##sys#size s)]
-         [bv (##sys#make-blob n)] )
+	 [bv (##sys#make-blob n)] )
     (##core#inline "C_copy_memory" bv s n) 
     bv) )
 
 (define (blob->string bv)
   (##sys#check-blob bv 'blob->string)
   (let* ([n (##sys#size bv)]
-         [s (##sys#make-string n)] )
+	 [s (##sys#make-string n)] )
     (##core#inline "C_copy_memory" s bv n) 
     s) )
 
@@ -1281,26 +1285,26 @@ EOF
   (cond-expand
     [unsafe
     (let* ([len (length lst0)]
-           [v (##sys#make-vector len)] )
+	   [v (##sys#make-vector len)] )
       (let loop ([lst lst0]
-                 [i 0])
-        (if (null? lst)
-          v
-          (begin
-            (##sys#setslot v i (##sys#slot lst 0))
-            (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) )]
+		 [i 0])
+	(if (null? lst)
+	  v
+	  (begin
+	    (##sys#setslot v i (##sys#slot lst 0))
+	    (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) )]
     [else
     (if (not (list? lst0))
       (##sys#not-a-proper-list-error lst0 'list->vector)
       (let* ([len (length lst0)]
-             [v (##sys#make-vector len)] )
-        (let loop ([lst lst0]
-                   [i 0])
-          (if (null? lst)
-            v
-            (begin
-              (##sys#setslot v i (##sys#slot lst 0))
-              (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) ) )]
+	     [v (##sys#make-vector len)] )
+	(let loop ([lst lst0]
+		   [i 0])
+	  (if (null? lst)
+	    v
+	    (begin
+	      (##sys#setslot v i (##sys#slot lst 0))
+	      (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) ) )]
     ))
 
 (define vector->list
@@ -1712,7 +1716,7 @@ EOF
 	    (##core#inline "C_display_char" p c) )
 	  (lambda (p s)			; write-string
 	    (##core#inline "C_display_string" p s) )
-	  (lambda (p)	    		; close
+	  (lambda (p)			; close
 	    (##core#inline "C_close_file" p)
 	    (##sys#update-errno) )
 	  (lambda (p)			; flush-output
@@ -1721,17 +1725,17 @@ EOF
 	    (##core#inline "C_char_ready_p" p) )
 	  #f				; read-string!
 	  #; ;UNUSED
-          (lambda (p n dest start)      ; read-string!
-            (let loop ([rem (or n (fx- (##sys#size dest) start))] [act 0] [start start])
-              (let ([len (##core#inline "fast_read_string_from_file" dest p rem start)])
-                (cond [(eof-object? len)
-                        (if (eq? 0 act) #!eof act)]
-                      [(not len)
-                        act]
-                      [(fx< len rem)
-                        (loop (fx- rem len) (fx+ act len) (fx+ start len))]
-                      [else
-                        act ] ) ) ) )
+	  (lambda (p n dest start)	; read-string!
+	    (let loop ([rem (or n (fx- (##sys#size dest) start))] [act 0] [start start])
+	      (let ([len (##core#inline "fast_read_string_from_file" dest p rem start)])
+		(cond [(eof-object? len)
+			(if (eq? 0 act) #!eof act)]
+		      [(not len)
+			act]
+		      [(fx< len rem)
+			(loop (fx- rem len) (fx+ act len) (fx+ start len))]
+		      [else
+			act ] ) ) ) )
 	  (lambda (p limit)		; read-line
 	    (let* ((buffer-len (if limit limit 256))
 		   (buffer (make-string buffer-len)))
@@ -1816,14 +1820,14 @@ EOF
 	 [fixsuffix (eq? bp 'mingw32)])
     (lambda (name)
       (if fixsuffix
-        (let ([end (fx- (##sys#size name) 1)])
-          (if (fx>= end 0)
-            (let ([c (##core#inline "C_subchar" name end)])
-              (if (or (eq? c #\\) (eq? c #\/))
-                (##sys#substring name 0 end)
-                name) )
-            name) )
-        name) ) ) )
+	(let ([end (fx- (##sys#size name) 1)])
+	  (if (fx>= end 0)
+	    (let ([c (##core#inline "C_subchar" name end)])
+	      (if (or (eq? c #\\) (eq? c #\/))
+		(##sys#substring name 0 end)
+		name) )
+	    name) )
+	name) ) ) )
 
 (define (##sys#pathname-resolution name thunk . _)
   (thunk (##sys#expand-home-path name)) )
@@ -2156,10 +2160,10 @@ EOF
 	    (if (and (not (##core#inline "C_eofp" c)) (not (eq? #\newline c)))
 		(skip (##sys#read-char-0 port)) ) ) )
 
-        (define (readrec)
+	(define (readrec)
 
-          (define (r-spaces)
-            (let loop ([c (##sys#peek-char-0 port)])
+	  (define (r-spaces)
+	    (let loop ([c (##sys#peek-char-0 port)])
 	      (cond ((##core#inline "C_eofp" c))
 		    ((eq? #\; c) 
 		     (skip-to-eol)
@@ -2168,28 +2172,28 @@ EOF
 		     (##sys#read-char-0 port)
 		     (loop (##sys#peek-char-0 port)) ) ) ) )
 
-          (define (r-usequence u n)
+	  (define (r-usequence u n)
 	    (let loop ([seq '()] [n n])
 	      (if (eq? n 0)
-                (let* ([str (##sys#reverse-list->string seq)]
-                       [n (string->number str 16)])
-                  (or n
-                      (##sys#read-error port (string-append "invalid escape-sequence '\\" u str "\'")) ) )
-                (let ([x (##sys#read-char-0 port)])
-                  (if (or (eof-object? x) (char=? #\" x))
-                    (##sys#read-error port "unterminated string constant") 
-                    (loop (cons x seq) (fx- n 1)) ) ) ) ) )
+		(let* ([str (##sys#reverse-list->string seq)]
+		       [n (string->number str 16)])
+		  (or n
+		      (##sys#read-error port (string-append "invalid escape-sequence '\\" u str "\'")) ) )
+		(let ([x (##sys#read-char-0 port)])
+		  (if (or (eof-object? x) (char=? #\" x))
+		    (##sys#read-error port "unterminated string constant") 
+		    (loop (cons x seq) (fx- n 1)) ) ) ) ) )
 
-          (define (r-cons-codepoint cp lst)
-            (let* ((s (##sys#char->utf8-string (integer->char cp)))
-                   (len (##sys#size s)))
-              (let lp ((i 0) (lst lst))
-                (if (fx>= i len)
-                  lst
-                  (lp (fx+ i 1) (cons (##core#inline "C_subchar" s i) lst))))))
+	  (define (r-cons-codepoint cp lst)
+	    (let* ((s (##sys#char->utf8-string (integer->char cp)))
+		   (len (##sys#size s)))
+	      (let lp ((i 0) (lst lst))
+		(if (fx>= i len)
+		  lst
+		  (lp (fx+ i 1) (cons (##core#inline "C_subchar" s i) lst))))))
 
-          (define (r-string term)
-            (if (eq? (##sys#read-char-0 port) term)
+	  (define (r-string term)
+	    (if (eq? (##sys#read-char-0 port) term)
 		(let loop ((c (##sys#read-char-0 port)) (lst '()))
 		  (cond ((##core#inline "C_eofp" c) 
 			 (##sys#read-error port "unterminated string") )
@@ -2209,21 +2213,21 @@ EOF
 			   ((#\u)
 			    (let ([n (r-usequence "u" 4)])
 			      (if (##sys#unicode-surrogate? n)
-                                  (if (and (eqv? #\\ (##sys#read-char-0 port))
-                                           (eqv? #\u (##sys#read-char-0 port)))
-                                      (let* ((m (r-usequence "u" 4))
-                                             (cp (##sys#surrogates->codepoint n m)))
-                                        (if cp
-                                            (loop (##sys#read-char-0 port)
-                                                  (r-cons-codepoint cp lst))
-                                            (##sys#read-error port "bad surrogate pair" n m)))
-                                      (##sys#read-error port "unpaired escaped surrogate" n))
-                                  (loop (##sys#read-char-0 port) (r-cons-codepoint n lst)) ) ))
+				  (if (and (eqv? #\\ (##sys#read-char-0 port))
+					   (eqv? #\u (##sys#read-char-0 port)))
+				      (let* ((m (r-usequence "u" 4))
+					     (cp (##sys#surrogates->codepoint n m)))
+					(if cp
+					    (loop (##sys#read-char-0 port)
+						  (r-cons-codepoint cp lst))
+					    (##sys#read-error port "bad surrogate pair" n m)))
+				      (##sys#read-error port "unpaired escaped surrogate" n))
+				  (loop (##sys#read-char-0 port) (r-cons-codepoint n lst)) ) ))
 			   ((#\U)
 			    (let ([n (r-usequence "U" 8)])
 			      (if (##sys#unicode-surrogate? n)
-                                  (##sys#read-error port (string-append "invalid escape (surrogate)" n))
-                                  (loop (##sys#read-char-0 port) (r-cons-codepoint n lst)) )))
+				  (##sys#read-error port (string-append "invalid escape (surrogate)" n))
+				  (loop (##sys#read-char-0 port) (r-cons-codepoint n lst)) )))
 			   ((#\\ #\' #\")
 			    (loop (##sys#read-char-0 port) (cons c lst)))
 			   (else
@@ -2235,7 +2239,7 @@ EOF
 			((eq? term c) (##sys#reverse-list->string lst))
 			(else (loop (##sys#read-char-0 port) (cons c lst))) ) )
 		(##sys#read-error port (string-append "missing `" (string term) "'")) ) )
-                    
+		    
 	  (define (r-list start end)
 	    (if (eq? (##sys#read-char-0 port) start)
 		(let ([first #f]
@@ -2292,13 +2296,13 @@ EOF
 		      (info 'list-info (##sys#infix-list-hook first) ln0)
 		      '() ) )
 		(##sys#read-error port "missing token" start) ) )
-          
+	  
 	  (define (r-vector)
 	    (let ([lst (r-list #\( #\))])
 	      (if (list? lst)
 		  (##sys#list->vector lst)
 		  (##sys#read-error port "invalid vector syntax" lst) ) ) )
-          
+	  
 	  (define (r-number radix)
 	    (set! rat-flag #f)
 	    (let ([tok (r-token)])
@@ -2321,7 +2325,7 @@ EOF
 			   [(char=? c2 #\e) (##sys#inexact->exact (r-number radix))]
 			   [else (##sys#read-error port "illegal number syntax - invalid exactness prefix" c2)] ) ) ]
 		  [else (r-number radix)] ) )
-          
+	  
 	  (define (r-number-with-radix)
 	    (cond [(char=? #\# (##sys#peek-char-0 port))
 		   (##sys#read-char-0 port)
@@ -2333,7 +2337,7 @@ EOF
 			   [(char=? c2 #\b) (r-number 2)]
 			   [else (##sys#read-error port "illegal number syntax - invalid radix" c2)] ) ) ]
 		  [else (r-number 10)] ) )
-        
+	
 	  (define (r-token)
 	    (let loop ([c (##sys#peek-char-0 port)] [lst '()])
 	      (cond [(or (eof-object? c)
@@ -2360,7 +2364,7 @@ EOF
 	  (define (r-next-token)
 	    (r-spaces)
 	    (r-token) )
-          
+	  
 	  (define (r-symbol)
 	    (let ((s (resolve-symbol
 		      (if (char=? (##sys#peek-char-0 port) #\|)
@@ -2379,7 +2383,7 @@ EOF
 			 (##sys#reverse-list->string lst) )
 			(else (loop (##sys#read-char-0 port) (cons c lst))) ) )
 		(##sys#read-error port "missing \'|\'") ) )
-          
+	  
 	  (define (r-char)
 	    ;; Code contributed by Alex Shinn
 	    (let* ([c (##sys#peek-char-0 port)]
@@ -2438,7 +2442,7 @@ EOF
 		(##sys#read-error port "qualified symbol syntax is not allowed" tok) )
 	      (let loop ([i 0])
 		(cond [(fx>= i toklen)
-                       (##sys#read-error port "invalid qualified symbol syntax" tok) ]
+		       (##sys#read-error port "invalid qualified symbol syntax" tok) ]
 		      [(fx= (##sys#byte tok i) (char->integer #\#))
 		       (when (fx> i namespace-max-id-len)
 			 (set! tok (##sys#substring tok 0 namespace-max-id-len)) )
@@ -2556,10 +2560,10 @@ EOF
 					     (cond [(string=? "eof" tok) #!eof]
 						   [(member tok '("optional" "rest" "key"))
 						    (build-symbol (##sys#string-append "#!" tok)) ]
-                                                   [(string=? "current-line" tok)
-                                                       (##sys#slot port 4)]
-                                                   [(string=? "current-file" tok)
-                                                       (port-name port)]
+						   [(string=? "current-line" tok)
+						       (##sys#slot port 4)]
+						   [(string=? "current-file" tok)
+						       (port-name port)]
 						   [else 
 						    (let ((a (assq (string->symbol tok) read-marks)))
 						      (if a
@@ -2591,16 +2595,16 @@ EOF
       ((fx<= i #x7F) (string c))
       ((fx<= i #x7FF)
        (string (integer->char (fxior #b11000000 (fxshr i 6)))
-               (integer->char (fxior #b10000000 (fxand i #b111111)))))
+	       (integer->char (fxior #b10000000 (fxand i #b111111)))))
       ((fx<= i #xFFFF)
        (string (integer->char (fxior #b11100000 (fxshr i 12)))
-               (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
-               (integer->char (fxior #b10000000 (fxand i #b111111)))))
+	       (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
+	       (integer->char (fxior #b10000000 (fxand i #b111111)))))
       ((fx<= i #x1FFFFF)
        (string (integer->char (fxior #b11110000 (fxshr i 18)))
-               (integer->char (fxior #b10000000 (fxand (fxshr i 12) #b111111)))
-               (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
-               (integer->char (fxior #b10000000 (fxand i #b111111)))))
+	       (integer->char (fxior #b10000000 (fxand (fxshr i 12) #b111111)))
+	       (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
+	       (integer->char (fxior #b10000000 (fxand i #b111111)))))
       (else (error "unicode codepoint out of range:" i)))))
 
 (define (##sys#unicode-surrogate? n)
@@ -2611,8 +2615,8 @@ EOF
   (and (fx<= #xD800 hi) (fx<= hi #xDBFF)
        (fx<= #xDC00 lo) (fx<= lo #xDFFF)
        (fxior (fxshl (fx+ 1 (fxand (fxshr hi 6) #b11111)) 16)
-              (fxior (fxshl (fxand hi #b111111) 10)
-                     (fxand lo #b1111111111)))))
+	      (fxior (fxshl (fxand hi #b111111) 10)
+		     (fxand lo #b1111111111)))))
 
 ;;; Hooks for user-defined read-syntax:
 ;
@@ -2912,9 +2916,9 @@ EOF
 		     (outstr port "#<blob of size ") )
 		 (outstr port (number->string (##core#inline "C_block_size" x)))
 		 (outchr port #\>) )
-   	        ((##core#inline "C_structurep" x) (##sys#user-print-hook x readable port))
+		((##core#inline "C_structurep" x) (##sys#user-print-hook x readable port))
 		((##core#inline "C_closurep" x) (outstr port (##sys#procedure->string x)))
- 		((##core#inline "C_locativep" x) (outstr port "#<locative>"))
+		((##core#inline "C_locativep" x) (outstr port "#<locative>"))
 		((##core#inline "C_lambdainfop" x)
 		 (outstr port "#<lambda info ")
 		 (outstr port (##sys#lambda-info->string x))
@@ -3081,7 +3085,7 @@ EOF
 	       ((fx>= i len) (##sys#setislot p 10 position))
 	     (##core#inline "C_setsubchar" output position (##core#inline "C_subchar" str i))
 	     (set! position (fx+ position 1)) ) ) ) )
-     (lambda (p)	    		; close
+     (lambda (p)			; close
        (##sys#setislot p 10 (##sys#slot p 11)) )
      (lambda (p) #f)			; flush-output
      (lambda (p)			; char-ready?
@@ -3132,16 +3136,16 @@ EOF
 (define (##sys#update-port-position/scan port buf pos lim)
   (let loop ([pos pos])
     (let ([bumper
-           (lambda (cur ptr)
-             (cond [(eq? cur ptr)       ; at EOB
-                     (##sys#setislot port 5 (fx+ (##sys#slot port 5) (fx- cur pos)))
-                     #f ]
-                   [else                ; at EOL
-                     (##sys#setislot port 4 (fx+ (##sys#slot port 4) 1))
-                     (##sys#setislot port 5 0)
-                     ptr ] ) ) ] )
+	   (lambda (cur ptr)
+	     (cond [(eq? cur ptr)	; at EOB
+		     (##sys#setislot port 5 (fx+ (##sys#slot port 5) (fx- cur pos)))
+		     #f ]
+		   [else		; at EOL
+		     (##sys#setislot port 4 (fx+ (##sys#slot port 4) 1))
+		     (##sys#setislot port 5 0)
+		     ptr ] ) ) ] )
       (when pos
-        (loop (##sys#scan-buffer-line buf lim pos bumper)) ) ) ) )
+	(loop (##sys#scan-buffer-line buf lim pos bumper)) ) ) ) )
 
 (define open-input-string 
   (lambda (string)
@@ -3239,7 +3243,7 @@ EOF
   (if full
       (let ((rev (##sys#fudge 38))
 	    (spec (string-append
-		   (if (##sys#fudge 3)  " 64bit" "")
+		   (if (##sys#fudge 3)	" 64bit" "")
 		   (if (##sys#fudge 15) " symbolgc" "")
 		   (if (##sys#fudge 40) " manyargs" "")
 		   (if (##sys#fudge 24) " dload" "") 
@@ -3279,7 +3283,7 @@ EOF
       (cond [(string? x)  (string->keyword x)]
 	    [(keyword? x) x]
 	    [(symbol? x)  (string->keyword (##sys#symbol->string x))]
-	    [else         (err x)] ) ) ) )
+	    [else	  (err x)] ) ) ) )
 
 (define ##sys#features
   '(#:chicken #:srfi-23 #:srfi-30 #:srfi-39 #:srfi-62 #:srfi-17 #:srfi-12 #:srfi-98))
@@ -3443,8 +3447,7 @@ EOF
 (define (singlestep thunk)
   (unless (##sys#fudge 35)
     (##sys#signal-hook #:runtime-error 'singlestep "apply-hook not available") )
-  (unless (procedure? thunk)
-    (##sys#signal-hook #:type-error "bad argument type - not a procedure" thunk) )
+  (##sys#check-closure thunk 'singlestep)
   (set! ##sys#stepped-thread ##sys#current-thread)
   (##sys#step thunk) )
 
@@ -3466,7 +3469,7 @@ EOF
      (lambda () (##sys#print (cons p args) #t o)) )
     (flush-output o)
     (let loop ()
-      (##sys#print "\n        step (RETURN), (s)kip, (c)ontinue or (b)reak ? " #f o)
+      (##sys#print "\n	      step (RETURN), (s)kip, (c)ontinue or (b)reak ? " #f o)
       (let ((c (##sys#read-char-0 i)))
 	(if (eof-object? c)
 	    (cont)
@@ -3797,7 +3800,7 @@ EOF
 	((34) (apply ##sys#signal-hook #:runtime-error loc
 		     "code to load dynamically was linked with unsafe runtime libraries, but executing runtime was not"
 		     args) )
-	((35) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a floating-point number" args))
+	((35) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a flonum" args))
 	((36) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a procedure" args))
 	(else (apply ##sys#signal-hook #:runtime-error loc "unknown internal error" args)) ) ) ) )
 
@@ -3879,7 +3882,7 @@ EOF
       (let* ([len (##core#inline "C_fetch_c_strlen" b i)]
 	     [str2 (##sys#make-string len)] )
 	(##core#inline "C_peek_c_string" b i str2 len)
-        (##core#inline "C_free_mptr" b i)
+	(##core#inline "C_free_mptr" b i)
 	str2) ) )
 
 (define (##sys#poke-c-string b i s) 
@@ -3991,7 +3994,7 @@ EOF
    q					; #9 quantum
    (##core#undefined)			; #10 specific
    #f					; #11 block object (type depends on blocking type)
-   '()				        ; #12 recipients (currently unused)
+   '()					; #12 recipients (currently unused)
    #f) )				; #13 unblocked by timeout?
 
 (define ##sys#primordial-thread (##sys#make-thread #f 'running 'primordial ##sys#default-thread-quantum))
@@ -4092,21 +4095,21 @@ EOF
 		(let ([str (open-output-string)]
 		      [end (readln port)] 
 		      [f #f] )
-                  (let ((endlen (string-length end)))
-                    (cond
-                     ((fx= endlen 0)
-                      (##sys#read-warning
-                       port "Missing tag after #<< here-doc token"))
-                     ((or (char=? (string-ref end (fx- endlen 1)) #\space)
-                          (char=? (string-ref end (fx- endlen 1)) #\tab))
-                      (##sys#read-warning
-                       port "Whitespace after #<< here-doc tag"))
-                     ))                     
+		  (let ((endlen (string-length end)))
+		    (cond
+		     ((fx= endlen 0)
+		      (##sys#read-warning
+		       port "Missing tag after #<< here-doc token"))
+		     ((or (char=? (string-ref end (fx- endlen 1)) #\space)
+			  (char=? (string-ref end (fx- endlen 1)) #\tab))
+		      (##sys#read-warning
+		       port "Whitespace after #<< here-doc tag"))
+		     ))			    
 		  (do ([ln (readln port) (readln port)])
 		      ((or (eof-object? ln) (string=? end ln)) 
 		       (when (eof-object? ln)
 			 (##sys#read-warning port
-                          (##sys#format-here-doc-warning end)))
+			  (##sys#format-here-doc-warning end)))
 		       (get-output-string str) )
 		    (if f 
 			(##sys#write-char-0 #\newline str)
@@ -4121,16 +4124,16 @@ EOF
 		      (set! str (open-output-string))
 		      s))
 
-                  (let ((endlen (string-length end)))
-                    (cond
-                     ((fx= endlen 0)
-                      (##sys#read-warning
-                       port "Missing tag after #<# here-doc token"))
-                     ((or (char=? (string-ref end (fx- endlen 1)) #\space)
-                          (char=? (string-ref end (fx- endlen 1)) #\tab))
-                      (##sys#read-warning
-                       port "Whitespace after #<# here-doc tag"))
-                     ))
+		  (let ((endlen (string-length end)))
+		    (cond
+		     ((fx= endlen 0)
+		      (##sys#read-warning
+		       port "Missing tag after #<# here-doc token"))
+		     ((or (char=? (string-ref end (fx- endlen 1)) #\space)
+			  (char=? (string-ref end (fx- endlen 1)) #\tab))
+		      (##sys#read-warning
+		       port "Whitespace after #<# here-doc tag"))
+		     ))
 
 		  (let loop [(lst '())]
 		    (let ([c (##sys#read-char-0 port)])
@@ -4140,8 +4143,8 @@ EOF
 			   (cond [(or (eof-object? c) (string=? end s))
 				  (when (eof-object? c)
 				    (##sys#read-warning
-                                     port (##sys#format-here-doc-warning end))
-                                     )
+				     port (##sys#format-here-doc-warning end))
+				     )
 				  `(##sys#print-to-string
 				    ;;Can't just use `(list ,@lst) because of 126 argument apply limit
 				    ,(let loop2 ((lst (cdr lst)) (next-string '()) (acc ''())) ; drop last newline
@@ -4457,7 +4460,7 @@ EOF
 
 (define ##sys#import
   (let ([enum-syms! (foreign-lambda scheme-object "C_enumerate_symbols" c-pointer scheme-object)])
-    (lambda (ns  . more)
+    (lambda (ns	 . more)
       (let-optionals more ([syms '()] [prefix #f])
 	(let ([prefix
 	       (and prefix
@@ -4510,14 +4513,14 @@ EOF
 (define (##sys#walk-namespace proc . args)
   (let ([ns (if (pair? args) (car args) ".")])
     (let ([nsp (##sys#find-symbol-table ns)]
-          [enum-syms! (foreign-lambda scheme-object "C_enumerate_symbols" c-pointer scheme-object)]
-          [pos (cons -1 '())])
+	  [enum-syms! (foreign-lambda scheme-object "C_enumerate_symbols" c-pointer scheme-object)]
+	  [pos (cons -1 '())])
       (unless nsp (##sys#error "undefined namespace" ns))
       (let loop ()
-        (let ([sym (enum-syms! nsp pos)])
-          (when sym
-            (proc sym)
-            (loop) ) ) ) ) ) )
+	(let ([sym (enum-syms! nsp pos)])
+	  (when sym
+	    (proc sym)
+	    (loop) ) ) ) ) ) )
 
 ;;; More memory info
 
@@ -4572,8 +4575,7 @@ EOF
 (define procedure-information
   (let ((open-input-string open-input-string))
     (lambda (x)
-      (unless (procedure? x)
-	(##sys#signal-hook #:type-error 'procedure-information "bad argument type - not a procedure" x) )
+      (##sys#check-closure x 'procedure-information)
       (and-let* ((info (##sys#lambda-info x)))
 	(##sys#read (open-input-string (##sys#lambda-info->string info)) #f) ) ) ) )
 
@@ -4636,11 +4638,6 @@ EOF
 (define cdddr (getter-with-setter cdddr (lambda (x y) (set-cdr! (cddr x) y))))
 (define string-ref (getter-with-setter string-ref string-set!))
 (define vector-ref (getter-with-setter vector-ref vector-set!))
-
-(define (##sys#dunload name)		; not available on all platforms and to be used with caution...
-  (and-let* ((r (##core#inline "C_dunload" (##sys#make-c-string name))))
-    (##sys#gc #t) 
-    #t) )
 
 
 ;;; Property lists
