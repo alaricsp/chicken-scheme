@@ -115,7 +115,7 @@
 (define (string-search-positions rx str #!optional (start 0) (range (string-length str)))
   (let ((rx (unregexp rx)))
     (and-let* ((n (string-length str))
-	       (m (irregex-search rx str start (min n (fx+ start (fx- n 1))))))
+	       (m (irregex-search rx str start (min n (fx+ start range)))))
       (let loop ((i (irregex-match-num-submatches m))
                  (res '()))
         (if (fx< i 0)

@@ -245,9 +245,11 @@ HOSTNAME ?= $(shell hostname)
 ifdef WINDOWS_SHELL
 BUILD_TIME ?= $(shell date /t)
 UNAME_SYS ?= MinGW
+COPY_COMMAND = copy /Y
 else
 BUILD_TIME ?= $(shell date +%Y-%m-%d)
 UNAME_SYS ?= $(shell uname)
+COPY_COMMAND = cp
 endif
 BUILD_TAG ?= compiled $(BUILD_TIME) on $(HOSTNAME) ($(UNAME_SYS))
 COPYMANY =

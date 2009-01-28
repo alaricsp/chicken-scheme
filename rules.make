@@ -1311,7 +1311,7 @@ bootstrap:
 	touch *.c
 	$(MAKE) -f $(SRCDIR)Makefile.$(PLATFORM) STATICBUILD=1 DEBUGBUILD=1 \
 	  chicken$(EXE)
-	cp chicken$(EXE) chicken-boot$(EXE)
+	$(COPY_COMMAND) chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
 	$(MAKE) PLATFORM=$(PLATFORM) confclean
 
