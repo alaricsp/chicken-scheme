@@ -4168,7 +4168,6 @@ C_regparm C_word C_fcall C_fudge(C_word fudge_factor)
   case C_fix(19):
     for(i = j = 0; i < locative_table_count; ++i)
       if(locative_table[ i ] != C_SCHEME_UNDEFINED) ++j;
- 
     return C_fix(j);
 
   case C_fix(20):
