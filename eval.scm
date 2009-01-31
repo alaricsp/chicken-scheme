@@ -738,14 +738,14 @@
 					    ##core#define-external-variable ##core#let-location
 					    ##core#foreign-primitive
 					    ##core#foreign-lambda* ##core#define-foreign-type)
-			  (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
+			  (##sys#syntax-error-hook "cannot evaluate compiler-special-form" x) ]
 
 			 [(##core#app)
 			  (compile-call (cdr x) e tf cntr se) ]
 
 			 [else
 			  (cond [(eq? head 'location)
-				 (##sys#syntax-error-hook "can not evaluate compiler-special-form" x) ]
+				 (##sys#syntax-error-hook "cannot evaluate compiler-special-form" x) ]
 
 				[else (compile-call x e tf cntr se)] ) ] ) ) ) ) ]
 	      
@@ -924,7 +924,7 @@
 				(and (not isdir) input) ) ) ) ) ] ) ]
 	    [evproc (or evaluator eval)] )
 	(cond [(and (string? input) (not fname))
-	       (##sys#signal-hook #:file-error 'load "can not open file" input) ]
+	       (##sys#signal-hook #:file-error 'load "cannot open file" input) ]
 	      [(and (load-verbose) fname)
 	       (display "; loading ")
 	       (display fname)
@@ -1131,7 +1131,7 @@
 			(##sys#load id2 #f #f)
 			(set! ##sys#loaded-extensions (cons p ##sys#loaded-extensions)) 
 			#t)
-		       ((optional err? #t) (##sys#error loc "can not load extension" id))
+		       ((optional err? #t) (##sys#error loc "cannot load extension" id))
 		       (else #f) ) ) ) ) ) ) ) )
 
 (define (##sys#provide . ids)

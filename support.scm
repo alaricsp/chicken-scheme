@@ -287,7 +287,7 @@
 	[exn-msg (condition-property-accessor 'exn 'message)] )
     (lambda (str)
       (handle-exceptions ex
-	  (quit "can not parse expression: ~s [~a]~%" 
+	  (quit "cannot parse expression: ~s [~a]~%" 
 		str
 		(if (exn? ex) 
 		    (exn-msg ex)
@@ -1044,7 +1044,7 @@
 
 (define (estimate-foreign-result-location-size type)
   (define (err t) 
-    (quit "can not compute size of location for foreign type `~S'" t) )
+    (quit "cannot compute size of location for foreign type `~S'" t) )
   (follow-without-loop
    type
    (lambda (t next)

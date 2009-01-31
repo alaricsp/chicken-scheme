@@ -434,7 +434,7 @@ EOF
 		    (##sys#warn "procedure already has breakpoint") )
 		   (else
 		    (let ((old (##sys#slot s 0)))
-		      (cond ((not (procedure? old)) (##sys#error "can not trace non-procedure" s))
+		      (cond ((not (procedure? old)) (##sys#error "cannot trace non-procedure" s))
 			    (else
 			     (set! traced-procedures (cons (cons s old) traced-procedures))
 			     (##sys#setslot
@@ -472,7 +472,7 @@ EOF
 	       (##sys#setslot s 0 (cdr a))
 	       (set! traced-procedures (del a traced-procedures eq?)) )
 	     (let ((old (##sys#slot s 0)))
-	       (cond ((not (procedure? old)) (##sys#error "can not set breakpoint on non-procedure" s))
+	       (cond ((not (procedure? old)) (##sys#error "cannot set breakpoint on non-procedure" s))
 		     (else
 		      (set! broken-procedures (cons (cons s old) broken-procedures))
 		      (##sys#setslot
@@ -743,7 +743,7 @@ EOF
 	([len #f]
 	 [out ##sys#standard-output] )
       (define (bestlen n) (if len (min len n) n))
-      (cond [(##sys#immediate? x) (##sys#error 'dump "can not dump immediate object" x)]
+      (cond [(##sys#immediate? x) (##sys#error 'dump "cannot dump immediate object" x)]
 	    [(##sys#bytevector? x) (hexdump x (bestlen (##sys#size x)) ##sys#byte out)]
 	    [(string? x) (hexdump x (bestlen (##sys#size x)) ##sys#byte out)]
 	    [(and (not (##sys#immediate? x)) (##sys#pointer? x))
@@ -751,7 +751,7 @@ EOF
 	    [(and (##sys#generic-structure? x) (assq (##sys#slot x 0) bytevector-data))
 	     (let ([bv (##sys#slot x 1)])
 	       (hexdump bv (bestlen (##sys#size bv)) ##sys#byte out) ) ]
-	    [else (##sys#error 'dump "can not dump object" x)] ) ) ) )
+	    [else (##sys#error 'dump "cannot dump object" x)] ) ) ) )
 
 (define hexdump
   (let ([display display]

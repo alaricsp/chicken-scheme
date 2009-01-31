@@ -208,7 +208,7 @@ EOF
 	  (set! thread (make-thread thread))
 	  (##sys#check-structure thread 'thread 'thread-start!) )
       (unless (eq? 'created (##sys#slot thread 3))
-	(##sys#error 'thread-start! "thread can not be started a second time" thread) )
+	(##sys#error 'thread-start! "thread cannot be started a second time" thread) )
       (##sys#setslot thread 3 'ready)
       (##sys#add-to-ready-queue thread) 
       thread) ) )

@@ -142,7 +142,7 @@
 
 (define (windows-sudo-install-setup)
   (set! *sudo* #f)
-  (print "Warning: can not install as superuser with Windows") )
+  (print "Warning: cannot install as superuser with Windows") )
 
 (define (unix-sudo-install-setup)
   (set! *copy-command*        "sudo cp -r")
@@ -589,7 +589,7 @@
   (and-let* ((dir (pathname-directory path)))
     (if (file-exists? dir)
 	(unless (directory? dir)
-	  (error "can not create directory: a file with the same name already exists") )
+	  (error "cannot create directory: a file with the same name already exists") )
 	(begin
 	  (create-directory dir)
 	  (unless *windows-shell*
@@ -697,7 +697,7 @@
 (define (remove-directory dir #!optional (strict #t))
   (cond ((not (file-exists? dir))
 	 (if strict
-	     (error 'remove-directory "can not remove - directory not found" dir)
+	     (error 'remove-directory "cannot remove - directory not found" dir)
 	     #f))
 	(*sudo*
 	 ($system (sprintf "sudo rm -fr ~a" (shellpath dir))))

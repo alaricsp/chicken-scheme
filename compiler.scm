@@ -212,7 +212,7 @@
 ;   global -> <boolean>                      If true: variable does not occur in any lambda-list
 ;   call-sites -> ((<lambda-id> <node>) ...) Known call-nodes of a named procedure
 ;   home -> <lambda-id>                      Procedure which introduces this variable
-;   unknown -> <boolean>                     If true: variable can not have a known value
+;   unknown -> <boolean>                     If true: variable cannot have a known value
 ;   assigned -> <boolean>                    If true: variable is assigned somewhere
 ;   assigned-locally -> <boolean>            If true: variable has been assigned inside user lambda
 ;   undefined -> <boolean>                   If true: variable is unknown yet but can be known later
@@ -2588,7 +2588,7 @@
 				   'type 
 				   "coerced inexact literal number `~S' to fixnum ~S" c (inexact->exact c))
 				  (immediate-literal (inexact->exact c)) )
-				 (else (quit "can not coerce inexact literal `~S' to fixnum" c)) ) )
+				 (else (quit "cannot coerce inexact literal `~S' to fixnum" c)) ) )
 			  (else (make-node '##core#literal (list (literal c)) '())) ) )
 		   ((immediate? c) (immediate-literal c))
 		   (else (make-node '##core#literal (list (literal c)) '())) ) ) )

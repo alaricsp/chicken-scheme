@@ -547,7 +547,7 @@ int CHICKEN_main(int argc, char *argv[], void *toplevel)
   CHICKEN_parse_command_line(argc, argv, &h, &s, &n);
   
   if(!CHICKEN_initialize(h, s, n, toplevel))
-    panic(C_text("can not initialize - out of memory"));
+    panic(C_text("cannot initialize - out of memory"));
 
   CHICKEN_run(NULL);
   return 0;
@@ -566,7 +566,7 @@ void parse_argv(C_char *cmds)
   C_main_argv = (C_char **)malloc(MAXIMAL_NUMBER_OF_COMMAND_LINE_ARGUMENTS * sizeof(C_char *));
 
   if(C_main_argv == NULL)
-    panic(C_text("can not allocate argument-list buffer"));
+    panic(C_text("cannot allocate argument-list buffer"));
 
   C_main_argc = 0;
 
@@ -582,7 +582,7 @@ void parse_argv(C_char *cmds)
     aptr = (C_char *)malloc(sizeof(C_char) * (n + 1));
     
     if(aptr == NULL)
-      panic(C_text("can not allocate argument buffer"));
+      panic(C_text("cannot allocate argument buffer"));
 
     C_strcpy(aptr, bptr0);
     C_main_argv[ C_main_argc++ ] = aptr;
@@ -712,7 +712,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   C_timer_interrupt_counter = INITIAL_TIMER_INTERRUPT_PERIOD;
   memset(signal_mapping_table, 0, sizeof(int) * NSIG);
   initialize_symbol_table();
-  C_dlerror = "can not load compiled code dynamically - this is a statically linked executable";
+  C_dlerror = "cannot load compiled code dynamically - this is a statically linked executable";
   error_location = C_SCHEME_FALSE;
   C_pre_gc_hook = NULL;
   C_post_gc_hook = NULL;
@@ -734,7 +734,7 @@ static C_PTABLE_ENTRY *create_initial_ptable()
   int i = 0;
 
   if(pt == NULL)
-    panic(C_text("out of memory - can not create initial ptable"));
+    panic(C_text("out of memory - cannot create initial ptable"));
 
   C_pte(termination_continuation);
   C_pte(callback_return_continuation);
@@ -811,7 +811,7 @@ void *CHICKEN_new_gc_root_2(int finalizable)
   C_GC_ROOT *r = (C_GC_ROOT *)C_malloc(sizeof(C_GC_ROOT));
 
   if(r == NULL)
-    panic(C_text("out of memory - can not allocate GC root"));
+    panic(C_text("out of memory - cannot allocate GC root"));
 
   r->value = C_SCHEME_UNDEFINED;
   r->next = gc_root_list;
@@ -1069,7 +1069,7 @@ void C_set_or_change_heap_size(C_word heap, int reintern)
      (ptr2 = heap_realloc (tospace_start,
 			   tospace_limit - tospace_start,
 			   size, &ptr2a)) == NULL)
-    panic(C_text("out of memory - can not allocate heap"));
+    panic(C_text("out of memory - cannot allocate heap"));
 
   heapspace1 = ptr1, heapspace1_size = size;
   heapspace2 = ptr2, heapspace2_size = size;
@@ -1466,7 +1466,7 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_CONTINUATION_CANT_RECEIVE_VALUES_ERROR:
-    msg = C_text("continuation can not receive multiple values");
+    msg = C_text("continuation cannot receive multiple values");
     c = 1;
     break;
 
@@ -1481,7 +1481,7 @@ void barf(int code, char *loc, ...)
     break;
 
   case C_CANT_REPRESENT_INEXACT_ERROR:
-    msg = C_text("inexact number can not be represented as an exact number");
+    msg = C_text("inexact number cannot be represented as an exact number");
     c = 1;
     break;
 
@@ -2257,7 +2257,7 @@ C_regparm C_word C_fcall C_static_string(C_word **ptr, int len, C_char *str)
   C_word strblock;
 
   if(dptr == NULL)
-    panic(C_text("out of memory - can not allocate static string"));
+    panic(C_text("out of memory - cannot allocate static string"));
     
   strblock = (C_word)dptr;
   ((C_SCHEME_BLOCK *)strblock)->header = C_STRING_TYPE | len;
@@ -2273,7 +2273,7 @@ C_regparm C_word C_fcall C_static_lambda_info(C_word **ptr, int len, C_char *str
   C_word strblock;
 
   if(dptr == NULL)
-    panic(C_text("out of memory - can not allocate static lambda info"));
+    panic(C_text("out of memory - cannot allocate static lambda info"));
 
   strblock = (C_word)dptr;
   ((C_SCHEME_BLOCK *)strblock)->header = C_LAMBDA_INFO_TYPE | len;
@@ -2295,7 +2295,7 @@ C_regparm C_word C_fcall C_pbytevector(int len, C_char *str)
 {
   C_SCHEME_BLOCK *pbv = C_malloc(len + sizeof(C_header));
 
-  if(pbv == NULL) panic(C_text("out of memory - can not allocate permanent blob"));
+  if(pbv == NULL) panic(C_text("out of memory - cannot allocate permanent blob"));
 
   pbv->header = C_BYTEVECTOR_TYPE | len;
   C_memcpy(pbv->data, str, len);
@@ -2624,7 +2624,7 @@ C_regparm C_word C_fcall C_mutate(C_word *slot, C_word val)
       mutation_stack_bottom = (C_word **)realloc(mutation_stack_bottom, (mssize + MUTATION_STACK_GROWTH) * sizeof(C_word *));
       
       if(mutation_stack_bottom == NULL)
-	panic(C_text("out of memory - can not re-allocate mutation stack"));
+	panic(C_text("out of memory - cannot re-allocate mutation stack"));
 
       mutation_stack_limit = mutation_stack_bottom + mssize + MUTATION_STACK_GROWTH;
       mutation_stack_top = mutation_stack_bottom + mssize;
@@ -3163,7 +3163,7 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   size /= 2;
 
   if ((new_heapspace = heap_alloc (size, &new_tospace_start)) == NULL)
-    panic(C_text("out of memory - can not allocate heap segment"));
+    panic(C_text("out of memory - cannot allocate heap segment"));
   new_heapspace_size = size;
 
   new_tospace_top = new_tospace_start;
@@ -3256,7 +3256,7 @@ C_regparm void C_fcall C_rereclaim2(C_uword size, int double_plus)
   heap_free (heapspace2, heapspace1_size);
   
   if ((heapspace2 = heap_alloc (size, &tospace_start)) == NULL)
-    panic(C_text("out ot memory - can not allocate heap segment"));
+    panic(C_text("out ot memory - cannot allocate heap segment"));
   heapspace2_size = size;
 
   heapspace1 = new_heapspace;
@@ -3727,7 +3727,7 @@ C_char *C_dump_trace(int start)
   int i;
 
   if((result = (char *)C_malloc(STRING_BUFFER_SIZE)) == NULL)
-    horror(C_text("out of memory - can not allocate trace-dump buffer"));
+    horror(C_text("out of memory - cannot allocate trace-dump buffer"));
 
   *result = '\0';
 
@@ -3747,7 +3747,7 @@ C_char *C_dump_trace(int start)
 
       if(C_strlen(result) > STRING_BUFFER_SIZE - 32) {
 	if((result = C_realloc(result, C_strlen(result) * 2)) == NULL)
-	  horror(C_text("out of memory - can not reallocate trace-dump buffer"));
+	  horror(C_text("out of memory - cannot reallocate trace-dump buffer"));
       }
 
       C_strcat(result, ptr->raw);
@@ -3769,7 +3769,7 @@ C_regparm void C_fcall C_clear_trace_buffer(void)
     trace_buffer = (TRACE_INFO *)C_malloc(sizeof(TRACE_INFO) * C_trace_buffer_size);
 
     if(trace_buffer == NULL)
-      panic(C_text("out of memory - can not allocate trace-buffer"));
+      panic(C_text("out of memory - cannot allocate trace-buffer"));
   }
 
   trace_buffer_top = trace_buffer;
@@ -7361,7 +7361,7 @@ void allocate_vector_2(void *dummy)
   if(C_truep(mode)) {
     while((C_uword)(C_fromspace_limit - C_fromspace_top) < (bytes + stack_size)) {
       if(C_heap_size_is_fixed)
-	panic(C_text("out of memory - can not allocate vector (heap resizing disabled)"));
+	panic(C_text("out of memory - cannot allocate vector (heap resizing disabled)"));
 
       C_save(init);
       C_save(k);
@@ -8426,7 +8426,7 @@ void C_ccall C_do_register_finalizer(C_word x, C_word proc)
 
   if(finalizer_free_list == NULL) {
     if((flist = (FINALIZER_NODE *)C_malloc(sizeof(FINALIZER_NODE))) == NULL)
-      panic(C_text("out of memory - can not allocate finalizer node"));
+      panic(C_text("out of memory - cannot allocate finalizer node"));
 
     ++allocated_finalizer_count;
   }
@@ -8583,7 +8583,7 @@ void dload_2(void *dummy)
       tmp = (C_char *)C_malloc(C_strlen(topname) + 2);
       
       if(tmp == NULL)
-	panic(C_text("out of memory - can not allocate toplevel name string"));
+	panic(C_text("out of memory - cannot allocate toplevel name string"));
       
       C_strcpy(tmp, C_text("_"));
       C_strcat(tmp, topname);
@@ -8746,7 +8746,7 @@ void C_ccall C_become(C_word c, C_word closure, C_word k, C_word table)
 
     if(i == 0) {
       if((forwarding_table = (C_word *)realloc(forwarding_table, (forwarding_table_size + 1) * 4 * sizeof(C_word))) == NULL)
-	panic(C_text("out of memory - can not re-allocate forwarding table"));
+	panic(C_text("out of memory - cannot re-allocate forwarding table"));
 	
       i = forwarding_table_size;
       p = forwarding_table + forwarding_table_size * 2;
@@ -8831,7 +8831,7 @@ C_regparm C_word C_fcall C_a_i_make_locative(C_word **a, int c, C_word type, C_w
     locative_table = (C_word *)C_realloc(locative_table, locative_table_size * 2 * sizeof(C_word));
 
     if(locative_table == NULL) 
-      panic(C_text("out of memory - can not resize locative table"));
+      panic(C_text("out of memory - cannot resize locative table"));
 
     locative_table_size *= 2;
   }
@@ -8981,7 +8981,7 @@ C_regparm void C_fcall C_gc_protect(C_word **addr, int n)
     collectibles = (C_word **)C_realloc(collectibles, sizeof(C_word *) * k * 2);
 
     if(collectibles == NULL)
-      panic(C_text("out of memory - can not allocate GC protection vector"));
+      panic(C_text("out of memory - cannot allocate GC protection vector"));
     
     collectibles_top = collectibles + k;
     collectibles_limit = collectibles + k * 2;
@@ -9245,7 +9245,7 @@ static C_regparm C_word C_fcall decode_literal2(C_word **ptr, C_char **str,
   }
 
   if((bits & C_SPECIALBLOCK_BIT) != 0)
-    panic(C_text("literals with special bit can not be decoded"));
+    panic(C_text("literals with special bit cannot be decoded"));
 
   size = decode_size(str);
 

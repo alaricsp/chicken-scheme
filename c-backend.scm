@@ -1425,7 +1425,7 @@ return((C_header_bits(lit) >> 24) & 0xff);
 	     (encode-size (string-length str))
 	     str) ) )
 	 ((##sys#immediate? lit)
-	  (bomb "invalid literal - can not encode" lit))
+	  (bomb "invalid literal - cannot encode" lit))
 	 ((##core#inline "C_byteblockp" lit)
 	  (##sys#string-append ; relies on the fact that ##sys#string-append doesn't check
 	   (string-append

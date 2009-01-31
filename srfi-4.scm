@@ -257,7 +257,7 @@ EOF
 	  (if ext?
 	      (let ([bv (ext-alloc len)])
 		(or bv
-		    (##sys#error loc "not enough memory - can not allocate external number vector" len)) )
+		    (##sys#error loc "not enough memory - cannot allocate external number vector" len)) )
 	      (let ([bv (##sys#allocate-vector len #t #f #t)]) ; this could be made better...
 		(##core#inline "C_string_to_bytevector" bv)
 		bv) ) ) ] )

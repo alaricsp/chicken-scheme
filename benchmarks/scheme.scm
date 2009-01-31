@@ -86,7 +86,7 @@
   (if (not (symbol? x))
     (scheme-error "Identifier expected" x))
   (if (memq x scheme-syntactic-keywords)
-    (scheme-error "Variable name can not be a syntactic keyword" x)))
+    (scheme-error "Variable name cannot be a syntactic keyword" x)))
 
 (define (shape form n)
   (let loop ((form form) (n n) (l form))

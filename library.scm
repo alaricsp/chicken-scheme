@@ -1331,7 +1331,7 @@ EOF
       (when (or (fx> n len-to) (fx> n len-from))
 	(##sys#signal-hook 
 	 #:bounds-error 'vector-copy!
-	 "can not copy vector - count exceeds length" from to n) ) ]
+	 "cannot copy vector - count exceeds length" from to n) ) ]
      [else] )
     (do ([i 0 (fx+ i 1)])
 	((fx>= i n))
@@ -1865,13 +1865,13 @@ EOF
 	       [(#:text) (set! bmode "")]
 	       [(#:append) 
 		(if inp
-		    (##sys#error loc "can not use append mode with input file")
+		    (##sys#error loc "cannot use append mode with input file")
 		    (set! fmode "a") ) ]
 	       [else (##sys#error loc "invalid file option" o)] ) ) )
 	 (let ([port (##sys#make-port inp ##sys#stream-port-class name 'stream)])
 	   (unless (##sys#open-file-port port name (##sys#string-append fmode bmode))
 	     (##sys#update-errno)
-	     (##sys#signal-hook #:file-error loc (##sys#string-append "can not open file - " strerror) name) )
+	     (##sys#signal-hook #:file-error loc (##sys#string-append "cannot open file - " strerror) name) )
 	   port) ) )
      #:open (not inp) modes) )
 
@@ -1969,7 +1969,7 @@ EOF
   (##sys#check-port port 'port-position)
   (if (##sys#slot port 1) 
       (##sys#values (##sys#slot port 4) (##sys#slot port 5))
-      (##sys#error 'port-position "can not compute position of port" port) ) )
+      (##sys#error 'port-position "cannot compute position of port" port) ) )
 
 (define (delete-file filename)
   (##sys#check-string filename 'delete-file)
@@ -1980,7 +1980,7 @@ EOF
        (##sys#update-errno)
        (##sys#signal-hook
 	#:file-error 'delete-file
-	(##sys#string-append "can not delete file - " strerror) filename) ) )
+	(##sys#string-append "cannot delete file - " strerror) filename) ) )
    #:delete) )
 
 (define (rename-file old new)
@@ -1996,7 +1996,7 @@ EOF
 	  (##sys#update-errno)
 	  (##sys#signal-hook
 	   #:file-error 'rename-file
-	   (##sys#string-append "can not rename file - " strerror) old new) ) ) ) )
+	   (##sys#string-append "cannot rename file - " strerror) old new) ) ) ) )
    #:rename new) )
 
 
@@ -2298,7 +2298,7 @@ EOF
 		  (let ([val (##sys#string->number tok (or radix 10))] )
 		    (cond [val
 			   (when (and (##sys#inexact? val) rat-flag)
-			     (##sys#read-warning port "can not represent exact fraction - coerced to flonum" tok) )
+			     (##sys#read-warning port "cannot represent exact fraction - coerced to flonum" tok) )
 			   val]
 			  [radix (##sys#read-error port "illegal number syntax" tok)]
 			  [else (resolve-symbol tok)] ) ) ) ) )
@@ -3753,10 +3753,10 @@ EOF
 	((7) (apply ##sys#signal-hook #:arithmetic-error loc "division by zero" args))
 	((8) (apply ##sys#signal-hook #:bounds-error loc "out of range" args))
 	((9) (apply ##sys#signal-hook #:type-error loc "call of non-procedure" args))
-	((10) (apply ##sys#signal-hook #:arity-error loc "continuation can not receive multiple values" args))
+	((10) (apply ##sys#signal-hook #:arity-error loc "continuation cannot receive multiple values" args))
 	((11) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a non-cyclic list" args))
 	((12) (apply ##sys#signal-hook #:limit-error loc "recursion too deep" args))
-	((13) (apply ##sys#signal-hook #:type-error loc "inexact number can not be represented as an exact number" args))
+	((13) (apply ##sys#signal-hook #:type-error loc "inexact number cannot be represented as an exact number" args))
 	((14) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a proper list" args))
 	((15) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a fixnum" args))
 	((16) (apply ##sys#signal-hook #:type-error loc "bad argument type - not a number" args))
@@ -4368,7 +4368,7 @@ EOF
  
 (define (##sys#make-locative obj index weak? loc)
   (cond [(##sys#immediate? obj)
-	 (##sys#signal-hook #:type-error loc "locative can not refer to immediate object" obj) ]
+	 (##sys#signal-hook #:type-error loc "locative cannot refer to immediate object" obj) ]
 	[(or (vector? obj) (pair? obj))
 	 (##sys#check-range index 0 (##sys#size obj) loc)
 	 (##core#inline_allocate ("C_a_i_make_locative" 5) 0 obj index weak?) ]
@@ -4422,7 +4422,7 @@ EOF
 	[else
 	 (##sys#signal-hook
 	  #:type-error loc
-	  "bad argument type - locative can not refer to objects of this type" 
+	  "bad argument type - locative cannot refer to objects of this type" 
 	  obj) ] ) )
 
 

@@ -292,7 +292,7 @@ EOF
 
 (define (number-of-bytes x)
   (cond [(not (##core#inline "C_blockp" x))
-	 (##sys#signal-hook #:type-error 'number-of-bytes "can not compute number of bytes of immediate object" x) ]
+	 (##sys#signal-hook #:type-error 'number-of-bytes "cannot compute number of bytes of immediate object" x) ]
 	[(##core#inline "C_byteblockp" x) (##sys#size x)]
 	[else (##core#inline "C_w2b" (##sys#size x))] ) )
 
@@ -413,7 +413,7 @@ EOF
 			      (make-composite-condition
 			       (make-property-condition
 				'exn 'location 'object-evict-to-location
-				'message "can not evict object - limit exceeded" 
+				'message "cannot evict object - limit exceeded" 
 				'arguments (list x limit))
 			       (make-property-condition 'evict 'limit limit) ) ) ) )
 			 (let ([y (##core#inline "C_evict_block" x ptr2)])
@@ -454,7 +454,7 @@ EOF
 (define object-unevict
     (lambda (x #!optional (full #f))
       (define (err x)
-	(##sys#signal-hook #:type-error 'object-unevict "can not copy object" x) )
+	(##sys#signal-hook #:type-error 'object-unevict "cannot copy object" x) )
       (let ([tab (##sys#make-vector evict-table-size '())])
 	(let copy ([x x])
 	  (cond [(not (##core#inline "C_blockp" x)) x]

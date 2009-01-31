@@ -753,7 +753,7 @@
 		      (set! mod (##sys#find-module mname)))
 		  (else
 		   (syntax-error
-		    loc "can not import from undefined module" 
+		    loc "cannot import from undefined module" 
 		    mname)))))
 	(let ((vexp (module-vexports mod))
 	      (sexp (module-sexports mod)))
@@ -1465,7 +1465,7 @@
       (if (pair? (cdr a))
 	  a
 	  (##sys#error
-	   'import "can not find implementation of re-exported syntax"
+	   'import "cannot find implementation of re-exported syntax"
 	   name))))
   (let* ((sexps
 	  (map (lambda (se)

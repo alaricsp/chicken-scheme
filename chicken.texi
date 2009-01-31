@@ -913,7 +913,7 @@ Marks the generated file for being linked with the unsafe runtime system. This s
 Use definitions from the library unit @code{NAME}. This is equivalent to @code{-prelude "(declare (uses NAME))"}. Multiple arguments may be given, separated by @code{,}.
 @item -no-usual-integrations
 
-Specifies that standard procedures and certain internal procedures may be redefined, and can not be inlined. This is equivalent to declaring @code{(not usual-integrations)}.
+Specifies that standard procedures and certain internal procedures may be redefined, and cannot be inlined. This is equivalent to declaring @code{(not usual-integrations)}.
 @item -version
 
 Prints the version and some copyright information and exit the compiler.
@@ -1228,7 +1228,7 @@ CHICKEN provides an interpreter named @code{csi} for evaluating Scheme programs 
 
 @code{csi @{FILENAME|OPTION}@}
 
-where @code{FILENAME} specifies a file with Scheme source-code.  If the extension of the source file is @code{.scm}, it may be omitted. The runtime options described in @uref{http://galinha.ucpel.tche.br/Using%20the%20compiler#Compiler%20command%20line%20format, Compiler command line format} are also available for the interpreter.  If the environment variable @code{CSI_OPTIONS} is set to a list of options, then these options are additionally passed to every direct or indirect invocation of @code{csi}. Please note that runtime options (like @code{-:...}) can not be passed using this method. The options recognized by the interpreter are:
+where @code{FILENAME} specifies a file with Scheme source-code.  If the extension of the source file is @code{.scm}, it may be omitted. The runtime options described in @uref{http://galinha.ucpel.tche.br/Using%20the%20compiler#Compiler%20command%20line%20format, Compiler command line format} are also available for the interpreter.  If the environment variable @code{CSI_OPTIONS} is set to a list of options, then these options are additionally passed to every direct or indirect invocation of @code{csi}. Please note that runtime options (like @code{-:...}) cannot be passed using this method. The options recognized by the interpreter are:
 
 @table @b
 @item --
@@ -3016,7 +3016,7 @@ Emit prototypes for callbacks defined with @code{define-external} before any oth
 [declaration specifier] (disable-interrupts)
 [declaration specifier] (not interrupts-enabled)
 @end verbatim
-Disable timer-interrupts checks in the compiled program. Threads can not be preempted in main- or library-units that contain this declaration.
+Disable timer-interrupts checks in the compiled program. Threads cannot be preempted in main- or library-units that contain this declaration.
 
 @node Declarations - disable-warning, Declarations - import, Declarations - disable-interrupts, Declarations
 @section disable-warning
@@ -4167,7 +4167,7 @@ Execute shell command. The functionality offered by this procedure depends on th
 @verbatim
 [procedure] (cpu-time)
 @end verbatim
-Returns the used CPU time of the current process in milliseconds as two values: the time spent in user code, and the time spent in system code. On platforms where user and system time can not be differentiated, system time will be always be 0.
+Returns the used CPU time of the current process in milliseconds as two values: the time spent in user code, and the time spent in system code. On platforms where user and system time cannot be differentiated, system time will be always be 0.
 
 @node Unit library - Execution time - current-milliseconds, Unit library - Execution time - current-seconds, Unit library - Execution time - cpu-time, Unit library - Execution time
 @subsection current-milliseconds
@@ -13564,7 +13564,7 @@ To actually link with the static version of @code{my-ext}, do:
 @verbatim
 % csc -static-extensions my-program.scm -uses my-ext
 @end verbatim
-The compiler will try to do the right thing, but can not handle all extensions, since the ability to statically link eggs is relatively new. Eggs that support static linking are designated as being able to do so. If you require a statically linkable version of an egg that has not been converted yet, contact the extension author or the CHICKEN  mailing list.
+The compiler will try to do the right thing, but cannot handle all extensions, since the ability to statically link eggs is relatively new. Eggs that support static linking are designated as being able to do so. If you require a statically linkable version of an egg that has not been converted yet, contact the extension author or the CHICKEN  mailing list.
 
 Previous: @ref{Interface to external functions and variables, Interface to external functions and variables}
 
@@ -13770,7 +13770,7 @@ Each unit used via @code{(declare (uses ...))} is registered as a feature and so
 @subsection Why are constants defined by @code{define-constant} not honoured in @code{case} constructs?
 
 
-@code{case} expands into a cascaded @code{if} expression, where the first item in each arm is treated as a quoted list. So the @code{case} macro can not infer whether a symbol is to be treated as a constant-name (defined via @code{define-constant}) or a literal symbol.
+@code{case} expands into a cascaded @code{if} expression, where the first item in each arm is treated as a quoted list. So the @code{case} macro cannot infer whether a symbol is to be treated as a constant-name (defined via @code{define-constant}) or a literal symbol.
 
 @node FAQ - General - How can I enable case sensitive reading/writing in user code?, FAQ - General - How can I change match-error-control during compilation?, FAQ - General - Why are constants defined by define-constant not honoured in case constructs?, FAQ - General
 @subsection How can I enable case sensitive reading/writing in user code?
@@ -14062,7 +14062,7 @@ The compiler option @code{-unsafe} or the declaration @code{(declare (unsafe))} 
 @subsection Why do I get a warning when I define a global variable named @code{match}?
 
 
-Even when the @code{match} unit is not used, the macros from that package are visible in the compiler. The reason for this is that macros can not be accessed from library units (only when explicitly evaluated in running code). To speed up macro-expansion time, the compiler and the interpreter both already provide the compiled  @code{match-...} macro definitions. Macros shadowed lexically are no problem, but global definitions of variables named identically to (global) macros are useless - the macro definition shadows the global variable.
+Even when the @code{match} unit is not used, the macros from that package are visible in the compiler. The reason for this is that macros cannot be accessed from library units (only when explicitly evaluated in running code). To speed up macro-expansion time, the compiler and the interpreter both already provide the compiled  @code{match-...} macro definitions. Macros shadowed lexically are no problem, but global definitions of variables named identically to (global) macros are useless - the macro definition shadows the global variable.
 
 This problem can be solved using a different name or undefining the macro, like this:
 

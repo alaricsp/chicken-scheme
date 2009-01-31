@@ -249,7 +249,7 @@
 	 (locate-egg/svn name location version destination username password))
 	((http)
 	 (locate-egg/http name location version destination tests))
-	(else (error "can not retrieve extension unsupported transport" transport)))) )
+	(else (error "cannot retrieve extension unsupported transport" transport)))) )
 
   (define (list-extensions transport location #!key quiet username password)
     (fluid-let ((*quiet* quiet))
@@ -258,6 +258,6 @@
 	 (list-eggs/local location)) 
 	((svn)
 	 (list-eggs/svn location username password))
-	(else (error "can not list extensions - unsupported transport" transport)))) )
+	(else (error "cannot list extensions - unsupported transport" transport)))) )
 
 )
