@@ -43,7 +43,7 @@ EOF
     (bound-to-procedure
       ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-string
       ##sys#substring ##sys#for-each ##sys#map ##sys#setslot
-      ##sys#allocate-vector ##sys#check-pair ##sys#not-a-proper-list-error
+      ##sys#allocate-vector ##sys#check-pair ##sys#error-not-a-proper-list
       ##sys#member ##sys#assoc ##sys#error ##sys#signal-hook ##sys#read-string!
       ##sys#check-symbol ##sys#check-vector ##sys#floor ##sys#ceiling
       ##sys#truncate ##sys#round ##sys#check-number ##sys#cons-flonum
@@ -242,7 +242,7 @@ EOF
     (let loop ([lsts lsts])
       (cond [(null? lsts) '()]
 	    [(cond-expand [unsafe #f] [else (not (pair? lsts))])
-	     (##sys#not-a-proper-list-error lsts) ]
+	     (##sys#error-not-a-proper-list lsts) ]
 	    [else
 	     (let ([l (##sys#slot lsts 0)]
 		   [r (##sys#slot lsts 1)] )
@@ -516,7 +516,7 @@ EOF
 	       (##sys#check-string stri 'string-intersperse)
 	       (loop1 (##sys#slot ss 1)
 		      (fx+ (##sys#size stri) (fx+ dslen n)) ) ) )
-	    (else (##sys#not-a-proper-list-error strs)) ) ) ) )
+	    (else (##sys#error-not-a-proper-list strs)) ) ) ) )
 
 
 ;;; Translate elements of a string:
@@ -882,7 +882,7 @@ EOF
 	   ((eq? (##sys#slot lst 1) '()) lst)
 	 (if (or (not (##core#inline "C_blockp" lst))
 		 (not (##core#inline "C_pairp" lst)) )
-	     (##sys#not-a-proper-list-error lst0 'list->queue) ) ) ) ) )
+	     (##sys#error-not-a-proper-list lst0 'list->queue) ) ) ) ) )
 
 
 ; (queue-push-back! queue item)

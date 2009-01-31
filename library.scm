@@ -130,7 +130,7 @@ EOF
     (bound-to-procedure
      ##sys#check-char ##sys#check-exact ##sys#check-port ##sys#check-port* ##sys#check-string ##sys#substring ##sys#check-port-mode
      ##sys#for-each ##sys#map ##sys#setslot ##sys#allocate-vector ##sys#check-pair 
-     ##sys#not-a-proper-list-error ##sys#error ##sys#warn ##sys#signal-hook
+     ##sys#error-not-a-proper-list ##sys#error ##sys#warn ##sys#signal-hook
      ##sys#check-symbol ##sys#check-vector ##sys#floor ##sys#ceiling ##sys#truncate ##sys#round 
      ##sys#check-number ##sys#cons-flonum ##sys#check-integer ##sys#check-special
      ##sys#flonum-fraction ##sys#make-port ##sys#print 
@@ -433,9 +433,10 @@ EOF
 	  ((eq? x (##sys#slot lst 0)) (##sys#slot lst 1))
 	  (else (cons (##sys#slot lst 0) (loop (##sys#slot lst 1)))) ) ) )
 
-(define (##sys#not-a-proper-list-error arg . loc)
-  (##sys#error-hook (foreign-value "C_NOT_A_PROPER_LIST_ERROR" int)
-		    (and (pair? loc) (car loc)) arg) )
+(define (##sys#error-not-a-proper-list arg . loc)
+  (##sys#error-hook (foreign-value "C_NOT_A_PROPER_LIST_ERROR" int) (and (pair? loc) (car loc)) arg) )
+
+(define ##sys#not-a-proper-list-error ##sys#error-not-a-proper-list) ;DEPRECATED
 
 (define (append . lsts)
   (if (eq? lsts '())
@@ -453,7 +454,7 @@ EOF
 		(cond ((eq? node '()) (loop (##sys#slot lsts 1)))
 		      ((pair? node)
 		       (cons (##sys#slot node 0) (copy (##sys#slot node 1))) )
-		      (else (##sys#not-a-proper-list-error (##sys#slot lsts 0) 'append)) ) ] ) ) ) ) ) )
+		      (else (##sys#error-not-a-proper-list (##sys#slot lsts 0) 'append)) ) ] ) ) ) ) ) )
 
 (define (reverse lst0)
   (let loop ((lst lst0) (rest '()))
@@ -466,7 +467,7 @@ EOF
 	(cond ((eq? lst '()) rest)
 	      ((pair? lst)
 	       (loop (##sys#slot lst 1) (cons (##sys#slot lst 0) rest)) )
-	      (else (##sys#not-a-proper-list-error lst0 'reverse)) ) ] ) ) )
+	      (else (##sys#error-not-a-proper-list lst0 'reverse)) ) ] ) ) )
 
 (define (memq x lst) (##core#inline "C_i_memq" x lst))
 (define (memv x lst) (##core#inline "C_i_memv" x lst))
@@ -526,7 +527,7 @@ EOF
 	(##core#inline "C_setsubchar" s i (##sys#slot lst 0)) ) )]
     [else
     (if (not (list? lst0))
-      (##sys#not-a-proper-list-error lst0 'list->string)
+      (##sys#error-not-a-proper-list lst0 'list->string)
       (let* ([len (length lst0)]
 	     [s (##sys#make-string len)] )
 	(do ([i 0 (fx+ i 1)]
@@ -562,7 +563,7 @@ EOF
 		   (##core#inline "C_setsubchar" s n2 c) )
 		 (iter (##sys#slot l2 1) (fx- n2 1)) ) ) )
 	s )
-      (##sys#not-a-proper-list-error l 'reverse-list->string) ) ]
+      (##sys#error-not-a-proper-list l 'reverse-list->string) ) ]
     ) )
 
 (define reverse-list->string ##sys#reverse-list->string)
@@ -1288,7 +1289,7 @@ EOF
 	    (loop (##sys#slot lst 1) (fx+ i 1)) ) ) ) )]
     [else
     (if (not (list? lst0))
-      (##sys#not-a-proper-list-error lst0 'list->vector)
+      (##sys#error-not-a-proper-list lst0 'list->vector)
       (let* ([len (length lst0)]
 	     [v (##sys#make-vector len)] )
 	(let loop ([lst lst0]
@@ -1507,7 +1508,7 @@ EOF
 	    ((pair? lst)
 	     (p (##sys#slot lst 0))
 	     (loop (##sys#slot lst 1)) )
-	    (else (##sys#not-a-proper-list-error lst0 'for-each)) ) ] ) ) )
+	    (else (##sys#error-not-a-proper-list lst0 'for-each)) ) ] ) ) )
 
 (define (##sys#map p lst0)
   (let loop ((lst lst0))
@@ -1520,7 +1521,7 @@ EOF
       (cond ((eq? lst '()) lst)
 	    ((pair? lst)
 	     (cons (p (##sys#slot lst 0)) (loop (##sys#slot lst 1))) )
-	    (else (##sys#not-a-proper-list-error lst0 'map)) ) ] ) ) )
+	    (else (##sys#error-not-a-proper-list lst0 'map)) ) ] ) ) )
 
 (define for-each)
 (define map)
@@ -1537,7 +1538,7 @@ EOF
 					[else (check lsts start loc)] ) )
 			  ((pair? item)
 			   (cons (p item) (mapsafe p (##sys#slot lsts 1) #f loc)) )
-			  (else (##sys#not-a-proper-list-error item loc)) ) ) ) ) )
+			  (else (##sys#error-not-a-proper-list item loc)) ) ) ) ) )
 	   (check 
 	    (lambda (lsts start loc)
 	      (if (or (not start)

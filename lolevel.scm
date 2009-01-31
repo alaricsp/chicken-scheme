@@ -56,7 +56,7 @@ EOF
      ##sys#make-locative ##sys#become!
      ##sys#make-string
      make-property-condition make-composite-condition signal ##sys#set-pointer-address! ##sys#make-vector
-     ##sys#make-pointer make-string make-byte-vector ##sys#not-a-proper-list-error ##sys#check-pointer
+     ##sys#make-pointer make-string make-byte-vector ##sys#error-not-a-proper-list ##sys#check-pointer
      ##sys#locative? ##sys#bytevector?
      extend-procedure ##sys#lambda-decoration ##sys#decorate-lambda ##sys#make-tagged-pointer ##sys#check-special
      ##sys#vector->closure! ##sys#error ##sys#signal-hook ##sys#address->pointer ##sys#pointer->address) ) ] )

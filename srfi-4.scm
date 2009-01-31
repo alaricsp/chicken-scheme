@@ -77,7 +77,7 @@ EOF
      ##sys#f32vector-ref ##sys#f32vector-set! ##sys#f64vector-ref ##sys#f64vector-set! ##sys#check-exact-interval
      ##sys#check-inexact-interval ##sys#check-number ##sys#check-structure ##sys#cons-flonum ##sys#check-list
      ##sys#check-range ##sys#error ##sys#signal-hook
-     ##sys#not-a-proper-list-error ##sys#print ##sys#allocate-vector) ) ] )
+     ##sys#error-not-a-proper-list ##sys#print ##sys#allocate-vector) ) ] )
 
 (include "unsafe-declarations.scm")
 
@@ -392,7 +392,7 @@ EOF
 	    ((##core#inline "C_eqp" p '()) v)
 	  (if (and (##core#inline "C_blockp" p) (##core#inline "C_pairp" p))
 	      (set v i (##core#inline "C_slot" p 0))
-	      (##sys#not-a-proper-list-error lst) ) ) ) ) )
+	      (##sys#error-not-a-proper-list lst) ) ) ) ) )
 
   (set! list->u8vector (init make-u8vector u8vector-set! 'list->u8vector))
   (set! list->s8vector (init make-s8vector s8vector-set! 'list->s8vector))
