@@ -2056,7 +2056,7 @@
               (dfa-match/longest dfa str i j)))))
      ((pair? sre)
       (case (car sre)
-        ((seq)
+        ((: seq)
          (let* ((right (sre-sequence (cddr sre)))
                 (match-left (lp (cadr sre) n #t))
                 (match-right
