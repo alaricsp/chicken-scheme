@@ -1309,11 +1309,11 @@ compiler-check:
 bootstrap: 
 	gzip -d -c $(SRCDIR)bootstrap.tar.gz | tar xvf -
 	touch *.c
-	$(MAKE) -f $(SRCDIR)Makefile.$(PLATFORM) STATICBUILD=1 DEBUGBUILD=1 \
+	$(MAKE) -f $(SRCDIR)Makefile.$(PLATFORM) STATICBUILD=1 DEBUGBUILD=1 PLATFORM=$(PLATFORM) \
 	  chicken$(EXE)
 	$(COPY_COMMAND) chicken$(EXE) chicken-boot$(EXE)
 	touch *.scm
-	$(MAKE) PLATFORM=$(PLATFORM) confclean
+	$(MAKE) -f $(SRCDIR)Makefile.$(PLATFORM) PLATFORM=$(PLATFORM) confclean
 
 $(SRCDIR)bootstrap.tar.gz: distfiles
 	tar cfz $@ library.c eval.c data-structures.c ports.c files.c extras.c lolevel.c utils.c tcp.c \

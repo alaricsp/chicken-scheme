@@ -157,7 +157,9 @@ C_COMPILER_OUTPUT_OPTION ?= -o
 C_COMPILER_OUTPUT ?= $(C_COMPILER_OUTPUT_OPTION) $@
 
 ifdef DEBUGBUILD
+ifeq ($(C_COMPILER),gcc)
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused
+endif
 endif
 C_COMPILER_BUILD_RUNTIME_OPTIONS ?= -DC_BUILDING_LIBCHICKEN
 C_COMPILER_BUILD_UNSAFE_RUNTIME_OPTIONS ?= $(C_COMPILER_BUILD_RUNTIME_OPTIONS) -DNDEBUG -DC_UNSAFE_RUNTIME
@@ -242,9 +244,9 @@ HOST_LIBRARIES ?= $(LIBRARIES)
 # other settings
 
 HOSTNAME ?= $(shell hostname)
+
 ifdef WINDOWS_SHELL
 BUILD_TIME ?= $(shell date /t)
-UNAME_SYS ?= MinGW
 COPY_COMMAND = copy /Y
 else
 BUILD_TIME ?= $(shell date +%Y-%m-%d)
@@ -338,16 +340,14 @@ endif
 
 # main rule
 
-.PHONY: all
+.PHONY: all buildsvnrevision
 
-ifdef WINDOWS_SHELL
-all: $(TARGETS)
-else
 all: buildsvnrevision $(TARGETS)
-endif
 
 buildsvnrevision:
+ifndef WINDOWS_SHELL
 	sh $(SRCDIR)svnrevision.sh
+endif
 
 # generic part of chicken-config.h
 
