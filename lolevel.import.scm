@@ -61,6 +61,7 @@
    object-size
    object-unevict
    pointer->address
+   pointer-like?
    pointer->object
    pointer-f32-ref
    pointer-f32-set!
@@ -85,8 +86,13 @@
    procedure-data
    record->vector
    record-instance?
+   record-instance-length
+   record-instance-slot
+   record-instance-slot-set!
+   record-instance-type
    set-invalid-procedure-call-handler!
    set-procedure-data!
    tag-pointer
    tagged-pointer?
-   unbound-variable-value))
+   unbound-variable-value
+   vector-like?))

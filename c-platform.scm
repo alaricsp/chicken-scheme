@@ -575,7 +575,7 @@
 (rewrite 'flonum? 2 1 "C_i_flonump" #t #f)
 (rewrite 'fixnum? 2 1 "C_fixnump" #t #f)
 (rewrite 'finite? 2 1 "C_i_finitep" #f #f)
-(rewrite '##sys#pointer? 2 1 "C_pointerp" #t #f)
+(rewrite '##sys#pointer? 2 1 "C_anypointerp" #t #f)
 (rewrite '##sys#generic-structure? 2 1 "C_structurep" #t #f)
 (rewrite 'exact? 2 1 "C_fixnump" #f #f)
 (rewrite 'exact? 2 1 "C_i_exactp" #t #f)

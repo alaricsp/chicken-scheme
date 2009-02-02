@@ -7,7 +7,7 @@ export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
 compile="../csc -compiler ../chicken -v -I.. -L.. -include-path .. -o a.out"
 compile_s="../csc -s -compiler ../chicken -v -I.. -L.. -include-path .."
-interpret="../csi -include-path .."
+interpret="../csi -n -include-path .."
 
 echo "======================================== compiler tests ..."
 $compile compiler-tests.scm && ./a.out
@@ -78,6 +78,9 @@ $interpret -bnq ec.so ec-tests.scm
 
 echo "======================================== hash-table tests ..."
 $interpret -s hash-table-tests.scm
+
+echo "======================================== lolevel tests ..."
+$interpret -s lolevel-tests.scm
 
 echo "======================================== port tests ..."
 $interpret -s port-tests.scm
