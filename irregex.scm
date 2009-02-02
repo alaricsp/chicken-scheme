@@ -1281,6 +1281,8 @@
              (case (car sre)
                ((/ ~ & -)
                 (grow 1))
+               ((posix-string)
+                (lp (string->sre (cadr sre)) n lo hi return))
                ((seq : w/case w/nocase atomic)
                 (let lp2 ((ls (cdr sre)) (n n) (lo2 0) (hi2 0))
                   (if (null? ls)
