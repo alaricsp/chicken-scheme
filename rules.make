@@ -1007,7 +1007,7 @@ install-setup-files:
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) setup-download.so $(DESTDIR)$(IEGGDIR)
 
 install-includes:
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken-primitive-inlines.scm $(DESTDIR)$(IDATADIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken-primitive-object-inlines.scm $(DESTDIR)$(IDATADIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken-thread-object-inlines.scm $(DESTDIR)$(IDATADIR)
 
 uninstall:
