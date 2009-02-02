@@ -8,11 +8,11 @@
 ; conditions are met:
 ;
 ;   Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-;     disclaimer. 
+;     disclaimer.
 ;   Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
-;     disclaimer in the documentation and/or other materials provided with the distribution. 
+;     disclaimer in the documentation and/or other materials provided with the distribution.
 ;   Neither the name of the author nor the names of its contributors may be used to endorse or promote
-;     products derived from this software without specific prior written permission. 
+;     products derived from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS
 ; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -27,6 +27,12 @@
 
 /* Configuration: */
 
+/*
+ * The Watcom (__WATCOMC__), Metroworks (__MWERKS__), and Delorie (__DJGPP__)
+ * compilers are not currently supported but existing references remain,
+ * just in case.
+ */
+
 #ifndef ___CHICKEN
 #define ___CHICKEN
 
@@ -39,23 +45,139 @@
 # include "chicken-config.h"
 #endif
 
-#if !defined(__GNUC__)
+
+/* Kind of platform */
+
+#ifndef C_SIXTY_FOUR
+# if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__) || defined(__powerpc64__)
+#   define C_SIXTY_FOUR
+# elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
+#   define C_SIXTY_FOUR
+# endif
+#endif
+
+#if defined(__APPLE__) && defined(__MACH__)
+# define C_MACOSX
+#endif
+
+#if defined(C_MACOSX) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+# define C_XXXBSD
+#endif
+
+#if /*defined(__GNUC__) &&*/ (defined(__linux__) || defined(C_XXXBSD))
+# define C_GNU_ENV
+#endif
+
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__WATCOMC__) || defined(__MWERKS__) || defined(__DJGPP__)
+# define C_NONUNIX
+#endif
+
+
+/* Headers */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <string.h>
+#include <setjmp.h>
+#include <limits.h>
+#include <time.h>
+
+#if !defined(C_NONUNIX) || defined(__MINGW32__) || defined(__WATCOMC__)
+# include <unistd.h>
+# include <inttypes.h>
+# include <sys/types.h>
+#endif
+
+/* Byteorder in machine word */
+
+#if defined(__MINGW32__)
+# include <sys/param.h>
+#elif defined(__CYGWIN__)
+# include <endian.h>
+#elif defined(__linux__)
+# include <endian.h>
+#elif defined(C_XXXBSD)
+# include <machine/endian.h>
+#elif defined(__hpux__)
+# include <arpa/nameser.h>
+#elif defined(_AIX)
+# include <sys/machine.h>
+#elif defined(__sun__)
+# include <sys/isa_defs.h>
+#elif defined(__svr4__)
+# include <sys/byteorder.h>
+#endif
+
+#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__WATCOMC__)
+# include <malloc.h>
+#endif
+
+#ifdef _MSC_VER
+# include <io.h>
+#endif
+
+/* Much better with stack allocation API */
+
+#if defined(_MSC_VER)
+# if HAVE_ALLOCA_H
+#  define alloca            _alloca
+# endif
+#elif !defined(__GNUC__) && !defined(__WATCOMC__)
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
-# else
-#  ifdef _AIX
+# elif defined(_AIX)
 #   pragma alloca
-#  else
-#   ifndef alloca /* predefined by HP cc +Olibcalls */
-char *alloca ();
-#   endif
-#  endif
+# elif !defined(alloca) /* predefined by HP cc +Olibcalls */
+    char *alloca ();
 # endif
 #elif (defined(__sun__) && defined(__svr4__)) || defined(__sgi__)
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
 # endif
 #endif
+
+
+/* Chicken Core C API */
+
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+# define C_BIG_ENDIAN
+#elif defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
+# define C_BIG_ENDIAN
+#elif defined(__BIG_ENDIAN__)
+# define C_BIG_ENDIAN
+#elif defined(__sparc__) || defined(__POWERPC__) || defined(__MC68K__) || defined(__mips__)
+# define C_BIG_ENDIAN
+#endif
+
+#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && __BYTE_ORDER == __LITTLE_ENDIAN
+# define C_LITTLE_ENDIAN
+#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && BYTE_ORDER == LITTLE_ENDIAN
+# define C_LITTLE_ENDIAN
+#elif defined(__LITTLE_ENDIAN__)
+# define C_LITTLE_ENDIAN
+#elif defined (__alpha__) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
+# define C_LITTLE_ENDIAN
+#endif
+
+/* Make sure some common C identifiers are availble w/ Windows */
+
+#ifdef _MSC_VER
+# define strncasecmp       strnicmp
+# define isatty            _isatty
+typedef __int8             int8_t;
+typedef unsigned __int8    uint8_t;
+typedef __int16            int16_t;
+typedef unsigned  __int16  uint16_t;
+typedef __int32            int32_t;
+typedef unsigned __int32   uint32_t;
+typedef __int64            int64_t;
+typedef unsigned __int64   uint64_t;
+# pragma warning(disable: 4101)
+#endif
+
+/* Could be used by C++ source */
 
 #ifdef __cplusplus
 # define C_extern                  extern "C"
@@ -66,7 +188,11 @@ char *alloca ();
 # define C_BEGIN_C_DECLS
 # define C_END_C_DECLS
 #endif
- 
+
+
+/* Function declaration modes */
+
+/* Visibility */
 #define C_varextern                C_extern
 #define C_fctimport
 #define C_fctexport
@@ -115,6 +241,50 @@ char *alloca ();
 # endif
 #endif
 
+/* Language specifics: */
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+# ifndef __cplusplus
+#  define C_cblock                ({
+#  define C_cblockend             })
+#  define C_noret                 __attribute__ ((noreturn))
+#  define C_noret_decl(name)
+#  define C_aligned               __attribute__ ((aligned))
+# endif
+# ifdef __i386__
+#  define C_regparm               __attribute__ ((regparm(3)))
+# endif
+#elif defined(_MSC_VER)
+# define C_fcall                  __fastcall
+#elif defined(__WATCOMC__)
+# define C_ccall                  __cdecl
+#endif
+
+#ifndef C_cblock
+# define C_cblock                 do{
+# define C_cblockend              }while(0)
+# define C_noret
+# define C_noret_decl(name)
+#endif
+
+#ifndef C_regparm
+# define C_regparm
+#endif
+
+#ifndef C_fcall
+# define C_fcall
+#endif
+
+#ifndef C_ccall
+# define C_ccall
+#endif
+
+#ifndef C_aligned
+# define C_aligned
+#endif
+
+#define C_c_regparm
+
+/* Thread Local Stoarage */
 #ifdef C_ENABLE_TLS
 # if defined(__GNUC__)
 #  define C_TLS                    __thread
@@ -126,6 +296,9 @@ char *alloca ();
 #ifndef C_TLS
 # define C_TLS
 #endif
+
+
+/* Stack growth direction; used to compute stack addresses */
 
 #ifndef C_STACK_GROWS_DOWNWARD
 # define C_STACK_GROWS_DOWNWARD    -1
@@ -141,121 +314,17 @@ char *alloca ();
 # endif
 #endif
 
+/* Have a GUI? */
+
 #if defined(C_WINDOWS_GUI)
 # define C_MICROSOFT_WINDOWS
 #else
 # define C_GENERIC_CONSOLE
 #endif
 
+/* Needed for pre-emptive threading */
+
 #define C_TIMER_INTERRUPTS
-
-#ifdef C_DEFAULT_TARGET_STACK_SIZE
-# define C_resize_stack(n)           C_do_resize_stack(C_DEFAULT_TARGET_STACK_SIZE)
-#else
-# define C_resize_stack(n)           C_do_resize_stack(n)
-#endif
-
-#ifndef C_SIXTY_FOUR
-# if defined (__alpha__) || defined (__sparc_v9__) || defined (__sparcv9) || defined(__ia64__) || defined(__x86_64__) || defined(__LP64__) || defined(__powerpc64__)
-#   define C_SIXTY_FOUR
-# elif defined(__mips64) && (!defined(__GNUC__) || _MIPS_SZPTR == 64)
-#   define C_SIXTY_FOUR
-# endif
-#endif
-
-#if defined(__APPLE__) && defined(__MACH__)
-# define C_MACOSX
-#endif
-
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-# define C_XXXBSD
-#endif
-
-#if defined(C_MACOSX) || defined(__linux__) || defined(C_XXXBSD)
-# define C_GNU_ENV
-#endif
-
-#if defined(_MSC_VER) || defined(__MINGW32__)
-# define C_NONUNIX
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <string.h>
-#include <setjmp.h>
-#include <limits.h>
-#include <time.h>
-
-#if !defined(C_NONUNIX) || defined(__MINGW32__) || defined(__WATCOMC__)
-# include <unistd.h>
-# include <inttypes.h>
-# include <sys/types.h>
-#endif
-
-#if defined(__MINGW32__)
-# include <sys/param.h>
-#elif defined(__CYGWIN__)
-# include <endian.h>
-#elif defined(__linux__)
-# include <endian.h>
-#elif defined(C_MACOSX) || defined(C_XXXBSD)
-# include <machine/endian.h>
-#elif defined(__hpux__)
-# include <arpa/nameser.h>
-#elif defined(_AIX)
-# include <sys/machine.h>
-#elif defined(__sun__)
-# include <sys/isa_defs.h>
-#elif defined(__svr4__)
-# include <sys/byteorder.h>
-#endif
-
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
-# define C_BIG_ENDIAN
-#elif defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
-# define C_BIG_ENDIAN
-#elif defined(__BIG_ENDIAN__)
-# define C_BIG_ENDIAN
-#elif defined(__sparc__) || defined(__POWERPC__) || defined(__MC68K__) || defined(__mips__)
-# define C_BIG_ENDIAN
-#endif
-
-#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && __BYTE_ORDER == __LITTLE_ENDIAN
-# define C_LITTLE_ENDIAN
-#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && BYTE_ORDER == LITTLE_ENDIAN
-# define C_LITTLE_ENDIAN
-#elif defined(__LITTLE_ENDIAN__)
-# define C_LITTLE_ENDIAN
-#elif defined (__alpha__) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
-# define C_LITTLE_ENDIAN
-#endif
-
-#ifdef __MINGW32__
-# include <malloc.h>
-#endif
-
-#ifdef _MSC_VER
-# include <malloc.h>
-# include <io.h>
-# define alloca            _alloca
-# define strncasecmp       strnicmp
-# define isatty            _isatty
-typedef __int8             int8_t;
-typedef unsigned __int8    uint8_t;
-typedef __int16            int16_t;
-typedef unsigned  __int16  uint16_t;
-typedef __int32            int32_t;
-typedef unsigned __int32   uint32_t;
-typedef __int64            int64_t;
-typedef unsigned __int64   uint64_t;
-# pragma warning(disable: 4101)
-#endif
-
-#ifdef __WATCOMC__
-# include <malloc.h>
-#endif
 
 /* For the easy FFI: */
 
@@ -335,15 +404,16 @@ typedef unsigned __int64   uint64_t;
 # define C_PAIR_TYPE              (0x0300000000000000L)
 # define C_CLOSURE_TYPE           (0x0400000000000000L | C_SPECIALBLOCK_BIT)
 # define C_FLONUM_TYPE            (0x0500000000000000L | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
-# define C_UNUSED_TYPE            (0x0600000000000000L)
+/*       unused                   (0x0600000000000000L ...) */
 # define C_PORT_TYPE              (0x0700000000000000L | C_SPECIALBLOCK_BIT)
 # define C_STRUCTURE_TYPE         (0x0800000000000000L)
 # define C_POINTER_TYPE           (0x0900000000000000L | C_SPECIALBLOCK_BIT)
-# define C_BUCKET_TYPE            (0x0f00000000000000L)
 # define C_LOCATIVE_TYPE          (0x0a00000000000000L | C_SPECIALBLOCK_BIT)
 # define C_TAGGED_POINTER_TYPE    (0x0b00000000000000L | C_SPECIALBLOCK_BIT)
-# define C_SWIG_POINTER_TYPE      (0x0c00000000000000L | C_BYTEBLOCK_BIT)
+# define C_SWIG_POINTER_TYPE      (0x0c00000000000000L | C_SPECIALBLOCK_BIT)
 # define C_LAMBDA_INFO_TYPE       (0x0d00000000000000L | C_BYTEBLOCK_BIT)
+/*       unused                   (0x0e00000000000000L ...) */
+# define C_BUCKET_TYPE            (0x0f00000000000000L)
 #else
 # define C_INT_SIGN_BIT           0x80000000
 # define C_INT_TOP_BIT            0x40000000
@@ -360,19 +430,20 @@ typedef unsigned __int64   uint64_t;
 # define C_PAIR_TYPE              (0x03000000)
 # define C_CLOSURE_TYPE           (0x04000000 | C_SPECIALBLOCK_BIT)
 # ifdef C_DOUBLE_IS_32_BITS
-#  define C_FLONUM_TYPE            (0x05000000 | C_BYTEBLOCK_BIT)
+#  define C_FLONUM_TYPE           (0x05000000 | C_BYTEBLOCK_BIT)
 # else
-#  define C_FLONUM_TYPE            (0x05000000 | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
+#  define C_FLONUM_TYPE           (0x05000000 | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
 # endif
-# define C_UNUSED_TYPE            (0x06000000)
+/*       unused                   (0x06000000 ...) */
 # define C_PORT_TYPE              (0x07000000 | C_SPECIALBLOCK_BIT)
 # define C_STRUCTURE_TYPE         (0x08000000)
 # define C_POINTER_TYPE           (0x09000000 | C_SPECIALBLOCK_BIT)
-# define C_BUCKET_TYPE            (0x0f000000)
 # define C_LOCATIVE_TYPE          (0x0a000000 | C_SPECIALBLOCK_BIT)
 # define C_TAGGED_POINTER_TYPE    (0x0b000000 | C_SPECIALBLOCK_BIT)
-# define C_SWIG_POINTER_TYPE      (0x0c000000 | C_BYTEBLOCK_BIT)
+# define C_SWIG_POINTER_TYPE      (0x0c000000 | C_SPECIALBLOCK_BIT)
 # define C_LAMBDA_INFO_TYPE       (0x0d000000 | C_BYTEBLOCK_BIT)
+/*       unused                   (0x0e000000 ...) */
+# define C_BUCKET_TYPE            (0x0f000000)
 #endif
 
 #define C_SLOT_LOCATIVE           0
@@ -487,49 +558,6 @@ typedef unsigned __int64   uint64_t;
 #define CHICKEN_default_toplevel       ((void *)C_default_stub_toplevel)
 
 
-/* Language specifics: */
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-# ifndef __cplusplus
-#  define C_cblock                ({
-#  define C_cblockend             })
-#  define C_noret                 __attribute__ ((noreturn))
-#  define C_noret_decl(name)
-#  define C_aligned               __attribute__ ((aligned))
-# endif
-# ifdef __i386__
-#  define C_regparm               __attribute__ ((regparm(3)))
-# endif
-#elif defined(_MSC_VER)
-# define C_fcall                  __fastcall
-#elif defined(__WATCOMC__)
-# define C_ccall                  __cdecl
-#endif
-
-#ifndef C_cblock
-# define C_cblock                 do{
-# define C_cblockend              }while(0)
-# define C_noret
-# define C_noret_decl(name)
-#endif
-
-#ifndef C_regparm
-# define C_regparm
-#endif
-
-#ifndef C_fcall
-# define C_fcall
-#endif
-
-#ifndef C_ccall
-# define C_ccall
-#endif
-
-#ifndef C_aligned
-# define C_aligned
-#endif
-
-#define C_c_regparm
-
 /* Types: */
 
 typedef struct C_block_struct
@@ -562,7 +590,7 @@ typedef struct C_ptable_entry_struct
 #ifdef __x86_64__
 # define C_AMD64_ABI_WEIRDNESS      , ...
 #else
-# define C_AMD64_ABI_WEIRDNESS      
+# define C_AMD64_ABI_WEIRDNESS
 #endif
 
 /* C_WORD_p<P>_<B>: List of ((2 ** P) * B) 'C_word' parameters */
@@ -729,6 +757,12 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 #define C_return(x)                return(x)
 
+#ifdef C_DEFAULT_TARGET_STACK_SIZE
+# define C_resize_stack(n)           C_do_resize_stack(C_DEFAULT_TARGET_STACK_SIZE)
+#else
+# define C_resize_stack(n)           C_do_resize_stack(n)
+#endif
+
 #define C_memcpy_slots(t, f, n)    C_memcpy((t), (f), (n) * sizeof(C_word))
 #define C_block_header(x)          (((C_SCHEME_BLOCK *)(x))->header)
 #define C_header_bits(x)           (C_block_header(x) & C_HEADER_BITS_MASK)
@@ -807,6 +841,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 #define C_zero_length_p(x)        C_mk_bool(C_header_size(x) == 0)
 #define C_boundp(x)               C_mk_bool(((C_SCHEME_BLOCK *)(x))->data[ 0 ] != C_SCHEME_UNBOUND)
+#define C_unboundvaluep(x)        C_mk_bool((x) == C_SCHEME_UNBOUND)
 #define C_blockp(x)               C_mk_bool(!C_immediatep(x))
 #define C_forwardedp(x)           C_mk_bool((C_block_header(x) & C_GC_FORWARDING_BIT) != 0)
 #define C_immp(x)                 C_mk_bool(C_immediatep(x))
@@ -915,6 +950,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 #define C_null_pointerp(x)              C_mk_bool((void *)C_u_i_car(x) == NULL)
 #define C_update_pointer(p, ptr)        (C_set_block_item(ptr, 0, C_num_to_unsigned_int(p)), C_SCHEME_UNDEFINED)
 #define C_copy_pointer(from, to)        (C_set_block_item(to, 0, C_u_i_car(from)), C_SCHEME_UNDEFINED)
+#define C_pointer_to_object(ptr)        ((C_word*)C_block_item(ptr, 0))
 
 #define C_direct_return(dk, x)          (C_kontinue(dk, x), C_SCHEME_UNDEFINED)
 
@@ -1113,7 +1149,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 /* Variables: */
 
 C_varextern C_TLS time_t C_startup_time_seconds;
-C_varextern C_TLS C_word 
+C_varextern C_TLS C_word
   *C_temporary_stack,
   *C_temporary_stack_bottom,
   *C_stack_limit;
@@ -1142,10 +1178,10 @@ C_varextern C_TLS int
   C_max_pending_finalizers,
   C_trace_buffer_size,
   C_main_argc;
-C_varextern C_TLS C_uword 
+C_varextern C_TLS C_uword
   C_heap_growth,
   C_heap_shrinkage;
-C_varextern C_TLS char 
+C_varextern C_TLS char
   **C_main_argv,
   *C_dlerror;
 C_varextern C_TLS C_uword C_maximal_heap_size;
@@ -1474,7 +1510,7 @@ C_fctexport C_word C_fcall C_i_null_list_p(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_string_null_p(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_string_to_pbytevector(C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_null_pointerp(C_word x) C_regparm;
-C_fctexport C_word C_fcall C_i_fixnum_arithmetic_shift(C_word n, C_word c) C_regparm; 
+C_fctexport C_word C_fcall C_i_fixnum_arithmetic_shift(C_word n, C_word c) C_regparm;
 C_fctexport C_word C_fcall C_i_locative_set(C_word loc, C_word x) C_regparm;
 C_fctexport C_word C_fcall C_i_locative_to_object(C_word loc) C_regparm;
 C_fctexport C_word C_fcall C_a_i_make_locative(C_word **a, int c, C_word type, C_word object, C_word index, C_word weak) C_regparm;

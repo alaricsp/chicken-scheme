@@ -226,6 +226,7 @@ tests/loopy-loop.scm
 tests/r5rs_pitfalls.scm
 tests/test-irregex.scm
 tests/re-tests.txt
+tests/lolevel-tests.scm
 tweaks.scm
 utils.scm
 apply-hack.x86.s

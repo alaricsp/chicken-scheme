@@ -47,7 +47,7 @@
 
 ;; Unbound (the unbound value, not is a symbol unbound)
 
-(define-inline (%unbound? x) (##core#inline "C_unboundp" x))
+(define-inline (%unbound? x) (##core#inline "C_unboundvaluep" x))
 
 ;; Block (anything not immediate)
 

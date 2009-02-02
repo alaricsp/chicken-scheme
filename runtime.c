@@ -8291,7 +8291,7 @@ void C_ccall C_software_type(C_word c, C_word closure, C_word k)
 #if defined(__CYGWIN__) || defined(__MINGW32__) || defined(_WIN32) || defined(__WINNT__)
   a = C_alloc(2 + C_bytestowords(7));
   s = C_string2(&a, "windows");
-#elif defined(__unix__) || defined(C_MACOSX) || defined(C_XXXBSD)
+#elif defined(__unix__) || defined(C_XXXBSD)
   a = C_alloc(2 + C_bytestowords(4));
   s = C_string2(&a, "unix");
 #elif defined(ECOS)
