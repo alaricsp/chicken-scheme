@@ -103,6 +103,8 @@ buildsvnrevision
 c-backend.scm
 c-platform.scm
 chicken-ffi-syntax.scm
+chicken-primitive-inlines.scm
+chicken-thread-object-inlines.scm
 chicken-profile.1
 chicken-profile.scm
 chicken.1

@@ -778,7 +778,7 @@ chicken.info: chicken.texi
 # installation
 
 .PHONY: install uninstall install-libs install-manifests install-import-libs install-setup-files \
-	install-dirs
+	install-dirs install-includes
 
 install-libs:
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_STATIC_LIBRARY_OPTIONS) libchicken$(A) $(DESTDIR)$(ILIBDIR)
@@ -870,7 +870,8 @@ ifndef STATICBUILD
 	$(MAKE_WRITABLE_COMMAND) $(CHICKEN_STATUS_PROGRAM)$(EXE)
 endif
 else
-install: $(TARGETS) install-dirs install-libs install-import-libs install-manifests install-setup-files
+install: $(TARGETS) install-dirs install-libs install-import-libs install-manifests \
+         install-setup-files  install-includes
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(CHICKEN_PROGRAM)$(EXE) $(DESTDIR)$(IBINDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(CSI_PROGRAM)$(EXE) $(DESTDIR)$(IBINDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(CHICKEN_PROFILE_PROGRAM)$(EXE) $(DESTDIR)$(IBINDIR)
@@ -922,7 +923,7 @@ ifeq ($(DESTDIR),)
 	-$(DESTDIR)$(IBINDIR)$(SEP)$(CHICKEN_INSTALL_PROGRAM) -update-db
 else
 	@echo
-	@echo "Warning: can not run chicken-install -update-db when DESTDIR is set"
+	@echo "Warning: cannot run chicken-install -update-db when DESTDIR is set"
 	@echo
 endif
 endif
@@ -1004,6 +1005,10 @@ install-setup-files:
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)setup.defaults $(DESTDIR)$(IDATADIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) setup-api.so $(DESTDIR)$(IEGGDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) setup-download.so $(DESTDIR)$(IEGGDIR)
+
+install-includes:
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken-primitive-inlines.scm $(DESTDIR)$(IDATADIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)chicken-thread-object-inlines.scm $(DESTDIR)$(IDATADIR)
 
 uninstall:
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_PROGRAM)$(EXE) \
