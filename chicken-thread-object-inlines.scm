@@ -1,9 +1,19 @@
 ;;;; chicken-thread-object-primitive-inlines.scm
 ;;;; Kon Lovett, Jan '09
 
-;;;; Provides inlines & macros for thread objects
-;;;; MUST be included
-;;;; NEEDS "chicken-primitive-inlines" included
+; Usage
+;
+; (include "chicken-primitive-object-inlines")
+; (include "chicken-thread-object-inlines")
+
+;; Notes
+;
+; Provides inlines & macros for thread objects. Use of these procedures
+; by non-core & non-core-extensions is highly suspect. Many of these routines
+; are unsafe.
+;
+; In fact, any use is suspect ;-)
+
 
 ;;; Mutex object helpers:
 
@@ -18,7 +28,7 @@
 ; 6     Specific (object)
 
 (define-inline (%mutex? x)
-  (%structure-instance? x 'mutex) )
+  (%structure? x 'mutex) )
 
 (define-inline (%mutex-name mx)
   (%structure-ref mx 1) )
@@ -27,28 +37,28 @@
   (%structure-ref mx 2) )
 
 (define-inline (%mutex-thread-set! mx th)
-  (%structure-slot-set! mx 2 th) )
+  (%structure-set! mx 2 th) )
 
 (define-inline (%mutex-thread-clear! mx)
-  (%structure-immediate-set! mx 2 #f) )
+  (%structure-set!/immediate mx 2 #f) )
 
 (define-inline (%mutex-waiters mx)
   (%structure-ref mx 3) )
 
 (define-inline (%mutex-waiters-set! mx wt)
-  (%structure-slot-set! mx 3 wt) )
+  (%structure-set! mx 3 wt) )
+
+(define-inline (%mutex-waiters-empty? mx)
+  (%null? (%mutex-waiters mx)) )
+
+(define-inline (%mutex-waiters-empty! mx)
+  (%structure-set!/immediate mx 3 '()) )
 
 (define-inline (%mutex-waiters-add! mx th)
   (%mutex-waiters-set! mx (%append-item (%mutex-waiters mx) th)) )
 
 (define-inline (%mutex-waiters-delete! mx th)
-  (%mutex-waiters-set! mx (##sys#delq th (%mutex-waiters mx))) )
-
-(define-inline (%mutex-waiters-empty? mx)
-  (%null? (%mutex-waiters mx)) )
-
-(define-inline (%mutex-waiters-forget! mx)
-  (%structure-immediate-set! mx 3 '()) )
+  (%mutex-waiters-set! mx (%delq! th (%mutex-waiters mx))) )
 
 (define-inline (%mutex-waiters-pop! mx)
   (let* ([wt (%mutex-waiters mx)]
@@ -60,19 +70,19 @@
   (%structure-ref mx 4) )
 
 (define-inline (%mutex-abandoned-set! mx f)
-  (%structure-immediate-set! mx 4 f) )
+  (%structure-set!/immediate mx 4 f) )
 
 (define-inline (%mutex-locked? mx)
   (%structure-ref mx 5) )
 
 (define-inline (%mutex-locked-set! mx f)
-  (%structure-immediate-set! mx 5 f) )
+  (%structure-set!/immediate mx 5 f) )
 
 (define-inline (%mutex-specific mx)
   (%structure-ref mx 6) )
 
 (define-inline (%mutex-specific-set! mx x)
-  (%structure-slot-set! mx 6 x) )
+  (%structure-set! mx 6 x) )
 
 
 ;;; Thread object helpers:
@@ -101,31 +111,31 @@
 ; 13    Unblocked by timeout? (boolean)
 
 (define-inline (%thread? x)
-  (%structure-instance? x 'thread) )
+  (%structure? x 'thread) )
 
 (define-inline (%thread-thunk th)
   (%structure-ref th 1) )
 
 (define-inline (%thread-thunk-set! th tk)
-  (%structure-slot-set! th 1 tk) )
+  (%structure-set! th 1 tk) )
 
 (define-inline (%thread-results th)
   (%structure-ref th 2) )
 
 (define-inline (%thread-results-set! th rs)
-  (%structure-slot-set! th 2 rs) )
+  (%structure-set! th 2 rs) )
 
 (define-inline (%thread-state th)
   (%structure-ref th 3) )
 
 (define-inline (%thread-state-set! th st)
-  (%structure-slot-set! th 3 st) )
+  (%structure-set! th 3 st) )
 
 (define-inline (%thread-block-timeout th)
   (%structure-ref th 4) )
 
 (define-inline (%thread-block-timeout-set! th to)
-  (%structure-immediate-set! th 4 to) )
+  (%structure-set!/immediate th 4 to) )
 
 (define-inline (%thread-block-timeout-clear! th)
   (%thread-block-timeout-set! th #f) )
@@ -134,7 +144,7 @@
   (%structure-ref th 5) )
 
 (define-inline (%thread-state-buffer-set! th v)
-  (%structure-slot-set! th 5 v) )
+  (%structure-set! th 5 v) )
 
 (define-inline (%thread-name th)
   (%structure-ref th 6) )
@@ -143,69 +153,72 @@
   (%structure-ref th 7) )
 
 (define-inline (%thread-reason-set! th cd)
-  (%structure-slot-set! th 7 cd) )
+  (%structure-set! th 7 cd) )
 
 (define-inline (%thread-mutexes th)
   (%structure-ref th 8) )
 
 (define-inline (%thread-mutexes-set! th wt)
-  (%structure-slot-set! th 8 wx) )
+  (%structure-set! th 8 wx) )
 
 (define-inline (%thread-mutexes-empty? th)
   (%null? (%thread-mutexes th)) )
 
-(define-inline (%thread-mutexes-forget! th)
-  (%structure-immediate-set! th 8 '()) )
+(define-inline (%thread-mutexes-empty! th)
+  (%structure-set!/immediate th 8 '()) )
 
 (define-inline (%thread-mutexes-add! th mx)
   (%thread-mutexes-set! th (%cons mx (%thread-mutexes th))) )
 
 (define-inline (%thread-mutexes-delete! th mx)
-  (%thread-mutexes-set! th (##sys#delq mx (%thread-mutexes th))) )
+  (%thread-mutexes-set! th (%delq! mx (%thread-mutexes th))) )
 
 (define-inline (%thread-quantum th)
   (%structure-ref th 9) )
 
 (define-inline (%thread-quantum-set! th qt)
-  (%structure-immediate-set! th 9 qt) )
+  (%structure-set!/immediate th 9 qt) )
 
 (define-inline (%thread-specific th)
   (%structure-ref th 10) )
 
 (define-inline (%thread-specific-set! th x)
-  (%structure-slot-set! th 10 x) )
+  (%structure-set! th 10 x) )
 
 (define-inline (%thread-block-object th)
   (%structure-ref th 11) )
 
 (define-inline (%thread-block-object-set! th x)
-  (%structure-slot-set! th 11 x) )
+  (%structure-set! th 11 x) )
 
 (define-inline (%thread-block-object-clear! th)
-  (%structure-immediate-set! th 11 #f) )
+  (%structure-set!/immediate th 11 #f) )
 
 (define-inline (%thread-recipients th)
   (%structure-ref th 12) )
 
 (define-inline (%thread-recipients-set! th x)
-  (%structure-slot-set! th 12 x) )
+  (%structure-set! th 12 x) )
+
+(define-inline (%thread-recipients-empty? th)
+  (%null? (%condition-variable-waiters th)) )
+
+(define-inline (%thread-recipients-empty! th)
+  (%structure-set!/immediate th 12 '()) )
 
 (define-inline (%thread-recipients-add! th rth)
   (%thread-recipients-set! t (%cons rth (%thread-recipients t))) )
 
-(define-inline (%thread-recipients-forget! th)
-  (%structure-immediate-set! th 12 '()) )
-
 (define-inline (%thread-recipients-process! th tk)
   (let ([rs (%thread-recipients t)])
     (unless (%null? rs) (for-each tk rs) ) )
-  (thread-recipients-forget! t) )
+  (thread-recipients-empty! t) )
 
 (define-inline (%thread-unblocked-by-timeout? th)
   (%structure-ref th 13) )
 
 (define-inline (%thread-unblocked-by-timeout-set! th f)
-  (%structure-immediate-set! th 13 f) )
+  (%structure-set!/immediate th 13 f) )
 
 
 ;;; Condition-variable object:
@@ -218,7 +231,7 @@
 ; 3     Specific (object)
 
 (define-inline (%condition-variable? x)
-  (%structure-instance? x 'condition-variable) )
+  (%structure? x 'condition-variable) )
 
 (define-inline (%condition-variable-name cv)
   (%structure-ref cv 1) )
@@ -227,16 +240,19 @@
   (%structure-ref cv 2) )
 
 (define-inline (%condition-variable-waiters-set! cv x)
-  (%structure-slot-set! cv 2 x) )
+  (%structure-set! cv 2 x) )
+
+(define-inline (%condition-variable-waiters-empty? cv)
+  (%null? (%condition-variable-waiters cv)) )
+
+(define-inline (%condition-variable-waiters-empty! cv)
+  (%structure-set!/immediate cv 2 '()) )
 
 (define-inline (%condition-variable-waiters-add! cv th)
   (%condition-variable-waiters-set! cv (%append-item (%condition-variable-waiters cv) th)) )
 
 (define-inline (%condition-variable-waiters-delete! cv th)
-  (%condition-variable-waiters-set! cv (##sys#delq th (%condition-variable-waiters cv))) )
-
-(define-inline (%condition-variable-waiters-empty? mx)
-  (%null? (%condition-variable-waiters mx)) )
+  (%condition-variable-waiters-set! cv (%delq! th (%condition-variable-waiters cv))) )
 
 (define-inline (%condition-variable-waiters-pop! mx)
   (let* ([wt (%condition-variable-waiters mx)]
@@ -244,11 +260,8 @@
     (%condition-variable-waiters-set! mx (%cdr wt))
     top ) )
 
-(define-inline (%condition-variable-waiters-clear! cv)
-  (%structure-immediate-set! cv 2 '()) )
-
 (define-inline (%condition-variable-specific cv)
   (%structure-ref cv 3) )
 
 (define-inline (%condition-variable-specific-set! cv x)
-  (%structure-slot-set! cv 3 x) )
+  (%structure-set! cv 3 x) )

@@ -2578,25 +2578,26 @@ EOF
 ;;; This is taken from Alex Shinn's UTF8 egg:
 
 (define (##sys#char->utf8-string c)
-  (let ((i (char->integer c)))
-    (cond
-      ((fx<= i #x7F) (string c))
-      ((fx<= i #x7FF)
-       (string (integer->char (fxior #b11000000 (fxshr i 6)))
-	       (integer->char (fxior #b10000000 (fxand i #b111111)))))
-      ((fx<= i #xFFFF)
-       (string (integer->char (fxior #b11100000 (fxshr i 12)))
-	       (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
-	       (integer->char (fxior #b10000000 (fxand i #b111111)))))
-      ((fx<= i #x1FFFFF)
-       (string (integer->char (fxior #b11110000 (fxshr i 18)))
-	       (integer->char (fxior #b10000000 (fxand (fxshr i 12) #b111111)))
-	       (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
-	       (integer->char (fxior #b10000000 (fxand i #b111111)))))
-      (else (error "unicode codepoint out of range:" i)))))
+  (let ([i (char->integer c)])
+    (cond [(fx<= i #x7F)
+           (string c) ]
+          [(fx<= i #x7FF)
+           (string (integer->char (fxior #b11000000 (fxshr i 6)))
+	           (integer->char (fxior #b10000000 (fxand i #b111111)))) ]
+          [(fx<= i #xFFFF)
+           (string (integer->char (fxior #b11100000 (fxshr i 12)))
+	           (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
+	           (integer->char (fxior #b10000000 (fxand i #b111111)))) ]
+          [(fx<= i #x1FFFFF)
+           (string (integer->char (fxior #b11110000 (fxshr i 18)))
+	           (integer->char (fxior #b10000000 (fxand (fxshr i 12) #b111111)))
+	           (integer->char (fxior #b10000000 (fxand (fxshr i 6) #b111111)))
+	           (integer->char (fxior #b10000000 (fxand i #b111111)))) ]
+          [else
+           (error "UTF-8 codepoint out of range:" i) ] ) ) )
 
 (define (##sys#unicode-surrogate? n)
-  (and (fx<= #xD800 n) (fx<= n #xDFFF)))
+  (and (fx<= #xD800 n) (fx<= n #xDFFF)) )
 
 ;; returns #f if the inputs are not a valid surrogate pair (hi followed by lo)
 (define (##sys#surrogates->codepoint hi lo)
@@ -2604,7 +2605,7 @@ EOF
        (fx<= #xDC00 lo) (fx<= lo #xDFFF)
        (fxior (fxshl (fx+ 1 (fxand (fxshr hi 6) #b11111)) 16)
 	      (fxior (fxshl (fxand hi #b111111) 10)
-		     (fxand lo #b1111111111)))))
+		     (fxand lo #b1111111111)))) )
 
 ;;; Hooks for user-defined read-syntax:
 ;
@@ -2615,9 +2616,9 @@ EOF
 (define (##sys#user-read-hook char port)
   (case char
     ;; I put it here, so the SRFI-4 unit can intercept '#f...'
-    ((#\f #\F) (##sys#read-char-0 port) #f)
-    ((#\t #\T) (##sys#read-char-0 port) #t)
-    (else (##sys#read-error port "invalid sharp-sign read syntax" char) ) ) )
+    [(#\f #\F) (##sys#read-char-0 port) #f ]
+    [(#\t #\T) (##sys#read-char-0 port) #t ]
+    [else (##sys#read-error port "invalid sharp-sign read syntax" char) ] ) )
 
 
 ;;; Table for specially handled read-syntax:

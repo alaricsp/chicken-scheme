@@ -292,6 +292,61 @@ EOF
 	      #:type-error 'align-to-word
 	      "bad argument type - not a pointer or integer" x)] ) ) ) )
 
+
+;;; Tagged-pointers:
+
+(define (tag-pointer ptr tag)
+  (let ([tp (##sys#make-tagged-pointer tag)])
+    (if (%special-block? ptr)
+	(##core#inline "C_copy_pointer" ptr tp)
+	(##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_POINTER_ERROR" int) 'tag-pointer ptr) )
+    tp) )
+
+(define (tagged-pointer? x #!optional tag)
+  (and (##core#inline "C_blockp" x)  (##core#inline "C_taggedpointerp" x)
+       (or (not tag)
+	   (equal? tag (##sys#slot x 1)) ) ) )
+
+(define (pointer-tag x)
+  (if (%special-block? x)
+      (and (##core#inline "C_taggedpointerp" x)
+	   (##sys#slot x 1) )
+      (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_POINTER_ERROR" int) 'pointer-tag x) ) )
+
+
+;;; locatives:
+
+;; Locative layout:
+;
+; 0	Object-address + Byte-offset (address)
+; 1	Byte-offset (fixnum)
+; 2	Type (fixnum)
+;	0	vector or pair		(C_SLOT_LOCATIVE)
+;	1	string			(C_CHAR_LOCATIVE)
+;	2	u8vector or blob        (C_U8_LOCATIVE)
+;	3	s8vector	        (C_S8_LOCATIVE)
+;	4	u16vector		(C_U16_LOCATIVE)
+;	5	s16vector		(C_S16_LOCATIVE)
+;	6	u32vector		(C_U32_LOCATIVE)
+;	7	s32vector		(C_S32_LOCATIVE)
+;	8	f32vector		(C_F32_LOCATIVE)
+;	9	f64vector		(C_F64_LOCATIVE)
+; 3	Object or #f, if weak (C_word)
+
+(define (make-locative obj . index)
+  (##sys#make-locative obj (optional index 0) #f 'make-locative) )
+
+(define (make-weak-locative obj . index)
+  (##sys#make-locative obj (optional index 0) #t 'make-weak-locative) )
+
+(define (locative-set! x y) (##core#inline "C_i_locative_set" x y))
+(define locative-ref (getter-with-setter (##core#primitive "C_locative_ref") locative-set!))
+(define (locative->object x) (##core#inline "C_i_locative_to_object" x))
+(define (locative? x) (and (##core#inline "C_blockp" x) (##core#inline "C_locativep" x)))
+
+
+;;; SRFI-4 number-vector:
+
 (define pointer-u8-set! (foreign-lambda* void ([c-pointer p] [int n]) "*((unsigned char *)p) = n;"))
 (define pointer-s8-set! (foreign-lambda* void ([c-pointer p] [int n]) "*((char *)p) = n;"))
 (define pointer-u16-set! (foreign-lambda* void ([c-pointer p] [int n]) "*((unsigned short *)p) = n;"))
@@ -340,58 +395,6 @@ EOF
   (getter-with-setter
    (foreign-lambda* double ([c-pointer p]) "return(*((double *)p));")
    pointer-f64-set!) )
-
-
-;;; Tagged-pointers:
-
-(define (tag-pointer ptr tag)
-  (let ([tp (##sys#make-tagged-pointer tag)])
-    (if (%special-block? ptr)
-	(##core#inline "C_copy_pointer" ptr tp)
-	(##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_POINTER_ERROR" int) 'tag-pointer ptr) )
-    tp) )
-
-(define (tagged-pointer? x #!optional tag)
-  (and (##core#inline "C_blockp" x)  (##core#inline "C_taggedpointerp" x)
-       (or (not tag)
-	   (equal? tag (##sys#slot x 1)) ) ) )
-
-(define (pointer-tag x)
-  (if (%special-block? x)
-      (and (##core#inline "C_taggedpointerp" x)
-	   (##sys#slot x 1) )
-      (##sys#error-hook (foreign-value "C_BAD_ARGUMENT_TYPE_NO_POINTER_ERROR" int) 'pointer-tag x) ) )
-
-
-;;; locatives:
-
-;; Locative layout:
-;
-; 0	Object-address + Byte-offset (address)
-; 1	Byte-offset (fixnum)
-; 2	Type (fixnum)
-;	0	vector or pair		(C_SLOT_LOCATIVE)
-;	1	string			(C_CHAR_LOCATIVE)
-;	2	u8vector		(C_U8_LOCATIVE)
-;	3	s8vector or blob	(C_U8_LOCATIVE)
-;	4	u16vector		(C_U16_LOCATIVE)
-;	5	s16vector		(C_S16_LOCATIVE)
-;	6	u32vector		(C_U32_LOCATIVE)
-;	7	s32vector		(C_S32_LOCATIVE)
-;	8	f32vector		(C_F32_LOCATIVE)
-;	9	f64vector		(C_F64_LOCATIVE)
-; 3	Object or #f, if weak (C_word)
-
-(define (make-locative obj . index)
-  (##sys#make-locative obj (optional index 0) #f 'make-locative) )
-
-(define (make-weak-locative obj . index)
-  (##sys#make-locative obj (optional index 0) #t 'make-weak-locative) )
-
-(define (locative-set! x y) (##core#inline "C_i_locative_set" x y))
-(define locative-ref (getter-with-setter (##core#primitive "C_locative_ref") locative-set!))
-(define (locative->object x) (##core#inline "C_i_locative_to_object" x))
-(define (locative? x) (and (##core#inline "C_blockp" x) (##core#inline "C_locativep" x)))
 
 
 ;;; Procedures extended with data:

@@ -6238,7 +6238,7 @@ PTR_O_p0_##p0(((n0-2)&0xFE)+1));
 }
 
 
-void C_ccall C_call_cc(C_word c, C_word cl, C_word k, C_word cont)
+void C_ccall C_call_cc(C_word c, C_word closure, C_word k, C_word cont)
 {
   C_word *a = C_alloc(3),
          wrapper;
@@ -6359,7 +6359,7 @@ void C_ccall C_apply_values(C_word c, C_word closure, C_word k, C_word lst)
 }
 
 
-void C_ccall C_call_with_values(C_word c, C_word cl, C_word k, C_word thunk, C_word kont)
+void C_ccall C_call_with_values(C_word c, C_word closure, C_word k, C_word thunk, C_word kont)
 {
   C_word *a = C_alloc(4),
          kk;
@@ -6379,7 +6379,7 @@ void C_ccall C_call_with_values(C_word c, C_word cl, C_word k, C_word thunk, C_w
 }
 
 
-void C_ccall C_u_call_with_values(C_word c, C_word cl, C_word k, C_word thunk, C_word kont)
+void C_ccall C_u_call_with_values(C_word c, C_word closure, C_word k, C_word thunk, C_word kont)
 {
   C_word *a = C_alloc(4),
          kk;
@@ -6391,8 +6391,8 @@ void C_ccall C_u_call_with_values(C_word c, C_word cl, C_word k, C_word thunk, C
 
 void C_ccall values_continuation(C_word c, C_word closure, C_word arg0, ...)
 {
-  C_word kont = ((C_SCHEME_BLOCK *)closure)->data[ 1 ],
-         k = ((C_SCHEME_BLOCK *)closure)->data[ 2 ],
+  C_word kont = C_u_i_cdr(closure),
+         k = C_block_item(closure, 2),
          n = c,
          *ptr;
   va_list v;
@@ -8411,7 +8411,7 @@ void C_ccall C_software_version(C_word c, C_word closure, C_word k)
 
 void C_ccall C_register_finalizer(C_word c, C_word closure, C_word k, C_word x, C_word proc)
 {
-  if(C_immediatep(x)) C_kontinue(k, x );
+  if(C_immediatep(x)) C_kontinue(k, x);
 
   C_do_register_finalizer(x, proc);
   C_kontinue(k, x);

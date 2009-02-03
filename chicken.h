@@ -376,7 +376,9 @@ typedef unsigned __int64   uint64_t;
 #define C_FIXNUM_BIT              0x00000001
 #define C_FIXNUM_SHIFT            1
 
+/* Character range is that of a UTF-8 codepoint, not representable range */
 #define C_CHAR_BIT_MASK           0x1fffff
+#define C_CHAR_SHIFT              8
 
 #ifdef C_SIXTY_FOUR
 # define C_MOST_POSITIVE_FIXNUM   0x3fffffffffffffffL
@@ -463,12 +465,12 @@ typedef unsigned __int64   uint64_t;
 #define C_SIZEOF_LIST(n)          ((n) * 3 + 1)
 #define C_SIZEOF_PAIR             3
 #define C_SIZEOF_STRING(n)        (C_bytestowords(n) + 2)
-#define C_SIZEOF_SYMBOL          4
+#define C_SIZEOF_SYMBOL           4
 #define C_SIZEOF_INTERNED_SYMBOL(n) (C_SIZEOF_SYMBOL + C_SIZEOF_BUCKET + C_SIZEOF_STRING(n))
 #ifdef C_DOUBLE_IS_32_BITS
-# define C_SIZEOF_FLONUM           2
+# define C_SIZEOF_FLONUM          2
 #else
-# define C_SIZEOF_FLONUM           4
+# define C_SIZEOF_FLONUM          4
 #endif
 #define C_SIZEOF_POINTER          2
 #define C_SIZEOF_TAGGED_POINTER   3
@@ -484,7 +486,7 @@ typedef unsigned __int64   uint64_t;
 #define C_TAGGED_POINTER_TAG      (C_TAGGED_POINTER_TYPE | (C_SIZEOF_TAGGED_POINTER - 1))
 #define C_SWIG_POINTER_TAG        (C_SWIG_POINTER_TYPE | (C_wordstobytes(C_SIZEOF_SWIG_POINTER - 1)))
 #define C_SYMBOL_TAG              (C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1))
-#define C_FLONUM_TAG             (C_FLONUM_TYPE | sizeof(double))
+#define C_FLONUM_TAG              (C_FLONUM_TYPE | sizeof(double))
 
 #ifdef C_SIXTY_FOUR
 # define C_word                   long
@@ -786,8 +788,8 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 #define C_demand_2(n)              (((C_word *)C_fromspace_top + (n)) < (C_word *)C_fromspace_limit)
 #define C_fix(n)                   (((C_word)(n) << C_FIXNUM_SHIFT) | C_FIXNUM_BIT)
 #define C_unfix(x)                 ((x) >> C_FIXNUM_SHIFT)
-#define C_make_character(c)        ((((c) & C_CHAR_BIT_MASK) << 8) | C_CHARACTER_BITS)
-#define C_character_code(x)        (((x) >> 8) & C_CHAR_BIT_MASK)
+#define C_make_character(c)        ((((c) & C_CHAR_BIT_MASK) << C_CHAR_SHIFT) | C_CHARACTER_BITS)
+#define C_character_code(x)        (((x) >> C_CHAR_SHIFT) & C_CHAR_BIT_MASK)
 #define C_flonum_magnitude(x)      (*((double *)(((C_SCHEME_BLOCK *)(x))->data)))
 #define C_c_string(x)              ((C_char *)(((C_SCHEME_BLOCK *)(x))->data))
 #define C_c_pointer(x)             ((void *)(x))
