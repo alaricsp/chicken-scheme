@@ -26,7 +26,8 @@
 
 (##sys#register-primitive-module
  'irregex
- '(irregex string->irregex sre->irregex irregex? irregex-match-data?
+ '(irregex string->irregex sre->irregex string->sre
+    irregex? irregex-match-data?
     irregex-new-matches irregex-reset-matches!
     irregex-match-start irregex-match-end irregex-match-substring
     irregex-search irregex-search/matches irregex-match irregex-match-string
