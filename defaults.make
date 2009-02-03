@@ -340,7 +340,7 @@ endif
 
 # main rule
 
-.PHONY: all
+.PHONY: buildsvnrevision all
 
 all: buildsvnrevision $(TARGETS)
 
