@@ -47,5 +47,5 @@ then
         echo "${rev}" > buildsvnrevision
     fi
 else
-    echo "Setting Build SVN Revision: ${rev}"
+    echo "${rev}" > buildsvnrevision
 fi
