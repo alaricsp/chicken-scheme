@@ -447,18 +447,6 @@ typedef unsigned __int64   uint64_t;
 /*       unused                   (0x0e000000 ...) */
 # define C_BUCKET_TYPE            (0x0f000000)
 #endif
-
-#define C_SLOT_LOCATIVE           0
-#define C_CHAR_LOCATIVE           1
-#define C_U8_LOCATIVE             2
-#define C_S8_LOCATIVE             3
-#define C_U16_LOCATIVE            4
-#define C_S16_LOCATIVE            5
-#define C_U32_LOCATIVE            6
-#define C_S32_LOCATIVE            7
-#define C_F32_LOCATIVE            8
-#define C_F64_LOCATIVE            9
-
 #define C_VECTOR_TYPE             0x00000000
 #define C_BYTEVECTOR_TYPE         (C_VECTOR_TYPE | C_BYTEBLOCK_BIT | C_8ALIGN_BIT)
 
@@ -480,6 +468,7 @@ typedef unsigned __int64   uint64_t;
 #define C_SIZEOF_LOCATIVE         5
 #define C_SIZEOF_PORT             16
 
+/* Fixed size types have pre-computed header tags */
 #define C_PAIR_TAG                (C_PAIR_TYPE | (C_SIZEOF_PAIR - 1))
 #define C_POINTER_TAG             (C_POINTER_TYPE | (C_SIZEOF_POINTER - 1))
 #define C_LOCATIVE_TAG            (C_LOCATIVE_TYPE | (C_SIZEOF_LOCATIVE - 1))
@@ -487,6 +476,18 @@ typedef unsigned __int64   uint64_t;
 #define C_SWIG_POINTER_TAG        (C_SWIG_POINTER_TYPE | (C_wordstobytes(C_SIZEOF_SWIG_POINTER - 1)))
 #define C_SYMBOL_TAG              (C_SYMBOL_TYPE | (C_SIZEOF_SYMBOL - 1))
 #define C_FLONUM_TAG              (C_FLONUM_TYPE | sizeof(double))
+
+/* Locative subtypes */
+#define C_SLOT_LOCATIVE           0
+#define C_CHAR_LOCATIVE           1
+#define C_U8_LOCATIVE             2
+#define C_S8_LOCATIVE             3
+#define C_U16_LOCATIVE            4
+#define C_S16_LOCATIVE            5
+#define C_U32_LOCATIVE            6
+#define C_S32_LOCATIVE            7
+#define C_F32_LOCATIVE            8
+#define C_F64_LOCATIVE            9
 
 #ifdef C_SIXTY_FOUR
 # define C_word                   long
@@ -551,13 +552,102 @@ typedef unsigned __int64   uint64_t;
 #define C_BAD_ARGUMENT_TYPE_NO_CLOSURE_ERROR          36
 
 
-#define CHICKEN_gc_root_ref(root)      (((C_GC_ROOT *)(root))->value)
-#define CHICKEN_gc_root_set(root, x)   C_mutate(&((C_GC_ROOT *)(root))->value, (x))
+/* Platform information */
+#if defined(C_BIG_ENDIAN)
+# define C_MACHINE_BYTE_ORDER "big-endian"
+#elif defined(C_LITTLE_ENDIAN)
+# define C_MACHINE_BYTE_ORDER "little-endian"
+#endif
 
-#define CHICKEN_global_ref(root)       C_u_i_car(((C_GC_ROOT *)(root))->value)
-#define CHICKEN_global_set(root, x)    C_mutate(&C_u_i_car(((C_GC_ROOT *)(root))->value), (x))
+#if defined(__alpha__)
+# define C_MACHINE_TYPE "alpha"
+#elif defined(__mips__)
+# define C_MACHINE_TYPE "mips"
+#elif defined(__hppa__)
+# define C_MACHINE_TYPE "hppa"
+#elif defined(__sparc_v9__) || defined(__sparcv9)
+# define C_MACHINE_TYPE "ultrasparc"
+#elif defined(__sparc__)
+# define C_MACHINE_TYPE "sparc"
+#elif defined(__powerpc64__)
+# define C_MACHINE_TYPE "ppc64"
+#elif defined(__ppc__) || defined(__powerpc__)
+# define C_MACHINE_TYPE "ppc"
+#elif defined(_M_IX86) || defined(__i386__)
+# define C_MACHINE_TYPE "x86"
+#elif defined(__ia64__)
+# define C_MACHINE_TYPE "ia64"
+#elif defined(__x86_64__)
+# define C_MACHINE_TYPE "x86-64"
+#elif defined(__arm__)
+# define C_MACHINE_TYPE "arm"
+#else
+# define C_MACHINE_TYPE "unknown"
+#endif
 
-#define CHICKEN_default_toplevel       ((void *)C_default_stub_toplevel)
+#if defined(__CYGWIN__) || defined(__MINGW32__) || defined(_WIN32) || defined(__WINNT__)
+# define C_SOFTWARE_TYPE "windows"
+#elif defined(__unix__) || defined(C_XXXBSD)
+# define C_SOFTWARE_TYPE "unix"
+#elif defined(ECOS)
+# define C_SOFTWARE_TYPE "ecos"
+#else
+# define C_SOFTWARE_TYPE "unknown"
+#endif
+
+#if defined(__CYGWIN__)
+# define C_BUILD_PLATFORM "cygwin"
+#elif defined(_MSC_VER)
+# define C_BUILD_PLATFORM "msvc"
+#elif defined(__SUNPRO_C)
+# define C_BUILD_PLATFORM "sun"
+#elif defined(__MINGW32__)
+# define C_BUILD_PLATFORM "mingw32"
+#elif defined(__GNUC__)
+# define C_BUILD_PLATFORM "gnu"
+#elif defined(__MWERKS__)
+# define C_BUILD_PLATFORM "metrowerks"
+#elif defined(__INTEL_COMPILER)
+# define C_BUILD_PLATFORM "intel"
+#elif defined(__WATCOMC__)
+# define C_BUILD_PLATFORM "watcom"
+#else
+# define C_BUILD_PLATFORM "unknown"
+#endif
+
+#if defined(_MSC_VER)
+# if defined(_DLL)
+#   define C_RUNTIME_VERSION "dynamic"
+# else
+#   define C_RUNTIME_VERSION "static"
+# endif
+#else
+# define C_RUNTIME_VERSION "unknown"
+#endif
+
+#if defined(__linux__)
+# define C_SOFTWARE_VERSION "linux"
+#elif defined(__FreeBSD__)
+# define C_SOFTWARE_VERSION "freebsd"
+#elif defined(__NetBSD__)
+# define C_SOFTWARE_VERSION "netbsd"
+#elif defined(__OpenBSD__)
+# define C_SOFTWARE_VERSION "openbsd"
+#elif defined(C_MACOSX)
+# define C_SOFTWARE_VERSION "macosx"
+#elif defined(__hpux__)
+# define C_SOFTWARE_VERSION "hpux"
+#elif defined(__DragonFly__)
+# define C_SOFTWARE_VERSION "dragonfly"
+#elif defined(__sun__)
+# if defined(__svr4__)
+#   define C_SOFTWARE_VERSION "solaris"
+# else
+#   define C_SOFTWARE_VERSION "sunos"
+# endif
+#else
+# define C_SOFTWARE_VERSION "unknown"
+#endif
 
 
 /* Types: */
@@ -660,6 +750,14 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 
 
 /* Macros: */
+
+#define CHICKEN_gc_root_ref(root)      (((C_GC_ROOT *)(root))->value)
+#define CHICKEN_gc_root_set(root, x)   C_mutate(&((C_GC_ROOT *)(root))->value, (x))
+
+#define CHICKEN_global_ref(root)       C_u_i_car(((C_GC_ROOT *)(root))->value)
+#define CHICKEN_global_set(root, x)    C_mutate(&C_u_i_car(((C_GC_ROOT *)(root))->value), (x))
+
+#define CHICKEN_default_toplevel       ((void *)C_default_stub_toplevel)
 
 #define C_align4(n)                (((n) + 3) & ~3)
 #define C_align8(n)                (((n) + 7) & ~7)
