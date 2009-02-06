@@ -340,12 +340,13 @@ endif
 
 # main rule
 
-.PHONY: checksvnrevision all
+.PHONY: all
 
-all: checksvnrevision $(TARGETS)
+all: buildsvnrevision $(TARGETS)
 
-checksvnrevision buildsvnrevision:
+buildsvnrevision:
 ifdef WINDOWS_SHELL
+	echo 0 >buildsvnrevision
 else
 	sh $(SRCDIR)svnrevision.sh
 endif

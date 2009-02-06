@@ -1282,7 +1282,7 @@ distclean: clean confclean
 
 .PHONY: check fullcheck compiler-check
 
-check: $(CHICKEN_SHARED_EXECUTABLE)$(EXE) $(CSI_SHARED_EXECUTABLE)$(EXE) $(CSC_PROGRAM)$(EXE)
+check: $(CHICKEN_SHARED_EXECUTABLE) $(CSI_SHARED_EXECUTABLE) $(CSC_PROGRAM)
 	cd tests; sh runtests.sh
 
 # Only for UNIX, yet:
