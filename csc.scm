@@ -487,7 +487,7 @@
 		 (printf "Warning: output file will overwrite source file `~A' - renaming source to `~A.old'~%"
 			 target-filename target-filename)
 		 (unless (zero? ($system (sprintf "~A ~A ~A" 
-						  (if (or msvc mingw) "move" "mv")
+						  (if *windows-shell* "move" "mv")
 						  (quotewrap target-filename)
 						  (quotewrap (string-append target-filename ".old")))))
 		   (exit last-exit-code) ) )

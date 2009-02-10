@@ -106,6 +106,7 @@ chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_GETPROCADDRESS 1" >>$@
 	echo "#define HAVE_WINSOCK2_H 1" >>$@
 	echo "#define HAVE_WS2TCPIP_H 1" >>$@
+	echo "#define C_WINDOWS_SHELL 1" >>$@
 	echo "#define C_STACK_GROWS_DOWNWARD 1" >>$@
 ifdef GCHOOKS
 	echo "#define C_GC_HOOKS" >>$@
