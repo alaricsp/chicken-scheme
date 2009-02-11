@@ -37,8 +37,8 @@ TODO for trunk								-*- Outline -*-
 *** library/runtime: cyclic list checks for assq/assv/assoc/memq/memv/member
     and C_i_list_tail
 
-** henrietta
-*** installed version on kitten-tech seems not to work?
+** build
+*** get rid of auto-import warnings for mingw compiler/linker
 
 
 * tasks
@@ -100,6 +100,7 @@ TODO for trunk								-*- Outline -*-
     touching .c files caused chicken-install to be rebuilt; did using
     .SECONDARY help?
 *** using "touch" with WINDOWS_SHELL won't work (need alternative)
+** test --enable-auto-import witg mingw builds
 
 ** documentation
 *** document qs, normalize-pathname
