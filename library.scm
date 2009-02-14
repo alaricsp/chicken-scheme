@@ -3069,10 +3069,8 @@ EOF
 	 (check p len)
 	 (let ([position (##sys#slot p 10)]
 	       [output (##sys#slot p 12)] )
-	   (do ((i 0 (fx+ i 1)))
-	       ((fx>= i len) (##sys#setislot p 10 position))
-	     (##core#inline "C_setsubchar" output position (##core#inline "C_subchar" str i))
-	     (set! position (fx+ position 1)) ) ) ) )
+	   (##core#inline "C_substring_copy" str output 0 len position)
+	   (##sys#setislot p 10 (fx+ position len)) ) ) )
      (lambda (p)			; close
        (##sys#setislot p 10 (##sys#slot p 11)) )
      (lambda (p) #f)			; flush-output
