@@ -113,8 +113,15 @@
 
 (set! ##sys#syntax-error-hook
   (lambda (msg . args)
-    (let ([out (current-error-port)])
-      (fprintf out "Syntax error: ~a~%~%" msg) 
+    (let ((out (current-error-port))
+	  (loc (and (symbol? msg) 
+		    (begin 
+		      (set! msg (car args))
+		      (set! args (cdr args))
+		      msg))))
+      (if loc
+	  (fprintf out "Syntax error (~a): ~a~%~%" loc msg) 
+	  (fprintf out "Syntax error: ~a~%~%" msg) )
       (for-each (cut fprintf out "\t~s~%" <>) args)
       (print-call-chain out 0 ##sys#current-thread "\n\tExpansion history:\n")
       (exit 70) ) ) )

@@ -36,6 +36,8 @@ TODO for trunk								-*- Outline -*-
 ** libraries
 *** library/runtime: cyclic list checks for assq/assv/assoc/memq/memv/member
     and C_i_list_tail
+*** finalizers on lexically ref'd data not working in interpreter (reported
+    by Jim Ursetto)
 
 ** build
 *** get rid of auto-import warnings for mingw compiler/linker
