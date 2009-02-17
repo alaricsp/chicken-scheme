@@ -39,9 +39,6 @@ TODO for trunk								-*- Outline -*-
 *** finalizers on lexically ref'd data not working in interpreter (reported
     by Jim Ursetto)
 
-** build
-*** get rid of auto-import warnings for mingw compiler/linker
-
 
 * tasks
 
@@ -52,7 +49,6 @@ TODO for trunk								-*- Outline -*-
 *** test new implementation of `define-for-syntax'
 **** test "numbers" egg
 **** is s48-modules still working?
-**** port xlib egg
 *** at some stage remove debug-output in expand.scm
 
 ** module issues
@@ -102,7 +98,6 @@ TODO for trunk								-*- Outline -*-
     touching .c files caused chicken-install to be rebuilt; did using
     .SECONDARY help?
 *** using "touch" with WINDOWS_SHELL won't work (need alternative)
-** test --enable-auto-import witg mingw builds
 
 ** documentation
 *** document qs, normalize-pathname
