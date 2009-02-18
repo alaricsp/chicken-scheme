@@ -107,7 +107,13 @@ $interpret -bnq test-irregex.scm
 echo "======================================== r4rstest ..."
 $interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
   -i -s r4rstest.scm >r4rstest.log
-diff -bu r4rstest.out r4rstest.log || true
+
+if test "$MSYSTEM" == "MINGW32"; then
+    # the windows runtime library prints flonums differently
+    cat r4rstest.log
+else
+    diff -bu r4rstest.out r4rstest.log || true
+fi
 
 echo "======================================== finalizer tests ..."
 $interpret -s test-finalizers.scm

@@ -22,6 +22,13 @@
   #t)
 (gc #t)
 (assert (not x-f))
+
+#|
+
+This ought to work, see patches/finalizer.closures.diff for
+a fix that unfortunately disables finalizers in the interpreter
+(probably due to the different closure representation).
+
 (assert (not y-f))
 (set! x #f)
 (gc #t)
@@ -31,3 +38,13 @@
 (gc #t)
 (assert y-f)
 (assert x-f)
+|#
+
+(define foo-f #f)
+
+(let ((foo (vector 1 2 3)))
+  (set-finalizer! foo (lambda _ (set! foo-f #t)))
+  #t)
+
+(gc #t)
+(assert foo-f)

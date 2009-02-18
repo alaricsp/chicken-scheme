@@ -1,0 +1,55 @@
+Index: runtime.c
+===================================================================
+--- runtime.c	(Revision 12825)
++++ runtime.c	(Revision 12869)
+@@ -2701,10 +2701,15 @@
+     /* Mark collectibles: */
+     for(msp = collectibles; msp < collectibles_top; ++msp)
+       if(*msp != NULL) mark(*msp);
+-    
++
++    /* mark GC roots: */
+     for(gcrp = gc_root_list; gcrp != NULL; gcrp = gcrp->next)
+       mark(&gcrp->value);
+ 
++    /* mark finalizer procedures: */
++    for(flist = finalizer_list; flist != NULL; flist = flist->next) 
++      mark(&flist->finalizer);
++
+     mark_system_globals();
+   }
+   else {
+@@ -2769,7 +2774,6 @@
+ 
+ 	for(flist = finalizer_list; flist != NULL; flist = flist->next) {
+ 	  mark(&flist->item);
+-	  mark(&flist->finalizer);
+ 	  ++fcount;
+ 	}
+ 
+@@ -2786,7 +2790,6 @@
+ 	  }
+ 
+ 	  mark(&flist->item);
+-	  mark(&flist->finalizer);
+ 	}
+       }
+ 
+@@ -2794,7 +2797,7 @@
+       finalizers_checked = 1;
+ 
+       if(pending_finalizer_count > 0 && gc_report_flag)
+-	C_printf(C_text("[GC] finalizers pending for rescan:\t %d (%d live)\n"), 
++	C_printf(C_text("[GC] finalizers pending: %d (%d live)\n"), 
+ 		 pending_finalizer_count, live_finalizer_count);
+ 
+       goto rescan;
+@@ -2803,7 +2806,7 @@
+       /* Copy finalized items with remembered indices into `##sys#pending-finalizers' 
+ 	 (and release finalizer node): */
+       if(pending_finalizer_count > 0) {
+-	if(gc_report_flag) C_printf(C_text("[GC] queueing %d finalizers\n"), pending_finalizer_count);
++	if(gc_report_flag) C_printf(C_text("[GC] finalizers queued: %d\n"), pending_finalizer_count);
+ 
+ 	last = C_block_item(pending_finalizers_symbol, 0);
+ 	assert(C_u_i_car(last) == C_fix(0));

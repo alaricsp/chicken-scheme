@@ -1,0 +1,26 @@
+Index: library.scm
+===================================================================
+@@ -4250,6 +4257,7 @@
+ (define ##sys#run-pending-finalizers
+  (let ([vector-fill! vector-fill!]
+       [print print]
++       [with-exception-handler with-exception-handler]
+       [working #f] )
+    (lambda (state)
+      (unless working
+@@ -4262,8 +4270,13 @@
+         (do ([i 0 (fx+ i 1)])
+             ((fx>= i c))
+           (let ([i2 (fx+ 1 (fx* i 2))])
+-             ((##sys#slot ##sys#pending-finalizers (fx+ i2 1))
+-              (##sys#slot ##sys#pending-finalizers i2)) ) )
++             (##sys#call-with-current-continuation
++              (lambda (ret)
++                (with-exception-handler
++                 ret
++                 (lambda ()
++                   ((##sys#slot ##sys#pending-finalizers (fx+ i2 1))
++                    (##sys#slot ##sys#pending-finalizers i2)))))) ) )
+         (vector-fill! ##sys#pending-finalizers (##core#undefined))
+         (##sys#setislot ##sys#pending-finalizers 0 0)
+         (set! working #f) ) )

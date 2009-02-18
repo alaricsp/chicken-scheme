@@ -1,4 +1,4 @@
-TODO								-*- org -*-
+TODO							-*- Outline -*-
 ====
 
 
@@ -17,7 +17,7 @@ TODO								-*- org -*-
     took place in the compiler
 
 ** expander
-*** TODO unstripped quoted constants					   :BUG:
+*** unstripped quoted constants					   
     if macro expands into the name of an exported macro, ##sys#strip-syntax will 
     not strip the symbol (the se contains a macro-def). Possibly just use the
     macro name, then.

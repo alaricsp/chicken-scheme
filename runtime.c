@@ -2735,10 +2735,6 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       if(!gcrp->finalizable) mark(&gcrp->value);
     }
 
-    /* mark finalizer procedures: */
-    for(flist = finalizer_list; flist != NULL; flist = flist->next) 
-      mark(&flist->finalizer);
-
     mark_system_globals();
   }
   else {
@@ -2803,6 +2799,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 
 	for(flist = finalizer_list; flist != NULL; flist = flist->next) {
 	  mark(&flist->item);
+	  mark(&flist->finalizer);
 	  ++fcount;
 	}
 
@@ -2824,6 +2821,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
 	  }
 
 	  mark(&flist->item);
+	  mark(&flist->finalizer);
 	}
 
 	/* mark finalizable GC roots: */
@@ -2836,7 +2834,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       finalizers_checked = 1;
 
       if(pending_finalizer_count > 0 && gc_report_flag)
-	C_printf(C_text("[GC] finalizers pending: %d (%d live)\n"), 
+	C_printf(C_text("[GC] finalizers pending for rescan:\t %d (%d live)\n"), 
 		 pending_finalizer_count, live_finalizer_count);
 
       goto rescan;
@@ -2845,7 +2843,7 @@ C_regparm void C_fcall C_reclaim(void *trampoline, void *proc)
       /* Copy finalized items with remembered indices into `##sys#pending-finalizers' 
 	 (and release finalizer node): */
       if(pending_finalizer_count > 0) {
-	if(gc_report_flag) C_printf(C_text("[GC] finalizers queued: %d\n"), pending_finalizer_count);
+	if(gc_report_flag) C_printf(C_text("[GC] queueing %d finalizers\n"), pending_finalizer_count);
 
 	last = C_block_item(pending_finalizers_symbol, 0);
 	assert(C_u_i_car(last) == C_fix(0));
