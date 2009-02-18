@@ -5,8 +5,15 @@ set -e
 TEST_DIR=`pwd`
 export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
-compile="../csc -compiler ../chicken -v -I.. -L.. -include-path .. -o a.out"
-compile_s="../csc -s -compiler ../chicken -v -I.. -L.. -include-path .."
+
+CHICKEN=../chicken
+
+if test "$MSYSTEM" == "MINGW32"; then
+    CHICKEN="..\\chicken"
+fi
+
+compile="../csc -compiler $CHICKEN -v -I.. -L.. -include-path .. -o a.out"
+compile_s="../csc -s -compiler $CHICKEN -v -I.. -L.. -include-path .."
 interpret="../csi -n -include-path .."
 
 echo "======================================== compiler tests ..."
@@ -100,7 +107,7 @@ $interpret -bnq test-irregex.scm
 echo "======================================== r4rstest ..."
 $interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
   -i -s r4rstest.scm >r4rstest.log
-diff -u r4rstest.out r4rstest.log
+diff -bu r4rstest.out r4rstest.log || true
 
 echo "======================================== finalizer tests ..."
 $interpret -s test-finalizers.scm
@@ -125,7 +132,7 @@ for x in `ls *.scm`; do
 	"plists.scm");;
 	*)
 	    echo $x
-	    ../csc $x -compiler ../chicken -C -I.. -L.. -O2 -d0
+	    ../csc $x -compiler $CHICKEN -C -I.. -L.. -O2 -d0
 	    ./`basename $x .scm`;;
     esac
 done

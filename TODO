@@ -1,4 +1,5 @@
-TODO for trunk								-*- Outline -*-
+TODO								-*- org -*-
+====
 
 
 * bugs
@@ -16,6 +17,10 @@ TODO for trunk								-*- Outline -*-
     took place in the compiler
 
 ** expander
+*** TODO unstripped quoted constants					   :BUG:
+    if macro expands into the name of an exported macro, ##sys#strip-syntax will 
+    not strip the symbol (the se contains a macro-def). Possibly just use the
+    macro name, then.
 *** expansion of r5rs_pitfall 4.2 incorrect
     possibly due to a non-aliased implicit "begin" somewhere
 *** dirty-macros.scm loops when using `defile'
@@ -41,6 +46,8 @@ TODO for trunk								-*- Outline -*-
 
 
 * tasks
+
+** Convert this file to org mode
 
 ** branches
 *** try to improve performance in lazy-gensyms
