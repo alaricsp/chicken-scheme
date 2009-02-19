@@ -84,7 +84,8 @@
       (let* ((alias (gensym var))
 	     (ua (or (lookup var se) var)))
 	(##sys#put! alias '##core#macro-alias ua)
-	(dd "aliasing " alias " to " 
+	(##sys#put! alias '##core#real-name var)
+	(dd "aliasing " alias " (real: " var ") to " 
 	    (if (pair? ua)
 		'<macro>
 		ua))
@@ -102,7 +103,8 @@
 	   (let ((x2 (if se 
 			 (lookup x se)
 			 (get x '##core#macro-alias) ) ) )
-	     (cond ((and alias (not (assq x se)))
+	     (cond ((get x '##core#real-name))
+		   ((and alias (not (assq x se)))
 		    (##sys#alias-global-hook x #f))
 		   ((not x2) x)
 		   ((pair? x2) x)

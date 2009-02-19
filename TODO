@@ -17,10 +17,6 @@ TODO							-*- Outline -*-
     took place in the compiler
 
 ** expander
-*** unstripped quoted constants					   
-    if macro expands into the name of an exported macro, ##sys#strip-syntax will 
-    not strip the symbol (the se contains a macro-def). Possibly just use the
-    macro name, then.
 *** expansion of r5rs_pitfall 4.2 incorrect
     possibly due to a non-aliased implicit "begin" somewhere
 *** dirty-macros.scm loops when using `defile'
@@ -41,8 +37,9 @@ TODO							-*- Outline -*-
 ** libraries
 *** library/runtime: cyclic list checks for assq/assv/assoc/memq/memv/member
     and C_i_list_tail
-*** finalizers on lexically ref'd data not working in interpreter (reported
-    by Jim Ursetto)
+*** finalizers on lexically ref'd data not working in interpreter
+    reported by Jim Ursetto
+    reverted original patch, see patches/finalizer-closures.diff
 
 
 * tasks

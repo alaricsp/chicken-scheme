@@ -110,7 +110,7 @@ $interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
 
 if test "$MSYSTEM" == "MINGW32"; then
     # the windows runtime library prints flonums differently
-    cat r4rstest.log
+    tail r4rstest.log
 else
     diff -bu r4rstest.out r4rstest.log || true
 fi
