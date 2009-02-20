@@ -195,7 +195,6 @@ static C_TLS struct stat C_statbuf;
 #define C_close(fd)         C_fix(close(C_unfix(fd)))
 #define C_sleep             sleep
 
-#define C_putenv(s)         C_fix(putenv((char *)C_data_pointer(s)))
 #define C_stat(fn)          C_fix(stat((char *)C_data_pointer(fn), &C_statbuf))
 #define C_lstat(fn)         C_fix(lstat((char *)C_data_pointer(fn), &C_statbuf))
 #define C_fstat(f)          C_fix(fstat(C_unfix(f), &C_statbuf))
@@ -213,8 +212,10 @@ static C_TLS struct stat C_statbuf;
 #endif
 
 #ifdef C_GNU_ENV
+# define C_unsetenv(s)      (unsetenv((char *)C_data_pointer(s)), C_SCHEME_TRUE)
 # define C_setenv(x, y)     C_fix(setenv((char *)C_data_pointer(x), (char *)C_data_pointer(y), 1))
 #else
+# define C_unsetenv(s)      C_fix(putenv((char *)C_data_pointer(s)))
 static C_word C_fcall C_setenv(C_word x, C_word y) {
   char *sx = C_data_pointer(x),
        *sy = C_data_pointer(y);
@@ -1872,7 +1873,7 @@ EOF
 
 (define (unsetenv var)
   (##sys#check-string var 'unsetenv)
-  (##core#inline "C_putenv" (##sys#make-c-string var))
+  (##core#inline "C_unsetenv" (##sys#make-c-string var))
   (##core#undefined) )
 
 (define get-environment-variables
