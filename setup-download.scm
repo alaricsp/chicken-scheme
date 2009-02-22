@@ -46,9 +46,9 @@
   (define *quiet* #f)
 
   (define (d fstr . args)
-    (apply      
-     fprintf (if *quiet* (current-error-port) (current-output-port))
-     fstr args))
+    (let ((port (if *quiet* (current-error-port) (current-output-port))))
+      (apply fprintf port fstr args)
+      (flush-output port)))
      
   (define temporary-directory (make-parameter #f))
 

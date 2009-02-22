@@ -1,5 +1,5 @@
-TODO							-*- Outline -*-
-====
+TODO for chicken							-*- Outline -*-
+================
 
 
 * bugs
@@ -40,6 +40,7 @@ TODO							-*- Outline -*-
 *** finalizers on lexically ref'd data not working in interpreter
     reported by Jim Ursetto
     reverted original patch, see patches/finalizer-closures.diff
+*** Use record-descriptors instead of symbols as 1st slot in structure objects?
 
 
 * tasks

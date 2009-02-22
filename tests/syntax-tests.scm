@@ -269,3 +269,22 @@
 	(print* i " ")
 	(set! i (add1 i))))
 (newline)
+
+
+;;;; exported macro would override original name (fixed in rev. 13351)
+
+(module xfoo (xbaz xbar)
+  (import scheme)
+  (define-syntax xbar
+    (syntax-rules ()
+      ((_ 1) (xbaz))
+      ((_) 'xbar)))
+  (define-syntax xbaz
+    (syntax-rules ()
+      ((_ 1) (xbar))
+      ((_) 'xbazz))))
+
+(import xfoo)
+(assert (eq? 'xbar (xbaz 1)))
+(assert (eq? 'xbazz (xbar 1)))
+(assert (eq? 'xbar (xbar)))
