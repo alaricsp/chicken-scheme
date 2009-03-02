@@ -984,9 +984,11 @@
     (lambda (alist . rest)
       (##sys#check-list alist 'alist->hash-table)
       (let ([ht (apply make-hash-table rest)])
-	(for-each (lambda (x)
-		    (*hash-table-update!/default  ht (##sys#slot x 0) identity (##sys#slot x 1)) )
-		  alist)
+	(for-each
+	 (lambda (x)
+	   (##sys#check-pair x 'alist->hash-table)
+	   (*hash-table-update!/default  ht (##sys#slot x 0) identity (##sys#slot x 1)) )
+	 alist)
 	ht ) ) ) )
 
 ;; Hash-Table Keys & Values:
