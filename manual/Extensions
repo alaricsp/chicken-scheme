@@ -71,7 +71,7 @@ systems that do not use {{ld.so.conf}}).
 
 Extensions can be created by creating an (optionally gzipped) {{tar}}
 archive named {{EXTENSION.egg}} containing all needed files plus a
-{{.setup}} script in the root directory.  After {{chicken-setup}} has
+{{.setup}} script in the root directory.  After {{chicken-install}} has
 extracted the files, the setup script will be invoked. There are no
 additional constraints on the structure of the archive, but the setup
 script has to be in the root path of the archive.
@@ -266,7 +266,7 @@ path where the CHICKEN binaries ({{chicken}}, {{csi}}, etc.) are installed.
 
  [parameter] (setup-root-directory [PATH])
 
-Contains the path of the directory where {{chicken-setup}} was invoked.
+Contains the path of the directory where {{chicken-install}} was invoked.
 
 
 ==== setup-install-flag

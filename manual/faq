@@ -612,6 +612,11 @@ Note, however, that using {{repository-path}} as above hard-codes the location o
 
 Yes, just [[FAQ#Extensions#How can I install Chicken eggs to a non-default location?|install them in a directory you can write]].
 
+==== Why does downloading an extension via {{chicken-install}} fail on Windows Vista?
+
+Possibly the Windows Firewall is active, which prevents {{chicken-install}} from opening a TCP
+connection to the egg repository. Try disabling the firewall temporarily.
+
 ----
 
 Previous: [[Bugs and limitations]]

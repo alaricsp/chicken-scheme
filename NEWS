@@ -1,4 +1,4 @@
-4.0.0x5
+4.0.0
 
 - replaced PCRE regex engine with Alex Shinn's "irregex" regular expression
   package
@@ -7,16 +7,10 @@
 - `regex' unit: removed `regexp*' and `regex-optimize'
 - added `CHICKEN_new_finalizable_gc_root()'
 - `length' checks its argument for being cyclic
-
-4.0.0x3
-
 - removed custom declarations and "link-options" and "c-options" declarations
 - deprecated "-quiet" option to "chicken" program
 - added "-update-db" option to chicken-install
 - the compiler now suggests possibly required module-imports
-
-4.0.0x2
-
 - moved non-standard syntax-definitions into "chicken-syntax" library unit
 - the pretty-printer prints the end-of-file object readably now
 - alternative conditional execution paths have separate allocation computation
@@ -25,9 +19,6 @@
 - expander handles syntax-reexports and makes unexported syntax available
   for exported expanders in import libraries
 - added checks in some procedures in the the "tcp" library unit.
-
-4.0.0x1
-
 - the macro system has been completely overhauled and converted 
   to hygienic macros
 - a macro-aware module system has been added

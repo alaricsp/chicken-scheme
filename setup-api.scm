@@ -625,7 +625,7 @@
 (define (upgrade-message ext msg)
   (error
    (sprintf
-    "the required extension `~s' ~a - please run~%~%  chicken-setup ~a~%~%and repeat the current installation operation."
+    "the required extension `~s' ~a - please run~%~%  chicken-install ~a~%~%and repeat the current installation operation."
     ext msg ext) ) )
 
 (define (required-extension-version . args)

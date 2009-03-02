@@ -2727,7 +2727,7 @@
              (car (reverse (sort (directory-files dir t "^[0-9]+$")
                                  #'string-lessp)))))
       (and (fboundp 'shell-command-to-string)
-           (let* ((res (shell-command-to-string "chicken-setup -R"))
+           (let* ((res (shell-command-to-string "csi -p \"(repository-path)\""))
                   (res (substring res 0 (- (length res) 1))))
              (and res (file-directory-p res) res)))
       "/usr/local/lib/chicken"))
