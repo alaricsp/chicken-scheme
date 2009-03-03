@@ -190,13 +190,9 @@
 
 (define-inline (%eq? x y) (##core#inline "C_eqp" x y))
 
-; (%peek-signed-integer BLOCK INDEX)
-;
-(define-inline %peek-signed-integer (##core#primitive "C_peek_signed_integer"))
+(define-inline (%peek-signed-integer b i) ((##core#primitive "C_peek_signed_integer") b i))
 
-; (%peek-unsigned-integer BLOCK INDEX)
-;
-(define-inline %peek-unsigned-integer (##core#primitive "C_peek_unsigned_integer"))
+(define-inline (%peek-unsigned-integer b i) ((##core#primitive "C_peek_unsigned_integer") b i))
 
 (define-inline (%poke-integer b i n) (##core#inline "C_poke_integer" b i n))
 
@@ -243,7 +239,7 @@
 ; Size is # of bytes when 'byteblock?', otherwise # of words.
 ; Fill is a character when 'byteblock?', otherwise any.
 ;
-(define-inline %block-allocate (##core#primitive "C_allocate_vector"))
+(define-inline (%block-allocate n bb f a) ((##core#primitive "C_allocate_vector") n bb f a))
 
 (define-inline (%block-address x) (##core#inline_allocate ("C_block_address" 4) x))
 
@@ -447,27 +443,11 @@
 
 ;; Structure (wordblock)
 
-;; (%make-structure tag fill)
-;;
-
-; (%make-structure TAG [SLOT ...])
-(define-inline %make-structure (##core#primitive "C_make_structure"))
+(define-inline (%make-structure t . s) (apply (##core#primitive "C_make_structure") t s))
 
 (define-inline (%generic-structure? x) (and (%block? x) (%structure-type? x)))
 
 (define-inline (%structure-instance? x s) (##core#inline "C_i_structurep" x s))
-
-(cond-expand
-  [hygienic-macros
-    (define-syntax %structure?
-      (syntax-rules ()
-        [(_ ?x)     (%generic-structure? ?x)]
-        [(_ ?x ?t)  (%structure-instance? ?x ?t)] ) ) ]
-  [else
-    (define-macro (%structure? ?x . ?t)
-      (if (%null? ?t)
-          `(%generic-structure? ,?x)
-          `(%structure-instance? ,?x ,(car ?t)) ) ) ] )
 
 (define-inline (%structure-ref r i) (%block-word-ref r i))
 
@@ -560,7 +540,7 @@
 (define-inline (%symbol-string s) (%block-word-ref s 1))
 (define-inline (%symbol-bucket s) (%block-word-ref s 2))
 
-(define-inline %string->symbol-interned (##core#primitive "C_string_to_symbol"))
+(define-inline (%string->symbol-interned s) ((##core#primitive "C_string_to_symbol") s))
 
 ;(define-inline (%symbol-intern! s) (%string->symbol (%symbol-string s)))
 
@@ -635,7 +615,7 @@
 
 ;; Simple-pointer (wordblock)
 
-(define-inline %make-simple-pointer (##core#primitive "C_make_pointer"))
+(define-inline (%make-simple-pointer) ((##core#primitive "C_make_pointer")))
 
 (define-inline (%simple-pointer? x) (and (%block? x) (%simple-pointer-type? x)))
 
@@ -657,7 +637,7 @@
 
 ;; Tagged-pointer (wordblock)
 
-(define-inline %make-tagged-pointer (##core#primitive "C_make_tagged_pointer"))
+(define-inline (%make-tagged-pointer t) ((##core#primitive "C_make_tagged_pointer") t))
 
 (define-inline (%tagged-pointer? x) (and (%block? x) (%tagged-pointer-type? x)))
 
