@@ -401,22 +401,49 @@
 (define-inline (%set-car/immediate! p x) (%block-word-set!/immediate p 0 x))
 (define-inline (%set-cdr/immediate! p x) (%block-word-set!/immediate p 1 x))
 
-;; l0 must be a proper-list
+;; These are safe
 
+(define-inline (%memq x l) (##core#inline "C_i_memq" x l))
+(define-inline (%memv x l) (##core#inline "C_i_memv" x l))
+(define-inline (%member x l) (##core#inline "C_i_member" x l))
+
+(define-inline (%assq x l) (##core#inline "C_i_assq" x l))
+(define-inline (%assv x l) (##core#inline "C_i_assv" x l))
+(define-inline (%assoc x l) (##core#inline "C_i_assoc" x l))
+
+; l0 must be a proper-list
 (define-inline (%list-ref l0 i0)
   (let loop ([l l0] [i i0])
-    (cond [(null? l)
-           '() ]
-	        [(%fx= 0 i)
-	         (%car l) ]
-	        [else
-	         (loop (%cdr l) (%fx- i 1)) ] ) ) )
+    (cond [(null? l)  '() ]
+	        [(%fx= 0 i) (%car l) ]
+	        [else       (loop (%cdr l) (%fx- i 1)) ] ) ) )
 
 ; l0 cannot be null
 (define-inline (%last-pair l0)
   (do ([l l0 (%cdr l)])
       [(%null? (%cdr l)) l]) )
 
+; each elm of ls must be a proper-list
+(define-inline (%append! . ls)
+  (let ([ls (let loop ([ls ls])
+              (cond [(%null? ls)        '() ]
+                    [(%null? (%car ls)) (loop (%cdr ls)) ]
+                    [else               ls ] ) ) ] )
+    (if (%null? ls)
+        '()
+        (let ([l0 (%car ls)])
+          ;(assert (not (null? l0)))
+          (let loop ([ls (%cdr ls)] [pl l0])
+            (if (%null? ls)
+                l0
+                (let ([l1 (%car ls)])
+                  (if (%null? l1)
+                      (loop (%cdr ls) pl)
+                      (begin
+                        (%set-cdr! (%last-pair pl) l1)
+                        (loop (%cdr ls) l1) ) ) ) ) ) ) ) ) )
+    
+; l0 must be a proper-list
 (define-inline (%delq! x l0)
   (let loop ([l l0] [pp #f])
     (cond [(null? l)
@@ -429,16 +456,6 @@
 	                (%cdr l) ] ) ]
 	        [else
 	         (loop (%cdr l) l) ] ) ) )
-
-;; These are safe
-
-(define-inline (%memq x l) (##core#inline "C_i_memq" x l))
-(define-inline (%memv x l) (##core#inline "C_i_memv" x l))
-(define-inline (%member x l) (##core#inline "C_i_member" x l))
-
-(define-inline (%assq x l) (##core#inline "C_i_assq" x l))
-(define-inline (%assv x l) (##core#inline "C_i_assv" x l))
-(define-inline (%assoc x l) (##core#inline "C_i_assoc" x l))
 
 
 ;; Structure (wordblock)

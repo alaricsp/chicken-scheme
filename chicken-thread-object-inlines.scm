@@ -28,7 +28,7 @@
 ; 6     Specific (object)
 
 (define-inline (%mutex? x)
-  (%structure? x 'mutex) )
+  (%structure-instance? x 'mutex) )
 
 (define-inline (%mutex-name mx)
   (%structure-ref mx 1) )
@@ -55,7 +55,7 @@
   (%structure-set!/immediate mx 3 '()) )
 
 (define-inline (%mutex-waiters-add! mx th)
-  (%mutex-waiters-set! mx (%append-item (%mutex-waiters mx) th)) )
+  (%mutex-waiters-set! mx (%append! (%mutex-waiters mx) (%cons th '()))) )
 
 (define-inline (%mutex-waiters-delete! mx th)
   (%mutex-waiters-set! mx (%delq! th (%mutex-waiters mx))) )
@@ -111,7 +111,7 @@
 ; 13    Unblocked by timeout? (boolean)
 
 (define-inline (%thread? x)
-  (%structure? x 'thread) )
+  (%structure-instance? x 'thread) )
 
 (define-inline (%thread-thunk th)
   (%structure-ref th 1) )
@@ -212,13 +212,38 @@
 (define-inline (%thread-recipients-process! th tk)
   (let ([rs (%thread-recipients t)])
     (unless (%null? rs) (for-each tk rs) ) )
-  (thread-recipients-empty! t) )
+  (%thread-recipients-empty! t) )
 
 (define-inline (%thread-unblocked-by-timeout? th)
   (%structure-ref th 13) )
 
 (define-inline (%thread-unblocked-by-timeout-set! th f)
   (%structure-set!/immediate th 13 f) )
+
+(define-inline (%thread-blocked-for-timeout? th)
+  (and (%thread-block-timeout th)
+       (not (%thread-block-object th))) )
+
+(define-inline (%thread-blocked? th)
+  (%eq? 'blocked (%thread-state th)) )
+
+(define-inline (%thread-created? th)
+  (%eq? 'created (%thread-state th)) )
+
+(define-inline (%thread-ready? th)
+  (%eq? 'ready (%thread-state th)) )
+
+(define-inline (%thread-sleeping? th)
+  (%eq? 'sleeping (%thread-state th)) )
+
+(define-inline (%thread-suspended? th)
+  (%eq? 'suspended (%thread-state th)) )
+
+(define-inline (%thread-terminated? th)
+  (%eq? 'terminated (%thread-state th)) )
+
+(define-inline (%thread-dead? th)
+  (%eq? 'dead (%thread-state th)) )
 
 
 ;;; Condition-variable object:
@@ -231,7 +256,7 @@
 ; 3     Specific (object)
 
 (define-inline (%condition-variable? x)
-  (%structure? x 'condition-variable) )
+  (%structure-instance? x 'condition-variable) )
 
 (define-inline (%condition-variable-name cv)
   (%structure-ref cv 1) )
@@ -249,7 +274,7 @@
   (%structure-set!/immediate cv 2 '()) )
 
 (define-inline (%condition-variable-waiters-add! cv th)
-  (%condition-variable-waiters-set! cv (%append-item (%condition-variable-waiters cv) th)) )
+  (%condition-variable-waiters-set! cv (%append! (%condition-variable-waiters cv) (%cons th '()))) )
 
 (define-inline (%condition-variable-waiters-delete! cv th)
   (%condition-variable-waiters-set! cv (%delq! th (%condition-variable-waiters cv))) )
