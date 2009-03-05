@@ -245,6 +245,11 @@
 (define-inline (%thread-dead? th)
   (%eq? 'dead (%thread-state th)) )
 
+;; Synonyms
+
+(define-inline (%current-thread)
+  ##sys#current-thread )
+
 
 ;;; Condition-variable object:
 

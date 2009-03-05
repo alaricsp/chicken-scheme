@@ -42,42 +42,62 @@
 
 ;; Immediate
 
-(define-inline (%immediate? ?x) (##core#inline "C_immp" x))
+(define-inline (%immediate? x) (##core#inline "C_immp" x))
 
 
 ;; Fixnum
 
-(define-inline (%fixnum? x) (##core#inline "C_fixnump" x))
+(define-inline (%fixnum-type? x) (##core#inline "C_fixnump" x))
+
+(define-inline (%fixnum? x) (and (%immediate? x) (%fixnum-type? x)))
 
 
 ;; Character
 
-(define-inline (%char? x) (##core#inline "C_charp" x))
+(define-inline (%char-type? x) (##core#inline "C_charp" x))
+
+(define-inline (%char? x) (and (%immediate? x) (%char-type? x)))
 
 
 ;; Boolean
 
-(define-inline (%boolean? x) (##core#inline "C_booleanp" x))
+(define-inline (%boolean-type? x) (##core#inline "C_booleanp" x))
+
+(define-inline (%boolean? x) (and (%immediate? x) (%boolean-type? x)))
+
+(define-inline (%true-value? x) (and (%boolean? x) (##core#inline "C_and" x #t)))
+
+(define-inline (%false-value? x) (not (%true-value? x)))
 
 
 ;; EOF
 
-(define-inline (%eof-object? x) (##core#inline "C_eofp" x))
+(define-inline (%eof-object-type? x) (##core#inline "C_eofp" x))
+
+(define-inline (%eof-object? x) (and (%immediate? x) (%eof-object-type? x)))
 
 
 ;; Null (the end-of-list value)
 
-(define-inline (%null? x) (##core#inline "C_i_nullp" x))
+(define-inline (%eol-object-type? x) (##core#inline "C_i_nullp" x))
+
+(define-inline (%eol-object? x) (and (%immediate? x) (%eol-object-type? x)))
 
 
 ;; Undefined (void)
 
-(define-inline (%undefined? x) (##core#inline "C_undefinedp" x))
+(define-inline (%undefined-type? x) (##core#inline "C_undefinedp" x))
+
+(define-inline (%undefined-value? x) (and (%immediate? x) (%undefined-type? x)))
+
+(define-inline (%undefined-value) (##core#undefined))
 
 
 ;; Unbound (the unbound value, not 'is a symbol unbound')
 
-(define-inline (%unbound? x) (##core#inline "C_unboundvaluep" x))
+(define-inline (%unbound-type? x) (##core#inline "C_unboundvaluep" x))
+
+(define-inline (%unbound-value? x) (and (%immediate? x) (%unbound-type? x)))
 
 
 ;; Block (anything not immediate)
@@ -85,19 +105,42 @@
 (define-inline (%block? x) (##core#inline "C_blockp" x))
 
 
+;; Special
+
+(define-inline (%special? x) (##core#inline "C_specialp" x))
+
+
+;; Wordblock (special block)
+
+(define-inline (%wordblock? x) (and (%block? x) (%special? x)))
+
+
+;; Byteblock
+
+(define-inline (%byteblock-type? x) (##core#inline "C_byteblockp" x))
+
+(define-inline (%byteblock? x) (and (%block? x) (%byteblock-type? x)))
+
+
 ;; Vector
 
 (define-inline (%vector-type? x) (##core#inline "C_vectorp" x))
+
+(define-inline (%vector? x) (and (%block? x) (%vector-type? x)))
 
 
 ;; Bytevector (isa vector so be careful; refers to how allocated, not what stored)
 
 (define-inline (%bytevector-type? x) (##core#inline "C_bytevectorp" x))
 
+(define-inline (%bytevector? x) (and (%block? x) (%bytevector-type? x)))
+
 
 ;; Pair
 
 (define-inline (%pair-type? x) (##core#inline "C_pairp" x))
+
+(define-inline (%pair? x) (and (%block? x) (%pair-type? x)))
 
 
 ;; Bucket
@@ -110,70 +153,84 @@
 
 (define-inline (%structure-type? x) (##core#inline "C_structurep" x))
 
+(define-inline (%structure? x) (and (%block? x) (%structure-type? x)))
+
 
 ;; Symbol
 
 (define-inline (%symbol-type? x) (##core#inline "C_symbolp" x))
 
-
-;; Byteblock
-
-(define-inline (%byteblock? x) (##core#inline "C_byteblockp" x))
+(define-inline (%symbol? x) (and (%block? x) (%symbol-type? x)))
 
 
 ;; String
 
 (define-inline (%string-type? x) (##core#inline "C_stringp" x))
 
+(define-inline (%string? x) (and (%block? x) (%string-type? x)))
+
 
 ;; Flonum
 
 (define-inline (%flonum-type? x) (##core#inline "C_flonump" x))
+
+(define-inline (%flonum? x) (and (%block? x) (%flonum-type? x)))
 
 
 ;; Lambda-info
 
 (define-inline (%lambda-info-type? x) (##core#inline "C_lambdainfop" x))
 
-
-;; Special
-
-(define-inline (%special? x) (##core#inline "C_specialp" x))
+(define-inline (%lambda-info? x) (and (%block? x) (%lambda-info-type? x)))
 
 
 ;; Closure
 
 (define-inline (%closure-type? x) (##core#inline "C_closurep" x))
 
+(define-inline (%closure? x) (and (%block? x) (%closure-type? x)))
+
 
 ;; Port
 
 (define-inline (%port-type? x) (##core#inline "C_portp" x))
+
+(define-inline (%port? x) (and (%block? x) (%port-type? x)))
 
 
 ;; Simple-pointer
 
 (define-inline (%simple-pointer-type? x) (##core#inline "C_pointerp" x))
 
+(define-inline (%simple-pointer? x) (and (%block? x) (%simple-pointer-type? x)))
+
 
 ;; Tagged-Pointer
 
 (define-inline (%tagged-pointer-type? x) (##core#inline "C_taggedpointerp" x))
+
+(define-inline (%tagged-pointer? x) (and (%block? x) (%tagged-pointer-type? x)))
 
 
 ;; Swig-Pointer
 
 (define-inline (%swig-pointer-type? x) (##core#inline "C_swigpointerp" x))
 
+(define-inline (%swig-pointer? x) (and (%block? x) (%swig-pointer-type? x)))
+
 
 ;; Any-pointer
 
 (define-inline (%any-pointer-type? x) (##core#inline "C_anypointerp" x))
 
+(define-inline (%pointer? x) (and (%block? x) (%any-pointer-type? x)))
+
 
 ;; Locative
 
 (define-inline (%locative-type? x) (##core#inline "C_locativep" x))
+
+(define-inline (%locative? x) (and (%block? x) (%locative-type? x)))
 
 
 ;; Forwarded (block object moved to new address, forwarding pointer)
@@ -183,7 +240,6 @@
 
 
 ;;; Values
-
 
 
 ;;; Operations
@@ -269,15 +325,11 @@
 ;; Generic-byteblock
 
 ; generic-byteblock isa string, flonum, or lambda-info
-;
-(define-inline (%generic-byteblock? x) (and (%block? x) (%byteblock? x)))
 
 
 ;; String (byteblock)
 
 (define-inline (%make-string size fill) (%make-block-byte size fill #f))
-
-(define-inline (%string? x) (and (%block? x) (%string-type? x)))
 
 (define-inline (%string-ref s i) (##core#inline "C_subchar" s i))
 
@@ -290,18 +342,13 @@
 
 ;; Flonum (byteblock)
 
-(define-inline (%flonum? x) (and (%block? x) (%flonum-type? x)))
-
 
 ;; Lambda-info (byteblock)
-
-(define-inline (%lambda-info? x) (and (%block? x) (%lambda-info-type? x)))
 
 
 ;; Generic-vector
 
 ; generic-vector isa vector, pair, structure, symbol, or keyword
-;
 (define-inline (%generic-vector? x)
   (and (%block? x)
        (not (or (%special? x) (%byteblock? x)))) )
@@ -310,8 +357,6 @@
 ;; Vector (wordblock)
 
 (define-inline (%make-vector size fill) (%make-word-block size fill #f))
-
-(define-inline (%vector? x) (and (%block? x) (%vector-type? x)))
 
 (define-inline (%vector-ref v i) (%block-word-ref v i))
 
@@ -328,8 +373,6 @@
     (##core#inline "C_string_to_bytevector" bv)
     bv ) )
 
-(define-inline (%bytevector? x) (and (%block? x) (%bytevector-type? x)))
-
 (define-inline (%bytevector-ref bv i) (%block-byte-ref bv i))
 
 (define-inline (%bytevector-set! bv i x) (%block-byte-set! bv i x))
@@ -339,7 +382,7 @@
 (define-inline (%bytevector=? v1 v2)
   (let ([ln (%bytevector-length v1)])
     (and (%eq? n %bytevector-length v2))
-         (fx=? 0 (##core#inline "C_string_compare" v1 v2 n)) ) )
+         (%fx=? 0 (##core#inline "C_string_compare" v1 v2 n)) ) )
 
 (define-inline (%string->bytevector s)
   (let* ([n (%string-length s)]
@@ -371,7 +414,7 @@
 
 ;; Pair (wordblock)
 
-(define-inline (%pair? x) (and (%block? x) (%pair-type? x)))
+(define-inline (%null? x) (%eol-object? x))
 
 (define-inline (%list? x) (or (%null? x) (%pair? x)))
 
@@ -423,6 +466,12 @@
   (do ([l l0 (%cdr l)])
       [(%null? (%cdr l)) l]) )
 
+(define-inline (%list-copy l0)
+  (let loop ([ls l0])
+    (if (%null? ls)
+        '()
+        (%cons (%car ls) (loop (%cdr ls))) ) ) )
+
 ; each elm of ls must be a proper-list
 (define-inline (%append! . ls)
   (let ([ls (let loop ([ls ls])
@@ -462,8 +511,6 @@
 
 (define-inline (%make-structure t . s) (apply (##core#primitive "C_make_structure") t s))
 
-(define-inline (%generic-structure? x) (and (%block? x) (%structure-type? x)))
-
 (define-inline (%structure-instance? x s) (##core#inline "C_i_structurep" x s))
 
 (define-inline (%structure-ref r i) (%block-word-ref r i))
@@ -474,11 +521,6 @@
 (define-inline (%structure-length r) (%block-size r))
 
 (define-inline (%structure-tag r) (%block-word-ref r 0))
-
-
-;; Special-block (wordblock)
-
-(define-inline (%special-block? x) (and (%block? x) (%special? x)))
 
 
 ;; Port (wordblock)
@@ -500,8 +542,6 @@
 ; port is 16 slots + a block-header word
 ;
 ;(define-inline (%make-port n) (##core#inline_allocate ("C_a_i_port" 17)))
-
-(define-inline (%port? x) (and (%block? x) (%port-type? x)))
 
 (define-inline (%port-filep port) (%peek-unsigned-integer port 0))
 (define-inline (%port-input-mode? port) (%block-word-ref? port 1))
@@ -540,8 +580,6 @@
 
 ;; Closure (wordblock)
 
-(define-inline (%closure? x) (and (%block? x) (%closure-type? x)))
-
 (define-inline (%closure-size c) (%block-size? c))
 
 (define-inline (%vector->closure! v a)
@@ -550,8 +588,6 @@
 
 
 ;; Symbol (wordblock)
-
-(define-inline (%symbol? x) (and (%block? x) (%symbol-type? x)))
 
 (define-inline (%symbol-binding s) (%block-word-ref s 0))
 (define-inline (%symbol-string s) (%block-word-ref s 1))
@@ -577,8 +613,6 @@
 
 (define-inline (%make-locative typ obj idx weak?)
   (##core#inline_allocate ("C_a_i_make_locative" 5) typ obj idx weak?))
-
-(define-inline (%locative? x) (and (%block? x) (%locative-type? x)))
 
 ; Locative layout:
 ;
@@ -606,13 +640,11 @@
 
 ;; Pointer (wordblock)
 
-(define-inline (%pointer? x) (and (%block? x) (%any-pointer-type? x)))
-
 ; simple-pointer, tagged-pointer, swig-pointer, locative
 (define-inline (%generic-pointer? x) (or (%pointer? x) (%locative? x)))
 
 ; simple-pointer, tagged-pointer, swig-pointer, locative, closure, port, symbol, keyword
-(define-inline (%pointer-like? x) (%special-block? x))
+(define-inline (%pointer-like? x) (%wordblock? x))
 
 ; These operate on pointer-like objects
 
@@ -634,8 +666,6 @@
 
 (define-inline (%make-simple-pointer) ((##core#primitive "C_make_pointer")))
 
-(define-inline (%simple-pointer? x) (and (%block? x) (%simple-pointer-type? x)))
-
 (define-inline (%make-pointer-null)
   (let ([ptr (%make-simple-pointer)])
     (##core#inline "C_update_pointer" 0 ptr)
@@ -656,17 +686,18 @@
 
 (define-inline (%make-tagged-pointer t) ((##core#primitive "C_make_tagged_pointer") t))
 
-(define-inline (%tagged-pointer? x) (and (%block? x) (%tagged-pointer-type? x)))
-
 
 ;; Swig-pointer (wordblock)
-
-(define-inline (%swig-pointer? x) (and (%block? x) (%swig-pointer-type? x)))
 
 
 
 ;;; Values
 
+
+
+;;; Numbers
+
+(define-inline (%number? x) (or (%fixnum? x) (%flonum? x) ) )
 
 
 ;;; Operations
