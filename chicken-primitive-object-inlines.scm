@@ -518,19 +518,19 @@
 	        [else
 	         (find-elm (%cdr ls) ls) ] ) ) )
 
-(define-inline (%list-fold-1 ls0 func init)
+(define-inline (%list-fold-1 func init ls0)
   ;(assert (and (proper-list? ls0) (procedure? func)))
   (let loop ([ls ls0] [acc init])
     (if (%null? ls) acc
         (loop (%cdr ls) (func (%car ls) acc)) ) ) )
 
-(define-inline (%list-map-1 ls0 func)
+(define-inline (%list-map-1 func ls0)
   ;(assert (and (proper-list? ls0) (procedure? func)))
   (let loop ([ls ls0])
     (if (%null? ls) '()
         (%cons (func (%car ls)) (loop (%cdr ls))) ) ) )
 
-(define-inline (%list-for-each-1 ls0 proc)
+(define-inline (%list-for-each-1 proc ls0)
   ;(assert (and (proper-list? ls0) (procedure? proc)))
   (let loop ([ls ls0])
     (unless (%null? ls)
