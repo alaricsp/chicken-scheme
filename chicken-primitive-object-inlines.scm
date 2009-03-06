@@ -302,25 +302,25 @@
 
 ;; Byte access
 
-(define-inline (%make-block-byte n f a?) (%block-allocate n #t f a?))
+(define-inline (%make-byteblock n f a?) (%block-allocate n #t f a?))
 
-(define-inline (%block-byte-ref x i) (##core#inline "C_subbyte" x i))
-(define-inline (%block-byte-set! x i n) (##core#inline "C_setsubbyte" x i n))
+(define-inline (%byteblock-ref x i) (##core#inline "C_subbyte" x i))
+(define-inline (%byteblock-set! x i n) (##core#inline "C_setsubbyte" x i n))
 
 
 ;; Word access
 
-(define-inline (%make-block-word n f a?) (%block-allocate n #f f a?))
+(define-inline (%make-wordblock n f a?) (%block-allocate n #f f a?))
 
-(define-inline (%block-word-ref x i) (##core#inline "C_slot" x i))
+(define-inline (%wordblock-ref x i) (##core#inline "C_slot" x i))
 
-(define-inline (%block-word-set! x i y) (##core#inline "C_i_setslot" x i y))
-(define-inline (%block-word-set!/immediate x i y) (##core#inline "C_i_set_i_slot" x i y))
+(define-inline (%wordblock-set! x i y) (##core#inline "C_i_setslot" x i y))
+(define-inline (%wordblock-set!/immediate x i y) (##core#inline "C_i_set_i_slot" x i y))
 
-(define-inline (%block-word-set!/maybe-immediate x i y)
+(define-inline (%wordblock-set!/maybe-immediate x i y)
   (if (%immediate? y)
-      (%block-word-set!/immediate x i y)
-      (%block-word-set! x i y) ) )
+      (%wordblock-set!/immediate x i y)
+      (%wordblock-set! x i y) ) )
 
 
 ;;;
@@ -333,7 +333,7 @@
 
 ;; String (byteblock)
 
-(define-inline (%make-string size fill) (%make-block-byte size fill #f))
+(define-inline (%make-string size fill) (%make-byteblock size fill #f))
 
 (define-inline (%string-ref s i) (##core#inline "C_subchar" s i))
 
@@ -360,13 +360,13 @@
 
 ;; Vector (wordblock)
 
-(define-inline (%make-vector size fill) (%make-word-block size fill #f))
+(define-inline (%make-vector size fill) (%make-wordblock size fill #f))
 
-(define-inline (%vector-ref v i) (%block-word-ref v i))
+(define-inline (%vector-ref v i) (%wordblock-ref v i))
 
-(define-inline (%vector-set! v i x) (%block-word-set! v i x))
-(define-inline (%vector-set!/immediate v i x) (%block-word-set!/immediate v i x))
-(define-inline (%vector-set!/maybe-immediate v i x) (%block-word-set!/maybe-immediate v i x))
+(define-inline (%vector-set! v i x) (%wordblock-set! v i x))
+(define-inline (%vector-set!/immediate v i x) (%wordblock-set!/immediate v i x))
+(define-inline (%vector-set!/maybe-immediate v i x) (%wordblock-set!/maybe-immediate v i x))
 
 (define-inline (%vector-length v) (%block-size v))
 
@@ -378,9 +378,9 @@
     (##core#inline "C_string_to_bytevector" bv)
     bv ) )
 
-(define-inline (%bytevector-ref bv i) (%block-byte-ref bv i))
+(define-inline (%bytevector-ref bv i) (%byteblock-ref bv i))
 
-(define-inline (%bytevector-set! bv i x) (%block-byte-set! bv i x))
+(define-inline (%bytevector-set! bv i x) (%byteblock-set! bv i x))
 
 (define-inline (%bytevector-length bv) (%block-size bv))
 
@@ -427,8 +427,8 @@
 
 (define-inline (%length ls) (##core#inline "C_i_length" ls))
 
-(define-inline (%car pr) (%block-word-ref pr 0))
-(define-inline (%cdr pr) (%block-word-ref pr 1))
+(define-inline (%car pr) (%wordblock-ref pr 0))
+(define-inline (%cdr pr) (%wordblock-ref pr 1))
 
 (define-inline (%caar pr) (%car (%car pr)))
 (define-inline (%cadr pr) (%car (%cdr pr)))
@@ -444,12 +444,12 @@
 (define-inline (%cddar pr) (%cdr (%cdar pr)))
 (define-inline (%cdddr pr) (%cdr (%cddr pr)))
 
-(define-inline (%set-car! pr x) (%block-word-set! pr 0 x))
-(define-inline (%set-cdr! pr x) (%block-word-set! pr 1 x))
-(define-inline (%set-car/immediate! pr x) (%block-word-set!/immediate pr 0 x))
-(define-inline (%set-cdr/immediate! pr x) (%block-word-set!/immediate pr 1 x))
-(define-inline (%set-car!/maybe-immediate pr x) (%block-word-set!/maybe-immediate pr 0 x))
-(define-inline (%set-cdr!/maybe-immediate pr x) (%block-word-set!/maybe-immediate pr 1 x))
+(define-inline (%set-car! pr x) (%wordblock-set! pr 0 x))
+(define-inline (%set-cdr! pr x) (%wordblock-set! pr 1 x))
+(define-inline (%set-car!/immediate pr x) (%wordblock-set!/immediate pr 0 x))
+(define-inline (%set-cdr!/immediate pr x) (%wordblock-set!/immediate pr 1 x))
+(define-inline (%set-car!/maybe-immediate pr x) (%wordblock-set!/maybe-immediate pr 0 x))
+(define-inline (%set-cdr!/maybe-immediate pr x) (%wordblock-set!/maybe-immediate pr 1 x))
 
 ;; These are safe
 
@@ -544,15 +544,15 @@
 
 (define-inline (%structure-instance? x s) (##core#inline "C_i_structurep" x s))
 
-(define-inline (%structure-ref r i) (%block-word-ref r i))
+(define-inline (%structure-ref r i) (%wordblock-ref r i))
 
-(define-inline (%structure-set! r i x) (%block-word-set! r i x))
-(define-inline (%structure-set!/immediate r i x) (%block-word-set!/immediate r i x))
-(define-inline (%structure-set!/maybe-immediate r i x) (%block-word-set!/maybe-immediate r i x))
+(define-inline (%structure-set! r i x) (%wordblock-set! r i x))
+(define-inline (%structure-set!/immediate r i x) (%wordblock-set!/immediate r i x))
+(define-inline (%structure-set!/maybe-immediate r i x) (%wordblock-set!/maybe-immediate r i x))
 
 (define-inline (%structure-length r) (%block-size r))
 
-(define-inline (%structure-tag r) (%block-word-ref r 0))
+(define-inline (%structure-tag r) (%wordblock-ref r 0))
 
 
 ;; Port (wordblock)
@@ -576,26 +576,26 @@
 ;(define-inline (%make-port n) (##core#inline_allocate ("C_a_i_port" 17)))
 
 (define-inline (%port-filep port) (%peek-unsigned-integer port 0))
-(define-inline (%port-input-mode? port) (%block-word-ref? port 1))
-(define-inline (%port-class port) (%block-word-ref? port 2))
-(define-inline (%port-name port) (%block-word-ref? port 3))
-(define-inline (%port-row port) (%block-word-ref? port 4))
-(define-inline (%port-column port) (%block-word-ref? port 5))
-(define-inline (%port-eof? port) (%block-word-ref? port 6))
-(define-inline (%port-type port) (%block-word-ref? port 7))
-(define-inline (%port-closed? port) (%block-word-ref? port 8))
-(define-inline (%port-data port) (%block-word-ref? port 9))
+(define-inline (%port-input-mode? port) (%wordblock-ref? port 1))
+(define-inline (%port-class port) (%wordblock-ref? port 2))
+(define-inline (%port-name port) (%wordblock-ref? port 3))
+(define-inline (%port-row port) (%wordblock-ref? port 4))
+(define-inline (%port-column port) (%wordblock-ref? port 5))
+(define-inline (%port-eof? port) (%wordblock-ref? port 6))
+(define-inline (%port-type port) (%wordblock-ref? port 7))
+(define-inline (%port-closed? port) (%wordblock-ref? port 8))
+(define-inline (%port-data port) (%wordblock-ref? port 9))
 
 (define-inline (%port-filep-set! port fp) (%poke-integer port 0 fp))
-(define-inline (%port-input-mode-set! port f) (%block-word-set!/immediate port 1 f))
-(define-inline (%port-class port v) (%block-word-set! port 2 v))
-(define-inline (%port-name-set! port s) (%block-word-set! port 3 s))
-(define-inline (%port-row-set! port n) (%block-word-set!/immediate port 4 n))
-(define-inline (%port-column-set! port n) (%block-word-set!/immediate port 5 n))
-(define-inline (%port-eof-set! port f) (%block-word-set!/immediate port 6 f))
-(define-inline (%port-type-set! port s) (%block-word-set! port 7 s))
-(define-inline (%port-closed-set! port f) (%block-word-set!/immediate port 8 f))
-(define-inline (%port-data-set! port port) (%block-word-set! port 9 x))
+(define-inline (%port-input-mode-set! port f) (%wordblock-set!/immediate port 1 f))
+(define-inline (%port-class port v) (%wordblock-set! port 2 v))
+(define-inline (%port-name-set! port s) (%wordblock-set! port 3 s))
+(define-inline (%port-row-set! port n) (%wordblock-set!/immediate port 4 n))
+(define-inline (%port-column-set! port n) (%wordblock-set!/immediate port 5 n))
+(define-inline (%port-eof-set! port f) (%wordblock-set!/immediate port 6 f))
+(define-inline (%port-type-set! port s) (%wordblock-set! port 7 s))
+(define-inline (%port-closed-set! port f) (%wordblock-set!/immediate port 8 f))
+(define-inline (%port-data-set! port port) (%wordblock-set! port 9 x))
 
 ; Port-class layout
 ;
@@ -621,9 +621,9 @@
 
 ;; Symbol (wordblock)
 
-(define-inline (%symbol-binding s) (%block-word-ref s 0))
-(define-inline (%symbol-string s) (%block-word-ref s 1))
-(define-inline (%symbol-bucket s) (%block-word-ref s 2))
+(define-inline (%symbol-binding s) (%wordblock-ref s 0))
+(define-inline (%symbol-string s) (%wordblock-ref s 1))
+(define-inline (%symbol-bucket s) (%wordblock-ref s 2))
 
 (define-inline (%string->symbol-interned s) ((##core#primitive "C_string_to_symbol") s))
 
@@ -638,7 +638,7 @@
 
 (define-inline (%keyword? x)
   (and (%symbol? x)
-       (%eq? 0 (%block-byte-ref (%symbol-string x) 0)) ) )
+       (%eq? 0 (%byteblock-ref (%symbol-string x) 0)) ) )
 
 
 ;; Locative (wordblock)
@@ -664,10 +664,10 @@
 ; 3	Object or #f, if weak (C_word)
 
 ;%locative-address - see Pointer
-(define-inline (%locative-offset lv) (%block-word-ref lv 1))
-(define-inline (%locative-type lv) (%block-word-ref lv 2))
-(define-inline (%locative-weak? lv) (not (%block-word-ref lv 3)))
-(define-inline (%locative-object lv) (%block-word-ref lv 3))
+(define-inline (%locative-offset lv) (%wordblock-ref lv 1))
+(define-inline (%locative-type lv) (%wordblock-ref lv 2))
+(define-inline (%locative-weak? lv) (not (%wordblock-ref lv 3)))
+(define-inline (%locative-object lv) (%wordblock-ref lv 3))
 
 
 ;; Pointer (wordblock)
@@ -680,8 +680,8 @@
 
 ; These operate on pointer-like objects
 
-(define-inline (%pointer-ref ptr) (%block-word-ref ptr 0))
-(define-inline (%pointer-set! ptr y) (%block-word-set! ptr 0 y))
+(define-inline (%pointer-ref ptr) (%wordblock-ref ptr 0))
+(define-inline (%pointer-set! ptr y) (%wordblock-set! ptr 0 y))
 
 (define-inline (%peek-byte ptr i) (##core#inline "C_peek_byte" ptr i))
 
