@@ -22,7 +22,9 @@ TODO for chicken							-*- Outline -*-
 *** dirty-macros.scm loops when using `defile'
     possibly due to unrenamed special forms
 *** extended lambda-lists refer to `optional' and `let-optionals[*]'
-    this will break, when these macros are renamed on import
+    this will break, when these macros are renamed on import or not imported
+    at all
+**** a possible solution is to use internal forms, provided by the "scheme" module.
 
 ** modules
 *** `require-extension' fails in interpreter when extension is .so without import library
@@ -45,8 +47,6 @@ TODO for chicken							-*- Outline -*-
 
 * tasks
 
-** Convert this file to org mode
-
 ** branches
 *** try to improve performance in lazy-gensyms
 
@@ -63,17 +63,12 @@ TODO for chicken							-*- Outline -*-
 *** "scheme" module does not include some special forms ("define-syntax", etc.)
 *** import-for-syntax imports value bindings into import-env
     should actually be a distinct meta-import-env.
-    (does it work at all?)
     example: we need `(import-for-syntax chicken)' to have access to
     `receive' in a procedural syntax definition.
-**** could be tested with xlib egg
 *** curried define performs expansion in empty se - problem?
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
 **** see "expander" above
-**** interaction for define-for-syntax, begin-for-syntax, and macros
-***** check for different execution modes (compile-time, run-time, csi, ...)
-***** figure out visibility
 
 ** compiler
 *** test define-rewrite-rule
@@ -83,6 +78,7 @@ TODO for chicken							-*- Outline -*-
 *** setup-download
 **** use "HTTP_PROXY"/"http_proxy" env. var
 **** handle redirects in http-fetch
+**** option in chicken-install to list available eggs
 *** automatically update db after extension installation?
 *** test sudo
 
@@ -106,6 +102,7 @@ TODO for chicken							-*- Outline -*-
 
 ** documentation
 *** document qs, normalize-pathname
+*** write quick-and-dirty wiki-syntax -> HTML converter
 
 
 * tests
