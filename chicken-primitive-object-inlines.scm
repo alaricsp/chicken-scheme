@@ -317,6 +317,10 @@
 (define-inline (%block-word-set! x i y) (##core#inline "C_i_setslot" x i y))
 (define-inline (%block-word-set!/immediate x i y) (##core#inline "C_i_set_i_slot" x i y))
 
+(define-inline (%block-word-set!/maybe-immediate x i y)
+  (if (%immediate? y)
+      (%block-word-set!/immediate x i y)
+      (%block-word-set! x i y) ) )
 
 
 ;;;
@@ -362,6 +366,7 @@
 
 (define-inline (%vector-set! v i x) (%block-word-set! v i x))
 (define-inline (%vector-set!/immediate v i x) (%block-word-set!/immediate v i x))
+(define-inline (%vector-set!/maybe-immediate v i x) (%block-word-set!/maybe-immediate v i x))
 
 (define-inline (%vector-length v) (%block-size v))
 
@@ -387,13 +392,13 @@
 (define-inline (%string->bytevector s)
   (let* ([n (%string-length s)]
 	       [bv (%make-bytevector sz)] )
-    (##core#inline "C_copy_memory" bv s n) 
+    (##core#inline "C_copy_memory" bv s n)
     bv ) )
 
 (define-inline (%bytevector->string bv)
   (let* ([n (%bytevector-length bv)]
 	       [s (%make-string n #\space)] )
-    (##core#inline "C_copy_memory" s bv n) 
+    (##core#inline "C_copy_memory" s bv n)
     s ) )
 
 
@@ -420,91 +425,117 @@
 
 (define-inline (%cons x y) (##core#inline_allocate ("C_a_i_cons" 3) x y) )
 
-(define-inline (%length l) (##core#inline "C_i_length" l))
+(define-inline (%length ls) (##core#inline "C_i_length" ls))
 
-(define-inline (%car p) (%block-word-ref p 0))
-(define-inline (%cdr p) (%block-word-ref p 1))
+(define-inline (%car pr) (%block-word-ref pr 0))
+(define-inline (%cdr pr) (%block-word-ref pr 1))
 
-(define-inline (%caar p) (%car (%car p)))
-(define-inline (%cadr p) (%car (%cdr p)))
-(define-inline (%cdar p) (%cdr (%car p)))
-(define-inline (%cddr p) (%cdr (%cdr p)))
+(define-inline (%caar pr) (%car (%car pr)))
+(define-inline (%cadr pr) (%car (%cdr pr)))
+(define-inline (%cdar pr) (%cdr (%car pr)))
+(define-inline (%cddr pr) (%cdr (%cdr pr)))
 
-(define-inline (%caaar p) (%car (%caar p)))
-(define-inline (%caadr p) (%car (%cadr p)))
-(define-inline (%cadar p) (%car (%cdar p)))
-(define-inline (%caddr p) (%car (%cddr p)))
-(define-inline (%cdaar p) (%cdr (%caar p)))
-(define-inline (%cdadr p) (%cdr (%cadr p)))
-(define-inline (%cddar p) (%cdr (%cdar p)))
-(define-inline (%cdddr p) (%cdr (%cddr p)))
+(define-inline (%caaar pr) (%car (%caar pr)))
+(define-inline (%caadr pr) (%car (%cadr pr)))
+(define-inline (%cadar pr) (%car (%cdar pr)))
+(define-inline (%caddr pr) (%car (%cddr pr)))
+(define-inline (%cdaar pr) (%cdr (%caar pr)))
+(define-inline (%cdadr pr) (%cdr (%cadr pr)))
+(define-inline (%cddar pr) (%cdr (%cdar pr)))
+(define-inline (%cdddr pr) (%cdr (%cddr pr)))
 
-(define-inline (%set-car! p x) (%block-word-set! p 0 x))
-(define-inline (%set-cdr! p x) (%block-word-set! p 1 x))
-(define-inline (%set-car/immediate! p x) (%block-word-set!/immediate p 0 x))
-(define-inline (%set-cdr/immediate! p x) (%block-word-set!/immediate p 1 x))
+(define-inline (%set-car! pr x) (%block-word-set! pr 0 x))
+(define-inline (%set-cdr! pr x) (%block-word-set! pr 1 x))
+(define-inline (%set-car/immediate! pr x) (%block-word-set!/immediate pr 0 x))
+(define-inline (%set-cdr/immediate! pr x) (%block-word-set!/immediate pr 1 x))
+(define-inline (%set-car!/maybe-immediate pr x) (%block-word-set!/maybe-immediate pr 0 x))
+(define-inline (%set-cdr!/maybe-immediate pr x) (%block-word-set!/maybe-immediate pr 1 x))
 
 ;; These are safe
 
-(define-inline (%memq x l) (##core#inline "C_i_memq" x l))
-(define-inline (%memv x l) (##core#inline "C_i_memv" x l))
-(define-inline (%member x l) (##core#inline "C_i_member" x l))
+(define-inline (%memq x ls) (##core#inline "C_i_memq" x ls))
+(define-inline (%memv x ls) (##core#inline "C_i_memv" x ls))
+(define-inline (%member x ls) (##core#inline "C_i_member" x ls))
 
-(define-inline (%assq x l) (##core#inline "C_i_assq" x l))
-(define-inline (%assv x l) (##core#inline "C_i_assv" x l))
-(define-inline (%assoc x l) (##core#inline "C_i_assoc" x l))
+(define-inline (%assq x ls) (##core#inline "C_i_assq" x ls))
+(define-inline (%assv x ls) (##core#inline "C_i_assv" x ls))
+(define-inline (%assoc x ls) (##core#inline "C_i_assoc" x ls))
 
-; l0 must be a proper-list
-(define-inline (%list-ref l0 i0)
-  (let loop ([l l0] [i i0])
-    (cond [(null? l)  '() ]
-	        [(%fx= 0 i) (%car l) ]
-	        [else       (loop (%cdr l) (%fx- i 1)) ] ) ) )
+(define-inline (%list-ref ls0 i0)
+  ;(assert (and (proper-list? ls0) (exact? i0) (<= 0 i0 (sub1 (length ls0)))))
+  (let loop ([ls ls0] [i i0])
+    (cond [(%null? ls)  '() ]
+	        [(%fx= 0 i)   (%car ls) ]
+	        [else         (loop (%cdr ls) (%fx- i 1)) ] ) ) )
 
-; l0 cannot be null
-(define-inline (%last-pair l0)
-  (do ([l l0 (%cdr l)])
-      [(%null? (%cdr l)) l]) )
+(define-inline (%list-pair-ref ls0 i0)
+  ;(assert (and (proper-list? ls0) (exact? i0) (<= 0 i0 (sub1 (length ls0)))))
+  (let loop ([ls ls0] [i i0])
+    (cond [(%null? ls)  '() ]
+	        [(%fx= 0 i)   ls ]
+	        [else         (loop (%cdr ls) (%fx- i 1)) ] ) ) )
 
-(define-inline (%list-copy l0)
-  (let loop ([ls l0])
-    (if (%null? ls)
-        '()
+(define-inline (%last-pair ls0)
+  ;(assert (and (proper-list? ls0) (not (null? ls0))))
+  (do ([ls ls0 (%cdr ls)])
+      [(%null? (%cdr ls)) ls]) )
+
+(define-inline (%list-copy ls0)
+  ;(assert (proper-list? ls0))
+  (let loop ([ls ls0])
+    (if (%null? ls) '()
         (%cons (%car ls) (loop (%cdr ls))) ) ) )
 
-; each elm of ls must be a proper-list
-(define-inline (%append! . ls)
-  (let ([ls (let loop ([ls ls])
-              (cond [(%null? ls)        '() ]
-                    [(%null? (%car ls)) (loop (%cdr ls)) ]
-                    [else               ls ] ) ) ] )
-    (if (%null? ls)
-        '()
-        (let ([l0 (%car ls)])
-          ;(assert (not (null? l0)))
-          (let loop ([ls (%cdr ls)] [pl l0])
-            (if (%null? ls)
-                l0
-                (let ([l1 (%car ls)])
-                  (if (%null? l1)
-                      (loop (%cdr ls) pl)
-                      (begin
-                        (%set-cdr! (%last-pair pl) l1)
-                        (loop (%cdr ls) l1) ) ) ) ) ) ) ) ) )
-    
-; l0 must be a proper-list
-(define-inline (%delq! x l0)
-  (let loop ([l l0] [pp #f])
-    (cond [(null? l)
-           l0 ]
-	        [(%eq? x (%car l))
-	         (cond [pp
-	                (%set-cdr! pp (%cdr l))
-	                l0 ]
+(define-inline (%append! . lss)
+  ;(assert (and (proper-list? lss) (for-each (lambda (x) (proper-list? x)) lss)))
+  (let ([lss (let position-at-first-pair ([lss lss])
+               (cond [(%null? lss)        '() ]
+                     [(%null? (%car lss))  (position-at-first-pair (%cdr lss)) ]
+                     [else                 lss ] ) ) ] )
+    (if (%null? lss) '()
+        (let ([ls0 (%car lss)])
+          ;(assert (not (null? ls0)))
+          (let append!-rest ([lss (%cdr lss)] [pls ls0])
+            (if (%null? lss) ls0
+                (let ([ls (%car lss)])
+                  (cond [(%null? ls)
+                         (append!-rest (%cdr lss) pls) ]
+                        [else
+                         (%set-cdr! (%last-pair pls) ls)
+                         (append!-rest (%cdr lss) ls) ] ) ) ) ) ) ) ) )
+
+(define-inline (%delq! x ls0)
+  ;(assert (proper-list? ls0))
+  (let find-elm ([ls ls0] [ppr #f])
+    (cond [(%null? ls)
+           ls0 ]
+	        [(%eq? x (%car ls))
+	         (cond [ppr
+	                (%set-cdr!/maybe-immediate ppr (%cdr ls))
+	                ls0 ]
 	               [else
-	                (%cdr l) ] ) ]
+	                (%cdr ls) ] ) ]
 	        [else
-	         (loop (%cdr l) l) ] ) ) )
+	         (find-elm (%cdr ls) ls) ] ) ) )
+
+(define-inline (%list-fold-1 ls0 func init)
+  ;(assert (and (proper-list? ls0) (procedure? func)))
+  (let loop ([ls ls0] [acc init])
+    (if (%null? ls) acc
+        (loop (%cdr ls) (func (%car ls) acc)) ) ) )
+
+(define-inline (%list-map-1 ls0 func)
+  ;(assert (and (proper-list? ls0) (procedure? func)))
+  (let loop ([ls ls0])
+    (if (%null? ls) '()
+        (%cons (func (%car ls)) (loop (%cdr ls))) ) ) )
+
+(define-inline (%list-for-each-1 ls0 proc)
+  ;(assert (and (proper-list? ls0) (procedure? proc)))
+  (let loop ([ls ls0])
+    (unless (%null? ls)
+      (proc (%car ls))
+      (loop (%cdr ls)) ) ) )
 
 
 ;; Structure (wordblock)
@@ -517,6 +548,7 @@
 
 (define-inline (%structure-set! r i x) (%block-word-set! r i x))
 (define-inline (%structure-set!/immediate r i x) (%block-word-set!/immediate r i x))
+(define-inline (%structure-set!/maybe-immediate r i x) (%block-word-set!/maybe-immediate r i x))
 
 (define-inline (%structure-length r) (%block-size r))
 
@@ -565,7 +597,7 @@
 (define-inline (%port-closed-set! port f) (%block-word-set!/immediate port 8 f))
 (define-inline (%port-data-set! port port) (%block-word-set! port 9 x))
 
-; Port-class layout	
+; Port-class layout
 ;
 ; 0	  (read-char PORT) -> CHAR | EOF
 ; 1	  (peek-char PORT) -> CHAR | EOF
