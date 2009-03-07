@@ -49,6 +49,9 @@
      required-chicken-version required-extension-version cross-chicken
      sudo-install keep-intermediates
      version>=?
+     extension-name-and-version
+     extension-name
+     extension-version
      create-temporary-directory
      remove-directory
      remove-extension
@@ -115,7 +118,7 @@
 (define setup-root-directory      (make-parameter *base-directory*))
 (define setup-verbose-flag        (make-parameter #f))
 (define setup-install-flag        (make-parameter #t))
-(define program-path (make-parameter *chicken-bin-path*))
+(define program-path              (make-parameter *chicken-bin-path*))
 (define keep-intermediates (make-parameter #f))
 
 ; Setup shell commands
@@ -191,8 +194,7 @@
 	  (verb dir)
 	  ($system (sprintf "mkdir -p ~a" (shellpath dir) ) ) ) ) ) )
 
-(define abort-setup 
-  (make-parameter exit))
+(define abort-setup (make-parameter exit))
 
 (define (yes-or-no? str #!key default (abort (abort-setup)))
   (let loop ()
@@ -680,6 +682,17 @@
 		(loop (cdr p1) (cdr p2))))
 	  ((string>=? (car p1) (car p2)) (loop (cdr p1) (cdr p2)))
 	  (else #f))))
+
+(define extension-name-and-version (make-parameter '("" "")))
+
+(define (extension-name)
+  (car (extension-name-and-version)) )
+
+(define (extension-version #!optional defver)
+  (let ([ver (cadr (extension-name-and-version))])
+    (if (string-null? ver)
+        defver
+        ver ) ) )
 
 (define (read-info egg)
   (with-input-from-file 
