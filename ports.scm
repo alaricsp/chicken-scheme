@@ -38,11 +38,7 @@
  (unit ports)
 ; (uses data-structures)
  (usual-integrations)
- (disable-warning redef)
- (foreign-declare #<<EOF
-#define C_mem_compare(to, from, n)   C_fix(C_memcmp(C_c_string(to), C_c_string(from), C_unfix(n)))
-EOF
-) )
+ (disable-warning redef) )
 
 (cond-expand
  [paranoia]
@@ -81,7 +77,7 @@ EOF
 (define (port-for-each fn thunk)
   (let loop ()
     (let ((x (thunk)))
-      (unless (eq? x #!eof)
+      (unless (eof-object? x)
 	(fn x)
 	(loop) ) ) ) )
 
@@ -90,16 +86,16 @@ EOF
     (lambda (fn thunk)
       (let loop ((xs '()))
 	(let ((x (thunk)))
-	  (if (eq? x #!eof)
+	  (if (eof-object? x)
 	      (reverse xs)
 	      (loop (cons (fn x) xs))))))))
 
 (define (port-fold fn acc thunk)
   (let loop ([acc acc])
     (let ([x (thunk)])
-      (if (eq? x #!eof)
-        acc
-        (loop (fn x acc))) ) ) )
+      (if (eof-object? x)
+          acc
+          (loop (fn x acc))) ) ) )
 
 ;;;; funky-ports
 
