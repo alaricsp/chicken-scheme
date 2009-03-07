@@ -29,12 +29,7 @@
  (unit extras)
  (uses data-structures ports)
  (usual-integrations)
- (disable-warning redef)
- (foreign-declare #<<EOF
-#define C_hashptr(x)   C_fix(x & C_MOST_POSITIVE_FIXNUM)
-#define C_mem_compare(to, from, n)   C_fix(C_memcmp(C_c_string(to), C_c_string(from), C_unfix(n)))
-EOF
-) )
+ (disable-warning redef) )
 
 (cond-expand
  [paranoia]
@@ -64,12 +59,7 @@ EOF
 
 (declare
   (hide
-    fprintf0 generic-write
-    unbound-value-thunk reverse-string-append
-    %object-uid-hash %eq?-hash %eqv?-hash %equal?-hash
-    %hash-table-copy %hash-table-ref %hash-table-update! %hash-table-merge!
-    %hash-table-for-each %hash-table-fold
-    hash-table-canonical-length hash-table-rehash) )
+    fprintf0 generic-write reverse-string-append) )
 
 (include "unsafe-declarations.scm")
 
