@@ -40,6 +40,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
+#include <float.h>
 
 #ifdef HAVE_SYSEXITS_H
 # include <sysexits.h>
@@ -732,6 +733,11 @@ EOF
 
 ;;; Numeric routines:
 
+(define most-positive-fixnum (foreign-value "C_MOST_POSITIVE_FIXNUM" int))
+(define most-negative-fixnum (foreign-value "C_MOST_NEGATIVE_FIXNUM" int))
+(define fixnum-bits (foreign-value "(C_WORD_SIZE - 1)" int))
+(define fixnum-precision (foreign-value "(C_WORD_SIZE - (1 + 1))" int))
+
 (define (fixnum? x) (##core#inline "C_fixnump" x))
 (define (fx+ x y) (##core#inline "C_fixnum_plus" x y))
 (define (fx- x y) (##core#inline "C_fixnum_difference" x y))
@@ -768,6 +774,17 @@ EOF
    [else
     (fx-check-divison-by-zero x y 'fxmod)
     (##core#inline "C_fixnum_modulo" x y) ] ) )
+
+(define maximum-flonum (foreign-value "DBL_MAX" double))
+(define minimum-flonum (foreign-value "DBL_MIN" double))
+(define flonum-radix (foreign-value "FLT_RADIX" int))
+(define flonum-epsilon (foreign-value "DBL_EPSILON" double))
+(define flonum-precision (foreign-value "DBL_MANT_DIG" int))
+(define flonum-decimal-precision (foreign-value "DBL_DIG" int))
+(define flonum-maximum-exponent (foreign-value "DBL_MAX_EXP" int))
+(define flonum-minimum-exponent (foreign-value "DBL_MIN_EXP" int))
+(define flonum-maximum-decimal-exponent (foreign-value "DBL_MAX_10_EXP" int))
+(define flonum-minimum-decimal-exponent (foreign-value "DBL_MIN_10_EXP" int))
 
 (define (flonum? x) (##core#inline "C_i_flonump" x))
 

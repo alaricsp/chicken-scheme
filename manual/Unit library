@@ -16,6 +16,7 @@ unless the program is compiled with the {{-explicit-use}} option.
 
 Adds/subtracts 1 from {{N}}.
 
+
 ==== Binary integer operations
 
 Binary integer operations. {{arithmetic-shift}} shifts the argument {{N1}} by
@@ -37,12 +38,6 @@ platforms).
 Returns {{#t}} if the bit at the position {{INDEX}} in the integer {{N}} is
 set, or {{#f}} otherwise. The rightmost/least-significant bit is bit 0.
 
-
-==== fixnum?
-
- [procedure] (fixnum? X)
-
-Returns {{#t}} if {{X}} is a fixnum, or {{#f}} otherwise.
 
 ==== Arithmetic fixnum operations
 
@@ -75,13 +70,25 @@ respectively.
 ; [procedure] (fxshl N1 N2)
 ; [procedure] (fxshr N1 N2)
 
+==== fixnum?
+
+ [procedure] (fixnum? X)
+
+Returns {{#t}} if {{X}} is a fixnum, or {{#f}} otherwise.
+
+==== Fixnum limits
+
+{{most-positive-fixnum}}
+{{most-negative-fixnum}}
+{{fixnum-bits}}
+{{fixnum-precision}}
+
 
 ==== Arithmetic floating-point operations
 
-In safe mode, these procedures throw a type error with non-float
-arguments (except {{flonum?}}, which returns {{#f}}). In unsafe mode,
-these procedures do not check their arguments. A non-flonum argument
-in unsafe mode can crash the system.
+In safe mode, these procedures throw a type error with non-float arguments. In
+unsafe mode, these procedures do not check their arguments. A non-flonum
+argument in unsafe mode can crash the system.
 
 ; [procedure] (flonum? X)
 ; [procedure] (fp+ X Y)
@@ -97,19 +104,37 @@ in unsafe mode can crash the system.
 ; [procedure] (fp>= X Y)
 ; [procedure] (fp<= X Y)
 
-==== signum
+==== flonum?
 
- [procedure] (signum N)
+ [procedure] (flonum? X)
 
-Returns {{1}} if {{N}} is positive, {{-1}} if {{N}}
-is negative or {{0}} if {{N}} is zero. {{signum}} is exactness preserving.
+Returns {{#t}} if {{X}} is a flonum, or {{#f}} otherwise.
 
+==== Flonum limits
+
+{{maximum-flonum}}
+{{minimum-flonum}}
+{{flonum-radix}}
+{{flonum-epsilon}}
+{{flonum-precision}}
+{{flonum-decimal-precision}}
+{{flonum-maximum-exponent}}
+{{flonum-minimum-exponent}}
+{{flonum-maximum-decimal-exponent}}
+{{flonum-minimum-decimal-exponent}}
 
 ==== finite?
 
  [procedure] (finite? N)
 
 Returns {{#f}} if {{N}} is negative or positive infinity, and {{#t}} otherwise.
+
+==== signum
+
+ [procedure] (signum N)
+
+Returns {{1}} if {{N}} is positive, {{-1}} if {{N}}
+is negative or {{0}} if {{N}} is zero. {{signum}} is exactness preserving.
 
 
 
