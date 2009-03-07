@@ -683,7 +683,19 @@
 	  ((string>=? (car p1) (car p2)) (loop (cdr p1) (cdr p2)))
 	  (else #f))))
 
-(define extension-name-and-version (make-parameter '("" "")))
+(define extension-name-and-version
+  (make-parameter '("" "")
+    (lambda (x)
+      (cond [(or (not x) (null? x))
+             '("" "") ]
+            [(and (list? x) (= 2 (length x)))
+             (let ([dir (car x)]
+                   [ver (cadr x)]
+                   [ensure-string (lambda (x) (if (or (not x) (null? x)) "" (->string x)))])
+               (list (ensure-string dir) (ensure-string ver)) ) ]
+            [else
+             (warning "invalid extension-name-and-version" x)
+             (extension-name-and-version) ] ) ) ) )
 
 (define (extension-name)
   (car (extension-name-and-version)) )
@@ -691,7 +703,7 @@
 (define (extension-version #!optional defver)
   (let ([ver (cadr (extension-name-and-version))])
     (if (string-null? ver)
-        defver
+        (and defver (->string defver))
         ver ) ) )
 
 (define (read-info egg)
