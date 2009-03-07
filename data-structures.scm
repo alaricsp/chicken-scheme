@@ -62,8 +62,7 @@ EOF
 
 (private data-structures
   reverse-string-append
-  fprintf0 generic-write 
-   )
+  fprintf0 generic-write )
 
 (declare
   (hide
