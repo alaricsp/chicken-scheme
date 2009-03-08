@@ -155,6 +155,7 @@
 	  `((,%let ,%loop ((,%l ,input))
 		   (,%or (,%null? ,%l)
 			 (,%and (,%pair? ,%l)
+				,@conjuncts
 				(,%loop (,%cdr ,%l)))))))))
 
    (define (process-vector-match input pattern)

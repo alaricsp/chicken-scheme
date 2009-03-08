@@ -288,3 +288,17 @@
 (assert (eq? 'xbar (xbaz 1)))
 (assert (eq? 'xbazz (xbar 1)))
 (assert (eq? 'xbar (xbar)))
+
+
+;;;; ellipsis pattern element wasn't matched - reported by Jim Ursetto (fixed rev. 13582)
+
+(define-syntax foo
+  (syntax-rules ()
+    ((_ (a b) ...)
+     (list '(a b) ...))
+    ((_ a ...)
+     (list '(a) ...))))
+
+(assert (equal? (foo (1 2) (3 4) (5 6)) '((1 2) (3 4) (5 6))))
+(assert (equal? (foo (1 2) (3) (5 6)) '(((1 2)) ((3)) ((5 6))))) ; failed
+(assert (equal? (foo 1) '((1))))

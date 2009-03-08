@@ -97,6 +97,7 @@ $compile fixnum-tests.scm && ./a.out
 
 echo "======================================== srfi-18 tests ..."
 $interpret -s srfi-18-tests.scm
+# $interpret -s feeley-dynwind.scm
 
 echo "======================================== path tests ..."
 $compile path-tests.scm && ./a.out
