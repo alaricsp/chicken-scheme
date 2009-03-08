@@ -879,7 +879,7 @@
 	  0
 	  (system str)))
     (unless (zero? last-exit-code)
-      (printf "Error: shell command terminated with non-zero exit status ~S: ~A~%" last-exit-code str) )
+      (printf "\nError: shell command terminated with non-zero exit status ~S: ~A~%" last-exit-code str) )
     last-exit-code))
 
 (define ($delete-file str)

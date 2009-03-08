@@ -1586,7 +1586,7 @@
 	   (##sys#error-handler
 	    (lambda (msg . args)
 	      (resetports)
-	      (##sys#print "Error" #f ##sys#standard-error)
+	      (##sys#print "\nError" #f ##sys#standard-error)
 	      (when msg
 		(##sys#print ": " #f ##sys#standard-error)
 		(##sys#print msg #f ##sys#standard-error) )
