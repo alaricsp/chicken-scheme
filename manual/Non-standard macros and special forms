@@ -51,6 +51,8 @@ See also: {{set-extension-specifier!}}
 
 This is equivalent to {{(require-library ID ...)}} but performs an implicit
 {{import}}, if necessary.
+This implementation of {{require-extension}} is compliant with [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]]
+(see the [[http://srfi.schemers.org/srfi-55/srfi-55.html|SRFI-55]] document for more information).
 
 ==== use
 

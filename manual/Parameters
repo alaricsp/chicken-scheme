@@ -3,8 +3,8 @@
 
 == Parameters
 
-Certain behavior of the interpreter and compiled programs can be
-customized via 'parameters', where a parameter is a procedure of
+Parameters are Chicken's form of dynamic variables, except that they are
+procedures rather than actual variables.  A parameter is a procedure of
 zero or one arguments. To retrieve the value of a parameter call the
 parameter-procedure with zero arguments. To change the setting of the
 parameter, call the parameter-procedure with the new value as argument:
@@ -35,6 +35,11 @@ value). {{GUARD}} should be a procedure of a single argument. Any
 new values of the parameter (even the initial value) are passed to this
 procedure. The guard procedure should check the value and/or convert it
 to an appropriate form.
+
+== Built-in parameters
+
+Certain behavior of the interpreter and compiled programs can be
+customized via the following built-in parameters:
 
 === case-sensitive
 If true, then {{read}} reads symbols and identifiers in

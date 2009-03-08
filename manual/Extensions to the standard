@@ -160,6 +160,8 @@ arguments specify the mode in which the file is opened. Possible
 values are the keywords {{#:text}}, {{#:binary}} or
 {{#:append}}.
 
+[6.7] The {{exit}} procedure exits a program right away and does ''not'' invoke pending {{dynamic-wind}} thunks.
+
 Previous: [[Deviations from the standard]]
 
 Next: [[Non-standard read syntax]]

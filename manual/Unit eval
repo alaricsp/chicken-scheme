@@ -135,13 +135,6 @@ Returns {{#t}} if there exists a macro-definition for {{SYMBOL}}.
 If {{X}} is a macro-form, expand the macro (and repeat expansion
 until expression is a non-macro form).  Returns the resulting expression.
 
-==== expand*
-
- [procedure] (expand* X)
-
-If {{X}} is a macro-form, expand the macro.  Returns the resulting
-expression.
-
 ==== undefine-macro!
 
  [procedure] (undefine-macro! SYMBOL)

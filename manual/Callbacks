@@ -22,8 +22,10 @@ do not capture the lexical environment.
 
 Non-local exits leaving the scope of the invocation of a callback from Scheme into C
 will not remove the C call-frame from the stack (and will result in a memory
-leak).
-
+leak).  '''Note:''' The same applies to
+SRFI-18 threading, which is implemented with {{call/cc}};
+additionally, if you enter one callback, switch threads and then exit
+a different callback, your program is likely to crash.
 
 
 === define-external
