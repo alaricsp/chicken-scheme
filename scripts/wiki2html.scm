@@ -1,7 +1,10 @@
 ;;;; wiki2html.scm - quick-and-dirty svnwiki->HTML conversion
+;
+; usage: wiki2html <INPUTFILE >OUTPUTFILE
 
 
 (use regex srfi-1 extras utils)
+(use htmlprag matchable)
 
 
 ;;; inline elements
@@ -158,4 +161,13 @@
 
 ;;; run it
 
-(wiki->html)
+(let ((sxml (html->sxml (open-input-string (with-output-to-string wiki->html)))))
+  (define (walk n)
+    (match n
+      (('*PI* . _) n)
+      (('enscript strs ...)
+       `(pre ,@strs))
+      (((? symbol? tag) . body)
+       `(,tag ,@(map walk body)))
+      (_ n)))
+  (sxml->html (walk sxml)))

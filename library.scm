@@ -3514,7 +3514,7 @@ EOF
      (lambda (msg . args)
        (##sys#error-handler (lambda args (##core#inline "C_halt" "error in error")))
        (cond ((##sys#fudge 4)
-	      (##sys#print "Error" #f ##sys#standard-error)
+	      (##sys#print "\nError" #f ##sys#standard-error)
 	      (when msg
 		(##sys#print ": " #f ##sys#standard-error)
 		(##sys#print msg #f ##sys#standard-error) )
@@ -3593,7 +3593,7 @@ EOF
        'condition
        '(user-interrupt) ) ) ]
     [(#:warning)
-     (##sys#print "Warning: " #f ##sys#standard-error)
+     (##sys#print "\nWarning: " #f ##sys#standard-error)
      (##sys#print msg #f ##sys#standard-error)
      (if (or (null? args) (fx> (length args) 1))
 	 (##sys#write-char-0 #\newline ##sys#standard-error)
@@ -3680,7 +3680,7 @@ EOF
 			'() ) )
 		   ((##sys#reset-handler)) ) ]
 		[(eq? 'user-interrupt (##sys#slot kinds 0))
-		 (##sys#print "*** user interrupt ***\n" #f ##sys#standard-error)
+		 (##sys#print "\n*** user interrupt ***\n" #f ##sys#standard-error)
 		 ((##sys#reset-handler)) ] 
 		[(eq? 'uncaught-exception (##sys#slot kinds 0))
 		 ((##sys#error-handler)

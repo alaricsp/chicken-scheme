@@ -102,12 +102,12 @@
 (define (compiler-warning class msg . args)	       
   (when (and ##sys#warnings-enabled (not (memq class disabled-warnings)))
     (let ((out (current-error-port)))
-      (apply fprintf out (string-append "Warning: " msg) args)
+      (apply fprintf out (string-append "\nWarning: " msg) args)
       (newline out) ) ) )
 
 (define (quit msg . args)
   (let ([out (current-error-port)])
-    (apply fprintf out (string-append "Error: " msg) args)
+    (apply fprintf out (string-append "\nError: " msg) args)
     (newline out)
     (exit 1) ) )
 
