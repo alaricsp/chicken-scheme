@@ -133,8 +133,7 @@
   (let ((prefix (and-let* ((p (getenv prefix-environment-variable)))
 		  (##sys#string-append 
 		   p
-		   (if (memq (string-ref p (fx- (##sys#size p) 1)) '(#\\ #\/))
-		       "" "/") ) ) ) )
+		   (if (memq (string-ref p (fx- (##sys#size p) 1)) '(#\\ #\/)) "" "/")) ) ) )
     (lambda (#!optional dir)
       (and prefix
 	   (if dir (##sys#string-append prefix dir) prefix) ) ) ) )
@@ -156,17 +155,16 @@
       (if (eq? s cache-s)
 	  (##core#inline "C_fixnum_modulo" cache-h n)
           (begin
-              (set! cache-s s)
-              (set! cache-h (##core#inline "C_hash_string" (##sys#slot s 1)))
-              (##core#inline "C_fixnum_modulo" cache-h n))))))
+            (set! cache-s s)
+            (set! cache-h (##core#inline "C_hash_string" (##sys#slot s 1)))
+            (##core#inline "C_fixnum_modulo" cache-h n))))))
 
 (define (##sys#hash-table-ref ht key)
   (let loop ((bucket (##sys#slot ht (##sys#hash-symbol key (##core#inline "C_block_size" ht)))))
-      (if (eq? '() bucket)
-          #f
-          (if (eq? key (##sys#slot (##sys#slot bucket 0) 0))
-              (##sys#slot (##sys#slot bucket 0) 1)
-              (loop (##sys#slot bucket 1))))))
+      (and (not (eq? '() bucket))
+           (if (eq? key (##sys#slot (##sys#slot bucket 0) 0))
+               (##sys#slot (##sys#slot bucket 0) 1)
+               (loop (##sys#slot bucket 1))))))
 
 (define (##sys#hash-table-set! ht key val)
   (let* ((k (##sys#hash-symbol key (##core#inline "C_block_size" ht)))
@@ -185,10 +183,8 @@
   (let ((len (##core#inline "C_block_size" ht)))
     (do ((i 0 (fx+ i 1)))
 	((fx>= i len))
-      (##sys#for-each (lambda (bucket) 
-		   (p (##sys#slot bucket 0)
-		      (##sys#slot bucket 1) ) )
-		 (##sys#slot ht i) ) ) ) )
+      (##sys#for-each (lambda (bucket) (p (##sys#slot bucket 0) (##sys#slot bucket 1)))
+		      (##sys#slot ht i) ) ) ) )
 
 (define ##sys#hash-table-location
   (let ([unbound (##sys#slot '##sys#arbitrary-unbound-symbol 0)])
