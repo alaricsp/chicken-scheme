@@ -180,7 +180,7 @@ EOF
 	(##sys#error 'move-memory! "need number of bytes to move" from to))
       ;
       (define (sizerr . args)
-	(apply ##sys#error 'move-memory! "number of bytes to move too large" from to args)
+	(apply ##sys#error 'move-memory! "number of bytes to move too large" from to args))
       ;
       (define (checkn1 n nmax off)
 	(if (cond-expand [unsafe #t] [else (fx<= n (fx- nmax off))])
@@ -220,7 +220,7 @@ EOF
 		       [else
 			(typerr to)] ) ) ]
 	      [else
-	       (typerr from)] ) ) ) ) ) )
+	       (typerr from)] ) ) ) ) )
 
 
 ;;; Copy arbitrary object:
