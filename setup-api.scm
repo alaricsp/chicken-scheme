@@ -689,10 +689,10 @@
       (cond [(or (not x) (null? x))
              '("" "") ]
             [(and (list? x) (= 2 (length x)))
-             (let ([dir (car x)]
+             (let ([nam (car x)]
                    [ver (cadr x)]
                    [ensure-string (lambda (x) (if (or (not x) (null? x)) "" (->string x)))])
-               (list (ensure-string dir) (ensure-string ver)) ) ]
+               (list (ensure-string nam) (ensure-string ver)) ) ]
             [else
              (warning "invalid extension-name-and-version" x)
              (extension-name-and-version) ] ) ) ) )
