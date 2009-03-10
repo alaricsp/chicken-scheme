@@ -88,11 +88,14 @@
 	       ((string-match (rx +header+) ln) =>
 		(lambda (m)
 		  (pop-all out)
-		  (let ((n (sub1 (string-length (second m)))))
-		    (fprintf out "<h~a>~a</h~a>~%" n (third m) n))))
+		  (let ((n (sub1 (string-length (second m))))
+			(name (clean (third m))))
+		    (fprintf out "<a name='~a' /><h~a>~a</h~a>~%" 
+			     name n name n))))
 	       ((string-match (rx +pre+) ln) =>
 		(lambda (m)
-		  (push-tag 'pre out)))
+		  (push-tag 'pre out)
+		  (display (clean (car m)))))
 	       ((string-match (rx +hr+) ln) =>
 		(lambda (m)
 		  (fprintf out "<hr />~%")))
@@ -153,7 +156,7 @@
 		    (string-append
 		     "<b>" (inline (second m)) "</b>"
 		     (continue m)))) 
-		 ((search (rx `(: bos ,+italic+)) rest) =>
+		 ((string-search (rx `(: bos ,+italic+)) rest) =>
 		  (lambda (m)
 		    (string-append
 		     "<i>" (inline (second m)) "</i>"
@@ -161,35 +164,57 @@
 		 (else (error "unknown inline match" m rest))))))
       str))
 
-(define (convert)
+(define (convert name)
   (let ((sxml (html->sxml (open-input-string (with-output-to-string wiki->html)))))
     (define (walk n)
       (match n
-	(('*PI* . _) n)
+	(('*PI* . _) "")
+	(('*TOP* . n) n)
 	(('enscript strs ...)
 	 `(pre ,@strs))
 	(('procedure strs ...)
-	 `(pre "\n [procedure] " (tt ,@strs)))
+	 `(pre "\n [procedure] " ,@strs))
 	(((? symbol? tag) . body)
 	 `(,tag ,@(map walk body)))
 	(_ n)))
-    (display (shtml->html (walk sxml)))))
+    (display
+     (shtml->html
+      (wrap name (walk sxml))))))
+
+(define (wrap name body)
+  `(html (head (title ,(string-append "The CHICKEN User's Manual - " name)))
+	 (body ,@body)))
 
 
 ;;; Normalize text
 
 (define (clean str)
-  (string-translate* str '(("<" . "&lt;") ("&" . "&amp;") ("'" . "&quot;"))))
+  (string-translate* str '(("<" . "&lt;") ("&" . "&amp;") ("'" . "&rsquo;"))))
 
 
 ;;; Run it
 
 (define (main args)
-  (match args
-    ((dir)
-     (set! *manual-pages* (map pathname-strip-directory (directory dir)))
-     (convert))
-    (_ (print "usage: wiki2html MANUALDIRECTORY")
-       (exit 1))))
+  (let ((outdir "."))
+    (let loop ((args args))
+      (match args
+	(()
+	 (print "usage: wiki2html [-o DIRECTORY] PAGEFILE ...")
+	 (exit 1))
+	(("-o" dir . more)
+	 (set! outdir dir)
+	 (loop more))
+	((files ...)
+	 (let ((dirs (delete-duplicates (map pathname-directory files) string=?)))
+	   (set! *manual-pages* (map pathname-strip-directory (append-map directory dirs)))
+	   (for-each
+	    (lambda (file)
+	      (print file)
+	      (with-input-from-file file 
+		(lambda ()
+		  (with-output-to-file (pathname-replace-directory (string-append file ".html") outdir) 
+		    (cut convert (pathname-file file))))))
+	    files)))))))
+
 
 (main (command-line-arguments))
