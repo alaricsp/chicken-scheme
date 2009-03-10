@@ -3,7 +3,7 @@
 ; usage: wiki2html <INPUTFILE >OUTPUTFILE
 
 
-(use regex srfi-1 extras utils)
+(use regex srfi-1 extras utils srfi-13 posix)
 (use htmlprag matchable)
 
 
@@ -43,9 +43,9 @@
 
 ;;; Global state
 
-(define *toc* #f)
 (define *tags* '())
 (define *open* '())
+(define *manual-pages* '())
 
 (define (push-tag tag out)
   (unless (and (pair? *open*) (equal? tag (car *open*)))
@@ -132,13 +132,22 @@
 		    (string-append
 		     (first m)
 		     (continue m))))
-		 ((string-search(rx `(: bos ,+link+)) rest) =>
+		 ((string-search (rx `(: bos ,+link+)) rest) =>
 		  (lambda (m)
-		    (string-append
-		     "<a href='" (clean (second m)) "'>"
-		     (clean (or (third m) (second m)))
-		     "</a>"
-		     (continue m)))) 
+		    (let ((m1 (string-trim-both (second m))))
+		      (string-append
+		       (cond ((or (string=? "toc:" m1)
+				  (string-search (rx '(: bos (* space) "tags:")) m1) )
+			      "")
+			     ((member m1 *manual-pages*)
+			      (string-append 
+			       "<a href='" m1 ".html'>" m1 "</a>"))
+			     (else
+			      (string-append
+			       "<a href='" (clean (second m)) "'>"
+			       (clean (or (third m) (second m)))
+			       "</a>")))
+		       (continue m)))))
 		 ((string-search (rx `(: bos ,+bold+)) rest) =>
 		  (lambda (m)
 		    (string-append
@@ -152,6 +161,20 @@
 		 (else (error "unknown inline match" m rest))))))
       str))
 
+(define (convert)
+  (let ((sxml (html->sxml (open-input-string (with-output-to-string wiki->html)))))
+    (define (walk n)
+      (match n
+	(('*PI* . _) n)
+	(('enscript strs ...)
+	 `(pre ,@strs))
+	(('procedure strs ...)
+	 `(pre "\n [procedure] " (tt ,@strs)))
+	(((? symbol? tag) . body)
+	 `(,tag ,@(map walk body)))
+	(_ n)))
+    (display (shtml->html (walk sxml)))))
+
 
 ;;; Normalize text
 
@@ -159,15 +182,14 @@
   (string-translate* str '(("<" . "&lt;") ("&" . "&amp;") ("'" . "&quot;"))))
 
 
-;;; run it
+;;; Run it
 
-(let ((sxml (html->sxml (open-input-string (with-output-to-string wiki->html)))))
-  (define (walk n)
-    (match n
-      (('*PI* . _) n)
-      (('enscript strs ...)
-       `(pre ,@strs))
-      (((? symbol? tag) . body)
-       `(,tag ,@(map walk body)))
-      (_ n)))
-  (sxml->html (walk sxml)))
+(define (main args)
+  (match args
+    ((dir)
+     (set! *manual-pages* (map pathname-strip-directory (directory dir)))
+     (convert))
+    (_ (print "usage: wiki2html MANUALDIRECTORY")
+       (exit 1))))
+
+(main (command-line-arguments))

@@ -70,33 +70,34 @@ of kind {{(exn i/o file)}}.
 
 ==== change-directory
 
- [procedure] (change-directory NAME)
+<procedure>(change-directory NAME)</procedure>
 
 Changes the current working directory to {{NAME}}.
 
 ==== current-directory
 
- [procedure] (current-directory [DIR])
+<procedure>(current-directory [DIR])</procedure>
 
 Returns the name of the current working directory. If the optional argument {{DIR}} is given,
 then {{(current-directory DIR)}} is equivalent to {{(change-directory DIR)}}.
 
 ==== create-directory
 
- [procedure] (create-directory NAME)
+<procedure>(create-directory NAME #!optional PARENTS?)</procedure>
 
-Creates a directory with the pathname {{NAME}}.
+Creates a directory with the pathname {{NAME}}.  If the {{PARENTS?}} argument
+is given and not false, any nonextant parent directories are also created.
 
 ==== delete-directory
 
- [procedure] (delete-directory NAME)
+<procedure>(delete-directory NAME)</procedure>
 
 Deletes the directory with the pathname {{NAME}}. The directory has
 to be empty.
 
 ==== directory
 
- [procedure] (directory [PATHNAME [SHOW-DOTFILES?]])
+<procedure>(directory [PATHNAME [SHOW-DOTFILES?]])</procedure>
 
 Returns a list with all files that are contained in the directory with the name {{PATHNAME}}
 (which defaults to the value of {{(current-directory)}}).
@@ -104,14 +105,14 @@ Files beginning with {{.}} are included only if {{SHOW-DOTFILES?}} is given and 
 
 ==== directory?
 
- [procedure] (directory? NAME)
+<procedure>(directory? NAME)</procedure>
 
 Returns {{#t}} if there exists a file with the name {{NAME}}
 and if that file is a directory, or {{#f}} otherwise.
 
 ==== glob
 
- [procedure] (glob PATTERN1 ...)
+<procedure>(glob PATTERN1 ...)</procedure>
 
 Returns a list of the pathnames of all existing files matching
 {{PATTERN1 ...}}, which should be strings containing the usual
@@ -120,7 +121,7 @@ file-patterns (with {{*}} matching zero or more characters and
 
 ==== canonical-path
 
- [procedure] (canonical-path NAME)
+<procedure>(canonical-path NAME)</procedure>
 
 Returns a canonical path for {{NAME}}, which should be a string
 containing a path-or-filename.  The string returned by 
@@ -143,7 +144,7 @@ procedure only canonicalises path syntax.
 
 ==== set-root-directory!
 
- [procedure] (set-root-directory! STRING)
+<procedure>(set-root-directory! STRING)</procedure>
 
 Sets the root directory for the current process to the path given in {{STRING}}
 (using the {{chroot}} function).
@@ -155,8 +156,8 @@ If the current process has no root permissions, the operation will fail.
 ==== call-with-input-pipe
 ==== call-with-output-pipe
 
- [procedure] (call-with-input-pipe CMDLINE PROC [MODE])
- [procedure] (call-with-output-pipe CMDLINE PROC [MODE])
+<procedure>(call-with-input-pipe CMDLINE PROC [MODE])</procedure>
+<procedure>(call-with-output-pipe CMDLINE PROC [MODE])</procedure>
 
 Call {{PROC}} with a single argument: a input- or output port
 for a pipe connected to the subprocess named in {{CMDLINE}}. If
@@ -166,8 +167,8 @@ are returned.
 ==== close-input-pipe
 ==== close-output-pipe
 
- [procedure] (close-input-pipe PORT)
- [procedure] (close-output-pipe PORT)
+<procedure>(close-input-pipe PORT)</procedure>
+<procedure>(close-output-pipe PORT)</procedure>
 
 Closes the pipe given in {{PORT}} and waits until the connected
 subprocess finishes. The exit-status code of the invoked process
@@ -175,7 +176,7 @@ is returned.
 
 ==== create-pipe
 
- [procedure] (create-pipe)
+<procedure>(create-pipe)</procedure>
 
 The fundamental pipe-creation operator. Calls the C function
 {{pipe()}} and returns 2 values: the file-descriptors of the input-
@@ -183,7 +184,7 @@ and output-ends of the pipe.
 
 ==== open-input-pipe
 
- [procedure] (open-input-pipe CMDLINE [MODE])
+<procedure>(open-input-pipe CMDLINE [MODE])</procedure>
 
 Spawns a subprocess with the command-line string {{CMDLINE}} and
 returns a port, from which the output of the process can be read. If
@@ -192,7 +193,7 @@ returns a port, from which the output of the process can be read. If
 
 ==== open-output-pipe
 
- [procedure] (open-output-pipe CMDLINE [MODE])
+<procedure>(open-output-pipe CMDLINE [MODE])</procedure>
 
 Spawns a subprocess with the command-line string {{CMDLINE}} and
 returns a port. Anything written to that port is treated as the input
@@ -206,8 +207,8 @@ atomically into a pipe or FIFO.
 ==== with-input-from-pipe
 ==== with-output-to-pipe
 
- [procedure] (with-input-from-pipe CMDLINE THUNK [MODE])
- [procedure] (with-output-to-pipe CMDLINE THUNK [MODE])
+<procedure>(with-input-from-pipe CMDLINE THUNK [MODE])</procedure>
+<procedure>(with-output-to-pipe CMDLINE THUNK [MODE])</procedure>
 
 Temporarily set the value of
 {{current-input-port/current-output-port}} to a port for a
@@ -239,18 +240,18 @@ is restored to its previous value and any result values are returned.
 
 ==== create-fifo
 
- [procedure] (create-fifo FILENAME [MODE])
+<procedure>(create-fifo FILENAME [MODE])</procedure>
 
 Creates a FIFO with the name {{FILENAME}} and the permission bits
 {{MODE}}, which defaults to
 
 <enscript highlight=scheme>
- [procedure] (+ perm/irwxu perm/irwxg perm/irwxo)
+ (+ perm/irwxu perm/irwxg perm/irwxo)
 </enscript>
 
 ==== fifo?
 
- [procedure] (fifo? FILENAME)
+<procedure>(fifo? FILENAME)</procedure>
 
 Returns {{#t}} if the file with the name {{FILENAME}} names
 a FIFO.
@@ -260,7 +261,7 @@ a FIFO.
 
 ==== duplicate-fileno
 
- [procedure] (duplicate-fileno OLD [NEW])
+<procedure>(duplicate-fileno OLD [NEW])</procedure>
 
 If {{NEW}} is given, then the file-descriptor {{NEW}} is opened
 to access the file with the file-descriptor {{OLD}}. Otherwise a
@@ -268,13 +269,13 @@ fresh file-descriptor accessing the same file as {{OLD}} is returned.
 
 ==== file-close
 
- [procedure] (file-close FILENO)
+<procedure>(file-close FILENO)</procedure>
 
 Closes the input/output file with the file-descriptor {{FILENO}}.
 
 ==== file-open
 
- [procedure] (file-open FILENAME FLAGS [MODE])
+<procedure>(file-open FILENAME FLAGS [MODE])</procedure>
 
 Opens the file specified with the string {{FILENAME}} and open-flags
 {{FLAGS}} using the C function {{open()}}. On success a
@@ -288,7 +289,7 @@ when a new file is created. The default mode is
 
 ==== file-mkstemp
 
- [procedure] (file-mkstemp TEMPLATE-FILENAME)
+<procedure>(file-mkstemp TEMPLATE-FILENAME)</procedure>
 
 Create a file based on the given {{TEMPLATE-FILENAME}}, in which
 the six last characters must be ''XXXXXX''.  These will be replaced
@@ -308,7 +309,7 @@ Example usage:
 
 ==== file-read
 
- [procedure] (file-read FILENO SIZE [BUFFER])
+<procedure>(file-read FILENO SIZE [BUFFER])</procedure>
 
 Reads {{SIZE}} bytes from the file with the file-descriptor
 {{FILENO}}.  If a string or bytevector is passed in the optional
@@ -318,7 +319,7 @@ the buffer containing the data and the number of bytes read.
 
 ==== file-select
 
- [procedure] (file-select READFDLIST WRITEFDLIST [TIMEOUT])
+<procedure>(file-select READFDLIST WRITEFDLIST [TIMEOUT])</procedure>
 
 Waits until any of the file-descriptors given in the lists
 {{READFDLIST}} and {{WRITEFDLIST}} is ready for input or
@@ -335,7 +336,7 @@ otherwise.  You can also pass {{#f}} as {{READFDLIST}} or
 
 ==== file-write
 
- [procedure] (file-write FILENO BUFFER [SIZE])
+<procedure>(file-write FILENO BUFFER [SIZE])</procedure>
 
 Writes the contents of the string or bytevector {{BUFFER}} into
 the file with the file-descriptor {{FILENO}}. If the optional
@@ -344,7 +345,7 @@ are written.
 
 ==== file-control
 
- [procedure] (file-control FILENO COMMAND [ARGUMENT])
+<procedure>(file-control FILENO COMMAND [ARGUMENT])</procedure>
 
 Performs the fcntl operation {{COMMAND}} with the given
 {{FILENO}} and optional {{ARGUMENT}}. The return value is
@@ -353,8 +354,8 @@ meaningful depending on the {{COMMAND}}.
 ==== open-input-file*
 ==== open-output-file*
 
- [procedure] (open-input-file* FILENO [OPENMODE])
- [procedure] (open-output-file* FILENO [OPENMODE])
+<procedure>(open-input-file* FILENO [OPENMODE])</procedure>
+<procedure>(open-output-file* FILENO [OPENMODE])</procedure>
 
 Opens file for the file-descriptor {{FILENO}} for input or output
 and returns a port.  {{FILENO}} should be a positive exact integer.
@@ -364,7 +365,7 @@ an output-file for appending).
 
 ==== port->fileno
 
- [procedure] (port->fileno PORT)
+<procedure>(port->fileno PORT)</procedure>
 
 If {{PORT}} is a file- or tcp-port, then a file-descriptor is returned for
 this port. Otherwise an error is signaled.
@@ -376,9 +377,9 @@ this port. Otherwise an error is signaled.
 ==== file-change-time
 ==== file-modification-time
 
- [procedure] (file-access-time FILE)
- [procedure] (file-change-time FILE)
- [procedure] (file-modification-time FILE)
+<procedure>(file-access-time FILE)</procedure>
+<procedure>(file-change-time FILE)</procedure>
+<procedure>(file-modification-time FILE)</procedure>
 
 Returns time (in seconds) of the last access, modification or change of {{FILE}}. {{FILE}}
 may be a filename or a file-descriptor. If the file does not exist,
@@ -386,7 +387,7 @@ an error is signaled.
 
 ==== file-stat
 
- [procedure] (file-stat FILE [LINK])
+<procedure>(file-stat FILE [LINK])</procedure>
 
 Returns a 13-element vector with the following contents: inode-number,
 mode (as with {{file-permissions}}), number of hard links, uid of
@@ -403,14 +404,14 @@ inexact integer.
 
 ==== file-position
 
- [procedure] (file-position FILE)
+<procedure>(file-position FILE)</procedure>
 
 Returns the current file position of {{FILE}}, which should be a
 port or a file-descriptor.
 
 ==== file-size
 
- [procedure] (file-size FILENAME)
+<procedure>(file-size FILENAME)</procedure>
 
 Returns the size of the file designated by {{FILE}}.  {{FILE}}
 may be a filename or a file-descriptor.  If the file does not exist,
@@ -419,20 +420,20 @@ return an inexact integer.
 
 ==== regular-file?
 
- [procedure] (regular-file? FILENAME)
+<procedure>(regular-file? FILENAME)</procedure>
 
 Returns true, if {{FILENAME}} names a regular file (not a directory or symbolic link).
 
 ==== file-owner
 
- [procedure] (file-owner FILE)
+<procedure>(file-owner FILE)</procedure>
 
 Returns the user-id of {{FILE}}.  {{FILE}} may be a filename
 or a file-descriptor.
 
 ==== file-permissions
 
- [procedure] (file-permissions FILE)
+<procedure>(file-permissions FILE)</procedure>
 
 Returns the permission bits for {{FILE}}. You can test this value
 by performing bitwise operations on the result and the {{perm/...}}
@@ -442,9 +443,9 @@ values.  {{FILE}} may be a filename or a file-descriptor.
 ==== file-write-access?
 ==== file-execute-access?
 
- [procedure] (file-read-access? FILENAME)
- [procedure] (file-write-access? FILENAME)
- [procedure] (file-execute-access? FILENAME)
+<procedure>(file-read-access? FILENAME)</procedure>
+<procedure>(file-write-access? FILENAME)</procedure>
+<procedure>(file-execute-access? FILENAME)</procedure>
 
 These procedures return {{#t}} if the current user has read,
 write or execute permissions on the file named {{FILENAME}}.
@@ -458,13 +459,13 @@ write or execute permissions on the file named {{FILENAME}}.
 ==== stat-symlink?
 ==== stat-socket?
 
- [procedure] (stat-regular? FILENAME)
- [procedure] (stat-directory? FILENAME)
- [procedure] (stat-char-device? FILENAME)
- [procedure] (stat-block-device? FILENAME)
- [procedure] (stat-fifo? FILENAME)
- [procedure] (stat-symlink? FILENAME)
- [procedure] (stat-socket? FILENAME)
+<procedure>(stat-regular? FILENAME)</procedure>
+<procedure>(stat-directory? FILENAME)</procedure>
+<procedure>(stat-char-device? FILENAME)</procedure>
+<procedure>(stat-block-device? FILENAME)</procedure>
+<procedure>(stat-fifo? FILENAME)</procedure>
+<procedure>(stat-symlink? FILENAME)</procedure>
+<procedure>(stat-socket? FILENAME)</procedure>
 
 These procedures return {{#t}} if the {{FILENAME}} given is of the 
 appropriate type.
@@ -474,7 +475,7 @@ appropriate type.
 
 ==== file-truncate
 
- [procedure] (file-truncate FILE OFFSET)
+<procedure>(file-truncate FILE OFFSET)</procedure>
 
 Truncates the file {{FILE}} to the length {{OFFSET}},
 which should be an integer. If the file-size is smaller or equal to
@@ -483,8 +484,8 @@ or a file-descriptor.
 
 ==== set-file-position!
 
- [procedure] (set-file-position! FILE POSITION [WHENCE])
- [procedure] (set! (file-position FILE) POSITION)
+<procedure>(set-file-position! FILE POSITION [WHENCE])</procedure>
+<procedure>(set! (file-position FILE) POSITION)</procedure>
 
 Sets the current read/write position of {{FILE}} to
 {{POSITION}}, which should be an exact integer. {{FILE}}
@@ -497,7 +498,7 @@ Exceptions: {{(exn bounds)}}, {{(exn i/o file)}}
 
 ==== change-file-mode
 
- [procedure] (change-file-mode FILENAME MODE)
+<procedure>(change-file-mode FILENAME MODE)</procedure>
 
 Changes the current file mode of the file named {{FILENAME}}
 to {{MODE}} using the {{chmod()}} system call.  The
@@ -506,7 +507,7 @@ be combinded with the {{bitwise-ior}} procedure.
 
 ==== change-file-owner
 
- [procedure] (change-file-owner FILENAME UID GID)
+<procedure>(change-file-owner FILENAME UID GID)</procedure>
 
 Changes the owner information of the file named {{FILENAME}} to
 the user- and group-ids {{UID}} and {{GID}} (which should be
@@ -517,25 +518,25 @@ exact integers) using the {{chown()}} system call.
 
 ==== current-process-id
 
- [procedure] (current-process-id)
+<procedure>(current-process-id)</procedure>
 
 Returns the process ID of the current process.
 
 ==== parent-process-id
 
- [procedure] (parent-process-id)
+<procedure>(parent-process-id)</procedure>
 
 Returns the process ID of the parent of the current process.
 
 ==== process-group-id
 
- [procedure] (process-group-id PID)
+<procedure>(process-group-id PID)</procedure>
 
 Returns the process group ID of the process specified by {{PID}}.
 
 ==== process-execute
 
- [procedure] (process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST]])
+<procedure>(process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST]])</procedure>
 
 Creates a new child process and replaces the running process with it
 using the C library function {{execvp(3)}}. If the optional argument
@@ -549,7 +550,7 @@ of the {{PATH}} environment variable while {{execve(3)}} does not.
 
 ==== process-fork
 
- [procedure] (process-fork [THUNK])
+<procedure>(process-fork [THUNK])</procedure>
 
 Creates a new child process with the UNIX system call
 {{fork()}}. Returns either the PID of the child process or 0. If
@@ -558,8 +559,8 @@ with no arguments and terminates.
 
 ==== process-run
 
- [procedure] (process-run COMMANDLINE])
- [procedure] (process-run COMMAND ARGUMENT-LIST)
+<procedure>(process-run COMMANDLINE])</procedure>
+<procedure>(process-run COMMAND ARGUMENT-LIST)</procedure>
 
 Creates a new child process. The PID of the new process is returned.
 
@@ -569,7 +570,7 @@ argument expansion can take place.
 
 ==== process-signal
 
- [procedure] (process-signal PID [SIGNAL])
+<procedure>(process-signal PID [SIGNAL])</procedure>
 
 Sends {{SIGNAL}} to the process with the id {{PID}} using the
 UNIX system call {{kill()}}. {{SIGNAL}} defaults to the value
@@ -577,7 +578,7 @@ of the variable {{signal/term}}.
 
 ==== process-wait
 
- [procedure] (process-wait [PID [NOHANG]])
+<procedure>(process-wait [PID [NOHANG]])</procedure>
 
 Suspends the current process until the child process with
 the id {{PID}} has terminated using the UNIX system call
@@ -592,8 +593,8 @@ returns three values:
 
 ==== process
 
- [procedure] (process COMMANDLINE)
- [procedure] (process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])
+<procedure>(process COMMANDLINE)</procedure>
+<procedure>(process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])</procedure>
 
 Creates a subprocess and returns three values: an input port from
 which data written by the sub-process can be read, an output port from
@@ -611,8 +612,8 @@ Not using the shell may be preferrable for security reasons.
 
 ==== process*
 
- [procedure] (process* COMMANDLINE)
- [procedure] (process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])
+<procedure>(process* COMMANDLINE)</procedure>
+<procedure>(process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST])</procedure>
 
 Like {{process}} but returns 4 values: an input port from
 which data written by the sub-process can be read, an output port from
@@ -622,7 +623,7 @@ which data written by the sub-process to {{stderr}} can be read.
 
 ==== sleep
 
- [procedure] (sleep SECONDS)
+<procedure>(sleep SECONDS)</procedure>
 
 Puts the process to sleep for {{SECONDS}}. Returns either 0 if
 the time has completely elapsed, or the number of remaining seconds,
@@ -630,7 +631,7 @@ if a signal occurred.
 
 ==== create-session
 
- [procedure] (create-session)
+<procedure>(create-session)</procedure>
 
 Creates a new session if the calling process is not a process group leader and returns
 the session ID.
@@ -640,26 +641,26 @@ the session ID.
 
 ==== symbolic-link?
 
- [procedure] (symbolic-link? FILENAME)
+<procedure>(symbolic-link? FILENAME)</procedure>
 
 Returns true, if {{FILENAME}} names a symbolic link.
 
 ==== create-symbolic-link
 
- [procedure] (create-symbolic-link OLDNAME NEWNAME)
+<procedure>(create-symbolic-link OLDNAME NEWNAME)</procedure>
 
 Creates a symbolic link with the filename {{NEWNAME}} that points
 to the file named {{OLDNAME}}.
 
 ==== read-symbolic-link
 
- [procedure] (read-symbolic-link FILENAME)
+<procedure>(read-symbolic-link FILENAME)</procedure>
 
 Returns the filename to which the symbolic link {{FILENAME}} points.
 
 ==== file-link
 
- [procedure] (file-link OLDNAME NEWNAME)
+<procedure>(file-link OLDNAME NEWNAME)</procedure>
 
 Creates a hard link from {{OLDNAME}} to {{NEWNAME}} (both strings).
 
@@ -668,21 +669,21 @@ Creates a hard link from {{OLDNAME}} to {{NEWNAME}} (both strings).
 
 ==== current-user-id
 
- [procedure] (current-user-id)
+<procedure>(current-user-id)</procedure>
  [setter] (set! (current-user-id) UID)
 
 Get or set the real user-id of the current process.
 
 ==== current-effective-user-id
 
- [procedure] (current-effective-user-id)
+<procedure>(current-effective-user-id)</procedure>
  [setter] (set! (current-effective-user-id) UID)
 
 Get or set the effective user-id of the current process.
 
 ==== user-information
 
- [procedure] (user-information USER [AS-VECTOR])
+<procedure>(user-information USER [AS-VECTOR])</procedure>
 
 If {{USER}} specifes a valid username (as a string) or user ID, then the user
 database is consulted and a list of 7 values are returned: the user-name, the
@@ -693,14 +694,14 @@ elements is returned instead of a list. If no user with this name or id then
 
 ==== current-group-id
 
- [procedure] (current-group-id)
+<procedure>(current-group-id)</procedure>
  [setter] (set! (current-group-id) GID)
 
 Get or set the real group-id of the current process.
 
 ==== current-effective-group-id
 
- [procedure] (current-effective-group-id)
+<procedure>(current-effective-group-id)</procedure>
  [setter] (set! (current-effective-group-id) GID)
 
 Get or set the effective group-id of the current process.
@@ -708,7 +709,7 @@ ID can be found, then {{#f}} is returned.
 
 ==== group-information
 
- [procedure] (group-information GROUP)
+<procedure>(group-information GROUP)</procedure>
 
 If {{GROUP}} specifies a valid group-name or group-id, then this
 procedure returns a list of four values: the group-name, the encrypted group password,
@@ -717,7 +718,7 @@ given name or ID exists, then {{#f}} is returned.
 
 ==== get-groups
 
- [procedure] (get-groups)
+<procedure>(get-groups)</procedure>
 
 Returns a list with the supplementary group IDs of the current user.
 
@@ -726,7 +727,7 @@ Returns a list with the supplementary group IDs of the current user.
 
 ==== set-groups!
 
- [procedure] (set-groups! GIDLIST)
+<procedure>(set-groups! GIDLIST)</procedure>
 
 Sets the supplementrary group IDs of the current user to the IDs given in the list {{GIDLIST}}.
 
@@ -734,7 +735,7 @@ Only the superuser may invoke this procedure.
 
 ==== initialize-groups
 
- [procedure] (initialize-groups USERNAME BASEGID)
+<procedure>(initialize-groups USERNAME BASEGID)</procedure>
 
 Sets the supplementrary group IDs of the current user to the IDs from the user with name {{USERNAME}}
 (a string), including {{BASEGID}}.
@@ -743,7 +744,7 @@ Only the superuser may invoke this procedure.
 
 ==== set-process-group-id!
 
- [procedure] (set-process-group-id! PID PGID)
+<procedure>(set-process-group-id! PID PGID)</procedure>
  [setter] (set! (process-group-id PID) PGID)
 
 Sets the process group ID of the process specifed by {{PID}} to {{PGID}}.
@@ -753,7 +754,7 @@ Sets the process group ID of the process specifed by {{PID}} to {{PGID}}.
 
 ==== file-lock
 
- [procedure] (file-lock PORT [START [LEN]])
+<procedure>(file-lock PORT [START [LEN]])</procedure>
 
 Locks the file associated with {{PORT}} for reading or
 writing (according to whether {{PORT}} is an input- or
@@ -764,14 +765,14 @@ the complete file. {{file-lock}} returns a ''lock''-object.
 
 ==== file-lock/blocking
 
- [procedure] (file-lock/blocking PORT [START [LEN]])
+<procedure>(file-lock/blocking PORT [START [LEN]])</procedure>
 
 Similar to {{file-lock}}, but if a lock is held on the file,
 the current process blocks (including all threads) until the lock is released.
 
 ==== file-test-lock
 
- [procedure] (file-test-lock PORT [START [LEN]])
+<procedure>(file-test-lock PORT [START [LEN]])</procedure>
 
 Tests whether the file associated with {{PORT}} is locked for reading
 or writing (according to whether {{PORT}} is an input- or output-port)
@@ -779,7 +780,7 @@ and returns either {{#f}} or the process-id of the locking process.
 
 ==== file-unlock
 
- [procedure] (file-unlock LOCK)
+<procedure>(file-unlock LOCK)</procedure>
 
 Unlocks the previously locked portion of a file given in {{LOCK}}.
 
@@ -788,7 +789,7 @@ Unlocks the previously locked portion of a file given in {{LOCK}}.
 
 ==== set-alarm!
 
- [procedure] (set-alarm! SECONDS)
+<procedure>(set-alarm! SECONDS)</procedure>
 
 Sets an internal timer to raise the {{signal/alrm}}
 after {{SECONDS}} are elapsed.  You can use the
@@ -796,24 +797,24 @@ after {{SECONDS}} are elapsed.  You can use the
 
 ==== set-signal-handler!
 
- [procedure] (set-signal-handler! SIGNUM PROC)
+<procedure>(set-signal-handler! SIGNUM PROC)</procedure>
 
 Establishes the procedure of one argument {{PROC}} as the handler
 for the signal with the code {{SIGNUM}}. {{PROC}} is called
 with the signal number as its sole argument. If the argument {{PROC}} is {{#f}}
-then any signal handler will be removed.
+then any signal handler will be removed, and the corresponding signal set to {{SIG_IGN}}.
 
 Note that is is unspecified in which thread of execution the signal handler will be invoked.
 
 ==== signal-handler
 
- [procedure] (signal-handler SIGNUM)
+<procedure>(signal-handler SIGNUM)</procedure>
 
 Returns the signal handler for the code {{SIGNUM}} or {{#f}}.
 
 ==== set-signal-mask!
 
- [procedure] (set-signal-mask! SIGLIST)
+<procedure>(set-signal-mask! SIGLIST)</procedure>
 
 Sets the signal mask of the current process to block all signals given
 in the list {{SIGLIST}}.  Signals masked in that way will not be
@@ -821,25 +822,25 @@ delivered to the current process.
 
 ==== signal-mask
 
- [procedure] (signal-mask)
+<procedure>(signal-mask)</procedure>
 
 Returns the signal mask of the current process.
 
 ==== signal-masked?
 
- [procedure] (signal-masked? SIGNUM)
+<procedure>(signal-masked? SIGNUM)</procedure>
 
 Returns whether the signal for the code {{SIGNUM}} is currently masked.
 
 ==== signal-mask!
 
- [procedure] (signal-mask! SIGNUM)
+<procedure>(signal-mask! SIGNUM)</procedure>
 
 Masks (blocks) the signal for the code {{SIGNUM}}.
 
 ==== signal-unmask!
 
- [procedure] (signal-unmask! SIGNUM)
+<procedure>(signal-unmask! SIGNUM)</procedure>
 
 Unmasks (unblocks) the signal for the code {{SIGNUM}}.
 
@@ -874,7 +875,7 @@ These variables contain signal codes for use with {{process-signal}},  {{set-sig
 
 === Environment access
 
-==== get-environment-variables
+==== current-environment
 
  [procedure] (get-environment-variables)
 
@@ -883,7 +884,7 @@ current values (see also [[http://srfi.schemers.org/srfi-98/|SRFI-98]]).
 
 ==== setenv
 
- [procedure] (setenv VARIABLE VALUE)
+<procedure>(setenv VARIABLE VALUE)</procedure>
 
 Sets the environment variable named {{VARIABLE}} to
 {{VALUE}}. Both arguments should be strings. If the variable is
@@ -891,7 +892,7 @@ not defined in the environment, a new definition is created.
 
 ==== unsetenv
 
- [procedure] (unsetenv VARIABLE)
+<procedure>(unsetenv VARIABLE)</procedure>
 
 Removes the definition of the environment variable {{VARIABLE}} from
 the environment of the current process. If the variable is not defined,
@@ -909,7 +910,7 @@ mapped file, or {{#f}} otherwise.
 
 ==== map-file-to-memory
 
- [procedure] (map-file-to-memory ADDRESS LEN PROTECTION FLAG FILENO [OFFSET])
+<procedure>(map-file-to-memory ADDRESS LEN PROTECTION FLAG FILENO [OFFSET])</procedure>
 
 Maps a section of a file to memory using the C function
 {{mmap()}}.  {{ADDRESS}} should be a foreign pointer object
@@ -926,14 +927,14 @@ returns an object representing the mapped file section.  The procedure
 
 ==== memory-mapped-file-pointer
 
- [procedure] (memory-mapped-file-pointer MMAP)
+<procedure>(memory-mapped-file-pointer MMAP)</procedure>
 
 Returns a machine pointer to the start of the memory region to which
 the file is mapped.
 
 ==== unmap-file-from-memory
 
- [procedure] (unmap-file-from-memory MMAP [LEN])
+<procedure>(unmap-file-from-memory MMAP [LEN])</procedure>
 
 Unmaps the section of a file mapped to memory using the C function
 {{munmap()}}.  {{MMAP}} should be a mapped file as returned
@@ -946,7 +947,7 @@ defaults to the complete length given when the file was mapped.
 
 ==== seconds->local-time
 
- [procedure] (seconds->local-time SECONDS)
+<procedure>(seconds->local-time SECONDS)</procedure>
 
 Breaks down the time value represented in {{SECONDS}} into a 10
 element vector of the form {{#(seconds minutes hours mday month
@@ -965,7 +966,7 @@ year wday yday dstflag timezone)}}, in the following format:
 
 ==== local-time->seconds
 
- [procedure] (local-time->seconds VECTOR)
+<procedure>(local-time->seconds VECTOR)</procedure>
 
 Converts the ten-element vector {{VECTOR}} representing the time value relative to
 the current timezone into
@@ -973,34 +974,34 @@ the number of seconds since the first of January, 1970 UTC.
 
 ==== local-timezone-abbreviation
 
- [procedure] (local-timezone-abbreviation)
+<procedure>(local-timezone-abbreviation)</procedure>
 
 Returns the abbreviation for the local timezone as a string.
 
 ==== seconds->string
 
- [procedure] (seconds->string SECONDS)
+<procedure>(seconds->string SECONDS)</procedure>
 
 Converts the local time represented in {{SECONDS}} into a string
 of the form {{"Tue May 21 13:46:22 1991"}}.
 
 ==== seconds->utc-time
 
- [procedure] (seconds->utc-time SECONDS)
+<procedure>(seconds->utc-time SECONDS)</procedure>
 
 Similar to {{seconds->local-time}}, but interpretes {{SECONDS}}
 as UTC time.
 
 ==== utc-time->seconds
 
- [procedure] (utc-time->seconds VECTOR)
+<procedure>(utc-time->seconds VECTOR)</procedure>
 
 Converts the ten-element vector {{VECTOR}} representing the UTC time value into
 the number of seconds since the first of January, 1970 UTC.
 
 ==== time->string
 
- [procedure] (time->string VECTOR [FORMAT])
+<procedure>(time->string VECTOR)</procedure>
 
 Converts the broken down time represented in the 10 element vector
 {{VECTOR}} into a string of the form represented by the {{FORMAT}}
@@ -1023,7 +1024,7 @@ The {{FORMAT}} string follows the rules for the C library procedure {{strptime}}
 
 ==== _exit
 
- [procedure] (_exit [CODE])
+<procedure>(_exit [CODE])</procedure>
 
 Exits the current process without flushing any buffered output (using
 the C function {{_exit}}).  Note that the {{exit-handler}}
@@ -1063,7 +1064,7 @@ These variables contain error codes as returned by {{errno}}.
 
 ==== find-files
 
- [procedure] (find-files DIRECTORY PREDICATE [ACTION [IDENTITY [LIMIT]]])
+<procedure>(find-files DIRECTORY PREDICATE [ACTION [IDENTITY [LIMIT]]])</procedure>
 
 Recursively traverses the contents of {{DIRECTORY}} (which should
 be a string) and invokes the procedure {{ACTION}} for all files
@@ -1088,13 +1089,13 @@ including the directory prefix.
 
 ==== get-host-name
 
- [procedure] (get-host-name)
+<procedure>(get-host-name)</procedure>
 
 Returns the hostname of the machine that this process is running on.
 
 ==== system-information
 
- [procedure] (system-information)
+<procedure>(system-information)</procedure>
 
 Invokes the UNIX system call {{uname()}} and returns a list of 5 values:
 system-name, node-name, OS release, OS version and machine.
@@ -1103,7 +1104,7 @@ system-name, node-name, OS release, OS version and machine.
 
 ==== set-buffering-mode!
 
- [procedure] (set-buffering-mode! PORT MODE [BUFSIZE])
+<procedure>(set-buffering-mode! PORT MODE [BUFSIZE])</procedure>
 
 Sets the buffering-mode for the file associated with {{PORT}} to
 {{MODE}}, which should be one of the keywords {{#:full}},
@@ -1115,13 +1116,13 @@ determines the size of the buffer to be used (if any).
 
 ==== terminal-name
 
- [procedure] (terminal-name PORT)
+<procedure>(terminal-name PORT)</procedure>
 
 Returns the name of the terminal that is connected to {{PORT}}.
 
 ==== terminal-port?
 
- [procedure] (terminal-port? PORT)
+<procedure>(terminal-port? PORT)</procedure>
 
 Returns {{#t}} if {{PORT}} is connected to a terminal and
 {{#f}} otherwise.
@@ -1228,20 +1229,20 @@ Only single-byte string encoding can be used.
 
 Exceptions to the above procedure definitions.
 
- [procedure] (create-pipe [MODE])
+<procedure>(create-pipe [MODE])</procedure>
 
 The optional parameter {{MODE}}, default {{open/binary | open/noinherit}}. This can be {{open/binary}} or
 {{open/text}}, optionally or'ed with {{open/noinherit}}.
 
- [procedure] (process-wait [PID [NOHANG]])
+<procedure>(process-wait [PID [NOHANG]])</procedure>
 
 {{process-wait}} always returns {{#t}} for a terminated process and only the exit
 status is available. (Windows does not provide signals as an interprocess
 communication method.)
 
- [procedure] (process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])
- [procedure] (process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])
- [procedure] (process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])
+<procedure>(process-execute PATHNAME [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])</procedure>
+<procedure>(process COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])</procedure>
+<procedure>(process* COMMAND ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]])</procedure>
 
 The optional parameter {{EXACT-FLAG}}, default {{#f}}. When {{#f}} any argument string with
 embedded whitespace will be wrapped in quotes. When {{#t}} no such wrapping occurs.
@@ -1276,7 +1277,6 @@ Microsoft tools or with MinGW):
  parent-process-id
  set-root-directory!
  utc-time->seconds
- string->time
 
 ==== Additional Definitions
 
@@ -1301,7 +1301,7 @@ documentation) and runs the process asynchronously.
 
 ==== process-spawn
 
- [procedure] (process-spawn MODE COMMAND [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])
+<procedure>(process-spawn MODE COMMAND [ARGUMENT-LIST [ENVIRONMENT-LIST [EXACT-FLAG]]])</procedure>
 
 Creates and runs a new process with the given {{COMMAND}} filename and the optional
 {{ARGUMENT-LIST}} and {{ENVIRONMENT-LIST}}. {{MODE}} specifies how exactly the process

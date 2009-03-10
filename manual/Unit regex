@@ -194,19 +194,6 @@ into a regular expression.
 </enscript>
 
 
-=== make-anchored-pattern
-
- [procedure] (make-anchored-pattern REGEXP [WITHOUT-BOL [WITHOUT-EOL]])
-
-Makes an anchored pattern from {{REGEXP}} (a string or a precompiled regular
-expression) and returns the updated pattern. When {{WITHOUT-BOL}} is {{#t}} the
-beginning-of-line anchor is not added. When {{WITHOUT-EOL}} is {{#t}} the
-end-of-line anchor is not added.
-
-The {{WITHOUT-BOL}} and {WITHOUT-EOL}} arguments are ignored for a precompiled regular
-expression.
-
-
 Previous: [[Unit srfi-14]]
 
 Next: [[Unit srfi-18]]

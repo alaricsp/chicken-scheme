@@ -11,14 +11,14 @@ used by default, unless the program is compiled with the
 
 ==== with-output-to-port
 
- [procedure] (with-output-to-port PORT THUNK)
+<procedure>(with-output-to-port PORT THUNK)</procedure>
 
 Call procedure {{THUNK}} with the current output-port temporarily
 bound to {{PORT}}.
 
 ==== make-input-port
 
- [procedure] (make-input-port READ READY? CLOSE [PEEK])
+<procedure>(make-input-port READ READY? CLOSE [PEEK])</procedure>
 
 Returns a custom input port. Common operations on this
 port are handled by the given parameters, which should be
@@ -36,7 +36,7 @@ calling {{READ}} and buffering the character).
 
 ==== make-output-port
 
- [procedure] (make-output-port WRITE CLOSE [FLUSH])
+<procedure>(make-output-port WRITE CLOSE [FLUSH])</procedure>
 
 Returns a custom output port. Common operations on this port are handled
 by the given parameters, which should be procedures.  {{WRITE}} is
@@ -48,7 +48,7 @@ for flushing the output port.
 
 ==== with-error-output-to-port
 
- [procedure] (with-error-output-to-port PORT THUNK)
+<procedure>(with-error-output-to-port PORT THUNK)</procedure>
 
 Call procedure {{THUNK}} with the current error output-port
 temporarily bound to {{PORT}}.
@@ -56,7 +56,7 @@ temporarily bound to {{PORT}}.
 
 ==== with-input-from-port
 
- [procedure] (with-input-from-port PORT THUNK)
+<procedure>(with-input-from-port PORT THUNK)</procedure>
 
 Call procedure {{THUNK}} with the current input-port temporarily
 bound to {{PORT}}.
@@ -66,7 +66,7 @@ bound to {{PORT}}.
 
 ==== call-with-input-string
 
- [procedure] (call-with-input-string STRING PROC)
+<procedure>(call-with-input-string STRING PROC)</procedure>
 
 Calls the procedure {{PROC}} with a single argument that is a
 string-input-port with the contents of {{STRING}}.
@@ -74,7 +74,7 @@ string-input-port with the contents of {{STRING}}.
 
 ==== call-with-output-string
 
- [procedure] (call-with-output-string PROC)
+<procedure>(call-with-output-string PROC)</procedure>
 
 Calls the procedure {{PROC}} with a single argument that is a
 string-output-port.  Returns the accumulated output-string.
@@ -82,7 +82,7 @@ string-output-port.  Returns the accumulated output-string.
 
 ==== with-input-from-string
 
- [procedure] (with-input-from-string STRING THUNK)
+<procedure>(with-input-from-string STRING THUNK)</procedure>
 
 Call procedure {{THUNK}} with the current input-port temporarily
 bound to an input-string-port with the contents of {{STRING}}.
@@ -90,7 +90,7 @@ bound to an input-string-port with the contents of {{STRING}}.
 
 ==== with-output-to-string
 
- [procedure] (with-output-to-string THUNK)
+<procedure>(with-output-to-string THUNK)</procedure>
 
 Call procedure {{THUNK}} with the current output-port temporarily
 bound to a string-output-port and return the accumulated output string.
@@ -100,21 +100,21 @@ bound to a string-output-port and return the accumulated output string.
 
 ==== port-for-each
 
- [procedure] (port-for-each FN THUNK)
+<procedure>(port-for-each FN THUNK)</procedure>
 
 Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
 until it returns {{#!eof}}, discarding the results.
 
 ==== port-map
 
- [procedure] (port-map FN THUNK)
+<procedure>(port-map FN THUNK)</procedure>
 
 Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}}
 until it returns {{#!eof}}, returning a list of the collected results.
 
 ==== port-fold
 
- [procedure] (port-map FN ACC THUNK)
+<procedure>(port-map FN ACC THUNK)</procedure>
 
 Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}},
 passing the {{ACC}} value as the second argument. The {{FN}} result becomes the new
@@ -125,7 +125,7 @@ passing the {{ACC}} value as the second argument. The {{FN}} result becomes the 
 
 ==== make-broadcast-port
 
- [procedure] (make-broadcast-port PORT ...)
+<procedure>(make-broadcast-port PORT ...)</procedure>
 
 Returns a custom output port that emits everything written into it to
 the ports given as {{PORT ...}}. Closing the broadcast port does not close
@@ -133,7 +133,7 @@ any of the argument ports.
 
 ==== make-concatenated-port
 
- [procedure] (make-concatenated-port PORT1 PORT2 ...)
+<procedure>(make-concatenated-port PORT1 PORT2 ...)</procedure>
 
 Returns a custom input port that reads its input from {{PORT1}}, until it
 is empty, then from {{PORT2}} and so on. Closing the concatenated port

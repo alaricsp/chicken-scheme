@@ -372,8 +372,6 @@ see: [[Supported language]].
 
 ; [parameter] user-pass : Holds a procedure of one argument. This procedure is applied to each toplevel expression '''after''' macro-expansion.  The result of the procedure is then compiled in place of the original expression. 
 
-; [parameter] user-pass-2 : Holds a procedure of one argument, which is called with the canonicalized node-graph as its sole argument. The result is ignored, so this pass has to mutate the node-structure to cause any effect.
-
 ; [parameter] user-post-analysis-pass : Holds a procedure that will be called after every performed program analysis pass. The procedure (when defined) will be called with seven arguments: a symbol indicating the analysis pass, the program database, the current node graph, a getter and a setter-procedure which can be used to access and manipulate the program database, which holds various information about the compiled program, a pass iteration count, and an analysis continuation flag. The getter procedure should be called with two arguments: a symbol representing the binding for which information should be retrieved, and a symbol that specifies the database-entry. The current value of the database entry will be returned or {{#f}}, if no such entry is available. The setter procedure is called with three arguments: the symbol and key and the new value. The pass iteration count currently is meaningful only for the 'opt pass. The analysis continuation flag will be {{#f}} for the last 'opt pass. For information about the contents of the program database contact the author.
 
 Loaded code (via the {{-extend}} option) has access to the library

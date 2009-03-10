@@ -32,6 +32,8 @@ for [[http://srfi.schemers.org/srfi-18/srfi-18.html|SRFI-18]].
 
 ** Any pending {{dynamic-wind}} thunks.
 
+* When an error is triggered inside the execution context of a thread, the default exception-handler will simply terminate the thread (and store the error condition for later use). Pending {{dynamic-wind}} thunks will ''not'' be invoked. Use a custom exception handler for the thread in that case.
+
 The following procedures are provided, in addition to the procedures defined in SRFI-18:
 
 
@@ -84,6 +86,18 @@ for input or output, respectively.
 Converts a time object (as created via {{current-time}}) into an exact integer representing
 the number of milliseconds since process startup.
 
+=== milliseconds->time
+
+ [procedure] (milliseconds->time ms)
+
+Converts into a time object an exact integer representing
+the number of milliseconds since process startup.
+
+This procedure may be useful in combination with {{thread-sleep!}} when your compilation unit is using {{(declare fixnum-arithmetic)}}.  In that case you won't be able to pass an inexact value to {{thread-sleep!}}, but you can do the following:
+
+ (define (thread-sleep!/ms ms)
+   (thread-sleep!
+    (milliseconds->time (+ ms (current-milliseconds)))))
 
 Previous: [[Unit regex]]
 

@@ -11,14 +11,14 @@ This unit contains file- and pathname-oriented procedures. It uses the {{regex}}
 
 ==== absolute-pathname?
 
- [procedure] (absolute-pathname? PATHNAME)
+<procedure>(absolute-pathname? PATHNAME)</procedure>
 
 Returns {{#t}} if the string {{PATHNAME}} names an absolute
 pathname, and returns {{#f}} otherwise.
 
 ==== decompose-pathname
 
- [procedure] (decompose-pathname PATHNAME)
+<procedure>(decompose-pathname PATHNAME)</procedure>
 
 Returns three values: the directory-, filename- and extension-components
 of the file named by the string {{PATHNAME}}.
@@ -27,8 +27,8 @@ For any component that is not contained in {{PATHNAME}}, {{#f}} is returned.
 ==== make-pathname
 ==== make-absolute-pathname
 
- [procedure] (make-pathname DIRECTORY FILENAME [EXTENSION [SEPARATOR]])
- [procedure] (make-absolute-pathname DIRECTORY FILENAME [EXTENSION [SEPARATOR]])
+<procedure>(make-pathname DIRECTORY FILENAME [EXTENSION [SEPARATOR]])</procedure>
+<procedure>(make-absolute-pathname DIRECTORY FILENAME [EXTENSION [SEPARATOR]])</procedure>
 
 Returns a string that names the file with the
 components {{DIRECTORY, FILENAME}} and (optionally)
@@ -42,48 +42,48 @@ and {{EXTENSION}} should be strings or {{#f}}.
 
 ==== pathname-directory
 
- [procedure] (pathname-directory PATHNAME)
+<procedure>(pathname-directory PATHNAME)</procedure>
 
 ==== pathname-file
 
- [procedure] (pathname-file PATHNAME)
+<procedure>(pathname-file PATHNAME)</procedure>
 
 ==== pathname-extension
 
- [procedure] (pathname-extension PATHNAME)
+<procedure>(pathname-extension PATHNAME)</procedure>
 
 Accessors for the components of {{PATHNAME}}. If the pathname does
 not contain the accessed component, then {{#f}} is returned.
 
 ==== pathname-replace-directory
 
- [procedure] (pathname-replace-directory PATHNAME DIRECTORY)
+<procedure>(pathname-replace-directory PATHNAME DIRECTORY)</procedure>
 
 ==== pathname-replace-file
 
- [procedure] (pathname-replace-file PATHNAME FILENAME)
+<procedure>(pathname-replace-file PATHNAME FILENAME)</procedure>
 
 ==== pathname-replace-extension
 
- [procedure] (pathname-replace-extension PATHNAME EXTENSION)
+<procedure>(pathname-replace-extension PATHNAME EXTENSION)</procedure>
 
 Return a new pathname with the specified component of {{PATHNAME}}
 replaced by a new value.
 
 ==== pathname-strip-directory
 
- [procedure] (pathname-strip-directory PATHNAME)
+<procedure>(pathname-strip-directory PATHNAME)</procedure>
 
 ==== pathname-strip-extension
 
- [procedure] (pathname-strip-extension PATHNAME)
+<procedure>(pathname-strip-extension PATHNAME)</procedure>
 
 Return a new pathname with the specified component of {{PATHNAME}}
 stripped.
 
 ==== directory-null?
 
- [procedure] (directory-null? DIRECTORY)
+<procedure>(directory-null? DIRECTORY)</procedure>
 
 Does the {{DIRECTORY}} consist only of path separators and the period?
 
@@ -94,7 +94,7 @@ Does the {{DIRECTORY}} consist only of path separators and the period?
 
 ==== create-temporary-file
 
- [procedure] (create-temporary-file [EXTENSION])
+<procedure>(create-temporary-file [EXTENSION])</procedure>
 
 Creates an empty temporary file and returns its pathname. If
 {{EXTENSION}} is not given, then {{.tmp}} is used. If the
@@ -106,7 +106,7 @@ then the pathname names a file in that directory.
 
 ==== delete-file*
 
- [procedure] (delete-file* FILENAME)
+<procedure>(delete-file* FILENAME)</procedure>
 
 If the file {{FILENAME}} exists, it is deleted and {{#t}}
 is returned.  If the file does not exist, nothing happens and {{#f}}
@@ -117,7 +117,7 @@ is returned.
 
 ==== file-copy
 
- [procedure] (file-copy ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+<procedure>(file-copy ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)</procedure>
 
 Copies {{ORIGFILE}} (a string denoting some filename) to {{NEWFILE}}, 
 {{BLOCKSIZE}} bytes at a time.  {{BLOCKSIZE}} defaults to 1024, and must be
@@ -130,7 +130,7 @@ platform-dependent.
 
 ==== file-move
 
- [procedure] (file-move ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)
+<procedure>(file-move ORIGFILE NEWFILE #!optional CLOBBER BLOCKSIZE)</procedure>
 
 Moves {{ORIGFILE}} (a string denoting some filename) to {{NEWFILE}}, with
 the same semantics as {{file-copy}}, above.  {{file-move}} is safe across

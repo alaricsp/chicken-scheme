@@ -97,25 +97,6 @@ There is an extension based on the GNU Multiprecision Package that implements mo
 numeric tower, see [[http://chicken.wiki.br/numbers|numbers]].
 
 
-==== How can I specialize a generic function method to match instances of every class?
-
-Specializing a method on {{<object>}} doesn't work on primitive data objects like
-numbers, strings, etc. so for example
-
-<enscript highlight=scheme>
-(define-method (foo (x <my-class>)) ...)
-(define-method (foo (x <object>)) ...)
-(foo 123)
-</enscript>
-
-will signal an error, because to applicable method can be found. To specialize a method for primitive
-objects, use {{<top>}}:
-
-<enscript highlight=scheme>
-(define-method (foo (x <top>)) ...)
-</enscript>
-
-
 ==== Does CHICKEN support native threads?
 
 Native threads are not supported for two reasons. One, the runtime
@@ -149,9 +130,36 @@ This will replace all builtin string operators with UTF-8-aware versions, that w
 Most eggs should work correctly in utf8 mode, including the regex extension, but you still have the option of working around incompatibilities of specific eggs by loading them before the (import utf8) directive. Keep in mind that some operations, such as string-length, are much more expensive in utf8 (multibyte) mode, and should be used with care. See the [[http://www.call-with-current-continuation.org/eggs/utf8.html|utf8 egg documentation]] for details.
 
 
-==== Why do I get an "Error: invalid syntax: ..." using 'match' and 'syntax-case'?
+=== Why are `dynamic-wind' thunks not executed when a SRFI-18 thread signals an error?
 
-The built-in 'match' macro is incompatible with 'syntax-case'. Use the  [[http://www.call-with-current-continuation.org/eggs/matchable.html|matchable egg]] instead.
+Here is what Marc Feeley, the author of [[http://srfi.schemers.org/srfi-18|SRFI-18]] has to
+say about this subject:
+
+    >No the default exception handler shouldn't invoke the after
+    > thunks of the current continuation.  That's because the
+    > exception handler doesn't "continue" at the initial
+    > continuation of that thread.  Here are the relevant words of
+    > SRFI 18:
+    
+    >
+    >  Moreover, in this dynamic environment the exception handler
+    >  is bound to the "initial exception handler" which is a unary
+    >  procedure which causes the (then) current thread to store in
+    >  its end-exception field an "uncaught exception" object whose
+    >  "reason" is the argument of the handler, abandon all mutexes
+    >  it owns, and finally terminate.
+    >
+    
+    >The rationale is that, when an uncaught exception occurs in a
+    >thread the thread is in bad shape and things have gone
+    >sufficiently wrong that there is no universally acceptable way to
+    >continue execution.  Executing after thunks could require a
+    >whole lot of processing that the thread is not in a shape to do.
+    >So the safe thing is to terminate the thread.  If the programmer
+    >knows how to recover from an exception, then he can capture the
+    >continuation early on, and install an exception handler which
+    >invokes the continuation.  When the continuation is invoked the
+    >after thunks will execute.
 
 
 === Platform specific

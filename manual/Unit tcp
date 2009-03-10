@@ -15,7 +15,7 @@ of kind {{(exn i/o network)}}.
 
 === tcp-listen
 
- [procedure] (tcp-listen TCPPORT [BACKLOG [HOST]])
+<procedure>(tcp-listen TCPPORT [BACKLOG [HOST]])</procedure>
 
 Creates and returns a TCP listener object that listens for connections on {{TCPPORT}}, which
 should be an exact integer. {{BACKLOG}} specifies the number of maximally pending
@@ -25,21 +25,21 @@ connections (and defaults to 4). If the optional argument {{HOST}} is given and 
 
 === tcp-listener?
 
- [procedure] (tcp-listener? X)
+<procedure>(tcp-listener? X)</procedure>
 
 Returns {{#t}} if {{X}} is a TCP listener object, or {{#f}} otherwise.
 
 
 === tcp-close
 
- [procedure] (tcp-close LISTENER)
+<procedure>(tcp-close LISTENER)</procedure>
 
 Reclaims any resources associated with {{LISTENER}}.
 
 
 === tcp-accept
 
- [procedure] (tcp-accept LISTENER)
+<procedure>(tcp-accept LISTENER)</procedure>
 
 Waits until a connection is established on the port on which
 {{LISTENER}} is listening and returns two values: an input- and
@@ -51,7 +51,7 @@ read- and write-operations on the returned ports will use the
 current values (at the time of the connection) of {{tcp-read-timeout}}
 and {{tcp-write-timeout}}, respectively, to determine the maximal
 number of milliseconds to wait for input/output before a timeout
-error is signalled by raising an exception of the kinds {{(exn i/o net)}}.
+error is signalled.
 
 Note: this operation and any I/O on the ports returned will not block
 other running threads.
@@ -59,7 +59,7 @@ other running threads.
 
 === tcp-accept-ready?
 
- [procedure] (tcp-accept-ready? LISTENER)
+<procedure>(tcp-accept-ready? LISTENER)</procedure>
 
 Returns {{#t}} if there are any connections pending on {{LISTENER}}, or {{#f}}
 otherwise.
@@ -67,21 +67,21 @@ otherwise.
 
 === tcp-listener-port
 
- [procedure] (tcp-listener-port LISTENER)
+<procedure>(tcp-listener-port LISTENER)</procedure>
 
 Returns the port number assigned to {{LISTENER}} (If you pass {{0}} to {{tcp-listen}},
 then the system will choose a port-number for you).
 
 === tcp-listener-fileno
 
- [procedure] (tcp-listener-fileno LISTENER)
+<procedure>(tcp-listener-fileno LISTENER)</procedure>
 
 Returns the file-descriptor associated with {{LISTENER}}.
 
 
 === tcp-connect
 
- [procedure] (tcp-connect HOSTNAME [TCPPORT])
+<procedure>(tcp-connect HOSTNAME [TCPPORT])</procedure>
 
 Establishes a client-side TCP connection to the machine with the name
 {{HOSTNAME}} (a string) at {{TCPPORT}} (an exact integer) and returns
@@ -93,7 +93,7 @@ read- and write-operations on the returned ports will use the current
 values (at the time of the call to {{tcp-connect}}) of {{tcp-read-timeout}} and
 {{tcp-write-timeout}}, respectively, to determine the maximal number
 of milliseconds to wait for input/output before a timeout error is
-signalled by raising an exception of the kinds {{(exn i/o net)}}.
+signalled.
 
 If the {{TCPPORT}} is omitted, the port is parsed from the {{HOSTNAME}} string.  The format expected is {{HOSTNAME:PORT}}.  The {{PORT}} can either be a string representation of an integer or a service name which is translated to an integer using the POSIX function [[http://www.opengroup.org/onlinepubs/009695399/functions/getservbyname.html|{{getservbyname}}]].
 
@@ -102,7 +102,7 @@ Note: any I/O on the ports returned will not block other running threads.
 
 === tcp-addresses
 
- [procedure] (tcp-addresses PORT)
+<procedure>(tcp-addresses PORT)</procedure>
 
 Returns two values for the input- or output-port {{PORT}} (which should be a port returned
 by either {{tcp-accept}} or {{tcp-connect}}): the IP address of the local and the remote
@@ -112,7 +112,7 @@ are strings in {{XXX.XXX.XXX.XXX}} notation.
 
 === tcp-port-numbers
 
- [procedure] (tcp-port-numbers PORT)
+<procedure>(tcp-port-numbers PORT)</procedure>
 
 Returns two values for the input- or output-port {{PORT}} (which should be a port returned
 by either {{tcp-accept}} or {{tcp-connect}}): the TCP port numbers of the local and the remote
@@ -121,7 +121,7 @@ machine that are connected over the socket associated with {{PORT}}.
 
 === tcp-abandon-port
 
- [procedure] (tcp-abandon-port PORT)
+<procedure>(tcp-abandon-port PORT)</procedure>
 
 Marks the socket port {{PORT}} as abandoned. This is mainly useful to close down a port
 without breaking the connection.
