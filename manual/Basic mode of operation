@@ -53,6 +53,6 @@ On platforms that support dynamic loading of compiled code (Windows, most ELF ba
 systems like Linux or BSD, MacOS X, and others) code can be compiled into a shared object {{.dll}}, {{.so}}, {{.dylib}}) and loaded 
 dynamically into a running application.
 
-Previous: [[The User's Manual]]
+Previous: [[Overview]]
 
 Next: [[Using the compiler]]

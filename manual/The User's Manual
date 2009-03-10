@@ -4,7 +4,7 @@
 
 This is the user's manual for the Chicken Scheme compiler, version 4.0.0x5
 
-; [[Getting started]] : What is CHICKEN and how do I use it?
+; [[Overview]] : What is CHICKEN and how do I use it?
 
 ; [[Basic mode of operation]] : Compiling Scheme files.
 
