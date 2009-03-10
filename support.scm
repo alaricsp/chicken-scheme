@@ -1252,7 +1252,8 @@ Usage: chicken FILENAME OPTION ...
   Syntax related options:
 
     -case-insensitive           don't preserve case of read symbols
-    -keyword-style STYLE        allow alternative keyword syntax (none, prefix or suffix)
+    -keyword-style STYLE        allow alternative keyword syntax (prefix, suffix or none)
+    -parenthesis-synonyms STYLE allow alternative keyword syntax (block or none)
     -compile-syntax             macros are made available at run-time
     -emit-import-library MODULE write compile-time module information into separate file
 

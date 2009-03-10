@@ -90,7 +90,9 @@ EOF
 "'
     -b  -batch                  terminate after command-line processing
     -w  -no-warnings            disable all warnings
-    -k  -keyword-style STYLE    enable alternative keyword-syntax (none, prefix or suffix)
+    -k  -keyword-style STYLE    enable alternative keyword-syntax (prefix, suffix or none)
+        -parenthesis-synonyms STYLE
+                                allow list delimiter synonyms (block or none)
     -s  -script PATHNAME        use interpreter for shell scripts
         -ss PATHNAME            shell script with `main' procedure
         -sx PATHNAME            same as `-s', but print each expression as it is evaluated
@@ -816,8 +818,8 @@ EOF
   '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #\p #\P) )
 
 (define-constant long-options
-  '("-keyword-style" "-script" "-version" "-help" "--help" "--" "-feature" 
-    "-eval" "-case-insensitive"
+  '("-script" "-version" "-help" "--help" "--" "-feature" 
+    "-eval" "-case-insensitive" "-keyword-style" "-parenthesis-synonyms" 
     "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
     "-include-path" "-release" "-ss" "-sx"
     "-print" "-pretty-print") )
@@ -850,6 +852,7 @@ EOF
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (command-line-arguments))]
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
+	 [paransyn (member* '("-parenthesis-synonyms") args)]
 	 [script (member* '("-s" "-ss" "-sx" "-script") args)])
     (cond [script
 	   (when (or (not (pair? (cdr script)))
@@ -931,6 +934,13 @@ EOF
 	       (keyword-style #:none) ]
 	      [(string=? "suffix" (cadr kwstyle))
 	       (keyword-style #:suffix) ] ) )
+      (when paransyn
+        (cond [(not (pair? (cdr paransyn)))
+	       (##sys#error "missing argument to `-parenthesis-synonyms' option") ]
+	      [(string=? "block" (cadr paransyn))
+	       (parenthesis-synonyms #:block) ]
+              [(string=? "none" (cadr paransyn))
+               (parenthesis-synonyms #:none) ] ) )
       (unless (or (member* '("-n" "-no-init") args) script) (loadinit))
       (do ([args args (cdr args)])
 	  ((null? args)

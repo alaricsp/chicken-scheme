@@ -152,6 +152,7 @@
    on-exit
    open-input-string
    open-output-string
+   parenthesis-synonyms
    port-name
    port-position
    port?
@@ -197,4 +198,4 @@
    void
    warning
    with-exception-handler)
-    ##sys#chicken-macro-environment)       ;*** incorrect - won't work in compiled executable
+ ##sys#chicken-macro-environment)       ;*** incorrect - won't work in compiled executable

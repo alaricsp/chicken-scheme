@@ -125,6 +125,7 @@
 	[hgrowth (memq 'heap-growth options)]
 	[hshrink (memq 'heap-shrinkage options)]
 	[kwstyle (memq 'keyword-style options)]
+	[paransyn (memq 'parenthesis-synonyms options)]
 	[uses-units '()]
 	[uunit (memq 'unit options)]
 	[a-only (memq 'analyze-only options)]
@@ -279,6 +280,11 @@
 	      [(string=? "none" val) (keyword-style #:none)]
 	      [(string=? "suffix" val) (keyword-style #:suffix)]
 	      [else (quit "invalid argument to `-keyword-style' option")] ) ) )
+    (when paransyn
+      (let ([val (option-arg paransyn)])
+	(cond [(string=? "block" val) (parenthesis-synonyms #:block)]
+	      [(string=? "none" val) (parenthesis-synonyms #:none)]
+	      [else (quit "invalid argument to `-parenthesis-synonyms' option")] ) ) )
     (set! verbose-mode verbose)
     (set! ##sys#read-error-with-line-number #t)
     (set! ##sys#include-pathnames

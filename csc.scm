@@ -297,6 +297,8 @@
 
     -i -case-insensitive        don't preserve case of read symbols    
     -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
+       -parenthesis-synonyms STYLE
+                                allow list delimiter synonyms (block or none)
     -compile-syntax             macros are made available at run-time
     -j -emit-import-library MODULE 
                                 write compile-time module information into separate file

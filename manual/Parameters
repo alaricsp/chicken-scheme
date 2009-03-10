@@ -96,6 +96,11 @@ Enables alternative keyword syntax, where {{STYLE}} may be either
 Any other value disables the alternative syntaxes.
 
 
+=== parenthesis-synonyms
+Enables list delimiter synonyms, where {{STYLE}} may be {{#:block}}.
+Any other value disables the alternative syntaxes.
+
+
 === load-verbose
 A boolean indicating whether loading of source files, compiled code
 (if available) and compiled libraries should display a message.

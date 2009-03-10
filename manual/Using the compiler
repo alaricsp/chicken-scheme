@@ -154,6 +154,8 @@ Possible options are:
 
 ; -output-file FILENAME : Specifies the pathname of the generated C file. Default is {{FILENAME.c}}.
 
+; -parenthesis-synonyms STYLE : Enables list delimiter synonyms, where {{STYLE}} may be {{#:block}}. Any other value is ignored.
+
 ; -postlude EXPRESSIONS : Add {{EXPRESSIONS}} after all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place after processing of {{-epilogue}}.
 
 ; -prelude EXPRESSIONS : Add {{EXPRESSIONS}} before all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place before processing of {{-prologue}}.

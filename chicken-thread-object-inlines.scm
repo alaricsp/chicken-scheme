@@ -37,7 +37,7 @@
   (%structure-ref mx 2) )
 
 (define-inline (%mutex-thread-set! mx th)
-  (%structure-set! mx 2 th) )
+  (%structure-set!/mutate mx 2 th) )
 
 (define-inline (%mutex-thread-clear! mx)
   (%structure-set!/immediate mx 2 #f) )
@@ -46,7 +46,7 @@
   (%structure-ref mx 3) )
 
 (define-inline (%mutex-waiters-set! mx wt)
-  (%structure-set! mx 3 wt) )
+  (%structure-set!/mutate mx 3 wt) )
 
 (define-inline (%mutex-waiters-empty? mx)
   (%null? (%mutex-waiters mx)) )
@@ -82,7 +82,7 @@
   (%structure-ref mx 6) )
 
 (define-inline (%mutex-specific-set! mx x)
-  (%structure-set! mx 6 x) )
+  (%structure-set!/mutate mx 6 x) )
 
 
 ;;; Thread object helpers:
@@ -117,19 +117,19 @@
   (%structure-ref th 1) )
 
 (define-inline (%thread-thunk-set! th tk)
-  (%structure-set! th 1 tk) )
+  (%structure-set!/mutate th 1 tk) )
 
 (define-inline (%thread-results th)
   (%structure-ref th 2) )
 
 (define-inline (%thread-results-set! th rs)
-  (%structure-set! th 2 rs) )
+  (%structure-set!/mutate th 2 rs) )
 
 (define-inline (%thread-state th)
   (%structure-ref th 3) )
 
 (define-inline (%thread-state-set! th st)
-  (%structure-set! th 3 st) )
+  (%structure-set!/mutate th 3 st) )
 
 (define-inline (%thread-block-timeout th)
   (%structure-ref th 4) )
@@ -144,7 +144,7 @@
   (%structure-ref th 5) )
 
 (define-inline (%thread-state-buffer-set! th v)
-  (%structure-set! th 5 v) )
+  (%structure-set!/mutate th 5 v) )
 
 (define-inline (%thread-name th)
   (%structure-ref th 6) )
@@ -153,13 +153,13 @@
   (%structure-ref th 7) )
 
 (define-inline (%thread-reason-set! th cd)
-  (%structure-set! th 7 cd) )
+  (%structure-set!/mutate th 7 cd) )
 
 (define-inline (%thread-mutexes th)
   (%structure-ref th 8) )
 
 (define-inline (%thread-mutexes-set! th wt)
-  (%structure-set! th 8 wx) )
+  (%structure-set!/mutate th 8 wx) )
 
 (define-inline (%thread-mutexes-empty? th)
   (%null? (%thread-mutexes th)) )
@@ -183,13 +183,13 @@
   (%structure-ref th 10) )
 
 (define-inline (%thread-specific-set! th x)
-  (%structure-set! th 10 x) )
+  (%structure-set!/mutate th 10 x) )
 
 (define-inline (%thread-block-object th)
   (%structure-ref th 11) )
 
 (define-inline (%thread-block-object-set! th x)
-  (%structure-set! th 11 x) )
+  (%structure-set!/mutate th 11 x) )
 
 (define-inline (%thread-block-object-clear! th)
   (%structure-set!/immediate th 11 #f) )
@@ -198,7 +198,7 @@
   (%structure-ref th 12) )
 
 (define-inline (%thread-recipients-set! th x)
-  (%structure-set! th 12 x) )
+  (%structure-set!/mutate th 12 x) )
 
 (define-inline (%thread-recipients-empty? th)
   (%null? (%condition-variable-waiters th)) )
@@ -270,7 +270,7 @@
   (%structure-ref cv 2) )
 
 (define-inline (%condition-variable-waiters-set! cv x)
-  (%structure-set! cv 2 x) )
+  (%structure-set!/mutate cv 2 x) )
 
 (define-inline (%condition-variable-waiters-empty? cv)
   (%null? (%condition-variable-waiters cv)) )
@@ -294,4 +294,4 @@
   (%structure-ref cv 3) )
 
 (define-inline (%condition-variable-specific-set! cv x)
-  (%structure-set! cv 3 x) )
+  (%structure-set!/mutate cv 3 x) )
