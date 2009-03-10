@@ -37,5 +37,6 @@ Some of the features supported by CHICKEN:
 This manual is merely a reference for the CHICKEN system and assumes
 a working knowledge of Scheme.
 
-----
+Next: [[Using the compiler]]
+
 Back to [[The User's Manual]]

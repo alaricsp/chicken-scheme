@@ -26,11 +26,10 @@
 
 (define +header+ '(: (submatch (>= 2 #\=)) (* space) (submatch (* any))))
 (define +pre+ '(: (>= 1 space) (submatch (* any))))
-(define +d-list+ '(: (* space) #\; (submatch (~ #\:)) #\: (submatch (* any))))
+(define +d-list+ '(: (* space) #\; (submatch (* (~ #\:))) #\: (submatch (* any))))
 (define +u-list+ '(: (* space) (submatch (>= 1 #\*)) (* space) (submatch (* any))))
 (define +o-list+ '(: (* space) (submatch (>= 1 #\*)) #\# (* space) (submatch (* any))))
 (define +hr+ '(: (* space) (submatch (>= 3 #\-)) (* space)))
-(define +emptyline+ '(: bos (* space) eos))
 
 (define +block-element+
   `(or ,+pre+
@@ -80,11 +79,11 @@
      (let loop ()
        (let ((ln (read-line in)))
 	 (cond ((eof-object? ln) (return #f))
-	       ((string-match (rx +emptyline+) ln)
-		(fprintf out "~%"))
 	       ((not (string-match (rx +block-element+) ln)) 
-		(pop-all out)
-		(fprintf out "~a~%" (inline ln)))
+		(cond ((string-null? ln) (display "<br />\n" out))
+		      (else
+		       (pop-all out)
+		       (fprintf out "~a~%" (inline ln)))))
 	       ((string-match (rx +header+) ln) =>
 		(lambda (m)
 		  (pop-all out)
@@ -95,7 +94,7 @@
 	       ((string-match (rx +pre+) ln) =>
 		(lambda (m)
 		  (push-tag 'pre out)
-		  (display (clean (car m)))))
+		  (fprintf out "~a~%" (clean (car m)))))
 	       ((string-match (rx +hr+) ln) =>
 		(lambda (m)
 		  (fprintf out "<hr />~%")))
@@ -144,7 +143,7 @@
 			      "")
 			     ((member m1 *manual-pages*)
 			      (string-append 
-			       "<a href='" m1 ".html'>" m1 "</a>"))
+			       "<a href='" (clean m1) ".html'>" (clean m1) "</a>"))
 			     (else
 			      (string-append
 			       "<a href='" (clean (second m)) "'>"
@@ -169,27 +168,30 @@
     (define (walk n)
       (match n
 	(('*PI* . _) "")
-	(('*TOP* . n) n)
 	(('enscript strs ...)
-	 `(pre ,@strs))
+	 `(pre ,@(match strs
+		   ((('@ . _) . strs) strs)
+		   (_ strs))))
 	(('procedure strs ...)
 	 `(pre "\n [procedure] " ,@strs))
+	(((? symbol? tag) ('@ attr ...) . body)
+	 `(,tag (@ ,@attr) ,@(map walk body)))
 	(((? symbol? tag) . body)
 	 `(,tag ,@(map walk body)))
 	(_ n)))
     (display
      (shtml->html
-      (wrap name (walk sxml))))))
+      (wrap name (walk `(body ,@(cdr sxml))))))))
 
 (define (wrap name body)
   `(html (head (title ,(string-append "The CHICKEN User's Manual - " name)))
-	 (body ,@body)))
+	 ,body))
 
 
 ;;; Normalize text
 
 (define (clean str)
-  (string-translate* str '(("<" . "&lt;") ("&" . "&amp;") ("'" . "&rsquo;"))))
+  (string-translate* str '(("<" . "&lt;") ("&" . "&amp;") ("'" . "&apos;") ("\"" . "&quot;"))))
 
 
 ;;; Run it
