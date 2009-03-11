@@ -9,7 +9,7 @@
 
 ;;; inline elements
 
-(define +code+ '(: #\{ #\{ (submatch (*? (~ #\}))) #\} #\}))
+(define +code+ '(: #\{ #\{ (submatch (*? any)) #\} #\}))
 (define +bold+ '(: (= 3 #\') (submatch (* (~ #\'))) (= 3 #\')))
 (define +italic+ '(: (= 2 #\') (submatch (* (~ #\'))) (= 2 #\')))
 (define +html-tag+ '(: #\< (submatch (* (~ #\>))) #\>))
@@ -28,7 +28,10 @@
 
 (define +header+ '(: (submatch (>= 2 #\=)) (* space) (submatch (* any))))
 (define +pre+ '(: (>= 1 space) (submatch (* any))))
-(define +d-list+ '(: (* space) #\; (submatch (*? any)) #\space #\: #\space (submatch (* any))))
+
+(define +d-list+
+  '(: (* space) #\; (submatch (*? any)) #\space #\: #\space (submatch (* any))))
+
 (define +u-list+ '(: (* space) (submatch (>= 1 #\*)) (* space) (submatch (* any))))
 (define +o-list+ '(: (* space) (submatch (>= 1 #\*)) #\# (* space) (submatch (* any))))
 (define +hr+ '(: (* space) (submatch (>= 3 #\-)) (* space)))
@@ -122,7 +125,7 @@
 		  (push-tag 'dl out)
 		  (set! *list-continuation* #t)
 		  (fprintf out "<dt>~a</dt><dd>~a</dd>~%" 
-			   (inline (second m)) (inline (third m)))))
+			   (inline (second m)) (inline (or (third m) "")))))
 	       ((string-match (rx +u-list+) ln) =>
 		(lambda (m)
 		  (push-tag `(ul . ,(string-length (second m))) out)

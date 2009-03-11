@@ -11,8 +11,8 @@ unless the program is compiled with the {{-explicit-use}} option.
 
 ==== add1/sub1
 
-; [procedure] (add1 N)
-; [procedure] (sub1 N)
+<procedure>(add1 N)</procedure>
+<procedure>(sub1 N)</procedure>
 
 Adds/subtracts 1 from {{N}}.
 
@@ -25,11 +25,11 @@ right. These operations only accept exact integers or inexact integers in word
 range (32 bit signed on 32-bit platforms, or 64 bit signed on 64-bit
 platforms).
 
-; [procedure] (bitwise-and N1 ...)
-; [procedure] (bitwise-ior N1 ...)
-; [procedure] (bitwise-xor N1 ...)
-; [procedure] (bitwise-not N)
-; [procedure] (arithmetic-shift N1 N2)
+<procedure>(bitwise-and N1 ...)</procedure>
+<procedure>(bitwise-ior N1 ...)</procedure>
+<procedure>(bitwise-xor N1 ...)</procedure>
+<procedure>(bitwise-not N)</procedure>
+<procedure>(arithmetic-shift N1 N2)</procedure>
 
 ==== bit-set?
 
@@ -50,25 +50,25 @@ On division by zero, {{fx/}} and {{fxmod}} signal a condition of kind
 {{fxshl}} and {{fxshr}} perform arithmetic shift left and right,
 respectively.
 
-; [procedure] (fx+ N1 N2)
-; [procedure] (fx- N1 N2)
-; [procedure] (fx* N1 N2)
-; [procedure] (fx/ N1 N2)
-; [procedure] (fxmod N1 N2)
-; [procedure] (fxneg N)
-; [procedure] (fxmin N1 N2)
-; [procedure] (fxmax N1 N2)
-; [procedure] (fx= N1 N2)
-; [procedure] (fx> N1 N2)
-; [procedure] (fx< N1 N2)
-; [procedure] (fx>= N1 N2)
-; [procedure] (fx<= N1 N2)
-; [procedure] (fxand N1 N2)
-; [procedure] (fxior N1 N2)
-; [procedure] (fxxor N1 N2)
-; [procedure] (fxnot N)
-; [procedure] (fxshl N1 N2)
-; [procedure] (fxshr N1 N2)
+<procedure>(fx+ N1 N2)</procedure>
+<procedure>(fx- N1 N2)</procedure>
+<procedure>(fx* N1 N2)</procedure>
+<procedure>(fx/ N1 N2)</procedure>
+<procedure>(fxmod N1 N2)</procedure>
+<procedure>(fxneg N)</procedure>
+<procedure>(fxmin N1 N2)</procedure>
+<procedure>(fxmax N1 N2)</procedure>
+<procedure>(fx= N1 N2)</procedure>
+<procedure>(fx> N1 N2)</procedure>
+<procedure>(fx< N1 N2)</procedure>
+<procedure>(fx>= N1 N2)</procedure>
+<procedure>(fx<= N1 N2)</procedure>
+<procedure>(fxand N1 N2)</procedure>
+<procedure>(fxior N1 N2)</procedure>
+<procedure>(fxxor N1 N2)</procedure>
+<procedure>(fxnot N)</procedure>
+<procedure>(fxshl N1 N2)</procedure>
+<procedure>(fxshr N1 N2)</procedure>
 
 ==== fixnum?
 
@@ -90,19 +90,19 @@ arguments (except {{flonum?}}, which returns {{#f}}). In unsafe mode,
 these procedures do not check their arguments. A non-flonum argument
 in unsafe mode can crash the system.
 
-; [procedure] (flonum? X)
-; [procedure] (fp+ X Y)
-; [procedure] (fp- X Y)
-; [procedure] (fp* X Y)
-; [procedure] (fp/ X Y)
-; [procedure] (fpneg X)
-; [procedure] (fpmin X Y)
-; [procedure] (fpmax X Y)
-; [procedure] (fp= X Y)
-; [procedure] (fp> X Y)
-; [procedure] (fp< X Y)
-; [procedure] (fp>= X Y)
-; [procedure] (fp<= X Y)
+<procedure>(flonum? X)</procedure>
+<procedure>(fp+ X Y)</procedure>
+<procedure>(fp- X Y)</procedure>
+<procedure>(fp* X Y)</procedure>
+<procedure>(fp/ X Y)</procedure>
+<procedure>(fpneg X)</procedure>
+<procedure>(fpmin X Y)</procedure>
+<procedure>(fpmax X Y)</procedure>
+<procedure>(fp= X Y)</procedure>
+<procedure>(fp> X Y)</procedure>
+<procedure>(fp< X Y)</procedure>
+<procedure>(fp>= X Y)</procedure>
+<procedure>(fp<= X Y)</procedure>
 
 ==== flonum?
 
