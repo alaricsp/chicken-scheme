@@ -49,13 +49,11 @@
     (always-bound
       ##sys#windows-platform)
     (bound-to-procedure
-      string-search string-match regexp regexp-escape
-      ##sys#symbol-has-toplevel-binding? ##sys#environment-symbols
-      ##sys#hash-table-for-each ##sys#macro-environment
-      ##sys#string-append reverse port? read-string with-input-from-file command-line-arguments
-      for-each-line ##sys#check-port read-line getenv make-pathname file-exists? call-with-output-file
-      decompose-pathname absolute-pathname? string-append ##sys#substring
-      delete-file system)
+      string-match regexp
+      ##sys#string-append ##sys#substring  string-append
+      getenv
+      file-exists? delete-file
+      call-with-output-file read-string)
     (no-procedure-checks-for-usual-bindings)
     (no-bound-checks))] )
 

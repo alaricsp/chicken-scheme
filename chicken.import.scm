@@ -66,6 +66,7 @@
    current-seconds
    delete-file
    enable-warnings
+   environment?
    errno
    error
    exit

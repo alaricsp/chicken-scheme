@@ -1340,6 +1340,9 @@
 (define ##sys#r5rs-environment #f)
 (define ##sys#interaction-environment (##sys#make-structure 'environment #f #t))
 
+(define (##sys#environment? obj)
+  (and (##sys#structure? obj 'environment) (fx= 3 (##sys#size obj))) )
+
 (define ##sys#copy-env-table
   (lambda (e mff mf . args)
     (let ([syms (and (pair? args) (car args))])

@@ -27,7 +27,7 @@
 
 (declare
   (unit utils)
-  (uses regex data-structures extras files srfi-13)
+  (uses extras srfi-13)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)
@@ -40,125 +40,16 @@
     (always-bound
       ##sys#windows-platform)
     (bound-to-procedure
-      string-search string-match regexp regexp-escape
-      ##sys#symbol-has-toplevel-binding? ##sys#environment-symbols
-      ##sys#hash-table-for-each ##sys#macro-environment
-      ##sys#string-append reverse port? read-string with-input-from-file command-line-arguments
-      for-each-line ##sys#check-port read-line getenv make-pathname file-exists? call-with-output-file
-      decompose-pathname absolute-pathname? string-append ##sys#substring
-      delete-file system)
+      ##sys#check-port port? read-string for-each-line read-line with-input-from-file
+      command-line-arguments
+      string-append
+      system)
     (no-procedure-checks-for-usual-bindings)
     (no-bound-checks))] )
 
 (include "unsafe-declarations.scm")
 
 (register-feature! 'utils)
-
-
-;;; Environment utilities
-
-(define ##sys#apropos-interned)
-(define ##sys#apropos-macros)
-(let ([string-search string-search]
-      [regexp regexp]
-      [regexp-escape regexp-escape])
-  (let ([makpat
-         (lambda (patt)
-           (when (symbol? patt)
-             (set! patt (symbol->string patt)))
-           (when (string? patt)
-             (set! patt (regexp (regexp-escape patt))))
-           patt)])
-
-    (set! ##sys#apropos-interned
-      (lambda (patt env)
-        (set! patt (makpat patt))
-        (##sys#environment-symbols env
-          (lambda (sym)
-            (and (string-search patt (symbol->string sym))
-	         (##sys#symbol-has-toplevel-binding? sym) ) ) ) ) )
-
-    (set! ##sys#apropos-macros
-      (lambda (patt env) ; env is currently ignored
-        (set! patt (makpat patt))
-        (let ([ms '()])
-          (for-each
-	   (lambda (a)
-	     (let ((key (car a)))
-	       (when (string-search patt (symbol->string key))
-		 (set! ms (cons key ms)) ) ) )
-	   (##sys#macro-environment))
-          ms ) ) ) ) )
-
-(define (##sys#apropos patt env #!optional macf)
-  (let ([ts (##sys#apropos-interned patt env)])
-    (if macf
-        (##sys#append ts (##sys#apropos-macros patt env))
-        ts ) ) )
-
-(define apropos-list)
-(define apropos)
-(let ([%apropos-list
-        (lambda (loc patt args) ; #!optional (env (interaction-environment)) #!key macros?
-          (let ([env (interaction-environment)]
-                [macros? #f])
-            ; Handle extended lambda list optional & rest w/ keywords
-            (let loop ([args args])
-              (when (pair? args)
-                (let ([arg (car args)])
-                  (if (eq? #:macros? arg)
-                      (begin
-                        (set! macros? (cadr args))
-                        (loop (cddr args)) )
-                      (begin
-                        (set! env arg)
-                        (loop (cdr args)) ) ) ) ) )
-	    (##sys#check-structure env 'environment loc)
-            (unless (or (string? patt) (symbol? patt) (regexp? patt))
-              (##sys#signal-hook #:type-error loc "bad argument type - not a string, symbol, or regexp" patt))
-            (##sys#apropos patt env macros?) ) )]
-      [disp-proc
-        (lambda (proc labl)
-          (let ([info (procedure-information proc)])
-            (cond [(pair? info) (display (cons labl (cdr info)))]
-		  [info         (display labl)]
-		  [else         (display labl) ] ) ) ) ]
-      [symlen
-        (lambda (sym)
-          (let ([len (##sys#size (##sys#symbol->qualified-string sym))])
-            (if (keyword? sym)
-                (fx- len 2) ; compensate for leading '###' when only a ':' is printed
-                len ) ) )])
-
-  (set! apropos-list
-    (lambda (patt . rest)
-      (%apropos-list 'apropos-list patt rest)))
-
-  (set! apropos
-    (lambda (patt . rest)
-      (let ([ss (%apropos-list 'apropos patt rest)]
-            [maxlen 0])
-        (for-each
-          (lambda (sym)
-            (set! maxlen (fxmax maxlen (symlen sym))))
-          ss)
-        (for-each
-          (lambda (sym)
-            (display sym)
-            (do ([i (fx- maxlen (symlen sym)) (fx- i 1)])
-                [(fx<= i 0)]
-              (display #\space))
-            (display #\space) (display #\:) (display #\space)
-            (if (macro? sym)
-                ;FIXME want to display macro lambda arguments
-                (display 'macro)
-                (let ([bnd (##core#inline "C_retrieve" sym)])
-                  (cond [(procedure? bnd)
-                          (disp-proc bnd 'procedure)]
-                        [else
-                          (display 'variable)]) ) )
-            (newline) )
-          ss)))) )
 
 
 ;;; Like `system', but allows format-string and bombs on nonzero return code:

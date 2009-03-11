@@ -125,6 +125,46 @@
 (define ##sys#chicken-macro-environment '()) ; used later in chicken.import.scm
 (define ##sys#chicken-ffi-macro-environment '()) ; used later in foreign.import.scm
 
+; Workalike of '##sys#environment?' for syntactic environments
+(define (##sys#syntactic-environment? obj)
+  (and (list? obj)
+       (or (null? obj)
+           (call-with-current-continuation
+             (lambda (return)
+               (##sys#for-each
+                (lambda (x)
+                  (unless (and (pair? x) (= 3 (length x))
+                               ;key
+                               (symbol? (car x))
+                               #;(##sys#syntactic-environment? (cadr x))
+                               (procedure? (caddr x)) )
+                    (return #f) ) )
+                obj)
+               #t ) ) ) ) )
+
+; Workalike of '##sys#environment-symbols' for syntactic environments
+(define (##sys#syntactic-environment-symbols env pred )
+  ;I have no effing idea at the moment if this is correct
+  (define (walk-alias id)
+    (let loop ((alias (##sys#get id '##core#macro-alias)))
+      (and alias
+           (or (##sys#get id '##core#real-name)
+               (if (symbol? alias) alias
+                   (and-let* ((env (car alias))
+                              ((not (null? env))))
+                     (loop (lookup id env)) ) ) ) ) ) )
+  (let ((syms '()))
+    (##sys#for-each
+     (lambda (cell)
+       (let ((id (car cell)))
+         (cond ((pred id)
+                (set! syms (cons id syms)) )
+               ((walk-alias id) =>
+                (lambda (name)
+                  (when (pred name) (set! syms (cons name syms))) ) ) ) ) )
+     env)
+   syms ) )
+
 (define (##sys#extend-macro-environment name se handler)
   (let ((me (##sys#macro-environment)))
     (cond ((lookup name me) =>
