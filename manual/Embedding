@@ -334,6 +334,7 @@ Returns the value of the global variable referenced by the GC root {{global}}.
 
 Sets the value of the global variable referenced by the GC root {{global}} to {{value}}.
 
+---
 Previous: [[Foreign type specifiers]]
 
 Next: [[Callbacks]]

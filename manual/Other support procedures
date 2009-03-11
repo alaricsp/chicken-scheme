@@ -10,6 +10,7 @@
 Returns two values: an integer and a foreign-pointer object representing the {{argc}}
 and {{argv}} arguments passed to the current process.
 
+---
 Previous: [[Locations]]
 
 Next: [[C interface]]

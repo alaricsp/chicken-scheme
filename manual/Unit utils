@@ -61,6 +61,7 @@ as a string. If {{FILE-OR-PORT}} is a port, all remaining input is read and retu
 a string. The port is not closed. If no argument is provided, input will be read from the
 port that is the current value of {{(current-input-port)}}.
 
+---
 Previous: [[Unit posix]]
 
 Next: [[Unit tcp]]

@@ -162,6 +162,7 @@ values are the keywords {{#:text}}, {{#:binary}} or
 
 [6.7] The {{exit}} procedure exits a program right away and does ''not'' invoke pending {{dynamic-wind}} thunks.
 
+---
 Previous: [[Deviations from the standard]]
 
 Next: [[Non-standard read syntax]]

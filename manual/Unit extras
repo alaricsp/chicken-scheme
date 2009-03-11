@@ -804,6 +804,7 @@ searched value is equal to the current item, negative if the searched
 value is ''less'' than the current item, and positive otherwise.
 Returns the index of the found value or {{#f}} otherwise.
 
+---
 Previous: [[Unit files]]
 
 Next: [[Unit srfi-1]]

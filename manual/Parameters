@@ -124,7 +124,7 @@ default behavior in compiled code is to invoke the value of
 {{(exit-handler)}}. The default behavior in the interpreter is to
 abort the current computation and to restart the read-eval-print loop.
 
-
+---
 Previous: [[Declarations]]
 
 Next: [[Unit library]]

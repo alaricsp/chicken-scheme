@@ -160,7 +160,7 @@ Possible options are:
 
 ; -prelude EXPRESSIONS : Add {{EXPRESSIONS}} before all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place before processing of {{-prologue}}.
 
-; -profile :
+; -profile : 
 ;-accumulate-profile : Instruments the source code to count procedure calls and execution times. After the program terminates (either via an explicit {{exit}} or implicitly), profiling statistics are written to a file named {{PROFILE}}. Each line of the generated file contains a list with the procedure name, the number of calls and the time spent executing it. Use the {{chicken-profile}} program to display the profiling information in a more user-friendly form. Enter {{chicken-profile}} with no arguments at the command line to get a list of available options. The {{-accumulate-profile}} option is similar to {{-profile}}, but the resulting profile information will be appended to any existing {{PROFILE}} file. {{chicken-profile}} will merge and sum up the accumulated timing information, if several entries for the same procedure calls exist.
 
 ; -profile-name FILENAME : Specifies name of the generated profile information (which defaults to {{PROFILE}}. Implies {{-profile}}.
@@ -437,6 +437,7 @@ Note also that the size of the application can still be reduced by removing {{ex
 For more information, study the CHICKEN source code and/or get in
 contact with the author.
 
+---
 Previous: [[The User's Manual]]
 
 Next: [[Using the interpreter]]

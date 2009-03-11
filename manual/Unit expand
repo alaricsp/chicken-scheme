@@ -45,7 +45,7 @@ Remove the current macro-definition of the macro named {{SYMBOL}}.
 Signals an exception of the kind {{(exn syntax)}}. Otherwise identical to 
 {{error}}.
 
-
+---
 Previous: [[Unit library]]
 
 Next: [[Unit expand]]

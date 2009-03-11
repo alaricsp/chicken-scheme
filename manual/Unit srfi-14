@@ -14,6 +14,7 @@ be made available in the interpreter ({{csi}}) by entering
 
 This library provides only the Latin-1 character set.
 
+---
 Previous: [[Unit srfi-13]]
 
 Next: [[Unit regex]]

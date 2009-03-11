@@ -156,7 +156,7 @@ This procedure returns the number of bytes read.
 Writes the bytes {{U8VECTOR}} between the indices {{START}} (inclusive) and {{END}} (exclusive) to {{PORT}}.
 {{PORT}} defaults to the value of {{(current-output-port)}}.
 
-
+---
 Previous: [[Unit srfi-1]]
 
 Next: [[Unit srfi-13]]

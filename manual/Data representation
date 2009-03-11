@@ -112,6 +112,7 @@ objects), because this will confuse the garbage collector.
 
 For more information see the header file {{chicken.h}}.
 
+---
 Previous: [[Extensions]]
 
 Next: [[Bugs and limitations]]

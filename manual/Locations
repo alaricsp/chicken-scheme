@@ -76,6 +76,7 @@ for a tip on returning a {{c-string*}} type.
 {{location}} returns a value of type {{c-pointer}}, when given
 the name of a callback-procedure defined with {{define-external}}.
 
+---
 Previous: [[Callbacks]]
 
 Next: [[Other support procedures]]

@@ -1228,7 +1228,7 @@ all values are {{#f}}.
 {{PROPERTIES}} may also be an atom, in which case it is treated as a list of
 one element.
 
-
+---
 Previous: [[Parameters]]
 
 Next: [[Unit eval]]

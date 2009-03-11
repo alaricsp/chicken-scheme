@@ -9,7 +9,7 @@
 
 ;;; inline elements
 
-(define +code+ '(: #\{ #\{ (submatch (* (~ #\}))) #\} #\}))
+(define +code+ '(: #\{ #\{ (submatch (*? (~ #\}))) #\} #\}))
 (define +bold+ '(: (= 3 #\') (submatch (* (~ #\'))) (= 3 #\')))
 (define +italic+ '(: (= 2 #\') (submatch (* (~ #\'))) (= 2 #\')))
 (define +html-tag+ '(: #\< (submatch (* (~ #\>))) #\>))
@@ -21,12 +21,14 @@
 (define +inline-element+
   `(or ,+code+ ,+link+ ,+html-tag+ ,+bold+ ,+italic+))
 
+(define +http-url+ '(: (* space) "http://" (* any)))
+
 
 ;;; Block elements
 
 (define +header+ '(: (submatch (>= 2 #\=)) (* space) (submatch (* any))))
 (define +pre+ '(: (>= 1 space) (submatch (* any))))
-(define +d-list+ '(: (* space) #\; (submatch (* (~ #\:))) #\: (submatch (* any))))
+(define +d-list+ '(: (* space) #\; (submatch (*? any)) #\space #\: #\space (submatch (* any))))
 (define +u-list+ '(: (* space) (submatch (>= 1 #\*)) (* space) (submatch (* any))))
 (define +o-list+ '(: (* space) (submatch (>= 1 #\*)) #\# (* space) (submatch (* any))))
 (define +hr+ '(: (* space) (submatch (>= 3 #\-)) (* space)))
@@ -45,16 +47,28 @@
 (define *tags* '())
 (define *open* '())
 (define *manual-pages* '())
+(define *list-continuation* #f)
 
 (define (push-tag tag out)
+  ;(fprintf (current-error-port) "start: tag: ~a, open: ~a~%" tag *open*)
   (unless (and (pair? *open*) (equal? tag (car *open*)))
     (when (pair? *open*)
-      (pop-tag out))
-    (fprintf out "<~a>~%" (if (pair? tag) (car tag) tag))
-    (set! *open* (cons tag *open*))))
+      (cond ((not (pair? tag)) (pop-tag out))
+	    ((pair? (car *open*))
+	     ;(fprintf (current-error-port) "tag: ~a, open: ~a~%" tag *open*)
+	     (when (< (cdr tag) (cdar *open*))
+	       (do ((n (cdar *open*) (sub1 n)))
+		   ((= (cdr tag) n))
+		 (pop-tag out))))))
+    (unless (and (pair? *open*) (equal? tag (car *open*)))
+      (fprintf out "<~a>~%" (if (pair? tag) (car tag) tag))
+      (set! *list-continuation* #f)
+      ;(fprintf (current-error-port) "PUSH: ~a~%" tag)
+      (set! *open* (cons tag *open*)))))
 
 (define (pop-tag out)
   (let ((tag (car *open*)))
+    ;(fprintf (current-error-port) "POP: ~a~%" *open*)
     (fprintf out "</~a>~%" (if (pair? tag) (car tag) tag))
     (set! *open* (cdr *open*))))
 
@@ -80,7 +94,9 @@
        (let ((ln (read-line in)))
 	 (cond ((eof-object? ln) (return #f))
 	       ((not (string-match (rx +block-element+) ln)) 
-		(cond ((string-null? ln) (display "<br />\n" out))
+		(cond ((string-null? ln)
+		       (display "<br />\n" out)
+		       (set! *list-continuation* #f))
 		      (else
 		       (pop-all out)
 		       (fprintf out "~a~%" (inline ln)))))
@@ -93,23 +109,29 @@
 			     name n name n))))
 	       ((string-match (rx +pre+) ln) =>
 		(lambda (m)
-		  (push-tag 'pre out)
-		  (fprintf out "~a~%" (clean (car m)))))
+		  (cond (*list-continuation* 
+			 (fprintf out "~a~%" (inline (second m))))
+			(else
+			 (push-tag 'pre out)
+			 (fprintf out "~a~%" (clean (car m)))))))
 	       ((string-match (rx +hr+) ln) =>
 		(lambda (m)
 		  (fprintf out "<hr />~%")))
 	       ((string-match (rx +d-list+) ln) =>
 		(lambda (m)
 		  (push-tag 'dl out)
+		  (set! *list-continuation* #t)
 		  (fprintf out "<dt>~a</dt><dd>~a</dd>~%" 
 			   (inline (second m)) (inline (third m)))))
 	       ((string-match (rx +u-list+) ln) =>
 		(lambda (m)
 		  (push-tag `(ul . ,(string-length (second m))) out)
+		  (set! *list-continuation* #t)
 		  (fprintf out "<li>~a~%" (inline (third m)))))
 	       ((string-match (rx +o-list+) ln) =>
 		(lambda (m)
 		  (push-tag `(ol . ,(string-length (second m))) out)
+		  (set! *list-continuation* #t)
 		  (fprintf out "<li>~a~%" (inline (third m)))))
 	       (else (error "unknown block match" m))´)
 	 (loop))))))
@@ -143,10 +165,16 @@
 			      "")
 			     ((member m1 *manual-pages*)
 			      (string-append 
-			       "<a href='" (clean m1) ".html'>" (clean m1) "</a>"))
+			       "<a href='" (clean m1) ".html'>" (inline m1) "</a>"))
 			     (else
 			      (string-append
-			       "<a href='" (clean (second m)) "'>"
+			       "<a href='" 
+			       (clean
+				(let ((href (second m)))
+				  (if (string-match (rx +http-url+) href)
+				      href
+				      (string-append "http://chicken.wiki.br/" href))))
+			       "'>"
 			       (clean (or (third m) (second m)))
 			       "</a>")))
 		       (continue m)))))
@@ -181,10 +209,14 @@
 	(_ n)))
     (display
      (shtml->html
-      (wrap name (walk `(body ,@(cdr sxml))))))))
+      (let ((sxml (wrap name (walk `(body ,@(cdr sxml))))))
+	;(pp sxml (current-error-port))
+	sxml)))))
 
 (define (wrap name body)
-  `(html (head (title ,(string-append "The CHICKEN User's Manual - " name)))
+  `(html (head (title ,(string-append "The CHICKEN User's Manual - " name))
+	       (style (@ (type "text/css"))
+		 "@import url('manual.css');\n"))
 	 ,body))
 
 

@@ -99,6 +99,7 @@ This procedure may be useful in combination with {{thread-sleep!}} when your com
    (thread-sleep!
     (milliseconds->time (+ ms (current-milliseconds)))))
 
+---
 Previous: [[Unit regex]]
 
 Next: [[Unit posix]]

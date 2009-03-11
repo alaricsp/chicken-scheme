@@ -139,7 +139,7 @@ Returns a custom input port that reads its input from {{PORT1}}, until it
 is empty, then from {{PORT2}} and so on. Closing the concatenated port
 does not close any of the argument ports.
 
-
+---
 Previous: [[Unit data-structures]]
 
 Next: [[Unit files]]

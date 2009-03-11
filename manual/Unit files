@@ -138,7 +138,7 @@ filesystems and devices (unlike {{file-rename}}).  It is possible for an
 error to be signalled despite partial success if {{NEWFILE}} could be created
 and fully written but removing {{ORIGFILE}} fails.
 
-
+---
 Previous: [[Unit ports]]
 
 Next: [[Unit extras]]

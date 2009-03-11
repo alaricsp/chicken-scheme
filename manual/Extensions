@@ -549,7 +549,7 @@ do so. If you require a statically linkable version of an egg that has
 not been converted yet, contact the extension author or the CHICKEN 
 mailing list.
 
-
+---
 Previous: [[Interface to external functions and variables]]
 
 Next: [[Data representation]]

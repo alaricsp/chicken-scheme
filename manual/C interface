@@ -391,7 +391,7 @@ Continuations captured via {{call-with-current-continuation}}
 and passed to C code can be invoked like any other Scheme procedure.
 
 
-
+---
 Previous: [[Other support procedures]]
 
 Next: [[Extensions]]

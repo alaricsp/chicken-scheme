@@ -488,6 +488,7 @@ be one.
 * Currently value bindings imported by {{import}} and {{import-for-syntax}} share the same import-environment.
 
 
+---
 Previous: [[Non-standard macros and special forms]]
 
 Next: [[Declarations]]

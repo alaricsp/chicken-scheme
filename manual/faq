@@ -625,8 +625,7 @@ Yes, just [[FAQ#Extensions#How can I install Chicken eggs to a non-default locat
 Possibly the Windows Firewall is active, which prevents {{chicken-install}} from opening a TCP
 connection to the egg repository. Try disabling the firewall temporarily.
 
-----
-
+---
 Previous: [[Bugs and limitations]]
 
 Next: [[Acknowledgements]]

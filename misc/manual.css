@@ -1,0 +1,34 @@
+/* manual.css - Stylesheet for HTML manual */
+
+
+CODE {
+    color: #666666;
+}
+
+a:link {
+    color: #336;
+}
+
+a:visited { color: #666; }
+
+a:active  { color: #966; }
+
+a:hover   { color: #669; }
+
+body { 
+    background: #fff; 
+    color: #000; 
+    font: 9pt "Lucida Grande", "Verdana", sans-serif;
+    margin: 8em;
+}
+
+TT {
+    font-family: "Andale Mono", monospace;
+/* font-size: 1.2em; */
+}
+
+H3 {
+    color: #113;
+}
+
+PRE { font-family: "Andale Mono", monospace; }

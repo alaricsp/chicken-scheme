@@ -172,7 +172,7 @@ where {{N}} is the number of values to be returned, and {{X1, ...}} are the
 results, which should be Scheme data objects. When returning multiple values, the
 return-type should be omitted.
 
-
+---
 Previous: [[Interface to external functions and variables]]
 
 Next: [[Foreign type specifiers]]

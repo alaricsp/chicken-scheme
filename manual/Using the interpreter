@@ -257,8 +257,7 @@ To view the documentation for one entry from the manual, use {{man:help}} as in:
 
 Note: Currently the documentation provided by the {{man}} extension corresponds to Chicken's 2.429, one of the last releases whose documentation was in the texinfo format (the format the {{man}} extension parses).
 
-----
-
+---
 Previous: [[Using the compiler]]
 
 Next: [[Supported language]]

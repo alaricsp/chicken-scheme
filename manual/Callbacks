@@ -93,6 +93,7 @@ stack and {{size}} is the number of words contained in the data object
 (or some estimate). The call will make sure the limits are adjusted so
 that the value pointed to by {{ptr}} is located in the stack.
 
+---
 Previous: [[Embedding]]
 
 Next: [[Locations]]
