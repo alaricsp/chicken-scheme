@@ -65,6 +65,9 @@
 
 (include "irregex.scm")
 
+
+;;; Record `regexp'
+
 (define-record regexp x)
 
 (define (regexp pat #!optional caseless extended utf8)
@@ -82,6 +85,9 @@
   (cond ((regexp? x) (regexp-x x))
 	((irregex? x) x)
 	(else (irregex x))))
+
+
+;;; Basic `regexp' operations
 
 (define (string-match rx str)
   (let ((rx (unregexp rx)))
@@ -126,14 +132,13 @@
                                   res)))))))
 
 
-
 ;;; Split string into fields:
 
 (define string-split-fields
   (let ([reverse reverse]
         [substring substring]
         [string-search-positions string-search-positions] )
-    (lambda (rgxp str . mode-and-start)
+    (lambda (rx str . mode-and-start)
       (##sys#check-string str 'string-split-fields)
       (let* ([argc (length mode-and-start)]
              [len (##sys#size str)]
@@ -144,7 +149,7 @@
                       (lambda (ms start)
                         (if (fx< start len)
                             (##sys#error 'string-split-fields
-                                         "record does not end with suffix" str rgxp)
+                                         "record does not end with suffix" str rx)
                             (reverse ms) ) ) ]
                      [(#:infix)
                       (lambda (ms start)
@@ -156,7 +161,7 @@
                       [(#:infix #:suffix) (lambda (start from to) (substring str start from))]
                       [else (lambda (start from to) (substring str from to))] ) ] )
         (let loop ([ms '()] [start start])
-          (let ([m (string-search-positions rgxp str start)])
+          (let ([m (string-search-positions rx str start)])
             (if m
                 (let* ([mp (car m)]
                        [from (car mp)]
@@ -176,7 +181,7 @@
         [reverse reverse]
         [make-string make-string]
         [string-search-positions string-search-positions] )
-    (lambda (regex subst string . flag)
+    (lambda (rx subst string . flag)
       (##sys#check-string subst 'string-substitute)
       (let* ([which (if (pair? flag) (car flag) 1)]
              [substlen (##sys#size subst)]
@@ -204,14 +209,14 @@
                       (loop start index+1) ) ) ) ) )
         (let loop ([index 0] [count 1])
           (let ((matches (and (fx< index strlen) 
-			      (string-search-positions regex string index))))
+			      (string-search-positions rx string index))))
             (cond [matches
                    (let* ([range (car matches)]
                           [upto (cadr range)] )
                      (cond ((fx= 0 (fx- (cadr range) (car range)))
                             (##sys#error
                              'string-substitute "empty substitution match"
-                             regex) )
+                             rx) )
                            ((or (not (fixnum? which)) (fx= count which))
                             (push (substring string index (car range)))
                             (substitute matches)
@@ -290,14 +295,14 @@
 
 (define grep
   (let ([string-search string-search])
-    (lambda (rgxp lst)
+    (lambda (rx lst)
       (##sys#check-list lst 'grep)
       (let loop ([lst lst])
         (if (null? lst)
             '()
             (let ([x (car lst)]
                   [r (cdr lst)] )
-              (if (string-search rgxp x)
+              (if (string-search rx x)
                   (cons x (loop r))
                   (loop r) ) ) ) ) ) ) )
 

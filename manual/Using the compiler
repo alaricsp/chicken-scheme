@@ -34,6 +34,8 @@ Possible options are:
 
 ; -check-syntax : Aborts compilation process after macro-expansion and syntax checks.
 
+; -chicken-syntax : Enables the Chicken extensions to R5RS syntax, case sensitivity, {...} and [...] read as (...), and |...| escapes a symbol.
+
 ; -debug MODES : Enables one or more compiler debugging modes. {{MODES}} is a string of characters that select debugging information about the compiler that will be printed to standard output.
 
      t          show time needed for compilation
@@ -135,6 +137,10 @@ Possible options are:
 
 ; -no-lambda-info : Don't emit additional information for each {{lambda}} expression (currently the argument-list, after alpha-conversion/renaming).
 
+; -no-parentheses-synonyms STYLE : Disables list delimiter synonyms, [..] and {...} for (...).
+
+; -no-symbol-escape : Disables support for escaped symbols, the |...| form.
+
 ; -no-trace : Disable generation of tracing information. If a compiled executable should halt due to a runtime error, then a list of the name and the line-number (if available) of the last procedure calls is printed, unless {{-no-trace}} is specified. With this option the generated code is slightly faster.
 
 ; -no-warnings : Disable generation of compiler warnings.
@@ -154,18 +160,18 @@ Possible options are:
 
 ; -output-file FILENAME : Specifies the pathname of the generated C file. Default is {{FILENAME.c}}.
 
-; -parenthesis-synonyms STYLE : Enables list delimiter synonyms, where {{STYLE}} may be {{#:block}}. Any other value is ignored.
-
 ; -postlude EXPRESSIONS : Add {{EXPRESSIONS}} after all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place after processing of {{-epilogue}}.
 
 ; -prelude EXPRESSIONS : Add {{EXPRESSIONS}} before all other toplevel expressions in the compiled file.  This option may be given multiple times. Processing of this option takes place before processing of {{-prologue}}.
 
 ; -profile : 
-;-accumulate-profile : Instruments the source code to count procedure calls and execution times. After the program terminates (either via an explicit {{exit}} or implicitly), profiling statistics are written to a file named {{PROFILE}}. Each line of the generated file contains a list with the procedure name, the number of calls and the time spent executing it. Use the {{chicken-profile}} program to display the profiling information in a more user-friendly form. Enter {{chicken-profile}} with no arguments at the command line to get a list of available options. The {{-accumulate-profile}} option is similar to {{-profile}}, but the resulting profile information will be appended to any existing {{PROFILE}} file. {{chicken-profile}} will merge and sum up the accumulated timing information, if several entries for the same procedure calls exist.
+; -accumulate-profile : Instruments the source code to count procedure calls and execution times. After the program terminates (either via an explicit {{exit}} or implicitly), profiling statistics are written to a file named {{PROFILE}}. Each line of the generated file contains a list with the procedure name, the number of calls and the time spent executing it. Use the {{chicken-profile}} program to display the profiling information in a more user-friendly form. Enter {{chicken-profile}} with no arguments at the command line to get a list of available options. The {{-accumulate-profile}} option is similar to {{-profile}}, but the resulting profile information will be appended to any existing {{PROFILE}} file. {{chicken-profile}} will merge and sum up the accumulated timing information, if several entries for the same procedure calls exist.
 
 ; -profile-name FILENAME : Specifies name of the generated profile information (which defaults to {{PROFILE}}. Implies {{-profile}}.
 
 ; -prologue FILENAME : Includes the file named {{FILENAME}} at the start of the compiled source file.  The include-path is not searched. This option may be given multiple times.
+
+; -r5rs-syntax : Disables the Chicken extensions to R5RS syntax. Does not disable [[Non-standard read syntax|non-standard read syntax]].
 
 ; -raw : Disables the generation of any implicit code that uses the Scheme libraries (that is all runtime system files besides {{runtime.c}} and {{chicken.h}}).
 

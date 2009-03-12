@@ -59,7 +59,7 @@
 (assert (eq? (hash-table-ref ht 'baz) 'foo))
 (assert (= (hash-table-size ht) 2))
 
-(print "HT - AList")
+(print "HT - A-List")
 (let ([alist (hash-table->alist ht)])
   (assert (list? alist))
   (assert (= (length alist) 2))
@@ -80,7 +80,7 @@
 (assert (not (hash-table-exists? ht 'baz)))
 (assert (= (hash-table-size ht) 0))
 
-(print "HT - Make from AList")
+(print "HT - Make from A-List")
 (set! ht (alist->hash-table '(("abc" . #t) ("cbs" . #t) ("cnn" . #f))))
 (assert (hash-table? ht))
 (assert (= (hash-table-size ht) 3))

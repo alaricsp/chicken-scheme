@@ -127,7 +127,8 @@
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
     -emit-external-prototypes-first -inline -extension -release
-    -analyze-only -keep-shadowed-macros -inline-global) -ignore-repository)
+    -analyze-only -keep-shadowed-macros -inline-global -ignore-repository
+    -no-symbol-escape -no-parentheses-synonyms -chicken-syntax -r5rs-syntax))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
@@ -263,156 +264,182 @@
 ;;; Display usage information:
 
 (define (usage)
-  (display
-"Usage: csc FILENAME | OPTION ...
+  (display #<<EOF
+Usage: csc FILENAME | OPTION ...
 
-  `csc' is a driver program for the CHICKEN compiler. Any Scheme, C or object
-  files and all libraries given on the command line are translated, compiled or
-  linked as needed.
+  `csc' is a driver program for the CHICKEN compiler. Files given on the
+  command line are translated, compiled or linked as needed.
+
+  FILENAME is a Scheme source file name with optional extension or a
+  C/C++/Objective-C source, object or library file name with extension. OPTION
+  may be one of the following:
 
   General options:
 
-    -h  -help                   display this text and exit
-    -v                          show intermediate compilation stages
-    -v2  -verbose               display information about translation progress
-    -v3                         display information about all compilation stages
-    -V  -version                display Scheme compiler version and exit
-    -release                    display release number and exit
+    -h  -help                      display this text and exit
+    -v                             show intermediate compilation stages
+    -v2  -verbose                  display information about translation
+                                    progress
+    -v3                            display information about all compilation
+                                    stages
+    -V  -version                   display Scheme compiler version and exit
+    -release                       display release number and exit
 
   File and pathname options:
 
-    -o -output-file FILENAME    specifies target executable name
-    -I -include-path PATHNAME   specifies alternative path for included files
-    -to-stdout                  write compiler to stdout (implies -t)
-    -s -shared -dynamic         generate dynamically loadable shared object file
+    -o -output-file FILENAME       specifies target executable name
+    -I -include-path PATHNAME      specifies alternative path for included
+                                    files
+    -to-stdout                     write compiler to stdout (implies -t)
+    -s -shared -dynamic            generate dynamically loadable shared object
+                                    file
 
   Language options:
 
-    -D  -DSYMBOL  -feature SYMBOL 
-                                register feature identifier
-    -c++                        Compile via a C++ source file (.cpp) 
-    -objc                       Compile via Objective-C source file (.m)
+    -D  -DSYMBOL  -feature SYMBOL  register feature identifier
+    -c++                           compile via a C++ source file (.cpp) 
+    -objc                          compile via Objective-C source file (.m)
 
   Syntax related options:
 
-    -i -case-insensitive        don't preserve case of read symbols    
-    -K -keyword-style STYLE     allow alternative keyword syntax (prefix, suffix or none)
-       -parenthesis-synonyms STYLE
-                                allow list delimiter synonyms (block or none)
-    -compile-syntax             macros are made available at run-time
-    -j -emit-import-library MODULE 
-                                write compile-time module information into separate file
+    -i -case-insensitive           don't preserve case of read symbols    
+    -k  -keyword-style STYLE       enable alternative keyword-syntax
+                                    (prefix, suffix or none)
+        -no-parentheses-synonyms   disables list delimiter synonyms
+        -no-symbol-escape          disables support for escaped symbols
+        -chicken-syntax            enables the Chicken extensions to
+                                    R5RS syntax
+        -r5rs-syntax               disables the Chicken extensions to
+                                    R5RS syntax
+    -compile-syntax                macros are made available at run-time
+    -j -emit-import-library MODULE write compile-time module information into
+                                    separate file
 
   Translation options:
 
-    -x  -explicit-use           do not use units `library' and `eval' by default
-    -P  -check-syntax           stop compilation after macro-expansion
-    -A  -analyze-only           stop compilation after first analysis pass
+    -x  -explicit-use              do not use units `library' and `eval' by
+                                    default
+    -P  -check-syntax              stop compilation after macro-expansion
+    -A  -analyze-only              stop compilation after first analysis pass
 
   Debugging options:
 
-    -w  -no-warnings            disable warnings
-    -disable-warning CLASS      disable specific class of warnings
+    -w  -no-warnings               disable warnings
+    -disable-warning CLASS         disable specific class of warnings
     -d0 -d1 -d2 -debug-level NUMBER
-                                set level of available debugging information
-    -no-trace                   disable rudimentary debugging information
-    -profile                    executable emits profiling information 
-    -accumulate-profile         executable emits profiling information in append mode
-    -profile-name FILENAME      name of the generated profile information file
+                                   set level of available debugging information
+    -no-trace                      disable rudimentary debugging information
+    -profile                       executable emits profiling information 
+    -accumulate-profile            executable emits profiling information in
+                                    append mode
+    -profile-name FILENAME         name of the generated profile information
+                                    file
 
   Optimization options:
 
     -O -O1 -O2 -O3 -O4 -optimize-level NUMBER
-			        enable certain sets of optimization options
-    -optimize-leaf-routines     enable leaf routine optimization
-    -N  -no-usual-integrations  standard procedures may be redefined
-    -u  -unsafe                 disable safety checks
-    -local                      assume globals are only modified in current file
-    -b  -block                  enable block-compilation
-    -disable-interrupts         disable interrupts in compiled code
-    -f  -fixnum-arithmetic      assume all numbers are fixnums
-    -Ob  -benchmark-mode        equivalent to '-block -optimize-level 4
-                                 -debug-level 0 -fixnum-arithmetic -lambda-lift 
-                                 -disable-interrupts -inline'
-    -lambda-lift                perform lambda-lifting
-    -unsafe-libraries           link with unsafe runtime system
-    -disable-stack-overflow-checks  disables detection of stack-overflows
-    -inline                     enable inlining
-    -inline-limit               set inlining threshold
-    -inline-global              enable cross-module inlining
-    -n -emit-inline-file FILENAME  
-                                generate file with globally inlinable procedures
-                                (implies -inline -local)
+                                   enable certain sets of optimization options
+    -optimize-leaf-routines        enable leaf routine optimization
+    -N  -no-usual-integrations     standard procedures may be redefined
+    -u  -unsafe                    disable safety checks
+    -local                         assume globals are only modified in current
+                                    file
+    -b  -block                     enable block-compilation
+    -disable-interrupts            disable interrupts in compiled code
+    -f  -fixnum-arithmetic         assume all numbers are fixnums
+    -Ob  -benchmark-mode           equivalent to '-block -optimize-level 4
+                                    -debug-level 0 -fixnum-arithmetic
+                                    -lambda-lift -inline -disable-interrupts'
+    -lambda-lift                   perform lambda-lifting
+    -unsafe-libraries              link with unsafe runtime system
+    -disable-stack-overflow-checks disables detection of stack-overflows
+    -inline                        enable inlining
+    -inline-limit                  set inlining threshold
+    -inline-global                 enable cross-module inlining
+    -n -emit-inline-file FILENAME  generate file with globally inlinable
+                                    procedures (implies -inline -local)
 
   Configuration options:
 
-    -unit NAME                  compile file as a library unit
-    -uses NAME                  declare library unit as used.
-    -heap-size NUMBER           specifies heap-size of compiled executable
-    -heap-initial-size NUMBER   specifies heap-size at startup time
-    -heap-growth PERCENTAGE     specifies growth-rate of expanding heap
-    -heap-shrinkage PERCENTAGE  specifies shrink-rate of contracting heap
+    -unit NAME                     compile file as a library unit
+    -uses NAME                     declare library unit as used.
+    -heap-size NUMBER              specifies heap-size of compiled executable
+    -heap-initial-size NUMBER      specifies heap-size at startup time
+    -heap-growth PERCENTAGE        specifies growth-rate of expanding heap
+    -heap-shrinkage PERCENTAGE     specifies shrink-rate of contracting heap
     -nursery NUMBER  -stack-size NUMBER
-		                specifies nursery size of compiled executable
-    -X -extend FILENAME         load file before compilation commences
-    -prelude EXPRESSION         add expression to beginning of source file
-    -postlude EXPRESSION        add expression to end of source file
-    -prologue FILENAME          include file before main source file
-    -epilogue FILENAME          include file after main source file
-    -ignore-repository          do not refer to repository for extensions
+                                   specifies nursery size of compiled
+                                   executable
+    -X -extend FILENAME            load file before compilation commences
+    -prelude EXPRESSION            add expression to beginning of source file
+    -postlude EXPRESSION           add expression to end of source file
+    -prologue FILENAME             include file before main source file
+    -epilogue FILENAME             include file after main source file
+    -ignore-repository             do not refer to repository for extensions
 
-    -e  -embedded               compile as embedded (don't generate `main()')
-    -W  -windows                compile as Windows GUI application (MSVC only)
-    -R  -require-extension NAME require extension and import in compiled code
-    -E  -extension              compile as extension (dynamic or static)
-    -dll -library               compile multiple units into a dynamic library
+    -e  -embedded                  compile as embedded
+                                    (don't generate `main()')
+    -W  -windows                   compile as Windows GUI application
+                                    (MSVC only)
+    -R  -require-extension NAME    require extension and import in compiled
+                                    code
+    -E  -extension                 compile as extension (dynamic or static)
+    -dll -library                  compile multiple units into a dynamic
+                                    library
 
   Options to other passes:
 
-    -C OPTION                   pass option to C compiler
-    -L OPTION                   pass option to linker
-    -I<DIR>                     pass \"-I<DIR>\" to C compiler (add include path)
-    -L<DIR>                     pass \"-L<DIR>\" to linker (add library path)
-    -k                          keep intermediate files
-    -c                          stop after compilation to object files
-    -t                          stop after translation to C
-    -cc COMPILER                select other C compiler than the default one
-    -cxx COMPILER               select other C++ compiler than the default one
-    -ld COMPILER                select other linker than the default one
-    -lLIBNAME                   link with given library (`libLIBNAME' on UNIX,
-                                 `LIBNAME.lib' on Windows)                                
-    -static-libs                link with static CHICKEN libraries
-    -static                     generate completely statically linked executable
-    -static-extension NAME      link extension NAME statically (if available)
-    -F<DIR>                     pass \"-F<DIR>\" to C compiler (add framework 
-                                 header path on Mac OS X)
-    -framework NAME             passed to linker on Mac OS X
-    -rpath PATHNAME             add directory to runtime library search path
-    -Wl,...                     pass linker options
-    -strip                      strip resulting binary
+    -C OPTION                      pass option to C compiler
+    -L OPTION                      pass option to linker
+    -I<DIR>                        pass \"-I<DIR>\" to C compiler
+                                    (add include path)
+    -L<DIR>                        pass \"-L<DIR>\" to linker
+                                    (add library path)
+    -k                             keep intermediate files
+    -c                             stop after compilation to object files
+    -t                             stop after translation to C
+    -cc COMPILER                   select other C compiler than the default one
+    -cxx COMPILER                  select other C++ compiler than the default one
+    -ld COMPILER                   select other linker than the default one
+    -lLIBNAME                      link with given library
+                                    (`libLIBNAME' on UNIX,
+                                     `LIBNAME.lib' on Windows)
+    -static-libs                   link with static CHICKEN libraries
+    -static                        generate completely statically linked
+                                    executable
+    -static-extension NAME         link extension NAME statically
+                                    (if available)
+    -F<DIR>                        pass \"-F<DIR>\" to C compiler
+                                    (add framework header path on Mac OS X)
+    -framework NAME                passed to linker on Mac OS X
+    -rpath PATHNAME                add directory to runtime library search path
+    -Wl,...                        pass linker options
+    -strip                         strip resulting binary
 
   Inquiry options:
 
-    -home                       show home-directory (where support files go)
-    -cflags                     show required C-compiler flags and exit
-    -ldflags                    show required linker flags and exit
-    -libs                       show required libraries and exit
-    -cc-name                    show name of default C compiler used
-    -cxx-name                   show name of default C++ compiler used
-    -ld-name                    show name of default linker used
-    -dry-run                    just show commands executed, don't run them 
-                                 (implies `-v')
+    -home                          show home-directory (where support files go)
+    -cflags                        show required C-compiler flags and exit
+    -ldflags                       show required linker flags and exit
+    -libs                          show required libraries and exit
+    -cc-name                       show name of default C compiler used
+    -cxx-name                      show name of default C++ compiler used
+    -ld-name                       show name of default linker used
+    -dry-run                       just show commands executed, don't run them
+                                    (implies `-v')
 
   Obscure options:
 
-    -debug MODES                display debugging output for the given modes
-    -compiler PATHNAME          use other compiler than default `chicken'
-    -disable-c-syntax-checks    disable syntax checks of C code fragments
-    -raw                        do not generate implicit init- and exit code			       
-    -emit-external-prototypes-first  emit protoypes for callbacks before foreign
-                                 declarations
-    -keep-shadowed-macros       do not remove shadowed macro
-    -host                       compile for host when configured for cross-compiling
+    -debug MODES                   display debugging output for the given modes
+    -compiler PATHNAME             use other compiler than default `chicken'
+    -disable-c-syntax-checks       disable syntax checks of C code fragments
+    -raw                           do not generate implicit init- and exit code
+    -emit-external-prototypes-first
+                                   emit protoypes for callbacks before foreign
+                                    declarations
+    -keep-shadowed-macros          do not remove shadowed macro
+    -host                          compile for host when configured for
+                                    cross-compiling
 
   Options can be collapsed if unambiguous, so
 
@@ -422,9 +449,10 @@
 
     -v -k -fixnum-arithmetic -optimize
 
-  The contents of the environment variable CSC_OPTIONS are implicitly
-  passed to every invocation of `csc'.
-"
+  The contents of the environment variable CSC_OPTIONS are implicitly passed to
+  every invocation of `csc'.
+
+EOF
 ) )
 
 
@@ -461,7 +489,8 @@
 	     (when show-libs (print* (linker-libraries #t) #\space))
 	     (newline)
 	     (exit) )
-	   #;(when (null? scheme-files)
+	   #; ;UNUSED
+	   (when (null? scheme-files)
 	     (set! scheme-files c-files)
 	     (set! c-files '()) )
 	   (cond [(null? scheme-files)

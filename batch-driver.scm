@@ -125,7 +125,6 @@
 	[hgrowth (memq 'heap-growth options)]
 	[hshrink (memq 'heap-shrinkage options)]
 	[kwstyle (memq 'keyword-style options)]
-	[paransyn (memq 'parenthesis-synonyms options)]
 	[uses-units '()]
 	[uunit (memq 'unit options)]
 	[a-only (memq 'analyze-only options)]
@@ -280,11 +279,24 @@
 	      [(string=? "none" val) (keyword-style #:none)]
 	      [(string=? "suffix" val) (keyword-style #:suffix)]
 	      [else (quit "invalid argument to `-keyword-style' option")] ) ) )
-    (when paransyn
-      (let ([val (option-arg paransyn)])
-	(cond [(string=? "block" val) (parenthesis-synonyms #:block)]
-	      [(string=? "none" val) (parenthesis-synonyms #:none)]
-	      [else (quit "invalid argument to `-parenthesis-synonyms' option")] ) ) )
+    (when (memq 'no-parenthesis-synonyms options)
+      (dribble "Disabled support for parenthesis synonyms")
+      (parenthesis-synonyms #f) )
+    (when (memq 'no-symbol-escape options) 
+      (dribble "Disabled support for escaped symbols")
+      (symbol-escape #f) )
+    (when (memq '("-chicken-syntax") options)
+      (unless quiet (display "Enabled the Chicken extensions to R5RS syntax\n"))
+	(case-sensitive #t)
+	(keyword-style #:suffix)
+	(parentheses-synonyms #t)
+	(symbol-escape #t) )
+    (when (memq '("-r5rs-syntax") options)
+      (unless quiet (display "Disabled the Chicken extensions to R5RS syntax\n"))
+	(case-sensitive #f)
+	(keyword-style #:none)
+	(parentheses-synonyms #f)
+	(symbol-escape #f) )
     (set! verbose-mode verbose)
     (set! ##sys#read-error-with-line-number #t)
     (set! ##sys#include-pathnames

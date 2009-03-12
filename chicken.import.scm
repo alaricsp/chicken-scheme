@@ -152,7 +152,7 @@
    on-exit
    open-input-string
    open-output-string
-   parenthesis-synonyms
+   parentheses-synonyms
    port-name
    port-position
    port?
@@ -190,6 +190,7 @@
    string->uninterned-symbol
    strip-syntax
    sub1
+   symbol-escape
    symbol-plist
    syntax-error
    system

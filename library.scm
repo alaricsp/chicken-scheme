@@ -2110,7 +2110,8 @@ EOF
 
 (define case-sensitive (make-parameter #t))
 (define keyword-style (make-parameter #:suffix))
-(define parenthesis-synonyms (make-parameter #:block))
+(define parentheses-synonyms (make-parameter #t))
+(define symbol-escape (make-parameter #t))
 
 (define current-read-table (make-parameter (##sys#make-structure 'read-table #f #f #f)))
 
@@ -2145,23 +2146,23 @@ EOF
 	[char-name char-name]
 	[csp case-sensitive]
 	[ksp keyword-style]
-	[psp parenthesis-synonyms]
+	[psp parentheses-synonyms]
+	[sep symbol-escape]
 	[crt current-read-table]
-	[kwprefix (string (integer->char 0))]
-	; give it a name.
-	[full-terminating-characters '(#\, #\; #\( #\) #\[ #\] #\{ #\} #\' #\")]
-	[restricted-terminating-characters '(#\, #\; #\( #\) #\' #\") ] )
+	[kwprefix (string (integer->char 0))])
     (lambda (port infohandler)
       (let ([csp (csp)]
 	    [ksp (ksp)]
 	    [psp (psp)]
+	    [sep (sep)]
 	    [crt (crt)]
 	    [rat-flag #f]
-	    ; set below - needs 'psp' to make a decision.
-	    [terminating-characters #f] )
+	    ; set below - needs more state to make a decision
+	    [terminating-characters #f]
+	    [reserved-characters #f] )
 
 	(define (container c)
-	  (##sys#read-error port "unexpected list terminator" c))
+	  (##sys#read-error port "unexpected list terminator" c) )
 
 	(define (info class data val)
 	  (if infohandler
@@ -2172,6 +2173,16 @@ EOF
 	  (let skip ((c (##sys#read-char-0 port)))
 	    (if (and (not (##core#inline "C_eofp" c)) (not (eq? #\newline c)))
 		(skip (##sys#read-char-0 port)) ) ) )
+
+        (define (reserved-character c)
+          (##sys#read-char-0 port)
+          (##sys#read-error port "reserved character" c) )
+
+        (define (read-unreserved-char-0 port)
+          (let ((c (##sys#read-char-0 port)))
+            (if (memq c reserved-characters)
+                (reserved-character c)
+                c) ) )
 
 	(define (readrec)
 
@@ -2359,12 +2370,9 @@ EOF
 		     (##sys#reverse-list->string lst) ]
 		    [else
 		     (when (char=? c #\/) (set! rat-flag #t))
-		     (##sys#read-char-0 port)
+		     (read-unreserved-char-0 port)
 		     (loop (##sys#peek-char-0 port) 
-		       (cons (if csp
-				 c
-				 (char-downcase c) )
-			     lst) ) ] ) ) )
+		           (cons (if csp c (char-downcase c)) lst) ) ] ) ) )
 
 	  (define (r-digits)
 	    (let loop ((c (##sys#peek-char-0 port)) (lst '()))
@@ -2386,7 +2394,7 @@ EOF
 	      (info 'symbol-info s (##sys#port-line port)) ) )
 
 	  (define (r-xtoken)
-	    (if (char=? #\| (##sys#read-char-0 port))
+	    (if (char=? #\| (read-unreserved-char-0 port))
 		(let loop ((c (##sys#read-char-0 port)) (lst '()))
 		  (cond ((eof-object? c) (##sys#read-error port "unexpected end of `| ... |' symbol"))
 			((char=? c #\\)
@@ -2482,26 +2490,28 @@ EOF
 	  (define (build-keyword tok)
 	    (##sys#intern-symbol (##sys#string-append kwprefix tok)) )
 
-          ; Handle parenthesis-synonyms
-
-          (define (open-list/maybe start end)
-            (if (eq? #:block psp) (r-list start end) (r-symbol)))
-
-          (define (close-list/maybe c)
-            (if (eq? #:block psp)
-		(begin (##sys#read-char-0 port) (container c))
-		(r-symbol)))
-
           ; now have the state to make a decision.
           (set! terminating-characters
-	        (if (eq? #:block psp) full-terminating-characters restricted-terminating-characters))
+	        (if psp
+	            '(#\, #\; #\( #\) #\' #\" #\[ #\] #\{ #\})
+	            '(#\, #\; #\( #\) #\' #\")))
+          (set! reserved-characters
+	        (if psp
+	            (if sep
+	                '()
+	                '(#\[ #\] #\{ #\}) )
+	            (if sep
+	                '(#\|)
+	                '(#\[ #\] #\{ #\} #\|))))
 
 	  (r-spaces)
 	  (let* ([c (##sys#peek-char-0 port)]
 		 [srst (##sys#slot crt 1)]
 		 [h (and srst (##sys#slot srst (char->integer c)) ) ] )
 	    (if h
+	        ;then handled by read-table entry
 		(h c port)
+		;otherwise chicken extended r5rs syntax
 		(case c
 		  ((#\')
 		   (##sys#read-char-0 port)
@@ -2523,13 +2533,17 @@ EOF
 				(dchar (##sys#peek-char-0 port))
 				(spdrst (##sys#slot crt 3)) 
 				(h (and spdrst (##sys#slot spdrst (char->integer dchar)) ) ) )
+	                         ;#<num> handled by parameterized # read-table entry?
 			   (cond (h (h dchar port n))
+			         ;#<num>?
 				 ((or (eq? dchar #\)) (char-whitespace? dchar)) (##sys#sharp-number-hook port n))
 				 (else (##sys#read-error port "invalid parameterized read syntax" dchar n) ) ) )
 			 (let* ((sdrst (##sys#slot crt 2))
 				(h (and sdrst (##sys#slot sdrst (char->integer dchar)) ) ) )
 			   (if h
+	                       ;then handled by # read-table entry
 			       (h dchar port)
+                	       ;otherwise chicken extended r5rs syntax
 			       (case (char-downcase dchar)
 				 ((#\x) (##sys#read-char-0 port) (r-number-with-exactness 16))
 				 ((#\d) (##sys#read-char-0 port) (r-number-with-exactness 10))
@@ -2597,20 +2611,22 @@ EOF
 							  ((##sys#slot a 1) port)
 							  (##sys#read-error port "invalid `#!' token" tok) ) ) ] ) ) ) ) ) )
 				 (else (##sys#user-read-hook dchar port)) ) ) ) ) ) )
-		  ((#\() (r-list #\( #\)))
-		  ((#\)) 
-		   (##sys#read-char-0 port)
-		   (container c) )
-		  ((#\{) (r-list/maybe #\{ #\}))
-		  ((#\}) (close-list/maybe c))
-		  ((#\[) (open-list/maybe #\[ #\]))
-		  ((#\]) (close-list/maybe c))
+		  ((#\( #;#\)) (r-list #\( #\)))
+		  ((#;#\( #\)) (##sys#read-char-0 port) (container c))
 		  ((#\") (r-string #\"))
 		  ((#\.) (r-number #f))
 		  ((#\- #\+) (r-number #f))
-		  (else (cond [(eof-object? c) c]
-			      [(char-numeric? c) (r-number #f)]
-			      [else (r-symbol)] ) ) ) ) ) )
+		  (else
+		   (cond [(eof-object? c) c]
+			 [(char-numeric? c) (r-number #f)]
+			 [else
+			  (if (memq c reserved-characters)
+			      (reserved-character c)
+			      (case c
+			        ((#\[ #;#\]) (r-list #\[ #\]))
+			        ((#\{ #;#\}) (r-list #\{ #\}))
+			        ((#;#\[ #\] #;#\{ #\}) (##sys#read-char-0 port) (container c))
+			        (else (r-symbol) ) ) ) ] ) ) ) ) ) )
 
 	(readrec) ) ) ) )
 
@@ -2778,20 +2794,14 @@ EOF
   (let ([char-name char-name]
 	[csp case-sensitive]
 	[ksp keyword-style]
-	[psp parenthesis-synonyms]
 	[cpp current-print-length]
-	[string-append string-append]
-	; give it a name.
-	[full-special-characters '(#\( #\) #\| #\, #\[ #\] #\{ #\} #\' #\" #\; #\\ #\`)]
-	[restricted-special-characters '(#\( #\) #\| #\, #\' #\" #\; #\\ #\`)] )
+	[string-append string-append])
     (lambda (x readable port)
       (##sys#check-port-mode port #f)
       (let ([csp (csp)]
 	    [ksp (ksp)]
-	    [psp (psp)]
 	    [length-limit (print-length-limit)]
-	    ; set below - needs 'psp' to make a decision.
-	    [special-characters #f] )
+	    [special-characters '(#\( #\) #\, #\[ #\] #\{ #\} #\' #\" #\; #\ #\` #\|)] )
 
 	(define (outstr port str)
 	  (if length-limit
@@ -2858,10 +2868,6 @@ EOF
 			 (and (or csp (not (char-upper-case? c)))
 			      (not (specialchar? c))
 			      (loop (fx- i 1)) ) ) ) ) ) ) )
-
-        ; now have the state to make a decision.
-        (set! special-characters
-	      (if (eq? #:block psp) full-special-characters restricted-special-characters))
 
 	(let out ([x x])
 	  (cond ((eq? x '()) (outstr port "()"))

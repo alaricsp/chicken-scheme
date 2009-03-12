@@ -97,8 +97,11 @@ Any other value disables the alternative syntaxes.
 
 
 === parenthesis-synonyms
-Enables list delimiter synonyms, where {{STYLE}} may be {{#:block}}.
-Any other value disables the alternative syntaxes.
+If true, then the list delimiter synonyms {{#\[}} {{#\]}} and {{#\{}} {{#\}}} are enabled. Defaults to {{#t}}.
+
+
+=== symbol-escape
+If true, then the symbol escape {{#\|}} {{#\|}} is enabled. Defaults to {{#t}}.
 
 
 === load-verbose

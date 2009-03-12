@@ -1229,102 +1229,115 @@
   (display #<<EOF
 Usage: chicken FILENAME OPTION ...
 
+  `chicken' is the CHICKEN compiler.
+  
   FILENAME should be a complete source file name with extension, or "-" for
   standard input. OPTION may be one of the following:
 
   General options:
 
-    -help                       display this text and exit
-    -version                    display compiler version and exit
-    -release                    print release number and exit
-    -verbose                    display information on compilation progress
+    -help                        display this text and exit
+    -version                     display compiler version and exit
+    -release                     print release number and exit
+    -verbose                     display information on compilation progress
 
   File and pathname options:
 
-    -output-file FILENAME       specifies output-filename, default is 'out.c'
-    -include-path PATHNAME      specifies alternative path for included files
-    -to-stdout                  write compiled file to stdout instead of file
+    -output-file FILENAME        specifies output-filename, default is 'out.c'
+    -include-path PATHNAME       specifies alternative path for included files
+    -to-stdout                   write compiled file to stdout instead of file
 
   Language options:
 
-    -feature SYMBOL             register feature identifier
+    -feature SYMBOL              register feature identifier
 
   Syntax related options:
 
-    -case-insensitive           don't preserve case of read symbols
-    -keyword-style STYLE        allow alternative keyword syntax (prefix, suffix or none)
-    -parenthesis-synonyms STYLE allow alternative keyword syntax (block or none)
-    -compile-syntax             macros are made available at run-time
-    -emit-import-library MODULE write compile-time module information into separate file
+    -case-insensitive            don't preserve case of read symbols
+    -keyword-style STYLE         allow alternative keyword syntax
+                                  (prefix, suffix or none)
+    -no-parentheses-synonyms     disables list delimiter synonyms
+    -no-symbol-escape            disables support for escaped symbols
+    -chicken-syntax              enables the Chicken extensions to
+                                  R5RS syntax
+    -r5rs-syntax                 disables the Chicken extensions to
+                                  R5RS syntax
+    -compile-syntax              macros are made available at run-time
+    -emit-import-library MODULE  write compile-time module information into
+                                  separate file
 
   Translation options:
 
-    -explicit-use               do not use units 'library' and 'eval' by default
-    -check-syntax               stop compilation after macro-expansion
-    -analyze-only               stop compilation after first analysis pass
+    -explicit-use                do not use units 'library' and 'eval' by
+                                  default
+    -check-syntax                stop compilation after macro-expansion
+    -analyze-only                stop compilation after first analysis pass
 
   Debugging options:
 
-    -no-warnings                disable warnings
-    -disable-warning CLASS      disable specific class of warnings
-    -debug-level NUMBER         set level of available debugging information
-    -no-trace                   disable tracing information
-    -profile                    executable emits profiling information 
-    -profile-name FILENAME      name of the generated profile information file
-    -accumulate-profile         executable emits profiling information in append mode
-    -no-lambda-info             omit additional procedure-information
+    -no-warnings                 disable warnings
+    -disable-warning CLASS       disable specific class of warnings
+    -debug-level NUMBER          set level of available debugging information
+    -no-trace                    disable tracing information
+    -profile                     executable emits profiling information 
+    -profile-name FILENAME       name of the generated profile information file
+    -accumulate-profile          executable emits profiling information in
+                                  append mode
+    -no-lambda-info              omit additional procedure-information
 
   Optimization options:
 
-    -optimize-level NUMBER      enable certain sets of optimization options
-    -optimize-leaf-routines     enable leaf routine optimization
-    -lambda-lift                enable lambda-lifting
-    -no-usual-integrations      standard procedures may be redefined
-    -unsafe                     disable safety checks
-    -local                      assume globals are only modified in current file
-    -block                      enable block-compilation
-    -disable-interrupts         disable interrupts in compiled code
-    -fixnum-arithmetic          assume all numbers are fixnums
-    -benchmark-mode             equivalent to '-block -optimize-level 4
-                                 -debug-level 0 -fixnum-arithmetic -lambda-lift 
-                                 -disable-interrupts -inline'
-    -disable-stack-overflow-checks  
-                                disables detection of stack-overflows.
-    -inline                     enable inlining
-    -inline-limit               set inlining threshold
-    -inline-global              enable cross-module inlining
-    -emit-inline-file FILENAME  generate file with globally inlinable procedures
-                                (implies -inline -local)
+    -optimize-level NUMBER       enable certain sets of optimization options
+    -optimize-leaf-routines      enable leaf routine optimization
+    -lambda-lift                 enable lambda-lifting
+    -no-usual-integrations       standard procedures may be redefined
+    -unsafe                      disable safety checks
+    -local                       assume globals are only modified in current
+                                  file
+    -block                       enable block-compilation
+    -disable-interrupts          disable interrupts in compiled code
+    -fixnum-arithmetic           assume all numbers are fixnums
+    -benchmark-mode              equivalent to 'block -optimize-level 4
+                                  -debug-level 0 -fixnum-arithmetic -lambda-lift
+                                  -inline -disable-interrupts'
+    -disable-stack-overflow-checks  disables detection of stack-overflows
+    -inline                      enable inlining
+    -inline-limit                set inlining threshold
+    -inline-global               enable cross-module inlining
+    -emit-inline-file FILENAME   generate file with globally inlinable
+                                  procedures (implies -inline -local)
 
   Configuration options:
 
-    -unit NAME                  compile file as a library unit
-    -uses NAME                  declare library unit as used.
-    -heap-size NUMBER           specifies heap-size of compiled executable
-    -heap-initial-size NUMBER   specifies heap-size at startup time
-    -heap-growth PERCENTAGE     specifies growth-rate of expanding heap
-    -heap-shrinkage PERCENTAGE  specifies shrink-rate of contracting heap
-    -nursery NUMBER
-    -stack-size NUMBER          specifies nursery size of compiled executable
-    -extend FILENAME            load file before compilation commences
-    -prelude EXPRESSION         add expression to front of source file
-    -postlude EXPRESSION        add expression to end of source file
-    -prologue FILENAME          include file before main source file
-    -epilogue FILENAME          include file after main source file
-    -dynamic                    compile as dynamically loadable code
-    -require-extension NAME     require and import extension NAME
-    -static-extension NAME      import extension NAME but link statically (if available)
-    -extension                  compile as extension (dynamic or static)
-    -ignore-repository          do not refer to repository for extensions
+    -unit NAME                   compile file as a library unit
+    -uses NAME                   declare library unit as used.
+    -heap-size NUMBER            specifies heap-size of compiled executable
+    -heap-initial-size NUMBER    specifies heap-size at startup time
+    -heap-growth PERCENTAGE      specifies growth-rate of expanding heap
+    -heap-shrinkage PERCENTAGE   specifies shrink-rate of contracting heap
+    -nursery NUMBER  -stack-size NUMBER
+                                 specifies nursery size of compiled executable
+    -extend FILENAME             load file before compilation commences
+    -prelude EXPRESSION          add expression to front of source file
+    -postlude EXPRESSION         add expression to end of source file
+    -prologue FILENAME           include file before main source file
+    -epilogue FILENAME           include file after main source file
+    -dynamic                     compile as dynamically loadable code
+    -require-extension NAME      require and import extension NAME
+    -static-extension NAME       import extension NAME but link statically
+                                  (if available)
+    -extension                   compile as extension (dynamic or static)
+    -ignore-repository           do not refer to repository for extensions
 
   Obscure options:
 
-    -debug MODES                display debugging output for the given modes
-    -unsafe-libraries           marks the generated file as being linked
-                                with the unsafe runtime system
-    -raw                        do not generate implicit init- and exit code			       
-    -emit-external-prototypes-first  emit protoypes for callbacks before foreign
-                                declarations
+    -debug MODES                 display debugging output for the given modes
+    -unsafe-libraries            marks the generated file as being linked with
+                                  the unsafe runtime system
+    -raw                         do not generate implicit init- and exit code                           
+    -emit-external-prototypes-first
+                                 emit protoypes for callbacks before foreign
+                                  declarations
 
 EOF
 ) )

@@ -70,41 +70,58 @@ EOF
 ;;; Print all sorts of information:
 
 (define (print-usage)
-  (display
-"usage: csi [FILENAME | OPTION ...]
+  (display #<<EOF
+usage: csi [FILENAME | OPTION ...]
 
-  where OPTION may be one of the following:
+  `csi' is the CHICKEN interpreter.
+  
+  FILENAME is a Scheme source file name with optional extension. OPTION may be
+  one of the following:
 
-    -h  -help  --help           display this text and exit
-    -v  -version                display version and exit
-        -release                print release number and exit
-    -i  -case-insensitive       enable case-insensitive reading
-    -e  -eval EXPRESSION        evaluate given expression
-    -p  -print EXPRESSION       evaluate and print result(s)
+    -h  -help  --help             display this text and exit
+    -v  -version                  display version and exit
+        -release                  print release number and exit
+    -i  -case-insensitive         enable case-insensitive reading
+    -e  -eval EXPRESSION          evaluate given expression
+    -p  -print EXPRESSION         evaluate and print result(s)
     -P  -pretty-print EXPRESSION  evaluate and print result(s) prettily
-    -D  -feature SYMBOL         register feature identifier
-    -q  -quiet                  do not print banner
-    -n  -no-init                do not load initialization file `")
-  (display init-file)
-  (display 
-"'
-    -b  -batch                  terminate after command-line processing
-    -w  -no-warnings            disable all warnings
-    -k  -keyword-style STYLE    enable alternative keyword-syntax (prefix, suffix or none)
-        -parenthesis-synonyms STYLE
-                                allow list delimiter synonyms (block or none)
-    -s  -script PATHNAME        use interpreter for shell scripts
-        -ss PATHNAME            shell script with `main' procedure
-        -sx PATHNAME            same as `-s', but print each expression as it is evaluated
-    -R  -require-extension NAME require extension and import before executing code
-    -I  -include-path PATHNAME  add PATHNAME to include path
-    --                          ignore all following options
+    -D  -feature SYMBOL           register feature identifier
+    -q  -quiet                    do not print banner
 
-") )
+EOF
+)
+  (display #<#EOF
+    -n  -no-init                  do not load initialization file #{#\`} #{init-file} #{#\'}
+
+EOF
+)
+  (display  #<<EOF
+    -b  -batch                    terminate after command-line processing
+    -w  -no-warnings              disable all warnings
+    -k  -keyword-style STYLE      enable alternative keyword-syntax
+                                   (prefix, suffix or none)
+        -no-parentheses-synonyms  disables list delimiter synonyms
+        -no-symbol-escape         disables support for escaped symbols
+        -chicken-syntax           enables the Chicken extensions to
+                                   R5RS syntax
+        -r5rs-syntax              disables the Chicken extensions to
+                                   R5RS syntax
+    -s  -script PATHNAME          use interpreter for shell scripts
+        -ss PATHNAME              shell script with `main' procedure
+        -sx PATHNAME              same as `-s', but print each expression
+                                   as it is evaluated
+    -R  -require-extension NAME   require extension and import before
+                                   executing code
+    -I  -include-path PATHNAME    add PATHNAME to include path
+    --                            ignore all following options
+
+EOF
+) )
 
 (define (print-banner)
   (newline)
-  #;(when (and (tty-input?) (##sys#fudge 11))
+  #; ;UNUSED
+  (when (and (tty-input?) (##sys#fudge 11))
     (let* ((t (string-copy +product+))
 	   (len (string-length t))
 	   (c (make-string len #\x08)))
@@ -818,29 +835,28 @@ EOF
   '(#\k #\s #\v #\h #\D #\e #\i #\R #\b #\n #\q #\w #\- #\I #\p #\P) )
 
 (define-constant long-options
-  '("-script" "-version" "-help" "--help" "--" "-feature" 
-    "-eval" "-case-insensitive" "-keyword-style" "-parenthesis-synonyms" 
+  '("-ss" "-sx" "-script" "-version" "-help" "--help" "-feature" "-eval"
+    "-case-insensitive" "-keyword-style" "-no-parentheses-synonyms" "-no-symbol-escape"
+    "-r5rs-syntax" "-chicken-syntax"
     "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
-    "-include-path" "-release" "-ss" "-sx"
-    "-print" "-pretty-print") )
+    "-include-path" "-release" "-print" "-pretty-print" "--") )
 
 (define (canonicalize-args args)
   (let loop ((args args))
     (if (null? args)
 	'()
 	(let ((x (car args)))
-	  (cond 
-	   ((member x '("-s" "-ss" "-script" "--")) args)
-	   ((and (fx> (##sys#size x) 2)
-		 (char=? #\- (##core#inline "C_subchar" x 0))
-		 (not (member x long-options)) )
-	    (if (char=? #\: (##core#inline "C_subchar" x 1))
-		(loop (cdr args))
-		(let ((cs (string->list (substring x 1))))
-		  (if (findall cs short-options)
-		      (append (map (cut string #\- <>) cs) (loop (cdr args)))
-		      (##sys#error "invalid option" x) ) ) ) )
-	   (else (cons x (loop (cdr args)))))))))
+	  (cond ((member x '("-s" "-ss" "-script" "--")) args)
+                ((and (fx> (##sys#size x) 2)
+                       (char=? #\- (##core#inline "C_subchar" x 0))
+                       (not (member x long-options)) )
+                 (if (char=? #\: (##core#inline "C_subchar" x 1))
+                     (loop (cdr args))
+                     (let ((cs (string->list (substring x 1))))
+                       (if (findall cs short-options)
+                           (append (map (cut string #\- <>) cs) (loop (cdr args)))
+                           (##sys#error "invalid option" x) ) ) ) )
+	        (else (cons x (loop (cdr args)))))))))
 
 (define (findall chars clist)
   (let loop ((chars chars))
@@ -848,12 +864,21 @@ EOF
 	(and (memq (car chars) clist)
 	     (loop (cdr chars))))))
 
+(define-constant simple-options
+  '("--" "-b" "-batch" "-q" "-quiet" "-n" "-no-init" "-w" "-no-warnings" "-i" "-case-insensitive"
+    "-no-parentheses-synonyms" "-no-symbol-escape" "-r5rs-syntax" "-chicken-syntax"
+    ; Not "simple" but processed early
+    "-ss" "-sx" "-s" "-script") )
+
+(define-constant complex-options
+  '("-D" "-feature" "-I" "-include-path" "-k" "-keyword-style") )
+
 (define (run)
   (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (command-line-arguments))]
+	 ; Check for these before 'args' is updated by any 'extraopts'
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
-	 [paransyn (member* '("-parenthesis-synonyms") args)]
-	 [script (member* '("-s" "-ss" "-sx" "-script") args)])
+	 [script (member* '("-ss" "-sx" "-s" "-script") args)])
     (cond [script
 	   (when (or (not (pair? (cdr script)))
 		     (zero? (string-length (cadr script)))
@@ -934,13 +959,24 @@ EOF
 	       (keyword-style #:none) ]
 	      [(string=? "suffix" (cadr kwstyle))
 	       (keyword-style #:suffix) ] ) )
-      (when paransyn
-        (cond [(not (pair? (cdr paransyn)))
-	       (##sys#error "missing argument to `-parenthesis-synonyms' option") ]
-	      [(string=? "block" (cadr paransyn))
-	       (parenthesis-synonyms #:block) ]
-              [(string=? "none" (cadr paransyn))
-               (parenthesis-synonyms #:none) ] ) )
+      (when (member* '("-no-parentheses-synonyms") args)
+	(unless quiet (display "Disabled support for parentheses synonyms\n"))
+        (parentheses-synonyms #f) )
+      (when (member* '("-no-symbol-escape") args)
+	(unless quiet (display "Disabled support for escaped symbols\n"))
+	(symbol-escape #f) )
+      (when (member* '("-chicken-syntax") args)
+	(unless quiet (display "Enabled the Chicken extensions to R5RS syntax\n"))
+	(case-sensitive #t)
+	(keyword-style #:suffix)
+	(parentheses-synonyms #t)
+	(symbol-escape #t) )
+      (when (member* '("-r5rs-syntax") args)
+	(unless quiet (display "Disabled the Chicken extensions to R5RS syntax\n"))
+	(case-sensitive #f)
+	(keyword-style #:none)
+	(parentheses-synonyms #f)
+	(symbol-escape #f) )
       (unless (or (member* '("-n" "-no-init") args) script) (loadinit))
       (do ([args args (cdr args)])
 	  ((null? args)
@@ -948,14 +984,9 @@ EOF
 	     (repl)
 	     (##sys#write-char-0 #\newline ##sys#standard-output) ) )
 	(let* ([arg (car args)]
-	       [len (string-length arg)] )
-	  (cond ((member 
-		  arg 
-		  '("--" "-batch" "-quiet" "-no-init" "-no-warnings" "-script"
-		    "-b" "-q" "-n" "-w" "-s" "-i"
-		    "-case-insensitive" "-ss" "-sx") ) )
-		((member arg '("-feature" "-include-path" "-keyword-style" 
-			       "-D" "-I" "-k"))
+	       #;[len (string-length arg)] )
+	  (cond ((member arg simple-options) )
+		((member arg complex-options)
 		 (set! args (cdr args)) )
 		((or (string=? "-R" arg) (string=? "-require-extension" arg))
 		 (eval `(##core#require-extension (,(string->symbol (cadr args))) #t))
@@ -964,14 +995,10 @@ EOF
 		 (evalstring (cadr args))
 		 (set! args (cdr args)) )
 		((or (string=? "-p" arg) (string=? "-print" arg))
-		 (evalstring 
-		  (cadr args)
-		  (cut for-each print <...>) )
+		 (evalstring (cadr args) (cut for-each print <...>))
 		 (set! args (cdr args)) )
 		((or (string=? "-P" arg) (string=? "-pretty-print" arg))
-		 (evalstring 
-		  (cadr args)
-		  (cut for-each pretty-print <...>) )
+		 (evalstring (cadr args) (cut for-each pretty-print <...>) )
 		 (set! args (cdr args)) )
 		(else
 		 (let ((scr (and script (car script))))
@@ -983,7 +1010,7 @@ EOF
 			   (newline ##sys#standard-error)
 			   (eval x)))
 		    #f)
-		   (when (equal? scr "-ss")
+		   (when (equal? "-ss" scr)
 		     (call-with-values (cut main (command-line-arguments))
 		       (lambda results
 			 (exit
