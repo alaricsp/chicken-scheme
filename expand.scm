@@ -143,7 +143,7 @@
                #t ) ) ) ) )
 
 ; Workalike of '##sys#environment-symbols' for syntactic environments
-(define (##sys#syntactic-environment-symbols env pred )
+(define (##sys#syntactic-environment-symbols env pred)
   ;I have no effing idea at the moment if this is correct
   (define (walk-alias id)
     (let loop ((alias (##sys#get id '##core#macro-alias)))

@@ -128,7 +128,7 @@
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
     -emit-external-prototypes-first -inline -extension -release
     -analyze-only -keep-shadowed-macros -inline-global -ignore-repository
-    -no-symbol-escape -no-parentheses-synonyms -chicken-syntax -r5rs-syntax))
+    -no-symbol-escape -no-parentheses-synonyms -r5rs-syntax))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
@@ -307,8 +307,6 @@ Usage: csc FILENAME | OPTION ...
                                     (prefix, suffix or none)
         -no-parentheses-synonyms   disables list delimiter synonyms
         -no-symbol-escape          disables support for escaped symbols
-        -chicken-syntax            enables the Chicken extensions to
-                                    R5RS syntax
         -r5rs-syntax               disables the Chicken extensions to
                                     R5RS syntax
     -compile-syntax                macros are made available at run-time

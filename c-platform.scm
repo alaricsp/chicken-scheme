@@ -123,7 +123,7 @@
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first release local inline-global
     analyze-only dynamic
-    no-parentheses-synonyms no-symbol-escape chicken-syntax r5rs-syntax) )
+    no-parentheses-synonyms no-symbol-escape r5rs-syntax) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 

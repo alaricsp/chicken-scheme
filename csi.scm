@@ -102,8 +102,6 @@ EOF
                                    (prefix, suffix or none)
         -no-parentheses-synonyms  disables list delimiter synonyms
         -no-symbol-escape         disables support for escaped symbols
-        -chicken-syntax           enables the Chicken extensions to
-                                   R5RS syntax
         -r5rs-syntax              disables the Chicken extensions to
                                    R5RS syntax
     -s  -script PATHNAME          use interpreter for shell scripts
@@ -837,7 +835,7 @@ EOF
 (define-constant long-options
   '("-ss" "-sx" "-script" "-version" "-help" "--help" "-feature" "-eval"
     "-case-insensitive" "-keyword-style" "-no-parentheses-synonyms" "-no-symbol-escape"
-    "-r5rs-syntax" "-chicken-syntax"
+    "-r5rs-syntax"
     "-require-extension" "-batch" "-quiet" "-no-warnings" "-no-init" 
     "-include-path" "-release" "-print" "-pretty-print" "--") )
 
@@ -866,7 +864,7 @@ EOF
 
 (define-constant simple-options
   '("--" "-b" "-batch" "-q" "-quiet" "-n" "-no-init" "-w" "-no-warnings" "-i" "-case-insensitive"
-    "-no-parentheses-synonyms" "-no-symbol-escape" "-r5rs-syntax" "-chicken-syntax"
+    "-no-parentheses-synonyms" "-no-symbol-escape" "-r5rs-syntax"
     ; Not "simple" but processed early
     "-ss" "-sx" "-s" "-script") )
 
@@ -965,12 +963,6 @@ EOF
       (when (member* '("-no-symbol-escape") args)
 	(unless quiet (display "Disabled support for escaped symbols\n"))
 	(symbol-escape #f) )
-      (when (member* '("-chicken-syntax") args)
-	(unless quiet (display "Enabled the Chicken extensions to R5RS syntax\n"))
-	(case-sensitive #t)
-	(keyword-style #:suffix)
-	(parentheses-synonyms #t)
-	(symbol-escape #t) )
       (when (member* '("-r5rs-syntax") args)
 	(unless quiet (display "Disabled the Chicken extensions to R5RS syntax\n"))
 	(case-sensitive #f)

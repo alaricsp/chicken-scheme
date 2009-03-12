@@ -1258,8 +1258,6 @@ Usage: chicken FILENAME OPTION ...
                                   (prefix, suffix or none)
     -no-parentheses-synonyms     disables list delimiter synonyms
     -no-symbol-escape            disables support for escaped symbols
-    -chicken-syntax              enables the Chicken extensions to
-                                  R5RS syntax
     -r5rs-syntax                 disables the Chicken extensions to
                                   R5RS syntax
     -compile-syntax              macros are made available at run-time

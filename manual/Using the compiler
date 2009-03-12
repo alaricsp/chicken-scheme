@@ -34,8 +34,6 @@ Possible options are:
 
 ; -check-syntax : Aborts compilation process after macro-expansion and syntax checks.
 
-; -chicken-syntax : Enables the Chicken extensions to R5RS syntax, case sensitivity, {...} and [...] read as (...), and |...| escapes a symbol.
-
 ; -debug MODES : Enables one or more compiler debugging modes. {{MODES}} is a string of characters that select debugging information about the compiler that will be printed to standard output.
 
      t          show time needed for compilation

@@ -23,8 +23,6 @@ The options recognized by the interpreter are:
 
 ; -i  -case-insensitive : Enables the reader to read symbols case insensitive. The default is to read case sensitive (in violation of R5RS).  This option registers the {{case-insensitive}} feature identifier.
 
-;     -chicken-syntax : Enables the Chicken extensions to R5RS syntax, case sensitivity, {...} and [...] read as (...), and |...| escapes a symbol.
-
 ; -b  -batch : Quit the interpreter after processing all command line options.
 
 ; -e  -eval EXPRESSIONS : Evaluate {{EXPRESSIONS}}. This option implies {{-batch}} and {{-quiet}}, so no startup message will be printed and the interpreter exits after processing all {{-eval}} options and/or loading files given on the command-line.
