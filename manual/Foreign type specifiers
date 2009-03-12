@@ -96,13 +96,27 @@ This is not allowed as a return type.
 
 As {{blob}}, but guaranteed not to be {{#f}}.
 
-=== u8vector u16vector u32vector s8vector s16vector s32vector f32vector f64vector
+=== u8vector
+=== u16vector
+=== u32vector
+=== s8vector
+=== s16vector
+=== s32vector
+=== f32vector
+=== f64vector
 
 A SRFI-4 number-vector object, passed as a pointer to its contents.
 
 These type specifiers are not allowed as return types.
 
-=== nonnull-u8vector nonnull-u16vector nonnull-u32vector nonnull-s8vector nonnull-s16vector nonnull-s32vector nonnull-f32vector nonnull-f64vector
+=== nonnull-u8vector 
+=== nonnull-u16vector 
+=== nonnull-u32vector 
+=== nonnull-s8vector 
+=== nonnull-s16vector
+=== nonnull-s32vector
+=== nonnull-f32vector
+=== nonnull-f64vector
 
 As {{u8vector ...}}, but guaranteed not to be {{#f}}.
 

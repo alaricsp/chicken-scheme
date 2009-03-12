@@ -1,0 +1,375 @@
+* Chicken Runtime Data Type Proposal *
+
+Based on SRFI-99. I really like the SRFI-9 compatibility combined with the R6RS
+features.
+
+
+- Procedural Layer -
+
+- Suggested canonical name form of a condition identifier is '&<condition
+name>' where <condition name> is descriptive.
+
+- Suggested canonical name form of an rtd identifier is ':<rtd name>'. I know
+this conflicts with keyword-style; ':optional' redux.
+
+- Procedural Layer per SRFI-99 with some extensions.
+
+- Procedure rtd-constructor
+
+(rtd-constructor RTD [FIELDSPECS [INIT ...]]) => CTOR
+
+{{FIELDSPECS}} per SRFI-99.
+
+{{INIT}} is an '<initial value>'
+
+{{CTOR}} per SRFI-99, except when {{INIT}} specified, in which case the initial
+value of the constructed rtd-object is supplied. Otherwise the field must named
+in {{FIELDSPECS}}.
+
+<initial value> -> initializer <field> <procedure/(-> object)>
+                -> initial <field> <object>
+
+- Procedure rtd-mutator
+
+(rtd-mutator RTD FIELD [CHECKER]) => MUTATOR
+
+{{CHECKER}} is a 'procedure' with signature '(object -> boolean)'.
+
+{{MUTATOR}} per SRFI-99, except when a {{CHECKER}} specified. In which case the
+mutating object is validated with the {{CHECKER}} before mutation and an
+'&invalid-field-value' condition is raised if necessary.
+
+- Procedure rtd-operator
+
+(rtd-operator RTD OPERATION ...)
+
+{{OPERATION}} is an '<operation>'.
+
+<operation> -> printer <procedure/(rtd-object output-port)>
+            -> displayer <procedure/(rtd-object output-port)>
+            -> writer <procedure/(rtd-object output-port)>
+            -> comparator <procedure/(rtd-object rtd-object -> (union -1 0 1))>
+            -> hasher <procedure/(rtd-object (optional fixnum) -> fixnum)>
+
+- Procedure rtd-operation
+
+(rtd-operation RTD OPER) => PROCEDURE
+
+{{OPER}} is an '<operation>'.
+
+<operation> -> printer
+            -> displayer
+            -> writer
+            -> comparator
+            -> hasher
+
+Default rtd operators can be generated when a user-supplied procedure is
+unspecified.
+
+- Can have routines like '(rtd-comparator RTD) => PROCEDURE'.
+
+- make-rtd-parameter
+
+(make-rtd-parameter RTD SETTER VALUE [GUARD]) => PARAMETER-PROCEDURE
+
+{{SETTER}} is a 'procedure/(rtd-object object)'.
+
+Returns a {{PARAMETER-PROCEDURE}} closed over the {{RTD}}.
+
+'(make-parameter VALUE (lambda (x) (SETTER RTD (GUARD x))))'
+
+- Procedure rtd-print-syntax
+
+(rtd-print-syntax RTD [SYNTAX])
+(rtd-print-syntax RTD) => '<print-syntax>'
+
+{{SYNTAX}} is a '<print-syntax>'.
+
+<print-syntax>  -> srfi-10
+                -> character
+                -> sharp
+                -> parameterized
+                -> none
+
+'<print-syntax>' should probably be a keyword.
+
+See - Discussion - below.
+
+- Parameter current-print-syntax
+
+(current-print-syntax [SYNTAX])
+(current-print-syntax) => '<print-syntax>'
+
+{{SYNTAX}} is a '<print-syntax>'.
+
+Very unsure about this one.
+
+- While SRFI-99 uses symbols to represent keyed arguments Chicken can use
+keywords. The flag symbols of SRFI-99 would need to be represented as boolean
+keyword arguments. Ex: 'opaque?' -> opaque?: #f/#t.
+
+Both styles can be supported. However, an existing example of a keyword only
+interpretation of a SRFI is "srfi-69.scm".
+
+The symbol style is Scheme-y while the keyword style is CommonLisp-y. But I
+like DSSSL lambda-lists so my preference is the keyword style, if only one must
+be chosen.
+
+Really think both should be supported when features are advertised as a SRFI
+implementation. (Unit srfi-69 needs work.)
+
+
+- Syntactic Layer -
+
+- Macro define-record-type
+
+(define-record-type TYPESPEC CTORSPEC PREDSPEC FLDSPEC ...)
+
+{{TYPESPEC}} is a '<type spec>'.
+
+{{CTORSPEC}} is a '<constructor spec>'.
+
+{{PREDSPEC}} is a '<predicate spec>'.
+
+{{FLDSPEC}} is a '<field spec>'.
+
+<type spec>        -> <type name>
+                   -> (<type name> <parent>)
+                   -> (<type name> <parent> <option> ...)
+
+<constructor spec> -> #f               {no constructor procedure}
+                   -> #t               {default constructor procedure}
+                   -> <constructor name>
+                   -> (<constructor name> <field name> ...)
+                   -> (<constructor name> (<field name> <initial value>) ...)
+
+<predicate spec>   -> #f               {no predicate procedure}
+                   -> #t               {default predicate procedure}
+                   -> <predicate name>
+
+<field spec>       -> <field name>
+                   -> (<field name>)
+                   -> (<field name> <accessor spec>)
+                   -> (<field name> <accessor spec> <mutator spec>)
+                   -> (<field name> <accessor spec> <mutator spec> <check spec>)
+                   -> (<field name> <accessor spec> <mutator spec> <check spec>)
+
+<accessor spec>    -> #f               {no accessor procedure}
+                   -> #t               {default accessor procedure}
+                   -> <accessor name>
+
+<mutator spec>     -> #f               {no mutator procedure}
+                   -> #t               {default mutator procedure}
+                   -> <mutator name>
+
+<check spec>       -> #f            {no check procedure}
+                   -> #t            {default check procedure}
+                   -> <expression>  {=> procedure/(object -> boolean)}
+
+<parent>          -> #f           {no parent}
+                  -> #t           {default parent}
+                  -> <expression> {=> rtd-object}
+
+<option>          -> sealed?
+                  -> opaque?
+                  -> uid <expression>         {=> symbol}
+                  -> printer <expression>     {=> procedure/(rtd-object output-port)}
+                  -> displayer <expression>   {=> procedure/(rtd-object output-port)}
+                  -> writer <expression>      {=> procedure/(rtd-object output-port)}
+                  -> comparator <expression>  {=> procedure/(rtd-object rtd-object -> (union -1 0 1))}
+                  -> hasher <expression>      {=> procedure/(rtd-object (optional fixnum) -> fixnum)}
+
+<initial value> -> initializer <expression> {=> <procedure/(-> object)}
+                -> initial <expression>     {=> object}
+
+<type name>           -> <identifier>
+<constructor name>    -> <identifier>
+<predicate name>      -> <identifier>
+<accessor name>       -> <identifier>
+<mutator name>        -> <identifier>
+<field name>          -> <identifier>
+<type predicate name> -> <identifier>
+
+- Procedure define-reader-ctor
+
+(define-reader-ctor RTD () PROC)
+
+Is this necessary, useful?
+
+- Macro define-record-printer
+
+(define-record-printer RTD (RTDVAR PORTVAR) EXPRESSION ...)
+
+Does "(rtd-operator RTD 'printer (lambda (RTDVAR PORTVAR) EXPRESSION ...))"
+
+(define-record-printer RTD () PROC)
+
+Does "(rtd-operator RTD 'printer PROC)"
+
+- Macro define-record-displayer
+
+(define-record-displayer RTD (RTDVAR OUTPUT-PORT) EXPRESSION ...)
+
+Does "(rtd-operator RTD 'displayer (lambda (RTDVAR PORTVAR) EXPRESSION ...))"
+
+(define-record-displayer RTD () PROC)
+
+Does "(rtd-operator RTD 'displayer PROC)"
+
+- Macro define-record-writer
+
+(define-record-writer RTD (RTDVAR OUTPUT-PORT) EXPRESSION ...)
+
+Does "(rtd-operator RTD 'writer (lambda (RTDVAR PORTVAR) EXPRESSION ...))"
+
+(define-record-writer RTD () PROC)
+
+Does "(rtd-operator RTD 'writer PROC)"
+
+- Macro define-record-comparator
+
+(define-record-comparator RTD (RTDVAR1 RTDVAR2) EXPRESSION ...)
+
+Does "(rtd-operator RTD 'comparator (lambda (RTDVAR1 RTDVAR2) EXPRESSION ...))"
+
+(define-record-comparator RTD () FUNC)
+
+Does "(rtd-operator RTD 'comparator FUNC)"
+
+- Macro define-record-hasher
+
+(define-record-hasher RTD (RTDVAR) EXPRESSION ...)
+
+Does "(rtd-operator RTD 'hasher (lambda (RTDVAR) EXPRESSION ...))"
+
+(define-record-hasher RTD () FUNC)
+
+Does "(rtd-operator RTD 'hasher FUNC)"
+
+- Macro define-record-operator
+
+(define-record-operator RTD OPERATION ...)
+
+Something like this possible but I don't see the point.
+
+
+- Data Representation -
+
+The core structure-type is a vector-like object with a reference to a
+runtime-type-descriptor or rtd structure-type object in slot 0. So a
+structure-type object always has at least 1 element.
+
+For backwards compatibility, if needed, a structure-type with a symbol in slot
+0 can be given the current semantics. A synthetic rtd can be generated
+on-the-fly for such cases.
+
+- The rtd structure-type layout:
+
+0	  Definition	  rtd
+1	  Parent		    rtd or #f
+2	  Name		      symbol
+3	  Fields   	    vector-of (union symbol (symbol mutable) (symbol immutable))
+4	  Sealed?		    boolean
+5	  Opaque?		    boolean
+6   Uid           symbol
+
+- The "rtd" rtd structure-type object:
+
+0	  self-reference
+1	  #f
+2   'rtd
+3   #(parent name uid names kinds sealed opaque types inits)
+4   #t
+5   #t
+6   #f
+
+The Definition is not considered a "field" since it is always present.
+
+The Uid violates the contract deliberately since user rtd's Uid must be a
+symbol.
+
+R6RS suggests an automatically generated Uid to be in the UUID namespace
+prefixed with the rtd's Name. For example: 'rtd:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6'.
+
+- Operations
+
+-- The 'rtd-object' operations data-structure is a 'mapset' since it is
+associative, unique-valued and extensible. Called the 'rtd-operation-mapset'.
+
+-- Represention options:
+
+1)  Use an associative data-structure keyed by 'rtd-object' returning
+'rtd-operation-mapset' for that 'rtd-object'.
+
+2) Store the 'rtd-operation-mapset' in the 'rtd-object'.
+
+Both have their merits but the 1st option can coexist more easily with the
+symbol-tag style. The '##sys#record-printers' would become
+'##sys#record-operations'. Need routines to abstract the lookup of
+'rtd-operation-mapset' so it can be generated automatically when not found.
+Should also have finer-grained routines that return specific opration
+procedures.
+
+'##sys#record-operations' should probably be a hash-table since the current
+a-list will be inefficient after some 'magic-limit' of about 12.
+
+(The 'magic-limit' value is based on tests w/ Chicken 3 on my platfrom, YMMV.
+This is the value used by "lookup-table" to switch between a-list & hash-table
+representations.)
+
+--- Extending utility of '##sys#hash-table'
+
+The '##sys#hash-table' API currently only supports symbols. However, changing
+the signature of the various '##sys#hash-table' routines to allow an optional
+hash function is straight-forward. Affected are '##sys#hash-table-ref',
+'##sys#hash-table-set!' and '##sys#hash-table-update!'. (The
+'##sys#hash-table-location' routine doesn't need this change since only used
+for environments.)
+
+
+- Discussion -
+
+-- The rtd-operations used by system routines:
+
+'display'       '(rtd-displayer RTD)'
+
+'write'         '(rtd-writer RTD)'
+
+'equal?'        '(zero? ((rtd-comparator RTD) X Y))'
+
+'equal?-hash'   '(rtd-hasher RTD)'
+
+The 'rtd-printer' is used as a default for 'displayer' & 'writer', but will
+not override.
+
+-- Kinda think an 'rtd-object' should differentiate SRFI-10 syntax from other
+forms:
+
+The 'rtd-printer' could always produce SRFI-10 'read-syntax' while
+'rtd-displayer' produces human-readable output & 'rtd-writer' uses the
+'read-table'.
+
+-- Identifiers
+
+The identifiers are subject to the same rules as any other identifier in a
+module. So the syntactic layer will "(define <type name> (make-rtd '<type name>
+...))". So there is an identifier in the module namespace of '<type name>'.
+
+But the Name rtd field is not in a module namespace! Any two rtd's w/ the same
+Name but different Uid's are unique, no matter what the correspondence, if any,
+between the fields. Any two rtd's w/ the same Uid must be eqv?/equal? in all
+fields, except the Name can be different.
+
+-- Slot access performance
+
+Direct access to field slots by accessor & mutator procedures is tricky
+w/Êinheritance. If the parent 'rtd-object' is available at expand time then the
+syntactic layer can open code the slot index. Otherwise runtime fieldname ->
+slot-index is needed. Kinda implies that an imported 'rtd-object' used as a
+parent needs to be instantiated at compile time - how to determine an automatic
+'-extend' is beyond me.
+
+-- Unresolved:
+
+--- Conflicts between structure-type 'symbol' tags & 'rtd-object' names is an
+open issue.

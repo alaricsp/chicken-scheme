@@ -1219,9 +1219,9 @@ setup-download.c: $(SRCDIR)setup-download.scm setup-api.import.scm
 
 # distribution files
 
-.PHONY: distfiles dist
+.PHONY: distfiles dist html
 
-distfiles: buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
+distfiles: html buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
 	data-structures.c ports.c files.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c \
@@ -1234,6 +1234,11 @@ distfiles: buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
 
 dist: distfiles
 	$(CSI) -s $(SRCDIR)scripts/makedist.scm
+
+html:
+	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(SRCDIR)html
+	$(COPY_COMMAND) $(SRCDIR)misc/manual.css $(SRCDIR)html
+	$(CSI) -s $(SRCDIR)scripts/wiki2html.scm --outdir=html manual/*
 
 # cleaning up
 
@@ -1332,3 +1337,5 @@ bench:
 	cd $(SRCDIR)benchmarks; \
 	LD_LIBRARY_PATH=$$here DYLD_LIBRARY_PATH=$$here PATH=$$here:$$PATH \
 	csi -s cscbench.scm $(BENCHMARK_OPTIONS)
+
+# create HTML from manual

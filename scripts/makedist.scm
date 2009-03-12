@@ -2,7 +2,6 @@
 
 
 (define *release* #f)
-(define *test* #f)
 
 (load-relative "tools.scm")
 
@@ -46,17 +45,3 @@
 
 (run (gmake -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
 (release *release*)
-
-(when *test*
-  (let* ((bdir "/tmp/test-dist-build")
-	 (sdir "/tmp/test-dist-build/chicken-*")
-	 (bbdir "/tmp/test-dist-build/build")
-	 (idir "/tmp/test-dist-build/inst")
-	 (tgz (conc "chicken-" BUILDVERSION ".tar.gz")) )
-    (run (mkdir -p ,bdir))
-    (run (tar xfz ,(conc "site/" tgz) -C ,bdir))
-    (run (cd ,sdir ";" make -f ,(conc "Makefile." *platform*) 
-	     install (conc "PREFIX=" bdir "/inst")))
-    (run (cd ,idir ";" bin/chicken-setup -dv bloom-filter))
-    (run (cd ,idir ";" "CSI_OPTIONS= echo ,r |" bin/csi -n -R bloom-filter))
-    (run (rm -fr ,sdir ,idir)) ) )

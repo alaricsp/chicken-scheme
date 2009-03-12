@@ -113,14 +113,23 @@ Returns {{#t}} if {{X}} is a flonum, or {{#f}} otherwise.
 ==== Flonum limits
 
 {{maximum-flonum}}
+
 {{minimum-flonum}}
+
 {{flonum-radix}}
+
 {{flonum-epsilon}}
+
 {{flonum-precision}}
+
 {{flonum-decimal-precision}}
+
 {{flonum-maximum-exponent}}
+
 {{flonum-minimum-exponent}}
+
 {{flonum-maximum-decimal-exponent}}
+
 {{flonum-minimum-decimal-exponent}}
 
 ==== finite?

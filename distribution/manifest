@@ -128,49 +128,53 @@ chicken-bug.scm
 chicken-bug.c
 hen.el
 scheme-complete.el
-html/accessing-external-objects.html
-html/acknowledgements.html
-html/basic-mode-of-operation.html
-html/bibliography.html
-html/bugs-and-limitations.html
-html/c-interface.html
-html/callbacks.html
-html/data-representation.html
-html/declarations.html
-html/modules-and-macros.html
-html/deviations-from-the-standard.html
-html/embedding.html
-html/extensions-to-the-standard.html
+html/Accessing external objects.html
+html/Acknowledgements.html
+html/Basic mode of operation.html
+html/Bibliography.html
+html/Bugs and limitations.html
+html/C interface.html
+html/Callbacks.html
+html/Data representation.html
+html/Declarations.html
+html/Deviations from the standard.html
+html/Embedding.html
+html/Extensions to the standard.html
+html/Extensions.html
+html/Foreign type specifiers.html
+html/Getting started.html
+html/Getting started~.html
+html/Interface to external functions and variables.html
+html/Locations.html
+html/Modules and macros.html
+html/Non-standard macros and special forms.html
+html/Non-standard read syntax.html
+html/Other support procedures.html
+html/Overview.html
+html/Parameters.html
+html/Supported language.html
+html/The User's Manual.html
+html/Unit data-structures.html
+html/Unit eval.html
+html/Unit expand.html
+html/Unit extras.html
+html/Unit files.html
+html/Unit library.html
+html/Unit lolevel.html
+html/Unit ports.html
+html/Unit posix.html
+html/Unit regex.html
+html/Unit srfi-1.html
+html/Unit srfi-13.html
+html/Unit srfi-14.html
+html/Unit srfi-18.html
+html/Unit srfi-4.html
+html/Unit tcp.html
+html/Unit utils.html
+html/Using the compiler.html
+html/Using the interpreter.html
 html/faq.html
-html/foreign-type-specifiers.html
-html/getting-started.html
-html/index.html
-html/interface-to-external-functions-and-variables.html
-html/locations.html
-html/non-standard-macros-and-special-forms.html
-html/non-standard-read-syntax.html
-html/other-support-procedures.html
-html/parameters.html
-html/supported-language.html
-html/unit-data-structures.html
-html/unit-ports.html
-html/unit-files.html
-html/unit-eval.html
-html/unit-extras.html
-html/unit-library.html
-html/unit-lolevel.html
-html/unit-posix.html
-html/unit-regex.html
-html/unit-srfi-1.html
-html/unit-srfi-13.html
-html/unit-srfi-14.html
-html/unit-srfi-18.html
-html/unit-srfi-4.html
-html/unit-srfi-69.html
-html/unit-tcp.html
-html/unit-utils.html
-html/using-the-compiler.html
-html/using-the-interpreter.html
+html/manual.css
 library.scm
 lolevel.scm
 optimizer.scm

@@ -154,8 +154,7 @@ be substituted. Any non-numeric index specifies that all matches are to
 be substituted.
 
 <enscript highlight=scheme>
-(string-substitute "([0-9]+) (eggs|chicks)"
-                   "\\2 (\\1)" "99 eggs or 99 chicks" 2)
+(string-substitute "([0-9]+) (eggs|chicks)" "\\2 (\\1)" "99 eggs or 99 chicks" 2)
 => "99 eggs or chicks (99)"
 </enscript>
 
@@ -174,8 +173,7 @@ the regular expression {{MATCH}} in {{STRING}} will be replaced by the string
 {{REPLACEMENT}}
 
 <enscript highlight=scheme>
-(string-substitute* "<h1>Hello, world!</h1>"
-                    '(("<[/A-Za-z0-9]+>" . "")))
+(string-substitute* "<h1>Hello, world!</h1>" '(("<[/A-Za-z0-9]+>" . "")))
 
 =>  "Hello, world!"
 </enscript>

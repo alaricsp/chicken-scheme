@@ -525,12 +525,12 @@ should contain the name of the object file (or static library) to be
 linked, when {{csc}} gets passed the {{-static-extensions}} option:
 
 <enscript highlight=scheme>
-(compile -s -O2 -d1 my-ext.scm)   ; dynamically loadable "normal" version
-(compile -c -O2 -d1 my-ext -unit my-ext)  ; statically linkable version
-(install-extension
-  'my-ext
-  '("my-ext.so" "my-ext.o")
-  '((static "my-ext.o")) )
+ (compile -s -O2 -d1 my-ext.scm)   ; dynamically loadable "normal" version
+ (compile -c -O2 -d1 my-ext -unit my-ext)  ; statically linkable version
+ (install-extension
+   'my-ext
+   '("my-ext.so" "my-ext.o")
+   '((static "my-ext.o")) )
 </enscript>
 
 Note the use of the {{-unit}} option in the second compilation step: static

@@ -2,11 +2,6 @@ TODO for chicken							-*- Outline -*-
 ================
 
 
-* release
-** Continue merging wiki manual changes
-   continue from "Unit data-structures"
-
-
 * bugs
 
 ** compiler
@@ -40,6 +35,8 @@ TODO for chicken							-*- Outline -*-
     exists.
 *** mark import-source (module) on plist of imported symbols and use in re-import warning
     doesn't work that easily, try to find another solution
+*** DSSSL lambda-lists need imports of `chicken' module ("optional", "let-optionals", ...)
+**** should probably use internal aliases
 
 ** libraries
 *** library/runtime: cyclic list checks for assq/assv/assoc/memq/memv/member
@@ -47,7 +44,6 @@ TODO for chicken							-*- Outline -*-
 *** finalizers on lexically ref'd data not working in interpreter
     reported by Jim Ursetto
     reverted original patch, see patches/finalizer-closures.diff
-*** Use record-descriptors instead of symbols as 1st slot in structure objects?
 
 
 * tasks
@@ -91,6 +87,8 @@ TODO for chicken							-*- Outline -*-
 *** read-mark list should be stored in read-table
 *** ports should have indicator slot about exact type (tcp, file, ...)
 *** normalize-pathname: return short name on windows? (mingw/msvc)
+*** Use record-descriptors instead of symbols as 1st slot in structure objects?
+**** see Kon's proposal for new record-descriptors in "misc/Chicken Runtime Data Type Proposal"
 
 ** syntax-error
 *** if ##sys#current-module is set, add name to error message?
@@ -107,7 +105,6 @@ TODO for chicken							-*- Outline -*-
 
 ** documentation
 *** document qs, normalize-pathname
-*** write quick-and-dirty wiki-syntax -> HTML converter
 
 
 * tests
@@ -139,9 +136,6 @@ TODO for chicken							-*- Outline -*-
    convert groups of local lambdas referenced to only in operator-position into
    looping lambda + dispatch (static variable can be used), otherwise similar to
    a conditional
-*** new forms (after optimization, prepared language)
-    [##core#dispatch LAMBDABODY1 ... BODY]
-    [##core#goto {INDEX} ARGUMENT1 ...}
 
 ** lazy gensyms (see "lazy-gensyms" branch)
 

@@ -355,40 +355,35 @@ is undefined.
 
 === Notes:
 
-Scheme procedures can call C functions, and C functions can call
-Scheme procedures, but for every pending C stack frame, the available
-size of the first heap generation (the ''nursery'') will be decreased,
-because the C stack is identical to the nursery. On systems with a small
-nursery this might result in thrashing, since the C code between the
-invocation of C from Scheme and the actual calling back to Scheme might
-build up several stack-frames or allocates large amounts of stack data.
-To prevent this it is advisable to increase the default nursery size,
-either when compiling the file (using the {{-nursery}} option)
-or when running the executable (using the {{-:s}} runtime option).
-
-Calls to Scheme/C may be nested arbitrarily, and Scheme
-continuations can be invoked as usual, but keep in mind that C stack
-frames will not be recovered, when a Scheme procedure call from C does
-not return normally.
-
-When multiple threads are running concurrently, and control switches
-from one thread to another, then the continuation of the current thread
-is captured and saved. Any pending C stack frame still active from a
-callback will remain on the stack until the threads is re-activated
-again. This means that in a multithreading situation, when C callbacks
-are involved, the available nursery space can be smaller than expected.
-So doing many nested Scheme->C->Scheme calls can reduce the available
-memory up to the point of thrashing. It is advisable to have only a
-single thread with pending C stack-frames at any given time.
-
-Pointers to Scheme data objects should not be stored in local or
-global variables while calling back to Scheme.  Any Scheme object not
-passed back to Scheme will be reclaimed or moved by the garbage collector.
-
-Calls from C to Scheme are never tail-recursive.
-
-Continuations captured via {{call-with-current-continuation}}
-and passed to C code can be invoked like any other Scheme procedure.
+* Scheme procedures can call C functions, and C functions can call
+  Scheme procedures, but for every pending C stack frame, the available
+  size of the first heap generation (the ''nursery'') will be decreased,
+  because the C stack is identical to the nursery. On systems with a small
+  nursery this might result in thrashing, since the C code between the
+  invocation of C from Scheme and the actual calling back to Scheme might
+  build up several stack-frames or allocates large amounts of stack data.
+  To prevent this it is advisable to increase the default nursery size,
+  either when compiling the file (using the {{-nursery}} option)
+  or when running the executable (using the {{-:s}} runtime option).
+* Calls to Scheme/C may be nested arbitrarily, and Scheme
+  continuations can be invoked as usual, but keep in mind that C stack
+  frames will not be recovered, when a Scheme procedure call from C does
+  not return normally.
+* When multiple threads are running concurrently, and control switches
+  from one thread to another, then the continuation of the current thread
+  is captured and saved. Any pending C stack frame still active from a
+  callback will remain on the stack until the threads is re-activated
+  again. This means that in a multithreading situation, when C callbacks
+  are involved, the available nursery space can be smaller than expected.
+  So doing many nested Scheme->C->Scheme calls can reduce the available
+  memory up to the point of thrashing. It is advisable to have only a
+  single thread with pending C stack-frames at any given time.
+* Pointers to Scheme data objects should not be stored in local or
+  global variables while calling back to Scheme.  Any Scheme object not
+  passed back to Scheme will be reclaimed or moved by the garbage collector.
+* Calls from C to Scheme are never tail-recursive.
+* Continuations captured via {{call-with-current-continuation}}
+  and passed to C code can be invoked like any other Scheme procedure.
 
 
 ---

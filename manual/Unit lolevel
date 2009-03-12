@@ -779,13 +779,13 @@ procedure {{PROC}}. {{PROC}} will receive a copy of {{OLD}} that will be
 identical in behaviour to the result of {{PROC}}:
 
 <enscript highlight=scheme>
-;;; Replace arbitrary procedure with tracing one:
+ ;;; Replace arbitrary procedure with tracing one:
 
-(mutate-procedure my-proc
-  (lambda (new)
-    (lambda args
-      (printf "~s called with arguments: ~s~%" new args)
-      (apply new args) ) ) )
+ (mutate-procedure my-proc
+   (lambda (new)
+     (lambda args
+       (printf "~s called with arguments: ~s~%" new args)
+       (apply new args) ) ) )
 </enscript>
 
 ---

@@ -3,6 +3,8 @@
 ; usage: wiki2html <INPUTFILE >OUTPUTFILE
 
 
+(load-relative "tools.scm")
+
 (use regex srfi-1 extras utils srfi-13 posix)
 (use htmlprag matchable)
 
@@ -32,6 +34,7 @@
 (define +d-list+
   '(: (* space) #\; (submatch (*? any)) #\space #\: #\space (submatch (* any))))
 
+(define +d-head+ '(: (* space) #\; (submatch (* any))))
 (define +u-list+ '(: (* space) (submatch (>= 1 #\*)) (* space) (submatch (* any))))
 (define +o-list+ '(: (* space) (submatch (>= 1 #\*)) #\# (* space) (submatch (* any))))
 (define +hr+ '(: (* space) (submatch (>= 3 #\-)) (* space)))
@@ -40,6 +43,7 @@
   `(or ,+pre+
        ,+header+
        ,+d-list+
+       ,+d-head+
        ,+u-list+
        ,+o-list+
        ,+hr+))
@@ -126,6 +130,11 @@
 		  (set! *list-continuation* #t)
 		  (fprintf out "<dt>~a</dt><dd>~a</dd>~%" 
 			   (inline (second m)) (inline (or (third m) "")))))
+	       ((string-match (rx +d-head+) ln) =>
+		(lambda (m)
+		  (push-tag 'dl out)
+		  (set! *list-continuation* #t)
+		  (fprintf out "<dt>~a</dt>~%" (inline (second m)))))
 	       ((string-match (rx +u-list+) ln) =>
 		(lambda (m)
 		  (push-tag `(ul . ,(string-length (second m))) out)
@@ -231,27 +240,24 @@
 
 ;;; Run it
 
+(define *outdir* ".")
+
 (define (main args)
-  (let ((outdir "."))
-    (let loop ((args args))
-      (match args
-	(()
-	 (print "usage: wiki2html [-o DIRECTORY] PAGEFILE ...")
-	 (exit 1))
-	(("-o" dir . more)
-	 (set! outdir dir)
-	 (loop more))
-	((files ...)
-	 (let ((dirs (delete-duplicates (map pathname-directory files) string=?)))
-	   (set! *manual-pages* (map pathname-strip-directory (append-map directory dirs)))
-	   (for-each
-	    (lambda (file)
-	      (print file)
-	      (with-input-from-file file 
-		(lambda ()
-		  (with-output-to-file (pathname-replace-directory (string-append file ".html") outdir) 
-		    (cut convert (pathname-file file))))))
-	    files)))))))
+  (let loop ((args args))
+    (match args
+      (()
+       (print "usage: wiki2html [--outdir=DIRECTORY] PAGEFILE ...")
+       (exit 1))
+      ((files ...)
+       (let ((dirs (delete-duplicates (map pathname-directory files) string=?)))
+	 (set! *manual-pages* (map pathname-strip-directory (append-map directory dirs)))
+	 (for-each
+	  (lambda (file)
+	    (print file)
+	    (with-input-from-file file 
+	      (lambda ()
+		(with-output-to-file (pathname-replace-directory (string-append file ".html") *outdir*) 
+		  (cut convert (pathname-file file))))))
+	  files))))))
 
-
-(main (command-line-arguments))
+(main (simple-args))

@@ -181,22 +181,22 @@ A very simple example follows. Say we have the two files {{client.scm}}
 and {{server.scm}}:
 
 <enscript highlight=scheme>
-; client.scm
-(declare (uses tcp))
-(define-values (i o) (tcp-connect "localhost" 4242))
-(write-line "Good Bye!" o)
-(print (read-line i))
+ ; client.scm
+ (declare (uses tcp))
+ (define-values (i o) (tcp-connect "localhost" 4242))
+ (write-line "Good Bye!" o)
+ (print (read-line i))
 </enscript>
 
 <enscript highlight=scheme>
-; server.scm
-(declare (uses tcp))
-(define l (tcp-listen 4242))
-(define-values (i o) (tcp-accept l))
-(write-line "Hello!" o)
-(print (read-line i))
-(close-input-port i)
-(close-output-port o)
+ ; server.scm
+ (declare (uses tcp))
+ (define l (tcp-listen 4242))
+ (define-values (i o) (tcp-accept l))
+ (write-line "Hello!" o)
+ (print (read-line i))
+ (close-input-port i)
+ (close-output-port o)
 </enscript>
 
  % csc server.scm

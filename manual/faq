@@ -26,16 +26,6 @@ for the existence of CHICKEN are:
 
 * As far as we know, CHICKEN is the first implementation of Scheme that uses Henry Baker's [[http://home.pipeline.com/~hbaker1/CheneyMTA.html|Cheney on the M.T.A]] concept.
 
-==== Why call it 'Chicken'?
-
-According to [[http://chicken.wiki.br/felix winkelmann|felix]]:
-
-> Well, it's pretty boring, really: when I started the project and needed some
-> name, the first thing that met my eyes was the "chicken" (actually a disguised penguin) 
-> from the Wallace + Gromit movie...
-> And then there is of course the ever occurring chicken-and-egg problem
-> with bootstrapped compilers.
-
 ==== What should I do if I find a bug?
 
 Send e-mail to felix@call-with-current-continuation.org

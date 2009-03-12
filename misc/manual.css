@@ -22,9 +22,8 @@ body {
     margin: 8em;
 }
 
-TT {
-    font-family: "Andale Mono", monospace;
-/* font-size: 1.2em; */
+TABLE {
+    font: 9pt "Lucida Grande", "Verdana", sans-serif;
 }
 
 H3 {
