@@ -3,7 +3,7 @@
 
 == Unit expand
 
-This unit has support for macro- and module handling. This unit is used
+This unit has support for syntax- and module handling. This unit is used
 by default, unless the program is compiled with the {{-explicit-use}}
 option.
 
@@ -19,24 +19,12 @@ the associated line number. If line-number information is not available,
 then {{#f}} is returned.  Note that line-number information for
 expressions is only available in the compiler.
 
-==== macro?
-
- [procedure] (macro? SYMBOL)
-
-Returns {{#t}} if there exists a macro-definition for {{SYMBOL}}.
-
 ==== expand
 
  [procedure] (expand X)
 
 If {{X}} is a macro-form, expand the macro (and repeat expansion
 until expression is a non-macro form).  Returns the resulting expression.
-
-==== undefine-macro!
-
- [procedure] (undefine-macro! SYMBOL)
-
-Remove the current macro-definition of the macro named {{SYMBOL}}.
 
 ==== syntax-error
 

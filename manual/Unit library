@@ -79,8 +79,11 @@ Returns {{#t}} if {{X}} is a fixnum, or {{#f}} otherwise.
 ==== Fixnum limits
 
 {{most-positive-fixnum}}
+
 {{most-negative-fixnum}}
+
 {{fixnum-bits}}
+
 {{fixnum-precision}}
 
 

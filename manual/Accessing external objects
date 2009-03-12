@@ -85,23 +85,6 @@ lexically shadowed.  Note that {{STRING}} can name an arbitrary C
 expression. If no assignments are performed, then {{STRING}} doesn't
 even have to specify an lvalue.
 
-<enscript highlight=scheme>
-#>
-enum { abc=3, def, ghi };
-<#
-
-(define-macro (define-simple-foreign-enum . items)
-  `(begin
-     ,@(map (match-lambda 
-              [(name realname) `(define-foreign-variable ,name int ,realname)]
-              [name `(define-foreign-variable ,name int)] )
-     items) ) )
-
-(define-simple-foreign-enum abc def ghi)
-
-ghi                               ==> 5
-</enscript>
-
 
 === foreign-lambda
 

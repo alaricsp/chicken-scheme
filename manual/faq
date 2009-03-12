@@ -225,19 +225,19 @@ the compiler, like this (assuming all sources are in the
 current directory):
 
 <enscript highlight=scheme>
-% cat userpass.scm
-;;;; userpass.scm - My very own compiler pass
+  % cat userpass.scm
+  ;;;; userpass.scm - My very own compiler pass
 
-(declare (unit userpass))
+  (declare (unit userpass))
 
-;; Perhaps more user passes/extensions are added:
-(let ([old (user-pass)])
-(user-pass
-(lambda (x)
-(let ([x2 (do-something-with x)])
-	  (if old
-	      (old x2)
-	      x2) ) ) ) )
+  ;; Perhaps more user passes/extensions are added:
+  (let ([old (user-pass)])
+    (user-pass
+      (lambda (x)
+        (let ([x2 (do-something-with x)])
+	   (if old
+	       (old x2)
+	       x2) ) ) ) )
 </enscript>
 
  % csc -c -x userpass.scm
@@ -263,13 +263,6 @@ During compile-time, macros are only available in the source file in which they 
 ==== Why is {{include}} unable to load my hygienic macros?
 
 It is not sufficient for the included file to require the {{syntax-case}} extension. Call {{(require-extension syntax-case)}} ''before'' calling {{include}}.
-
-==== Why are macros not visible outside of the compilation unit in which they are defined?
-
-Macros are defined during compile time, so when a file has been compiled, the definitions are gone. An exception
-to this rule are macros defined with {{define-macro}}, which are also visible at run-time, i.e.
-in {{eval}}. To use macros defined in other files, use the {{include}} special
-form.
 
 === Warnings and errors
 
@@ -304,20 +297,6 @@ trigger an error will work unexpectedly or even crash the running application.
 It is advisable to develop and debug a program in safe mode (without unsafe
 declarations) and use this feature only if the application works properly.
 
-==== Why do I get a warning when I define a global variable named {{match}}?
-
-Even when the {{match}} unit is not used, the macros from that package are visible in the compiler.
-The reason for this is that macros can not be accessed from library units (only when explicitly evaluated in running
-code). To speed up macro-expansion time, the compiler and the interpreter both already provide the compiled 
-{{match-...}} macro definitions. Macros shadowed lexically are no problem, but global definitions
-of variables named identically to (global) macros are useless - the macro definition shadows the global
-variable.
-
-This problem can be solved using a different name or undefining the macro, like this:
-
-<enscript highlight=scheme>
-(eval-when (compile eval) (undefine-macro! 'match))
-</enscript>
 ==== Why don't toplevel-continuations captured in interpreted code work?
 
 Consider the following piece of code:
@@ -341,9 +320,9 @@ expressions will be loaded together.
 The following piece of code does not work as expected:
 
 <enscript highlight=scheme>
-(eval-when (compile)
-(define-reader-ctor 'integer->char integer->char) )
-(print #,(integer->char 33))
+ (eval-when (compile)
+ (define-reader-ctor 'integer->char integer->char) )
+ (print #,(integer->char 33))
 </enscript>
 
 The problem is that the compiler reads the complete source-file before doing any processing on it,
@@ -351,15 +330,15 @@ so the sharp-comma form is encountered before the reader-ctor is defined. A poss
 the file containing the sharp-comma form, like this:
 
 <enscript highlight=scheme>
-(eval-when (compile)
-(define-reader-ctor 'integer->char integer->char) )
-
-(include "other-file")
+ (eval-when (compile)
+ (define-reader-ctor 'integer->char integer->char) )
+ 
+ (include "other-file")
 </enscript>
 
 <enscript highlight=scheme>
-;;; other-file.scm:
-(print #,(integer->char 33))
+ ;;; other-file.scm:
+ (print #,(integer->char 33))
 </enscript>
 
 ==== Why do built-in units, such as srfi-1, srfi-18, and posix fail to load?
@@ -367,12 +346,12 @@ the file containing the sharp-comma form, like this:
 When you try to {{use}} a built-in unit such as {{srfi-18}}, you may get the following error:
 
 <enscript highlight=scheme>
-#;1> (use srfi-18)
-; loading library srfi-18 ...
-Error: (load-library) unable to load library
-srfi-18
-"dlopen(libchicken.dylib, 9): image not found"                ;; on a Mac
-"libchicken.so: cannot open shared object file: No such file or directory"  ;; Linux
+ #;1> (use srfi-18)
+ ; loading library srfi-18 ...
+ Error: (load-library) unable to load library
+ srfi-18
+ "dlopen(libchicken.dylib, 9): image not found"                ;; on a Mac
+ "libchicken.so: cannot open shared object file: No such file or directory"  ;; Linux
 </enscript>
 
 Another symptom is that {{(require 'srfi-18)}} will silently fail.
@@ -437,19 +416,19 @@ option or by using the {{-:s...}} runtime option).
 The following standard bindings are handled specially, depending on optimization options
 and compiler settings:
 
- {{+}} {{*}} {{-}} {{/}} {{quotient}} {{eq?}} {{eqv?}} {{equal?}} {{apply}} {{c...r}} {{values}} {{call-with-values}}
- {{list-ref}} {{null?}} {{length}} {{not}} {{char?}} {{string?}} {{symbol?}} {{vector?}} {{pair?}} {{procedure?}}
- {{boolean?}} {{number?}} {{complex?}} {{rational?}} {{real?}} {{exact?}} {{inexact?}} {{list?}} {{eof-object?}}
- {{string-ref}} {{string-set!}} {{vector-ref}} {{vector-set!}} {{char=?}} {{char<?}} {{char>?}} {{char<=?}} {{char>=?}}
- {{char-numeric?}} {{char-alphabetic?}} {{char-whitespace?}} {{char-upper-case?}}
- {{char-lower-case?}} {{char-upcae}} {{char-downcase}} {{list-tail}} {{assv}} {{memv}} {{memq}} {{assoc}}
- {{member}} {{set-car!}} {{set-cdr!}} {{abs}} {{exp}} {{sin}} {{cos}} {{tan}} {{log}} {{asin}} {{acos}} {{atan}} {{sqrt}}
- {{zero?}} {{positive?}} {{negative?}} {{vector-length}} {{string-length}} {{char->integer}}
- {{integer->char}} {{inexact->exact}} {{=}} {{>}} {{<}} {{>=}} {{<=}} {{for-each}} {{map}} {{substring}}
- {{string-append}} {{gcd}} {{lcm}} {{list}} {{exact->inexact}} {{string->number}} {{number->string}}
- {{even?}} {{odd?}} {{remainder}} {{floor}} {{ceiling}} {{truncate}} {{round}} {{cons}} {{vector}} {{string}}
- {{string=?}} {{string-ci=?}} {{make-vector}} {{call-with-current-continuation}}
- {{write-char}} {{read-string}} 
+{{+}} {{*}} {{-}} {{/}} {{quotient}} {{eq?}} {{eqv?}} {{equal?}} {{apply}} {{c...r}} {{values}} {{call-with-values}}
+{{list-ref}} {{null?}} {{length}} {{not}} {{char?}} {{string?}} {{symbol?}} {{vector?}} {{pair?}} {{procedure?}}
+{{boolean?}} {{number?}} {{complex?}} {{rational?}} {{real?}} {{exact?}} {{inexact?}} {{list?}} {{eof-object?}}
+{{string-ref}} {{string-set!}} {{vector-ref}} {{vector-set!}} {{char=?}} {{char<?}} {{char>?}} {{char<=?}} {{char>=?}}
+{{char-numeric?}} {{char-alphabetic?}} {{char-whitespace?}} {{char-upper-case?}}
+{{char-lower-case?}} {{char-upcae}} {{char-downcase}} {{list-tail}} {{assv}} {{memv}} {{memq}} {{assoc}}
+{{member}} {{set-car!}} {{set-cdr!}} {{abs}} {{exp}} {{sin}} {{cos}} {{tan}} {{log}} {{asin}} {{acos}} {{atan}} {{sqrt}}
+{{zero?}} {{positive?}} {{negative?}} {{vector-length}} {{string-length}} {{char->integer}}
+{{integer->char}} {{inexact->exact}} {{=}} {{>}} {{<}} {{>=}} {{<=}} {{for-each}} {{map}} {{substring}}
+{{string-append}} {{gcd}} {{lcm}} {{list}} {{exact->inexact}} {{string->number}} {{number->string}}
+{{even?}} {{odd?}} {{remainder}} {{floor}} {{ceiling}} {{truncate}} {{round}} {{cons}} {{vector}} {{string}}
+{{string=?}} {{string-ci=?}} {{make-vector}} {{call-with-current-continuation}}
+{{write-char}} {{read-string}} 
 
 The following extended bindings are handled specially: 
 
@@ -550,7 +529,9 @@ Running this in a normal program will work fine.
 
 When testing finalizers from the interpreter, you might want to define a trivial macro such as
 
- (define-macro (v x) `(begin (print ,x) (void)))
+ (define-syntax v
+   (syntax-rules ()
+     ((_ x) (begin (print x) (void)))))
 
 and wrap calls to {{set-finalizer!}} in it.
 
@@ -562,9 +543,9 @@ CSI doesn't support it natively but it can be activated with the [[http://www.ca
 After installing the egg, add the following to your {{~/.csirc}} or equivalent file:
 
 <enscript highlight=scheme>
-(require-extension readline)
-(current-input-port (make-gnu-readline-port))
-(gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
+ (require-extension readline)
+ (current-input-port (make-gnu-readline-port))
+ (gnu-history-install-file-manager (string-append (or (getenv "HOME") ".") "/.csi.history"))
 </enscript>
 
 Users of *nix-like systems (including Cygwin), may also want to check out [[http://utopia.knoware.nl/~hlub/rlwrap/|rlwrap]].  This program lets you "wrap" another process (e.g. {{rlwrap csi}}) with the readline library, giving you history, autocompletion, and the ability to set the keystroke set. Vi fans can get vi keystrokes by adding "set editing-mode vi" to their {{.inputrc}} file.

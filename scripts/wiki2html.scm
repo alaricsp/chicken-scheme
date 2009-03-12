@@ -17,11 +17,14 @@
 (define +html-tag+ '(: #\< (submatch (* (~ #\>))) #\>))
 
 (define +link+
-  '(: #\[ #\[ (? (: (* space) "image:" (* space)))
+  '(: #\[ #\[ (submatch (* (~ #\] #\|))) (? #\| (submatch (* (~ #\])))) #\] #\]))
+
+(define +image-link+
+  '(: #\[ #\[ (* space) "image:" (* space)
       (submatch (* (~ #\] #\|))) (? #\| (submatch (* (~ #\])))) #\] #\]))
 
 (define +inline-element+
-  `(or ,+code+ ,+link+ ,+html-tag+ ,+bold+ ,+italic+))
+  `(or ,+code+ ,+image-link+ ,+link+ ,+html-tag+ ,+bold+ ,+italic+))
 
 (define +http-url+ '(: (* space) "http://" (* any)))
 
@@ -168,6 +171,11 @@
 		    (string-append
 		     (first m)
 		     (continue m))))
+		 ((string-search (rx `(: bos ,+image-link+)) rest) =>
+		  (lambda (m)
+		    (string-append 
+		     "<img src='" (clean (second m)) "' />"
+		     (continue m))))
 		 ((string-search (rx `(: bos ,+link+)) rest) =>
 		  (lambda (m)
 		    (let ((m1 (string-trim-both (second m))))
@@ -175,7 +183,7 @@
 		       (cond ((or (string=? "toc:" m1)
 				  (string-search (rx '(: bos (* space) "tags:")) m1) )
 			      "")
-			     ((member m1 *manual-pages*)
+			     ((find (cut string-ci=? <> m1) *manual-pages*)
 			      (string-append 
 			       "<a href='" (clean m1) ".html'>" (inline m1) "</a>"))
 			     (else
