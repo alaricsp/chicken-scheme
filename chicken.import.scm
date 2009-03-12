@@ -141,6 +141,7 @@
    load-verbose
    machine-byte-order
    machine-type
+   macro?
    make-blob
    make-composite-condition
    make-parameter
