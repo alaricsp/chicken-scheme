@@ -455,7 +455,7 @@
 
 (define-inline (%fpfraction x) ((##core#primitive "C_flonum_fraction") x))
 
-(define-inline (%fpnegate x y) (##core#inline_allocate ("C_a_i_flonum_negate" 4) x y))
+(define-inline (%fpnegate x) (##core#inline_allocate ("C_a_i_flonum_negate" 4) x))
 
 (define-inline (%fpfloor x) ((##core#primitive "C_flonum_floor") x))
 (define-inline (%fpceiling x) ((##core#primitive "C_flonum_ceiling") x))
@@ -471,7 +471,7 @@
 (define-inline (%fpacos x) (##core#inline_allocate ("C_a_i_acos" 4) x))
 (define-inline (%fpasin x) (##core#inline_allocate ("C_a_i_asin" 4) x))
 (define-inline (%fpatan x) (##core#inline_allocate ("C_a_i_atan" 4) x))
-(define-inline (%fpatan2 x) (##core#inline_allocate ("C_a_i_atan2" 4) x))
+(define-inline (%fpatan2 x y) (##core#inline_allocate ("C_a_i_atan2" 4) x y))
 (define-inline (%fpcos x) (##core#inline_allocate ("C_a_i_cos" 4) x))
 (define-inline (%fpexp x) (##core#inline_allocate ("C_a_i_exp" 4) x))
 (define-inline (%fplog x) (##core#inline_allocate ("C_a_i_log" 4) x))
@@ -952,7 +952,7 @@
 (define-inline (%acos x) (##core#inline_allocate ("C_a_i_acos" 4) x))
 (define-inline (%asin x) (##core#inline_allocate ("C_a_i_asin" 4) x))
 (define-inline (%atan x) (##core#inline_allocate ("C_a_i_atan" 4) x))
-(define-inline (%atan2 x) (##core#inline_allocate ("C_a_i_atan2" 4) x))
+(define-inline (%atan2 x y) (##core#inline_allocate ("C_a_i_atan2" 4) x y))
 (define-inline (%cos x) (##core#inline_allocate ("C_a_i_cos" 4) x))
 (define-inline (%exp x) (##core#inline_allocate ("C_a_i_exp" 4) x))
 (define-inline (%log x) (##core#inline_allocate ("C_a_i_log" 4) x))
