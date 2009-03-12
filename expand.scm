@@ -180,9 +180,7 @@
   (let ((def (lookup old (##sys#macro-environment))))
     (apply ##sys#extend-macro-environment new def) ) )
 
-(define (macro? sym #!optional (senv (##sys#current-environment)))
-  (##sys#check-symbol sym 'macro?)
-  (##sys#check-list senv 'macro?)
+(define (##sys#macro? sym #!optional (senv (##sys#current-environment)))
   (or (let ((l (lookup sym senv)))
 	(pair? l))
       (and-let* ((l (lookup sym (##sys#macro-environment))))
@@ -196,8 +194,7 @@
 	    ((eq? name (caar me)) (cdr me))
 	    (else (cons (car me) (loop (cdr me))))))))
 
-(define (undefine-macro! name)
-  (##sys#check-symbol name 'undefine-macro!)
+(define (##sys#undefine-macro! name)
   (##sys#unregister-macro name) )
 
 

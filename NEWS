@@ -36,6 +36,7 @@
    byte-vector-move! byte-vector-append!
    set-file-position! set-user-id! set-group-id!
    set-process-group-id!
+   macro? undefine-macro!
 - the situation-identifiers "run-time" and "compile-time" have
   been removed
 - the compiler options "-check-imports", "-import" and "-emit-exports"

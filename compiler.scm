@@ -915,7 +915,7 @@
 				    (when safe-globals-flag
 				      (mark-variable var '##compiler#always-bound-to-procedure)
 				      (mark-variable var '##compiler#always-bound))
-				    (when (macro? var)
+				    (when (##sys#macro? var)
 				      (compiler-warning 
 				       'var "assigned global variable `~S' is a macro ~A"
 				       var
