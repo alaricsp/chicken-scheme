@@ -33,7 +33,6 @@
 ;; closure - caller
 ;; k       - continuation
 
-
 ;;; Unsafe Type Predicates
 
 ;; Fixnum
@@ -132,7 +131,6 @@
 ;; Locative
 
 (define-inline (%locative-type? x) (##core#inline "C_locativep" x))
-
 
 ;;; Safe Type Predicates
 
@@ -258,16 +256,11 @@
 
 (define-inline (%forwarded? x) (##core#inline "C_forwardedp" x))
 
-
 ;;; Operations
 
 ;Safe
 
 (define-inline (%eq? x y) (##core#inline "C_eqp" x y))
-
-(define-inline (%peek-signed-integer b i) ((##core#primitive "C_peek_signed_integer") b i))
-(define-inline (%peek-unsigned-integer b i) ((##core#primitive "C_peek_unsigned_integer") b i))
-(define-inline (%poke-integer b i n) (##core#inline "C_poke_integer" b i n))
 
 ;; Fixnum
 
@@ -318,6 +311,10 @@
 (define-inline (%fxnot x) (##core#inline "C_fixnum_not" x))
 
 ;; Block
+
+(define-inline (%peek-signed-integer b i) ((##core#primitive "C_peek_signed_integer") b i))
+(define-inline (%peek-unsigned-integer b i) ((##core#primitive "C_peek_unsigned_integer") b i))
+(define-inline (%poke-integer b i n) (##core#inline "C_poke_integer" b i n))
 
 ;Safe
 
@@ -434,8 +431,6 @@
 ;; Flonum (byteblock)
 
 ;Unsafe
-
-(define-inline (%exact->inexact x) ((##core#primitive "C_exact_to_inexact") x))
 
 (define-inline (%fp= x y) (##core#inline "C_flonum_equalp" x y))
 (define-inline (%fp< x y) (##core#inline "C_flonum_lessp" x y))
@@ -970,3 +965,11 @@
 (define-inline (%bit-set? n i) (##core#inline "C_i_bit_setp" n i))
 
 (define-inline (%randomize n) (##core#inline "C_randomize" n))
+
+;;; Operations
+
+;Safe
+
+(define-inline (%->boolean obj) (and obj #t))
+
+(define-inline (%make-unique-object #!optional id) (if id (%make-vector 1 id) '#()))
