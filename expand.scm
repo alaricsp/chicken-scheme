@@ -127,39 +127,62 @@
 
 ; Workalike of '##sys#environment?' for syntactic environments
 (define (##sys#syntactic-environment? obj)
-  (and (list? obj)
-       (or (null? obj)
-           (call-with-current-continuation
-             (lambda (return)
-               (##sys#for-each
-                (lambda (x)
-                  (unless (and (pair? x) (= 3 (length x))
-                               ;key
-                               (symbol? (car x))
-                               #;(##sys#syntactic-environment? (cadr x))
-                               (procedure? (caddr x)) )
-                    (return #f) ) )
-                obj)
+
+  (define (simple-environment? obj)
+    (and (list? obj)
+         (or (null? obj)
+             (simple-environment-entry? (car obj))
+             #; ;enough already
+             (call-with-current-continuation
+               (lambda (return)
+                 (##sys#for-each
+                  (lambda (x) (unless (simple-environment-entry? x) (return #f) ) )
+                  obj)
                #t ) ) ) ) )
 
+  (define (simple-environment-entry? obj)
+    (and (pair? obj)
+         (symbol? (car obj))
+         (symbol? (cdr obj)) ) )
+
+  (define (macro-environment? obj)
+    (and (list? obj)
+         (or (null? obj)
+             (macro-environment-entry? (car obj))
+             #; ;enough already
+             (call-with-current-continuation
+               (lambda (return)
+                 (##sys#for-each
+                  (lambda (x) (unless (macro-environment-entry? x) (return #f) ) )
+                  obj)
+               #t ) ) ) ) )
+
+  (define (macro-environment-entry? obj)
+    (and (pair? obj) (= 3 (length obj))
+         (symbol? (car obj))
+         (list? (cadr obj))
+         #;(##sys#syntactic-environment? (cadr x)) ;enough already
+         (procedure? (caddr obj)) ) )
+
+  (or (simple-environment? obj)
+      (macro-environment? obj) ) )
+
 ; Workalike of '##sys#environment-symbols' for syntactic environments
+; (I think :-)
 (define (##sys#syntactic-environment-symbols env pred)
-  ;I have no effing idea at the moment if this is correct
-  (define (walk-alias id)
-    (let loop ((alias (##sys#get id '##core#macro-alias)))
-      (and alias
-           (or (##sys#get id '##core#real-name)
-               (if (symbol? alias) alias
-                   (and-let* ((env (car alias))
-                              ((not (null? env))))
-                     (loop (lookup id env)) ) ) ) ) ) )
+  (define (try-alias id)
+    (or (##sys#get id '##core#real-name)
+        (let ((alias (##sys#get id '##core#macro-alias)))
+          (cond ((not alias) id)
+                ((pair? alias) id)
+                (else alias) ) ) ) )
   (let ((syms '()))
     (##sys#for-each
      (lambda (cell)
        (let ((id (car cell)))
          (cond ((pred id)
                 (set! syms (cons id syms)) )
-               ((walk-alias id) =>
+               ((try-alias id) =>
                 (lambda (name)
                   (when (pred name) (set! syms (cons name syms))) ) ) ) ) )
      env)
