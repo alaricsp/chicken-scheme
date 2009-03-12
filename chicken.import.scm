@@ -64,6 +64,7 @@
    current-milliseconds
    current-read-table
    current-seconds
+   define-reader-ctor
    delete-file
    enable-warnings
    errno

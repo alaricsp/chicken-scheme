@@ -36,10 +36,6 @@
 
 ;;; Unsafe Type Predicates
 
-;; Immediate
-
-(define-inline (%immediate? x) (##core#inline "C_immp" x))
-
 ;; Fixnum
 
 (define-inline (%fixnum-type? x) (##core#inline "C_fixnump" x))
@@ -68,14 +64,6 @@
 
 (define-inline (%unbound-type? x) (##core#inline "C_unboundvaluep" x))
 
-;; Block (anything not immediate)
-
-(define-inline (%block? x) (##core#inline "C_blockp" x))
-
-;; Special
-
-(define-inline (%special? x) (##core#inline "C_specialp" x))
-
 ;; Byteblock
 
 (define-inline (%byteblock-type? x) (##core#inline "C_byteblockp" x))
@@ -95,10 +83,6 @@
 ;; Lambda-info
 
 (define-inline (%lambda-info-type? x) (##core#inline "C_lambdainfop" x))
-
-;; Wordblock (special block)
-
-(define-inline (%wordblock? x) (and (%block? x) (%special? x)))
 
 ;; Vector
 
@@ -377,7 +361,7 @@
 
 ; generic-byteblock isa bytevector, string, flonum, or lambda-info
 (define-inline (%generic-byteblock? x)
-  (or (bytevector? x) (string? x) (flonum? x) (lambda-info? x)))
+  (or (bytevector? x) (string? x) (flonum? x) (lambda-info? x)) )
 
 ;; Bytevector (byteblock)
 
@@ -401,7 +385,7 @@
 (define-inline (%bytevector=? bv1 bv2)
   (let ((n (%bytevector-length bv1)))
     (and (%fx= n (%bytevector-length bv2))
-         (%fx= 0 (##core#inline "C_string_compare" bv1 bv2 n)) ) )
+         (%fx= 0 (##core#inline "C_string_compare" bv1 bv2 n)) ) ) )
 
 (define-inline (%bytevector-ref bv i) (%byteblock-ref bv i))
 
