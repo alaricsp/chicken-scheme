@@ -920,7 +920,7 @@
 				       'var "assigned global variable `~S' is a macro ~A"
 				       var
 				       (if ln (sprintf "in line ~S" ln) "") )
-				      (when undefine-shadowed-macros (undefine-macro! var) ) ) )
+				      (when undefine-shadowed-macros (##sys#undefine-macro! var) ) ) )
 				  (when (keyword? var)
 				    (compiler-warning 'syntax "assignment to keyword `~S'" var) )
 				  (when (pair? var) ; macro
