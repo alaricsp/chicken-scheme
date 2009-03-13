@@ -143,14 +143,13 @@ html/Extensions to the standard.html
 html/Extensions.html
 html/Foreign type specifiers.html
 html/Getting started.html
-html/Getting started~.html
 html/Interface to external functions and variables.html
 html/Locations.html
 html/Modules and macros.html
 html/Non-standard macros and special forms.html
 html/Non-standard read syntax.html
 html/Other support procedures.html
-html/Overview.html
+html/Getting Started.html
 html/Parameters.html
 html/Supported language.html
 html/The User's Manual.html
@@ -239,7 +238,6 @@ apply-hack.x86-64.s
 apply-hack.ppc.darwin.s
 apply-hack.ppc.sysv.s
 apply-hack.sparc64.s
-chicken.texi
 chicken.pdf
 Makefile
 Makefile.linux
@@ -254,11 +252,6 @@ Makefile.msvc
 rules.make
 defaults.make
 private-namespace.scm
-scripts/makedist.scm
-scripts/makehtml.scm
-scripts/maketexi.scm
-scripts/enscript-texinfo.scm
-scripts/dpkg-eggs.scm
 scripts/scheme
 svnrevision.sh
 synrules.scm

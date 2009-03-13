@@ -11,7 +11,17 @@
 
 (define *platform* 
   (let ((sv (symbol->string (software-version))))
-    (if (string-match ".*bsd" sv) "bsd" sv)))
+    (cond ((string-match ".*bsd" sv) "bsd")
+	  (else
+	   (case (build-platform)
+	     ((mingw32) 
+	      (if (string=? (getenv "MSYSTEM") "MINGW32")
+		  "mingw-msys"
+		  "mingw32"))
+	     ((msvc) "msvc")
+	     (else sv))))))
+
+(define *make* "make")
 
 (define (release full?)
   (let* ((files (read-lines "distribution/manifest"))
@@ -19,14 +29,19 @@
 	 (distfiles (map (cut prefix distname <>) files)) 
 	 (tgz (conc distname ".tar.gz")))
     (run (rm -fr ,distname ,tgz))
-    (run (mkdir -p ,distname
-		,@(map (cut path distname <>) 
-		       (delete-duplicates (filter-map prefix files) string=?))))
+    (create-directory distname)
+    (for-each
+     (lambda (d)
+       (let ((d (path distname d)))
+	 (unless (file-exists? d)
+	   (print "creating " d)
+	   (create-directory d))))
+     (delete-duplicates (filter-map prefix files) string=?))
     (let ((missing '()))
       (for-each
        (lambda (f)
 	 (if (-e f)
-	     (run (cp -p ,f ,(path distname f))) 
+	     (run (cp -p ,(qs f) ,(qs (path distname f))))
 	     (set! f (cons f missing))))
        files)
       (unless (null? missing)
@@ -40,8 +55,8 @@
   (simple-args
    (command-line-arguments)
    (lambda _
-     (print "usage: makedist [--release] [--test] MAKEOPTION ...")
+     (print "usage: makedist [--release] [--test] [--make=PROGRAM] [--platform=PLATFORM] MAKEOPTION ...")
      (exit 1))) )
 
-(run (gmake -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
+(run (,*make* -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
 (release *release*)

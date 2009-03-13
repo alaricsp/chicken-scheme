@@ -81,13 +81,13 @@ include $(SRCDIR)/defaults.make
 ifndef BUILD_SETUP_TOOLS
 TARGETS = libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
 	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
-	libuchicken$(SO) chicken-setup$(EXE) chicken.info \
+	libuchicken$(SO) chicken-setup$(EXE) \
 	libchickengui$(SO) chicken-bug$(EXE)
 else
 TARGETS = libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) \
 	chicken-profile$(EXE) csc$(EXE) libchicken$(SO) \
 	libuchicken$(SO) chicken-install$(EXE) chicken-uninstall$(EXE) \
-	chicken-status$(EXE) chicken.info \
+	chicken-status$(EXE) \
 	libchickengui$(SO) chicken-bug$(EXE)
 endif
 

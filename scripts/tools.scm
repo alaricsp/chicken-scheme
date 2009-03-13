@@ -1,7 +1,7 @@
 ;;;; tools.scm
 
 
-(use (srfi 1) posix utils)
+(use (srfi 1) posix utils files)
 
 
 (define *verbose* (##sys#fudge 13))
@@ -10,6 +10,9 @@
 (define *actions* (make-hash-table string=?))
 (define *pseudo-targets* '())
 (define *sleep-delay* 2)
+
+(define *windows-shell*
+  (memq (build-platform) '(mingw32 msvc)))
 
 
 ;;; Verbosity and output

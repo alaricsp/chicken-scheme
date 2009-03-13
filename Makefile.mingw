@@ -84,7 +84,7 @@ include $(SRCDIR)defaults.make
 all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE) \
 	csc$(EXE) libchicken$(SO) \
 	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-install$(EXE) \
-	chicken-status$(EXE) chicken-uninstall$(EXE) chicken.info
+	chicken-status$(EXE) chicken-uninstall$(EXE)
 
 chicken-config.h: chicken-defaults.h
 	echo #define HAVE_DIRENT_H 1 >$@

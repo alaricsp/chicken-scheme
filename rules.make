@@ -770,11 +770,6 @@ $(CHICKEN_BUG_PROGRAM)$(EXE): chicken-bug$(O) libchicken$(A)
 	$(LINKER) $(LINKER_OPTIONS) $(LINKER_STATIC_OPTIONS) $< $(LINKER_OUTPUT) \
           libchicken$(A) $(LIBRARIES)
 
-# info documentation
-
-chicken.info: chicken.texi
-	-$(MAKEINFO_PROGRAM) $(MAKEINFO_PROGRAM_OPTIONS) $<
-
 # installation
 
 .PHONY: install uninstall install-libs install-manifests install-import-libs install-setup-files \
@@ -1221,7 +1216,7 @@ setup-download.c: $(SRCDIR)setup-download.scm setup-api.import.scm
 
 .PHONY: distfiles dist html
 
-distfiles: html buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
+distfiles: buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
 	data-structures.c ports.c files.c extras.c lolevel.c utils.c \
 	tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c \
 	posixunix.c posixwin.c regex.c scheduler.c profiler.c stub.c \
