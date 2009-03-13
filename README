@@ -84,10 +84,6 @@
         passing "CHICKEN=./chicken-boot" to "make", you can force
         using this bootstrapped compiler to build the system.
 
-        The build may show errors when creating the info(1)
-        documentation, if you do not have GNU texinfo installed.
-        This is not fatal - the build should proceed.
-
         If CHICKEN is build successfully, you can install it on your
         system by entering
 

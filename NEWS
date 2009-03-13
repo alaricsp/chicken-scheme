@@ -1,6 +1,7 @@
 4.0.0
 
-- removed texinfo documentation - this will be added back later
+- removed texinfo and PDF documentation - this will possible be added back 
+  later
 - replaced PCRE regex engine with Alex Shinn's "irregex" regular expression
   package
 - removed `-extension' option
