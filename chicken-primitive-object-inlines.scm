@@ -2,6 +2,8 @@
 ;;;; Kon Lovett, Jan '09
 ;;;; (Was chicken-sys-macros.scm)
 
+; ***** SHOULD RENAME SAFE ROUTINES AS '*foo', KEEPING '%foo' FOR UNSAFE *****
+
 ; Usage
 ;
 ; (include "chicken-primitive-object-inlines")
@@ -287,8 +289,8 @@
 (define-inline (%fxodd? fx) (%fx= 1 (%fxand fx 1)))
 (define-inline (%fxeven? fx) (%fx= 0 (%fxand fx 1)))
 
-(define-inline (%fxmin x y) (##core#inline "C_i_fixnum_min" x y))
-(define-inline (%fxmax x y) (##core#inline "C_i_fixnum_max" x y))
+(define-inline (%fxmin x y) (if (%fx< x y) x y))
+(define-inline (%fxmax x y) (if (%fx< x y) y x))
 
 (define-inline (%fx+ x y) (##core#inline "C_fixnum_plus" x y))
 (define-inline (%fx- x y) (##core#inline "C_fixnum_difference" x y))
@@ -370,7 +372,7 @@
     bv ) )
 
 (define-inline (%string->bytevector s)
-  (let* ((n (%byteblock-length s) #;(%string-length s))
+  (let* ((n (%byteblock-length s) #;(%string-size s))
 	       (bv (%make-bytevector sz)) )
     (##core#inline "C_copy_memory" bv s n)
     bv ) )
@@ -422,11 +424,44 @@
     (##core#inline "C_copy_memory" s li sz)
     s ) )
 
+(define-inline (%string-size s) (%byteblock-length s))
 (define-inline (%string-length s) (%byteblock-length s))
 
 (define-inline (%string-ref s i) (##core#inline "C_subchar" s i))
 
 (define-inline (%string-set! s i c) (##core#inline "C_setsubchar" s i c))
+
+(define-inline (%string-compare/length s1 s2 l) (##core#inline "C_string_compare" s1 s2 l))
+
+(define-inline (%string-compare s1 s2)
+  (let* ((l1 (%string-length s1))
+         (l2 (%string-length s2))
+         (d (%fx- l1 l2))
+         (r (%string-compare/length s1 s2 (if (%fxpositive? d) l2 l1))) )
+    (if (%fxzero? r) d
+        r ) ) )
+
+(define-inline (%string=? s1 s2) (%fxzero? (%string-compare s1 s2)))
+(define-inline (%string<? s1 s2) (%fxnegative? (%string-compare s1 s2)))
+(define-inline (%string>? s1 s2) (%fxpositive? (%string-compare s1 s2)))
+(define-inline (%string<=? s1 s2) (%fx<= 0 (%string-compare s1 s2)))
+(define-inline (%string>=? s1 s2) (%fx>= 0 (%string-compare s1 s2)))
+
+(define-inline (%string-ci-compare/length s1 s2 l) (##core#inline "C_string_compare_case_insensitive" s1 s2 l))
+
+(define-inline (%string-ci-compare s1 s2)
+  (let* ((l1 (%string-length s1))
+         (l2 (%string-length s2))
+         (d (%fx- l1 l2))
+         (r (%string-ci-compare/length s1 s2 (if (%fxpositive? d) l2 l1))) )
+    (if (%fxzero? r) d
+        r ) ) )
+
+(define-inline (%string-ci=? s1 s2) (%fxzero? (%string-ci-compare s1 s2)))
+(define-inline (%string-ci<? s1 s2) (%fxnegative? (%string-ci-compare s1 s2)))
+(define-inline (%string-ci>? s1 s2) (%fxpositive? (%string-ci-compare s1 s2)))
+(define-inline (%string-ci<=? s1 s2) (%fx<= 0 (%string-ci-compare s1 s2)))
+(define-inline (%string-ci>=? s1 s2) (%fx>= 0 (%string-ci-compare s1 s2)))
 
 ;; Flonum (byteblock)
 
@@ -479,8 +514,8 @@
 ;Unsafe
 
 (define-inline (%string->lambda-info s)
-  (let* ((n (%string-length s))
-	       (li (%make-string sz)) )
+  (let* ((n (%string-size s))
+	       (li (%make-string n)) )
     (##core#inline "C_copy_memory" li s n)
     (##core#inline "C_string_to_lambdainfo" li)
     li ) )
@@ -823,13 +858,22 @@
 
 ;; Symbol (wordblock)
 
+;Unsafe
+
 (define-inline (%symbol-binding s) (%wordblock-ref s 0))
 (define-inline (%symbol-string s) (%wordblock-ref s 1))
 (define-inline (%symbol-bucket s) (%wordblock-ref s 2))
 
-(define-inline (%string->symbol-interned s) ((##core#primitive "C_string_to_symbol") s))
+(define-constant NAMESPACE-MAX-ID-LEN 31)
 
-;(define-inline (%symbol-intern! s) (%string->symbol (%symbol-string s)))
+(define-inline (%qualified-symbol? s)
+  (let ((str (%symbol-string s)))
+    (and (%fxpositive? (%string-size str))
+         (fx<= (%byteblock-ref str 0) NAMESPACE-MAX-ID-LEN) ) ) )
+
+;Safe
+
+(define-inline (%string->symbol-interned s) ((##core#primitive "C_string_to_symbol") s))
 
 (define-inline (%symbol-interned? x) (##core#inline "C_lookup_symbol" x))
 
@@ -837,7 +881,7 @@
 
 ;; Keyword (wordblock)
 
-(define-inline (%keyword? x) (and (%symbol? x) (%fx= 0 (%byteblock-ref (%symbol-string x) 0))))
+(define-inline (%keyword? x) (and (%symbol? x) (%fxzero? (%byteblock-ref (%symbol-string x) 0))))
 
 ;; Pointer (wordblock)
 
