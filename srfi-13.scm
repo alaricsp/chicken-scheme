@@ -10,7 +10,7 @@
 	%string-map %string-copy! %string-compare %substring/shared %string-suffix? %multispan-repcopy!
 	%string-prefix-length-ci %string-suffix-length-ci %string-prefix-ci? %string-suffix-ci?
 	##srfi13#traverse
-	%string-titlecase! %string-map! %kmp-search %string-compare-ci ##srfi13#string-fill!)
+	%string-titlecase! %string-map! %string-compare-ci ##srfi13#string-fill!)
   (standard-bindings not boolean? apply call-with-current-continuation eq? eqv? equal? pair? cons car cdr caar cadr
 		     cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr caaaar caaadr caadar caaddr cadaar
 		     cadadr caddar cadddr cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar cddddr set-car! set-cdr!

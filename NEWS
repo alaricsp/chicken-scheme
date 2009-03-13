@@ -1,5 +1,7 @@
 4.0.0
 
+- removed `apropos' and `apropos-list' from the "utils" library unit;
+  available as an extension
 - removed texinfo and PDF documentation - this will possible be added back 
   later
 - replaced PCRE regex engine with Alex Shinn's "irregex" regular expression
@@ -20,7 +22,7 @@
 - removed unused "%kmp-search" from "srfi-13" library unit
 - expander handles syntax-reexports and makes unexported syntax available
   for exported expanders in import libraries
-- added checks in some procedures in the the "tcp" library unit.
+- added checks in some procedures in the "tcp" library unit
 - the macro system has been completely overhauled and converted 
   to hygienic macros
 - a macro-aware module system has been added
@@ -69,7 +71,7 @@
   more flexible and allow greater freedom when creating local or application-
   specific repositories
 - extension-installation can be done directly from SVN repositories or a local
-  file tree.
+  file tree
 - enabled chicken mirror site as alternative download location
 
 3.4.0
