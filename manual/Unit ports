@@ -114,7 +114,7 @@ until it returns {{#!eof}}, returning a list of the collected results.
 
 ==== port-fold
 
-<procedure>(port-map FN ACC THUNK)</procedure>
+<procedure>(port-fold FN ACC THUNK)</procedure>
 
 Apply {{FN}} to successive results of calling the zero argument procedure {{THUNK}},
 passing the {{ACC}} value as the second argument. The {{FN}} result becomes the new
