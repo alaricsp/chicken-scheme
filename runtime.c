@@ -133,8 +133,6 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
 # undef C_HACKED_APPLY
 #endif
 
-#define BITWISE_UINT_ONLY
-
 /* Parameters: */
 
 #define RELAX_MULTIVAL_CHECK
@@ -248,6 +246,7 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
                                        else n = (C_word)f; \
                                      }
 
+#ifdef BITWISE_UINT_ONLY
 #define C_check_uint(x, f, n, w)    if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
                                      else if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) \
                                        barf(C_BAD_ARGUMENT_TYPE_NO_NUMBER_ERROR, w, x); \
@@ -257,8 +256,8 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
                                          barf(C_BAD_ARGUMENT_TYPE_NO_UINTEGER_ERROR, w, x); \
                                        else n = (C_uword)f; \
                                      }
-
-#define C_check_uintX(x, f, n, w)    if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
+#else
+#define C_check_uint(x, f, n, w)    if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
                                       else if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) \
                                         barf(C_BAD_ARGUMENT_TYPE_NO_NUMBER_ERROR, w, x); \
                                       else { double _m; \
@@ -267,16 +266,7 @@ extern void _C_do_apply_hack(void *proc, C_word *args, int count) C_noret;
                                           barf(C_BAD_ARGUMENT_TYPE_NO_UINTEGER_ERROR, w, x); \
                                         else n = (C_uword)f; \
                                       }
-
-#define C_check_uintX(x, f, n, w)    if(((x) & C_FIXNUM_BIT) != 0) n = C_unfix(x); \
-                                      else if(C_immediatep(x) || C_block_header(x) != C_FLONUM_TAG) \
-                                        barf(C_BAD_ARGUMENT_TYPE_NO_NUMBER_ERROR, w, x); \
-                                      else { double _m; \
-                                        f = C_flonum_magnitude(x); \
-                                        if(modf(f, &_m) != 0.0 || f > C_UWORD_MAX) \
-                                          barf(C_BAD_ARGUMENT_TYPE_NO_UINTEGER_ERROR, w, x); \
-                                        else n = (C_uword)f; \
-                                      }
+#endif
 
 #ifdef C_SIXTY_FOUR
 #define C_limit_fixnum(n)            ((n) & C_MOST_POSITIVE_FIXNUM)
@@ -5430,13 +5420,8 @@ C_regparm C_word C_fcall C_a_i_bitwise_and(C_word **a, int c, C_word n1, C_word 
   double f1, f2;
   C_uword nn1, nn2;
 
-# ifdef BITWISE_UINT_ONLY
   C_check_uint(n1, f1, nn1, "bitwise-and");
   C_check_uint(n2, f2, nn2, "bitwise-and");
-# else
-  C_check_uintX(n1, f1, nn1, "bitwise-and");
-  C_check_uintX(n2, f2, nn2, "bitwise-and");
-# endif
   nn1 = C_limit_fixnum(nn1 & nn2);
 
   if(C_ufitsinfixnump(nn1)) return C_fix(nn1);
@@ -5449,13 +5434,8 @@ C_regparm C_word C_fcall C_a_i_bitwise_ior(C_word **a, int c, C_word n1, C_word 
   double f1, f2;
   C_uword nn1, nn2;
 
-# ifdef BITWISE_UINT_ONLY
   C_check_uint(n1, f1, nn1, "bitwise-ior");
   C_check_uint(n2, f2, nn2, "bitwise-ior");
-# else
-  C_check_uintX(n1, f1, nn1, "bitwise-ior");
-  C_check_uintX(n2, f2, nn2, "bitwise-ior");
-# endif
   nn1 = C_limit_fixnum(nn1 | nn2);
 
   if(C_ufitsinfixnump(nn1)) return C_fix(nn1);
@@ -5468,13 +5448,8 @@ C_regparm C_word C_fcall C_a_i_bitwise_xor(C_word **a, int c, C_word n1, C_word 
   double f1, f2;
   C_uword nn1, nn2;
 
-# ifdef BITWISE_UINT_ONLY
   C_check_uint(n1, f1, nn1, "bitwise-xor");
   C_check_uint(n2, f2, nn2, "bitwise-xor");
-# else
-  C_check_uintX(n1, f1, nn1, "bitwise-xor");
-  C_check_uintX(n2, f2, nn2, "bitwise-xor");
-# endif
   nn1 = C_limit_fixnum(nn1 ^ nn2);
 
   if(C_ufitsinfixnump(nn1)) return C_fix(nn1);
@@ -5496,11 +5471,7 @@ C_regparm C_word C_fcall C_i_bit_setp(C_word n, C_word i)
   if(index < 0 || index >= C_WORD_SIZE)
     barf(C_OUT_OF_RANGE_ERROR, "bit-set?", n, i);
 
-# ifdef BITWISE_UINT_ONLY
   C_check_uint(n, f1, nn1, "bit-set?");
-# else
-  C_check_uintX(n, f1, nn1, "bit-set?");
-# endif
   return C_mk_bool((nn1 & (1 << index)) != 0);
 }
 
@@ -5510,11 +5481,7 @@ C_regparm C_word C_fcall C_a_i_bitwise_not(C_word **a, int c, C_word n)
   double f;
   C_uword nn;
 
-# ifdef BITWISE_UINT_ONLY
   C_check_uint(n, f, nn, "bitwise-not");
-# else
-  C_check_uintX(n, f, nn, "bitwise-not");
-# endif
   nn = C_limit_fixnum(~nn);
 
   if(C_ufitsinfixnump(nn)) return C_fix(nn);

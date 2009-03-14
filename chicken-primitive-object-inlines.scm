@@ -278,9 +278,9 @@
 (define-inline (%fx>= x y) (##core#inline "C_fixnum_greater_or_equal_p" x y))
 (define-inline (%fx<= x y) (##core#inline "C_fixnum_less_or_equal_p" x y))
 
-(define-inline (%fxclosed-right? l x h) (and (%< l x) (%fx<= x h)))
-(define-inline (%fxclosed? l x h) (and (%<= l x) (%fx<= x h)))
-(define-inline (%fxclosed-left? l x h) (and (%<= l x) (%fx< x h)))
+(define-inline (%fxclosed-right? l x h) (and (fx%< l x) (%fx<= x h)))
+(define-inline (%fxclosed? l x h) (and (%fx<= l x) (%fx<= x h)))
+(define-inline (%fxclosed-left? l x h) (and (%fx<= l x) (%fx< x h)))
 
 (define-inline (%fxzero? fx) (%fx= 0 fx))
 (define-inline (%fxpositive? fx) (%fx< 0 fx))
