@@ -26,9 +26,7 @@
 
 (##sys#register-primitive-module
  'utils
- '(apropos
-   apropos-list
-   for-each-argv-line
+ '(for-each-argv-line
    for-each-line
    read-all
    system*
