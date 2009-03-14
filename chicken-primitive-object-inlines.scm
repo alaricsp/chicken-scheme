@@ -360,7 +360,7 @@
 
 ; generic-byteblock isa bytevector, string, flonum, or lambda-info
 (define-inline (%generic-byteblock? x)
-  (or (bytevector? x) (string? x) (flonum? x) (lambda-info? x)) )
+  (or (%bytevector? x) (%string? x) (%flonum? x) (%lambda-info? x)) )
 
 ;; Bytevector (byteblock)
 
@@ -833,24 +833,24 @@
       ((%fx>= i l))
     (%closure-set! tc i (%closure-ref fc i)) ) )
 
-(define-inline (%closure-decoration c t)
+(define-inline (%closure-decoration c test)
   (let find-decor ((i (%fxsub1 (%closure-length c))))
     (and (%fxpositive? i)
          (let ((x (%closure-ref c i)))
-           (if (t x) x
+           (if (test x) x
                (find-decor (%fxsub1 i)) ) ) ) ) )
 
-(define-inline (%closure-decorate! c t d)
+(define-inline (%closure-decorate! c test dcor)
   (let ((l (%closure-length c)))
     (let find-decor ((i (%fxsub l)))
       (cond ((%fxzero? i)
              (let ((nc (%make-closure (%fxadd1 l))))
                (%closure-copy nc c l)
                (##core#inline "C_copy_pointer" c nc)
-               (d nc i) ) )
+               (dcor nc i) ) )
             (else
              (let ((x (%closure-ref c i)))
-               (if (t x) (d c i)
+               (if (test x) (dcor c i)
                    (find-decor (%fxsub i)) ) ) ) ) ) ) )
 
 (define-inline (%closure-lambda-info c)
@@ -869,7 +869,7 @@
 (define-inline (%qualified-symbol? s)
   (let ((str (%symbol-string s)))
     (and (%fxpositive? (%string-size str))
-         (fx<= (%byteblock-ref str 0) NAMESPACE-MAX-ID-LEN) ) ) )
+         (%fx<= (%byteblock-ref str 0) NAMESPACE-MAX-ID-LEN) ) ) )
 
 ;Safe
 
