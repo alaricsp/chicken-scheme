@@ -1,0 +1,367 @@
+[[tags: manual]]
+[[toc:]]
+
+== Unit srfi-69
+
+CHICKEN implements SRFI 69 with SRFI 90 extensions. For more information, see
+[[http://srfi.schemers.org/srfi-69/srfi-69.html|SRFI-69]] and
+[[http://srfi.schemers.org/srfi-90/srfi-90.html|SRFI-90]].
+
+
+=== Hash Table Procedures
+
+
+==== make-hash-table
+
+ [procedure] (make-hash-table [TEST HASH SIZE] [#:test TEST] [#:hash HASH] [#:size SIZE] [#:initial INITIAL] [#:min-load MIN-LOAD] [#:max-load MAX-LOAD] [#:weak-keys WEAK-KEYS] [#:weak-values WEAK-VALUES])
+
+Returns a new {{HASH-TABLE}} with the supplied configuration.
+
+; {{TEST}} : The equivalence function.
+; {{HASH}} : The hash function.
+; {{SIZE}} : The expected number of table elements.
+; {{INITIAL}} : The default initial value.
+; {{MIN-LOAD}} : The minimum load factor. A {{flonum}} in (0.0 1.0).
+; {{MAX-LOAD}} : The maximum load factor. A {{flonum}} in (0.0 1.0).
+; {{WEAK-KEYS}} : Use weak references for keys. (Ignored)
+; {{WEAK-VALUES}} : Use weak references for values. (Ignored)
+
+
+==== alist->hash-table
+
+ [procedure] (alist->hash-table A-LIST [#:test TEST] [#:hash HASH] [#:size SIZE] [#:initial INITIAL] [#:min-load MIN-LOAD] [#:max-load MAX-LOAD] [#:weak-keys WEAK-KEYS] [#:weak-values WEAK-VALUES])
+
+Returns a new {{HASH-TABLE}}. The {{HASH-TABLE}} is populated from the
+{{A-LIST}}. The keyword arguments are per {{make-hash-table}}.
+
+
+==== hash-table?
+
+ [procedure] (hash-table? OBJECT)
+
+Is the {{OBJECT}} a {{hash-table}}?
+
+
+==== hash-table-size
+
+ [procedure] (hash-table-size HASH-TABLE)
+
+The {{HASH-TABLE}} size.
+
+
+==== hash-table-equivalence-function
+
+ [procedure] (hash-table-equivalence-function HASH-TABLE)
+
+The {{HASH-TABLE}} {{equivalence-function}}.
+
+
+==== hash-table-hash-function
+
+ [procedure] (hash-table-hash-function HASH-TABLE)
+
+The {{HASH-TABLE}} {{hash-function}}.
+
+
+==== hash-table-min-load
+
+ [procedure] (hash-table-min-load HASH-TABLE)
+
+The {{HASH-TABLE}} minimum load factor.
+
+
+==== hash-table-max-load
+
+ [procedure] (hash-table-max-load HASH-TABLE)
+
+The {{HASH-TABLE}} maximum load factor.
+
+
+==== hash-table-weak-keys
+
+ [procedure] (hash-table-weak-keys HASH-TABLE)
+
+Does the {{HASH-TABLE}} weak references for keys?
+
+
+==== hash-table-weak-values
+
+ [procedure] (hash-table-weak-values HASH-TABLE)
+
+Does the {{HASH-TABLE}} weak references for values?
+
+
+==== hash-table-has-initial?
+
+ [procedure] (hash-table-has-initial? HASH-TABLE)
+
+Does the {{HASH-TABLE}} have a default initial value?
+
+
+==== hash-table-initial
+
+ [procedure] (hash-table-initial HASH-TABLE)
+
+The {{HASH-TABLE}} default initial value.
+
+
+==== hash-table-keys
+
+ [procedure] (hash-table-keys HASH-TABLE)
+
+Returns a list of the keys in the {{HASH-TABLE}} population.
+
+
+==== hash-table-values
+
+ [procedure] (hash-table-values HASH-TABLE)
+
+Returns a list of the values in the {{HASH-TABLE}} population.
+
+
+==== hash-table->alist
+
+ [procedure] (hash-table->alist HASH-TABLE)
+
+Returns the population of the {{HASH-TABLE}} as an {{a-list}}.
+
+
+
+==== hash-table-ref
+
+ [procedure] (hash-table-ref HASH-TABLE KEY)
+
+Returns the {{VALUE}} for the {{KEY}} in the {{HASH-TABLE}}.
+
+Aborts with an exception when the {{KEY}} is missing.
+
+
+==== hash-table-ref/default
+
+ [procedure] (hash-table-ref/default HASH-TABLE KEY DEFAULT)
+
+Returns the {{VALUE}} for the {{KEY}} in the {{HASH-TABLE}}, or the {{DEFAULT}}
+when the {{KEY}} is missing.
+
+
+==== hash-table-exists?
+
+ [procedure] (hash-table-exists? HASH-TABLE KEY)
+
+Does the {{KEY}} exist in the {{HASH-TABLE}}?
+
+
+==== hash-table-set!
+
+ [procedure] (hash-table-set! HASH-TABLE KEY VALUE)
+
+Set the {{VALUE}} for the {{KEY}} in the {{HASH-TABLE}}.
+
+A setter for {{hash-table-ref}} is defined, so
+
+<enscript highlight=scheme>
+(set! (hash-table-ref HASH-TABLE KEY) VALUE)
+</enscript>
+
+is equivalent to
+
+<enscript highlight=scheme>
+(hash-table-set! HASH-TABLE KEY VALUE)
+</enscript>
+
+
+==== hash-table-update!
+
+ [procedure] (hash-table-update! HASH-TABLE KEY [UPDATE-FUNCTION [DEFAULT-VALUE-FUNCTION]])
+
+Sets or replaces the {{VALUE}} for {{KEY}} in the {{HASH-TABLE}}.
+
+The {{UPDATE-FUNCTION}} takes the existing {{VALUE}} for {{KEY}} and returns
+the new {{VALUE}}. The default is {{identity}}
+
+The {{DEFAULT-VALUE-FUNCTION}} is called when the entry for {{KEY}} is missing.
+The default uses the {{(hash-table-initial-value)}}, if provided. Otherwise
+aborts with an exception.
+
+Returns the new {{VALUE}}.
+
+
+==== hash-table-update!/default
+
+ [procedure] (hash-table-update! HASH-TABLE KEY UPDATE-FUNCTION DEFAULT-VALUE)
+
+Sets or replaces the {{VALUE}} for {{KEY}} in the {{HASH-TABLE}}.
+
+The {{UPDATE-FUNCTION}} takes the existing {{VALUE}} for {{KEY}} and returns
+the new {{VALUE}}.
+
+The {{DEFAULT-VALUE}} is used when the entry for {{KEY}} is missing.
+
+Returns the new {{VALUE}}.
+
+
+==== hash-table-copy
+
+ [procededure] (hash-table-copy HASH-TABLE)
+
+Returns a shallow copy of the {{HASH-TABLE}}.
+
+
+==== hash-table-delete!
+
+ [procedure] (hash-table-delete! HASH-TABLE KEY)
+
+Deletes the entry for {{KEY}} in the {{HASH-TABLE}}.
+
+
+==== hash-table-remove!
+
+ [procedure] (hash-table-remove! HASH-TABLE PROC)
+
+Calls {{PROC}} for all entries in {{HASH-TABLE}} with the key and value of each
+entry. If {{PROC}} returns true, then that entry is removed.
+
+
+==== hash-table-clear!
+
+ [procedure] (hash-table-clear! HASH-TABLE)
+
+Deletes all entries in {{HASH-TABLE}}.
+
+
+==== hash-table-merge
+
+ [procedure] (hash-table-merge HASH-TABLE-1 HASH-TABLE-2)
+
+Returns a new {{HASH-TABLE}} with the union of {{HASH-TABLE-1}} and
+{{HASH-TABLE-2}}.
+
+
+==== hash-table-merge!
+
+ [procedure] (hash-table-merge! HASH-TABLE-1 HASH-TABLE-2)
+
+Returns {{HASH-TABLE-1}} as the union of {{HASH-TABLE-1}} and
+{{HASH-TABLE-2}}.
+
+
+==== hash-table-map
+
+ [procedure] (hash-table-map HASH-TABLE FUNC)
+
+Calls {{FUNC}} for all entries in {{HASH-TABLE}} with the key and value of each
+entry.
+
+Returns a list of the results of each call.
+
+
+==== hash-table-fold
+
+ [procedure] (hash-table-fold HASH-TABLE FUNC INIT)
+
+Calls {{FUNC}} for all entries in {{HASH-TABLE}} with the key and value of each
+entry, and the current folded value. The initial folded value is {{INIT}}.
+
+Returns the final folded value.
+
+
+==== hash-table-for-each
+
+ [procedure] (hash-table-for-each HASH-TABLE PROC)
+
+Calls {{PROC}} for all entries in {{HASH-TABLE}} with the key and value of each
+entry.
+
+
+==== hash-table-walk
+
+ [procedure] (hash-table-walk HASH-TABLE PROC)
+
+Calls {{PROC}} for all entries in {{HASH-TABLE}} with the key and value of each
+entry.
+
+
+=== Hashing Functions
+
+All hash functions return a {{fixnum}} in the range [0 {{BOUND}}).
+
+
+==== number-hash
+
+ [procedure] (number-hash NUMBER [BOUND])
+
+For use with {{=}} as a {{hash-table-equivalence-function}}.
+
+
+==== object-uid-hash
+
+ [procedure] (object-uid-hash OBJECT [BOUND])
+
+Currently a synonym for {{equal?-hash}}.
+
+
+==== symbol-hash
+
+ [procedure] (symbol-hash SYMBOL [BOUND])
+
+For use with {{eq?}} as a {{hash-table-equivalence-function}}.
+
+
+==== keyword-hash
+
+ [procedure] (keyword-hash KEYWORD [BOUND])
+
+For use with {{eq?}} as a {{hash-table-equivalence-function}}.
+
+
+==== string-hash
+
+ [procedure] (string-hash STRING [BOUND])
+
+For use with {{string=?}} as a {{hash-table-equivalence-function}}.
+
+
+==== string-ci-hash
+
+ [procedure] (string-ci-hash STRING [BOUND])
+
+For use with {{string-ci=?}} as a {{hash-table-equivalence-function}}.
+
+
+==== eq?-hash
+
+ [procedure] (eq?-hash OBJECT [BOUND])
+
+For use with {{eq?}} as a {{hash-table-equivalence-function}}.
+
+
+==== eqv?-hash
+
+ [procedure] (eqv?-hash OBJECT [BOUND])
+
+For use with {{eqv?}} as a {{hash-table-equivalence-function}}.
+
+
+==== equal?-hash
+
+ [procedure] (equal?-hash OBJECT [BOUND])
+
+For use with {{equal?}} as a {{hash-table-equivalence-function}}.
+
+
+==== hash
+
+ [procedure] (hash OBJECT [BOUND])
+
+Synonym for {{equal?-hash}}.
+
+
+==== hash-by-identity
+
+ [procedure] (hash-by-identity OBJECT [BOUND])
+
+Synonym for {{eq?-hash}}.
+
+Previous: [[Unit srfi-18]]
+Next: [[Unit posix]]
+

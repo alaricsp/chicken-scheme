@@ -10,23 +10,24 @@
 * [[Modules and macros]]
 * [[Declarations]]
 * [[Parameters]]
-* [[Unit library]] basic Scheme definitions
-* [[Unit eval]] evaluation
-* [[Unit expand]] macro- and module handling
-* [[Unit data-structures]] data structures
+* [[Unit library]] Basic Scheme definitions
+* [[Unit eval]] Evaluation
+* [[Unit expand]] Modules and macros handling
+* [[Unit data-structures]] Data structures
 * [[Unit ports]] I/O ports
 * [[Unit files]] File and pathname operations
-* [[Unit extras]] useful utility definitions
+* [[Unit extras]] Useful utility definitions
+* [[Unit regex]] Regular expressions
 * [[Unit srfi-1]] List Library
 * [[Unit srfi-4]] Homogeneous numeric vectors
 * [[Unit srfi-13]] String library
-* [[Unit srfi-14]] character set library              
-* [[Unit regex]] regular expressions
+* [[Unit srfi-14]] Character set library              
 * [[Unit srfi-18]] multithreading
+* [[Unit srfi-69]] Hashtable Library
 * [[Unit posix]] Unix-like services
 * [[Unit utils]] Shell scripting and file operations
-* [[Unit tcp]] basic TCP-sockets
-* [[Unit lolevel]] low-level operations
+* [[Unit tcp]] Basic TCP-sockets
+* [[Unit lolevel]] Low-level operations
 
 ---
 Previous: [[Using the interpreter]]

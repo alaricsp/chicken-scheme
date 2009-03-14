@@ -191,35 +191,6 @@ When missing a ({{sprintf}}) is performed.
 
 
 
-=== Hash tables
-
-CHICKEN implements SRFI-69. For more information, 
-see [[http://srfi.schemers.org/srfi-69/srfi-69.html|SRFI-69]].
-
-A setter for {{hash-table-ref}} is defined, so
-
-<enscript highlight=scheme>
-(set! (hash-table-ref HT KEY) VAL)
-</enscript>
-
-is equivalent to
-
-<enscript highlight=scheme>
-(hash-table-set! HT KEY VAL)
-</enscript>
-
-As an extension to SRFI-69, {{hash-table-update!}} and {{hash-table-update!/default}} return
-the new value (after applying the update procedure).
-
-==== hash-table-remove!
-
- [procedure] (hash-table-remove! HASHTABLE PROC)
-
-Calls {{PROC}} for all entries in {{HASHTABLE}} with the key and value of each
-entry. If {{PROC}} returns true, then that entry is removed.
-
-
-
 === Queues
 
 
@@ -807,4 +778,4 @@ Returns the index of the found value or {{#f}} otherwise.
 ---
 Previous: [[Unit files]]
 
-Next: [[Unit srfi-1]]
+Next: [[Unit regex]]
