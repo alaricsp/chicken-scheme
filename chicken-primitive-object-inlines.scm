@@ -978,10 +978,13 @@
 (define-inline (%odd? n) (##core#inline "C_i_oddp" n))
 (define-inline (%even? n) (##core#inline "C_i_evenp" n))
 
+(define-inline (%+ x y) ((##core#primitive "C_plus") x y))
 (define-inline (%- x y) ((##core#primitive "C_minus") x y))
 (define-inline (%* x y) ((##core#primitive "C_times") x y))
 (define-inline (%/ x y) ((##core#primitive "C_divide") x y))
-(define-inline (%+ x y) ((##core#primitive "C_plus") x y))
+
+(define-inline (%add1 x) (%+ x 1))
+(define-inline (%sub1 x) (%- x 1))
 
 (define-inline (%quotient x y) ((##core#primitive "C_quotient") x y))
 (define-inline (%remainder x y) (let ((quo (%quotient x y))) (%- x (%* quo y))))

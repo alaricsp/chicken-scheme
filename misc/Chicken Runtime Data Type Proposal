@@ -259,7 +259,7 @@ The core structure-type is a vector-like object with a reference to a
 runtime-type-descriptor or rtd structure-type object in slot 0. So a
 structure-type object always has at least 1 element.
 
-For backwards compatibility, if needed, a structure-type with a symbol in slot
+For backwards compatibility a structure-type with a symbol in slot
 0 can be given the current semantics. A synthetic rtd can be generated
 on-the-fly for such cases.
 
@@ -370,6 +370,76 @@ parent needs to be instantiated at compile time - how to determine an automatic
 '-extend' is beyond me.
 
 -- Unresolved:
+
+--- Generative vs. Nongenerative
+
+(Shiro Kawai comp.lang.scheme Sun, 8 Mar 2009 01:14:37 -0800 (PST) Generative/nongenerative record types)
+This is just a rough idea from top of my head.  Feedbacks are welcome.
+
+I've been feeling very uncomfortable about "nongenerative" record type
+creation feature in R6RS but couldn't point my finger to what made me
+feel so.  I see why the feature like that is needed, but it doesn't
+look
+like Scheme-way as I perceive (what Scheme-way is may vary widely
+among people, though).  I dug the discussion about it and so far got
+an impression that (1) first, make-record-type is understood to be
+generative, in order to guarantee to create distinct types, and then
+(2) uid for nongenerative record type creation is introduced, mainly
+to accomodate efficient local record definitions.
+
+Record type descriptor is an immutable object, and I tend to think
+equality of immutable objects should, ideally, defined by equality of
+its components (as Henry Baker suggests in [1]).  Implementation may
+take advantage of immutability to share the same storage for
+equivalent object.  Anyway, it seems weird that two immutalbe objects
+are not equivalent even though I cannot distinguish one from the other
+any way except the system-provided equivalence predicate (e.g. eqv?).
+
+The only reason I can think of that immutable record types with
+exactly the same definitions need to be distinguished is the necessity
+of distinct types.
+
+Then, how about separate type identity from structure definitions?
+
+The record type in R6RS are burdened by two roles; creating distinct
+types, and creating aggregate types.  These two are not the same;
+sometimes I merely need an aggregate type for code readability and do
+not care if it is distinct from other types.  I've been happily using
+a macro that expands aggregate type definition into bunch of
+procedures that operate on vectors.
+
+Specifically,
+
+* make-record-type-descriptor (or equivalent) is *allowed* to return
+the
+  identical rtd if all the given arguments are equivalent.
+
+* Record type equivalence is based on equivalence of rtd's components.
+(If the implementation returns identical rtd for equivalent arguments,
+the comparison is effectively eq?).
+
+* If you need distinct types, give make-record-type-descriptor
+something
+different.  An easiest way may be to add "type-id" component to rtd,
+and
+use eqv? to compare that component to determine equivalence of rtds.
+It is easy to create distinct rtd by giving (cons #f #f) as type-id.
+
+* For the syntactic layer, I'm not sure whether the define-record-type
+macro should create a distinct type or not.  But I feel it better to
+have different macros for distinct type creation and mere aggregate
+type creation.  Local aggregate structure for readability requires
+latter, while the record type which is part of external API of some
+module may require former.
+
+On the surface, this idea just reverses the default perception of
+generative/nongenerative behavior of make-record-type-descriptor;
+R6RS's is generative unless unique uid is given.  This one is
+nongenerative unless unique type-id is given.  But this one eliminates
+explicit bookkeeping of uids, which is effectively creating another
+namespace in R6RS.
+
+[1] http://home.pipeline.com/~hbaker1/ObjectIdentity.html
 
 --- Conflicts between structure-type 'symbol' tags & 'rtd-object' names is an
 open issue.
