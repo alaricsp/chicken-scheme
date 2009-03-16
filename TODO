@@ -74,6 +74,7 @@ TODO for chicken							-*- Outline -*-
 ** compiler
 *** test define-rewrite-rule
 *** (csc) generate object-files in /tmp (or TMPDIR)?
+*** warning on unused local variable
 
 ** setup/install
 *** setup-download
@@ -102,9 +103,11 @@ TODO for chicken							-*- Outline -*-
     touching .c files caused chicken-install to be rebuilt; did using
     .SECONDARY help?
 *** using "touch" with WINDOWS_SHELL won't work (need alternative)
+*** script for guessing PLATFORM
 
 ** documentation
 *** document qs, normalize-pathname
+*** compatibility notes for `define-macro' in FAQ, manual
 
 
 * tests
@@ -113,6 +116,7 @@ TODO for chicken							-*- Outline -*-
 *** syntax-rules-stress-test
 *** fully compiled ec-tests
 ** 3-stage bootstrap with compiler-output comparison
+** distribution-test script
 
 
 * documentation

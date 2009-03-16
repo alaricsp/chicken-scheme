@@ -32,6 +32,7 @@
 			locate-egg/local
 			locate-egg/svn
 			locate-egg/http
+			gather-egg-information
 			list-extensions
 			temporary-directory)
 
@@ -86,6 +87,18 @@
             (if (and (file-exists? trunkdir) (directory? trunkdir))
                 (values trunkdir "trunk")
                 (values eggdir "") ) ) ) ) )
+
+  (define (gather-egg-information dir)
+    (let ((ls (directory dir)))
+      (filter-map
+       (lambda (egg)
+	 (let-values (((loc version) (locate-egg/local egg dir)))
+	   (let ((meta (make-pathname (list dir loc) egg "meta")))
+	     (and (file-exists? meta)
+		  (cons (string->symbol egg) 
+			(cons (list 'version version)
+			      (with-input-from-file meta read)))))))
+       ls)))
 
   (define (make-svn-ls-cmd uarg parg pnam #!key recursive?)
     (conc "svn ls " uarg #\space parg (if recursive? " -R " "") (qs pnam)) )
