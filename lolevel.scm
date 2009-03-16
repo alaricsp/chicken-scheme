@@ -27,6 +27,7 @@
 
 (declare
   (unit lolevel)
+  (uses srfi-69)
   (usual-integrations)
   (disable-warning var redef)
   (hide ipc-hook-0 xproc-tag
@@ -58,7 +59,7 @@ EOF
      ##sys#check-pointer ##sys#check-closure ##sys#check-integer ##sys#check-special
      ##sys#error ##sys#signal-hook 
      ##sys#error-not-a-proper-list
-     ##sys#hash-table-ref ##sys#hash-table-set!
+     make-hash-table hash-table-ref/default hash-table-set!
      ##sys#make-pointer ##sys#make-tagged-pointer ##sys#make-locative ##sys#locative?
      ##sys#become!
      ##sys#make-string ##sys#make-vector ##sys#vector->closure!
@@ -512,17 +513,17 @@ EOF
 (define (object-evict x . allocator)
   (let ([allocator 
 	 (if (pair? allocator) (car allocator) (foreign-lambda c-pointer "C_malloc" int) ) ] 
-	[tab (##sys#make-vector evict-table-size '())] )
+	[tab (make-hash-table eq?)] )
     (##sys#check-closure allocator 'object-evict)
     (let evict ([x x])
       (cond [(not (##core#inline "C_blockp" x)) x ]
-	    [(##sys#hash-table-ref tab x) ]
+	    [(hash-table-ref/default tab x #f) ]
 	    [else
 	     (let* ([n (##sys#size x)]
 		    [bytes (if (##core#inline "C_byteblockp" x) (align-to-word n) (##core#inline "C_bytes" n))]
 		    [y (##core#inline "C_evict_block" x (allocator (fx+ bytes (##core#inline "C_bytes" 1))))] )
 	       (when (symbol? x) (##sys#setislot y 0 (void)))
-	       (##sys#hash-table-set! tab x y)
+	       (hash-table-set! tab x y)
 	       (unless (##core#inline "C_byteblockp" x)
 		 (do ([i (if (or (##core#inline "C_specialp" x) (symbol? x)) 1 0) (fx+ i 1)])
 		     [(fx>= i n)]
@@ -537,11 +538,11 @@ EOF
 		       (##sys#check-exact limit 'object-evict-to-location)
 		       limit)) ]
 	 [ptr2 (##sys#address->pointer (##sys#pointer->address ptr))]
-	 [tab (##sys#make-vector evict-table-size '())]
+	 [tab (make-hash-table eq?)]
 	 [x2
 	  (let evict ([x x])
 	    (cond [(not (##core#inline "C_blockp" x)) x ]
-		  [(##sys#hash-table-ref tab x) ]
+		  [(hash-table-ref/default tab x #f) ]
 		  [else
 		   (let* ([n (##sys#size x)]
 			  [bytes 
@@ -560,7 +561,7 @@ EOF
 		   (let ([y (##core#inline "C_evict_block" x ptr2)])
 		     (when (symbol? x) (##sys#setislot y 0 (void)))
 		     (##sys#set-pointer-address! ptr2 (+ (##sys#pointer->address ptr2) bytes))
-		     (##sys#hash-table-set! tab x y)
+		     (hash-table-set! tab x y)
 		     (unless (##core#inline "C_byteblockp" x)
 		       (do ([i (if (or (##core#inline "C_specialp" x) (symbol? x)) 1 0) (fx+ i 1)] )
 			   [(fx>= i n)]
@@ -587,16 +588,16 @@ EOF
 	       (free (##sys#address->pointer (##core#inline_allocate ("C_block_address" 4) x))) ) ] ) ) ) )
 
 (define (object-size x)
-  (let ([tab (##sys#make-vector evict-table-size '())])
+  (let ([tab (make-hash-table eq?)])
     (let evict ([x x])
       (cond [(not (##core#inline "C_blockp" x)) 0 ]
-	    [(##sys#hash-table-ref tab x) 0 ]
+	    [(hash-table-ref/default tab x #f) 0 ]
 	    [else
 	     (let* ([n (##sys#size x)]
 		    [bytes
 		     (fx+ (if (##core#inline "C_byteblockp" x) (align-to-word n) (##core#inline "C_bytes" n))
 			  (##core#inline "C_bytes" 1) ) ] )
-	       (##sys#hash-table-set! tab x #t)
+	       (hash-table-set! tab x #t)
 	       (unless (##core#inline "C_byteblockp" x)
 		 (do ([i (if (or (##core#inline "C_specialp" x) (symbol? x)) 1 0) (fx+ i 1)])
 		     [(fx>= i n)]
@@ -604,25 +605,25 @@ EOF
 	       bytes) ] ) ) ) )
 
 (define (object-unevict x #!optional full)
-  (let ([tab (##sys#make-vector evict-table-size '())])
+  (let ([tab (make-hash-table eq?)])
     (let copy ([x x])
     (cond [(not (##core#inline "C_blockp" x)) x ]
 	  [(not (##core#inline "C_permanentp" x)) x ]
-	  [(##sys#hash-table-ref tab x) ]
+	  [(hash-table-ref/default tab x #f) ]
 	  [(##core#inline "C_byteblockp" x) 
 	   (if full
 	       (let ([y (##core#inline "C_copy_block" x (##sys#make-string (##sys#size x)))])
-		 (##sys#hash-table-set! tab x y)
+		 (hash-table-set! tab x y)
 		 y) 
 	       x) ]
 	  [(symbol? x) 
 	   (let ([y (##sys#intern-symbol (##sys#slot x 1))])
-	     (##sys#hash-table-set! tab x y)
+	     (hash-table-set! tab x y)
 	     y) ]
 	  [else
 	   (let* ([words (##sys#size x)]
 		  [y (##core#inline "C_copy_block" x (##sys#make-vector words))] )
-	     (##sys#hash-table-set! tab x y)
+	     (hash-table-set! tab x y)
 	     (do ([i (if (##core#inline "C_specialp" x) 1 0) (fx+ i 1)])
 		 ((fx>= i words))
 	       (##sys#setslot y i (copy (##sys#slot y i))) )
