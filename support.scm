@@ -1324,8 +1324,6 @@ Usage: chicken FILENAME OPTION ...
     -require-extension NAME      require and import extension NAME
     -static-extension NAME       import extension NAME but link statically
                                   (if available)
-    -extension                   compile as extension (dynamic or static)
-    -ignore-repository           do not refer to repository for extensions
 
   Obscure options:
 
@@ -1336,6 +1334,7 @@ Usage: chicken FILENAME OPTION ...
     -emit-external-prototypes-first
                                  emit protoypes for callbacks before foreign
                                   declarations
+    -ignore-repository           do not refer to repository for extensions
 
 EOF
 ) )

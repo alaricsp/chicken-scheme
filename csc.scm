@@ -126,7 +126,7 @@
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
-    -emit-external-prototypes-first -inline -extension -release
+    -emit-external-prototypes-first -inline -release
     -analyze-only -keep-shadowed-macros -inline-global -ignore-repository
     -no-symbol-escape -no-parentheses-synonyms -r5rs-syntax))
 
@@ -140,7 +140,6 @@
 (define-constant shortcuts
   '((-h "-help")
     (-s "-shared")
-    (|-E| "-extension")
     (|-P| "-check-syntax")
     (|-V| "-version")
     (|-Ob| "-benchmark-mode")
@@ -373,7 +372,6 @@ Usage: csc FILENAME | OPTION ...
     -postlude EXPRESSION           add expression to end of source file
     -prologue FILENAME             include file before main source file
     -epilogue FILENAME             include file after main source file
-    -ignore-repository             do not refer to repository for extensions
 
     -e  -embedded                  compile as embedded
                                     (don't generate `main()')
@@ -435,6 +433,7 @@ Usage: csc FILENAME | OPTION ...
     -emit-external-prototypes-first
                                    emit protoypes for callbacks before foreign
                                     declarations
+    -ignore-repository             do not refer to repository for extensions
     -keep-shadowed-macros          do not remove shadowed macro
     -host                          compile for host when configured for
                                     cross-compiling

@@ -814,8 +814,7 @@ ifneq ($(SONAME_VERSION),)
 	cd $(DESTDIR)$(ILIBDIR)  && ln -sf $(LIBUCHICKEN_SO_FILE) libuchicken$(SO)
 endif
 ifdef WINDOWS
-	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_SHARED_LIBRARY_OPTIONS) libchickengui$(SO) \
-	  $(DESTDIR)$(IBINDIR)
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_SHARED_LIBRARY_OPTIONS) libchickengui$(SO) $(DESTDIR)$(IBINDIR)
 endif
 endif
 
@@ -1188,7 +1187,7 @@ csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ -extend $(SRCDIR)private-namespace.scm
 chicken-profile.c: $(SRCDIR)chicken-profile.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -output-file $@ 
-chicken-install.c: $(SRCDIR)chicken-install.scm setup-download.import.scm
+chicken-install.c: $(SRCDIR)chicken-install.scm setup-download.c
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -ignore-repository -output-file $@ 
 chicken-uninstall.c: $(SRCDIR)chicken-uninstall.scm
 	$(CHICKEN) $< $(CHICKEN_PROGRAM_OPTIONS) -ignore-repository -output-file $@ 
@@ -1202,7 +1201,7 @@ chicken-bug.c: $(SRCDIR)chicken-bug.scm
 setup-api.c: $(SRCDIR)setup-api.scm
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-api \
 	  -ignore-repository -output-file $@ 
-setup-download.c: $(SRCDIR)setup-download.scm setup-api.import.scm
+setup-download.c: $(SRCDIR)setup-download.scm setup-api.c
 	$(CHICKEN) $< $(CHICKEN_DYNAMIC_OPTIONS) -emit-import-library setup-download \
 	  -ignore-repository -output-file $@ 
 

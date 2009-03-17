@@ -2,9 +2,11 @@
 
 (load-relative "tools.scm")
 
-(use setup-download matchable htmlprag)
+(use setup-download matchable htmlprag data-structures)
 
 (define *major-version* (##sys#fudge 41))
+
+(define +stylesheet+ "")
 
 (define +categories+
   '((lang-exts "Language extensions")
@@ -36,6 +38,9 @@
     (uncategorized "Not categerized")
     (obsolete "Unsupported or redundant") ) )
 
+(define (d fstr . args)
+  (fprintf (current-error-port) "~?~%" fstr args))
+
 (define (usage code)
   (print "make-egg-index.scm [--major-version=MAJOR] [DIR]")
   (exit code))
@@ -44,19 +49,20 @@
   (let ((title 
 	 (sprintf "Eggs Unlimited (release branch ~a, updated ~a)"
 		  *major-version*
-		  (string-chomp (seconds->string (current-seconds))))))
-    (shtml->html
+		  (string-chomp (seconds->string (current-seconds)))))
+	(eggs (gather-egg-information dir)))
+    (write-shtml-as-html
      `(html
        ,(header title)
        (body
 	,@(prelude title)
-	,@(emit-egg-information (gather-egg-information dir))
+	,@(emit-egg-information eggs)
 	,@(trailer))))))
 
 (define (header title)
   `(head
     (style (@ (type "text/css")) 
-      ,(sprintf "@import url(~a);~%" +stylesheet+) )
+      ,+stylesheet+)
     (title ,title)))
 
 (define (prelude title)
@@ -66,7 +72,7 @@
     (p "Just enter")
     (pre "  chicken-install EXTENSIONNAME\n")
     (p "This will download anything needed to compile and install the library. "
-       "If your" (i "extension repository") "is placed at a location for which "
+       "If your " (i "extension repository") " is placed at a location for which "
        "you don't have write permissions, then run " (tt "chicken-install") 
        "with the " (tt "-sudo") " option or run it as root (not recommended).")
     (p "You can obtain the repository location by running")
@@ -85,8 +91,8 @@
 	  (i "Egg tutorial")) ".")
     (p "If you are looking for 3rd party libraries used by one the extensions, "
        "check out the CHICKEN "
-       (a (@ (href "http://www.call-with-current-continuation.org/tarballs/") 
-	     (i "tarball repository"))) )
+       (a (@ (href "http://www.call-with-current-continuation.org/tarballs/") )
+	  (i "tarball repository")))
     (h3 "List of available eggs")))
 
 (define (trailer)
@@ -96,35 +102,52 @@
   (append-map
    (match-lambda
      ((cat catname)
+      (d "category: ~a" catname)
       `((h3 ,catname)
 	(table
 	 (tr (th "Name") (th "Description") (th "License") (th "author") (th "maintainer") (th "version"))
-	 ,@(map make-egg-entry
-		(sort
-		 (filter (lambda (info) 
-			   (and (eq? cat (cadr (or (assq 'category (cdr info))
-						   '(#f uncategorized))))
-				(not (assq 'hidden (cdr info)))))
-			 eggs) 
-		 (lambda (e1 e2)
-		   (string<? (symbol->string (car e1)) (symbol->string (car e2))))))))))
+	 ,@(append-map
+	    make-egg-entry
+	    (sort
+	     (filter (lambda (info) 
+		       (and (eq? cat (cadr (or (assq 'category (cdr info))
+					       '(#f uncategorized))))
+			    (not (assq 'hidden (cdr info)))))
+		     eggs) 
+	     (lambda (e1 e2)
+	       (string<? (symbol->string (car e1)) (symbol->string (car e2))))))))))
    +categories+))
 
 (define (make-egg-entry egg)
-  (define (prop name def)
-    (cond ((assq name (cdr egg)) => cadr)
-	  (else def)))
-  `(tr (td ,(symbol->string (car egg)))
-       (td ,(prop 'synopsis "unknown"))
-       (td ,(prop 'license "unknown"))
-       (td ,(prop 'author "unknown"))
-       (td ,(prop 'maintainer ""))
-       (td ,(prop 'version ""))))
+  (call/cc 
+   (lambda (return)
+     (define (prop name def pred)
+       (cond ((assq name (cdr egg)) => (o (cut check pred <> name) cadr))
+	     (else def)))
+     (define (check pred x p)
+       (cond ((pred x) x)
+	     (else
+	      (warning "extension has incorrectly typed .meta entry and will not be listed" (car egg) p x)
+	      (return '()))))
+     (d "  ~a   ~a" (car egg) (prop 'version "HEAD" any?))
+     `((tr (td ,(symbol->string (car egg)))
+	   (td ,(prop 'synopsis "unknown" string?))
+	   (td ,(prop 'license "unknown" name?))
+	   (td ,(prop 'author "unknown" name?))
+	   (td ,(prop 'maintainer "" name?))
+	   (td ,(prop 'version "" version?)))))))
+
+(define name?
+  (disjoin string? symbol?))
+
+(define version?
+  (disjoin string? number?))
 
 (define (main args)
   (match args
     ((dir)
      (make-egg-index dir))
+    (() (make-egg-index "."))
     (_ (usage 1))))
 
 (main (simple-args (command-line-arguments)))

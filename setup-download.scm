@@ -95,9 +95,15 @@
 	 (let-values (((loc version) (locate-egg/local egg dir)))
 	   (let ((meta (make-pathname (list dir loc) egg "meta")))
 	     (and (file-exists? meta)
-		  (cons (string->symbol egg) 
-			(cons (list 'version version)
-			      (with-input-from-file meta read)))))))
+		  (call/cc
+		   (lambda (return)
+		     (cons (string->symbol egg) 
+			   (cons (list 'version version)
+				 (handle-exceptions ex
+				     (begin
+				       (warning "extension has syntactically invalid .meta file" egg)
+				       (return #f))
+				   (with-input-from-file meta read))))))))))
        ls)))
 
   (define (make-svn-ls-cmd uarg parg pnam #!key recursive?)
