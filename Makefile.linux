@@ -33,9 +33,6 @@ ARCH = $(shell sh $(SRCDIR)/config-arch.sh)
 
 # options
 
-SONAME_VERSION = .$(BINARYVERSION)
-LIBCHICKEN_SO_LINKER_OPTIONS = -Wl,-soname,libchicken.so$(SONAME_VERSION)
-LIBUCHICKEN_SO_LINKER_OPTIONS = -Wl,-soname,libuchicken.so$(SONAME_VERSION)
 C_COMPILER_OPTIONS = -fno-strict-aliasing -DHAVE_CHICKEN_CONFIG_H
 ifdef DEBUGBUILD
 C_COMPILER_OPTIMIZATION_OPTIONS ?= -g -Wall -Wno-unused

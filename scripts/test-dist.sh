@@ -14,13 +14,16 @@ if test "$1" == "-bootstrap"; then
     shift
 fi
 
-if test $# \!= 2; then
-    echo "usage: test-dist.sh [-bootstrap] PLATFORM [TARBALL]"
-    exit 1
-fi
+case $# in
+    1|2) ;;
+    *) 
+	echo "usage: test-dist.sh [-bootstrap] PLATFORM [TARBALL]"
+	exit 1;;
+esac
 
 platform="$1"
 tarball="$2"
+makeprg=gmake
 
 # use gmake, if available
 if test -z `which gmake`; then
@@ -42,7 +45,7 @@ fi
 
 # if no tarball given, create one
 if test -z "$tarball"; then
-    $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 CHICKEN=$prefix/bin/chicken CSI=$prefix/bin/csi dist
+    $prefix/bin/csi -s scripts/makedist.scm --make=$makeprg --platform=$platform
     tarball=chicken-`cat buildversion`.tar.gz
 fi
 
