@@ -741,7 +741,7 @@
 (define-inline (%port-eof-set! port f) (%wordblock-set!/immediate port 6 f))
 (define-inline (%port-type-set! port s) (%wordblock-set!/mutate port 7 s))
 (define-inline (%port-closed-set! port f) (%wordblock-set!/immediate port 8 f))
-(define-inline (%port-data-set! port port) (%wordblock-set!/mutate port 9 x))
+(define-inline (%port-data-set! port x) (%wordblock-set!/mutate port 9 x))
 
 (define-inline (%make-port i/o class name type)
   ; port is 16 slots + a block-header word
@@ -902,7 +902,7 @@
 
 (define-inline (%pointer->address ptr)
   ; Pack pointer address value into Chicken words; '4' is platform dependent!
-  (##core#inline_allocate ("C_block_address" 4) (%generic-pointer-ref x)) )
+  (##core#inline_allocate ("C_block_address" 4) (%generic-pointer-ref ptr)) )
 
 ;; Simple-pointer (wordblock)
 
@@ -974,7 +974,7 @@
 (define-inline (%zero? n) (##core#inline "C_i_zerop" n))
 (define-inline (%positive? n) (##core#inline "C_i_positivep" n))
 (define-inline (%negative? n) (##core#inline "C_i_negativep" n))
-(define-inline (%cardinal? n) (and (%integer? x) (%<= 0 n)))
+(define-inline (%cardinal? n) (and (%integer? n) (%<= 0 n)))
 (define-inline (%odd? n) (##core#inline "C_i_oddp" n))
 (define-inline (%even? n) (##core#inline "C_i_evenp" n))
 
