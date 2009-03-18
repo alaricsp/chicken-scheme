@@ -42,7 +42,7 @@ fi
 
 # if no tarball given, create one
 if test -z "$tarball"; then
-    $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 CSI=`$prefix/bin/csi` dist
+    $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 CHICKEN=$prefix/bin/chicken CSI=$prefix/bin/csi dist
     tarball=chicken-`cat buildversion`.tar.gz
 fi
 
