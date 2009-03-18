@@ -3,132 +3,39 @@
 
 == Unit extras
 
-This unit contains a collection of useful utility definitions. 
-This unit is used by default, unless the program
-is compiled with the {{-explicit-use}} option.
-
-
-=== Lists
-
-
-==== alist-ref
-
- [procedure] (alist-ref KEY ALIST [TEST [DEFAULT]])
-
-Looks up {{KEY}} in {{ALIST}} using {{TEST}} as the comparison function (or {{eqv?}} if
-no test was given) and returns the cdr of the found pair, or {{DEFAULT}} (which defaults to {{#f}}).
-
-
-==== alist-update!
-
- [procedure] (alist-update! KEY VALUE ALIST [TEST])
-
-If the list {{ALIST}} contains a pair of the form {{(KEY . X)}}, then this procedure
-replaces {{X}} with {{VALUE}} and returns {{ALIST}}. If {{ALIST}} contains no such item, then
-{{alist-update!}} returns {{((KEY . VALUE) . ALIST)}}. The optional argument
-{{TEST}} specifies the comparison procedure to search a matching pair in {{ALIST}}
-and defaults to {{eqv?}}.
-
-
-==== atom?
-
- [procedure] (atom? X)
-
-Returns {{#t}} if {{X}} is not a pair. This is identical to {{not-pair?}} from [[Unit srfi-1]] but
-kept for historical reasons.
-
-
-==== rassoc
-
- [procedure] (rassoc KEY LIST [TEST])
-
-Similar to {{assoc}}, but compares {{KEY}} with the {{cdr}} of each pair in {{LIST}} using
-{{TEST}} as the comparison procedures (which defaults to {{eqv?}}.
-
-
-==== butlast
-
- [procedure] (butlast LIST)
-
-Returns a fresh list with all elements but the last of {{LIST}}.
-
-
-==== chop
-
- [procedure] (chop LIST N)
-
-Returns a new list of sublists, where each sublist contains {{N}}
-elements of {{LIST}}. If {{LIST}} has a length that is not
-a multiple of {{N}}, then the last sublist contains the remaining
-elements.
-
-<enscript highlight=scheme>
-(chop '(1 2 3 4 5 6) 2) ==> ((1 2) (3 4) (5 6))
-(chop '(a b c d) 3)     ==> ((a b c) (d))
-</enscript>
+This unit contains a collection of useful utility definitions. The unit is
+used by default, unless the program is compiled with the {{-explicit-use}}
+option.
 
 
 
-==== compress
-
- [procedure] (compress BLIST LIST)
-
-Returns a new list with elements taken from {{LIST}} with
-corresponding true values in the list {{BLIST}}.
-
-<enscript highlight=scheme>
-(define nums '(99 100 110 401 1234))
-(compress (map odd? nums) nums)      ==> (99 401)
-</enscript>
+=== Random numbers
 
 
-==== flatten
+==== random-seed
 
- [procedure] (flatten LIST1 ...)
+ [procedure] (random-seed [SEED])
 
-Returns {{LIST1 ...}} concatenated together, with nested lists
-removed (flattened).
-
-
-==== intersperse
-
- [procedure] (intersperse LIST X)
-
-Returns a new list with {{X}} placed between each element.
+Seeds the random number generator with {{SEED}} (an {{integer}}) or 
+{{(current-seconds)}} if {{SEED}} is not given.
 
 
-==== join
+==== randomize
 
- [procedure] (join LISTOFLISTS [LIST])
+ [procedure] (randomize [SEED])
 
-Concatenates the lists in {{LISTOFLISTS}} with {{LIST}} placed
-between each sublist. {{LIST}} defaults to the empty list.
-
-<enscript highlight=scheme>
-(join '((a b) (c d) (e)) '(x y)) ==> (a b x y c d x y e)
-(join '((p q) () (r (s) t)) '(-))  ==> (p q - - r (s) t)
-</enscript>
-
-{{join}} could be implemented as follows:
-
-<enscript highlight=scheme>
-(define (join lstoflsts #!optional (lst '()))
-  (apply append (intersperse lstoflists lst)) )
-</enscript>
+Set random-number seed. If {{SEED}} (an {{exact integer}}) is not supplied, the
+current time is used. On startup (when Unit {{extras}} is initialized), the
+random number generator is initialized with the current time.
 
 
-==== shuffle
+==== random
 
- [procedure] (shuffle LIST)
+ [procedure] (random N)
 
-Returns {{LIST}} with its elements sorted in a random order.
+Returns a random {{integer}} in {{[0 N-1]}}. {{N}} is an {{integer}}.
 
-
-==== tail?
-
- [procedure] (tail? X LIST)
-
-Returns true if {{X}} is one of the tails (cdr's) of {{LIST}}.
+On '''Windows''' {{N}} and the random value are {{exact integer}}.
 
 
 
@@ -139,9 +46,9 @@ Returns true if {{X}} is one of the tails (cdr's) of {{LIST}}.
 ==== fprintf
 ==== sprintf
 
- [procedure] (fprintf PORT FORMATSTRING ARG ...)
- [procedure] (printf FORMATSTRING ARG ...)
- [procedure] (sprintf FORMATSTRING ARG ...)
+ [procedure] (fprintf PORT FORMATSTRING [ARG...])
+ [procedure] (printf FORMATSTRING [ARG...])
+ [procedure] (sprintf FORMATSTRING [ARG...])
 
 Simple formatted output to a given port ({{fprintf}}), the
 value of {{(current-output-port)}} ({{printf}}), or a string
@@ -178,166 +85,16 @@ invoke formatted output routine recursively with the next two arguments as forma
 
 ==== format
 
- [procedure] (format [DESTINATION] FORMATSTRING ARG ...)
+ [procedure] (format [DESTINATION] FORMATSTRING [ARG...])
 
-The parameters  {{FORMATSTRING}} and {{ARG ...}} are as for
-({{printf}}/{{sprintf}}/{{fprintf}}).
+The parameters {{FORMATSTRING}} and {{ARG...}} are as for {{printf}}.
 
-The optional {{DESTINATION}}, when supplied, performs
-a ({{sprintf}}) for a  {{#f}},
-a ({{printf}}) for a {{#t}},
-and a ({{fprintf}}) for an output-port.
-When missing a ({{sprintf}}) is performed.
+The optional {{DESTINATION}}, when supplied, performs:
 
-
-
-=== Queues
-
-
-==== list->queue
-
- [procedure] (list->queue LIST)
-
-Returns {{LIST}} converted into a queue, where the first element
-of the list is the same as the first element of the queue. The resulting
-queue may share memory with the list and the list should not be modified
-after this operation.
-
-
-==== make-queue
-
- [procedure] (make-queue)
-
-Returns a newly created queue.
-
-
-==== queue?
-
- [procedure] (queue? X)
-
-Returns {{#t}} if {{X}} is a queue, or {{#f}} otherwise.
-
-
-==== queue->list
-
- [procedure] (queue->list QUEUE)
-
-Returns {{QUEUE}} converted into a list, where the first element
-of the list is the same as the first element of the queue. The resulting
-list may share memory with the queue object and should not be modified.
-
-
-==== queue-add!
-
- [procedure] (queue-add! QUEUE X)
-
-Adds {{X}} to the rear of {{QUEUE}}.
-
-
-==== queue-empty?
-
- [procedure] (queue-empty? QUEUE)
-
-Returns {{#t}} if {{QUEUE}} is empty, or {{#f}} otherwise.
-
-
-==== queue-first
-
- [procedure] (queue-first QUEUE)
-
-Returns the first element of {{QUEUE}}. If {{QUEUE}} is empty
-an error is signaled
-
-
-==== queue-last
-
- [procedure] (queue-last QUEUE)
-
-Returns the last element of {{QUEUE}}. If {{QUEUE}} is empty
-an error is signaled
-
-
-==== queue-remove!
-
- [procedure] (queue-remove! QUEUE)
-
-Removes and returns the first element of {{QUEUE}}. If {{QUEUE}}
-is empty an error is signaled
-
-
-==== queue-push-back!
-
- [procedure] (queue-push-back! QUEUE ITEM)
-
-Pushes an item into the first position of a queue, i.e. the next
-{{queue-remove!}} will return {{ITEM}}.
-
-
-==== queue-push-back-list!
-
- [procedure] (queue-push-back-list! QUEUE LIST)
-
-Pushes the items in item-list back onto the queue,
-so that {{(car LIST)}} becomes the next removable item.
-
-
-
-=== Sorting
-
-
-==== merge
-
- [procedure] (merge LIST1 LIST2 LESS?)
- [procedure] (merge! LIST1 LIST2 LESS?)
-
-Joins two lists in sorted order. {{merge!}} is the destructive
-version of merge. {{LESS?  }} should be a procedure of two arguments,
-that returns true if the first argument is to be ordered before the
-second argument.
-
-
-==== sort
-
- [procedure] (sort SEQUENCE LESS?)
- [procedure] (sort! SEQUENCE LESS?)
-
-Sort {{SEQUENCE}}, which should be a list or a vector. {{sort!}}
-is the destructive version of sort.
-
-
-==== sorted?
-
- [procedure] (sorted? SEQUENCE LESS?)
-
-Returns true if the list or vector {{SEQUENCE}} is already sorted.
-
-
-
-=== Random numbers
-
-
-==== random-seed
-
- [procedure] (random-seed [SEED])
-
-Seeds the random number generator with {{SEED}} (an exact integer) or 
-{{(current-seconds)}} if {{SEED}} is not given.
-
-
-==== random
-
- [procedure] (random N)
-
-Returns an exact random integer from 0 to {{N}}-1.
-
-
-==== randomize
-
- [procedure] (randomize [X])
-
-Set random-number seed. If {{X}} is not supplied, the current time is used.
-On startup (when the {{extras}} unit is initialized), the random number generator
-is initialized with the current time.
+; {{#f}} : {{sprintf}}
+; {{#t}} : {{printf}}
+; {{output-port}} : {{fprintf}}
+; : {{sprintf}}
 
 
 === Input/Output extensions
@@ -426,354 +183,6 @@ the read characters are stored starting at that position.
 Reads characters from {{PORT}} (which defaults to the value of {{(current-input-port)}})
 and calls the procedure {{PREDICATE}} with each character until {{PREDICATE}} returns
 false. Returns a string with the accumulated characters.
-
-
-
-=== Strings
-
-
-==== conc
-
- [procedure] (conc X ...)
-
-Returns a string with the string-represenation of all arguments concatenated
-together. {{conc}} could be implemented as
-
-<enscript highlight=scheme>
-(define (conc . args)
-  (apply string-append (map ->string args)) )
-</enscript>
-
-
-
-==== ->string
-
- [procedure] (->string X)
-
-Returns a string-representation of {{X}}.
-
-
-==== string-chop
-
- [procedure] (string-chop STRING LENGTH)
-
-Returns a list of substrings taken by ''chopping'' {{STRING}} every {{LENGTH}}
-characters:
-
-<enscript highlight=scheme>
-(string-chop "one two three" 4)  ==>  ("one " "two " "thre" "e")
-</enscript>
-
-
-
-==== string-chomp
-
- [procedure] (string-chomp STRING [SUFFIX])
-
-If {{STRING}} ends with {{SUFFIX}}, then this procedure returns a copy of its first argument with the suffix
-removed, otherwise returns {{STRING}} unchanged. {{SUFFIX}} defaults to {{"\n"}}.
-
-
-==== string-compare3
-
- [procedure] (string-compare3 STRING1 STRING2)
- [procedure] (string-compare3-ci STRING1 STRING2)
-
-Perform a three-way comparison between the {{STRING1}} and {{STRING2}},
-returning either {{-1}} if {{STRING1}} is lexicographically less
-than {{STRING2}}, {{0}} if it is equal, or {{1}} if it s greater.
-{{string-compare3-ci}} performs a case-insensitive comparison.
-
-
-==== string-intersperse
-
- [procedure] (string-intersperse LIST [STRING])
-
-Returns a string that contains all strings in {{LIST}} concatenated
-together.  {{STRING}} is placed between each concatenated string and
-defaults to {{" "}}.
-
-<enscript highlight=scheme>
-(string-intersperse '("one" "two") "three")
-</enscript>
-
-is equivalent to
-
-<enscript highlight=scheme>
-(apply string-append (intersperse '("one" "two") "three"))
-</enscript>
-
-
-==== string-split
-
- [procedure] (string-split STRING [DELIMITER-STRING [KEEPEMPTY]])
-
-Split string into substrings separated by the given delimiters. If
-no delimiters are specified, a string comprising the tab, newline and space characters 
-is assumed. If the
-parameter {{KEEPEMPTY}} is given and not {{#f}}, then empty
-substrings are retained:
-
-<enscript highlight=scheme>
-(string-split "one  two  three") ==> ("one" "two" "three")
-(string-split "foo:bar::baz:" ":" #t) ==> ("foo" "bar" "" "baz" "")
-</enscript>
-
-
-==== string-translate
-
- [procedure] (string-translate STRING FROM [TO])
-
-Returns a fresh copy of {{STRING}} with characters matching
-{{FROM}} translated to {{TO}}.  If {{TO}} is omitted, then
-matching characters are removed. {{FROM}} and {{TO}} may be
-a character, a string or a list. If both {{FROM}} and {{TO}}
-are strings, then the character at the same position in {{TO}}
-as the matching character in {{FROM}} is substituted.
-
-
-==== string-translate*
-
- [procedure] (string-translate* STRING SMAP)
-
-Substitutes elements of {{STRING}} according to {{SMAP}}.
-{{SMAP}} should be an association-list where each element of the list
-is a pair of the form {{(MATCH \. REPLACEMENT)}}. Every occurrence of
-the string {{MATCH}} in {{STRING}} will be replaced by the string
-{{REPLACEMENT}}:
-
-<enscript highlight=scheme>
-(string-translate*
-  "<h1>this is a \"string\"</h1>"
-  '(("<" . "&lt;") (">" . "&gt;") ("\"" . "&quot;")) )
-=>  "&lt;h1&gt;this is a &quot;string&quot;&lt;/h1&gt;"
-</enscript>
-
-
-==== substring=?
-
- [procedure] (substring=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
- [procedure] (substring-ci=? STRING1 STRING2 [START1 [START2 [LENGTH]]])
-
-Returns {{#t}} if the strings {{STRING1}} and {{STRING2}} are equal, or
-{{#f}} otherwise.
-The comparison starts at the positions {{START1}} and {{START2}} (which default
-to 0), comparing {{LENGTH}} characters (which defaults to the minimum of the remaining
-length of both strings).
-
-
-==== substring-index
-
- [procedure] (substring-index WHICH WHERE [START])
- [procedure] (substring-index-ci WHICH WHERE [START])
-
-Searches for first index in string {{WHERE}} where string
-{{WHICH}} occurs.  If the optional argument {{START}} is given,
-then the search starts at that index.  {{substring-index-ci}}
-is a case-insensitive version of {{substring-index}}.
-
-
-
-=== Combinators
-
-
-==== any?
-
- [procedure] (any? X)
-
-Ignores its argument and always returns {{#t}}. This is actually useful sometimes.
-
-
-==== none?
-
- [procedure] (none? X)
-
-Ignores its argument and always returns {{#f}}. This is actually useful sometimes.
-
-
-==== always?
-
- [procedure] (always? ...)
-
-Ignores its arguments and always returns {{#t}}. This is actually useful sometimes.
-
-
-==== never?
-
- [procedure] (never? ...)
-
-Ignores its arguments and always returns {{#f}}. This is actually useful sometimes.
-
-
-==== constantly
-
- [procedure] (constantly X ...)
-
-Returns a procedure that always returns the values {{X ...}} regardless of the number and value of its arguments.
-
-<enscript highlight=scheme>
-(constantly X) <=> (lambda args X)
-</enscript>
-
-
-==== complement
-
- [procedure] (complement PROC)
-
-Returns a procedure that returns the boolean inverse of {{PROC}}.
-
-<enscript highlight=scheme>
-(complement PROC) <=> (lambda (x) (not (PROC x)))
-</enscript>
-
-
-==== compose
-
- [procedure] (compose PROC1 PROC2 ...)
-
-Returns a procedure that represents the composition of the
-argument-procedures {{PROC1 PROC2 ...}}.
-
-<enscript highlight=scheme>
-(compose F G) <=> (lambda args
-                      (call-with-values
-                         (lambda () (apply G args))
-                         F))
-</enscript>
-
-{{(compose)}} is equivalent to {{values}}.
-
-
-==== conjoin
-
- [procedure] (conjoin PRED ...)
-
-Returns a procedure that returns {{#t}} if its argument satisfies the
-predicates {{PRED ...}}.
-<enscript highlight=scheme>
-((conjoin odd? positive?) 33)   ==>  #t
-((conjoin odd? positive?) -33)  ==>  #f
-</enscript>
-
-
-==== disjoin
-
- [procedure] (disjoin PRED ...)
-
-Returns a procedure that returns {{#t}} if its argument satisfies any
-predicate {{PRED ...}}.
-<enscript highlight=scheme>
-((disjoin odd? positive?) 32)    ==>  #t
-((disjoin odd? positive?) -32)   ==>  #f
-</enscript>
-
-
-==== each
-
- [procedure] (each PROC ...)
-
-Returns a procedure that applies {{PROC ...}} to its arguments, and returns the result(s)
-of the last procedure application. For example
-
-<enscript highlight=scheme>
-(each pp eval)
-</enscript>
-
-is equivalent to
-
-<enscript highlight=scheme>
-(lambda args 
-  (apply pp args)
-  (apply eval args) )
-</enscript>
-
-{{(each PROC)}} is equivalent to {{PROC}} and {{(each)}} is equivalent to
-{{noop}}.
-
-
-==== flip
-
- [procedure] (flip PROC)
-
-Returns a two-argument procedure that calls {{PROC}} with its
-arguments swapped:
-<enscript highlight=scheme>
-(flip PROC) <=> (lambda (x y) (PROC y x))
-</enscript>
-
-
-==== identity
-
- [procedure] (identity X)
-
-Returns its sole argument {{X}}.
-
-
-==== project
-
- [procedure] (project N)
-
-Returns a procedure that returns its {{N}}th argument (starting from 0).
-
-
-==== list-of
-
- [procedure] (list-of PRED)
-
-Returns a procedure of one argument that returns {{#t}} when
-applied to a list of elements that all satisfy the predicate procedure
-{{PRED}}, or {{#f}} otherwise.
-
-<enscript highlight=scheme>
-((list-of even?) '(1 2 3))   ==> #f
-((list-of number?) '(1 2 3)) ==> #t
-</enscript>
-
-
-==== noop
-
- [procedure] (noop X ...)
-
-Ignores it's arguments, does nothing and returns an unspecified value.
-
-
-==== o
-
- [procedure] (o PROC ...)
-
-A single value version of {{compose}} (slightly faster). {{(o)}} is equivalent
-to {{identity}}.
-
-
-==== left-section
-
- [procedure] (left-section PROC ARG0 ...)
-
-Returns an n-ary procedure that partially applies its' arguments {{ARG0 ...}}
-from the left (normal order). Sort of a n-ary curry.
-
-
-==== right-section
-
- [procedure] (right-section PROC ARG0 ...)
-
-Returns an n-ary procedure that partially applies its' arguments {{ARG0 ...}}
-from the right (reverse order). Sort of a n-ary curry.
-
-
-=== Binary searching
-
-
-==== binary-search
-
- [procedure] (binary-search SEQUENCE PROC)
-
-Performs a binary search in {{SEQUENCE}}, which should be a sorted
-list or vector.  {{PROC}} is called to compare items in the sequence,
-should accept a single argument and return an exact integer: zero if the
-searched value is equal to the current item, negative if the searched
-value is ''less'' than the current item, and positive otherwise.
-Returns the index of the found value or {{#f}} otherwise.
 
 ---
 Previous: [[Unit files]]

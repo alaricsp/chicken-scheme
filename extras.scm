@@ -85,31 +85,48 @@
 
 ;;; Random numbers:
 
-(define random-seed
-    (let ((srand   (foreign-lambda void "srand" unsigned-integer)))
+(cond-expand
+  (unix
+
+    (define random-seed)
+    (define randomize)
+
+    (let ((srandom (foreign-lambda void "srandom" unsigned-integer)))
+
+      (set! random-seed
+        (lambda (#!optional (seed (current-seconds)))
+          (##sys#check-integer seed 'random-seed)
+          (srandom seed) ) )
+
+      (set! randomize
+        (lambda (#!optional (seed (##sys#fudge 2)))
+          (##sys#check-exact seed 'randomize)
+          (srandom seed) ) ) )
+
+    (define (random n)
+      (##sys#check-integer n 'random)
+      (if (eq? 0 n)
+          0
+          ((foreign-lambda* long ((integer64 n)) "return( random() % ((uint64_t) n) );") n) ) ) )
+  (else
+
+    (define random-seed
+      (let ((srand (foreign-lambda void "srand" unsigned-integer)))
         (lambda n
-            (and (> (length n) 1)
-                 (##sys#error 'random-seed "too many arguments" (length n) 1))
-            (let ((t   (if (null? n)
-                           (current-seconds)
-                           (car n))))
-                (##sys#check-integer t 'random-seed)
-                (srand t)))))
+          (let ((t (if (null? n) (current-seconds) (car n))))
+            (##sys#check-integer t 'random-seed)
+            (srand t) ) ) ) )
 
-(define (random n)
-  (##sys#check-exact n 'random)
-  (if (eq? n 0)
-      0
-      (##core#inline "C_random_fixnum" n) ) )
+    (define (randomize . n)
+      (let ((nn (if (null? n) (##sys#fudge 2) (car n))))
+        (##sys#check-exact nn 'randomize)
+        (##core#inline "C_randomize" nn) ) )
 
-(define (randomize . n)
-  (##core#inline
-   "C_randomize"
-   (if (##core#inline "C_eqp" n '())
-       (##sys#fudge 2)
-       (let ((nn (##sys#slot n 0)))
-	 (##sys#check-exact nn 'randomize)
-	 nn) ) ) )
+    (define (random n)
+      (##sys#check-exact n 'random)
+      (if (eq? n 0)
+          0
+          (##core#inline "C_random_fixnum" n) ) ) ) )
 
 
 ;;; Line I/O:

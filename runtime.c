@@ -715,7 +715,13 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   reload_lf = NULL;
   callback_continuation_level = 0;
   timer_start_gc_ms = 0;
+#if defined(C_NONUNIX)
   C_randomize(time(NULL));
+#elif defined(C_GNU_ENV)
+  srandomdev();
+#else
+  srandom(time(NULL));
+#endif
   return 1;
 }
 
