@@ -208,11 +208,12 @@ tests/fixnum-tests.scm
 tests/path-tests.scm
 tests/r4rstest.out
 tests/port-tests.scm
-tests/test-gc-hook.scm
+tests/test-gc-hooks.scm
 tests/matchable.scm
 tests/match-tests.scm
 tests/module-tests.scm
 tests/test-finalizers.scm
+tests/test-finalizers-2.scm
 tests/module-tests-compiled.scm
 tests/syntax-tests.scm
 tests/syntax-tests-2.scm

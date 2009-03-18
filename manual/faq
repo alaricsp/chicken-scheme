@@ -104,21 +104,9 @@ egg.
 
 ==== Does CHICKEN support Unicode strings?
 
-Yes, as an extension.
-
-By default all string and character functions operate bytewise, so that characters with an iteger value greater than 255 don't make much sense and multibyte UTF-8 characters are seen and manipulated as separate bytes, analogous to what a C program would see.
-
-You can enable UTF-8 support by placing the following two lines at the beginning of your source file (or in your ~/.csirc for interactive sessions) before any other code, including other use directives:
-
-<enscript highlight=scheme>
-(use iset syntax-case utf8)
-(import utf8)
-</enscript>
-
-This will replace all builtin string operators with UTF-8-aware versions, that will treat strings as sequences of multibyte UTF-8 characters, thus enabling you to represent and manipulate Unicode characters while remaining compatible with most C libraries and system interfaces.
-
-Most eggs should work correctly in utf8 mode, including the regex extension, but you still have the option of working around incompatibilities of specific eggs by loading them before the (import utf8) directive. Keep in mind that some operations, such as string-length, are much more expensive in utf8 (multibyte) mode, and should be used with care. See the [[http://www.call-with-current-continuation.org/eggs/utf8.html|utf8 egg documentation]] for details.
-
+The system does not directly support Unicode, but an extension for UTF8 strings
+exists for CHICKEN 3, which may be ported to the current CHICKEN version at some
+stage.
 
 === Why are `dynamic-wind' thunks not executed when a SRFI-18 thread signals an error?
 
@@ -249,7 +237,14 @@ On platforms that support it (Linux ELF, Solaris, Windows + VC++), compiled code
 just like source files (see {{load}} in the User's Manual).
 
 
-=== Compiled macros
+=== Macros
+
+==== Where is {{define-macro}}?
+
+With CHICKEN 4, the macro-expansion subsystem is now hygienic where old Lisp-style low-level macros
+are not available anymore. {{define-syntax}} can define hygienic macros using {{syntax-rules}}
+or low-level macros with user-controlled hygienic with ''explicit renaming'' macros. Translating
+old-style macros into ER-macros isn't that hard, see [[Modules and macros]] for more information.
 
 ==== Why are low-level macros defined with {{define-syntax}} complaining about unbound variables?
 
@@ -259,10 +254,6 @@ evaluated during compilation and so have no access to anything created with {{de
 ==== Why isn't {{load}} properly loading my library of macros?
 
 During compile-time, macros are only available in the source file in which they are defined. Files included via {{include}} are considered part of the containing file.
-
-==== Why is {{include}} unable to load my hygienic macros?
-
-It is not sufficient for the included file to require the {{syntax-case}} extension. Call {{(require-extension syntax-case)}} ''before'' calling {{include}}.
 
 === Warnings and errors
 
@@ -488,6 +479,15 @@ To do this, pass to {{load}} a path for a shared object.
 Use a form such as {{(load "foo.so")}} and run
 {{csc -shared foo.scm}} to produce {{foo.so}} from {{foo.scm}} (at
 which point {{foo.scm}} will no longer be required).
+
+==== Why is my program which uses regular expressions so slow?
+
+The regular expression engine has recently be replaced by [[alex shinn]]'s excellent
+{{irregex}} library, which is fully implemented in Scheme. Precompiling regular
+expressions to internal form is somewhat slower than with the old PCRE-based
+regex engine. It is advisable to use {{regexp}} to precompile regular expressions
+outside of time-critical loops and use them where performance matters.
+
 
 === Garbage collection
 
