@@ -1,7 +1,7 @@
 #!/bin/sh
 ### test-dist.sh - test distribution tarball
 #
-# usage: test-dist.sh [-bootstrap] PLATFORM TARBALL
+# usage: test-dist.sh [-bootstrap] PLATFORM [TARBALL]
 
 set -e
 set -x
@@ -15,7 +15,7 @@ if test "$1" == "-bootstrap"; then
 fi
 
 if test $# \!= 2; then
-    echo "usage: test-dist.sh [-bootstrap] PLATFORM TARBALL"
+    echo "usage: test-dist.sh [-bootstrap] PLATFORM [TARBALL]"
     exit 1
 fi
 
@@ -36,8 +36,14 @@ fi
 prefix=`pwd $pwdopts`/tmp-test-dist
 
 if test -n "$bootstrap"; then
-    $makeprg PLATFORM=$platform PREFIX=`pwd $pwdopts` DEBUGBUILD=1 bootstrap
-    $makeprg PLATFORM=$platform PREFIX=`pwd $pwdopts` DEBUGBUILD=1 CHICKEN=./chicken-boot confclean all install
+    $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 bootstrap
+    $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 CHICKEN=./chicken-boot confclean all install
+fi
+
+# if no tarball given, create one
+if test -z "$tarball"; then
+    $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 CSI=`$prefix/bin/csi` dist
+    tarball=chicken-`cat buildversion`.tar.gz
 fi
 
 # prepare testing directory

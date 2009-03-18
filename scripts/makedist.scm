@@ -55,7 +55,7 @@
   (simple-args
    (command-line-arguments)
    (lambda _
-     (print "usage: makedist [--release] [--test] [--make=PROGRAM] [--platform=PLATFORM] MAKEOPTION ...")
+     (print "usage: makedist [--release] [--make=PROGRAM] [--platform=PLATFORM] MAKEOPTION ...")
      (exit 1))) )
 
 (run (,*make* -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
