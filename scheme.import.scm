@@ -45,7 +45,7 @@
        string-length string-ref string-set! string-append string-copy
        string->list list->string substring string-fill! vector? make-vector
        vector-ref vector-set! string vector vector-length vector->list
-       list->vector vector-fill! procedure? map for-each apply force
+       list->vector vector-fill! procedure? map for-each apply force delay
        call-with-current-continuation input-port? output-port?
        current-input-port current-output-port call-with-input-file
        call-with-output-file open-input-file open-output-file
