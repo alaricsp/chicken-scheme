@@ -11,6 +11,11 @@ written completely in Scheme.
 This library unit exposes two APIs: the one listed below and the
 original irregex API. To use the latter, import from the {{irregex}} module.
 
+Regular expressions may be either POSIX-style strings (with most PCRE
+extensions) or an SCSH-style SRE. There is no {{(rx ...)}} syntax -
+just use normal Scheme lists, with quasiquote if you like.
+
+
 
 === grep
 
@@ -190,6 +195,265 @@ into a regular expression.
 (regexp-escape "^[0-9]+:.*$")
 =>  "\\^\\[0-9\\]\\+:.\n.\\*\\$"
 </enscript>
+
+=== Extended SRE Syntax
+
+The following table summarizes the SRE syntax, with detailed explanations following.
+
+  ;; basic patterns
+  <string>                          ; literal string
+  (seq <sre> ...)                   ; sequence
+  (: <sre> ...)
+  (or <sre> ...)                    ; alternation
+  
+  ;; optional/multiple patterns
+  (? <sre> ...)                     ; 0 or 1 matches
+  (* <sre> ...)                     ; 0 or more matches
+  (+ <sre> ...)                     ; 1 or more matches
+  (= <n> <sre> ...)                 ; exactly <n> matches
+  (>= <n> <sre> ...)                ; <n> or more matches
+  (** <from> <to> <sre> ...)        ; <n> to <m> matches
+  (?? <sre> ...)                    ; non-greedy (non-greedy) pattern: (0 or 1)
+  (*? <sre> ...)                    ; non-greedy kleene star
+  (**? <from> <to> <sre> ...)       ; non-greedy range
+  
+  ;; submatch patterns
+  (submatch <sre> ...)              ; numbered submatch
+  (submatch-named <name> <sre> ...) ; named submatch
+  (=> <name> <sre> ...)
+  (backref <n-or-name>)             ; match a previous submatch
+  
+  ;; toggling case-sensitivity
+  (w/case <sre> ...)                ; enclosed <sre>s are case-sensitive
+  (w/nocase <sre> ...)              ; enclosed <sre>s are case-insensitive
+  
+  ;; character sets
+  <char>                            ; singleton char set
+  (<string>)                        ; set of chars
+  (or <cset-sre> ...)               ; set union
+  (~ <cset-sre> ...)                ; set complement (i.e. [^...])
+  (- <cset-sre> ...)                ; set difference
+  (& <cset-sre> ...)                ; set intersection
+  (/ <range-spec> ...)              ; pairs of chars as ranges
+  
+  ;; named character sets
+  any
+  nonl
+  ascii
+  lower-case     lower
+  upper-case     upper
+  alphabetic     alpha
+  numeric        num
+  alphanumeric   alphanum  alnum
+  punctuation    punct
+  graphic        graph
+  whitespace     white     space
+  printing       print
+  control        cntrl
+  hex-digit      xdigit
+  
+  ;; assertions and conditionals
+  bos eos                           ; beginning/end of string
+  bol eol                           ; beginning/end of line
+  bow eow                           ; beginning/end of word
+  nwb                               ; non-word-boundary
+  (look-ahead <sre> ...)            ; zero-width look-ahead assertion
+  (look-behind <sre> ...)           ; zero-width look-behind assertion
+  (neg-look-ahead <sre> ...)        ; zero-width negative look-ahead assertion
+  (neg-look-behind <sre> ...)       ; zero-width negative look-behind assertion
+  (atomic <sre> ...)                ; for (?>...) independent patterns
+  (if <test> <pass> [<fail>])       ; conditional patterns
+  commit                            ; don't backtrack beyond this (i.e. cut)
+  
+  ;; backwards compatibility
+  (posix-string <string>)           ; embed a POSIX string literal
+
+====  Basic SRE Patterns
+
+The simplest SRE is a literal string, which matches that string exactly.
+
+  (string-search "needle" "hayneedlehay") => <match>
+
+By default the match is case-sensitive, though you can control this either with the compiler flags or local overrides:
+
+  (string-search "needle" "haynEEdlehay") => #f
+  
+  (string-search (irregex "needle" 'i) "haynEEdlehay") => <match>
+  
+  (string-search '(w/nocase "needle") "haynEEdlehay") => <match>
+
+You can use {{w/case}} to switch back to case-sensitivity inside a {{w/nocase}}:
+
+  (string-search '(w/nocase "SMALL" (w/case "BIG")) "smallBIGsmall") => <match>
+  
+  (string-search '(w/nocase "small" (w/case "big")) "smallBIGsmall") => #f
+
+Of course, literal strings by themselves aren't very interesting
+regular expressions, so we want to be able to compose them. The most
+basic way to do this is with the {{seq}} operator (or its abbreviation {{:}}),
+which matches one or more patterns consecutively:
+
+  (string-search '(: "one" space "two" space "three") "one two three") => <match>
+
+As you may have noticed above, the {{w/case}} and {{w/nocase}} operators
+allowed multiple SREs in a sequence - other operators that take any
+number of arguments (e.g. the repetition operators below) allow such
+implicit sequences.
+
+To match any one of a set of patterns use the or alternation operator:
+
+  (string-search '(or "eeney" "meeney" "miney") "meeney") => <match>
+
+  (string-search '(or "eeney" "meeney" "miney") "moe") => #f
+
+====  SRE Repetition Patterns
+
+There are also several ways to control the number of times a pattern
+is matched. The simplest of these is {{?}} which just optionally matches
+the pattern:
+
+  (string-search '(: "match" (? "es") "!") "matches!") => <match>
+  
+  (string-search '(: "match" (? "es") "!") "match!") => <match>
+  
+  (string-search '(: "match" (? "es") "!") "matche!") => #f
+
+To optionally match any number of times, use {{*}}, the Kleene star:
+
+  (string-search '(: "<" (* (~ #\>)) ">") "<html>") => <match>
+  
+  (string-search '(: "<" (* (~ #\>)) ">") "<>") => <match>
+  
+  (string-search '(: "<" (* (~ #\>)) ">") "<html") => #f
+
+Often you want to match any number of times, but at least one time is required, and for that you use {{+}}:
+
+  (string-search '(: "<" (+ (~ #\>)) ">") "<html>") => <match>
+  
+  (string-search '(: "<" (+ (~ #\>)) ">") "<a>") => <match>
+  
+  (string-search '(: "<" (+ (~ #\>)) ">") "<>") => #f
+
+More generally, to match at least a given number of times, use {{>=}}:
+
+  (string-search '(: "<" (>= 3 (~ #\>)) ">") "<table>") => <match>
+
+  (string-search '(: "<" (>= 3 (~ #\>)) ">") "<pre>") => <match>
+
+  (string-search '(: "<" (>= 3 (~ #\>)) ">") "<tr>") => #f
+
+To match a specific number of times exactly, use {=}:
+
+  (string-search '(: "<" (= 4 (~ #\>)) ">") "<html>") => <match>
+  
+  (string-search '(: "<" (= 4 (~ #\>)) ">") "<table>") => #f
+
+And finally, the most general form is {{**}} which specifies a range
+of times to match. All of the earlier forms are special cases of this.
+
+  (string-search '(: (= 3 (** 1 3 numeric) ".") (** 1 3 numeric)) "192.168.1.10") => <match>
+
+  (string-search '(: (= 3 (** 1 3 numeric) ".") (** 1 3 numeric)) "192.0168.1.10") => #f
+
+There are also so-called "non-greedy" variants of these repetition
+operators, by convention suffixed with an additional {{?}}. Since the
+normal repetition patterns can match any of the allotted repetition
+range, these operators will match a string if and only if the normal
+versions matched. However, when the endpoints of which submatch
+matched where are taken into account (specifically, all matches when
+using string-search since the endpoints of the match itself matter),
+the use of a non-greedy repetition can change the result.
+
+So, whereas {{?}} can be thought to mean "match or don't match," {{??}} means
+"don't match or match." {{*}} typically consumes as much as possible, but
+{{*?}} tries first to match zero times, and only consumes one at a time if
+that fails. If you have a greedy operator followed by a non-greedy
+operator in the same pattern, they can produce surprisins results as
+they compete to make the match longer or shorter. If this seems
+confusing, that's because it is. Non-greedy repetitions are defined
+only in terms of the specific backtracking algorithm used to implement
+them, which for compatibility purposes always means the Perl
+algorithm. Thus, when using these patterns you force IrRegex to use a
+backtracking engine, and can't rely on efficient execution.
+
+====  SRE Character Sets
+
+Perhaps more common than matching specific strings is matching any of
+a set of characters. You can use the or alternation pattern on a list
+of single-character strings to simulate a character set, but this is
+too clumsy for everyday use so SRE syntax allows a number of
+shortcuts.
+
+A single character matches that character literally, a trivial
+character class. More conveniently, a list holding a single element
+which is a string refers to the character set composed of every
+character in the string.
+
+  (string-match '(* #\-) "---") => <match>
+  
+  (string-match '(* #\-) "-_-") => #f
+  
+  (string-match '(* ("aeiou")) "oui") => <match>
+  
+  (string-match '(* ("aeiou")) "ouais") => #f
+
+Ranges are introduced with the {{/}} operator. Any strings or characters
+in the {{/}} are flattened and then taken in pairs to represent the start
+and end points, inclusive, of character ranges.
+
+  (string-match '(* (/ "AZ09")) "R2D2") => <match>
+  
+  (string-match '(* (/ "AZ09")) "C-3PO") => #f
+
+In addition, a number of set algebra operations are provided. or, of
+course, has the same meaning, but when all the options are character
+sets it can be thought of as the set union operator. This is further
+extended by the {{&}} set intersection, {{-}} set difference, and {{~}} set
+complement operators.
+
+  (string-match '(* (& (/ "az") (~ ("aeiou")))) "xyzzy") => <match>
+  
+  (string-match '(* (& (/ "az") (~ ("aeiou")))) "vowels") => #f
+
+  (string-match '(* (- (/ "az") ("aeiou"))) "xyzzy") => <match>
+  
+  (string-match '(* (- (/ "az") ("aeiou"))) "vowels") => #f
+
+====  SRE Assertion Patterns
+
+There are a number of times it can be useful to assert something about
+the area around a pattern without explicitly making it part of the
+pattern. The most common cases are specifically anchoring some pattern
+to the beginning or end of a word or line or even the whole
+string. For example, to match on the end of a word:
+
+  (string-match '(: "foo" eow) "foo") => <match>
+  
+  (string-match '(: "foo" eow) "foo!") => <match>
+  
+  (string-match '(: "foo" eow) "foof") => #f
+
+The {{bow}}, {{bol}}, {{eol}}, {{bos}} and {{eos}} work similarly. {{nwb}} asserts that you
+are not in a word-boundary - if replaced for {{eow}} in the above examples
+it would reverse all the results.
+
+There is no {{wb}}, since you tend to know from context whether it
+would be the beginning or end of a word, but if you need it you can
+always use (or bow eow).
+
+Somewhat more generally, Perl introduced positive and negative
+look-ahead and look-behind patterns. Perl look-behind patterns are
+limited to a fixed length, however the IrRegex versions have no such
+limit.
+
+  (string-match '(: "regular" (look-ahead " expression")) "regular expression") => <match>
+
+The most general case, of course, would be an and pattern to
+complement the or pattern - all the patterns must match or the whole
+pattern fails. This may be provided in a future release, although it
+(and look-ahead and look-behind assertions) are unlikely to be
+compiled efficiently.
+
 
 ---
 Previous: [[Unit extras]]

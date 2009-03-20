@@ -47,8 +47,6 @@
       (unless (null? missing)
 	(warning "files missing" missing) ) )
     (run (tar cfz ,(conc distname ".tar.gz") ,distname))
-    (when full?
-      (run (cp ,tgz site)) )
     (run (rm -fr ,distname)) ) )
 
 (define *makeargs*

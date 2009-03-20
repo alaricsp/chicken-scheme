@@ -1,0 +1,22 @@
+ANN.: CHICKEN 4.0.0
+
+Version 4.0.0 of CHICKEN, the portable and practical Scheme system has
+been released. In addition to many bugfixes and cleaning up, it provides
+the following significant changes:
+
+- PCRE has been replaced by Alex Shinn's excellent "IrRegex" regular
+  expression package (while still being API compatible to the old
+  regular expression subsystem)
+
+- New implementations of tools to download, build and install extension
+  libraries, which are easier to use and provide more flexibility
+
+- The macro system has been completely rewritten and is now fully
+  hygienic with highlevel R5RS "syntax-rules" macros and low level
+  "explicit renaming" macros that allow full control over hygienie;
+  "define-macro" is not available anymore
+
+- A module system has been implemented that fully supports hygienic
+  macros and still integrates with separate and cross compilation
+
+- Experimental support for cross-module inlining
