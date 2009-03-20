@@ -49,7 +49,7 @@ h2, h3, h4, h5, h6 {
 
 h1 {
     background-color: #336;
-	color: #aab;
+	color: #fff;
 	width: 100%;
 	padding: 0;
     padding: 0.25em 16px 0.25em 0.5em;
