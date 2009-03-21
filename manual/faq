@@ -33,6 +33,8 @@ with some hints about the problem, like
 version/build of the compiler, platform, system configuration, code that
 causes the bug, etc.
 
+=== Specific
+
 ==== Why are values defined with {{define-foreign-variable}} or {{define-constant}} or {{define-inline}} not seen outside of the containing source file?
 
 Accesses to foreign variables are translated directly into C constructs that access the variable,
@@ -84,7 +86,7 @@ numbers) are more than sufficient;
 - Dispatching of arithmetic operations is more efficient.
 
 There is an extension based on the GNU Multiprecision Package that implements most of the full
-numeric tower, see [[http://chicken.wiki.br/numbers|numbers]].
+numeric tower, see [[http://chicken.wiki.br/egg/numbers|numbers]].
 
 
 ==== Does CHICKEN support native threads?
@@ -359,6 +361,7 @@ When a runtime error is detected, Chicken will print the last entries from the t
 By default, only 16 entries will be shown.
 To increase this number pass the {{-:aN}} parameter to your executable.
 
+
 === Optimizations
 
 ==== How can I obtain smaller executables?
@@ -568,6 +571,12 @@ add:
 </enscript>
 
 === Extensions 
+
+==== Where is "chicken-setup" ?
+
+{{chicken-setup}} has been rewritten from scratch and its functionality is now
+contained in the three tools {{chicken-install}}, {{chicken-uninstall}} and {{chicken-status}}.
+See the [[Extensions]] chapter for more information.
 
 ==== How can I install Chicken eggs to a non-default location?
 

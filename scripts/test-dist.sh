@@ -72,4 +72,7 @@ $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 CHICKEN=$prefix/bin/chic
 # and check...
 $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 check
 
+# Install a few eggs
+$prefix/bin/chicken-install opengl
+
 echo "looks good."
