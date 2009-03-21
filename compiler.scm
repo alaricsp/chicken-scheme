@@ -1215,11 +1215,11 @@
 
 	  ((and (pair? (car x))
 		(symbol? (caar x))
-		(eq? 'lambda (or (lookup (caar x) se) (caar x))))
+		(memq (or (lookup (caar x) se) (caar x)) '(lambda ##core#lambda)))
 	   (let ([lexp (car x)]
 		 [args (cdr x)] )
 	     (emit-syntax-trace-info x #f)
-	     (##sys#check-syntax 'lambda lexp '(lambda lambda-list . #(_ 1)) #f se)
+	     (##sys#check-syntax 'lambda lexp '(_ lambda-list . #(_ 1)) #f se)
 	     (let ([llist (cadr lexp)])
 	       (if (and (proper-list? llist) (= (llist-length llist) (length args)))
 		   (walk `(,(macro-alias 'let se)
