@@ -2158,7 +2158,7 @@ EOF
 	    [crt (crt)]
 	    [rat-flag #f]
 	    ; set below - needs more state to make a decision
-	    [terminating-characters #f]
+	    (terminating-characters '(#\, #\; #\( #\) #\' #\" #\[ #\] #\{ #\}))
 	    [reserved-characters #f] )
 
 	(define (container c)
@@ -2491,10 +2491,6 @@ EOF
 	    (##sys#intern-symbol (##sys#string-append kwprefix tok)) )
 
           ; now have the state to make a decision.
-          (set! terminating-characters
-	        (if psp
-	            '(#\, #\; #\( #\) #\' #\" #\[ #\] #\{ #\})
-	            '(#\, #\; #\( #\) #\' #\")))
           (set! reserved-characters
 	        (if psp
 	            (if sep
@@ -2619,15 +2615,15 @@ EOF
 		  (else
 		   (cond [(eof-object? c) c]
 			 [(char-numeric? c) (r-number #f)]
-			 [else
-			  (if (memq c reserved-characters)
-			      (reserved-character c)
-			      (case c
-			        ((#\[ #;#\]) (r-list #\[ #\]))
-			        ((#\{ #;#\}) (r-list #\{ #\}))
-			        ((#;#\[ #\] #;#\{ #\}) (##sys#read-char-0 port) (container c))
-			        (else (r-symbol) ) ) ) ] ) ) ) ) ) )
-
+			 ((memq c reserved-characters)
+			  (reserved-character c))
+			 (else
+			  (case c
+			    ((#\[ #;#\]) (r-list #\[ #\]))
+			    ((#\{ #;#\}) (r-list #\{ #\}))
+			    ((#;#\[ #\] #;#\{ #\}) (##sys#read-char-0 port) (container c))
+			    (else (r-symbol) ) ) ) ) ) ) ) ) )
+	
 	(readrec) ) ) ) )
 
 

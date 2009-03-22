@@ -1315,5 +1315,3 @@ bench:
 	cd $(SRCDIR)benchmarks; \
 	LD_LIBRARY_PATH=$$here DYLD_LIBRARY_PATH=$$here PATH=$$here:$$PATH \
 	csi -s cscbench.scm $(BENCHMARK_OPTIONS)
-
-# create HTML from manual
