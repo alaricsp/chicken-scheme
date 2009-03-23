@@ -19,4 +19,21 @@ the following significant changes:
 - A module system has been implemented that fully supports hygienic
   macros and still integrates with separate and cross compilation
 
+- A new optimization mode "local" enables inlining of definitions
+  that are still visible from other compilation units
+
 - Experimental support for cross-module inlining
+
+CHICKEN 4.0.0 can be downloaded from:
+
+  http://www.call-with-current-continuation.org/chicken-4.0.0.tar.gz
+
+CHICKEN-related mailing lists can be found here:
+
+  http://mail.nongnu.org/mailman/listinfo/chicken-users
+  http://mail.nongnu.org/mailman/listinfo/chicken-hackers
+
+Send bug reports to to <chicken-janitors@nongnu.org> or use the
+`chicken-bug' program.
+
+Many thanks to all who helped improve and extend the system.
