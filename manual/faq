@@ -471,6 +471,15 @@ The following extended bindings are handled specially:
 {{cpu-time}} {{error}} {{call/cc}} {{any?}}
 {{substring=?}} {{substring-ci=?}} {{substring-index}} {{substring-index-ci}}
 
+==== What's the difference betweem "block" and "local" mode?
+
+In {{block}} mode, the compiler assumes that definitions in the current file
+are not visible from outside of the current compilation unit, so unused
+definitions can be removed and calls can be inlined. In {{local}} mode,
+definitions are not hidden, but the compiler assumes that they are
+not modified from other compilation units (or code evaluated at runtime),
+and thus allows inlining of them.
+
 ==== Can I load compiled code at runtime?
 
 Yes.
