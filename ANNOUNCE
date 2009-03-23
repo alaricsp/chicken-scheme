@@ -22,6 +22,8 @@ the following significant changes:
 - A new optimization mode "local" enables inlining of definitions
   that are still visible from other compilation units
 
+- Better support for build and use on Windows (mingw and msys)
+
 - Experimental support for cross-module inlining
 
 CHICKEN 4.0.0 can be downloaded from:
