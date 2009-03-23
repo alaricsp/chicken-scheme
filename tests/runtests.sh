@@ -8,8 +8,8 @@ export LD_LIBRARY_PATH=${TEST_DIR}/..
 
 CHICKEN=../chicken
 
-if test "$MSYSTEM" == "MINGW32"; then
-    CHICKEN="..\\chicken"
+if test -n "$MSYSTEM"; then
+    CHICKEN="..\\chicken.exe"
 fi
 
 compile="../csc -compiler $CHICKEN -v -I.. -L.. -include-path .. -o a.out"
@@ -109,12 +109,18 @@ echo "======================================== r4rstest ..."
 $interpret -e '(set! ##sys#procedure->string (constantly "#<procedure>"))' \
   -i -s r4rstest.scm >r4rstest.log
 
-if test "$MSYSTEM" == "MINGW32"; then
+if test -n "$MSYSTEM"; then
     # the windows runtime library prints flonums differently
     tail r4rstest.log
 else
     diff -bu r4rstest.out r4rstest.log || true
 fi
+
+echo "======================================== compiler/nursery stress test ..."
+for s in 100000 120000 200000 250000 300000 350000 400000 450000 500000; do
+    echo "  $s"
+    ../chicken ../utils.scm -:s$s -output-file tmp.c -include-path .. 
+done
 
 echo "======================================== finalizer tests ..."
 $interpret -s test-finalizers.scm
@@ -139,7 +145,7 @@ for x in `ls *.scm`; do
 	"plists.scm");;
 	*)
 	    echo $x
-	    ../csc $x -compiler $CHICKEN -C -I.. -L.. -O2 -d0
+	    ../csc $x -compiler $CHICKEN -C -I.. -L.. -O3 -d0
 	    ./`basename $x .scm`;;
     esac
 done
