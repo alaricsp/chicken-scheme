@@ -109,46 +109,50 @@
 <h2>call-with-current-continuation.org</h2>
 
 <center>
-<img src="chicken3b.png">
+<img src="chicken-new.png">
 <div style="width: 70%; margin: 3em;">
 <font size="5"><em><span>CHICKEN - A practical and portable Scheme system</span></em></font>
 
 <p class="block" style="margin: 3em;">
 CHICKEN is a compiler for the <a href="http://schemers.org/">Scheme</a> programming language. 
-CHICKEN produces portable, efficient C, supports almost all of the current Scheme language standard, 
-<a href="http://schemers.org/Documents/Standards/R5RS/HTML/">R5RS</a> and includes many 
-enhancements and extensions.  CHICKEN runs on MacOS X, Windows, and many Unix flavours.
+CHICKEN produces portable, efficient C, supports almost all of the
+<a href="http://schemers.org/Documents/Standards/R5RS/HTML/">R5RS</a>
+Scheme language standard, and includes many enhancements and
+extensions.  CHICKEN runs on Linux, MacOS X, Windows, and many Unix flavours.
 </p>
 
 <h3>FEATURES</h3>
 <p class="block"><ul style="text-align: left;">
-<li>Includes a full-featured interactive interpreter as well as an optimizing batch compiler<br>
-<li>Full support for tail recursion, first-class continuations and high-level macros
-<li>Highly portable and known to run on many platforms, including x86, x86-64, IA-64, PowerPC, SPARC and UltraSPARC, Alpha, MIPS, 
-PA-RISC, ARM and S/390<br>
-<li>Distributed free for use and modification under the terms of the BSD License<br>
-<li>Transparent support for dynamically loadable compiled code and linkage to C<br>
-<li>A sophisticated but easy to use foreign function interface for accessing C and C++ libraries from Scheme code<br>
-<li>Lightweight threads based on first-class continuations<br>
-<li>An object system with multiple dispatch, multiple inheritance and meta-object protocol<br>
-<li>Provides the <tt>syntax-case</tt> enhanced high-level macro system (including R5RS <tt>syntax-rules</tt>), and 
-<tt>define-macro</tt> style low-level macros<br>
-<li>Support for syntactic pattern-matching via Andrew Wright's <tt>match</tt> package<br>
-<li>Execution profiling, debugging, backtrace and single-stepping support<br>
-<li>A POSIX interface that covers environment and filesystem access, pipes, processes, signals, locks, sockets, and low-level and memory-mapped I/O<br>
-<li>Perl compatible regular expressions<br>
-<li>Support for interpreted or compiled shell scripts under Unix and Windows<br>
-<li>CHICKEN is supported by <a href="http://www.swig.org">SWIG</a> so interfacing to C or C++ can be automated<br>
-<li>Support for a large number of <a href="http://srfi.schemers.org/">Scheme Requests For Implementation</a> (SRFIs)<br>
-<li>Many libraries and extensions are available at <a href="http://www.call-with-current-continuation.org/eggs/">"Eggs unlimited"</a>
+<li>Includes a full-featured interactive interpreter as well as an optimizing batch compiler
+<li>Usable for interpreted scripts or compiled standalone executables with either dynamic or static linkage
+<li>Full support for tail recursion, first-class continuations and hygienic macros
+<li>Highly portable and known to run on many platforms, including x86,
+x86-64, IA-64, PowerPC, SPARC and UltraSPARC, Alpha, MIPS, ARM and
+S/390
+<li>Distributed free for use and modification under the terms of the BSD License
+<li>Transparent support for dynamically loadable compiled code and linkage to C
+<li>An easy to use foreign function interface for accessing C and C++ libraries from Scheme code
+<li>Lightweight user-level threads based on first-class continuations
+<li>Provides high- and low-level hygienic macros, including <tt>syntax-rules</tt>
+<li>Includes a powerful module system that integrates hygienic macros and separate compilation 
+<li>Execution profiling, debugging, backtrace and single-stepping support
+<li>A POSIX interface that covers environment and filesystem access,
+pipes, processes, signals, locks, sockets, and low-level and
+memory-mapped I/O
+<li>Perl compatible regular expressions, including support for SRE syntax (Structured Regular Expressions)
+<li>Support for interpreted or compiled shell scripts under Unix and Windows
+<li>Support for a large number of <a href="http://srfi.schemers.org/">Scheme Requests For Implementation</a> (SRFIs)
+<li>Many libraries and extensions are available
+at <a href="http://www.call-with-current-continuation.org/eggs/">"Eggs
+unlimited"</a>
 </ul>
 </p>
 
 <h3>DOWNLOAD</h3>
 <p>
-Tar archives of the most recent release can be found here:
-<a href="http://chicken.wiki.br/releases">
-http://chicken.wiki.br/releases</a>
+Get the tarball for the most recent release (4.0.0) here:
+<a href="http://www.call-with-current-continuation.org/chicken-4.0.0.tar.gz">
+chicken-4.0.0.tar.gz</a>
 
 </p>
 
@@ -156,9 +160,6 @@ http://chicken.wiki.br/releases</a>
 <p>
 Browse the <a href="http://chicken.wiki.br/The User's Manual">User's manual</a> at the CHICKEN 
 <a href="http://chicken.wiki.br/">wiki</a>
-</p>
-
-<p>Browse the CHICKEN documentation at <a href="http://callcc.org">http://callcc.org</a>.
 </p>
 
 <h3>MAILING LIST</h3>
@@ -179,9 +180,6 @@ The current CHICKEN development version can be accessed through the
 $ svn co <a href="https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk">https://galinha.ucpel.tche.br/svn/chicken-eggs/chicken/trunk</a>
 </pre>
 (username: <tt>anonymous</tt>, password: &lt;none&gt;)
-</p>
-
-<p>A list of open bugs and feature request can be accessed at <a href="http://trac.callcc.org">http://trac.callcc.org</a>.
 </p>
 
 <h3>CONTACT</h3>
