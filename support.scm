@@ -115,10 +115,10 @@
   (lambda (msg . args)
     (let ((out (current-error-port))
 	  (loc (and (symbol? msg) 
-		    (begin 
+		    (let ((loc msg))
 		      (set! msg (car args))
 		      (set! args (cdr args))
-		      msg))))
+		      loc))))
       (if loc
 	  (fprintf out "Syntax error (~a): ~a~%~%" loc msg) 
 	  (fprintf out "Syntax error: ~a~%~%" msg) )
