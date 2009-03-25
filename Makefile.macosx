@@ -57,6 +57,30 @@ SO = .dylib
 CHICKEN_CONFIG_H = chicken-config.h
 APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 
+# architectures
+
+ifeq ($(ARCH),x86-64)
+C_COMPILER_OPTIONS += -m64
+LINKER_OPTIONS += -m64
+else
+
+ifeq ($(ARCH),universal)
+C_COMPILER_OPTIONS += -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+LINKER_OPTIONS += -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+
+ifneq ($(HACKED_APPLY),)
+# We undefine HACKED_APPLY in order to override rules.make.
+HACKED_APPLY=
+apply-hack.ppc.darwin$(O): apply-hack.ppc.darwin.s
+	as -arch ppc -o $@ $<
+apply-hack.x86$(O): apply-hack.x86.s
+	as -arch i386 -o $@ $<
+$(APPLY_HACK_OBJECT): apply-hack.x86$(O) apply-hack.ppc.darwin$(O)
+	lipo -create -output $(APPLY_HACK_OBJECT) $^
+endif
+endif
+endif
+
 # select default and internal settings
 
 include $(SRCDIR)/defaults.make
@@ -101,30 +125,5 @@ ifneq ($(HACKED_APPLY),)
 	echo "#define C_HACKED_APPLY" >>$@
 endif
 	cat chicken-defaults.h >>$@
-
-# architectures
-
-ifeq ($(ARCH),x86-64)
-C_COMPILER_OPTIONS += -m64
-LINKER_OPTIONS += -m64
-else
-
-ifeq ($(ARCH),universal)
-C_COMPILER_OPTIONS += -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-LINKER_OPTIONS += -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-
-ifneq ($(HACKED_APPLY),)
-# We undefine HACKED_APPLY in order to override rules.make.
-HACKED_APPLY=
-apply-hack.ppc.darwin$(O): apply-hack.ppc.darwin.s
-	as -arch ppc -o $@ $<
-apply-hack.x86$(O): apply-hack.x86.s
-	as -arch i386 -o $@ $<
-$(APPLY_HACK_OBJECT): apply-hack.x86$(O) apply-hack.ppc.darwin$(O)
-	lipo -create -output $(APPLY_HACK_OBJECT) $^
-endif
-
-endif
-endif
 
 include $(SRCDIR)/rules.make
