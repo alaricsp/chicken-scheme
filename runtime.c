@@ -717,7 +717,7 @@ int CHICKEN_initialize(int heap, int stack, int symbols, void *toplevel)
   timer_start_gc_ms = 0;
 #if defined(C_NONUNIX)
   C_randomize(time(NULL));
-#elif defined(__linux__) || defined(C_MACOSX) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+#elif defined(C_MACOSX) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
   srandomdev();
 #else
   srandom(time(NULL));
