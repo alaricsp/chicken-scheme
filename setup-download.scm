@@ -93,7 +93,7 @@
       (filter-map
        (lambda (egg)
 	 (let-values (((loc version) (locate-egg/local egg dir)))
-	   (let ((meta (make-pathname (list dir loc) egg "meta")))
+	   (let ((meta (make-pathname loc egg "meta")))
 	     (and (file-exists? meta)
 		  (call/cc
 		   (lambda (return)
