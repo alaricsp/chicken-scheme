@@ -254,6 +254,7 @@ rules.make
 defaults.make
 private-namespace.scm
 scripts/scheme
+scripts/tools.scm
 scripts/test-dist.sh
 scripts/wiki2html.scm
 scripts/make-egg-index.scm
