@@ -254,6 +254,10 @@ rules.make
 defaults.make
 private-namespace.scm
 scripts/scheme
+scripts/test-dist.sh
+scripts/wiki2html.scm
+scripts/make-egg-index.scm
+scripts/makedist.scm
 svnrevision.sh
 synrules.scm
 expand.scm
