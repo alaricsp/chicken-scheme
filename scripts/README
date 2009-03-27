@@ -1,0 +1,44 @@
+README for scripts/
+===================
+
+
+This directory contains a couple of things that might be useful:
+
+  scheme
+
+    A wrapper sh(1) script that allows automatic compilation of Scheme
+    scripts. If you precede a Scheme file with a header line like this
+
+      #!/usr/bin/env scheme
+
+    then a compiled version of the code will be stored in $HOME/.cache
+    and executed, instead of the original source file.
+
+  tools.scm
+
+    Helper functions for some of the scripts here.
+
+  test-dist.sh
+
+    Takes a platform-designator and the path to a tarball and unpacks,
+    builds and tests the chicken distribution contained therein.
+
+  wiki2html.scm
+
+    A simple svnwiki -> HTML translator used for the manual. Needs
+    `htmlprag' and `matchable' eggs installed.
+
+  make-egg-index.scm
+
+    Creates an egg index HTML page from a local working copy of a
+    `release/<number>' egg tree.
+
+  makedist.scm
+
+    Creates a distribution tarball from a chicken svn checkout.
+
+  henrietta.scm
+  henrietta.cgi
+
+    A CGI script and sub-program that serves eggs from a local tree
+    or via svn over HTTP.

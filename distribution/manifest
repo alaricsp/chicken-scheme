@@ -259,6 +259,9 @@ scripts/test-dist.sh
 scripts/wiki2html.scm
 scripts/make-egg-index.scm
 scripts/makedist.scm
+scripts/README
+scripts/henrietta.scm
+scripts/henrietta.cgi
 svnrevision.sh
 synrules.scm
 expand.scm
