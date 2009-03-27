@@ -4318,7 +4318,7 @@ EOF
 (define ##sys#vector? vector?)
 (define ##sys#vector->list vector->list)
 (define ##sys#vector-length vector-length)
-(define ##sys#vector-ref vector-length)
+(define ##sys#vector-ref vector-ref)
 (define ##sys#vector-length vector-length)
 (define ##sys#>= >=)
 (define ##sys#= =)
