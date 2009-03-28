@@ -32,10 +32,15 @@ SRCDIR =.$(SEP)
 
 DLLSINPATH = 1
 ARCH = x86
-HACKED_APPLY = 1
 WINDOWS = 1
 WINDOWS_SHELL = 1
 UNAME_SYS = MinGW
+
+ifeq ($(ARCH),x86)
+HACKED_APPLY = 1
+else
+HACKED_APPLY =
+endif
 
 # file extensions
 
