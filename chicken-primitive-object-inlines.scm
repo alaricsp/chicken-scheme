@@ -964,19 +964,21 @@
 
 (define-inline (%number? x) (or (%fixnum? x) (%flonum? x)))
 (define-inline (%integer? x) (##core#inline "C_i_integerp" x))
+(define-inline (%exact? x) (##core#inline "C_i_exactp" x))
+(define-inline (%inexact? x) (##core#inline "C_i_inexactp" x))
 
-(define-inline (%= x y) ((##core#primitive "C_i_eqvp") x y))
-(define-inline (%< x y) ((##core#primitive "C_i_lessp") x y))
-(define-inline (%<= x y) ((##core#primitive "C_i_less_or_equalp") x y))
-(define-inline (%> x y) ((##core#primitive "C_i_greaterp") x y))
-(define-inline (%>= x y) ((##core#primitive "C_i_greater_or_equalp") x y))
+(define-inline (%= x y) (##core#inline "C_i_eqvp" x y))
+(define-inline (%< x y) (##core#inline "C_i_lessp" x y))
+(define-inline (%<= x y) (##core#inline "C_i_less_or_equalp" x y))
+(define-inline (%> x y) (##core#inline "C_i_greaterp" x y))
+(define-inline (%>= x y) (##core#inline "C_i_greater_or_equalp" x y))
 
 (define-inline (%zero? n) (##core#inline "C_i_zerop" n))
 (define-inline (%positive? n) (##core#inline "C_i_positivep" n))
 (define-inline (%negative? n) (##core#inline "C_i_negativep" n))
-(define-inline (%cardinal? n) (and (%integer? n) (%<= 0 n)))
 (define-inline (%odd? n) (##core#inline "C_i_oddp" n))
 (define-inline (%even? n) (##core#inline "C_i_evenp" n))
+(define-inline (%cardinal? n) (and (%integer? n) (%<= 0 n)))
 
 (define-inline (%+ x y) ((##core#primitive "C_plus") x y))
 (define-inline (%- x y) ((##core#primitive "C_minus") x y))
