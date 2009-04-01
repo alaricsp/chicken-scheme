@@ -670,24 +670,39 @@
 	        (else
 	         (find-elm (%cdr ls) ls) ) ) ) )
 
-(define-inline (%list-fold-1 func init ls0)
+(define-inline (%list-fold/1 func init ls0)
   ;(assert (and (proper-list? ls0) (procedure? func)))
   (let loop ((ls ls0) (acc init))
     (if (%null? ls) acc
         (loop (%cdr ls) (func (%car ls) acc)) ) ) )
 
-(define-inline (%list-map-1 func ls0)
+(define-inline (%list-map/1 func ls0)
   ;(assert (and (proper-list? ls0) (procedure? func)))
   (let loop ((ls ls0))
     (if (%null? ls) '()
         (%cons (func (%car ls)) (loop (%cdr ls))) ) ) )
 
-(define-inline (%list-for-each-1 proc ls0)
+(define-inline (%list-for-each/1 proc ls0)
   ;(assert (and (proper-list? ls0) (procedure? proc)))
   (let loop ((ls ls0))
     (unless (%null? ls)
       (proc (%car ls))
       (loop (%cdr ls)) ) ) )
+
+(define-inline (%make-list n e)
+  (let loop ((n n) (ls '()))
+    (if (%fxzero? n) ls
+        (loop (%fxsub1 n) (%cons e ls)) ) ) )
+
+(define-inline (%list-take ls0 n)
+  (let loop ((ls ls0) (n n))
+    (if (%fxzero? n) '()
+        (%cons (%car ls) (loop (%cdr ls) (%fxsub1 n))) ) ) )
+
+(define-inline (%list-drop ls0 n)
+  (let loop ((ls ls0) (n n))
+    (if (%fxzero? n) ls
+        (loop (%cdr ls) (%fxsub1 n)) ) ) )
 
 ;; Structure (wordblock)
 
