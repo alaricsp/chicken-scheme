@@ -72,7 +72,7 @@ where symbols have all context-information removed.
 === Explicit renaming macros
 
 The low-level macro facility that CHICKEN provides is called "explicit
-renaming" and allows writing hygienic or nonhygienic macros procedurally.
+renaming" and allows writing hygienic or non-hygienic macros procedurally.
 When given a lambda-expression instead of a {{syntax-rules}} form,
 {{define-syntax}} evaluates the procedure in a distinct expansion
 environment (initially having access to the exported identifiers
@@ -279,7 +279,7 @@ Allows augmenting module-exports from inside the module-body.
 
  [syntax] (import IMPORT ...)
 
-Imports module bindings into the currentl syntactical environment.
+Imports module bindings into the current syntactical environment.
 The visibility of any imported bindings is limited to the current
 module, if used inside a module-definition, or to the current
 compilation unit, if compiled and used outside of a module.
@@ -292,7 +292,7 @@ An {{IMPORT}} defines a set of bindings that are to be made visible
 in the current scope.
 
 Note that the imported bindings are only visible in the next toplevel
-expression (regardless of wether the import appears inside or outside
+expression (regardless of whether the import appears inside or outside
 a module):
 
   (begin
@@ -438,7 +438,7 @@ The module can easily be compiled
 
   % csc -s hello.scm
 
-and used in an indentical manner:
+and used in an identical manner:
 
   #;1> ,l hello.so
   ; loading hello.so ...
@@ -480,7 +480,7 @@ load it manually:
 
 The macro- and module system has been implemented relatively
 recently and is likely to contain bugs. Please contact the
-maintainers if you encounter behaviour that you think is
+maintainers if you encounter behavior that you think is
 not correct or that triggers an error where there shouldn't
 be one.
 
