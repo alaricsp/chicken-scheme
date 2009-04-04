@@ -747,6 +747,9 @@
 (define-inline (%port-closed? port) (%wordblock-ref? port 8))
 (define-inline (%port-data port) (%wordblock-ref? port 9))
 
+(define-inline (%input-port? x) (and (%port x) (%port-input-mode? x)))
+(define-inline (%output-port? x) (and (%port x) (not (%port-input-mode? x))))
+
 (define-inline (%port-filep-set! port fp) (%poke-integer port 0 fp))
 (define-inline (%port-input-mode-set! port f) (%wordblock-set!/immediate port 1 f))
 (define-inline (%port-class-set! port v) (%wordblock-set!/mutate port 2 v))
@@ -832,6 +835,8 @@
   (let ((v (%make-vector n)))
     (##core#inline "C_vector_to_closure" v)
     v ) )
+
+(define-inline (%procedure? x) (%closure? x))
 
 (define-inline (%vector->closure! v a)
   (##core#inline "C_vector_to_closure" v)
@@ -991,9 +996,10 @@
 (define-inline (%zero? n) (##core#inline "C_i_zerop" n))
 (define-inline (%positive? n) (##core#inline "C_i_positivep" n))
 (define-inline (%negative? n) (##core#inline "C_i_negativep" n))
+(define-inline (%cardinal? fx) (%<= 0 fx))
+
 (define-inline (%odd? n) (##core#inline "C_i_oddp" n))
 (define-inline (%even? n) (##core#inline "C_i_evenp" n))
-(define-inline (%cardinal? n) (and (%integer? n) (%<= 0 n)))
 
 (define-inline (%+ x y) ((##core#primitive "C_plus") x y))
 (define-inline (%- x y) ((##core#primitive "C_minus") x y))
