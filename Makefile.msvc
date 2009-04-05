@@ -184,7 +184,7 @@ all: libchicken$(A) libuchicken$(A) chicken$(EXE) csi$(EXE) chicken-profile$(EXE
 	csc$(EXE) libchicken$(SO) \
 	libuchicken$(SO) libchickengui$(SO) libchickengui$(A) chicken-setup$(EXE)
 
-chicken-config.h: chicken-defaults.h
+chicken-config.h.in:
 	echo #define HAVE_DIRENT_H 0 >>$@
 	echo #define HAVE_INTTYPES_H 0 >>$@
 	echo #define HAVE_LIMITS_H 1 >>$@
@@ -223,7 +223,9 @@ ifdef NOAPPLYHOOK
 	echo #define C_NO_APPLY_HOOK >>$@
 endif
 	echo #define C_HACKED_APPLY >>$@
-	cat chicken-defaults.h >>$@
+
+chicken-config.h: chicken-config.h.in chicken-defaults.h
+	copy /Y /B chicken-config.h.in + chicken-defaults.h $@
 
 chicken-defaults.h:
 	echo /* generated */ >$@

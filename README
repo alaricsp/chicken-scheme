@@ -261,13 +261,19 @@
         - On Windows, mingw32, <http://mingw.sourceforge.net/>,
           Cygwin, and Visual C/C++ (PLATFORM=msvc) are supported.
           Makefiles for mingw under MSYS and Windows shell are provided
-          (`Makefile.mingw-msys' and `Makefile.mingw').
+          (`Makefile.mingw-msys' and `Makefile.mingw'). Please also
+	  read the notes below:
 
         - When installing under the mingw-msys platform, PREFIX must be an
-          absolute path name (i.e. it must include the drive letter).
+          absolute path name (i.e. it must include the drive letter) and
+	  must use forward slashes (no backward slashes).
 
         - When installing under mingw, with a windows shell ("cmd.exe"),
           pass an absolute pathname as PREFIX and use forward slashes.
+
+	- When installing under mingw without MSYS, make sure that the
+	  MSYS tools (in case you have some of them, in particular the
+	  sh.exe UNIX shell) are *NOT* visible in your PATH.
 
         - Cygwin will not be able to find the chicken shared libraries
           until Windows is rebooted.
