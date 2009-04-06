@@ -595,9 +595,11 @@ EOF
 		  (loop) ) ) )
 	    (fail) ) )
       (let ((err (get-socket-error s)))
-	(cond ((= err -1) 
+	(cond ((= err -1)
+	       (##net#close s)
 	       (##sys#signal-hook #:network-error 'tcp-connect (##sys#string-append "getsockopt() failed - " strerror)))
-	      ((> err 0) 
+	      ((> err 0)
+	       (##net#close s)
 	       (##sys#signal-hook #:network-error 'tcp-connect (##sys#string-append "cannot create socket - " (general-strerror err))))))
       (##net#io-ports s) ) ) )
 
