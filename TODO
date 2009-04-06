@@ -15,6 +15,8 @@ TODO for chicken							-*- Outline -*-
     add declaration to keep re-writes enabled for core library files
 *** check in foreign.import.scm and compiler.import.scm whether the import
     took place in the compiler
+*** -prologue, -epilogue, -prelude, -postlude should check for argument being directory 
+    (reported by Eduardo Cavazos)
 
 ** expander
 *** expansion of r5rs_pitfall 4.2 incorrect
@@ -25,6 +27,7 @@ TODO for chicken							-*- Outline -*-
     this will break, when these macros are renamed on import or not imported
     at all
 **** a possible solution is to use internal forms, provided by the "scheme" module.
+*** need way to force generating module-registration code for standalone executables.
 
 ** modules
 *** `require-extension' fails in interpreter when extension is .so without import library
@@ -45,16 +48,23 @@ TODO for chicken							-*- Outline -*-
     reported by Jim Ursetto
     reverted original patch, see patches/finalizer-closures.diff
 
+** tools
+*** chicken-bug: SMTP servers not accessible
+
+** build
+*** somehow get SONAME to work
+
+** tests
+*** should run without installation
+
 
 * tasks
 
 ** branches
 *** try to improve performance in lazy-gensyms
+*** scrutiny
 
 ** expander
-*** test new implementation of `define-for-syntax'
-**** test "numbers" egg
-**** is s48-modules still working?
 *** at some stage remove debug-output in expand.scm
 
 ** module issues
@@ -106,6 +116,18 @@ TODO for chicken							-*- Outline -*-
 
 ** documentation
 *** document qs, normalize-pathname
+
+
+* wiki
+
+** XXX update egg tutorials
+** XXX compatibility page
+
+
+* extensions
+
+** check status of `s48-modules'
+** implement script to generate RSS feed from egg-index and install on galinha
 
 
 * tests

@@ -769,8 +769,8 @@
 					 (if rest
 					     (if (zero? a2)
 						 #t
-						 `(,(r 'fx>=) ,lvar ,a2) )
-					     `(,(r 'fx=) ,lvar ,a2) ) )
+						 `(,(r '>=) ,lvar ,a2) )
+					     `(,(r '=) ,lvar ,a2) ) )
 				      ,(receive (vars1 vars2)
 					   (split-at! (take vars argc) mincount)
 					 (let ((bindings
