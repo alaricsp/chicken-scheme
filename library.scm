@@ -157,7 +157,7 @@ EOF
      newline string-append ##sys#with-print-length-limit write print vector-fill! ##sys#context-switch
      ##sys#set-finalizer! open-output-string get-output-string read ##sys#make-pointer
      ##sys#pointer->address number->string ##sys#flush-output ##sys#break-entry ##sys#step
-     ##sys#apply-values ##sys#signal-hook ##sys#get-call-chain ##sys#really-print-call-chain
+     ##sys#apply-values ##sys#get-call-chain ##sys#really-print-call-chain
      string->keyword keyword? string->keyword getenv ##sys#number->string ##sys#copy-bytes
      call-with-current-continuation ##sys#string->number ##sys#inexact->exact ##sys#exact->inexact
      ##sys#reverse-list->string reverse ##sys#inexact? list? string ##sys#char->utf8-string 
@@ -3732,9 +3732,9 @@ EOF
 (define (with-exception-handler handler thunk)
   (let ([oldh ##sys#current-exception-handler])
     (##sys#dynamic-wind 
-	(lambda () (set! ##sys#current-exception-handler handler))
-	thunk
-	(lambda () (set! ##sys#current-exception-handler oldh)) ) ) )
+      (lambda () (set! ##sys#current-exception-handler handler))
+      thunk
+      (lambda () (set! ##sys#current-exception-handler oldh)) ) ) )
 
 (define (current-exception-handler) ##sys#current-exception-handler)
 
