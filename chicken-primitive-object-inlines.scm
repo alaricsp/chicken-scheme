@@ -689,6 +689,13 @@
       (proc (%car ls))
       (loop (%cdr ls)) ) ) )
 
+(define-inline (%list/1 obj) (%cons obj '()))
+
+(define-inline (%list . objs)
+  (let loop ((objs objs))
+    (if (%null? objs) '()
+        (%cons (%car objs) (loop (%cdr objs)) ) ) ) )
+
 (define-inline (%make-list n e)
   (let loop ((n n) (ls '()))
     (if (%fxzero? n) ls
@@ -703,6 +710,17 @@
   (let loop ((ls ls0) (n n))
     (if (%fxzero? n) ls
         (loop (%cdr ls) (%fxsub1 n)) ) ) )
+
+(define-inline (%any/1 pred? ls)
+  (let loop ((ls ls))
+    (and (not (%null? ls))
+         (or (pred? (%car ls))
+             (loop (%cdr ls)) ) ) ) )
+
+(define-inline (%list-length ls0)
+  (let loop ((ls ls0) (n 0))
+    (if (%null? ls) n
+        (loop (%cdr ls) (%fxadd1 n)) ) ) )
 
 ;; Structure (wordblock)
 
@@ -737,18 +755,18 @@
 ; 10-15	 reserved, port class specific
 
 (define-inline (%port-filep port) (%peek-unsigned-integer port 0))
-(define-inline (%port-input-mode? port) (%wordblock-ref? port 1))
-(define-inline (%port-class port) (%wordblock-ref? port 2))
-(define-inline (%port-name port) (%wordblock-ref? port 3))
-(define-inline (%port-row port) (%wordblock-ref? port 4))
-(define-inline (%port-column port) (%wordblock-ref? port 5))
-(define-inline (%port-eof? port) (%wordblock-ref? port 6))
-(define-inline (%port-type port) (%wordblock-ref? port 7))
-(define-inline (%port-closed? port) (%wordblock-ref? port 8))
-(define-inline (%port-data port) (%wordblock-ref? port 9))
+(define-inline (%port-input-mode? port) (%wordblock-ref port 1))
+(define-inline (%port-class port) (%wordblock-ref port 2))
+(define-inline (%port-name port) (%wordblock-ref port 3))
+(define-inline (%port-row port) (%wordblock-ref port 4))
+(define-inline (%port-column port) (%wordblock-ref port 5))
+(define-inline (%port-eof? port) (%wordblock-ref port 6))
+(define-inline (%port-type port) (%wordblock-ref port 7))
+(define-inline (%port-closed? port) (%wordblock-ref port 8))
+(define-inline (%port-data port) (%wordblock-ref port 9))
 
-(define-inline (%input-port? x) (and (%port x) (%port-input-mode? x)))
-(define-inline (%output-port? x) (and (%port x) (not (%port-input-mode? x))))
+(define-inline (%input-port? x) (and (%port? x) (%port-input-mode? x)))
+(define-inline (%output-port? x) (and (%port? x) (not (%port-input-mode? x))))
 
 (define-inline (%port-filep-set! port fp) (%poke-integer port 0 fp))
 (define-inline (%port-input-mode-set! port f) (%wordblock-set!/immediate port 1 f))
