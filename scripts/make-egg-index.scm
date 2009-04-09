@@ -116,6 +116,8 @@ EOF
 
 (define (prelude title)
   `((h1 ,title)
+    (p (center
+	(img (@ (src "http://www.call-with-current-continuation.org/eggs/3/egg.jpg")))))
     (p (b "Last updated: " ,(seconds->string (current-seconds))))
     (p "A library of extensions for the Chicken Scheme system.")
     (h3 "Installation")
