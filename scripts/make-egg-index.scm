@@ -202,7 +202,7 @@ EOF
      str
      (lambda (m)
        (let ((name (irregex-match-substring m 1)))
-	 (string-append "<a href=\"http://chicken.wiki.br/" name "\">" name "</a>")))))))
+	 (string-append "<a href=\"http://chicken.wiki.br/users/" name "\">" name "</a>")))))))
 
 (define name?
   (disjoin string? symbol?))
