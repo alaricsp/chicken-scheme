@@ -530,7 +530,9 @@
 		    (loop 
 		     (cdr body) 
 		     (cons (if (pair? (cadr def))
-			       `(define-syntax ,(caadr def) (,(macro-alias 'lambda se) ,(cdadr def) ,@(cddr def)))
+			       `(define-syntax ,(caadr def)
+				  (,(macro-alias 'er-macro-transformer se)
+				   (,(macro-alias 'lambda se) ,(cdadr def) ,@(cddr def))))
 			       def)
 			   defs) 
 		     #f)))
@@ -727,6 +729,8 @@
 
 
 ;;; explicit-renaming transformer
+
+(define (er-macro-transformer x) x)
 
 (define ((##sys#er-transformer handler) form se dse)
   (let ((renv '()))			; keep rename-environment for this expansion

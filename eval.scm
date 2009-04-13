@@ -624,7 +624,8 @@
 			   #f se)
 			  (let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
 				 (body (if (pair? (cadr x))
-					   `(,(rename 'lambda se) ,(cdadr x) ,@(cddr x))
+					   `(,(rename 'er-macro-transformer se)
+					     (,(rename 'lambda se) ,(cdadr x) ,@(cddr x)))
 					   (caddr x)))
 				 (name (rename var se)))
 			    (##sys#register-syntax-export 

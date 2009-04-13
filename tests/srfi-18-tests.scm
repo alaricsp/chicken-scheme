@@ -3,6 +3,7 @@
 (cond-expand (dribble
 (define-for-syntax count 0)
 (define-syntax trail
+  (er-macro-transformer
   (lambda (form r c)			; doesn't bother much with renaming
     (let ((loc (cadr form))
 	  (expr (caddr form)))
@@ -11,7 +12,7 @@
 	(print "(" ,count ") " ,loc ": " ',expr ": get: " (##sys#slot get-mutex 5) ", put: " (##sys#slot put-mutex 5))
 	(let ((xxx ,expr))
 	  (print "  (" ,count ") " ,loc ": " ',expr ": get: " (##sys#slot get-mutex 5) ", put: " (##sys#slot put-mutex 5))
-	  xxx) ) ))))
+	  xxx) ) )))))
 (else (define-syntax trail (syntax-rules () ((_ loc expr) expr)))))
 
 (define (tprint . x)

@@ -395,6 +395,7 @@
 	 argv) ) ) ) )
 
 (define-syntax make
+  ;;XXX use er-macro-transformer
   (lambda (form r c)
     (##sys#check-syntax 'make form '(_ _ . #(_ 0 1)))
     (let ((spec (cadr form))
@@ -450,7 +451,8 @@
   (let ((from (if (pair? from) (car from) from))
 	(to (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
 	      (if (and prefix (not (string-prefix? prefix to-path)))
-		  (make-pathname prefix to-path) to-path))))
+		  (make-pathname prefix to-path) 
+		  to-path))))
     (ensure-directory to)
     (cond ((or (glob? from) (file-exists? from))
 	   (begin
