@@ -448,6 +448,7 @@
       (unless *windows-shell* (run (,*chmod-command* a+r ,(shellpath setup-file)))))))
 
 (define (copy-file from to #!optional (err #t) (prefix (installation-prefix)))
+  ;;XXX the prefix handling is completely bogus
   (let ((from (if (pair? from) (car from) from))
 	(to (let ((to-path (if (pair? from) (make-pathname to (cadr from)) to)))
 	      (if (and prefix (not (string-prefix? prefix to-path)))
@@ -516,19 +517,23 @@
 					(equal? (pathname-extension to) "a"))
 			       (run (,*ranlib-command* ,(shellpath to)) ) ))
 			   (make-dest-pathname rpath f)))
-		       files) ) )
+		       files) ) 
+	   (pre (installation-prefix))
+	   (docpath (if pre
+			(ensure-directory (make-pathname pre "share/chicken/doc"))
+			*doc-path*)))
       (and-let* ((docs (assq 'documentation info)))
-	(print "\n* Installing documentation files in " *doc-path* ":")
+	(print "\n* Installing documentation files in " docpath ":")
 	(for-each
 	 (lambda (f)
-	   (copy-file f (make-pathname *doc-path* f) #f) )
+	   (copy-file f (make-pathname docpath f) #f) )
 	 (cdr docs))
 	(newline))
       (and-let* ((exs (assq 'examples info)))
-	(print "\n* Installing example files in " *doc-path* ":")
+	(print "\n* Installing example files in " docpath ":")
 	(for-each 
 	 (lambda (f)
-	   (let ((destf (make-pathname *doc-path* f)))
+	   (let ((destf (make-pathname docpath f)))
 	     (copy-file f destf #f)
 	     (unless *windows-shell*
 	       (run (,*chmod-command* a+rx ,destf)) ) ))
@@ -543,7 +548,10 @@
      (if *windows-shell* "exe" #f) ) )
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
-	   (ppath ((lambda (pre) (if pre (make-pathname pre (program-path)) (program-path)))
+	   (ppath ((lambda (pre)
+		     (if pre 
+			 (ensure-directory (make-pathname pre "bin"))
+			 (program-path)))
 		   (installation-prefix)))
 	   (files (if *windows*
                       (map (lambda (f)
@@ -565,7 +573,10 @@
 (define (install-script id files #!optional (info '()))
   (when (setup-install-flag)
     (let* ((files (check-filelist (if (list? files) files (list files))))
-	   (ppath ((lambda (pre) (if pre (make-pathname pre (program-path)) (program-path)))
+	   (ppath ((lambda (pre) 
+		     (if pre
+			 (ensure-directory (make-pathname pre "bin"))
+			 (program-path)))
 		   (installation-prefix)))
 	   (pfiles (map (lambda (f)
 			  (let ((from (if (pair? f) (car f) f))
@@ -584,7 +595,9 @@
 
 (define (repo-path #!optional ddir?)
   (let ((p (if (and ddir? (installation-prefix))
-	       (make-pathname (installation-prefix) (repository-path))
+	       (make-pathname 
+		(installation-prefix) 
+		(sprintf "lib/chicken/~a" (##sys#fudge 42)))
 	       (repository-path))) )
     (ensure-directory p)
     p) )
@@ -595,9 +608,10 @@
 	(unless (directory? dir)
 	  (error "cannot create directory: a file with the same name already exists") )
 	(begin
-	  (create-directory dir)
+	  (create-directory/parents dir)
 	  (unless *windows-shell*
-		  (run (,*chmod-command* a+x ,(shellpath dir))))))))
+		  (run (,*chmod-command* a+x ,(shellpath dir)))))))
+  path)
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
 		     (verb (setup-verbose-flag)) (compile-only #f))

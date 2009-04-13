@@ -4033,7 +4033,7 @@ C_regparm C_word C_fcall C_display_flonum(C_word port, C_word n)
 
 C_regparm C_word C_fcall C_read_char(C_word port)
 {
-  int c = C_fgetc(C_port_file(port));
+  int c = C_getc(C_port_file(port));
 
   return c == EOF ? C_SCHEME_END_OF_FILE : C_make_character(c);
 }
@@ -4042,7 +4042,7 @@ C_regparm C_word C_fcall C_read_char(C_word port)
 C_regparm C_word C_fcall C_peek_char(C_word port)
 {
   C_FILEPTR fp = C_port_file(port);
-  int c = C_fgetc(fp);
+  int c = C_getc(fp);
 
   C_ungetc(c, fp);
   return c == EOF ? C_SCHEME_END_OF_FILE : C_make_character(c);

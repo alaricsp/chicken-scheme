@@ -87,7 +87,7 @@ EOF
     (macros "Macros and meta-syntax")
     (misc "Miscellaneous")
     (hell "Concurrency and parallelism")
-    (uncategorized "Not categerized")
+    (uncategorized "Not categorized")
     (obsolete "Unsupported or redundant") ) )
 
 (define (d fstr . args)

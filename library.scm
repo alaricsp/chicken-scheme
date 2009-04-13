@@ -77,15 +77,15 @@ static C_word fast_read_line_from_file(C_word str, C_word port, C_word size) {
   char *buf = C_c_string(str);
   C_FILEPTR fp = C_port_file(port);
 
-  if ((c = getc(fp)) == EOF)
+  if ((c = C_getc(fp)) == EOF)
     return C_SCHEME_END_OF_FILE;
 
-  ungetc(c, fp);
+  C_ungetc(c, fp);
 
   for (i = 0; i < n; i++) {
-    c = getc(fp);
+    c = C_getc(fp);
     switch (c) {
-    case '\r':	if ((c = getc(fp)) != '\n') ungetc(c, fp);
+    case '\r':	if ((c = C_getc(fp)) != '\n') C_ungetc(c, fp);
     case EOF:	clearerr(fp);
     case '\n':	return C_fix(i);
     }
@@ -176,6 +176,7 @@ EOF
 (define-constant namespace-max-id-len 31)
 (define-constant char-name-table-size 37)
 (define-constant output-string-initial-size 256)
+(define-constant read-line-buffer-initial-size 1024)
 (define-constant default-parameter-vector-size 16)
 (define-constant maximal-string-length #x00ffffff)
 
@@ -1715,6 +1716,10 @@ EOF
     (##sys#setslot port 7 type)
     port) )
 
+;;; Stream ports:
+; Input port slots:
+;   12: Static buffer for read-line, allocated on-demand
+
 (define ##sys#stream-port-class
   (vector (lambda (p)			; read-char
 	    (##core#inline "C_read_char" p) )
@@ -1745,27 +1750,32 @@ EOF
 		      [else
 			act ] ) ) ) )
 	  (lambda (p limit)		; read-line
-	    (let* ((buffer-len (if limit limit 256))
-		   (buffer (make-string buffer-len)))
-	      (let loop ([len buffer-len]
-			 [buffer buffer]
+	    (if limit (##sys#check-exact limit 'read-line))
+	    (let ((sblen read-line-buffer-initial-size))
+	      (unless (##sys#slot p 12)
+		(##sys#setslot p 12 (##sys#make-string sblen)))
+	      (let loop ([len sblen]
+			 [limit (or limit maximal-string-length)]   ; guaranteed fixnum?
+			 [buffer (##sys#slot p 12)]
 			 [result ""]
 			 [f #f])
-		(let ([n (##core#inline "fast_read_line_from_file" buffer p len)])
+		(let ([n (##core#inline "fast_read_line_from_file" buffer p
+					(fxmin limit len))])
 		  (cond [(eof-object? n) (if f result #!eof)]
-			[(and limit (not n))
-			 (##sys#string-append result (##sys#substring buffer 0 limit))]
 			[(not n)
-			 (loop (fx* len 2) (##sys#make-string (fx* len 2))
-			       (##sys#string-append 
-				result
-				(##sys#substring buffer 0 len))
-			       #t) ]
+			 (if (fx< limit len)
+			     (##sys#string-append result (##sys#substring buffer 0 limit))
+			     (loop (fx* len 2)
+				   (fx- limit len)
+				   (##sys#make-string (fx* len 2))
+				   (##sys#string-append result buffer)
+				   #t)) ]
 			[f (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1))
 			   (##sys#string-append result (##sys#substring buffer 0 n))]
 			[else
 			 (##sys#setislot p 4 (fx+ (##sys#slot p 4) 1))
-			 (##sys#substring buffer 0 n)] ) ) ) ) ) ) )
+			 (##sys#substring buffer 0 n)] ) ) ) ) )          
+ ) )
 
 (define ##sys#open-file-port (##core#primitive "C_open_file_port"))
 
