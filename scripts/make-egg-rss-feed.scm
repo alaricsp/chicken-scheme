@@ -90,7 +90,7 @@
 			   (let* ((c1 (prop 'category 'uncategorized name?))
 				  (c (assq c1 +categories+)))
 			     (if c (cadr c) (sprintf "unknown category: ~a" c1)))))
-	  (guid ,(symbol->string (car egg)))
+	  (guid (@ (isPermaLink "false")) ,(symbol->string (car egg)))
 	  (link ,(sprintf "http://chicken.wiki.br/eggref/~a/~a" *major-version* (car egg)))
 	  (description ,(prop 'synopsis "unknown" string?))
 	  (author ,(prop 'author "unknown" name?))))))
