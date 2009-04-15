@@ -65,6 +65,9 @@
         Enter "make" without any options to see a list of supported 
         platforms.
 
+	Note that parallel builds (using the "-j" make(1) option) is
+	*not* supported.
+
         If you build CHICKEN directly from the development sources out
         of the subversion repository, you will need a "chicken"
         executable to generate the compiled C files from the Scheme

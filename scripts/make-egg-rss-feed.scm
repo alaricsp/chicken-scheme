@@ -2,7 +2,7 @@
 
 (load-relative "tools.scm")
 
-(use setup-download matchable htmlprag data-structures regex)
+(use setup-download matchable htmlprag data-structures regex srfi-1)
 
 (import irregex)
 
@@ -77,7 +77,7 @@
 	(define (check pred x p)
 	  (cond ((pred x) x)
 		(else
-		 (warning "extension has incorrectly typed .meta entry and will not be listed" (car egg) p x)
+		 (warning "extension has .meta entry of incorrect type and will not be listed" (car egg) p x)
 		 (return '()))))
 	(d "  ~a   ~a" (car egg) (prop 'version "HEAD" any?))
 	`(item 
@@ -87,9 +87,10 @@
 			   (let* ((c1 (prop 'category 'uncategorized name?))
 				  (c (assq c1 +categories+)))
 			     (if c (cadr c) (sprintf "unknown category: ~a" c1)))))
+	  (guid ,(symbol->string (car egg)))
 	  (link ,(sprintf "http://chicken.wiki.br/eggref/~a/~a" *major-version* (car egg)))
 	  (description ,(prop 'synopsis "unknown" string?))
-	  (author ,(linkify-names (prop 'author "unknown" name?)))))))
+	  (author ,(prop 'author "unknown" name?))))))
    eggs))
 
 (define name?
@@ -100,6 +101,7 @@
 
 (define (main args)
   (match args
+    (((or "-h" "-help" "--help") . _) (usage 0))
     ((dir)
      (make-egg-rss-feed dir))
     (() (make-egg-rss-feed "."))
