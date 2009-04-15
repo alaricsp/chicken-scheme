@@ -2,7 +2,10 @@
 
 (load-relative "tools.scm")
 
-(use setup-download matchable htmlprag data-structures regex srfi-1)
+;; uses sxml-transforms since htmlprag idiotically attempts to be clever
+;; about empty elements (i.e. "link").
+
+(use setup-download matchable sxml-transforms data-structures regex srfi-1)
 
 (import irregex)
 
@@ -49,7 +52,7 @@
   (let ((title (sprintf "Eggs Unlimited (release branch ~a)" *major-version*))
 	(eggs (gather-egg-information dir)))
     (display "<?xml version='1.0'?>\n")
-    (write-shtml-as-html
+    (SXML->HTML
      `(rss
        (@ (version "2.0"))
        (channel
