@@ -304,3 +304,10 @@
 (assert (equal? (foo (1 2) (3 4) (5 6)) '((1 2) (3 4) (5 6))))
 (assert (equal? (foo (1 2) (3) (5 6)) '(((1 2)) ((3)) ((5 6))))) ; failed
 (assert (equal? (foo 1) '((1))))
+
+
+;;; incorrect lookup for keyword variables in DSSSL llists
+
+(module broken-keyword-var ()
+  (import scheme chicken)
+  ((lambda (#!key string) (assert (not string))))) ; refered to R5RS `string'

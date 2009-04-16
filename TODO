@@ -57,6 +57,8 @@ TODO for chicken							-*- Outline -*-
 ** tests
 *** should run without installation
 
+** setting nursery default size doesn't seem to work properly (reported by Zbigniew)
+
 
 * tasks
 
@@ -91,7 +93,6 @@ TODO for chicken							-*- Outline -*-
 **** handle redirects in http-fetch
 **** option in chicken-install to list available eggs
 *** automatically update db after extension installation?
-*** test sudo
 
 ** library units
 *** read-mark list should be stored in read-table
@@ -120,14 +121,12 @@ TODO for chicken							-*- Outline -*-
 
 * wiki
 
-** XXX update egg tutorials
-** XXX compatibility page
+** compatibility page
 
 
 * extensions
 
 ** check status of `s48-modules'
-** implement script to generate RSS feed from egg-index and install on galinha
 
 
 * tests
@@ -142,7 +141,6 @@ TODO for chicken							-*- Outline -*-
 
 ** document new .meta entries in tutorials on wiki
    depends, test-depends
-** chicken.texi needs to be regenerated
 
 
 * optimizations

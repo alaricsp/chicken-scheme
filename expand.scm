@@ -390,7 +390,7 @@
 	    (%let-optionals (macro-alias 'let-optionals se))
 	    (%let-optionals* (macro-alias 'let-optionals* se))
 	    (%let (macro-alias 'let se)))
-	(let loop ([mode 0]		; req, opt, rest, key, end
+	(let loop ([mode 0]		; req=0, opt=1, rest=2, key=3, end=4
 		   [req '()]
 		   [opt '()]
 		   [key '()] 
@@ -427,18 +427,18 @@
 		 (if (fx> mode 2)
 		     (err "rest argument list specified more than once")
 		     (begin
-		       (if (not rvar) (set! rvar llist))
+		       (unless rvar (set! rvar llist))
 		       (set! hasrest llist)
 		       (loop 4 req opt '() '()) ) ) ]
 		[(not (pair? llist))
 		 (err "invalid lambda list syntax") ]
 		[else
 		 (let* ((var (car llist))
-			(x (or (and (symbol? var) (lookup var se)) var))
+			(x (or (and (symbol? var) (not (eq? 3 mode)) (lookup var se)) var))
 			(r (cdr llist)))
 		   (case x
 		     [(#!optional)
-		      (if (not rvar) (set! rvar (macro-alias 'tmp se)))
+		      (unless rvar (set! rvar (macro-alias 'tmp se)))
 		      (if (eq? mode 0)
 			  (loop 1 req '() '() r)
 			  (err "`#!optional' argument marker in wrong context") ) ]
