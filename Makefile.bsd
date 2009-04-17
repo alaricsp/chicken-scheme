@@ -53,6 +53,11 @@ CHICKEN_CONFIG_H = chicken-config.h
 
 include $(SRCDIR)/defaults.make
 
+# These may be useful for NetBSD:
+#
+#C_COMPILER_OPTIONS += -I/usr/pkg/lib
+#LINKER_OPTIONS += -L/usr/pkg/lib -Wl,-R/usr/pkg/lib
+
 chicken-config.h: chicken-defaults.h
 	echo "#define HAVE_DIRENT_H 1" >$@
 	echo "#define HAVE_DLFCN_H 1" >>$@

@@ -861,13 +861,7 @@ DECL_C_PROC_p0 (128,  1,0,0,0,0,0,0,0)
 #endif
 
 #define C_return(x)                return(x)
-
-#ifdef C_DEFAULT_TARGET_STACK_SIZE
-# define C_resize_stack(n)           C_do_resize_stack(C_DEFAULT_TARGET_STACK_SIZE)
-#else
-# define C_resize_stack(n)           C_do_resize_stack(n)
-#endif
-
+#define C_resize_stack(n)          C_do_resize_stack(n)
 #define C_memcpy_slots(t, f, n)    C_memcpy((t), (f), (n) * sizeof(C_word))
 #define C_block_header(x)          (((C_SCHEME_BLOCK *)(x))->header)
 #define C_header_bits(x)           (C_block_header(x) & C_HEADER_BITS_MASK)

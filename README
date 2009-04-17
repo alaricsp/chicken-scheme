@@ -238,6 +238,15 @@
 
           % unlimit datasize
 
+	- Using external libraries on NetBSD may also be easier, if
+	  you add the following definitions to `Makefile.bsd':
+
+	    C_COMPILER_OPTIONS += -I/usr/pkg/lib
+	    LINKER_OPTIONS += -L/usr/pkg/lib -Wl,-R/usr/pkg/lib
+
+	  Note that this may cause build-problems, if you already have
+	  an existing CHICKEN installation in the /usr/pkg prefix.
+
         - For Mac OS X, Chicken requires libdl, for loading compiled
           code dynamically. This library is available on Mac OS X 10.4
           (Tiger) by default. For older versions you can find it here:
