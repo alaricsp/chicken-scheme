@@ -116,25 +116,25 @@
     (p "This will download anything needed to compile and install the library. "
        "If your " (i "extension repository") " is placed at a location for which "
        "you don't have write permissions, then run " (tt "chicken-install") 
-       "with the " (tt "-sudo") " option or run it as root (not recommended).")
+       " with the " (tt "-sudo") " option or run it as root (not recommended).")
     (p "You can obtain the repository location by running")
     (pre "  csi -p \"(repository-path)\"\n")
     (p "If you only want to download the extension and install it later, pass the "
        (tt "-retrieve") " option to " (tt "chicken-install") ":")
     (pre "  chicken-install -retrieve EXTENSIONNAME\n")
     (p "By default the archive will be unpacked into a temporary directory (named "
-       (tt "EXTENSIONNAME.egg-dir") " and the directory will be removed if the "
+       (tt "EXTENSIONNAME.egg-dir") ") and the directory will be removed if the "
        "installation completed successfully. To keep the extracted files add "
-       (tt "-keep") "to the options passed to " (tt "chicken-install") ".")
+       (tt "-keep") " to the options passed to " (tt "chicken-install") ".")
     (p "For more information, enter")
     (pre "  chicken-install -help\n")
-    (p "If you would like to access the subversion repository, see "
-       (a (@ (href "http://chicken.wiki.br/eggs tutorial")) "the "
-          (i "Egg tutorial")) ".")
-    (p "If you are looking for 3rd party libraries used by one the extensions, "
+    (p "If you would like to access the subversion repository, see the "
+       (a (@ (href "http://chicken.wiki.br/eggs tutorial"))
+          "Egg tutorial") ".")
+    (p "If you are looking for 3rd party libraries used by one of the extensions, "
        "check out the CHICKEN "
        (a (@ (href "http://www.call-with-current-continuation.org/tarballs/") )
-          (i "tarball repository")))
+          "tarball repository") ".")
     (h2 "List of available eggs")
     (a (@ (name "category-list")))
     (h3 "Categories")
