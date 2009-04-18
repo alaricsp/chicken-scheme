@@ -2,63 +2,14 @@
 
 (load-relative "tools.scm")
 
-(use setup-download matchable htmlprag data-structures regex)
+(use setup-download matchable sxml-transforms data-structures regex)
 
 (import irregex)
 
 (define *major-version* (##sys#fudge 41))
 
 (define +link-regexp+
-  '(: #\[ #\[ (submatch (* (~ #\] #\|))) #\] #\]))
-
-(define +stylesheet+ #<<EOF
-/* table mods by zb */
-table {
-  background: #f6f6ff;
-  padding: 0.2em;
-  margin: 1.2em 2.0em;
-  border: 1px solid #aac;
-  border-collapse: collapse;
-  font-size: 100%;
-}
-th {
-  text-align: left;
-  border-bottom: 1px solid #aac;
-  border-left: 1px solid #aac; 
-  padding: 0.25em 1.0em 0.25em 1.0em;
-} 
-td { 
-  padding: 0.25em 1.0em 0.25em 1.0em; 
-  border-left: 1px solid #aac; 
-}
-blockquote, pre {
-  background-color: #fafaff;
-  display: block;
-  border: 1px dashed gray;
-  margin: 1.0em 0em;
-  padding: 0.5em 1.0em;
-  overflow: auto;
-}
-pre {
-  line-height: 1.3;
-}
-h2, h3, h4, h5, h6 {
-   color: #226;
-   padding-top: 1em;
-}
-
-h1 {
-    background-color: #336;
-	color: #fff;
-	width: 100%;
-	padding: 0;
-    padding: 0.25em 16px 0.25em 0.5em;
-	margin: 0 0 0em 0;
-	font-size: 160%;
-}
-
-EOF
-)
+  (irregex '(: #\[ #\[ (submatch (* (~ #\] #\|))) #\] #\])))
 
 (define +categories+
   '((lang-exts "Language extensions")
@@ -70,7 +21,7 @@ EOF
     (db "Databases")
     (os "OS interface")
     (ffi "Interfacing to other languages")
-    (web "Web programing")
+    (web "Web programming")
     (xml "XML processing")
     (doc-tools "Documentation tools")
     (egg-tools "Egg tools")
@@ -87,7 +38,7 @@ EOF
     (macros "Macros and meta-syntax")
     (misc "Miscellaneous")
     (hell "Concurrency and parallelism")
-    (uncategorized "Not categorized")
+    (uncategorized "Uncategorized")
     (obsolete "Unsupported or redundant") ) )
 
 (define (d fstr . args)
@@ -97,30 +48,68 @@ EOF
   (print "make-egg-index.scm [--major-version=MAJOR] [DIR]")
   (exit code))
 
+(define (sxml->html doc)
+  (SRV:send-reply
+   (pre-post-order
+    doc
+    ;; LITERAL tag contents are used as raw HTML.
+    `((literal *preorder* . ,(lambda (tag . body) (map ->string body)))
+      ,@universal-conversion-rules))))
+
 (define (make-egg-index dir)
   (let ((title (sprintf "Eggs Unlimited (release branch ~a)" *major-version*))
 	(eggs (gather-egg-information dir)))
-    (write-shtml-as-html
-     `(html
-       ,(header title)
-       (body
-	,@(prelude title)
-	,@(emit-egg-information eggs)
-	,@(trailer))))))
+    (sxml->html
+     `((literal "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
+       (literal "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">")
+       (html
+        ,(header title)
+        (body
+         ,(titlebar title)
+         ,(sidebar)
+         ,(content (prelude title)
+                   (emit-egg-information eggs))
+         ,(trailer)))))))
+
+(define (wiki-link path desc)
+  `(a (@ (href "http://chicken.wiki.br/" ,path))
+      ,desc))
+
+(define (sidebar)
+  `(div (@ (id "toc-links"))
+        (div (@ (id "toc"))
+             (p ,(wiki-link "" "Home") (br)
+                ,(wiki-link "manual/index" "Manual") (br)
+                ,(wiki-link "eggs" "Eggs") (br)
+                ,(wiki-link "users" "Users") (br)
+                ))))
+
+(define (content . body)
+  `(div (@ (id "content-box"))
+        (div (@ (class "content"))
+             ,body)))
 
 (define (header title)
   `(head
-    (style (@ (type "text/css")) 
-      ,+stylesheet+)
+;;     (style (@ (type "text/css")) 
+;;       ,+stylesheet+)
+    (link (@ (rel "stylesheet")
+             (type "text/css")
+             (href "http://chicken.wiki.br/common-css")))
     (title ,title)))
 
+(define (titlebar title)
+  `(div (@ (id "header"))
+        (h1 (a (@ (href "http://chicken.wiki.br/eggs"))
+               ,title))))
+
 (define (prelude title)
-  `((h1 ,title)
-    (p (center
-	(img (@ (src "http://www.call-with-current-continuation.org/eggs/3/egg.jpg")))))
+  `((p (img (@
+             (style "float: right;")
+             (src "http://www.call-with-current-continuation.org/eggs/3/egg.jpg"))))
     (p (b "Last updated: " ,(seconds->string (current-seconds))))
     (p "A library of extensions for the Chicken Scheme system.")
-    (h3 "Installation")
+    (h2 "Installation")
     (p "Just enter")
     (pre "  chicken-install EXTENSIONNAME\n")
     (p "This will download anything needed to compile and install the library. "
@@ -140,15 +129,30 @@ EOF
     (pre "  chicken-install -help\n")
     (p "If you would like to access the subversion repository, see "
        (a (@ (href "http://chicken.wiki.br/eggs tutorial")) "the "
-	  (i "Egg tutorial")) ".")
+          (i "Egg tutorial")) ".")
     (p "If you are looking for 3rd party libraries used by one the extensions, "
        "check out the CHICKEN "
        (a (@ (href "http://www.call-with-current-continuation.org/tarballs/") )
-	  (i "tarball repository")))
-    (h3 "List of available eggs")))
+          (i "tarball repository")))
+    (h2 "List of available eggs")
+    (a (@ (name "category-list")))
+    (h3 "Categories")
+    ,(category-link-list)
+    ))
+
+;; information on empty categories not available yet; link all possible categories
+(define (category-link-list)
+  `(ul (@ (style "list-style-type: none; padding-left: 2em;"))
+       ,@(map
+          (match-lambda
+           ((cat catname)
+            `(li (a (@ (href "#" ,cat))
+                    ,catname))))
+          +categories+)))
 
 (define (trailer)
-  '())
+  `(div (@ (id "credits"))
+        (p "Generated with Chicken " ,(chicken-version))))
 
 (define (emit-egg-information eggs)
   (append-map
@@ -168,7 +172,9 @@ EOF
 	    '()
 	    (begin
 	      (d "category: ~a" catname)
-	      `((h3 ,catname)
+	      `((a (@ (name ,cat)))
+                (h3 (a (@ (href "#category-list"))
+                       ,catname))
 		(table
 		 (tr (th "Name") (th "Description") (th "License") (th "author") (th "maintainer") (th "version"))
 		 ,@eggs)))))))
@@ -194,16 +200,50 @@ EOF
 	   (td ,(linkify-names (prop 'maintainer "" name?)))
 	   (td ,(prop 'version "" version?)))))))
 
+;; Names are either raw HTML, or [[user name]] denoting a wiki link.
 (define (linkify-names str)
-  ;; silly
-  (html->shtml
-   (open-input-string
-    (irregex-replace/all
-     +link-regexp+ 
-     str
-     (lambda (m)
-       (let ((name (irregex-match-substring m 1)))
-	 (string-append "<a href=\"http://chicken.wiki.br/users/" name "\">" name "</a>")))))))
+  ;; Call MATCHED on (sub)matches and DID-NOT-MATCH on non-matches in STR,
+  ;; and collect into a list.
+  (define (transform irx str matched did-not-match)
+    ;; IRREGEX-FOLD is exported for SVN trunk >= r14283, delete this if
+    ;; installed Chicken is new enough.
+    (define (irregex-fold irx kons knil str . o)
+      (let* ((irx (irregex irx))
+             (finish (if (pair? o) (car o) (lambda (i acc) acc)))
+             (start (if (and (pair? o) (pair? (cdr o))) (cadr o) 0))
+             (end (if (and (pair? o) (pair? (cdr o)) (pair? (cddr o)))
+                      (caddr o)
+                      (string-length str))))
+        (let lp ((i start) (acc knil))
+          (if (>= i end)
+              (finish i acc)
+              (let ((m (irregex-search irx str i end)))
+                (if (not m)
+                    (finish i acc)
+                    (let* ((end (irregex-match-end m 0))
+                           (acc (kons i m acc)))
+                      (lp end acc))))))))
+    (let ((irregex-match-start-index irregex-match-start)) ;; upcoming API change in irregex 0.7
+      (irregex-fold irx
+                    (lambda (i m s)
+                      (cons (matched (irregex-match-substring m 1))
+                            (cons (did-not-match
+                                   (substring str i (irregex-match-start-index m 0)))
+                                  s)))
+                    '()
+                    str
+                    (lambda (i s)
+                      (reverse (cons (did-not-match (substring str i))
+                                     s))))))
+  (transform
+   +link-regexp+
+   str
+   (lambda (name)  ;; wiki username
+     `(a (@ (href ,(string-append "http://chicken.wiki.br/users/"
+                                  (string-substitute " " "-" name 'global))))
+         ,name))
+   (lambda (x)     ;; raw HTML chunk
+     `(literal ,x))))
 
 (define name?
   (disjoin string? symbol?))
@@ -220,3 +260,4 @@ EOF
     (_ (usage 1))))
 
 (main (simple-args (command-line-arguments)))
+
