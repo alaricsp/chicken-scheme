@@ -9,6 +9,7 @@
 
 (import irregex)
 
+(define *help* #f)
 (define *major-version* (##sys#fudge 41))
 
 (define +categories+
@@ -45,7 +46,7 @@
   (fprintf (current-error-port) "~?~%" fstr args))
 
 (define (usage code)
-  (print "make-egg-rss-feed.scm [--major-version=MAJOR] [DIR]")
+  (print "make-egg-rss-feed.scm [--help] [--major-version=MAJOR] [DIR]")
   (exit code))
 
 (define (make-egg-rss-feed dir)
@@ -103,8 +104,8 @@
   (disjoin string? number?))
 
 (define (main args)
+  (when *help* (usage 0))
   (match args
-    (((or "-h" "-help" "--help") . _) (usage 0))
     ((dir)
      (make-egg-rss-feed dir))
     (() (make-egg-rss-feed "."))

@@ -6,6 +6,7 @@
 
 (import irregex)
 
+(define *help* #f)
 (define *major-version* (##sys#fudge 41))
 
 (define +link-regexp+
@@ -45,7 +46,7 @@
   (fprintf (current-error-port) "~?~%" fstr args))
 
 (define (usage code)
-  (print "make-egg-index.scm [--major-version=MAJOR] [DIR]")
+  (print "make-egg-index.scm [--help] [--major-version=MAJOR] [DIR]")
   (exit code))
 
 (define (sxml->html doc)
@@ -252,8 +253,8 @@
   (disjoin string? number?))
 
 (define (main args)
+  (when *help* (usage 0))
   (match args
-    (((or "-h" "-help" "--help") . _) (usage 0))
     ((dir)
      (make-egg-index dir))
     (() (make-egg-index "."))

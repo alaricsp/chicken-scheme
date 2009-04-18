@@ -137,12 +137,6 @@ TODO for chicken							-*- Outline -*-
 ** 3-stage bootstrap with compiler-output comparison
 
 
-* documentation
-
-** document new .meta entries in tutorials on wiki
-   depends, test-depends
-
-
 * optimizations
 
 ** self-recursion optimization
