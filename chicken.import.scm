@@ -168,6 +168,8 @@
    register-feature!
    remprop!
    rename-file
+   repl
+   repl-prompt
    repository-path
    require
    reset
