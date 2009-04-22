@@ -38,11 +38,7 @@
       (pp arg1)
       (apply print arg1 more)))
 
-(cond-expand 
- (hygienic-macros
-  (define-syntax d (syntax-rules () ((_ . _) (void)))) )
- (else
-  (define-macro (d . _) '(void))))	;*** remove later
+(define-syntax d (syntax-rules () ((_ . _) (void))))
 
 #>
 #ifndef C_INSTALL_EGG_HOME
