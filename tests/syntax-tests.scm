@@ -311,3 +311,17 @@
 (module broken-keyword-var ()
   (import scheme chicken)
   ((lambda (#!key string) (assert (not string))))) ; refered to R5RS `string'
+
+
+;;; compiler didn't resolve expansion into local variable
+;;; (reported by Alex Shinn, #15)
+
+(module unresolve-local (foo)
+  (import scheme)
+  (define (foo)
+    (let ((qux 3))
+      (let-syntax ((bar (syntax-rules () ((bar) qux))))
+	(bar))))
+
+  (display (foo))
+)
