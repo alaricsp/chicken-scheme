@@ -62,7 +62,7 @@
 
 (define (irregex-match-data? obj)
   (and (vector? obj)
-       (>= 5 (vector-length obj))
+       (>= (vector-length obj) 5)
        (eq? irregex-match-tag (vector-ref obj 0))))
 
 (define (make-irregex-match str count names)
