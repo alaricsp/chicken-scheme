@@ -40,7 +40,7 @@
   (import extras regex posix utils srfi-1 data-structures tcp srfi-13 files setup-api)
 
   (define-constant +default-tcp-connect-timeout+ 10000) ; 10 seconds
-  (define-constant +default-tcp-read/write-timeout+ 10000) ; 20 seconds
+  (define-constant +default-tcp-read/write-timeout+ 20000) ; 20 seconds
 
   (tcp-connect-timeout +default-tcp-connect-timeout+)
   (tcp-read-timeout +default-tcp-read/write-timeout+)
