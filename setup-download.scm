@@ -39,9 +39,12 @@
   (import scheme chicken)
   (import extras regex posix utils srfi-1 data-structures tcp srfi-13 files setup-api)
 
-  (tcp-connect-timeout 10000)		; 10 seconds
-  (tcp-read-timeout 10000)
-  (tcp-write-timeout 10000)
+  (define-constant +default-tcp-connect-timeout+ 10000) ; 10 seconds
+  (define-constant +default-tcp-read/write-timeout+ 10000) ; 20 seconds
+
+  (tcp-connect-timeout +default-tcp-connect-timeout+)
+  (tcp-read-timeout +default-tcp-read/write-timeout+)
+  (tcp-write-timeout +default-tcp-read/write-timeout+)
 
   (define *quiet* #f)
 
@@ -213,7 +216,7 @@
       (display
        (make-HTTP-GET/1.1 locn *chicken-install-user-agent* host port: port accept: "*/*")
        out)
-      (close-output-port out)
+      (flush-output out)
       (d "reading response ...~%")
       (let ([chunked #f])
 	(let* ([h1 (read-line in)]
@@ -240,6 +243,7 @@
 		 (apply error (string-append "[Server] " (cadr name)) (cddr name)) ]
 		[(or (eof-object? name) (not name))
 		 (close-input-port in)
+		 (close-output-port out)
 		 (reverse files) ]
 		[(not (string? name))
 		 (error "invalid file name - possibly corrupt transmission" name) ]
