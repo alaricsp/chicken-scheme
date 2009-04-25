@@ -1496,7 +1496,9 @@
   (callback foreign-stub-callback))	       ; boolean
 
 (define (create-foreign-stub rtype sname argtypes argnames body callback cps)
-  (let* ([params (list-tabulate (length argtypes) (lambda (x) (gensym 'a)))]
+  (let* ((rtype (##sys#strip-syntax rtype))
+	 (argtypes (##sys#strip-syntax argtypes))
+	 [params (list-tabulate (length argtypes) (lambda (x) (gensym 'a)))]
 	 [f-id (gensym 'stub)]
 	 [bufvar (gensym)] 
 	 [rsize (estimate-foreign-result-size rtype)] )
