@@ -998,7 +998,7 @@
 
 			((define-foreign-variable)
 			 (let* ([var (##sys#strip-syntax (second x))]
-				[type (third x)]
+				[type (##sys#strip-syntax (third x))]
 				[name (if (pair? (cdddr x))
 					  (fourth x)
 					  (symbol->string var) ) ] )
@@ -1012,7 +1012,7 @@
 
 			((define-foreign-type)
 			 (let ([name (second x)]
-			       [type (third x)] 
+			       [type (##sys#strip-syntax (third x))] 
 			       [conv (cdddr x)] )
 			   (cond [(pair? conv)
 				  (let ([arg (gensym)]
@@ -1049,7 +1049,7 @@
 
 			((##core#let-location)
 			 (let* ([var (second x)]
-				[type (third x)]
+				[type (##sys#strip-syntax (third x))]
 				[alias (gensym)]
 				[store (gensym)] 
 				[init (and (pair? (cddddr x)) (fourth x))] )
