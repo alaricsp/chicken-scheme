@@ -204,19 +204,26 @@
 	   (##core#inline "C_setsubchar" dest start (##sys#read-char-0 port))
 	   (set! start (fx+ start 1)) )
 	 (let ((rdstring (##sys#slot (##sys#slot port 2) 7)))
-	   (let loop ((start start) (n n) (m 0))
-	     (let ((n2 (if rdstring
-			   (rdstring port n dest start) ; *** doesn't update port-position!
-			   (let ((c (##sys#read-char-0 port)))
+           (if rdstring
+	       (let loop ((start start) (n n) (m 0))
+		 (let ((n2 (rdstring port n dest start)))
+		   (##sys#setislot port 5 ; update port-position
+				   (fx+ (##sys#slot port 5) n2))
+		   (cond ((eq? n2 0) m)
+			 ((or (not n) (fx< n2 n)) 
+			  (loop (fx+ start n2) (and n (fx- n n2)) (fx+ m n2)))
+			 (else (fx+ n2 m)))))
+	       (let loop ((start start) (n n) (m 0))
+		 (let ((n2 (let ((c (##sys#read-char-0 port)))
 			     (if (eof-object? c)
 				 0
 				 (begin
 				   (##core#inline "C_setsubchar" dest start c)
-				   1) ) ) ) ) )
-	       (cond ((eq? n2 0) m)
-		     ((or (not n) (fx< n2 n)) 
-		      (loop (fx+ start n2) (and n (fx- n n2)) (fx+ m n2)) )
-		     (else (fx+ n2 m))) ) ) ))))
+				   1) ) )  ) )
+		   (cond ((eq? n2 0) m)
+			 ((or (not n) (fx< n2 n)) 
+			  (loop (fx+ start n2) (and n (fx- n n2)) (fx+ m n2)) )
+			 (else (fx+ n2 m))) )))))))
 
 (define (read-string! n dest #!optional (port ##sys#standard-input) (start 0))
   (##sys#check-port port 'read-string!)
@@ -228,6 +235,7 @@
   (##sys#check-exact start 'read-string!)
   (##sys#read-string! n dest port start) )
 
+(define-constant read-string-buffer-size 2048)
 (define ##sys#read-string/port
   (let ((open-output-string open-output-string)
 	(get-output-string get-output-string) )
@@ -240,15 +248,16 @@
 		     str
 		     (##sys#substring str 0 n2))))
 	    (else
-	     (let ([str (open-output-string)])
-	       (let loop ([n n])
-		 (or (and (eq? n 0) (get-output-string str))
-		     (let ([c (##sys#read-char-0 p)])
-		       (if (eof-object? c)
-			   (get-output-string str)
-			   (begin
-			     (##sys#write-char/port c str) 
-			     (loop (and n (fx- n 1))) ) ) ) ) ) ) ) ) ) ) )
+	     (let ([out (open-output-string)]
+		   (buf (make-string read-string-buffer-size)))
+	       (let loop ()
+		 (let ((n (##sys#read-string! read-string-buffer-size
+					      buf p 0)))
+		   (cond ((eq? n 0)
+			  (get-output-string out))
+			 (else
+			  (write-string buf n out)
+			  (loop)))))))))))
 
 (define (read-string #!optional n (port ##sys#standard-input))
   (##sys#read-string/port n port) )

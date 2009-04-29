@@ -1736,19 +1736,16 @@ EOF
 	    (##core#inline "C_flush_output" p) )
 	  (lambda (p)			; char-ready?
 	    (##core#inline "C_char_ready_p" p) )
-	  #f				; read-string!
-	  #; ;UNUSED
-	  (lambda (p n dest start)	; read-string!
+	  (lambda (p n dest start)		; read-string!
 	    (let loop ([rem (or n (fx- (##sys#size dest) start))] [act 0] [start start])
 	      (let ([len (##core#inline "fast_read_string_from_file" dest p rem start)])
-		(cond [(eof-object? len)
-			(if (eq? 0 act) #!eof act)]
-		      [(not len)
-			act]
+		(cond [(or (not len)	      ; error returns EOF
+			   (eof-object? len)) ; EOF returns 0 bytes read
+		       act]
 		      [(fx< len rem)
-			(loop (fx- rem len) (fx+ act len) (fx+ start len))]
+		       (loop (fx- rem len) (fx+ act len) (fx+ start len))]
 		      [else
-			act ] ) ) ) )
+		       (fx+ act len) ] ) )))
 	  (lambda (p limit)		; read-line
 	    (if limit (##sys#check-exact limit 'read-line))
 	    (let ((sblen read-line-buffer-initial-size))
