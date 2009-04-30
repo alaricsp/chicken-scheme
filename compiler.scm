@@ -293,7 +293,7 @@
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
-  location-pointer-map literal-rewrite-hook inline-globally
+  location-pointer-map literal-rewrite-hook inline-globally enable-inline-files
   local-definitions export-variable variable-mark intrinsic?
   undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
@@ -374,6 +374,7 @@
 (define inline-globally #f)
 (define inline-locally #f)
 (define inline-output-file #f)
+(define enable-inline-files #f)
 
 
 ;;; These are here so that the backend can access them:
@@ -1394,6 +1395,7 @@
 		    (set! standard-bindings (lset-difference eq? default-standard-bindings syms))
 		    (set! extended-bindings (lset-difference eq? default-extended-bindings syms)) ) ] ) ]
 	  ((inline-global)
+	   (set! enable-inline-files #t)
 	   (if (null? (cddr spec))
 	       (set! inline-globally #f)
 	       (for-each
@@ -1472,6 +1474,8 @@
 		(cut mark-variable <> '##compiler#local)
 		(stripa (cdr spec))))))
        ((inline-global)
+	(set! enable-inline-files #t)
+	(set! inline-locally #t)
 	(if (null? (cdr spec))
 	    (set! inline-globally #t)
 	    (for-each

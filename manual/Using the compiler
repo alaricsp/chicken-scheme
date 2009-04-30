@@ -121,7 +121,7 @@ Possible options are:
 
 ; -inline : Enable procedure inlining for known procedures of a size below the threshold (which can be set through the {{-inline-limit}} option).
 
-; -inline-global : Enable cross-module inlining (in addition to local inlining).
+; -inline-global : Enable cross-module inlining (in addition to local inlining). Implies {{-inline}}. For more information, see also [[Declarations]].
 
 ; -inline-limit THRESHOLD : Sets the maximum size of a potentially inlinable procedure. The default threshold is {{20}}.
 

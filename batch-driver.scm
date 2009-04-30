@@ -63,7 +63,7 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes
-  file-requirements import-libraries inline-globally
+  file-requirements import-libraries inline-globally enable-inline-files
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
@@ -501,20 +501,6 @@
 		 (set! exps (map proc exps))
 		 (end-time "user pass") ) )
 
-	     (let ((req (concatenate (vector->list file-requirements))))
-	       (when (debugging 'M "; requirements:")
-		 (pp req))
-	       (when inline-globally
-		 (for-each
-		  (lambda (id)
-		    (and-let* ((ifile (##sys#resolve-include-filename 
-				       (make-pathname #f (symbol->string id) "inline")
-				       #f #t))
-			       ((file-exists? ifile)))
-		      (dribble "Loading inline file ~a ..." ifile)
-		      (load-inline-file ifile)))
-		  (concatenate (map cdr req)))))
-
 	     (let* ([node0 (make-node
 			    'lambda '(())
 			    (list (build-node-graph
@@ -544,6 +530,20 @@
 		   (end-time "lambda lifting")
 		   (print-node "lambda lifted" '|L| node0) )
 		 (set! first-analysis #t) )
+
+	       (let ((req (concatenate (vector->list file-requirements))))
+		 (when (debugging 'M "; requirements:")
+		   (pp req))
+		 (when enable-inline-files
+		   (for-each
+		    (lambda (id)
+		      (and-let* ((ifile (##sys#resolve-include-filename 
+					 (make-pathname #f (symbol->string id) "inline")
+					 #f #t))
+				 ((file-exists? ifile)))
+			(dribble "Loading inline file ~a ..." ifile)
+			(load-inline-file ifile)))
+		    (concatenate (map cdr req)))))
 
 	       (set! ##sys#line-number-database #f)
 	       (set! constant-table #f)

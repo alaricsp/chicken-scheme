@@ -148,6 +148,8 @@ inlinable procedures from other compilation units referred to via
 {{.inline}} files (if available in the current include path) and inlined
 in the current compilation unit.
 
+Enabling global inlining implies {{(declare (inline))}}.
+
 
 === inline-limit
 
