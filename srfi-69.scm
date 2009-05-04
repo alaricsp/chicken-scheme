@@ -167,7 +167,7 @@
 	[else		(%fix (##sys#number-hash-hook obj))] ) )
 
 (define-inline (%number-hash obj)
-  (cond [(fixnum? obj)	?obj]
+  (cond [(fixnum? obj)	obj]
 	[else		(%non-fixnum-number-hash obj)] ) )
 
 (define (number-hash obj #!optional (bound hash-default-bound))
