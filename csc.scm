@@ -431,7 +431,7 @@ Usage: csc FILENAME | OPTION ...
     -disable-c-syntax-checks       disable syntax checks of C code fragments
     -raw                           do not generate implicit init- and exit code
     -emit-external-prototypes-first
-                                   emit protoypes for callbacks before foreign
+                                   emit prototypes for callbacks before foreign
                                     declarations
     -ignore-repository             do not refer to repository for extensions
     -keep-shadowed-macros          do not remove shadowed macro

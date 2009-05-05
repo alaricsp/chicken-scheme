@@ -1332,7 +1332,7 @@ Usage: chicken FILENAME OPTION ...
                                   the unsafe runtime system
     -raw                         do not generate implicit init- and exit code                           
     -emit-external-prototypes-first
-                                 emit protoypes for callbacks before foreign
+                                 emit prototypes for callbacks before foreign
                                   declarations
     -ignore-repository           do not refer to repository for extensions
 
