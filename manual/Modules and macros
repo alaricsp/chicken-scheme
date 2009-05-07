@@ -293,6 +293,13 @@ not exported from compiled code.
 As a special case, specifying {{*}} instead of an export-list
 will export all definitions.
 
+Note that the module system is only a device for controlling the
+mapping of identifiers to value or syntax bindings. Modules do not
+instantiate separate environments that contain their own bindings, as
+do many other module systems. Redefinition of value or syntax bindings
+will modify the original, imported definition.
+
+
 ==== export
 
  [syntax] (export EXPORT ...)
