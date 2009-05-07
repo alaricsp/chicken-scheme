@@ -1263,7 +1263,7 @@
     (##sys#check-syntax 'module x '(_ symbol _ . #(_ 0)))
     `(##core#module 
       ,(cadr x)
-      ,(if (c (r '*) (caddr x)) 
+      ,(if (eq? '* (strip-syntax (caddr x))) 
 	   #t 
 	   (caddr x))
       ,@(cdddr x)))))
