@@ -201,5 +201,7 @@
    vector-resize
    void
    warning
+   eval-handler
+   dynamic-load-libraries
    with-exception-handler)
  ##sys#chicken-macro-environment)       ;*** incorrect - won't work in compiled executable
