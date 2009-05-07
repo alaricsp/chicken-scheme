@@ -405,9 +405,21 @@ inexact integer.
 ==== file-position
 
 <procedure>(file-position FILE)</procedure>
+<procedure>(set! (file-position FILE) POSITION)</procedure>
 
-Returns the current file position of {{FILE}}, which should be a
+{{file-position}} Returns the current file position of {{FILE}}, which should be a
 port or a file-descriptor.
+
+{{(set! (file-position FILE) POSITION)}} Sets the current read/write position of {{FILE}} to
+{{POSITION}}, which should be an exact integer or a list of two elements. {{FILE}}
+should be a port or a file-descriptor. If {{POSITION}} is a list, it should
+be of the form {{(POSITION WHENCE)}} where {{WHENCE}} specifies
+how the position is to interpreted and should be one of the values
+{{seek/set, seek/cur}} and {{seek/end}}. It defaults to
+{{seek/set}}.
+
+Exceptions: {{(exn bounds)}}, {{(exn i/o file)}}
+
 
 ==== file-size
 
@@ -481,20 +493,6 @@ Truncates the file {{FILE}} to the length {{OFFSET}},
 which should be an integer. If the file-size is smaller or equal to
 {{OFFSET}} then nothing is done.  {{FILE}} should be a filename
 or a file-descriptor.
-
-==== set-file-position!
-
-<procedure>(set-file-position! FILE POSITION [WHENCE])</procedure>
-<procedure>(set! (file-position FILE) POSITION)</procedure>
-
-Sets the current read/write position of {{FILE}} to
-{{POSITION}}, which should be an exact integer. {{FILE}}
-should be a port or a file-descriptor.  {{WHENCE}} specifies
-how the position is to interpreted and should be one of the values
-{{seek/set, seek/cur}} and {{seek/end}}. It defaults to
-{{seek/set}}.
-
-Exceptions: {{(exn bounds)}}, {{(exn i/o file)}}
 
 ==== change-file-mode
 
