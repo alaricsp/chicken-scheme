@@ -277,9 +277,9 @@ Usage: csc FILENAME | OPTION ...
 
     -h  -help                      display this text and exit
     -v                             show intermediate compilation stages
-    -v2  -verbose                  display information about translation
+    -vv  -verbose                  display information about translation
                                     progress
-    -v3                            display information about all compilation
+    -vvv                           display information about all compilation
                                     stages
     -V  -version                   display Scheme compiler version and exit
     -release                       display release number and exit
@@ -559,19 +559,25 @@ EOF
 		(set! inquiry-only #t)
 		(set! show-libs #t) ]
 	       [(-v)
-		(set! verbose #t) ]
-	       [(-v2 -verbose)
+		(when (and (number? verbose) (not msvc))
+		  (set! compile-options (cons* "-v" "-Q" compile-options))
+		  (set! link-options (cons (if msvc "-VERBOSE" "-v") link-options)) )
+		(cond (verbose
+		       (t-options "-verbose") 
+		       (set! verbose 2)) 
+		      (else (set! verbose #t))) ]
+	       [(-v2 -verbose)		; DEPRECATED
 		(set! verbose #t)
 		(t-options "-verbose") ]
-	       [(-w -no-warnings)
-		(set! compile-options (cons "-w" compile-options))
-		(t-options "-no-warnings") ]
-	       [(-v3)
+	       [(-v3)			; DEPRECATED
 		(set! verbose #t)
 		(t-options "-verbose")
                 (if (not msvc)
                     (set! compile-options (cons* "-v" "-Q" compile-options)))
 		(set! link-options (cons (if msvc "-VERBOSE" "-v") link-options)) ]
+	       [(-w -no-warnings)
+		(set! compile-options (cons "-w" compile-options))
+		(t-options "-no-warnings") ]
 	       [(|-A| -analyze-only)
 		(set! translate-only #t)
 		(t-options "-analyze-only") ]
