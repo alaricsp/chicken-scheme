@@ -637,7 +637,7 @@
     (zero? r) ) )
 
 (define (required-chicken-version v)
-  (when (string-ci<? (chicken-version) (->string v))
+  (when (version>=? v (chicken-version) ) 
     (error (sprintf "CHICKEN version ~a or higher is required" v)) ) )
 
 (define (upgrade-message ext msg)
@@ -653,12 +653,11 @@
 	   (let* ((ext (car args))
 		  (version (cadr args))
 		  (more (cddr args))
-		  (info (extension-information ext))
-		  (version (->string version)) )
+		  (info (extension-information ext)))
 	     (if info
 		 (let ((ver (and (assq 'version info) (cadr (assq 'version info)))))
 		   (cond ((not ver) (upgrade-message ext "has no associated version information"))
-			 ((string-ci<? (->string ver) version)
+			 ((version>=? version ver)
 			  (upgrade-message 
 			   ext
 			   (sprintf "is older than ~a, which is what this extension requires"
@@ -683,7 +682,7 @@
 (define (version>=? v1 v2)
   (define (version->list v)
     (map (lambda (x) (or (string->number x) x))
-	 (string-split-fields "[-\\._]" v #:infix)))
+	 (string-split-fields "[-\\._]" (->string v) #:infix)))
   (let loop ((p1 (version->list v1))
 	     (p2 (version->list v2)))
     (cond ((null? p1) (null? p2))
