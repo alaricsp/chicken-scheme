@@ -983,16 +983,16 @@
 			     '(##core#undefined) ) )
 
 			((foreign-lambda)
-			 (walk (expand-foreign-lambda x) e se dest) )
+			 (walk (expand-foreign-lambda x #f) e se dest) )
 
 			((foreign-safe-lambda)
-			 (walk (expand-foreign-callback-lambda x) e se dest) )
+			 (walk (expand-foreign-lambda x #t) e se dest) )
 
 			((foreign-lambda*)
-			 (walk (expand-foreign-lambda* x) e se dest) )
+			 (walk (expand-foreign-lambda* x #f) e se dest) )
 
 			((foreign-safe-lambda*)
-			 (walk (expand-foreign-callback-lambda* x) e se dest) )
+			 (walk (expand-foreign-lambda* x #t) e se dest) )
 
 			((foreign-primitive)
 			 (walk (expand-foreign-primitive x) e se dest) )
@@ -1527,47 +1527,33 @@
 		     (finish-foreign-result ft (append head (cons bufvar rest)))
 		     rtype) ) ) ) ) ) ) )
 
-(define (expand-foreign-lambda exp)
+(define (expand-foreign-lambda exp callback?)
   (let* ([name (third exp)]
-	 [sname (cond ((symbol? name) (symbol->string name))
+	 [sname (cond ((symbol? name) (symbol->string (##sys#strip-syntax name)))
 		      ((string? name) name)
 		      (else (quit "name `~s' of foreign procedure has wrong type" name)) ) ]
 	 [rtype (second exp)]
 	 [argtypes (cdddr exp)] )
-    (create-foreign-stub rtype sname argtypes #f #f #f #f) ) )
+    (create-foreign-stub rtype sname argtypes #f #f callback? callback?) ) )
 
-(define (expand-foreign-callback-lambda exp)
-  (let* ([name (third exp)]
-	 [sname (cond ((symbol? name) (symbol->string name))
-		      ((string? name) name)
-		      (else (quit "name `~s' of foreign procedure has wrong type" name)) ) ]
-	 [rtype (second exp)]
-	 [argtypes (cdddr exp)] )
-    (create-foreign-stub rtype sname argtypes #f #f #t #t) ) )
-
-(define (expand-foreign-lambda* exp)
+(define (expand-foreign-lambda* exp callback?)
   (let* ([rtype (second exp)]
 	 [args (third exp)]
 	 [body (apply string-append (cdddr exp))]
  	 [argtypes (map car args)]
-	 [argnames (map cadr args)] )
-    (create-foreign-stub rtype #f argtypes argnames body #f #f) ) )
+         ;; C identifiers aren't hygienically renamed inside body strings
+	 [argnames (map cadr (##sys#strip-syntax args))] )
+    (create-foreign-stub rtype #f argtypes argnames body callback? callback?) ) )
 
-(define (expand-foreign-callback-lambda* exp)
-  (let* ([rtype (second exp)]
-	 [args (third exp)]
-	 [body (apply string-append (cdddr exp))]
- 	 [argtypes (map car args)]
-	 [argnames (map cadr args)] )
-    (create-foreign-stub rtype #f argtypes argnames body #t #t) ) )
-
+;; TODO: Try to fold this procedure into expand-foreign-lambda*
 (define (expand-foreign-primitive exp)
   (let* ([hasrtype (and (pair? (cddr exp)) (not (string? (caddr exp))))]
 	 [rtype (if hasrtype (second exp) 'void)]
-	 [args (if hasrtype (third exp) (second exp))]
+	 [args (##sys#strip-syntax (if hasrtype (third exp) (second exp)))]
 	 [body (apply string-append (if hasrtype (cdddr exp) (cddr exp)))]
  	 [argtypes (map car args)]
-	 [argnames (map cadr args)] )
+         ;; C identifiers aren't hygienically renamed inside body strings
+	 [argnames (map cadr (##sys#strip-syntax args))] )
     (create-foreign-stub rtype #f argtypes argnames body #f #t) ) )
 
 

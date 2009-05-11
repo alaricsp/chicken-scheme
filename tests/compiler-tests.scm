@@ -48,3 +48,38 @@
 
 (import x)
 (bar 42)
+
+;;; rev. 14574 (reported by Peter Bex)
+;
+; - type specifiers in foreign-lambda in macros are incorrectly renamed
+; - variable names and type specifiers in foreign-lambda* and
+;    foreign-primitive in macros are incorrectly renamed
+
+(let-syntax ((strlen-macro
+              (syntax-rules ()
+                ((strlen-macro arg)
+                 (print ((foreign-lambda int strlen c-string) arg)))))
+             (strlen-macro*
+              (syntax-rules ()
+                ((strlen-macro* arg)
+                 (print ((foreign-lambda* int ((c-string str))
+                                          "C_return(strlen(str));") arg)))))
+             (strlen-safe-macro
+              (syntax-rules ()
+                ((strlen-safe-macro arg)
+                 (print ((foreign-safe-lambda int strlen c-string) arg)))))
+             (strlen-safe-macro*
+              (syntax-rules ()
+                ((strlen-safe-macro* arg)
+                 (print ((foreign-safe-lambda* int ((c-string str))
+                                               "C_return(strlen(str));") arg)))))
+             (strlen-primitive-macro
+              (syntax-rules ()
+                ((strlen-primitive-macro* arg)
+                 (print ((foreign-primitive int ((c-string str))
+                                            "C_return(strlen(str));") arg))))))
+  (strlen-macro "hello, world")
+  (strlen-macro* "hello, world")
+  (strlen-safe-macro "hello, world")
+  (strlen-safe-macro* "hello, world")
+  (strlen-primitive-macro "hello, world"))
