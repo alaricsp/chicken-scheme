@@ -657,7 +657,7 @@
 	     (if info
 		 (let ((ver (and (assq 'version info) (cadr (assq 'version info)))))
 		   (cond ((not ver) (upgrade-message ext "has no associated version information"))
-			 ((version>=? version ver)
+			 ((and (version>=? version ver) (not (string=? (->string version) (->string ver))))
 			  (upgrade-message 
 			   ext
 			   (sprintf "is older than ~a, which is what this extension requires"
