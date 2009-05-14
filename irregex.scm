@@ -820,15 +820,23 @@
                  (error "bad char-set"))
                 (else
                  (let* ((c1 (car chars))
-                        (c2 (string-ref str (+ i 1)))
-                        (len (if utf8? (utf8-start-char->length c2) 1))
-                        (c2 (if (and utf8? (<= #x80 (char->integer c2) #xFF))
-                                (utf8-string-ref str (+ i 1) len)
-                                c2)))
-                   (if (char<? c2 c1)
-                       (error "inverted range in char-set" c1 c2)
-                       (go (+ i 1 len) (cdr chars) (cons (cons c1 c2) ranges))
-                     )))))
+                        (c2 (string-ref str (+ i 1))))
+                   (apply
+                    (lambda (c2 j)
+                      (if (char<? c2 c1)
+                          (error "inverted range in char-set" c1 c2)
+                          (go j (cdr chars) (cons (cons c1 c2) ranges))))
+                    (cond
+                     ((and (eqv? #\\ c2) (assv c2 posix-escape-sequences))
+                      => (lambda (x) (list (cdr x) (+ i 3))))
+                     ((and (eqv? #\\ c2)
+                           (eqv? (string-ref str (+ i 2)) #\x))
+                      (string-parse-hex-escape str (+ i 3) end))
+                     ((and utf8? (<= #x80 (char->integer c2) #xFF))
+                      (let ((len (utf8-start-char->length c2)))
+                        (list (utf8-string-ref str (+ i 1) len) (+ i 1 len))))
+                     (else
+                      (list c2 (+ i 2)))))))))
               ((#\[)
                (let* ((inv? (eqv? #\^ (string-ref str (+ i 1))))
                       (i2 (if inv? (+ i 2) (+ i 1))))
@@ -859,7 +867,7 @@
                    ((#\x)
                     (apply
                      (lambda (ch j)
-                       (go (+ j 1) (cons ch chars) ranges))
+                       (go j (cons ch chars) ranges))
                      (string-parse-hex-escape str (+ i 2) end)))
                    (else
                     (let ((c (cond ((assv c posix-escape-sequences) => cdr)
