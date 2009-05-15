@@ -770,7 +770,7 @@
 					     (if (zero? a2)
 						 #t
 						 `(,(r '>=) ,lvar ,a2) )
-					     `(,(r '=) ,lvar ,a2) ) )
+					     `(,(r 'eq) ,lvar ,a2) ) )
 				      ,(receive (vars1 vars2)
 					   (split-at! (take vars argc) mincount)
 					 (let ((bindings
