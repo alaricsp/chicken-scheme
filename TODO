@@ -53,6 +53,7 @@ TODO for chicken							-*- Outline -*-
 
 ** build
 *** somehow get SONAME to work
+*** integrate and build/install chicken-base.scm
 
 ** tests
 *** should run without installation

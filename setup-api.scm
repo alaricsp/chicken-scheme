@@ -239,6 +239,7 @@
 		   *chicken-bin-path*
 		   (cdr (assoc prg *installed-executables*))))
 		 "-feature" "compiling-extension"
+		 (if (keep-intermediates) "-k" "")
 		 (if (host-extension) "-host" "")
 		 *csc-options*) 
 	  " ") )

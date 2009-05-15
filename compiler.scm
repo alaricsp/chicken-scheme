@@ -509,8 +509,8 @@
 		      (finish-foreign-result ft body)
 		      t)
 		     e se dest))) ]
-	    ((not (memq x e)) (##sys#alias-global-hook x #f)) ; only if global
 	    ((##sys#get x '##core#primitive))
+	    ((not (memq x e)) (##sys#alias-global-hook x #f)) ; only if global
 	    (else x))))
   
   (define (eval/meta form)
@@ -638,20 +638,20 @@
 				    (append aliases e)
 				    se2 dest) ) ) )
 
-			 ((letrec ##core#letrec)
-			  (##sys#check-syntax 'letrec x '(_ #((symbol _) 0) . #(_ 1)))
-			  (let ((bindings (cadr x))
-				(body (cddr x)) )
-			    (walk
-			     `(##core#let
-			       ,(map (lambda (b)
-				       (list (car b) '(##core#undefined))) 
+			((letrec ##core#letrec)
+			 (##sys#check-syntax 'letrec x '(_ #((symbol _) 0) . #(_ 1)))
+			 (let ((bindings (cadr x))
+			       (body (cddr x)) )
+			   (walk
+			    `(##core#let
+			      ,(map (lambda (b)
+				      (list (car b) '(##core#undefined))) 
+				    bindings)
+			      ,@(map (lambda (b)
+				       `(##core#set! ,(car b) ,(cadr b))) 
 				     bindings)
-			       ,@(map (lambda (b)
-					`(##core#set! ,(car b) ,(cadr b))) 
-				      bindings)
-			       (##core#let () ,@body) )
-			     e se dest)))
+			      (##core#let () ,@body) )
+			    e se dest)))
 
 			((lambda ##core#lambda)
 			 (##sys#check-syntax 'lambda x '(_ lambda-list . #(_ 1)) #f se)
@@ -925,18 +925,19 @@
 					      ,(second a)
 					      ,(foreign-type-check tmp type) ) )
 					  e se #f))))
-				 (else 
-				  (when (eq? var var0) ; global?
-				    (set! var (##sys#alias-global-hook var #t))
+				 (else
+				  (unless (memq var e) ; global?
+				    (set! var (or (##sys#get var '##core#primitive)
+						  (##sys#alias-global-hook var #t)))
 				    (when safe-globals-flag
 				      (mark-variable var '##compiler#always-bound-to-procedure)
-				      (mark-variable var '##compiler#always-bound))
-				    (when (##sys#macro? var)
-				      (compiler-warning 
-				       'var "assigned global variable `~S' is a macro ~A"
-				       var
-				       (if ln (sprintf "in line ~S" ln) "") )
-				      (when undefine-shadowed-macros (##sys#undefine-macro! var) ) ) )
+				      (mark-variable var '##compiler#always-bound)))
+				  (when (##sys#macro? var)
+				    (compiler-warning 
+				     'var "assigned global variable `~S' is a macro ~A"
+				     var
+				     (if ln (sprintf "in line ~S" ln) "") )
+				    (when undefine-shadowed-macros (##sys#undefine-macro! var) ) )
 				  (when (keyword? var)
 				    (compiler-warning 'syntax "assignment to keyword `~S'" var) )
 				  (when (pair? var) ; macro

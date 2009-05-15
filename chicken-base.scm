@@ -363,6 +363,50 @@
 	 substring=?
 	 tail?
 
+	 ;; srfi-69
+	 alist->hash-table
+	 eq?-hash
+	 equal?-hash
+	 eqv?-hash
+	 hash
+	 hash-by-identity
+	 hash-table->alist
+	 hash-table-clear!
+	 hash-table-copy
+	 hash-table-delete!
+	 hash-table-equivalence-function
+	 hash-table-exists?
+	 hash-table-fold
+	 hash-table-for-each
+	 hash-table-has-initial?
+	 hash-table-hash-function
+	 hash-table-initial
+	 hash-table-keys
+	 hash-table-map
+	 hash-table-max-load
+	 hash-table-merge
+	 hash-table-merge!
+	 hash-table-min-load
+	 hash-table-ref
+	 hash-table-ref/default
+	 hash-table-remove!
+	 hash-table-set!
+	 hash-table-size
+	 hash-table-update!
+	 hash-table-update!/default
+	 hash-table-values
+	 hash-table-walk
+	 hash-table-weak-keys
+	 hash-table-weak-values
+	 hash-table?
+	 keyword-hash
+	 make-hash-table
+	 number-hash
+	 object-uid-hash
+	 string-ci-hash
+	 string-hash
+	 symbol-hash
+
 	 ;; utils
 	 for-each-argv-line
 	 for-each-line
@@ -370,6 +414,6 @@
 	 system*
 	 qs)
 
-  (import scheme chicken data-structures utils ports files extras)
+  (import scheme chicken data-structures utils ports files extras srfi-69)
 
   )

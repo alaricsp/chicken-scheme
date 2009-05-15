@@ -128,7 +128,7 @@
              (let ((a (assq 'version info)))
                (if a
                    (->string (cadr a))
-                   "1.0.0"))))
+                   "0.0.0"))))
           (else #f)))
 
   (define (outdated-dependencies meta)
@@ -151,15 +151,14 @@
                           (or (string? (car dep)) (symbol? (car dep))))
                      (let ((v (ext-version (car dep))))
                        (cond ((not v)
-                              (warning
-                               "installed extension has unknown version - assuming it is outdated"
-                               (car dep))
-                              (loop rest missing
-                                    (alist-cons
-                                     (->string (car dep))
-                                     (->string (cadr dep))
-                                     upgrade)))
-                             ((version>=? (->string (cadr dep)) v)
+                              (loop rest (cons (->string (car dep)) missing) upgrade))
+                             ((not (version>=? v (->string (cadr dep))))
+			      (when (string=? "chicken" (->string (car dep)))
+				(error
+				 (string-append 
+				  "Your CHICKEN version is not recent enough to use this extension - version "
+				  (cadr dep) 
+				  " or newer is required")))
                               (loop rest missing
                                     (alist-cons
                                      (->string (car dep)) (->string (cadr dep))

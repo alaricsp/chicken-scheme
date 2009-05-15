@@ -324,4 +324,15 @@
 	(bar))))
 
   (display (foo))
+  (newline)
 )
+
+
+;;; incorrect expansion when assigning to something marked '##core#primitive (rev. 14613)
+
+(module primitive-assign ()
+  (import scheme chicken)
+  (set! setter 123))
+
+(assert (= 123 setter))
+
