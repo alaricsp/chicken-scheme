@@ -31,6 +31,6 @@
     irregex-new-matches irregex-reset-matches!
     irregex-match-start irregex-match-end irregex-match-substring
     irregex-search irregex-search/matches irregex-match irregex-match-string
-    irregex-fold irregex-replace irregex-replace/all
+    irregex-fold irregex-replace irregex-replace/all irregex-apply-match
     irregex-dfa irregex-dfa/search irregex-dfa/extract
     irregex-nfa irregex-flags irregex-submatches irregex-lengths irregex-names))
