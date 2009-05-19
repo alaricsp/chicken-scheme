@@ -330,9 +330,13 @@
 
 ;;; incorrect expansion when assigning to something marked '##core#primitive (rev. 14613)
 
+(define x 99)
+
 (module primitive-assign ()
   (import scheme chicken)
+  (let ((x 100)) (set! x 20) (assert (= x 20)))
   (set! setter 123))
 
+(assert (= x 99))
 (assert (= 123 setter))
 

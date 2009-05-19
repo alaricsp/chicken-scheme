@@ -27,6 +27,7 @@
 (require-library setup-download setup-api)
 (require-library srfi-1 posix data-structures utils regex ports extras
                  srfi-13 files)
+(require-library chicken-syntax)	; in case an import library reexports chicken syntax
 
 
 (module main ()
@@ -320,7 +321,11 @@
         (for-each
          (lambda (f)
            (let ((m (string-match rx f)))
-             (eval `(import ,(string->symbol (cadr m))))))
+	     (handle-exceptions ex
+		 (print-error-message 
+		  ex (current-error-port) 
+		  (sprintf "Failed to import from `~a'" f))
+	       (eval `(import ,(string->symbol (cadr m)))))))
          files))
       (print "generating database")
       (let ((db

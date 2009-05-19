@@ -83,6 +83,9 @@ TODO for chicken							-*- Outline -*-
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
 **** see "expander" above
+** complete chicken-base.scm
+*** syntax reexports
+*** integrate into build
 
 ** compiler
 *** test define-rewrite-rule
@@ -101,6 +104,7 @@ TODO for chicken							-*- Outline -*-
 *** normalize-pathname: return short name on windows? (mingw/msvc)
 *** Use record-descriptors instead of symbols as 1st slot in structure objects?
 **** see Kon's proposal for new record-descriptors in "misc/Chicken Runtime Data Type Proposal"
+*** deprecate "getenv"
 
 ** syntax-error
 *** if ##sys#current-module is set, add name to error message?

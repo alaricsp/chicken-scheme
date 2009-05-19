@@ -47,7 +47,7 @@
 (define dm d)
 
 (cond-expand
- ((not debugbuild)
+ (chicken ;(not debugbuild)
   (begin
     (declare 
       (no-bound-checks)
@@ -84,6 +84,7 @@
 		ua))
 	alias) ) )
 
+#+(not debugbuild)
 (define (map-se se)
   (map (lambda (a) 
 	 (cons (car a) (if (symbol? (cdr a)) (cdr a) '<macro>)))
@@ -1531,7 +1532,7 @@
 					(sdefs '()))
   (define (find-reexport name)
     (let ((a (assq name (##sys#macro-environment))))
-      (if (pair? (cdr a))
+      (if (and a (pair? (cdr a)))
 	  a
 	  (##sys#error
 	   'import "cannot find implementation of re-exported syntax"
