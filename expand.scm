@@ -922,7 +922,7 @@
 		    (aid (cdr imp)))
 		(and-let* ((a (assq id (import-env)))
 			   ((not (eq? aid (cdr a)))))
-		  (##sys#warn "re-importing already imported identfier" id))))
+		  (##sys#warn "re-importing already imported identifier" id))))
 	    vsv)
 	   (for-each
 	    (lambda (imp)
