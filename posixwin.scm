@@ -1119,6 +1119,20 @@ EOF
     (set! stat-symlink? (stat-type 'stat-symlink?))
     (set! stat-socket? (stat-type 'stat-socket?)))
 
+(define set-file-position!
+  (lambda (port pos . whence)
+    (let ([whence (if (pair? whence) (car whence) _seek_set)])
+      (##sys#check-exact pos 'set-file-position!)
+      (##sys#check-exact whence 'set-file-position!)
+      (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
+      (unless (cond [(port? port)
+		     (and (eq? (##sys#slot port 7) 'stream)
+			  (##core#inline "C_fseek" port pos whence) ) ]
+		    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
+		    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
+	(##sys#update-errno)
+	(##sys#signal-hook #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) )
+
 (define file-position
   (getter-with-setter
    (lambda (port)
@@ -1132,21 +1146,7 @@ EOF
 	 (##sys#update-errno)
 	 (##sys#signal-hook #:file-error 'file-position "cannot retrieve file position of port" port) )
        pos) )
-   (lambda (port pos . whence)
-    (let ([whence (if (pair? whence) (car whence) _seek_set)])
-      (when (and (list? pos) (fx= 2 (length pos)))
-	(set! whence (cadr pos))
-	(set! pos (car pos)))
-      (##sys#check-exact pos 'set-file-position!)
-      (##sys#check-exact whence 'set-file-position!)
-      (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
-      (unless (cond [(port? port)
-		     (and (eq? (##sys#slot port 7) 'stream)
-			  (##core#inline "C_fseek" port pos whence) ) ]
-		    [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
-		    [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
-	(##sys#update-errno)
-	(##sys#signal-hook #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) ) )
+   set-file-position!) )		; doesn't accept WHENCE argument
 
 
 ;;; Directory stuff:

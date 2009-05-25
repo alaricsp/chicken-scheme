@@ -34,7 +34,7 @@
  compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings
-  foldable-bindings
+  foldable-bindings dump-defined-globals
   compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
   file-io-only undefine-shadowed-macros profiled-procedures
   unit-name insert-timer-checks used-units inline-max-size inline-locally
@@ -563,7 +563,9 @@
 		   (let ([db (analyze 'opt node2 i progress)])
 		     (when first-analysis
 		       (when (memq 'u debugging-chicken)
-			 (dump-undefined-globals db)) )
+			 (dump-undefined-globals db))
+		       (when (memq 'd debugging-chicken)
+			 (dump-defined-globals db)) )
 		     (set! first-analysis #f)
 		     (end-time "analysis")
 		     (print-db "analysis" '|4| db i)

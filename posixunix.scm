@@ -824,23 +824,9 @@ EOF
     (##sys#stat fname #f 'stat-socket?)
     (foreign-value "C_issock" bool))
 
-(define file-position
-  (getter-with-setter
-   (lambda (port)
-    (let ([pos (cond [(port? port)
-                      (if (eq? (##sys#slot port 7) 'stream)
-                          (##core#inline "C_ftell" port)
-                          -1) ]
-                     [(fixnum? port) (##core#inline "C_lseek" port 0 _seek_cur)]
-                     [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
-      (when (fx< pos 0)
-        (posix-error #:file-error 'file-position "cannot retrieve file position of port" port) )
-      pos) )
+(define set-file-position!
    (lambda (port pos . whence)
-     (let ((whence (if (pair? whence) (car whence) _seek_set)))
-       (when (and (list? pos) (fx= 2 (length pos)))
-	 (set! whence (cadr pos))
-	 (set! pos (car pos)))
+     (let ([whence (if (pair? whence) (car whence) _seek_set)])
        (##sys#check-exact pos 'set-file-position!)
        (##sys#check-exact whence 'set-file-position!)
        (when (fx< pos 0) (##sys#signal-hook #:bounds-error 'set-file-position! "invalid negative port position" pos port))
@@ -849,7 +835,21 @@ EOF
 			   (##core#inline "C_fseek" port pos whence) ) ]
 		     [(fixnum? port) (##core#inline "C_lseek" port pos whence)]
 		     [else (##sys#signal-hook #:type-error 'set-file-position! "invalid file" port)] )
-	 (posix-error #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) ) )
+	 (posix-error #:file-error 'set-file-position! "cannot set file position" port pos) ) ) ) )
+
+(define file-position
+  (getter-with-setter
+   (lambda (port)
+     (let ([pos (cond [(port? port)
+		       (if (eq? (##sys#slot port 7) 'stream)
+			   (##core#inline "C_ftell" port)
+			   -1) ]
+		      [(fixnum? port) (##core#inline "C_lseek" port 0 _seek_cur)]
+		      [else (##sys#signal-hook #:type-error 'file-position "invalid file" port)] ) ] )
+       (when (fx< pos 0)
+	 (posix-error #:file-error 'file-position "cannot retrieve file position of port" port) )
+       pos) )
+   set-file-position!) )		; doesn't accept WHENCE
 
 
 ;;; Directory stuff:

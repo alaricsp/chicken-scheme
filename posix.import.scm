@@ -113,6 +113,7 @@
    file-owner
    file-permissions
    file-position
+   set-file-position!
    file-read
    file-read-access?
    file-select

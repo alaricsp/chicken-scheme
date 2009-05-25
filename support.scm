@@ -31,7 +31,7 @@
 (private compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings
-  foldable-bindings compiler-macro-environment
+  foldable-bindings compiler-macro-environment dump-defined-globals
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
   file-io-only banner disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
@@ -808,6 +808,15 @@
    (lambda (sym plist)
      (when (and (assq 'global plist)
 		(not (assq 'assigned plist)) )
+       (write sym)
+       (newline) ) )
+   db) )
+
+(define (dump-defined-globals db)
+  (##sys#hash-table-for-each
+   (lambda (sym plist)
+     (when (and (assq 'global plist)
+		(assq 'assigned plist))
        (write sym)
        (newline) ) )
    db) )

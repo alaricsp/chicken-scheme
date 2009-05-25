@@ -317,6 +317,7 @@
            (tmpdir (create-temporary-directory))
            (dbfile (make-pathname tmpdir +module-db+))
            (rx (regexp ".*/([^/]+)\\.import\\.(scm|so)")))
+      (print "loading import libraries ...")
       (fluid-let ((##sys#warnings-enabled #f))
         (for-each
          (lambda (f)

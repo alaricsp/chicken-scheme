@@ -48,6 +48,7 @@ Possible options are:
      n          print the line-number database 
      c          print every expression before macro-expansion
      u          lists all unassigned global variable references
+     d          lists all assigned global variables
      x          display information about experimental features
      D          when printing nodes, use node-tree output
      N          show the real-name mapping table
