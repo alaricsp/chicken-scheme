@@ -358,15 +358,31 @@
 
 ;; String Hash:
 
-(define (string-hash str #!optional (bound hash-default-bound))
+(define (string-hash str #!optional (bound hash-default-bound) . start+end)
   (##sys#check-string str 'string-hash)
   (##sys#check-exact bound 'string-hash)
-  (%hash/limit (%string-hash str) bound) )
+  (let ((str (if (pair? start+end)
+		 (let-optionals start+end ((start 0)
+					   (end (##sys#size str)))
+		   (##sys#check-range start 0 (##sys#size str) 'string-hash) 
+		   (##sys#check-range end 0 (##sys#size str) 'string-hash) 
+		   (##sys#substring str start end) )
+		 str) ) )
+    (%hash/limit (%string-hash str) bound) ) )
 
-(define (string-ci-hash str #!optional (bound hash-default-bound))
+(define (string-ci-hash str #!optional (bound hash-default-bound) . start+end)
   (##sys#check-string str 'string-ci-hash)
   (##sys#check-exact bound 'string-ci-hash)
+  (let ((str (if (pair? start+end)
+		 (let-optionals start+end ((start 0)
+					   (end (##sys#size str)))
+		   (##sys#check-range start 0 (##sys#size str) 'string-hash-ci) 
+		   (##sys#check-range end 0 (##sys#size str) 'string-hash-ci) 
+		   (##sys#substring str start end) )
+		 str) ) )
   (%hash/limit (%string-ci-hash str) bound) )
+
+(define string-hash-ci string-ci-hash)
 
 
 ;;; Hash-Tables:
@@ -457,7 +473,7 @@
 			[(or (eq? core-string=? test)
 			     (eq? string=? test))	  string-hash]
 			[(or (eq? core-string-ci=? test)
-			     (eq? string-ci=? test))	  string-ci-hash]
+			     (eq? string-ci=? test))	  string-hash-ci]
 			[(or (eq? core= test)
 			     (eq? = test))		  number-hash]
 			[else				  #f] ) ) ] )

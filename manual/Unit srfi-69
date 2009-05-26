@@ -316,14 +316,17 @@ For use with {{eq?}} as a {{hash-table-equivalence-function}}.
 
 ==== string-hash
 
- [procedure] (string-hash STRING [BOUND])
+ [procedure] (string-hash STRING [BOUND START END])
 
 For use with {{string=?}} as a {{hash-table-equivalence-function}}.
+The optional {{START}} and {{END}} arguments may be given to limit
+the hash calculation to a specific sub-section of {{STRING}}.
 
 
 ==== string-ci-hash
 
- [procedure] (string-ci-hash STRING [BOUND])
+ [procedure] (string-hash-ci STRING [BOUND START END])
+ [procedure] (string-ci-hash STRING [BOUND START END])
 
 For use with {{string-ci=?}} as a {{hash-table-equivalence-function}}.
 

@@ -65,6 +65,7 @@
    make-hash-table
    number-hash
    object-uid-hash
+   string-hash-ci
    string-ci-hash
    string-hash
    symbol-hash))

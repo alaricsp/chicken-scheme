@@ -13,6 +13,11 @@ be made available in the interpreter ({{csi}}) by entering
 (require-extension srfi-13)
 </enscript>
 
+The {{string-hash}} and {{string-hash-ci}} procedures are
+not provided in this library unit, [[Unit srfi-69]] has
+compatible definitions.
+
+
 ---
 Previous: [[Unit srfi-4]]
 

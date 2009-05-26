@@ -61,8 +61,6 @@
    string-fold-right
    string-for-each
    string-for-each-index
-   string-hash
-   string-hash-ci
    string-index
    string-index-right
    string-join
