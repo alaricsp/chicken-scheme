@@ -955,7 +955,7 @@
 		       '#f) ) ) ]
 	     [(nonnull-c-pointer)
 	      `(##sys#foreign-pointer-argument ,param) ]
-	     [(c-string c-string* unsigned-c-string*)
+	     [(c-string c-string* unsigned-c-string unsigned-c-string*)
 	      (let ([tmp (gensym)])
 		`(let ([,tmp ,param])
 		   (if ,tmp
@@ -1039,7 +1039,7 @@
 	      int32 unsigned-int32) 
 	0)
        ((c-string nonnull-c-string c-pointer nonnull-c-pointer symbol c-string* nonnull-c-string*
-                  unsigned-c-string* nonnull-unsigned-c-string*
+                  unsigned-c-string unsigned-c-string* nonnull-unsigned-c-string*
 		  c-string-list c-string-list*)
 	(words->bytes 3) )
        ((unsigned-integer long integer unsigned-long integer32 unsigned-integer32)
@@ -1068,7 +1068,7 @@
        ((char int short bool unsigned-short unsigned-char unsigned-int long unsigned-long byte unsigned-byte
 	      c-pointer pointer nonnull-c-pointer unsigned-integer integer float c-string symbol
 	      scheme-pointer nonnull-scheme-pointer int32 unsigned-int32 integer32 unsigned-integer32
-              unsigned-c-string* nonnull-unsigned-c-string*
+              unsigned-c-string unsigned-c-string* nonnull-unsigned-c-string*
 	      nonnull-c-string c-string* nonnull-c-string* c-string-list c-string-list*) ; pointer and nonnull-pointer are DEPRECATED
 	(words->bytes 1) )
        ((double number)
@@ -1089,7 +1089,7 @@
 
 (define (finish-foreign-result type body)
   (case type
-    [(c-string) `(##sys#peek-c-string ,body '0)]
+    [(c-string unsigned-c-string) `(##sys#peek-c-string ,body '0)]
     [(nonnull-c-string) `(##sys#peek-nonnull-c-string ,body '0)]
     [(c-string* unsigned-c-string*) `(##sys#peek-and-free-c-string ,body '0)]
     [(nonnull-c-string* nonnull-unsigned-c-string*) `(##sys#peek-and-free-nonnull-c-string ,body '0)]

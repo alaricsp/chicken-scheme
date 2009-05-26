@@ -1191,9 +1191,10 @@
       [(s32vector nonnull-s32vector) (str "int *")]
       [(f32vector nonnull-f32vector) (str "float *")]
       [(f64vector nonnull-f64vector) (str "double *")]
-      [(nonnull-c-string c-string nonnull-c-string* c-string* 
-			 nonnull-unsigned-c-string nonnull-unsigned-c-string* unsigned-c-string*
-			 symbol) (str "char *")]
+      [(nonnull-c-string c-string nonnull-c-string* c-string* symbol) 
+       (str "char *")]
+      [(nonnull-unsigned-c-string nonnull-unsigned-c-string* unsigned-c-string unsigned-c-string*)
+       (str "unsigned char *")]
       [(void) (str "void")]
       [else
        (cond [(and (symbol? type) (##sys#hash-table-ref foreign-type-table type))

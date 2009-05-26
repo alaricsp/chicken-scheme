@@ -47,7 +47,7 @@
 (define dm d)
 
 (cond-expand
- (chicken ;(not debugbuild)
+ ((not debugbuild)
   (begin
     (declare 
       (no-bound-checks)
@@ -84,7 +84,7 @@
 		ua))
 	alias) ) )
 
-#+(not debugbuild)
+#+debugbuild
 (define (map-se se)
   (map (lambda (a) 
 	 (cons (car a) (if (symbol? (cdr a)) (cdr a) '<macro>)))
