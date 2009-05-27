@@ -24,7 +24,6 @@
 ; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ; POSSIBILITY OF SUCH DAMAGE.
 
-
 (declare
  (unit srfi-69)
  (usual-integrations)
@@ -147,17 +146,17 @@
   ;;XXX use er-macro-transformer
   (lambda (form r c)
     (let ( (flo (cadr form))
-           (%%subbyte (r '%subbyte))
-           (%flonum-magic (r 'flonum-magic))
-           (%fx+ (r 'fx+))
-           (%fx* (r 'fx*))
-           (%fxshl (r 'fxshl)) )
-    `(,%fx* ,%flonum-magic
+           (_%subbyte (r '%subbyte))
+           (_flonum-magic (r 'flonum-magic))
+           (_fx+ (r 'fx+))
+           (_fx* (r 'fx*))
+           (_fxshl (r 'fxshl)) )
+    `(,_fx* ,_flonum-magic
             ,(let loop ( (idx (fx- (##sys#size 1.0) 1)) )
                (if (fx= 0 idx)
-                   `(,%%subbyte ,flo 0)
-                   `(,%fx+ (,%%subbyte ,flo ,idx)
-                           (,%fxshl ,(loop (fx- idx 1)) 1)) ) ) ) ) ) )
+                   `(,_%subbyte ,flo 0)
+                   `(,_fx+ (,_%subbyte ,flo ,idx)
+                           (,_fxshl ,(loop (fx- idx 1)) 1)) ) ) ) ) ) )
 
 (define (##sys#number-hash-hook obj)
   (*equal?-hash obj) )
@@ -380,7 +379,7 @@
 		   (##sys#check-range end 0 (##sys#size str) 'string-hash-ci) 
 		   (##sys#substring str start end) )
 		 str) ) )
-  (%hash/limit (%string-ci-hash str) bound) )
+  (%hash/limit (%string-ci-hash str) bound) ) )
 
 (define string-hash-ci string-ci-hash)
 
