@@ -104,11 +104,9 @@ ASSEMBLER ?= $(C_COMPILER)
 ifdef WINDOWS_SHELL
 INSTALL_PROGRAM ?= xcopy
 MAKEDIR_COMMAND ?= -mkdir
-XHERE ?=
 else
 INSTALL_PROGRAM ?= install
 MAKEDIR_COMMAND ?= mkdir
-XHERE ?= $(SRCDIR)scripts/xhere
 endif
 POSTINSTALL_STATIC_LIBRARY ?= true
 POSTINSTALL_PROGRAM ?= true
@@ -274,7 +272,6 @@ endif
 # bootstrapping compiler
 
 CHICKEN ?= chicken$(EXE)
-XCHICKEN ?= $(XHERE) $(CHICKEN)
 
 # interpreter for scripts
 

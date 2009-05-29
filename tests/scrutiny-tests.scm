@@ -3,9 +3,6 @@
 
 (pp (current-environment))
 
-(let ((a (##core#undefined)))
-  (print a))
-
 (define (a)
   (define (b)
     (define (c)

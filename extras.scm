@@ -236,6 +236,7 @@
   (##sys#read-string! n dest port start) )
 
 (define-constant read-string-buffer-size 2048)
+
 (define ##sys#read-string/port
   (let ((open-output-string open-output-string)
 	(get-output-string get-output-string) )

@@ -463,7 +463,10 @@
        "in procedure call to `~s'~a" 
        (fragment x)
        (if (and (pair? params) (pair? (cdr params)))
-	   (sprintf " (line ~a)" (source-info->line (cadr params)))
+	   (let ((n (source-info->line (cadr params))))
+	     (if (number? n)
+		 (sprintf " (line ~a)" n)
+		 ""))
 	   "")))
     (d "call-result: ~a (~a)" args loc)
     (let* ((ptype (car args))
@@ -552,7 +555,7 @@
       (let ((results
 	     (case class
 	       ((quote) (list (constant-result (first params))))
-	       ((##core#undefined) '(undefined))
+	       ((##core#undefined) '(*))
 	       ((##core#proc) '(procedure))
 	       ((##core#global-ref) (global-result (first params) loc))
 	       ((##core#variable) (variable-result (first params) e loc))

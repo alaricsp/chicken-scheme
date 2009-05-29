@@ -1336,10 +1336,10 @@ bench:
 scrutiny: $(SCRUTINIZED_LIBRARIES:=.scrutiny1) $(COMPILER_OBJECTS_1:=.scrutiny2)
 
 %.scrutiny1: $(SRCDIR)%.scm
-	$(XCHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_LIBRARY_OPTIONS) 2>&1 | tee $@
+	$(CHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_LIBRARY_OPTIONS) 2>&1 | tee $@
 
 %.scrutiny2: $(SRCDIR)%.scm
-	$(XCHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_COMPILER_OPTIONS) 2>&1 | tee $@
+	$(CHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_COMPILER_OPTIONS) 2>&1 | tee $@
 
 scrutiny-clean:
 	rm *.scrutiny[12]
