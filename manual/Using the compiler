@@ -176,7 +176,11 @@ Possible options are:
 
 ; -require-extension NAME : Loads the extension {{NAME}} before the compilation process commences. This is identical to adding {{(require-extension NAME)}} at the start of the compiled program. If {{-uses NAME}} is also given on the command line, then any occurrences of {{-require-extension NAME}} are replaced with {{(declare (uses NAME))}}. Multiple names may be given and should be separated by {{,}}.
 
+; -scrutinize : Enable simple flow-analysis to catch common type errors and argument/result mismatches. You can also use the {{scrutinize}} declaration to enable scrutiny.
+
 ; -static-extension NAME : similar to {{-require-extension NAME}}, but links extension statically (also applies for an explicit {{(require-extension NAME)}}).
+
+; -types FILENAME : load additional type database from {{FILENAME}}. Type-definitions in {{FILENAME}} will override previous type-definitions.
 
 ; -compile-syntax : Makes macros also available at run-time. By default macros are not available at run-time.
 
@@ -366,7 +370,7 @@ The compiler supplies a couple of hooks to add user-level passes to the
 compilation process. Before compilation commences any Scheme source files
 or compiled code specified using the {{-extend}} option are loaded
 and evaluated.  The parameters {{user-options-pass, user-read-pass,
-user-preprocessor-pass, user-pass, user-pass-2}} and {{user-post-analysis-pass}} can be set
+user-preprocessor-pass, user-pass}} and {{user-post-analysis-pass}} can be set
 to procedures that are called to perform certain compilation passes
 instead of the usual processing (for more information about parameters
 see: [[Supported language]].

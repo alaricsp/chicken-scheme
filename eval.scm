@@ -1307,7 +1307,7 @@
 	   ((symbol? x) (##sys#slot x 1))
 	   ((number? x) (##sys#number->string x))
 	   (else (error "invalid extension version" x)) ) )
-   (if (and (list spec) (fx= 3 (length spec)))
+   (if (and (list? spec) (fx= 3 (length spec)))
        (let* ((info (extension-information (cadr spec)))
 	      (vv (and info (assq 'version info))) )
 	 (unless (and vv (string>=? (->string (car vv)) (->string (caddr spec))))

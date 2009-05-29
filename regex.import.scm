@@ -29,8 +29,6 @@
  '(glob->regexp
    glob?
    grep
-   regex-chardef-table
-   regex-chardef-table?
    regexp
    regexp-escape
    regexp?

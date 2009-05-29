@@ -63,6 +63,7 @@ extras.c
 library.c
 lolevel.c
 optimizer.c
+scrutinizer.c
 regex.c
 posixunix.c
 posixwin.c
@@ -177,6 +178,7 @@ html/manual.css
 library.scm
 lolevel.scm
 optimizer.scm
+scrutinizer.scm
 regex.scm
 irregex.scm
 posixunix.scm
@@ -327,3 +329,4 @@ setup-download.c
 setup-api.c
 setup-api.import.c
 setup-download.import.c
+types.db

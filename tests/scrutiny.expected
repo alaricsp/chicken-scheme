@@ -1,0 +1,50 @@
+
+Warning: at toplevel:
+  use of deprecated toplevel identifier `current-environment'
+
+Warning: at toplevel:
+  access to variable `a' which has an undefined value
+
+Warning: in local procedure `c',
+  in local procedure `b',
+  in toplevel procedure `a':
+  expected value of type boolean in conditional but were given a value of type `number' which is always true:
+
+(if x13 '1 '2)
+
+Warning: in toplevel procedure `foo':
+  branches in conditional expression differ in the number of results:
+
+(if x17 (values '1 '2) (values '1 '2 (+ ...)))
+
+Warning: at toplevel:
+  expected argument #2 of type `number' in procedure call to `bar20' (line 21), but where given an argument of type `symbol'
+
+Warning: at toplevel:
+  expected in procedure call to `pp' (line 23) 1 argument, but where given 0 arguments
+
+Warning: at toplevel:
+  expected in argument #1 of procedure call `(print (cpu-time))' a single result, but were given 2 results
+
+Warning: at toplevel:
+  expected in argument #1 of procedure call `(print (values))' a single result, but were given zero results
+
+Warning: at toplevel:
+  expected in procedure call to `x26' (line 29) a value of type `(procedure () *)', but were given a value of type `fixnum'
+
+Warning: at toplevel:
+  expected argument #1 of type `number' in procedure call to `+' (line 31), but where given an argument of type `symbol'
+
+Warning: at toplevel:
+  expected argument #2 of type `number' in procedure call to `+' (line 31), but where given an argument of type `symbol'
+
+Warning: at toplevel:
+  assignment of value of type `fixnum' to toplevel variable `car' does not match declared type `(procedure car (pair) *)'
+
+Warning: at toplevel:
+  expected in operator position of procedure call `((values (quote 1) (quote 2)))' a single result, but were given 2 results
+
+Warning: at toplevel:
+  expected in procedure call to `(values (quote 1) (quote 2))' a value of type `(procedure () *)', but were given a value of type `fixnum'
+
+Warning: redefinition of standard binding `car'

@@ -50,7 +50,7 @@ LIBCHICKENGUI_SHARED_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=$(O))
 LIBCHICKENGUI_STATIC_OBJECTS = $(LIBCHICKENGUI_OBJECTS_1:=-static$(O))
 
 COMPILER_OBJECTS_1 = \
-       chicken batch-driver compiler optimizer support \
+       chicken batch-driver compiler optimizer scrutinizer support \
        c-platform c-backend
 COMPILER_OBJECTS        = $(COMPILER_OBJECTS_1:=$(O))
 COMPILER_STATIC_OBJECTS = $(COMPILER_OBJECTS_1:=-static$(O))
@@ -583,6 +583,10 @@ optimizer$(O): optimizer.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< \
 	  $(C_COMPILER_OUTPUT)
+scrutinizer$(O): scrutinizer.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< \
+	  $(C_COMPILER_OUTPUT)
 chicken$(O): chicken.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $(C_COMPILER_SHARED_OPTIONS) $< \
@@ -623,6 +627,10 @@ support-static$(O): support.c chicken.h $(CHICKEN_CONFIG_H)
 	  $(C_COMPILER_STATIC_OPTIONS) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $< $(C_COMPILER_OUTPUT)
 optimizer-static$(O): optimizer.c chicken.h $(CHICKEN_CONFIG_H)
+	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
+	  $(C_COMPILER_STATIC_OPTIONS) \
+	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $< $(C_COMPILER_OUTPUT)
+scrutinizer-static$(O): scrutinizer.c chicken.h $(CHICKEN_CONFIG_H)
 	$(C_COMPILER) $(C_COMPILER_OPTIONS) $(C_COMPILER_PTABLES_OPTIONS) $(INCLUDES) \
 	  $(C_COMPILER_STATIC_OPTIONS) \
 	  $(C_COMPILER_COMPILE_OPTION) $(C_COMPILER_OPTIMIZATION_OPTIONS) $< $(C_COMPILER_OUTPUT)
@@ -926,6 +934,7 @@ endif
 ifdef WINDOWS_SHELL
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(SRCDIR)csibatch.bat $(DESTDIR)$(IBINDIR)
 endif
+	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_FILE_OPTIONS) $(SRCDIR)types.db $(DESTDIR)$(IEGGDIR)
 endif
 
 ifdef STATICBUILD
@@ -1166,6 +1175,8 @@ compiler.c: $(SRCDIR)compiler.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 optimizer.c: $(SRCDIR)optimizer.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
+scrutinizer.c: $(SRCDIR)scrutinizer.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 batch-driver.c: $(SRCDIR)batch-driver.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 c-platform.c: $(SRCDIR)c-platform.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
@@ -1207,7 +1218,7 @@ distfiles: buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
 	uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c \
 	chicken-profile.c chicken-install.c chicken-uninstall.c chicken-status.c \
-	csc.c csi.c chicken.c batch-driver.c compiler.c optimizer.c support.c \
+	csc.c csi.c chicken.c batch-driver.c compiler.c optimizer.c scrutinizer.c support.c \
 	c-platform.c c-backend.c chicken-bug.c $(IMPORT_LIBRARIES:=.import.c)
 
 dist: distfiles
@@ -1228,14 +1239,15 @@ else
 CLEAN_MINGW_LIBS =
 endif
 
-clean:
+clean: scrutiny-clean
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
 	  chicken-profile$(EXE) csi-static$(EXE) \
 	  chicken-install$(EXE) chicken-uninstall$(EXE) chicken-status$(EXE) \
 	  csc-static$(EXE) chicken-static$(EXE) chicken-bug$(EXE) *$(O) \
 	  $(LIBCHICKEN_SO_FILE) $(LIBUCHICKEN_SO_FILE) $(LIBCHICKENGUI_SO_FILE) \
 	  libchicken$(A) libuchicken$(A) libchickengui$(A) libchicken$(SO) $(PROGRAM_IMPORT_LIBRARIES) \
-	  $(IMPORT_LIBRARIES:=.import.so) $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
+	  $(IMPORT_LIBRARIES:=.import.so) $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) \
+	  $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
 	  $(MSVC_CHICKEN_EXPORT_FILES) $(CLEAN_MINGW_LIBS) \
 	  $(CLEAN_MANIFESTS)
 
@@ -1251,7 +1263,7 @@ spotless: distclean
 	  uutils.c utcp.c usrfi-1.c usrfi-4.c usrfi-13.c usrfi-14.c \
 	  usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-bug.c \
 	  csc.c csi.c chicken-install.c chicken-uninstall.c chicken-status.c \
-	  chicken.c batch-driver.c compiler.c optimizer.c support.c \
+	  chicken.c batch-driver.c compiler.c optimizer.c scrutinizer.c support.c \
 	  c-platform.c c-backend.c \
 	  $(IMPORT_LIBRARIES:=.import.c)
 
@@ -1315,3 +1327,19 @@ bench:
 	cd $(SRCDIR)benchmarks; \
 	LD_LIBRARY_PATH=$$here DYLD_LIBRARY_PATH=$$here PATH=$$here:$$PATH \
 	$(CSI) -s cscbench.scm $(BENCHMARK_OPTIONS)
+
+
+# scrutiny
+
+.PHONY: scrutiny scrutiny-clean
+
+scrutiny: $(SCRUTINIZED_LIBRARIES:=.scrutiny1) $(COMPILER_OBJECTS_1:=.scrutiny2)
+
+%.scrutiny1: $(SRCDIR)%.scm
+	$(XCHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_LIBRARY_OPTIONS) 2>&1 | tee $@
+
+%.scrutiny2: $(SRCDIR)%.scm
+	$(XCHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_COMPILER_OPTIONS) 2>&1 | tee $@
+
+scrutiny-clean:
+	rm *.scrutiny[12]

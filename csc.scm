@@ -126,20 +126,21 @@
     -block -disable-interrupts -fixnum-arithmetic -to-stdout -profile -raw -accumulate-profile
     -check-syntax -case-insensitive -benchmark-mode -shared -compile-syntax -no-lambda-info
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
-    -emit-external-prototypes-first -inline -release
+    -emit-external-prototypes-first -inline -release -scrutinize
     -analyze-only -keep-shadowed-macros -inline-global -ignore-repository
     -no-symbol-escape -no-parentheses-synonyms -r5rs-syntax))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
     -optimize-level -include-path -database-size -extend -prelude -postlude -prologue -epilogue 
-    -inline-limit -profile-name -disable-warning -emit-inline-file
+    -inline-limit -profile-name -disable-warning -emit-inline-file -types
     -feature -debug-level -heap-growth -heap-shrinkage -heap-initial-size 
     -emit-import-library -static-extension))
 
 (define-constant shortcuts
   '((-h "-help")
     (-s "-shared")
+    (-S "-scrutinize")
     (|-P| "-check-syntax")
     (|-V| "-version")
     (|-Ob| "-benchmark-mode")
@@ -156,7 +157,7 @@
     (-b "-block") ) )
 
 (define short-options
-  (string->list "PHhsfiENxubvwAOeWkctg") )
+  (string->list "PHhsfiENxubvwAOeWkctgS") )
 
 
 ;;; Variables:
@@ -331,6 +332,8 @@ Usage: csc FILENAME | OPTION ...
                                     append mode
     -profile-name FILENAME         name of the generated profile information
                                     file
+    -S  -scrutinize                perform local flow analysis
+    -types FILENAME                load additional type database
 
   Optimization options:
 

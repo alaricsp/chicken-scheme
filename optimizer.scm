@@ -299,7 +299,7 @@
 					((eq? '##core#variable (node-class k)))
 					(kvar (first (node-parameters k)))
 					(lval (and (not (test kvar 'unknown)) (test kvar 'value))) 
-					(eq? '##core#lambda (node-class lval))
+					((eq? '##core#lambda (node-class lval)))
 					(llist (third (node-parameters lval)))
 					((or (test (car llist) 'unused)
 					     (and (not (test (car llist) 'references))

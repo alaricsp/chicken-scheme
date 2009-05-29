@@ -104,9 +104,11 @@ ASSEMBLER ?= $(C_COMPILER)
 ifdef WINDOWS_SHELL
 INSTALL_PROGRAM ?= xcopy
 MAKEDIR_COMMAND ?= -mkdir
+XHERE ?=
 else
 INSTALL_PROGRAM ?= install
 MAKEDIR_COMMAND ?= mkdir
+XHERE ?= $(SRCDIR)scripts/xhere
 endif
 POSTINSTALL_STATIC_LIBRARY ?= true
 POSTINSTALL_PROGRAM ?= true
@@ -272,6 +274,7 @@ endif
 # bootstrapping compiler
 
 CHICKEN ?= chicken$(EXE)
+XCHICKEN ?= $(XHERE) $(CHICKEN)
 
 # interpreter for scripts
 
@@ -279,15 +282,14 @@ CSI ?= csi$(EXE)
 
 # Scheme compiler flags
 
-CHICKEN_OPTIONS = \
-	-no-trace -optimize-level 2 \
-	-include-path . -include-path $(SRCDIR)
+CHICKEN_OPTIONS = -no-trace -optimize-level 2 -include-path . -include-path $(SRCDIR)
 ifdef DEBUGBUILD
 CHICKEN_OPTIONS += -feature debugbuild
 endif
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info -inline -local
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
+CHICKEN_SCRUTINY_OPTIONS = -types $(SRCDIR)types.db -analyze-only -scrutinize -ignore-repository
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 CHICKEN_DYNAMIC_OPTIONS = $(CHICKEN_OPTIONS) -feature chicken-compile-shared -dynamic
 CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_DYNAMIC_OPTIONS)
@@ -305,6 +307,9 @@ CHICKEN_BUG_PROGRAM = $(PROGRAM_PREFIX)chicken-bug$(PROGRAM_SUFFIX)
 IMPORT_LIBRARIES = chicken lolevel srfi-1 srfi-4 data-structures ports files posix srfi-13 srfi-69 extras \
 	regex srfi-14 tcp foreign compiler scheme srfi-18 utils csi irregex
 IMPORT_LIBRARIES += setup-api setup-download
+SCRUTINIZED_LIBRARIES = library eval data-structures ports files extras lolevel utils tcp srfi-1 srfi-4 srfi-13 \
+       srfi-14 srfi-18 srfi-69 $(POSIXFILE) regex scheduler \
+       profiler stub expand chicken-syntax
 
 ifdef STATICBUILD
 CHICKEN_STATIC_EXECUTABLE = $(CHICKEN_PROGRAM)$(EXE)

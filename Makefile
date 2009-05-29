@@ -80,4 +80,6 @@ bootstrap:
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) bootstrap
 bench:
 	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) bench
+scrutiny:
+	$(MAKE) -f $(SRCDIR)/Makefile.$(PLATFORM) scrutiny
 endif

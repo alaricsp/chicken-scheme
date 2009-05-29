@@ -251,6 +251,13 @@ Equivalent to the compiler option of the same name - macros defined in the compi
 runtime.
 
 
+=== scrutinize
+
+ [declaration specifier] (scrutinize)
+
+Enables scrutiny. This is equivalent to passing the {{-scrutinize}} option to the compiler.
+
+
 === standard-bindings
 
  [declaration specifier] (standard-bindings SYMBOL ...)
@@ -260,6 +267,51 @@ Declares that all given standard procedures (or all if no symbols are
 specified) are never globally redefined.  If {{not}} is specified,
 then all but the given standard bindings are assumed to be never
 redefined.
+
+
+=== type
+
+  [declaration specifier] (type (SYMBOL TYPESPEC) ...)
+
+Declares toplevel procedures to have a specific type for scrutiny. {{SYMBOL}} should name
+a toplevel variable and {{TYPESPEC}} should be a type specification, following the syntax
+given here:
+
+  TYPESPEC --> *
+            |  ( VAL1 ... )
+  
+  VAL --> (or VAL1 ...)
+       |  (struct NAME)
+       |  (procedure (VAL1 ... [#!optional VALOPT1 ...] [#!rest [VAL]]) . RESULTS)
+       |  BASIC
+       |  deprecated
+  
+  BASIC --> * 
+         |  string 
+	 |  symbol 
+	 |  char 
+	 |  number 
+	 |  boolean 
+	 |  list 
+	 |  pair 
+	 |  procedure 
+	 |  vector 
+	 |  null 
+	 |  eof 
+	 |  port
+	 |  blob 
+	 |  pointer
+	 |  locative
+	 |  fixnum
+	 |  float
+  
+  RESULTS --> * 
+           |  (RVAL1 ...)
+
+  RVAL --> undefined
+        |  noreturn
+
+A type-declaration overrides any previous declaration for the same identifier.
 
 
 === extended-bindings

@@ -42,14 +42,6 @@
    blob->u32vector/shared
    blob->u8vector
    blob->u8vector/shared
-   byte-vector->f32vector
-   byte-vector->f64vector
-   byte-vector->s16vector
-   byte-vector->s32vector
-   byte-vector->s8vector
-   byte-vector->u16vector
-   byte-vector->u32vector
-   byte-vector->u8vector
    f32vector
    f32vector->blob
    f32vector->blob/shared

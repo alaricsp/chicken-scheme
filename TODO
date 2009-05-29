@@ -123,6 +123,10 @@ TODO for chicken							-*- Outline -*-
 ** documentation
 *** document qs, normalize-pathname
 
+** scrutiny
+*** allow giving toplevel procedure names to `scrutinize' option?
+*** write test file to trigger every type of warning (diff with result file in test-suite)
+
 
 * wiki
 

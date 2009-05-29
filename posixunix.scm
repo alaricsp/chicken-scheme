@@ -2207,8 +2207,7 @@ EOF
 
 (define process-run
   (let ([process-fork process-fork]
-        [process-execute process-execute]
-        [getenv getenv] )
+        [process-execute process-execute])
     (lambda (f . args)
       (let ([args (if (pair? args) (car args) #f)]
             [pid (process-fork)] )

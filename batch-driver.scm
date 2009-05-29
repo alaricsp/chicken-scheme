@@ -63,13 +63,14 @@
   topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
   default-declarations units-used-by-default words-per-flonum default-debugging-declarations
   default-profiling-declarations default-optimization-passes
-  file-requirements import-libraries inline-globally enable-inline-files
+  file-requirements import-libraries inline-globally scrutinize do-scrutinize enable-inline-files
   foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   do-lambda-lifting compiler-warning emit-global-inline-file load-inline-file
-  foreign-argument-conversion foreign-result-conversion)
+  foreign-argument-conversion foreign-result-conversion
+  load-identifier-database load-type-database)
 
 
 (include "tweaks")
@@ -81,7 +82,6 @@
 (define user-read-pass (make-parameter #f))
 (define user-preprocessor-pass (make-parameter #f))
 (define user-pass (make-parameter #f))
-(define user-pass-2 (make-parameter #f))
 (define user-post-analysis-pass (make-parameter #f))
 
 
@@ -228,6 +228,7 @@
 		   (string-append il ".import.scm")))
 	   (collect-options 'emit-import-library)))
     (when (memq 'lambda-lift options) (set! do-lambda-lifting #t))
+    (when (memq 'scrutinize options) (set! do-scrutinize #t))
     (when (memq 't debugging-chicken) (##sys#start-timer))
     (when (memq 'b debugging-chicken) (set! time-breakdown #t))
     (when (memq 'emit-exports options)
@@ -377,15 +378,7 @@
 	(dribble "Generating ~aprofile" (if acc "accumulated " "")) ) )
 
     ;;*** hardcoded "modules.db" is bad (also used in chicken-install.scm)
-    (and-let* ((rp (repository-path))
-	       (dbfile (file-exists? (make-pathname rp "modules.db"))))
-      (dribble "loading database ~a ..." dbfile)
-      (for-each
-       (lambda (e)
-	 (##sys#put! 
-	  (car e) '##core#db
-	  (append (or (##sys#get (car e) '##core#db) '()) (list (cdr e))) ))
-       (read-file dbfile)))
+    (load-identifier-database "modules.db")
 
     (cond ((memq 'version options)
 	   (print-version #t)
@@ -501,34 +494,39 @@
 		 (set! exps (map proc exps))
 		 (end-time "user pass") ) )
 
-	     (let* ([node0 (make-node
-			    'lambda '(())
-			    (list (build-node-graph
-				   (canonicalize-begin-body exps) ) ) ) ] 
-		    [proc (user-pass-2)] )
-	       (when proc
-		 (dribble "Secondary user pass...")
+	     (let ((node0 (make-node
+			   'lambda '(())
+			   (list (build-node-graph
+				  (canonicalize-begin-body exps) ) ) ) ) 
+		   (db #f))
+
+	       (when do-scrutinize
+		 ;;;*** hardcoded database file name
+		 (unless (memq 'ignore-repository options)
+		   (load-type-database "types.db"))
+		 (for-each (cut load-type-database <> #f) (collect-options 'types))
 		 (begin-time)
 		 (set! first-analysis #f)
-		 (let ([db (analyze 'user node0)])
-		   (print-db "analysis (u)" '|0| db 0)
-		   (end-time "pre-analysis (u)")
-		   (begin-time)
-		   (proc node0)
-		   (end-time "secondary user pass")
-		   (print-node "secondary user pass" '|U| node0) )
+		 (set! db (analyze 'scrutiny node0))
+		 (print-db "analysis" '|0| db 0)
+		 (end-time "pre-analysis")
+		 (begin-time)
+		 (debugging 'p "performing scrutiny")
+		 (scrutinize node0 db)
+		 (end-time "scrutiny")
 		 (set! first-analysis #t) )
 
 	       (when do-lambda-lifting
 		 (begin-time)
-		 (set! first-analysis #f)
-		 (let ([db (analyze 'lift node0)])
+		 (unless do-scrutinize	; no need to do analysis if already done above
+		   (set! first-analysis #f)
+		   (set! db (analyze 'lift node0))
 		   (print-db "analysis" '|0| db 0)
-		   (end-time "pre-analysis")
-		   (begin-time)
-		   (perform-lambda-lifting! node0 db)
-		   (end-time "lambda lifting")
-		   (print-node "lambda lifted" '|L| node0) )
+		   (end-time "pre-analysis"))
+		 (begin-time)
+		 (perform-lambda-lifting! node0 db)
+		 (end-time "lambda lifting")
+		 (print-node "lambda lifted" '|L| node0) 
 		 (set! first-analysis #t) )
 
 	       (let ((req (concatenate (vector->list file-requirements))))

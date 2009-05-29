@@ -121,7 +121,7 @@ between each sublist. {{LIST}} defaults to the empty list.
  [procedure] (shuffle LIST RANDOM)
 
 Returns {{LIST}} with its elements sorted in a random order given by
-procedure RANDOM. 
+procedure {{RANDOM}}. 
 
 
 ==== tail?

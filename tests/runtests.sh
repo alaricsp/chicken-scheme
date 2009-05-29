@@ -17,14 +17,21 @@ compile_s="../csc -s -compiler $CHICKEN -v -I.. -L.. -include-path .."
 interpret="../csi -n -include-path .."
 
 echo "======================================== compiler tests ..."
-$compile compiler-tests.scm && ./a.out
+$compile compiler-tests.scm
+./a.out
 
 echo "======================================== compiler tests (2) ..."
-$compile compiler-tests.scm -lambda-lift && ./a.out
+$compile compiler-tests.scm -lambda-lift
+./a.out
+
+echo "======================================== scrutiny tests ..."
+$compile scrutiny-tests.scm -scrutinize -analyze-only -ignore-repository -types ../types.db 2>scrutiny.out
+diff -u scrutiny.out scrutiny.expected || exit 1
 
 echo "======================================== runtime tests ..."
 $interpret -s apply-test.scm
-$compile test-gc-hooks.scm && ./a.out
+$compile test-gc-hooks.scm
+./a.out
 
 echo "======================================== library tests ..."
 $interpret -s library-tests.scm
@@ -33,10 +40,12 @@ echo "======================================== syntax tests ..."
 $interpret -s syntax-tests.scm
 
 echo "======================================== syntax tests (compiled) ..."
-$compile syntax-tests.scm && ./a.out
+$compile syntax-tests.scm
+./a.out
 
 echo "======================================== syntax tests (2, compiled) ..."
-$compile syntax-tests-2.scm && ./a.out
+$compile syntax-tests-2.scm
+./a.out
 
 #echo "======================================== meta-syntax tests ..."
 #$interpret -bnq meta-syntax-test.scm -e '(import foo)' -e '(bar 1 2)'
@@ -50,7 +59,8 @@ $compile import-library-test1.scm -emit-import-library foo
 $interpret -s import-library-test2.scm
 $compile_s -s foo.import.scm -o foo.import.so
 $interpret -s import-library-test2.scm
-$compile import-library-test2.scm && ./a.out
+$compile import-library-test2.scm
+./a.out
 
 echo "======================================== syntax tests (matchable) ..."
 $interpret matchable.scm -s match-test.scm
@@ -65,7 +75,8 @@ echo "======================================== module tests ..."
 $interpret -include-path .. -s module-tests.scm
 
 echo "======================================== module tests (compiled) ..."
-$compile module-tests-compiled.scm && ./a.out
+$compile module-tests-compiled.scm
+./a.out
 
 echo "======================================== module tests (chained) ..."
 rm -f m*.import.* test-chained-modules.so
@@ -81,7 +92,8 @@ $interpret -bqn ec.scm ec-tests.scm
 $compile_s ec.scm -emit-import-library ec -o ec.so
 $compile_s ec.import.scm -o ec.import.so 
 $interpret -bnq ec.so ec-tests.scm
-# $compile ec-tests.scm && ./a.out        # takes ages to compile
+# $compile ec-tests.scm
+# ./a.out        # takes ages to compile
 
 echo "======================================== hash-table tests ..."
 $interpret -s hash-table-tests.scm
@@ -93,14 +105,16 @@ echo "======================================== port tests ..."
 $interpret -s port-tests.scm
 
 echo "======================================== fixnum tests ..."
-$compile fixnum-tests.scm && ./a.out
+$compile fixnum-tests.scm
+./a.out
 
 echo "======================================== srfi-18 tests ..."
 $interpret -s srfi-18-tests.scm
 # $interpret -s feeley-dynwind.scm
 
 echo "======================================== path tests ..."
-$compile path-tests.scm && ./a.out
+$compile path-tests.scm
+./a.out
 
 echo "======================================== regular expression tests ..."
 $interpret -bnq test-irregex.scm
@@ -126,16 +140,20 @@ echo "======================================== finalizer tests ..."
 $interpret -s test-finalizers.scm
 
 echo "======================================== finalizer tests (2) ..."
-$compile test-finalizers-2.scm && ./a.out
+$compile test-finalizers-2.scm
+./a.out
 
 echo "======================================== locative stress test ..."
-$compile locative-stress-test.scm && ./a.out
+$compile locative-stress-test.scm
+./a.out
 
 echo "======================================== embedding (1) ..."
-$compile embedded1.c && ./a.out
+$compile embedded1.c
+./a.out
 
 echo "======================================== embedding (2) ..."
-$compile -e embedded2.scm && ./a.out
+$compile -e embedded2.scm
+./a.out
 
 echo "======================================== benchmarks ..."
 cd ../benchmarks

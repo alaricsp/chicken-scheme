@@ -26,7 +26,7 @@
 
 
 (declare
-  (uses chicken-syntax srfi-1 srfi-4 utils files support compiler optimizer driver 
+  (uses chicken-syntax srfi-1 srfi-4 utils files support compiler optimizer scrutinizer driver 
 	platform backend srfi-69)
   (run-time-macros) )			;*** later: compile-syntax
 

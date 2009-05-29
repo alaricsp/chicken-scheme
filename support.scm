@@ -68,7 +68,8 @@
   foreign-argument-conversion foreign-result-conversion final-foreign-type debugging
   constant-declarations process-lambda-documentation big-fixnum? sort-symbols llist-length
   export-dump-hook intrinsic? node->sexpr emit-global-inline-file inline-max-size
-  make-random-name foreign-type-convert-result foreign-type-convert-argument)
+  make-random-name foreign-type-convert-result foreign-type-convert-argument
+  load-identifier-database)
 
 
 (include "tweaks")
@@ -1291,6 +1292,8 @@ Usage: chicken FILENAME OPTION ...
     -accumulate-profile          executable emits profiling information in
                                   append mode
     -no-lambda-info              omit additional procedure-information
+    -scrutinize                  perform local flow analysis
+    -types FILENAME              load additional type database
 
   Optimization options:
 
@@ -1531,3 +1534,18 @@ EOF
 
 (define cdb-get get)
 (define cdb-put! put!)
+
+
+;;; Load support files
+
+(define (load-identifier-database name)
+  (and-let* ((rp (repository-path))
+	     (dbfile (file-exists? (make-pathname rp name))))
+    (when verbose-mode
+      (printf "loading identifier database ~a ...~%" dbfile))
+    (for-each
+     (lambda (e)
+       (##sys#put! 
+	(car e) '##core#db
+	(append (or (##sys#get (car e) '##core#db) '()) (list (cdr e))) ))
+     (read-file dbfile))))

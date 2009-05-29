@@ -68,10 +68,12 @@
 ; (profile <symbol> ...)
 ; (safe-globals)
 ; (separate)
+; (type (<symbol> <typespec>) ...)
 ; (unit <unitname>)
 ; (unsafe)
 ; (unused <symbol> ...)
 ; (uses {<unitname>})
+; (scrutinize)
 ;
 ;   <type> = fixnum | generic
 
@@ -294,7 +296,7 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
   location-pointer-map literal-rewrite-hook inline-globally enable-inline-files
-  local-definitions export-variable variable-mark intrinsic?
+  local-definitions export-variable variable-mark intrinsic? do-scrutinize
   undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   do-lambda-lifting file-requirements emit-closure-info 
@@ -374,6 +376,7 @@
 (define inline-globally #f)
 (define inline-locally #f)
 (define inline-output-file #f)
+(define do-scrutinize #f)
 (define enable-inline-files #f)
 
 
@@ -1481,6 +1484,17 @@
 	    (for-each
 	     (cut mark-variable <> '##compiler#inline-global 'yes)
 	     (stripa (cdr spec)))))
+       ((type)
+	(for-each
+	 (lambda (spec)
+	   (cond ((and (list? spec) (symbol? (car spec)) (= 2 (length spec)))
+		  (##sys#put! (car spec) '##core#type (cadr spec))
+		  (##sys#put! (car spec) '##core#declared-type #t))
+		 (else
+		  (compiler-warning 'syntax "illegal `type' declaration item `~s'" spec))))
+	 (cdr spec)))
+       ((scrutinize)
+	(set! do-scrutinize #t))
        (else (compiler-warning 'syntax "illegal declaration specifier `~s'" spec)) )
      '(##core#undefined) ) ) )
 
