@@ -242,6 +242,7 @@
     (when (memq 'local options)
       (set! local-definitions #t))
     (when (memq 'inline-global options)
+      (set! enable-inline-files #t)
       (set! inline-locally #t)
       (set! inline-globally #t))
     (set! disabled-warnings (map string->symbol (collect-options 'disable-warning)))
