@@ -1342,4 +1342,4 @@ scrutiny: $(SCRUTINIZED_LIBRARIES:=.scrutiny1) $(COMPILER_OBJECTS_1:=.scrutiny2)
 	$(CHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_COMPILER_OPTIONS) 2>&1 | tee $@
 
 scrutiny-clean:
-	rm *.scrutiny[12]
+	-rm *.scrutiny[12]
