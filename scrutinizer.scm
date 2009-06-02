@@ -73,7 +73,7 @@
   (when (##sys#fudge 13)
     (printf "[debug] ~?~%" fstr args)) )
 
-(define-syntax d (syntax-rules () ((_ . _) (void))))
+;(define-syntax d (syntax-rules () ((_ . _) (void))))
 
 
 ;;; Walk node tree, keeping type and binding information
@@ -360,8 +360,6 @@
     (cond ((null? results1) (atom? results2))
 	  ((eq? '* results1))
 	  ((eq? '* results2))
-	  ((eq? '* results2))
-	  ((eq? '* results2))
 	  ((null? results2) #f)
 	  ((match (car results1) (car results2)) 
 	   (match-results (cdr results1) (cdr results2)))
@@ -577,7 +575,9 @@
 		(let loop ((vars params) (body subs) (e2 '()))
 		  (if (null? vars)
 		      (walk (car body) (append e2 e) loc dest)
-		      (let ((t (single "in `let' binding" (walk (car body) e loc (car vars)) loc)))
+		      (let ((t (single 
+				(sprintf "in `let' binding of `~a'" (car vars))
+				(walk (car body) e loc (car vars)) loc)))
 			(loop (cdr vars) (cdr body) (alist-cons (car vars) t e2))))))
 	       ((##core#lambda lambda)
 		(decompose-lambda-list
