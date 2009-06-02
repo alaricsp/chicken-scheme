@@ -73,7 +73,7 @@
   (when (##sys#fudge 13)
     (printf "[debug] ~?~%" fstr args)) )
 
-;(define-syntax d (syntax-rules () ((_ . _) (void))))
+(define-syntax d (syntax-rules () ((_ . _) (void))))
 
 
 ;;; Walk node tree, keeping type and binding information
