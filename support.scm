@@ -65,7 +65,7 @@
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   default-optimization-iterations chop-separator chop-extension follow-without-loop
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion final-foreign-type debugging
+  foreign-argument-conversion foreign-result-conversion final-foreign-type debugging source-info->line
   constant-declarations process-lambda-documentation big-fixnum? sort-symbols llist-length
   export-dump-hook intrinsic? node->sexpr emit-global-inline-file inline-max-size
   make-random-name foreign-type-convert-result foreign-type-convert-argument
@@ -672,11 +672,7 @@
   (node-class-set! to (node-class from))
   (node-parameters-set! to (node-parameters from))
   (node-subexpressions-set! to (node-subexpressions from)) 
-  (let ([len-from (##sys#size from)]
-	[len-to (##sys#size to)] )
-    (do ([i 4 (fx+ i 1)])
-	((or (fx>= i len-from) (fx>= i len-to)))
-      (##sys#setslot to i (##sys#slot from i)) ) ) )
+  to)
 
 (define (node->sexpr n)
   (let walk ((n n))
@@ -1426,6 +1422,11 @@ EOF
 	    (name (caddr info)))
 	(let ((lns (->string ln)))
 	  (conc file ": " lns (make-string (max 0 (- 4 (string-length lns))) #\space) " " name) ) )
+      (and info (->string info))) )
+
+(define (source-info->line info)
+  (if (list? info)
+      (cadr info)
       (and info (->string info))) )
 
 

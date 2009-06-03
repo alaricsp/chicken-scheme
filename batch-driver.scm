@@ -34,7 +34,7 @@
  compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings
-  foldable-bindings dump-defined-globals
+  foldable-bindings dump-defined-globals apply-pre-cps-rewrite-rules!
   compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
   file-io-only undefine-shadowed-macros profiled-procedures
   unit-name insert-timer-checks used-units inline-max-size mark-variable inline-locally
@@ -555,9 +555,9 @@
 		 (print-db "analysis" '|0| db 0)
 		 (end-time "pre-analysis (rewrite)")
 		 (begin-time)
-		 (apply-rewrite-rules! node0 db)
-		 (end-time "applying rewrite rules")
-		 (print-node "applied rewrite rules" '|R| node0) 
+		 (apply-pre-cps-rewrite-rules! node0 db)
+		 (end-time "applying pre-CPS rewrite rules")
+		 (print-node "applied pre-CPS rewrite rules" '|R| node0) 
 		 (set! first-analysis #t) )
 
 	       (let ((req (concatenate (vector->list file-requirements))))
@@ -573,11 +573,15 @@
 			(dribble "Loading inline file ~a ..." ifile)
 			(load-inline-file ifile)))
 		    (concatenate (map cdr req))) )
-		 (for-each 
-		  (lambda (ilf)
-		    (dribble "Loading inline file ~a ..." ilf)
-		    (load-inline-file ilf) )
-		  (collect-options 'consult-inline-file)))
+		 (let ((ifs (collect-options 'consult-inline-file)))
+		   (unless (null? ifs)
+		     (set! inline-globally #t)
+		     (set! inline-locally #t)
+		     (for-each 
+		      (lambda (ilf)
+			(dribble "Loading inline file ~a ..." ilf)
+			(load-inline-file ilf) )
+		      ifs))))
 
 	       (set! ##sys#line-number-database #f)
 	       (set! constant-table #f)

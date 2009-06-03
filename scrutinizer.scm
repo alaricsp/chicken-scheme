@@ -655,8 +655,3 @@
 	    name new old))
 	 (##sys#put! name '##core#type new)))
      (read-file dbfile))))
-
-(define (source-info->line info)
-  (if (list? info)
-      (cadr info)
-      (and info (->string info))) )

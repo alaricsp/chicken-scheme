@@ -90,6 +90,7 @@
 ;   ##compiler#profile -> BOOL
 ;   ##compiler#unused -> BOOL
 ;   ##compiler#foldable -> BOOL
+;   ##compiler#rewrite -> PROCEDURE (see `apply-rewrite-rules!')
 
 ; - Source language:
 ;

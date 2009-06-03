@@ -61,7 +61,7 @@
   units-used-by-default words-per-flonum rewrite inline-locally
   parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  make-random-name final-foreign-type inline-max-size simplified-ops
+  make-random-name final-foreign-type inline-max-size simplified-ops apply-pre-cps-rewrite-rules!
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result)
 
@@ -348,7 +348,9 @@
 						     (map walk (cons fun (append-reverse used args))) ) ]
 						   [(test (car vars) 'unused)
 						    (touch)
-						    (debugging 'o "removed unused parameter to known procedure" (car vars) var)
+						    (debugging
+						     'o "removed unused parameter to known procedure" 
+						     (car vars) var)
 						    (if (expression-has-side-effects? (car args) db)
 							(make-node
 							 'let
@@ -1789,7 +1791,7 @@
 	  (let ([al (collect-accessibles g2)])
 	    (when (debugging 'l "accessibles:") (pretty-print al))
 	    (debugging 'p "eliminating liftables by access-lists and non-liftable callees...")
-	    (let ([ls (eliminate3 (eliminate4 g2))]) ;(eliminate2 g2 al)))])
+	    (let ([ls (eliminate3 (eliminate4 g2))]) ;(eliminate2 g2 al)))]) - why isn't this used?
 	      (debugging 'o "liftable local procedures" (delay (unzip1 ls)))
 	      (debugging 'p "gathering extra parameters...")
 	      (let ([extra (compute-extra-variables ls)])
@@ -1800,3 +1802,30 @@
 		(remove-local-bindings! ls)
 		(debugging 'p "moving liftables to toplevel...")
 		(reconstruct! ls extra) ) ) ) ) ) ) ) )
+
+
+;;; Apply rewrite-rules to procedure calls
+
+(define (apply-pre-cps-rewrite-rules! node db)
+  (define (walk n)
+    (let ((class (node-class n))
+	  (params (node-parameters n))
+	  (subs (node-subexpressions n)))
+      (case class
+	((##core#call)
+	 (let* ((opnode (walk (first subs)))
+		(proc (and (eq? '##core#variable (node-class opnode))
+			   (first (node-parameters opnode))) ) 
+		(handler (and proc
+			      (intrinsic? proc) 
+			      (##sys#get proc '##compiler#rewrite) ) ) )
+	   (for-each walk (cdr subs))
+	   (cond (handler
+		  (let ((info (and (pair? (cdr params))
+				   (source-info->line (second params)))))
+		    (debugging 'o "applying rule" proc info)
+		    (copy-node! (handler proc (cdr subs) db walk) n)))
+		 (else n))))
+	(else
+	 (for-each walk subs)))))
+  (walk node))
