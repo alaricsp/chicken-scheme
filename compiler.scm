@@ -143,7 +143,6 @@
 ; (define-compiled-syntax <symbol> <expr>)
 ; (define-compiled-syntax (<symbol> . <llist>) <expr> ...)
 ; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
-; (##core#define-rewrite-rule <symbol> <expr>)
 
 ; - Core language:
 ;
@@ -295,7 +294,7 @@
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
-  location-pointer-map literal-rewrite-hook inline-globally enable-inline-files
+  location-pointer-map inline-globally enable-inline-files
   local-definitions export-variable variable-mark intrinsic? do-scrutinize
   undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
@@ -424,7 +423,6 @@
 (define data-declarations '())
 (define file-requirements #f)
 (define postponed-initforms '())
-(define literal-rewrite-hook #f)
 
 
 ;;; Initialize globals:
@@ -786,15 +784,6 @@
 			     (##sys#er-transformer
 			      ,body)) ;*** possibly wrong se?
 			   e se dest)))
-
-		       ((##core#define-rewrite-rule)
-			(let ((name (##sys#strip-syntax (cadr x) se #t))
-			      (re (caddr x)))
-			  (##sys#put! name '##compiler#intrinsic 'rewrite)
-			  (rewrite 
-			   name 8 
-			   (eval/meta re))
-			  '(##core#undefined)))
 
 		       ((##core#module)
 			(let* ((name (lookup (cadr x) se))

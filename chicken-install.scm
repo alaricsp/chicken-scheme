@@ -497,7 +497,6 @@ EOF
                        (else (loop (cdr args) (cons arg eggs))))))))))
 
   (register-feature! 'chicken-install)
-  (define ##compiler#compiler-macro-environment '()) ; only to make `compiler' import work
 
   (handle-exceptions ex
       (begin

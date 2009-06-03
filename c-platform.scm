@@ -115,21 +115,23 @@
 (define valid-compiler-options
   '(-help h help version verbose explicit-use 
 	  quiet 			; DEPRECATED
-	  no-trace no-warnings unsafe block
+	  no-trace no-warnings unsafe block 
+	  rewrite
     check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
     profile inline keep-shadowed-macros ignore-repository
     fixnum-arithmetic disable-interrupts optimize-leaf-routines
     lambda-lift compile-syntax tag-pointers accumulate-profile
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first release local inline-global
-    analyze-only dynamic scrutinize
+    analyze-only dynamic scrutinize no-argc-checks no-procedure-checks
+    no-bound-checks no-procedure-checks-for-usual-bindings
     no-parentheses-synonyms no-symbol-escape r5rs-syntax) )
 
 (define valid-compiler-options-with-argument
   '(debug output-file include-path heap-size stack-size unit uses keyword-style require-extension 
 	  inline-limit profile-name disable-warning parenthesis-synonyms
     prelude postlude prologue epilogue nursery extend feature types
-    emit-import-library emit-inline-file static-extension
+    emit-import-library emit-inline-file static-extension consult-inline-file
     heap-growth heap-shrinkage heap-initial-size ffi-define ffi-include-path) )
 
 

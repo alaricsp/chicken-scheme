@@ -31,7 +31,7 @@
 (private compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings
-  foldable-bindings compiler-macro-environment dump-defined-globals
+  foldable-bindings dump-defined-globals
   installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
   file-io-only banner disabled-warnings internal-bindings
   unit-name insert-timer-checks used-units source-filename pending-canonicalizations
@@ -1316,6 +1316,7 @@ Usage: chicken FILENAME OPTION ...
     -inline-global               enable cross-module inlining
     -emit-inline-file FILENAME   generate file with globally inlinable
                                   procedures (implies -inline -local)
+    -consult-inline-file FILENAME  explicitly load inline file
     -no-argc-checks              disable argument count checks
     -no-bound-checks             disable bound variable checks
     -no-procedure-checks         disable procedure call checks
@@ -1519,27 +1520,6 @@ EOF
 
 (define intrinsic? (cut variable-mark <> '##compiler#intrinsic))
 (define foldable? (cut variable-mark <> '##compiler#foldable))
-
-
-;;; compiler-specific syntax
-
-(define compiler-macro-environment
-  (let ((me0 (##sys#macro-environment)))
-    (##sys#extend-macro-environment
-     'define-rewrite-rule
-     '()
-     (##sys#er-transformer
-      (lambda (form r c)
-	(##sys#check-syntax 'define-rewrite-rule form '(_ (symbol . _) . #(_ 1)))
-	`(##core#define-rewrite-rule
-	  ,(caadr form) (,(r 'lambda) ,(cdadr form) ,@(cddr form))))))
-    (##sys#macro-subset me0)))
-
-
-;;; not qualified, for use in `define-rewrite-rule'
-
-(define cdb-get get)
-(define cdb-put! put!)
 
 
 ;;; Load support files

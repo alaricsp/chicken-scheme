@@ -576,7 +576,7 @@
 		  (if (null? vars)
 		      (walk (car body) (append e2 e) loc dest)
 		      (let ((t (single 
-				(sprintf "in `let' binding of `~a'" (car vars))
+				(sprintf "in `let' binding of `~a'" (real-name (car vars)))
 				(walk (car body) e loc (car vars)) loc)))
 			(loop (cdr vars) (cdr body) (alist-cons (car vars) t e2))))))
 	       ((##core#lambda lambda)
