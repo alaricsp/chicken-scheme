@@ -37,7 +37,7 @@
   foldable-bindings dump-defined-globals
   compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
   file-io-only undefine-shadowed-macros profiled-procedures
-  unit-name insert-timer-checks used-units inline-max-size inline-locally
+  unit-name insert-timer-checks used-units inline-max-size mark-variable inline-locally
   debugging perform-lambda-lifting! disable-stack-overflow-checking
   foreign-declarations emit-trace-info block-compilation line-number-database-size
   target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
@@ -70,7 +70,8 @@
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   do-lambda-lifting compiler-warning emit-global-inline-file load-inline-file
   foreign-argument-conversion foreign-result-conversion
-  load-identifier-database load-type-database)
+  load-identifier-database load-type-database
+  no-bound-checks no-argc-checks no-procedure-checks)
 
 
 (include "tweaks")
@@ -304,6 +305,23 @@
     (set! uses-units (map string->symbol (collect-options 'uses)))
     (when (memq 'keep-shadowed-macros options)
       (set! undefine-shadowed-macros #f) )
+    (when (memq 'no-argc-checks options)
+      (set! no-argc-checks #t) )
+    (when (memq 'no-bound-checks options)
+      (set! no-bound-checks #t) )
+    (when (memq 'no-procedure-checks options)
+      (set! no-procedure-checks #t) )
+    (when (memq 'no-procedure-checks-for-usual-bindings options)
+      (for-each 
+       (lambda (v)
+         (mark-variable v '##compiler#always-bound-to-procedure)
+         (mark-variable v '##compiler#always-bound) )
+       default-standard-bindings)
+      (for-each 
+       (lambda (v)
+         (mark-variable v '##compiler#always-bound-to-procedure)
+         (mark-variable v '##compiler#always-bound) )
+       default-extended-bindings) )
 
     ;; Handle feature options:
     (for-each 

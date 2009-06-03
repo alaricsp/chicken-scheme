@@ -128,7 +128,9 @@
     -lambda-lift -dynamic -disable-stack-overflow-checks -local
     -emit-external-prototypes-first -inline -release -scrutinize
     -analyze-only -keep-shadowed-macros -inline-global -ignore-repository
-    -no-symbol-escape -no-parentheses-synonyms -r5rs-syntax))
+    -no-symbol-escape -no-parentheses-synonyms -r5rs-syntax
+    -no-argc-checks -no-bound-checks -no-procedure-checks
+    -no-procedure-checks-for-usual-bindings))
 
 (define-constant complex-options
   '(-debug -output-file -heap-size -nursery -stack-size -compiler -unit -uses -keyword-style
@@ -358,6 +360,12 @@ Usage: csc FILENAME | OPTION ...
     -inline-global                 enable cross-module inlining
     -n -emit-inline-file FILENAME  generate file with globally inlinable
                                     procedures (implies -inline -local)
+    -no-argc-checks                disable argument count checks
+    -no-bound-checks               disable bound variable checks
+    -no-procedure-checks           disable procedure call checks
+    -no-procedure-checks-for-usual-bindings
+                                   disable procedure call checks only for usual
+                                    bindings
 
   Configuration options:
 

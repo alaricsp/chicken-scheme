@@ -1301,7 +1301,7 @@ Usage: chicken FILENAME OPTION ...
     -optimize-leaf-routines      enable leaf routine optimization
     -lambda-lift                 enable lambda-lifting
     -no-usual-integrations       standard procedures may be redefined
-    -unsafe                      disable safety checks
+    -unsafe                      disable all safety checks
     -local                       assume globals are only modified in current
                                   file
     -block                       enable block-compilation
@@ -1316,6 +1316,12 @@ Usage: chicken FILENAME OPTION ...
     -inline-global               enable cross-module inlining
     -emit-inline-file FILENAME   generate file with globally inlinable
                                   procedures (implies -inline -local)
+    -no-argc-checks              disable argument count checks
+    -no-bound-checks             disable bound variable checks
+    -no-procedure-checks         disable procedure call checks
+    -no-procedure-checks-for-usual-bindings
+                                 disable procedure call checks only for usual
+                                  bindings
 
   Configuration options:
 
