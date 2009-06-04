@@ -116,7 +116,6 @@
   '(-help h help version verbose explicit-use 
 	  quiet 			; DEPRECATED
 	  no-trace no-warnings unsafe block 
-	  rewrite
     check-syntax to-stdout no-usual-integrations case-insensitive no-lambda-info 
     profile inline keep-shadowed-macros ignore-repository
     fixnum-arithmetic disable-interrupts optimize-leaf-routines

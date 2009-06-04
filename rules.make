@@ -770,7 +770,7 @@ $(CHICKEN_BUG_PROGRAM)$(EXE): chicken-bug$(O) libchicken$(A)
 
 # installation
 
-.PHONY: install uninstall install-libs install-manifests install-import-libs install-setup-files \
+.PHONY: install uninstall install-libs install-import-libs install-setup-files \
 	install-dirs
 
 install-libs:
@@ -812,21 +812,6 @@ ifdef WINDOWS
 endif
 endif
 
-install-manifests:
-ifneq ($(CHICKEN_MANIFEST),)
-# ignore missing manifests since they don't exist for MSVC versions < 8.0
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CHICKEN_MANIFEST) $(DESTDIR)$(IBINDIR)
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CSI_MANIFEST) $(DESTDIR)$(IBINDIR)
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CHICKEN_PROFILE_MANIFEST) $(DESTDIR)$(IBINDIR)
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CSC_MANIFEST) $(DESTDIR)$(IBINDIR)
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CHICKEN_BUG_MANIFEST) $(DESTDIR)$(IBINDIR)
-ifndef STATICBUILD
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CHICKEN_INSTALL_MANIFEST) $(DESTDIR)$(IBINDIR)
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CHICKEN_UNINSTALL_MANIFEST) $(DESTDIR)$(IBINDIR)
-	-$(INSTALL_PROGRAM) $(INSTALL_MANIFEST_OPTIONS) $(CHICKEN_STATUS_MANIFEST) $(DESTDIR)$(IBINDIR)
-endif
-endif
-
 install-dirs:
 ifneq ($(DESTDIR),)
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(DESTDIR)
@@ -857,7 +842,7 @@ ifndef STATICBUILD
 	$(MAKE_WRITABLE_COMMAND) $(CHICKEN_STATUS_PROGRAM)$(EXE)
 endif
 else
-install: $(TARGETS) install-dirs install-libs install-import-libs install-manifests \
+install: $(TARGETS) install-dirs install-libs install-import-libs \
          install-setup-files
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(CHICKEN_PROGRAM)$(EXE) $(DESTDIR)$(IBINDIR)
 	$(INSTALL_PROGRAM) $(INSTALL_PROGRAM_EXECUTABLE_OPTIONS) $(CSI_PROGRAM)$(EXE) $(DESTDIR)$(IBINDIR)
@@ -999,14 +984,6 @@ uninstall:
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(ILIBDIR)/libchicken*.* $(DESTDIR)$(ILIBDIR)/libuchicken*.* $(DESTDIR)$(IBINDIR)/libchicken*.* $(DESTDIR)$(IBINDIR)/libuchicken*.*
 ifdef ($(PLATFORM),cygwin)
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IBINDIR)/cygchicken* $(DESTDIR)$(IBINDIR)/cyguchicken*
-endif
-ifneq ($(CHICKEN_MANIFEST),)
-	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IBINDIR)/$(CHICKEN_MANIFEST) \
-	$(DESTDIR)$(IBINDIR)/$(CSI_MANIFEST) $(DESTDIR)$(IBINDIR)/$(CHICKEN_PROFILE_MANIFEST) \
-	$(DESTDIR)$(IBINDIR)/$(CSC_MANIFEST) $(DESTDIR)$(IBINDIR)/$(CHICKEN_BUG_MANIFEST) \
-	$(DESTDIR)$(IBINDIR)/$(CHICKEN_INSTALL_MANIFEST) \
-	$(DESTDIR)$(IBINDIR)/$(CHICKEN_UNINSTALL_MANIFEST) \
-	$(DESTDIR)$(IBINDIR)/$(CHICKEN_STATUS_MANIFEST)
 endif
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(DESTDIR)$(IMANDIR)/chicken.1 $(DESTDIR)$(IMANDIR)/csi.1 \
 	  $(DESTDIR)$(IMANDIR)/csc.1 $(DESTDIR)$(IMANDIR)/chicken-profile.1 $(DESTDIR)$(IMANDIR)/chicken-install.1 \
@@ -1239,8 +1216,7 @@ clean: scrutiny-clean
 	  libchicken$(A) libuchicken$(A) libchickengui$(A) libchicken$(SO) $(PROGRAM_IMPORT_LIBRARIES) \
 	  $(IMPORT_LIBRARIES:=.import.so) $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) \
 	  $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
-	  $(MSVC_CHICKEN_EXPORT_FILES) $(CLEAN_MINGW_LIBS) \
-	  $(CLEAN_MANIFESTS)
+	  $(CLEAN_MINGW_LIBS)
 
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision

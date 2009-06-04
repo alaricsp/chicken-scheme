@@ -548,7 +548,7 @@
 		 (print-node "lambda lifted" '|L| node0) 
 		 (set! first-analysis #t) )
 
-	       (when (memq 'rewrite options)
+	       #;(begin
 		 (begin-time)
 		 (set! first-analysis #f)
 		 (set! db (analyze 'rewrite node0))
