@@ -3634,7 +3634,8 @@ EOF
      (##sys#abort
       (##sys#make-structure
        'condition
-       '(user-interrupt) ) ) ]
+       '(user-interrupt)
+       '() ) ) ]
     [(#:warning)
      (##sys#print "\nWarning: " #f ##sys#standard-error)
      (##sys#print msg #f ##sys#standard-error)
