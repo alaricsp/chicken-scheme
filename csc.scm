@@ -406,9 +406,9 @@ Usage: csc FILENAME | OPTION ...
     -k                             keep intermediate files
     -c                             stop after compilation to object files
     -t                             stop after translation to C
-    -cc COMPILER                   select other C compiler than the default one
-    -cxx COMPILER                  select other C++ compiler than the default one
-    -ld COMPILER                   select other linker than the default one
+    -cc COMPILER                   select other C compiler than the default
+    -cxx COMPILER                  select other C++ compiler than the default
+    -ld COMPILER                   select other linker than the default 
     -lLIBNAME                      link with given library
                                     (`libLIBNAME' on UNIX,
                                      `LIBNAME.lib' on Windows)
