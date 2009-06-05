@@ -323,7 +323,7 @@
 (gensym (procedure gensym (#!optional *) symbol))
 (get (procedure get (symbol symbol) *))
 (get-call-chain (procedure get-call-chain (#!optional fixnum *) list))
-(get-environment-variable (procedure get-environment-variable (string) string))
+(get-environment-variable (procedure get-environment-variable (string) *))
 (get-keyword (procedure get-keyword (symbol list #!optional *) *))
 (get-output-string (procedure get-output-string (port) string))
 (get-properties (procedure get-properties (symbol list) symbol * list))
