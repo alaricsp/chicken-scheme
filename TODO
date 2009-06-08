@@ -65,10 +65,6 @@ TODO for chicken							-*- Outline -*-
 
 ** branches
 *** try to improve performance in lazy-gensyms
-*** scrutiny
-
-** expander
-*** at some stage remove debug-output in expand.scm
 
 ** module issues
 *** need a way to omit generating module registration without generating import lib
@@ -83,12 +79,8 @@ TODO for chicken							-*- Outline -*-
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
 **** see "expander" above
-** complete chicken-base.scm
-*** syntax reexports
-*** integrate into build
 
 ** compiler
-*** test define-rewrite-rule
 *** (csc) generate object-files in /tmp (or TMPDIR)?
 
 ** setup/install
@@ -96,7 +88,6 @@ TODO for chicken							-*- Outline -*-
 **** use "HTTP_PROXY"/"http_proxy" env. var
 **** handle redirects in http-fetch
 **** option in chicken-install to list available eggs
-*** automatically update db after extension installation?
 
 ** library units
 *** read-mark list should be stored in read-table
@@ -104,7 +95,6 @@ TODO for chicken							-*- Outline -*-
 *** normalize-pathname: return short name on windows? (mingw/msvc)
 *** Use record-descriptors instead of symbols as 1st slot in structure objects?
 **** see Kon's proposal for new record-descriptors in "misc/Chicken Runtime Data Type Proposal"
-*** deprecate "getenv"
 
 ** syntax-error
 *** if ##sys#current-module is set, add name to error message?
@@ -114,9 +104,6 @@ TODO for chicken							-*- Outline -*-
 *** need script to process import libraries for generating indices for doc.callcc.org
     then tell Toby Butzon about it
 *** test DESTDIR and proper linking
-*** test special status of setup-api.import.scm and setup-download.import.scm
-    touching .c files caused chicken-install to be rebuilt; did using
-    .SECONDARY help?
 *** using "touch" with WINDOWS_SHELL won't work (need alternative)
 *** extend scripts/guess-platforms.sh for more platforms
 
@@ -126,6 +113,7 @@ TODO for chicken							-*- Outline -*-
 ** scrutiny
 *** allow giving toplevel procedure names to `scrutinize' option?
 *** write test file to trigger every type of warning (diff with result file in test-suite)
+*** add support for keyword arguments and check even length and available keywords
 
 
 * wiki

@@ -318,6 +318,8 @@ chicken-status.scm
 chicken-status.c
 chicken-install.scm
 chicken-install.c
+chicken-setup.scm
+chicken-setup.c
 chicken-uninstall.scm
 chicken-uninstall.c
 setup.defaults
