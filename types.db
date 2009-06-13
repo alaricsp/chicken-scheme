@@ -614,7 +614,7 @@
 (call-with-input-string (procedure call-with-input-string (string (procedure (port) . *)) . *))
 (call-with-output-string (procedure call-with-output-string ((procedure (port) . *)) string))
 (make-input-port (procedure make-input-port ((procedure () char) (procedure () *) (procedure () . *) #!optional * * *) port))
-(make-output-port (procedure make-output-port ((procedure (string) . *) (procedure () . *) (procedure () . *)) port))
+(make-output-port (procedure make-output-port ((procedure (string) . *) (procedure () . *) #!optional (procedure () . *)) port))
 (port-for-each (procedure port-for-each ((procedure (*) *) (procedure () . *)) undefined))
 (port-map (procedure port-map ((procedure (*) *) (procedure () . *)) list))
 (port-fold (procedure port-fold ((procedure (* *) *) * (procedure () *)) *))
