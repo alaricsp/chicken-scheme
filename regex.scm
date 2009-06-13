@@ -183,6 +183,7 @@
         [string-search-positions string-search-positions] )
     (lambda (rx subst string . flag)
       (##sys#check-string subst 'string-substitute)
+      (##sys#check-string string 'string-substitute)
       (let* ([which (if (pair? flag) (car flag) 1)]
              [substlen (##sys#size subst)]
 	     (strlen (##sys#size string))
