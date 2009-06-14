@@ -350,7 +350,7 @@
 	(append 
 	 initforms 
 	 (map (lambda (r) `(##core#require-extension (,r) #t)) 
-	      (append se (collect-options 'require-extension)))))
+	      (append se (map string->symbol (collect-options 'require-extension))))))
 
       ;; add static-extensions as used units:
       (set! ##sys#explicit-library-modules
