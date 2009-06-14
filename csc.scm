@@ -391,7 +391,6 @@ Usage: csc FILENAME | OPTION ...
                                     (MSVC only)
     -R  -require-extension NAME    require extension and import in compiled
                                     code
-    -E  -extension                 compile as extension (dynamic or static)
     -dll -library                  compile multiple units into a dynamic
                                     library
 

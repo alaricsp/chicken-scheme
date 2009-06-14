@@ -48,13 +48,13 @@
 
 (cond-expand
  ((not debugbuild)
-  (begin
-    (declare 
-      (no-bound-checks)
-      (no-procedure-checks))
-    (define-syntax dd (syntax-rules () ((_ . _) (void))))
-    (define-syntax dm (syntax-rules () ((_ . _) (void)))))) 
+  (declare 
+    (no-bound-checks)
+    (no-procedure-checks)))
  (else))
+
+(define-syntax dd (syntax-rules () ((_ . _) (void))))
+(define-syntax dm (syntax-rules () ((_ . _) (void))))
 
 
 ;;; Syntactic environments
