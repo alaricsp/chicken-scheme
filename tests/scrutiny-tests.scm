@@ -30,3 +30,11 @@
 (set! car 33)
 
 ((values 1 2))
+
+; this should *not* signal a warning:
+
+(define (test-values x)
+  (define (fail) (error "failed"))
+  (if x
+      (values 42 43)
+      (fail)))

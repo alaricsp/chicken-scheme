@@ -237,7 +237,7 @@
 				   (let ((t (simplify t)))
 				     (cond ((and (pair? t) (eq? 'or (car t)))
 					    (cdr t))
-					   ((eq? 'noreturn t) '())
+					   ;((eq? t 'noreturn) '())
 					   ((eq? t 'undefined) (return 'undefined))
 					   (else (list t)))))
 				 (cdr t)))
@@ -279,14 +279,14 @@
 		 ((memq (car ts2) '(#!rest #!optional)) ts2)
 		 (else '(#!rest))))
 	  ((eq? '#!rest (car ts1))
-	   (cond ((eq? '#!rest (car ts2))
+	   (cond ((and (pair? ts2) (eq? '#!rest (car ts2)))
 		  `(#!rest
 		    ,(simplify 
 		      `(or ,(rest-type (cdr ts1))
 			   ,(rest-type (cdr ts2))))))
 		 (else '(#!rest))))		;XXX giving up
 	  ((eq? '#!optional (car ts1))
-	   (cond ((eq? '#!optional (car ts2))
+	   (cond ((and (pair? ts2) (eq? '#!optional (car ts2)))
 		  `(#!optional 
 		    ,(simplify `(or ,(cadr ts1) ,(cadr ts2)))
 		    ,@(merge-argument-types (cddr ts1) (cddr ts2))))
@@ -545,6 +545,11 @@
 		      ((eq? '* rt) (return '*))
 		      (else (cons (car rt) (loop (cdr rt)))))))))
 	  (else (bomb "not a procedure type: ~a" t))))
+  (define (noreturn-type? t)
+    (or (eq? 'noreturn t)
+	(and (pair? t)
+	     (eq? 'or (car t))
+	     (any noreturn-type? (cdr t)))))
   (define (walk n e loc dest)		; returns result specifier
     (let ((subs (node-subexpressions n))
 	  (params (node-parameters n)) 
@@ -561,8 +566,11 @@
 		       (always-true rt loc n)
 		       (let ((r1 (walk (second subs) e loc dest))
 			     (r2 (walk (third subs) e loc dest)))
-			 (cond ((and (not (eq? r1 '*)) (not (eq? '* r2)))
-				(when (not (= (length r1) (length r2)))
+			 (cond ((and (not (eq? r1 '*)) 
+				     (not (eq? '* r2)) )
+				(when (and (not (any noreturn-type? r1))
+					   (not (any noreturn-type? r2))
+					   (not (= (length r1) (length r2))))
 				  (report 
 				   loc
 				   (sprintf
