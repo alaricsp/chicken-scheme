@@ -1088,7 +1088,7 @@
 (define ##sys#find-extension
   (let ([file-exists? file-exists?]
 	[string-append string-append] )
-    (lambda (p inc?)
+    (lambda (p inc? here-first?)
       (let ((rp (##sys#repository-path)))
 	(define (check path)
 	  (let ([p0 (string-append path "/" p)])
@@ -1099,6 +1099,7 @@
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
 	  (let loop ([paths (##sys#append
+			     (if here-first? '(".") '())
 			     (if rp (list rp) '("."))
 			     (if inc? (##sys#append ##sys#include-pathnames '(".")) '()) ) ] )
 	    (and (pair? paths)
@@ -1118,7 +1119,7 @@
 	      ((memq id ##sys#core-library-modules)
 	       (##sys#load-library id #f) )
 	      (else
-	       (let ([id2 (##sys#find-extension p #t)])
+	       (let ([id2 (##sys#find-extension p #t #f)])
 		 (cond (id2
 			(##sys#load id2 #f #f)
 			(set! ##sys#loaded-extensions (cons p ##sys#loaded-extensions)) 

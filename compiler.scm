@@ -619,7 +619,8 @@
 						       (or (feature? id)
 							   (##sys#find-extension
 							    (##sys#canonicalize-extension-path 
-							     id 'require-extension) #f)) ) ) 
+							     id 'require-extension)
+							    #f #t)) ) ) 
 					(compiler-warning 
 					 'ext "extension `~A' is currently not installed" id))
 				      `(begin ,exp ,(loop (cdr ids))) ) ) ) )

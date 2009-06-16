@@ -813,7 +813,7 @@
 	(unless mod
 	  (let ((il (##sys#find-extension
 		     (string-append (symbol->string mname) ".import")
-		     #t)))
+		     #t #t)))
 	    (cond (il (parameterize ((##sys#current-module #f)
 				     (##sys#current-environment '())
 				     (##sys#current-meta-environment (##sys#current-meta-environment))
