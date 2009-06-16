@@ -281,7 +281,7 @@
      (sprintf " -e \"(extension-name-and-version '(\\\"~a\\\" \\\"~a\\\"))\"" (car e+d+v) (caddr e+d+v))
      (if (sudo-install) " -e \"(sudo-install #t)\"" "")
      (if *keep* " -e \"(keep-intermediates #t)\"" "")
-     (if *no-install* " -e \"(setup-install-flag #f)\"" "")
+     (if *no-install* " -e \"(setup-install-mode #f)\"" "")
      (if *host-extension* " -e \"(host-extension #t)\"" "")
      (if *prefix* (sprintf " -e \"(installation-prefix \\\"~a\\\")\"" *prefix*) "")
      #\space (shellpath (make-pathname (cadr e+d+v) (car e+d+v) "setup"))) )

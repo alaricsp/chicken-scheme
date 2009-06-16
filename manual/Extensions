@@ -269,9 +269,9 @@ path where the CHICKEN binaries ({{chicken}}, {{csi}}, etc.) are installed.
 Contains the path of the directory where {{chicken-install}} was invoked.
 
 
-==== setup-install-flag
+==== setup-install-mode
 
- [parameter] (setup-install-flag [BOOL])
+ [parameter] (setup-install-mode [BOOL])
 
 Reflects the setting of the {{-no-install}} option, i.e. is {{#f}}, if {{-no-install}} was
 given to {{chicken-install}}.

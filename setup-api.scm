@@ -39,8 +39,9 @@
      make make/proc
      host-extension
      install-extension install-program install-script
-     setup-verbose-flag
-     setup-install-flag installation-prefix chicken-prefix 
+     setup-verbose-mode setup-install-mode
+     setup-verbose-flag setup-install-flag			; DEPRECATED
+     installation-prefix chicken-prefix 
      find-library find-header 
      program-path remove-file* 
      patch yes-or-no? abort-setup
@@ -116,8 +117,10 @@
 (define *base-directory* (current-directory))
 
 (define setup-root-directory      (make-parameter *base-directory*))
-(define setup-verbose-flag        (make-parameter #f))
-(define setup-install-flag        (make-parameter #t))
+(define setup-verbose-mode        (make-parameter #f))
+(define setup-install-mode        (make-parameter #t))
+(define setup-verbose-flag setup-verbose-mode) ; DEPRECATED
+(define setup-install-flag setup-install-mode) ; DEPRECATED
 (define program-path              (make-parameter *chicken-bin-path*))
 (define keep-intermediates (make-parameter #f))
 
@@ -185,7 +188,7 @@
 	      (loop (pathname-directory dir))
 	      (create-directory dir))) ) ) )
     (define (verb dir)
-      (when (setup-verbose-flag) (printf "  creating directory `~a'~%~!" dir)) )
+      (when (setup-verbose-mode) (printf "  creating directory `~a'~%~!" dir)) )
     (if *windows-shell*
 	(lambda (dir)
 	  (verb dir)
@@ -212,7 +215,7 @@
 	     (loop) ) ) ) ) )
   
 (define (patch which rx subst)
-  (when (setup-verbose-flag) (printf "patching ~A ...~%" which))
+  (when (setup-verbose-mode) (printf "patching ~A ...~%" which))
   (if (list? which)
       (with-output-to-file (cadr which)
        (lambda ()
@@ -333,7 +336,7 @@
 		     (s2 (fixmaketarget s)) 
 		     (date (and (file-exists? s2)
 				(file-modification-time s2))))
-		(when (setup-verbose-flag)
+		(when (setup-verbose-mode)
 		  (printf "make: ~achecking ~a~%" indent s2))
 		(if line
 		    (let ((deps (cadr line)))
@@ -353,7 +356,7 @@
 			  (let ((l (cddr line)))
 			    (unless (null? l)
 			      (set! made (cons s made))
-			      (when (setup-verbose-flag)
+			      (when (setup-verbose-mode)
 				(printf "make: ~amaking ~a~a~%"
 					indent
 					s2
@@ -380,7 +383,7 @@
      ((string? argv) (make-file argv ""))
      ((null? argv) (make-file (caar spec) ""))
      (else (for-each (lambda (f) (make-file f "")) argv)))
-    (when (setup-verbose-flag)
+    (when (setup-verbose-mode)
       (for-each (lambda (item)
 		  (printf "make: made ~a~%" item))
 	(reverse made)))) )
@@ -438,7 +441,7 @@
 (define (write-info id files info)
   (let ((info `((files ,@files) 
 		,@info)) )
-    (when (setup-verbose-flag) (printf "writing info ~A -> ~S ...~%" id info))
+    (when (setup-verbose-mode) (printf "writing info ~A -> ~S ...~%" id info))
     (let* ((sid (->string id))
 	   (setup-file (make-setup-info-pathname sid (repo-path #t))))
       (cond (*sudo*
@@ -499,7 +502,7 @@
 ;;; Installation
 
 (define (install-extension id files #!optional (info '()))
-  (when (setup-install-flag)
+  (when (setup-install-mode)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (rpath (repo-path))
 	   (rpathd (repo-path #t))
@@ -547,7 +550,7 @@
     (translate-extension
      f
      (if *windows-shell* "exe" #f) ) )
-  (when (setup-install-flag)
+  (when (setup-install-mode)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (ppath ((lambda (pre)
 		     (if pre 
@@ -572,7 +575,7 @@
       (write-info id dests info) ) ) )
 
 (define (install-script id files #!optional (info '()))
-  (when (setup-install-flag)
+  (when (setup-install-mode)
     (let* ((files (check-filelist (if (list? files) files (list files))))
 	   (ppath ((lambda (pre) 
 		     (if pre
@@ -615,7 +618,7 @@
   path)
 
 (define (try-compile code #!key c++ (cc (if c++ *cxx* *cc*)) (cflags "") (ldflags "") 
-		     (verb (setup-verbose-flag)) (compile-only #f))
+		     (verb (setup-verbose-mode)) (compile-only #f))
   (let* ((fname (create-temporary-file "c"))
 	 (oname (pathname-replace-extension fname "o"))
 	 (r (begin
