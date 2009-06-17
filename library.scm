@@ -1968,6 +1968,16 @@ EOF
       (and (##sys#file-info (##sys#platform-fixup-pathname name)) name) )
     #:exists?) )
 
+(define (directory-exists? name)
+  (##sys#check-string name 'directory-exists?)
+  (##sys#pathname-resolution
+    name
+    (lambda (name)
+      (and-let* ((info (##sys#file-info (##sys#platform-fixup-pathname name))))
+	(eq? 1 (vector-ref info 4))
+	name))
+    #:exists?) )
+
 (define (##sys#flush-output port)
   ((##sys#slot (##sys#slot port 2) 5) port) ; flush-output
   (##core#undefined) )

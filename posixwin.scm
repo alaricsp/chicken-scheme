@@ -1111,13 +1111,17 @@ EOF
              (lambda (fname)
                  (##sys#check-string fname name)
                  #f))))
-    (set! stat-regular? regular-file?)
-    (set! stat-directory? (stat-type 'stat-directory?))
-    (set! stat-char-device? (stat-type 'stat-char-device?))
-    (set! stat-block-device? (stat-type 'stat-block-device?))
-    (set! stat-fifo? (stat-type 'stat-fifo?))
-    (set! stat-symlink? (stat-type 'stat-symlink?))
-    (set! stat-socket? (stat-type 'stat-socket?)))
+    (set! stat-regular? regular-file?)	; DEPRECATED
+    (set! stat-directory? (stat-type 'stat-directory?)) ; DEPRECATED
+    (set! stat-device? (stat-type 'stat-char-device?))	; DEPRECATED
+    (set! character-device? (stat-type 'character-device?))
+    (set! block-device? (stat-type 'block-device?))
+    (set! stat-block-device? (stat-type 'stat-block-device?)) ; DEPRECATED
+    (set! stat-fifo? (stat-type 'stat-fifo?))		      ; DEPRECATED
+    (set! fifo? (stat-type 'fifo?))
+    (set! stat-symlink? (stat-type 'stat-symlink?)) ; DEPRECATED
+    (set! socket? (stat-type 'socket?))
+    (set! stat-socket? (stat-type 'stat-socket?))) ; DEPRECATED
 
 (define set-file-position!
   (lambda (port pos . whence)

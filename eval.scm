@@ -1086,24 +1086,25 @@
 (define repository-path ##sys#repository-path)
 
 (define ##sys#find-extension
-  (let ([file-exists? file-exists?]
-	[string-append string-append] )
+  (let ((file-exists? file-exists?)
+	(string-append string-append) )
     (lambda (p inc? here-first?)
       (let ((rp (##sys#repository-path)))
 	(define (check path)
-	  (let ([p0 (string-append path "/" p)])
+	  (let ((p0 (string-append path "/" p)))
 	    (and (or (and rp
 			  (not ##sys#dload-disabled)
 			  (##sys#fudge 24) ; dload?
 			  (file-exists? (##sys#string-append p0 ##sys#load-dynamic-extension)))
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
-	  (let loop ([paths (##sys#append
+	  (let loop ((paths (##sys#append
 			     (if here-first? '(".") '())
-			     (if rp (list rp) '("."))
-			     (if inc? (##sys#append ##sys#include-pathnames '(".")) '()) ) ] )
+			     (if rp (list rp) '())
+			     (if inc? ##sys#include-pathnames '())
+			     (if here-first? '() '("."))) ) )
 	    (and (pair? paths)
-		 (let ([pa (##sys#slot paths 0)])
+		 (let ((pa (##sys#slot paths 0)))
 		   (or (check pa)
 		       (loop (##sys#slot paths 1)) ) ) ) ) ) ) ))
 

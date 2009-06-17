@@ -239,13 +239,17 @@
    signal/xfsz
    signals-list
    sleep
-   stat-block-device?
-   stat-char-device?
-   stat-directory?
-   stat-fifo?
-   stat-regular?
-   stat-socket?
-   stat-symlink?
+   stat-block-device?			; DEPRECATED
+   block-device?
+   character-device?
+   stat-char-device?			; DEPRECATED
+   stat-directory?			; DEPRECATED
+   stat-fifo?				; DEPRECATED
+   fifo?
+   stat-regular?			; DEPRECATED
+   stat-socket?				; DEPRECATED
+   socket?
+   stat-symlink?			; DEPRECATED
    string->time
    symbolic-link?
    system-information

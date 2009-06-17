@@ -451,21 +451,15 @@ These procedures return {{#t}} if the current user has read,
 write or execute permissions on the file named {{FILENAME}}.
 
 
-==== stat-regular?
-==== stat-directory?
-==== stat-char-device?
-==== stat-block-device?
-==== stat-fifo?
-==== stat-symlink?
-==== stat-socket?
+==== character-device?
+==== block-device?
+==== fifo?
+==== socket?
 
-<procedure>(stat-regular? FILENAME)</procedure>
-<procedure>(stat-directory? FILENAME)</procedure>
-<procedure>(stat-char-device? FILENAME)</procedure>
-<procedure>(stat-block-device? FILENAME)</procedure>
-<procedure>(stat-fifo? FILENAME)</procedure>
-<procedure>(stat-symlink? FILENAME)</procedure>
-<procedure>(stat-socket? FILENAME)</procedure>
+<procedure>(character-device? FILENAME)</procedure>
+<procedure>(block-device? FILENAME)</procedure>
+<procedure>(fifo? FILENAME)</procedure>
+<procedure>(socket? FILENAME)</procedure>
 
 These procedures return {{#t}} if the {{FILENAME}} given is of the 
 appropriate type.

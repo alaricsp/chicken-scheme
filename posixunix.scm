@@ -789,40 +789,44 @@ EOF
   (##sys#stat fname #t 'symbolic-link?)
   (foreign-value "C_islink" bool) )
 
-(define (stat-regular? fname)
+(define (stat-regular? fname)		; DEPRECATED
     (##sys#check-string fname 'stat-regular?)
     (##sys#stat fname #f 'stat-regular?)
     (foreign-value "C_isreg" bool))
 
-(define (stat-directory? fname)
+(define (stat-directory? fname)		; DEPRECATED
     (##sys#check-string fname 'stat-directory?)
     (##sys#stat fname #f 'stat-directory?)
     (foreign-value "C_isdir" bool))
 
-(define (stat-char-device? fname)
-    (##sys#check-string fname 'stat-char-device?)
-    (##sys#stat fname #f 'stat-char-device?)
+(define (character-device? fname)
+    (##sys#check-string fname 'character-device?)
+    (##sys#stat fname #f 'character-device?)
     (foreign-value "C_ischr" bool))
 
-(define (stat-block-device? fname)
-    (##sys#check-string fname 'stat-block-device?)
-    (##sys#stat fname #f 'stat-block-device?)
+(define stat-char-device? character-device?) ; DEPRECATED
+
+(define (block-device? fname)
+    (##sys#check-string fname 'block-device?)
+    (##sys#stat fname #f 'block-device?)
     (foreign-value "C_isblk" bool))
 
-(define (stat-fifo? fname)
+(define stat-block-device? block-device?) ; DEPRECATED
+
+(define (fifo? fname)
     (##sys#check-string fname 'stat-fifo?)
     (##sys#stat fname #f 'stat-fifo?)
     (foreign-value "C_isfifo" bool))
 
-(define (stat-symlink? fname)
-    (##sys#check-string fname 'stat-symlink?)
-    (##sys#stat fname #t 'stat-symlink?)
-    (foreign-value "C_islink" bool))
+(define stat-fifo? fifo?)		; DEPRECATED
+(define stat-symlink? symbolic-link?)	; DEPRECATED
 
-(define (stat-socket? fname)
-    (##sys#check-string fname 'stat-socket?)
-    (##sys#stat fname #f 'stat-socket?)
-    (foreign-value "C_issock" bool))
+(define (socket? fname)
+  (##sys#check-string fname 'socket?)
+  (##sys#stat fname #f 'socket?)
+  (foreign-value "C_issock" bool))
+
+(define stat-socket? socket?)		; DEPRECATED
 
 (define set-file-position!
    (lambda (port pos . whence)

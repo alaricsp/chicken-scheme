@@ -26,6 +26,11 @@ $compile compiler-tests.scm -lambda-lift
 
 echo "======================================== scrutiny tests ..."
 $compile scrutiny-tests.scm -scrutinize -analyze-only -ignore-repository -types ../types.db 2>scrutiny.out
+
+if test -n "$MSYSTEM"; then
+    dos2unix scrutiny.out
+fi
+
 diff -u scrutiny.out scrutiny.expected || exit 1
 
 echo "======================================== runtime tests ..."

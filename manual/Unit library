@@ -218,11 +218,19 @@ Deletes the file with the pathname {{STRING}}. If the file does
 not exist, an error is signaled.
 
 
+==== directory-exists?
+
+<procedure>(directory-exists? STRING)</procedure>
+
+Returns {{STRING}} if a directory with the given pathname exists, or
+{{#f}} otherwise.
+
+
 ==== file-exists?
 
 <procedure>(file-exists? STRING)</procedure>
 
-Returns {{STRING}} if a file with the given pathname exists, or
+Returns {{STRING}} if a file or directory with the given pathname exists, or
 {{#f}} otherwise.
 
 

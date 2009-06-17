@@ -76,6 +76,7 @@
    feature?
    features
    file-exists?
+   directory-exists?
    fixnum-bits
    fixnum-precision
    fixnum?
