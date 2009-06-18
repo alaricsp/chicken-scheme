@@ -54,8 +54,8 @@ Possible options are:
      x          display information about experimental features
      D          when printing nodes, use node-tree output
      N          show the real-name mapping table
-     U          show expressions after the secondary user pass
      0          show database before lambda-lifting pass
+     T          show expressions after converting to node tree
      L          show expressions after lambda-lifting
      M          show syntax-/runtime-requirements
      1          show source expressions

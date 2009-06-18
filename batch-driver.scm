@@ -519,6 +519,8 @@
 				  (canonicalize-begin-body exps) ) ) ) ) 
 		   (db #f))
 
+	       (print-node "initial node tree" '|T| node0)
+
 	       (when do-scrutinize
 		 ;;;*** hardcoded database file name
 		 (unless (memq 'ignore-repository options)
