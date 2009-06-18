@@ -340,3 +340,10 @@
 (assert (= x 99))
 (assert (= 123 setter))
 
+
+;;; prefixed import from `chicken' module with indirect reference to imported syntax
+;;; (reported by Jack Trades)
+
+(module prefixed-self-reference (a b c)
+  (import scheme (prefix chicken c:))
+  (c:define-values (a b c) (values 1 2 3)) )

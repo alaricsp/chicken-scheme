@@ -217,6 +217,8 @@ tests/module-tests.scm
 tests/test-finalizers.scm
 tests/test-finalizers-2.scm
 tests/module-tests-compiled.scm
+tests/scrutiny-tests.scm
+tests/scrutiny.expected
 tests/syntax-tests.scm
 tests/syntax-tests-2.scm
 tests/meta-syntax-test.scm

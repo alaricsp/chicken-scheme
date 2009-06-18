@@ -1705,7 +1705,13 @@
 (define ##sys#module-table '())
 
 (define (##sys#macro-subset me0)
-  (let loop ((me (##sys#macro-environment)))
-    (if (or (null? me) (eq? me me0))
-	'()
-	(cons (car me) (loop (cdr me))))))
+  (let ((se (let loop ((me (##sys#macro-environment)))
+	      (if (or (null? me) (eq? me me0))
+		  '()
+		  (cons (car me) (loop (cdr me)))))))
+    (for-each				; fixup se
+     (lambda (sdef)
+       (when (pair? (cdr sdef))
+	 (set-car! (cdr sdef) se)))
+     se)
+    se))
