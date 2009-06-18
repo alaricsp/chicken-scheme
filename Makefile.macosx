@@ -62,6 +62,8 @@ APPLY_HACK_OBJECT = apply-hack.$(ARCH)$(O)
 ifeq ($(ARCH),x86-64)
 C_COMPILER_OPTIONS += -m64
 LINKER_OPTIONS += -m64
+# Avoid bus error in install_name_tool
+LINKER_LINK_SHARED_DLOADABLE_OPTIONS += -Wl,-headerpad -Wl,128
 else
 
 ifeq ($(ARCH),universal)
