@@ -615,6 +615,7 @@
 			    loc))
 		       (b (assq var e)) )
 		  (when (and type (not b)
+			     (not (eq? type 'deprecated))
 			     (not (match type rt)))
 		    (report
 		     loc
