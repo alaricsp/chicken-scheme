@@ -61,7 +61,7 @@
   units-used-by-default words-per-flonum rewrite inline-locally
   parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  make-random-name final-foreign-type inline-max-size simplified-ops apply-pre-cps-rewrite-rules!
+  make-random-name final-foreign-type inline-max-size simplified-ops
   generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
   foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result)
 
@@ -1802,30 +1802,3 @@
 		(remove-local-bindings! ls)
 		(debugging 'p "moving liftables to toplevel...")
 		(reconstruct! ls extra) ) ) ) ) ) ) ) )
-
-
-;;; Apply rewrite-rules to procedure calls
-
-(define (apply-pre-cps-rewrite-rules! node db)
-  (define (walk n)
-    (let ((class (node-class n))
-	  (params (node-parameters n))
-	  (subs (node-subexpressions n)))
-      (case class
-	((##core#call)
-	 (let* ((opnode (walk (first subs)))
-		(proc (and (eq? '##core#variable (node-class opnode))
-			   (first (node-parameters opnode))) ) 
-		(handler (and proc
-			      (intrinsic? proc) 
-			      (##sys#get proc '##compiler#rewrite) ) ) )
-	   (for-each walk (cdr subs))
-	   (cond (handler
-		  (let ((info (and (pair? (cdr params))
-				   (source-info->line (second params)))))
-		    (debugging 'o "applying rule" proc info)
-		    (copy-node! (handler proc (cdr subs) db walk) n)))
-		 (else n))))
-	(else
-	 (for-each walk subs)))))
-  (walk node))

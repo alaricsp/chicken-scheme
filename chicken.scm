@@ -151,9 +151,5 @@
 		'usage "invalid compiler option `~a' - ignored" 
 		(if (string? o) o (conc "-" o)) )
 	       (loop rest) ] ) ) ) )
-  (handle-exceptions ex
-      (begin
-	(print-error-message ex (current-error-port))
-	(exit 1))
-    (apply compile-source-file filename options) )
+  (apply compile-source-file filename options)
   (exit) )

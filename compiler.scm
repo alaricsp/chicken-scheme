@@ -90,7 +90,6 @@
 ;   ##compiler#profile -> BOOL
 ;   ##compiler#unused -> BOOL
 ;   ##compiler#foldable -> BOOL
-;   ##compiler#rewrite -> PROCEDURE (see `apply-rewrite-rules!')
 
 ; - Source language:
 ;
@@ -814,7 +813,12 @@
 					    (let loop ((body (cdddr x)) (xs '()))
 					      (cond 
 					       ((null? body)
-						(##sys#finalize-module (##sys#current-module))
+						(handle-exceptions ex
+						    (begin
+						      ;; avoid backtrace
+						      (print-error-message ex (current-error-port))
+						      (exit 1))
+						  (##sys#finalize-module (##sys#current-module)))
 						(cond ((assq name import-libraries) =>
 						       (lambda (il)
 							 (when verbose-mode

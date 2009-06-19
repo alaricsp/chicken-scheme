@@ -34,7 +34,7 @@
  compiler
   compiler-arguments process-command-line dump-nodes dump-undefined-globals
   default-standard-bindings default-extended-bindings
-  foldable-bindings dump-defined-globals apply-pre-cps-rewrite-rules!
+  foldable-bindings dump-defined-globals
   compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
   file-io-only undefine-shadowed-macros profiled-procedures
   unit-name insert-timer-checks used-units inline-max-size mark-variable inline-locally
@@ -496,7 +496,7 @@
 	     (when (and unsafe (feature? 'compiling-extension))
 	       (compiler-warning 
 		'style
-		"compiling extensions in unsafe mode is bad practice and should be avoided as it may be surprising to an unsuspecting user") )
+		"compiling extensions in unsafe mode is bad practice and should be avoided") )
 
 	     (set! ##sys#line-number-database line-number-database-2)
 	     (set! line-number-database-2 #f)
@@ -549,19 +549,7 @@
 		 (end-time "lambda lifting")
 		 (print-node "lambda lifted" '|L| node0) 
 		 (set! first-analysis #t) )
-
-	       #;(begin
-		 (begin-time)
-		 (set! first-analysis #f)
-		 (set! db (analyze 'rewrite node0))
-		 (print-db "analysis" '|0| db 0)
-		 (end-time "pre-analysis (rewrite)")
-		 (begin-time)
-		 (apply-pre-cps-rewrite-rules! node0 db)
-		 (end-time "applying pre-CPS rewrite rules")
-		 (print-node "applied pre-CPS rewrite rules" '|R| node0) 
-		 (set! first-analysis #t) )
-
+	       
 	       (let ((req (concatenate (vector->list file-requirements))))
 		 (when (debugging 'M "; requirements:")
 		   (pp req))

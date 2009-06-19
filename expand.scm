@@ -259,6 +259,12 @@
 			  (copy r) ) ) ) ) )
 	     ex) )
       (let ((exp2 (handler exp se dse)))
+	(when (eq? exp exp2)
+	  (##sys#syntax-error-hook
+	   (string-append
+	    "syntax transformer for `" (symbol->string name)
+	    "' returns original form, which would result in non-termination")
+	   exp))
 	(dd `(,name --> ,exp2))
 	exp2)))
   (define (expand head exp mdef)
@@ -289,7 +295,7 @@
 	      (cond [(memq head2 '(let ##core#let))
 		     (##sys#check-syntax 'let body '#(_ 2) #f dse)
 		     (let ([bindings (car body)])
-		       (cond [(symbol? bindings)
+		       (cond [(symbol? bindings) ; expand named let
 			      (##sys#check-syntax 'let body '(_ #((variable _) 0) . #(_ 1)) #f dse)
 			      (let ([bs (cadr body)])
 				(values
@@ -300,7 +306,7 @@
 				   ,@(##sys#map cadr bs) )
 				 #t) ) ]
 			     [else (values exp #f)] ) ) ]
-		    [(and (memq head2 '(set! ##core#set!))
+		    [(and (memq head2 '(set! ##core#set!)) ; "setter" syntax
 			  (pair? body)
 			  (pair? (car body)) )
 		     (let ([dest (car body)])
