@@ -545,7 +545,7 @@
 	     (set! ##sys#syntax-error-culprit x)
 	     (let* ((name0 (lookup (car x) se))
 		    (name (or (and (symbol? name0) (##sys#get name0 '##core#primitive)) name0))
-		    (xexpanded (##sys#expand x se)))
+		    (xexpanded (##sys#expand x se #t)))
 	       (cond ((not (eq? x xexpanded))
 		      (walk xexpanded e se dest))
 		     
@@ -619,7 +619,7 @@
 							   (##sys#find-extension
 							    (##sys#canonicalize-extension-path 
 							     id 'require-extension)
-							    #f #t)) ) ) 
+							    #f)) ) ) 
 					(compiler-warning 
 					 'ext "extension `~A' is currently not installed" id))
 				      `(begin ,exp ,(loop (cdr ids))) ) ) ) )
@@ -636,7 +636,7 @@
 			     ,(map (lambda (alias b)
 				     (list alias (walk (cadr b) e se (car b))) )
 				   aliases bindings)
-			     ,(walk (##sys#canonicalize-body (cddr x) se2)
+			     ,(walk (##sys#canonicalize-body (cddr x) se2 #t)
 				    (append aliases e)
 				    se2 dest) ) ) )
 
@@ -669,7 +669,7 @@
 			    (lambda (vars argc rest)
 			      (let* ((aliases (map gensym vars))
 				     (se2 (append (map cons vars aliases) se))
-				     (body0 (##sys#canonicalize-body obody se2))
+				     (body0 (##sys#canonicalize-body obody se2 #t))
 				     (body (walk body0 (append aliases e) se2 #f))
 				     (llist2 
 				      (build-lambda-list
@@ -713,7 +713,7 @@
 					  (cadr x) )
 				     se) ) )
 			   (walk
-			    (##sys#canonicalize-body (cddr x) se2)
+			    (##sys#canonicalize-body (cddr x) se2 #t)
 			    e se2
 			    dest) ) )
 			       
@@ -732,7 +732,7 @@
 			     (set-car! (cdr sb) se2) )
 			   ms)
 			  (walk
-			   (##sys#canonicalize-body (cddr x) se2)
+			   (##sys#canonicalize-body (cddr x) se2 #t)
 			   e se2 dest)))
 			       
 		       ((define-syntax)
@@ -884,7 +884,7 @@
 			       (se2 (append (map cons vars aliases) se))
 			       [body 
 				(walk 
-				 (##sys#canonicalize-body obody se2)
+				 (##sys#canonicalize-body obody se2 #t)
 				 (append aliases e) 
 				 se2 #f) ] )
 			  (set-real-names! aliases vars)

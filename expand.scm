@@ -30,7 +30,7 @@
   (fixnum)
   (hide match-expression
 	macro-alias module-indirect-exports
-	d dd dm map-se merge-se
+	d dd dm dc map-se merge-se
 	lookup check-for-redef) )
 
 
@@ -45,6 +45,7 @@
 
 (define dd d)
 (define dm d)
+(define dc d)
 
 (cond-expand
  ((not debugbuild)
@@ -53,8 +54,10 @@
     (no-procedure-checks)))
  (else))
 
-(define-syntax dd (syntax-rules () ((_ . _) (void))))
-(define-syntax dm (syntax-rules () ((_ . _) (void))))
+(begin
+  (define-syntax dd (syntax-rules () ((_ . _) (void))))
+  (define-syntax dm (syntax-rules () ((_ . _) (void))))
+  (define-syntax dc (syntax-rules () ((_ . _) (void)))) )
 
 
 ;;; Syntactic environments
@@ -227,8 +230,8 @@
 
 ;; The basic macro-expander
 
-(define (##sys#expand-0 exp dse)
-  (define (call-handler name handler exp se)
+(define (##sys#expand-0 exp dse cs?)
+  (define (call-handler name handler exp se cs)
     (dd "invoking macro: " name)
     (dd `(STATIC-SE: ,@(map-se se)))
     (handle-exceptions ex
@@ -259,11 +262,11 @@
 			  (copy r) ) ) ) ) )
 	     ex) )
       (let ((exp2 (handler exp se dse)))
-	(when (eq? exp exp2)
+	(when (and (not cs) (eq? exp exp2))
 	  (##sys#syntax-error-hook
 	   (string-append
 	    "syntax transformer for `" (symbol->string name)
-	    "' returns original form, which would result in non-termination")
+	    "' returns original form, which would result in endless expansion")
 	   exp))
 	(dd `(,name --> ,exp2))
 	exp2)))
@@ -282,10 +285,11 @@
 	  ((pair? mdef)
 	   (values 
 	    ;; force ref. opaqueness by passing dynamic se  [what is this comment meaning? I forgot]
-	    (call-handler head (cadr mdef) exp (car mdef))
+	    (call-handler head (cadr mdef) exp (car mdef) #f)
 	    #t))
 	  (else (values exp #f)) ) )
-  (if (pair? exp)
+  (let loop ((exp exp))
+    (if (pair? exp)
       (let ((head (car exp))
 	    (body (cdr exp)) )
 	(if (symbol? head)
@@ -316,9 +320,16 @@
 				(cdr dest)
 				(cdr body) ) 
 			#t) ) ]
+		    ((and cs? (symbol? head2) (##sys#get head2 '##compiler#compiler-syntax)) =>
+		     (lambda (cs)
+		       (dc "applying compiler syntax for `" head2 "' ...")
+		       (let ((result (call-handler head (car cs) exp (cdr cs) #t)))
+			 (if (eq? result exp)
+			     (expand head exp head2)
+			     (loop result)))))
 		    [else (expand head exp head2)] ) )
 	    (values exp #f) ) )
-      (values exp #f) ) )
+      (values exp #f) ) ) )
 
 (define ##sys#enable-runtime-macros #f)
 
@@ -357,9 +368,9 @@
 
 ;;; User-level macroexpansion
 
-(define (##sys#expand exp #!optional (se (##sys#current-environment)))
+(define (##sys#expand exp #!optional (se (##sys#current-environment)) cs?)
   (let loop ((exp exp))
-    (let-values (((exp2 m) (##sys#expand-0 exp se)))
+    (let-values (((exp2 m) (##sys#expand-0 exp se cs?)))
       (if m
 	  (loop exp2)
 	  exp2) ) ) )
@@ -487,7 +498,7 @@
 (define ##sys#canonicalize-body
   (let ([reverse reverse]
 	[map map] )
-    (lambda (body #!optional (se (##sys#current-environment)))
+    (lambda (body #!optional (se (##sys#current-environment)) cs?)
       (define (fini vars vals mvars mvals body)
 	(if (and (null? vars) (null? mvars))
 	    (let loop ([body2 body] [exps '()])
@@ -591,7 +602,7 @@
 		      ((or (memq head vars) (memq head mvars))
 		       (fini vars vals mvars mvals body))
 		      [else
-		       (let ([x2 (##sys#expand-0 x se)])
+		       (let ([x2 (##sys#expand-0 x se cs?)])
 			 (if (eq? x x2)
 			     (fini vars vals mvars mvals body)
 			     (loop (cons x2 rest) vars vals mvars mvals) ) ) ] ) ) ) ) )
@@ -819,7 +830,7 @@
 	(unless mod
 	  (let ((il (##sys#find-extension
 		     (string-append (symbol->string mname) ".import")
-		     #t #t)))
+		     #t)))
 	    (cond (il (parameterize ((##sys#current-module #f)
 				     (##sys#current-environment '())
 				     (##sys#current-meta-environment (##sys#current-meta-environment))

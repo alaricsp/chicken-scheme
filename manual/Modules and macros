@@ -17,14 +17,12 @@ macro system based on ''explicit renaming''.
 
 Defines a macro named {{IDENTIFIER}} that will transform an expression
 with {{IDENTIFIER}} in operator position according to {{TRANSFORMER}}.
-The transformer expression must be an instance of
-{{er-macro-transformer}}, called with a procedure of three arguments,
-or a {{syntax-rules}} form. If {{syntax-rules}} is used, the usual
-R5RS semantics apply. If {{TRANSFORMER}} is an instance of
-{{er-macro-transformer}}, then it will be called on expansion with the
-complete s-expression of the macro invocation, a rename procedure that
-hygienically renames identifiers and a comparison procedure that
-compares (possibly renamed) identifiers.
+The transformer expression must be a procedure with three arguments or
+a {{syntax-rules}} form. If {{syntax-rules}} is used, the usual R5RS
+semantics apply. If {{TRANSFORMER}} is a procedure, then it will
+be called on expansion with the complete s-expression of the macro
+invocation, a rename procedure that hygienically renames identifiers
+and a comparison procedure that compares (possibly renamed) identifiers.
 
 {{define-syntax}} may be used to define local macros that are visible
 throughout the rest of the body in which the definition occurred, i.e.
@@ -46,27 +44,6 @@ is expanded into
 in allowing the ellipsis identifier to be user-defined by passing it as the first
 argument to the {{syntax-rules}} form.
 
-The alternative syntax 
-
-  (define-syntax (foo . LAMBDALIST) BODY ...)
-
-is also allowed and is equivalent to
-
-  (define-syntax foo
-    (er-macro-transformer
-      (lambda LAMBDALIST BODY ...)))
-
-==== er-macro-transformer
-
-  [procedure] (er-macro-transformer PROCEDURE)
-
-Takes a low-level transformer procedure and returns an explicit renaming
-syntax transformer. The canonical method of defining a low-level macro is
-
-  (define-syntax foo
-    (er-macro-transformer
-      (lambda (exp rename compare)
-        ...)))
 
 ==== define-compiled-syntax
 
@@ -95,31 +72,29 @@ where symbols have all context-information removed.
 === Explicit renaming macros
 
 The low-level macro facility that CHICKEN provides is called "explicit
-renaming" and allows writing hygienic or non-hygienic macros
-procedurally.  When given a macro-transformer returned by
-{{er-macro-transformer}} instead of a {{syntax-rules}} form,
-{{define-syntax}} evaluates the procedure given to it in a distinct
-expansion environment (initially having access to the exported
-identifiers of the {{scheme}} module). The procedure takes an
-expression and two other arguments and returns a transformed
-expression.
+renaming" and allows writing hygienic or non-hygienic macros procedurally.
+When given a lambda-expression instead of a {{syntax-rules}} form,
+{{define-syntax}} evaluates the procedure in a distinct expansion
+environment (initially having access to the exported identifiers
+of the {{scheme}} module). The procedure takes an expression and two
+other arguments and returns a transformed expression. 
 
-For example, the transformation procedure for a {{call}} macro such
-that {{(call proc arg ...)}} expands into {{(proc arg ...)}} can be
-written as
+For example, the transformation
+procedure for a {{call}} macro such that
+{{(call proc arg ...)}} expands
+into {{(proc arg ...)}} can be written as
 
   (lambda (exp rename compare)
     (cdr exp))
 
-Expressions are represented as lists in the traditional manner, except
-that identifiers are represented as special uninterned symbols.
+Expressions are represented as lists in the traditional manner,
+except that identifiers are represented as special uninterned symbols.
 
-The second argument to a transformation procedure is a renaming
-procedure that takes the representation of an identifier as its
-argument and returns the representation of a fresh identifier that
-occurs nowhere else in the program.  For example, the transformation
-procedure for a simplified version of the {{let}} macro might be
-written as
+The second argument to a transformation procedure is a renaming procedure that
+takes the representation of an identifier as its argument and returns the
+representation of a fresh identifier that occurs nowhere else in the
+program.  For example, the transformation procedure for a simplified
+version of the {{let}} macro might be written as
 
   (lambda (exp rename compare)
     (let ((vars (map car (cadr exp)))
@@ -183,34 +158,32 @@ to the comparison predicate, so the comparison will be true if and
 only if the test expression is an identifier that denotes the same
 thing in the syntactic environment of the expression being transformed
 as {{else}} denotes in the syntactic environment in which the {{cond}}
-macro was defined.  If {{else}} were not renamed before being passed
-to the comparison predicate, then it would match a local variable that
+macro was defined.  If {{else}} were not renamed before being passed to
+the comparison predicate, then it would match a local variable that
 happened to be named {{else}}, and the macro would not be hygienic.
 
-Some macros are non-hygienic by design.  For example, the following
-defines a {{loop}} macro that implicitly binds {{exit}} to an escape
-procedure.  The binding of {{exit}} is intended to capture free
+Some macros are non-hygienic by design.  For example, the
+following defines a {{loop}} macro that implicitly binds {{exit}} to an
+escape procedure.  The binding of {{exit}} is intended to capture free
 references to {{exit}} in the body of the loop, so {{exit}} is not
 renamed.
 
   (define-syntax loop
-    (er-macro-transformer
-      (lambda (x r c)
-	(let ((body (cdr x)))
-	  `(,(r 'call-with-current-continuation)
-	    (,(r 'lambda) (exit)
-    	     (,(r 'let) ,(r 'f) () ,@body (,(r 'f)))))))))
+     (lambda (x r c)
+       (let ((body (cdr x)))
+         `(,(r 'call-with-current-continuation)
+           (,(r 'lambda) (exit)
+            (,(r 'let) ,(r 'f) () ,@body (,(r 'f))))))))
 
 Suppose a {{while}} macro is implemented using {{loop}}, with the intent
 that {{exit}} may be used to escape from the {{while}} loop.  The {{while}}
 macro cannot be written as
 
   (define-syntax while
-    (er-macro-transformer
-      (syntax-rules ()
-	((while test body ...)
-	 (loop (if (not test) (exit #f))
-	       body ...)))))
+    (syntax-rules ()
+      ((while test body ...)
+       (loop (if (not test) (exit #f))
+             body ...))))
 
 because the reference to {{exit}} that is inserted by the {{while}} macro
 is intended to be captured by the binding of {{exit}} that will be
@@ -218,13 +191,12 @@ inserted by the {{loop}} macro.  In other words, this {{while}} macro is
 not hygienic.  Like {{loop}}, it must be written using procedurally:
 
   (define-syntax while
-    (er-macro-transformer
-      (lambda (x r c)
-	(let ((test (cadr x))
-	      (body (cddr x)))
-	  `(,(r 'loop)
-	    (,(r 'if) (,(r 'not) ,test) (exit #f))
-	    ,@body)))))
+     (lambda (x r c)
+       (let ((test (cadr x))
+             (body (cddr x)))
+         `(,(r 'loop)
+           (,(r 'if) (,(r 'not) ,test) (exit #f))
+           ,@body))))
 
 
 === Modules

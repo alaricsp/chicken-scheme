@@ -33,6 +33,16 @@ until expression is a non-macro form).  Returns the resulting expression.
 Signals an exception of the kind {{(exn syntax)}}. Otherwise identical to 
 {{error}}.
 
+
+==== er-macro-transformer
+
+  [procedure] (er-macro-transformer TRANSFORMER)
+
+This procedure does nothing and is available for writing low-level
+macros in a more portable fashion, without hard-coding the signature
+of a transformer procedure.
+
+
 ---
 Previous: [[Unit library]]
 

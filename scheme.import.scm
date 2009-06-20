@@ -53,6 +53,5 @@
        peek-char write display write-char newline with-input-from-file
        with-output-to-file dynamic-wind values call-with-values eval
        char-ready? imag-part real-part magnitude numerator denominator
-       scheme-report-environment null-environment interaction-environment
-       er-macro-transformer)
+       scheme-report-environment null-environment interaction-environment)
  ##sys#default-macro-environment)

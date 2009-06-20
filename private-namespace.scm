@@ -28,7 +28,6 @@
 (cond-expand
  (hygienic-macros
   (define-syntax private
-    ;;XXX use er-macro-transformer
     (lambda (form r c)
       (let ((namespace (cadr form))
 	    (vars (cddr form)))

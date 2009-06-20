@@ -326,7 +326,7 @@
 	      [(not (pair? x)) (##sys#syntax-error-hook "illegal non-atomic object" x)]
 	      [(symbol? (##sys#slot x 0))
 	       (emit-syntax-trace-info tf x cntr)
-	       (let ((x2 (##sys#expand x se)))
+	       (let ((x2 (##sys#expand x se #f)))
 		 (d `(EVAL/EXPANDED: ,x2))
 		 (if (not (eq? x2 x))
 		     (compile x2 e h tf cntr se)
@@ -425,7 +425,7 @@
 				 [e2 (cons aliases e)]
 				 (se2 (append (map cons vars aliases) se))
 				 [body (##sys#compile-to-closure
-					(##sys#canonicalize-body (cddr x) se2)
+					(##sys#canonicalize-body (cddr x) se2 #f)
 					e2
 					se2
 					cntr) ] )
@@ -501,7 +501,7 @@
 				      (e2 (cons aliases e))
 				      (body 
 				       (##sys#compile-to-closure
-					(##sys#canonicalize-body body se2)
+					(##sys#canonicalize-body body se2 #f)
 					e2
 					se2
 					(or h cntr) ) ) )
@@ -590,7 +590,7 @@
 					   (cadr x) ) 
 				      se) ) )
 			    (compile
-			     (##sys#canonicalize-body (cddr x) se2)
+			     (##sys#canonicalize-body (cddr x) se2 #f)
 			     e #f tf cntr se2)))
 			       
 			 ((letrec-syntax)
@@ -608,7 +608,7 @@
 			       (set-car! (cdr sb) se2) )
 			     ms) 
 			    (compile
-			     (##sys#canonicalize-body (cddr x) se2)
+			     (##sys#canonicalize-body (cddr x) se2 #f)
 			     e #f tf cntr se2)))
 			       
 			 ((define-syntax define-compiled-syntax)
@@ -1088,7 +1088,7 @@
 (define ##sys#find-extension
   (let ((file-exists? file-exists?)
 	(string-append string-append) )
-    (lambda (p inc? here-first?)
+    (lambda (p inc?)
       (let ((rp (##sys#repository-path)))
 	(define (check path)
 	  (let ((p0 (string-append path "/" p)))
@@ -1099,10 +1099,9 @@
 		     (file-exists? (##sys#string-append p0 source-file-extension)) )
 		 p0) ) )
 	  (let loop ((paths (##sys#append
-			     (if here-first? '(".") '())
 			     (if rp (list rp) '())
 			     (if inc? ##sys#include-pathnames '())
-			     (if here-first? '() '("."))) ) )
+			     '("."))) )
 	    (and (pair? paths)
 		 (let ((pa (##sys#slot paths 0)))
 		   (or (check pa)
@@ -1120,7 +1119,7 @@
 	      ((memq id ##sys#core-library-modules)
 	       (##sys#load-library id #f) )
 	      (else
-	       (let ([id2 (##sys#find-extension p #t #f)])
+	       (let ([id2 (##sys#find-extension p #t)])
 		 (cond (id2
 			(##sys#load id2 #f #f)
 			(set! ##sys#loaded-extensions (cons p ##sys#loaded-extensions)) 

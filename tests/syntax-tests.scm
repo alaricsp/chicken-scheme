@@ -211,12 +211,11 @@
 
 
 (define-syntax loop
-  (er-macro-transformer
-   (lambda (x r c)
-     (let ((body (cdr x)))
-       `(,(r 'call/cc)
-	 (,(r 'lambda) (exit)
-	  (,(r 'let) ,(r 'f) () ,@body (,(r 'f)))))))))
+  (lambda (x r c)
+    (let ((body (cdr x)))
+      `(,(r 'call/cc)
+	(,(r 'lambda) (exit)
+	 (,(r 'let) ,(r 'f) () ,@body (,(r 'f))))))))
 
 (let ((n 10))
   (loop
@@ -234,11 +233,10 @@
 (f (while0 #f (print "no.")))
 
 (define-syntax while
-  (er-macro-transformer
-   (lambda (x r c)
-     `(,(r 'loop) 
-       (,(r 'if) (,(r 'not) ,(cadr x)) (exit #f))
-       ,@(cddr x)))))
+  (lambda (x r c)
+    `(,(r 'loop) 
+      (,(r 'if) (,(r 'not) ,(cadr x)) (exit #f))
+      ,@(cddr x))))
 
 (let ((n 10))
   (while (not (zero? n))

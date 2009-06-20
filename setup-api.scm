@@ -399,7 +399,6 @@
 	 argv) ) ) ) )
 
 (define-syntax make
-  ;;XXX use er-macro-transformer
   (lambda (form r c)
     (##sys#check-syntax 'make form '(_ _ . #(_ 0 1)))
     (let ((spec (cadr form))

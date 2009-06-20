@@ -143,7 +143,6 @@
 (define-constant flonum-magic 331804471)
 
 (define-syntax $flonum-hash
-  ;;XXX use er-macro-transformer
   (lambda (form r c)
     (let ( (flo (cadr form))
            (_%subbyte (r '%subbyte))

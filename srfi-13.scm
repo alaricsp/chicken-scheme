@@ -204,7 +204,6 @@
 	   ,@body) ) ) )
  (else
   (define-syntax let-string-start+end
-    ;;XXX use er-macro-transformer
     (lambda (form r c)
       (##sys#check-syntax 'let-string-start+end form '(_ _ _ _ _ . _))
       (let ((s-e-r (cadr form))
