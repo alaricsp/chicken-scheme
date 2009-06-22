@@ -105,7 +105,8 @@
 (define unlikely-variables '(unquote unquote-splicing))
 
 (define eq-inline-operator "C_eqp")
-(define optimizable-rest-argument-operators '(car cadr caddr cadddr length pair? null? list-ref))
+(define optimizable-rest-argument-operators 
+  '(car cadr caddr cadddr length pair? null? list-ref))
 (define membership-test-operators
   '(("C_i_memq" . "C_eqp") ("C_u_i_memq" . "C_eqp") ("C_i_member" . "C_i_equalp")
     ("C_i_memv" . "C_i_eqvp") ) )

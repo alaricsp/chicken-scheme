@@ -342,6 +342,24 @@
 ;;; prefixed import from `chicken' module with indirect reference to imported syntax
 ;;; (reported by Jack Trades)
 
-(module prefixed-self-reference (a b c)
+(module prefixed-self-reference1 (a b c)
   (import scheme (prefix chicken c:))
   (c:define-values (a b c) (values 1 2 3)) )
+
+(module prefixed-self-reference2 ()
+  (import scheme (prefix chicken c:))
+  (c:define-values (a b c) (values 1 2 3))
+  (c:print "ok")
+  (c:condition-case 
+   (c:abort "ugh")
+   (ex () (c:print "aborted"))))
+
+(module prefixed-self-reference3 (a)
+  (import (prefix scheme s.) (prefix chicken c.))
+  (s.define (a x y)
+	    (c.condition-case (s.+ x y) ((exn) "not numbers")))
+  )
+
+(module prefixed-self-reference4 (a)
+  (import (prefix scheme s.))
+  (s.define (a x y) (s.and x y)))

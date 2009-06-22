@@ -4345,6 +4345,7 @@ EOF
 (define ##sys#list? list?)
 (define ##sys#null? null?)
 (define ##sys#map-n map)
+(define ##sys#list-ref list-ref)
 
 
 ;;; Promises:

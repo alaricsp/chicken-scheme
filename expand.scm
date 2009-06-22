@@ -344,7 +344,7 @@
   (define (mrename sym)
     (cond ((##sys#current-module) => 
 	   (lambda (mod)
-	     (dm "(ALIAS) global alias " sym " -> " (module-name mod))
+	     (dm "(ALIAS) global alias " sym " in " (module-name mod))
 	     (unless assign (##sys#register-undefined sym mod))
 	     (##sys#module-rename sym (module-name mod))))
 	  (else sym)))
@@ -1072,7 +1072,6 @@
 	    (%begin (r 'begin))
 	    (%if (r 'if))
 	    (%or (r 'or))
-	    (%eqv? '##sys#eqv?)
 	    (%else (r 'else)))
 	`(let ((,tmp ,exp))
 	   ,(let expand ((clauses body))
@@ -1084,7 +1083,7 @@
 		    (if (c %else (car clause))
 			`(,%begin ,@(cdr clause))
 			`(,%if (,%or ,@(##sys#map
-					(lambda (x) `(,%eqv? ,tmp ',x)) (car clause)))
+					(lambda (x) `(##sys#eqv? ,tmp ',x)) (car clause)))
 			       (,%begin ,@(cdr clause)) 
 			       ,(expand rclauses) ) ) ) ) ) ) ) ) ) ) )
 
@@ -1327,7 +1326,28 @@
 
 ;;; the base macro environment ("scheme", essentially)
 
-(define ##sys#default-macro-environment (##sys#macro-environment))
+(define (##sys#macro-subset me0 #!optional parent-env)
+  (let ((se (let loop ((me (##sys#macro-environment)))
+	      (if (or (null? me) (eq? me me0))
+		  '()
+		  (cons (car me) (loop (cdr me)))))))
+    (##sys#fixup-macro-environment se parent-env)))
+
+(define (##sys#fixup-macro-environment se #!optional parent-env)
+  (let ((se2 (if parent-env (##sys#append se parent-env) se)))
+    (for-each				; fixup se
+     (lambda (sdef)
+       (when (pair? (cdr sdef))
+	 (set-car!
+	  (cdr sdef) 
+	  (if (null? (cadr sdef)) 
+	      se2
+	      (##sys#append (cadr sdef) se2)))))
+     se)
+    se))
+
+(define ##sys#default-macro-environment
+  (##sys#fixup-macro-environment (##sys#macro-environment)))
 
 
 ;;; low-level module support
@@ -1591,17 +1611,20 @@
     (set! ##sys#module-table (cons (cons name mod) ##sys#module-table)) 
     mod))
 
+(define (##sys#primitive-alias sym)
+  (let ((palias 
+	 (##sys#string->symbol 
+	  (##sys#string-append "#%" (##sys#slot sym 1)))))
+    (##sys#put! palias '##core#primitive sym)
+    palias))
+
 (define (##sys#register-primitive-module name vexports #!optional (sexports '()))
   (let* ((me (##sys#macro-environment))
 	 (mod (make-module 
 	       name '()
 	       (map (lambda (ve)
 		      (if (symbol? ve)
-			  (let ((palias 
-				 (##sys#string->symbol 
-				  (##sys#string-append "#%" (##sys#slot ve 1)))))
-			    (##sys#put! palias '##core#primitive ve)
-			    (cons ve palias))
+			  (cons ve (##sys#primitive-alias ve))
 			  ve))
 		    vexports)
 	       (map (lambda (se)
@@ -1720,15 +1743,3 @@
       (set-module-sexports! mod sexports))))
 
 (define ##sys#module-table '())
-
-(define (##sys#macro-subset me0)
-  (let ((se (let loop ((me (##sys#macro-environment)))
-	      (if (or (null? me) (eq? me me0))
-		  '()
-		  (cons (car me) (loop (cdr me)))))))
-    (for-each				; fixup se
-     (lambda (sdef)
-       (when (pair? (cdr sdef))
-	 (set-car! (cdr sdef) se)))
-     se)
-    se))
