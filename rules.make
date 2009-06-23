@@ -1216,7 +1216,7 @@ else
 CLEAN_MINGW_LIBS =
 endif
 
-clean: scrutiny-clean
+clean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken$(EXE) csi$(EXE) csc$(EXE) \
 	  chicken-profile$(EXE) csi-static$(EXE) \
 	  chicken-install$(EXE) chicken-uninstall$(EXE) chicken-status$(EXE) chicken-setup$(EXE) \
@@ -1303,19 +1303,3 @@ bench:
 	cd $(SRCDIR)benchmarks; \
 	LD_LIBRARY_PATH=$$here DYLD_LIBRARY_PATH=$$here PATH=$$here:$$PATH \
 	$(CSI) -s cscbench.scm $(BENCHMARK_OPTIONS)
-
-
-# scrutiny
-
-.PHONY: scrutiny scrutiny-clean
-
-scrutiny: $(SCRUTINIZED_LIBRARIES:=.scrutiny1) $(COMPILER_OBJECTS_1:=.scrutiny2)
-
-%.scrutiny1: $(SRCDIR)%.scm
-	$(CHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_LIBRARY_OPTIONS) 2>&1 | tee $@
-
-%.scrutiny2: $(SRCDIR)%.scm
-	$(CHICKEN) $< $(CHICKEN_SCRUTINY_OPTIONS) $(CHICKEN_COMPILER_OPTIONS) 2>&1 | tee $@
-
-scrutiny-clean:
-	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) *.scrutiny1 *.scrutiny2

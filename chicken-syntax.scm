@@ -940,7 +940,7 @@
 
 (##sys#extend-macro-environment
  'cut 
- `((apply . (##sys#primitive-alias 'apply)))
+ `((apply . ,(##sys#primitive-alias 'apply)))
  (##sys#er-transformer
   (lambda (form r c)
     (let ((%<> (r '<>))

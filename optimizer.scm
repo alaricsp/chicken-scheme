@@ -30,7 +30,7 @@
 (private compiler
   compiler-arguments process-command-line perform-lambda-lifting!
   default-standard-bindings default-extended-bindings
-  foldable-bindings llist-length
+  foldable-bindings llist-length r-c-s compile-format-string
   installation-home decompose-lambda-list external-to-pointer
   copy-node! variable-visible? mark-variable intrinsic?
   unit-name insert-timer-checks used-units external-variables hide-variable
@@ -1802,3 +1802,170 @@
 		(remove-local-bindings! ls)
 		(debugging 'p "moving liftables to toplevel...")
 		(reconstruct! ls extra) ) ) ) ) ) ) ) )
+
+
+;;; Compiler macros (that operate in the expansion phase)
+
+(set! ##sys#compiler-syntax-hook
+  (lambda (name result)
+    (debugging 'x "applying compiler syntax" name)))
+
+(define (r-c-s names transformer #!optional (se '()))
+  (let ((t (cons (##sys#er-transformer transformer) se)))
+    (for-each
+     (lambda (name)
+       (##sys#put! name '##compiler#compiler-syntax t) )
+     (if (symbol? names) (list names) names) ) ) )
+
+(r-c-s 
+ '(for-each ##sys#for-each #%for-each)
+ (lambda (x r c)
+   (let ((%let (r 'let))
+	 (%if (r 'if))
+	 (%loop (r 'loop))
+	 (%lst (r 'lst))
+	 (%begin (r 'begin))
+	 (%pair? (r 'pair?)))
+     (if (= 3 (length x))
+	 `(,%let ,%loop ((,%lst ,(caddr x)))
+		 (,%if (,%pair? ,%lst)
+		       (,%begin
+			(,(cadr x) (##sys#slot ,%lst 0))
+			(##core#app ,%loop (##sys#slot ,%lst 1))) ) )
+	 x)))
+ `((pair? . ,(##sys#primitive-alias 'pair?))))
+
+(let ((env `((display . ,(##sys#primitive-alias 'display)) ;XXX clean this up
+	     (write . ,(##sys#primitive-alias 'write))
+	     (fprintf . ,(##sys#primitive-alias 'fprintf))
+	     (number->string . ,(##sys#primitive-alias 'number->string))
+	     (open-output-string . ,(##sys#primitive-alias 'open-output-string))
+	     (get-output-string . ,(##sys#primitive-alias 'get-output-string)) ) ) )
+  (r-c-s
+   '(sprintf #%sprintf format #%format)
+   (lambda (x r c)
+     (if (and (>= (length x) 2)
+	      (or (string? (cadr x))
+		  (and (list? (cadr x))
+		       (c (r 'quote) (caadr x))
+		       (string? (cadadr x)))))
+	 (let* ((out (gensym 'out))
+		(fstr (cadr x))
+		(code (compile-format-string 
+		       'sprintf out 
+		       (if (string? fstr) fstr (cadr fstr))
+		       (cddr x)
+		       r)))
+	   (if code
+	       `(,(r 'let) ((,out (,(r 'open-output-string))))
+		 ,code
+		 (,(r 'get-output-string) ,out))
+	       x))
+	 x))
+   env)
+  (r-c-s
+   '(fprintf #%fprintf)
+   (lambda (x r c)
+     (if (and (>= (length x) 3)
+	      (or (string? (caddr x))
+		  (and (list? (caddr x))
+		       (c (r 'quote) (caaddr x))
+		       (string? (cadr (caddr x))))))
+	 (let* ((fstr (caddr x))
+		(code (compile-format-string 
+		       'fprintf (cadr x) 
+		       (if (string? fstr) fstr (cadr fstr))
+		       (cdddr x)
+		       r)))
+	   (if code
+	       code
+	       x))
+	 x))
+   env)
+  (r-c-s
+   '(printf #%printf)
+   (lambda (x r c)
+     (if (and (>= (length x) 2)
+	      (or (string? (cadr x))
+		  (and (list? (cadr x))
+		       (c (r 'quote) (caadr x))
+		       (string? (cadadr x)))))
+	 (let* ((fstr (cadr x))
+		(code (compile-format-string 
+		       'printf '##sys#standard-output
+		       (if (string? fstr) fstr (cadr fstr))
+		       (cddr x)
+		       r)))
+	   (if code
+	       code
+	       x))
+	 x))
+   env))
+
+(define (compile-format-string func out fstr args r)
+  (call/cc
+   (lambda (return)
+     (define (fail msg . args)
+       (warning 
+	(sprintf "in format string ~s in call to `~a', ~?" fstr func msg args) )
+       (return #f))
+     (let ((code '())
+	   (index 0)
+	   (len (string-length fstr)) 
+	   (%display (r 'display))
+	   (%write (r 'write))
+	   (%out (r 'out))
+	   (%fprintf (r 'fprintf))
+	   (%let (r 'let))
+	   (%number->string (r 'number->string)))
+       (define (fetch)
+	 (let ((c (string-ref fstr index)))
+	   (set! index (fx+ index 1))
+	   c) )
+       (define (next)
+	 (if (null? args)
+	     (fail "too few arguments to formatted output procedure")
+	     (let ((x (car args)))
+	       (set! args (cdr args))
+	       x) ) )
+       (define (endchunk chunk)
+	 (when (pair? chunk)
+	   (push 
+	    (if (= 1 (length chunk))
+		`(##sys#write-char-0 ,(car chunk) ,%out)
+		`(,%display ,(reverse-list->string chunk) ,%out)))))
+       (define (push exp)
+	 (set! code (cons exp code)))
+       (let loop ((chunk '()))
+	 (cond ((>= index len)
+		(endchunk chunk)
+		`(,%let ((,%out ,out))
+			,@(reverse code)))
+	       (else
+		(let ((c (fetch)))
+		  (if (eq? c #\~)
+		      (let ((dchar (fetch)))
+			(endchunk chunk)
+			(case (char-upcase dchar)
+			  ((#\S) (push `(,%write ,(next) ,%out)))
+			  ((#\A) (push `(,%display ,(next) ,%out)))
+			  ((#\C) (push `(##sys#write-char-0 ,(next) ,%out)))
+			  ((#\B) (push `(,%display (,%number->string ,(next) 2) ,%out)))
+			  ((#\O) (push `(,%display (,%number->string ,(next) 8) ,%out)))
+			  ((#\X) (push `(,%display (,%number->string ,(next) 16) ,%out)))
+			  ((#\!) (push `(##sys#flush-output ,%out)))
+			  ((#\?)
+			   (let* ([fstr (next)]
+				  [lst (next)] )
+			     (push `(##sys#apply ,%fprintf ,%out ,fstr ,lst))))
+			  ((#\~) (push `(##sys#write-char-0 #\~ ,%out)))
+			  ((#\% #\N) (push `(##sys#write-char-0 #\newline ,%out)))
+			  (else
+			   (if (char-whitespace? dchar)
+			       (let skip ((c (fetch)))
+				 (if (char-whitespace? c)
+				     (skip (fetch))
+				     (set! index (sub1 index))))
+			       (fail "illegal format-string character `~c'" dchar) ) ) )
+			(loop '()) )
+		      (loop (cons c chunk)))))))))))

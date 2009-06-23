@@ -647,7 +647,7 @@ EOF
 	    [(fixnum? x)
 	     (fprintf out "exact integer ~S, #x~X, #o~O, #b~B" x x x x)
 	     (let ([code (integer->char x)])
-	       (when (fx< code #x10000) (fprintf out ", character ~S" code)) )
+	       (when (fx< x #x10000) (fprintf out ", character ~S" code)) )
 	     (##sys#write-char-0 #\newline ##sys#standard-output) ]
 	    [(eq? x (##sys#slot '##sys#arbitrary-unbound-symbol 0))
 	     (fprintf out "unbound value~%") ]

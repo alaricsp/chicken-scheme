@@ -322,15 +322,17 @@
 			#t) ) ]
 		    ((and cs? (symbol? head2) (##sys#get head2 '##compiler#compiler-syntax)) =>
 		     (lambda (cs)
-		       (dc "applying compiler syntax for `" head2 "' ...")
 		       (let ((result (call-handler head (car cs) exp (cdr cs) #t)))
-			 (if (eq? result exp)
-			     (expand head exp head2)
-			     (loop result)))))
+			 (cond ((eq? result exp) (expand head exp head2))
+			       (else
+				(when ##sys#compiler-syntax-hook
+				  (##sys#compiler-syntax-hook head result))
+				(loop result))))))
 		    [else (expand head exp head2)] ) )
 	    (values exp #f) ) )
       (values exp #f) ) ) )
 
+(define ##sys#compiler-syntax-hook #f)
 (define ##sys#enable-runtime-macros #f)
 
 (define (##sys#module-rename sym prefix)

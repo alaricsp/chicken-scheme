@@ -281,12 +281,11 @@ CSI ?= csi$(EXE)
 
 CHICKEN_OPTIONS = -no-trace -optimize-level 2 -include-path . -include-path $(SRCDIR)
 ifdef DEBUGBUILD
-CHICKEN_OPTIONS += -feature debugbuild
+CHICKEN_OPTIONS += -feature debugbuild -scrutinize -types $(SRCDIR)types.db -debug x
 endif
 CHICKEN_LIBRARY_OPTIONS = $(CHICKEN_OPTIONS) -explicit-use
 CHICKEN_PROGRAM_OPTIONS = $(CHICKEN_OPTIONS) -no-lambda-info -inline -local
 CHICKEN_COMPILER_OPTIONS = $(CHICKEN_PROGRAM_OPTIONS) -extend private-namespace.scm
-CHICKEN_SCRUTINY_OPTIONS = -types $(SRCDIR)types.db -analyze-only -scrutinize -ignore-repository
 CHICKEN_UNSAFE_OPTIONS = -unsafe -no-lambda-info
 CHICKEN_DYNAMIC_OPTIONS = $(CHICKEN_OPTIONS) -feature chicken-compile-shared -dynamic
 CHICKEN_IMPORT_LIBRARY_OPTIONS = $(CHICKEN_DYNAMIC_OPTIONS)
