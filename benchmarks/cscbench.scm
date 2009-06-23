@@ -101,7 +101,7 @@
   (dflush "\nCFLAGS:\n")
   (system* "echo `csc -cflags`")
   (display "\nRunning benchmarks ...\n\n  (averaging over 5 runs, dropping highest and lowest, binaries are statically linked and stripped)\n")
-  (display "\n                     (runtime)                      (code size)\n")
+  (display "\n                     (runtime)                                  (code size)\n")
   (display "\n                     base       fast     unsafe        max      base      fast    unsafe       max")
   (display "\n                  ----------------------------------------------------------------------------------\n")
   (let ((sum-base 0.0)
