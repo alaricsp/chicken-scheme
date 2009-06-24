@@ -1258,12 +1258,12 @@
   ;; Process visited definitions and main expression:
   (walk 
    `(,(macro-alias 'begin '())
-      ,@(let ([p (reverse pending-canonicalizations)])
-	  (set! pending-canonicalizations '())
-	  p)
-      ,(begin
-	 (set! extended-bindings (append internal-bindings extended-bindings))
-	 exp) )
+     ,@(let ([p (reverse pending-canonicalizations)])
+	 (set! pending-canonicalizations '())
+	 p)
+     ,(begin
+	(set! extended-bindings (append internal-bindings extended-bindings))
+	exp) )
    '() (##sys#current-environment)
    #f) )
 

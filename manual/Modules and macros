@@ -44,6 +44,9 @@ is expanded into
 in allowing the ellipsis identifier to be user-defined by passing it as the first
 argument to the {{syntax-rules}} form.
 
+The effect of destructively modifying the s-expression passed to a
+transformer procedure is undefined.
+
 
 ==== define-compiled-syntax
 

@@ -45,7 +45,7 @@
   target-initial-heap-size postponed-initforms
   current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
   rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used
-  broken-constant-nodes inline-substitutions-enabled
+  broken-constant-nodes inline-substitutions-enabled compiler-syntax-statistics
   emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
   direct-call-ids foreign-type-table first-analysis emit-closure-info
   initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
@@ -485,6 +485,11 @@
 			     '() )
 			 '((##core#undefined))) ] )
 
+	     (when (and (debugging 'x "applied compiler syntax:")
+			(pair? compiler-syntax-statistics))
+	       (for-each 
+		(lambda (cs) (printf "  ~a\t\t~a~%" (car cs) (cdr cs)))
+		compiler-syntax-statistics))
    	     (when (debugging '|N| "real name table:")
 	       (display-real-name-table) )
 	     (when (debugging 'n "line number database:")

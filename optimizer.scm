@@ -58,7 +58,7 @@
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
-  units-used-by-default words-per-flonum rewrite inline-locally
+  units-used-by-default words-per-flonum rewrite inline-locally compiler-syntax-statistics
   parameter-limit eq-inline-operator optimizable-rest-argument-operators
   membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
   make-random-name final-foreign-type inline-max-size simplified-ops
@@ -1806,9 +1806,13 @@
 
 ;;; Compiler macros (that operate in the expansion phase)
 
+(define compiler-syntax-statistics '())
+
 (set! ##sys#compiler-syntax-hook
   (lambda (name result)
-    (debugging 'x "applying compiler syntax" name)))
+    (let ((a (alist-ref name compiler-syntax-statistics eq? 0)))
+      (set! compiler-syntax-statistics
+	(alist-update! name (add1 a) compiler-syntax-statistics)))))
 
 (define (r-c-s names transformer #!optional (se '()))
   (let ((t (cons (##sys#er-transformer transformer) se)))
@@ -1844,39 +1848,26 @@
   (r-c-s
    '(sprintf #%sprintf format #%format)
    (lambda (x r c)
-     (if (and (>= (length x) 2)
-	      (or (string? (cadr x))
-		  (and (list? (cadr x))
-		       (c (r 'quote) (caadr x))
-		       (string? (cadadr x)))))
-	 (let* ((out (gensym 'out))
-		(fstr (cadr x))
-		(code (compile-format-string 
-		       'sprintf out 
-		       (if (string? fstr) fstr (cadr fstr))
-		       (cddr x)
-		       r)))
-	   (if code
-	       `(,(r 'let) ((,out (,(r 'open-output-string))))
-		 ,code
-		 (,(r 'get-output-string) ,out))
-	       x))
-	 x))
+     (let* ((out (gensym 'out))
+	    (code (compile-format-string 
+		   'sprintf out 
+		   x
+		   (cdr x)
+		   r)))
+       (if code
+	   `(,(r 'let) ((,out (,(r 'open-output-string))))
+	     ,code
+	     (,(r 'get-output-string) ,out))
+	   x)))
    env)
   (r-c-s
    '(fprintf #%fprintf)
    (lambda (x r c)
-     (if (and (>= (length x) 3)
-	      (or (string? (caddr x))
-		  (and (list? (caddr x))
-		       (c (r 'quote) (caaddr x))
-		       (string? (cadr (caddr x))))))
-	 (let* ((fstr (caddr x))
-		(code (compile-format-string 
-		       'fprintf (cadr x) 
-		       (if (string? fstr) fstr (cadr fstr))
-		       (cdddr x)
-		       r)))
+     (if (>= (length x) 3)
+	 (let ((code (compile-format-string 
+		      'fprintf (cadr x) 
+		      x (cddr x)
+		      r)))
 	   (if code
 	       code
 	       x))
@@ -1885,87 +1876,93 @@
   (r-c-s
    '(printf #%printf)
    (lambda (x r c)
-     (if (and (>= (length x) 2)
-	      (or (string? (cadr x))
-		  (and (list? (cadr x))
-		       (c (r 'quote) (caadr x))
-		       (string? (cadadr x)))))
-	 (let* ((fstr (cadr x))
-		(code (compile-format-string 
-		       'printf '##sys#standard-output
-		       (if (string? fstr) fstr (cadr fstr))
-		       (cddr x)
-		       r)))
-	   (if code
-	       code
-	       x))
-	 x))
+     (let ((code (compile-format-string 
+		  'printf '##sys#standard-output
+		  x (cdr x)
+		  r)))
+       (if code
+	   code
+	   x)))
    env))
 
-(define (compile-format-string func out fstr args r)
+(define (compile-format-string func out x args r)
   (call/cc
    (lambda (return)
-     (define (fail msg . args)
-       (warning 
-	(sprintf "in format string ~s in call to `~a', ~?" fstr func msg args) )
-       (return #f))
-     (let ((code '())
-	   (index 0)
-	   (len (string-length fstr)) 
-	   (%display (r 'display))
-	   (%write (r 'write))
-	   (%out (r 'out))
-	   (%fprintf (r 'fprintf))
-	   (%let (r 'let))
-	   (%number->string (r 'number->string)))
-       (define (fetch)
-	 (let ((c (string-ref fstr index)))
-	   (set! index (fx+ index 1))
-	   c) )
-       (define (next)
-	 (if (null? args)
-	     (fail "too few arguments to formatted output procedure")
-	     (let ((x (car args)))
-	       (set! args (cdr args))
-	       x) ) )
-       (define (endchunk chunk)
-	 (when (pair? chunk)
-	   (push 
-	    (if (= 1 (length chunk))
-		`(##sys#write-char-0 ,(car chunk) ,%out)
-		`(,%display ,(reverse-list->string chunk) ,%out)))))
-       (define (push exp)
-	 (set! code (cons exp code)))
-       (let loop ((chunk '()))
-	 (cond ((>= index len)
-		(endchunk chunk)
-		`(,%let ((,%out ,out))
-			,@(reverse code)))
-	       (else
-		(let ((c (fetch)))
-		  (if (eq? c #\~)
-		      (let ((dchar (fetch)))
-			(endchunk chunk)
-			(case (char-upcase dchar)
-			  ((#\S) (push `(,%write ,(next) ,%out)))
-			  ((#\A) (push `(,%display ,(next) ,%out)))
-			  ((#\C) (push `(##sys#write-char-0 ,(next) ,%out)))
-			  ((#\B) (push `(,%display (,%number->string ,(next) 2) ,%out)))
-			  ((#\O) (push `(,%display (,%number->string ,(next) 8) ,%out)))
-			  ((#\X) (push `(,%display (,%number->string ,(next) 16) ,%out)))
-			  ((#\!) (push `(##sys#flush-output ,%out)))
-			  ((#\?)
-			   (let* ([fstr (next)]
-				  [lst (next)] )
-			     (push `(##sys#apply ,%fprintf ,%out ,fstr ,lst))))
-			  ((#\~) (push `(##sys#write-char-0 #\~ ,%out)))
-			  ((#\% #\N) (push `(##sys#write-char-0 #\newline ,%out)))
-			  (else
-			   (if (char-whitespace? dchar)
-			       (let skip ((c (fetch)))
-				 (if (char-whitespace? c)
-				     (skip (fetch))
-				     (set! index (sub1 index))))
-			       (fail "illegal format-string character `~c'" dchar) ) ) )
-			(loop '()) )
-		      (loop (cons c chunk)))))))))))
+     (and (>= (length args) 1)
+	  (or (string? (car args))
+	      (and (list? (car args))
+		   (c (r 'quote) (caar args))
+		   (string? (cadar args))))
+	  (let ((fstr (if (string? (car args)) (car args) (cadar args)))
+		(args (cdr args)))
+	    (define (fail ret? msg . args)
+	      (let ((ln (get-line x)))
+		(compiler-warning 
+		 'syntax
+		 "(~a) in format string ~s~a, ~?" 
+		 func fstr 
+		 (if ln (sprintf " in line ~a" ln) "")
+		 msg args) ) 
+	      (when ret? (return #f)))
+	    (let ((code '())
+		  (index 0)
+		  (len (string-length fstr)) 
+		  (%display (r 'display))
+		  (%write (r 'write))
+		  (%out (r 'out))
+		  (%fprintf (r 'fprintf))
+		  (%let (r 'let))
+		  (%number->string (r 'number->string)))
+	      (define (fetch)
+		(let ((c (string-ref fstr index)))
+		  (set! index (fx+ index 1))
+		  c) )
+	      (define (next)
+		(if (null? args)
+		    (fail #t "too few arguments to formatted output procedure")
+		    (let ((x (car args)))
+		      (set! args (cdr args))
+		      x) ) )
+	      (define (endchunk chunk)
+		(when (pair? chunk)
+		  (push 
+		   (if (= 1 (length chunk))
+		       `(##sys#write-char-0 ,(car chunk) ,%out)
+		       `(,%display ,(reverse-list->string chunk) ,%out)))))
+	      (define (push exp)
+		(set! code (cons exp code)))
+	      (let loop ((chunk '()))
+		(cond ((>= index len)
+		       (unless (null? args)
+			 (fail #f "too many arguments to formatted output procedure"))
+		       (endchunk chunk)
+		       `(,%let ((,%out ,out))
+			       ,@(reverse code)))
+		      (else
+		       (let ((c (fetch)))
+			 (if (eq? c #\~)
+			     (let ((dchar (fetch)))
+			       (endchunk chunk)
+			       (case (char-upcase dchar)
+				 ((#\S) (push `(,%write ,(next) ,%out)))
+				 ((#\A) (push `(,%display ,(next) ,%out)))
+				 ((#\C) (push `(##sys#write-char-0 ,(next) ,%out)))
+				 ((#\B) (push `(,%display (,%number->string ,(next) 2) ,%out)))
+				 ((#\O) (push `(,%display (,%number->string ,(next) 8) ,%out)))
+				 ((#\X) (push `(,%display (,%number->string ,(next) 16) ,%out)))
+				 ((#\!) (push `(##sys#flush-output ,%out)))
+				 ((#\?)
+				  (let* ([fstr (next)]
+					 [lst (next)] )
+				    (push `(##sys#apply ,%fprintf ,%out ,fstr ,lst))))
+				 ((#\~) (push `(##sys#write-char-0 #\~ ,%out)))
+				 ((#\% #\N) (push `(##sys#write-char-0 #\newline ,%out)))
+				 (else
+				  (if (char-whitespace? dchar)
+				      (let skip ((c (fetch)))
+					(if (char-whitespace? c)
+					    (skip (fetch))
+					    (set! index (sub1 index))))
+				      (fail #t "illegal format-string character `~c'" dchar) ) ) )
+			       (loop '()) )
+			     (loop (cons c chunk)))))))))))))
