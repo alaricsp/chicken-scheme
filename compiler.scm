@@ -142,6 +142,7 @@
 ; (define-syntax (<symbol> . <llist>) <expr> ...)
 ; (define-compiled-syntax <symbol> <expr>)
 ; (define-compiled-syntax (<symbol> . <llist>) <expr> ...)
+; (##core#define-compiler-syntax <symbol> <expr>)
 ; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
 
 ; - Core language:
@@ -744,7 +745,7 @@
 			 #f se)
 			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
 			       (body (if (pair? (cadr x))
-					 `(,(macro-alias 'lambda se) ,(cdadr x) ,@(cddr x))
+					 `(##core#lambda ,(cdadr x) ,@(cddr x))
 					 (caddr x)))
 			       (name (lookup var se)))
 			  (##sys#register-syntax-export name (##sys#current-module) body)
@@ -770,7 +771,7 @@
 			 #f se)
 			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
 			       (body (if (pair? (cadr x))
-					 `(,(macro-alias 'lambda se) ,(cdadr x) ,@(cddr x))
+					 `(##core#lambda ,(cdadr x) ,@(cddr x))
 					 (caddr x)))
 			       (name (lookup var se)))
 			  (##sys#extend-macro-environment
@@ -785,6 +786,18 @@
 			     (##sys#er-transformer
 			      ,body)) ;*** possibly wrong se?
 			   e se dest)))
+
+		       ((##core#define-compiler-syntax)
+			(let* ((var (cadr x))
+			       (body (caddr x))
+			       (name (##sys#strip-syntax var se #t)))
+			  (##sys#put! 
+			   name
+			   '##compiler#compiler-syntax
+			   (cons 
+			    (##sys#er-transformer (eval/meta body))
+			    (##sys#current-environment)))
+			  (walk '(##core#undefined) e se dest)) )
 
 		       ((##core#module)
 			(let* ((name (lookup (cadr x) se))
@@ -875,7 +888,7 @@
 			      body)))))
 
 		       ((##core#named-lambda)
-			(walk `(,(macro-alias 'lambda se) ,@(cddr x)) e se (cadr x)) )
+			(walk `(##core#lambda ,@(cddr x)) e se (cadr x)) )
 
 		       ((##core#loop-lambda)
 			(let* ([vars (cadr x)]
@@ -1022,7 +1035,7 @@
 				    (hide-variable arg)
 				    (hide-variable ret)
 				    (walk
-				     `(,(macro-alias 'begin se)
+				     `(##core#begin
 					(define ,arg ,(first conv))
 					(define 
 					 ,ret 
@@ -1064,7 +1077,7 @@
 				       `(##core#inline_allocate
 					 ("C_a_i_bytevector" ,(+ 2 size))
 					 ',size)) ) )
-			       (,(macro-alias 'begin se)
+			       (##core#begin
 				,@(if init
 				      `((##core#set! ,alias ,init))
 				      '() )
@@ -1089,7 +1102,7 @@
 				       (if (collapsable-literal? valexp)
 					   valexp
 					   (eval
-					    `(,(macro-alias 'let se)
+					    `(##core#let
 					      ,defconstant-bindings ,valexp)) ) ) ] )
 			   (set! constants-used #t)
 			   (set! defconstant-bindings (cons (list name `',val) defconstant-bindings))
@@ -1106,7 +1119,7 @@
 
 			((##core#declare)
 			 (walk
-			  `(,(macro-alias 'begin se)
+			  `(##core#begin
 			     ,@(map (lambda (d)
 				      (process-declaration d se))
 				    (cdr x) ) )
@@ -1133,7 +1146,7 @@
 			       ,@(mapwalk args e se)
 			       ,(walk `(##core#lambda 
 					,vars
-					(,(macro-alias 'let se)
+					(##core#let
 					 ,(let loop ([vars vars] [types atypes])
 					    (if (null? vars)
 						'()
@@ -1147,7 +1160,7 @@
 						     type) )
 						   (loop (cdr vars) (cdr types)) ) ) ) )
 					 ,(foreign-type-convert-argument
-					   `(,(macro-alias 'let se)
+					   `(##core#let
 					     ()
 					     ,@(cond
 						((member 
@@ -1157,7 +1170,7 @@
 						    nonnull-unsigned-c-string
 						    nonnull-c-string))
 						 `((##sys#make-c-string
-						    (,(macro-alias 'let se)
+						    (##core#let
 						     () ,@(cddr lam)))))
 						((member 
 						  rtype
@@ -1177,9 +1190,8 @@
 						    (const unsigned-c-string)
 						    unsigned-c-string
 						    (const c-string)) )
-						 `((,(macro-alias 'let se)
-						    ((r (,(macro-alias 'let se)
-							 () ,@(cddr lam))))
+						 `((##core#let
+						    ((r (##core#let () ,@(cddr lam))))
 						    (,(macro-alias 'and se)
 						     r 
 						     (##sys#make-c-string r)) ) ) )
@@ -1236,12 +1248,12 @@
 	     (##sys#check-syntax 'lambda lexp '(_ lambda-list . #(_ 1)) #f se)
 	     (let ([llist (cadr lexp)])
 	       (if (and (proper-list? llist) (= (llist-length llist) (length args)))
-		   (walk `(,(macro-alias 'let se)
+		   (walk `(##core#let
 			   ,(map list llist args) ,@(cddr lexp)) 
 			 e se dest)
 		   (let ((var (gensym 't)))
 		     (walk
-		      `(,(macro-alias 'let se)
+		      `(##core#let
 			((,var ,(car x)))
 			(,var ,@(cdr x)) )
 		      e se dest) ) ) ) ) )
@@ -1257,7 +1269,7 @@
   (##sys#clear-trace-buffer)
   ;; Process visited definitions and main expression:
   (walk 
-   `(,(macro-alias 'begin '())
+   `(##core#begin
      ,@(let ([p (reverse pending-canonicalizations)])
 	 (set! pending-canonicalizations '())
 	 p)

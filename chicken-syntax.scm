@@ -1067,7 +1067,7 @@
       (,(r 'define) ,@(cdr form))))))
 
 
-;;; Just for backwards compatibility
+;;; use
 
 (##sys#extend-macro-environment
  'use '()
@@ -1075,6 +1075,18 @@
   (lambda (x r c)
     (##sys#check-syntax 'use x '(_ . #(_ 0)))
     `(##core#require-extension ,(cdr x) #t))))
+
+
+;;; compiler syntax
+
+(##sys#extend-macro-environment
+ 'define-compiler-syntax '()
+ (##sys#er-transformer
+  (syntax-rules ()
+    ((_ (name . llist) body ...)
+     (define-compiler-syntax name (lambda llist body ...)))
+    ((_ name transformer)
+     (##core#define-compiler-syntax name transformer)))))
 
 
 ;;; Just in case someone forgets

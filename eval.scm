@@ -632,6 +632,9 @@
 			     (##sys#er-transformer (eval/meta body)))
 			    (compile '(##core#undefined) e #f tf cntr se) ) )
 
+			 ((##core#define-compiler-syntax)
+			  (compile '(##core#undefined) e #f tf cntr se))
+
 			 ((##core#module)
 			  (let* ((name (rename (cadr x) se))
 				 (exports 
