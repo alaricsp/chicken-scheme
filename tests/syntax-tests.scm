@@ -352,7 +352,7 @@
   (c:print "ok")
   (c:condition-case 
    (c:abort "ugh")
-   (ex () (c:print "aborted"))))
+   (ex () (c:print "caught"))))
 
 (module prefixed-self-reference3 (a)
   (import (prefix scheme s.) (prefix chicken c.))
@@ -363,3 +363,8 @@
 (module prefixed-self-reference4 (a)
   (import (prefix scheme s.))
   (s.define (a x y) (s.and x y)))
+
+
+;;; canonicalization of body captures 'begin (reported by Abdulaziz Ghuloum)
+
+(let ((begin (lambda (x y) (bomb)))) 1 2)

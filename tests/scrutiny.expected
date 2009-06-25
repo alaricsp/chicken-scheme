@@ -7,15 +7,15 @@ Warning: in local procedure `c',
   in toplevel procedure `a':
   expected value of type boolean in conditional but were given a value of type `number' which is always true:
 
-(if x10 '1 '2)
+(if x7 '1 '2)
 
 Warning: in toplevel procedure `foo':
   branches in conditional expression differ in the number of results:
 
-(if x14 (values '1 '2) (values '1 '2 (+ ...)))
+(if x10 (values '1 '2) (values '1 '2 (+ ...)))
 
 Warning: at toplevel:
-  expected argument #2 of type `number' in procedure call to `bar17' (line 18), but where given an argument of type `symbol'
+  expected argument #2 of type `number' in procedure call to `bar12' (line 18), but where given an argument of type `symbol'
 
 Warning: at toplevel:
   expected in procedure call to `pp' (line 20) 1 argument, but where given 0 arguments
@@ -27,7 +27,7 @@ Warning: at toplevel:
   expected in argument #1 of procedure call `(print (values))' a single result, but were given zero results
 
 Warning: at toplevel:
-  expected in procedure call to `x23' (line 26) a value of type `(procedure () *)', but were given a value of type `fixnum'
+  expected in procedure call to `x17' (line 26) a value of type `(procedure () *)', but were given a value of type `fixnum'
 
 Warning: at toplevel:
   expected argument #1 of type `number' in procedure call to `+' (line 28), but where given an argument of type `symbol'

@@ -622,7 +622,7 @@
 							    #f)) ) ) 
 					(compiler-warning 
 					 'ext "extension `~A' is currently not installed" id))
-				      `(begin ,exp ,(loop (cdr ids))) ) ) ) )
+				      `(##core#begin ,exp ,(loop (cdr ids))) ) ) ) )
 			    e se dest) ) )
 
 			((let ##core#let)
@@ -968,8 +968,8 @@
 			 (eval/meta (cadr x))
 			 '(##core#undefined) )
 
-			((begin) 
-			 (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
+			((begin ##core#begin) 
+			 (##sys#check-syntax 'begin x '(_ . #(_ 0)) #f se)
 			 (if (pair? (cdr x))
 			     (canonicalize-begin-body
 			      (let fold ([xs (cdr x)])

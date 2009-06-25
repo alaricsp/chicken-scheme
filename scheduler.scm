@@ -86,15 +86,9 @@ EOF
   (declare (unsafe)) ] )
 
 
-(cond-expand
- (hygienic-macros
-  (define-syntax dbg
-    (syntax-rules ()
-      ((_ . _) #f))) )
- (else
-  (define-macro (dbg . args) #f)
-  #;(define-macro (dbg . args)
-  `(print "DBG: " ,@args) ) ) )
+(define-syntax dbg
+  (syntax-rules ()
+    ((_ . _) #f))) 
 
 
 (define (##sys#schedule)

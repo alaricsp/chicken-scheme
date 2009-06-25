@@ -26,73 +26,52 @@
 
 (cond-expand
  (unsafe
-  (eval-when (compile)
-    (cond-expand
-     (hygienic-macros
-      (define-syntax ##sys#check-closure
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-inexact
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-range
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-pair
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-blob
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-list
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-symbol
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-string
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-char
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-exact
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-port
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-port-mode
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-port*
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-number
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-special
-	(syntax-rules ()
-	  ((_ . _) (##core#undefined))))
-      (define-syntax ##sys#check-byte-vector
-	(syntax-rules ()
-	  ((_ . _) '(##core#undefined)) ) ) )
-     (else				;***
-      (define-macro (##sys#check-closure . _) '(##core#undefined))
-      (define-macro (##sys#check-inexact . _) '(##core#undefined))
-      (define-macro (##sys#check-structure . _) '(##core#undefined))
-      (define-macro (##sys#check-range . _) '(##core#undefined))
-      (define-macro (##sys#check-pair . _) '(##core#undefined))
-      (define-macro (##sys#check-list . _) '(##core#undefined))
-      (define-macro (##sys#check-symbol . _) '(##core#undefined))
-      (define-macro (##sys#check-string . _) '(##core#undefined))
-      (define-macro (##sys#check-blob . _) '(##core#undefined))
-      (define-macro (##sys#check-char . _) '(##core#undefined))
-      (define-macro (##sys#check-exact . _) '(##core#undefined))
-      (define-macro (##sys#check-port . _) '(##core#undefined))
-      (define-macro (##sys#check-port* . _) '(##core#undefined))
-      (define-macro (##sys#check-port-mode . _) '(##core#undefined))
-      (define-macro (##sys#check-special . _) '(##core#undefined))
-      (define-macro (##sys#check-number . _) '(##core#undefined))
-      (define-macro (##sys#check-byte-vector . _) '(##core#undefined)) ) ) ) )
+  (define-syntax ##sys#check-closure
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-inexact
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-range
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-pair
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-blob
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-list
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-symbol
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-string
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-char
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-exact
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-port
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-port-mode
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-port*
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-number
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-special
+    (syntax-rules ()
+      ((_ . _) (##core#undefined))))
+  (define-syntax ##sys#check-byte-vector
+    (syntax-rules ()
+      ((_ . _) '(##core#undefined)) ) ))
  (else))

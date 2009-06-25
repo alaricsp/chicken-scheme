@@ -376,8 +376,8 @@
 					  (compile '(##core#undefined) e #f tf cntr se) ) ] )
 			    (lambda (v) (if (##core#app test v) (##core#app cns v) (##core#app alt v))) ) ]
 
-			 [(begin)
-			  (##sys#check-syntax 'begin x '(begin . #(_ 0)) #f se)
+			 [(begin ##core#begin)
+			  (##sys#check-syntax 'begin x '(_ . #(_ 0)) #f se)
 			  (let* ([body (##sys#slot x 1)]
 				 [len (length body)] )
 			    (case len
@@ -389,7 +389,7 @@
 			      [else
 			       (let* ([x1 (compile (##sys#slot body 0) e #f tf cntr se)]
 				      [x2 (compile (cadr body) e #f tf cntr se)] 
-				      [x3 (compile `(,(rename 'begin se) ,@(##sys#slot (##sys#slot body 1) 1)) e #f tf cntr se)] )
+				      [x3 (compile `(##core#begin ,@(##sys#slot (##sys#slot body 1) 1)) e #f tf cntr se)] )
 				 (lambda (v) (##core#app x1 v) (##core#app x2 v) (##core#app x3 v)) ) ] ) ) ]
 
 			 [(set! ##core#set!)
@@ -1192,10 +1192,10 @@
 	   (cut lset-adjoin eq? <> id) 
 	   (lambda () (list id)))))
       (define (impform x id builtin?)
-	`(begin
+	`(##core#begin
 	   ,x
 	   ,@(if (and imp? (or (not builtin?) (##sys#current-module)))
-		 `((import ,id))
+		 `((import ,id))	;XXX make hygienic
 		 '())))
       (define (doit id)
 	(cond ((or (memq id builtin-features)
@@ -1208,19 +1208,19 @@
 		(impform
 		 (if comp?
 		     `(##core#declare (uses ,id))
-		     `(load-library ',id) )
+		     `(##sys#load-library ',id #f) )
 		 id #t)
 		#t) )
 	      ((memq id ##sys#explicit-library-modules)
 	       (let* ((info (##sys#extension-information id 'require-extension))
 		      (s (assq 'syntax info)))
 		 (values
-		  `(begin
+		  `(##core#begin
 		     ,@(if s `((##core#require-for-syntax ',id)) '())
 		     ,(impform
 		       (if comp?
 			   `(##core#declare (uses ,id)) 
-			   `(load-library ',id) )
+			   `(##sys#load-library ',id #f) )
 		       id #f))
 		  #t) ) )
 	      (else
@@ -1231,7 +1231,7 @@
 			  (when s (add-req id #t))
 			  (values 
 			   (impform
-			    `(begin
+			    `(##core#begin
 			       ,@(if s `((##core#require-for-syntax ',id)) '())
 			       ,@(if (and (not rr) s)
 				     '()
@@ -1258,7 +1258,7 @@
 				    (exps '())
 				    (f #f) )
 			   (if (null? specs)
-			       (values `(begin ,@(reverse exps)) f)
+			       (values `(##core#begin ,@(reverse exps)) f)
 			       (let-values (((exp fi) (##sys#do-the-right-thing (car specs) comp? imp?)))
 				 (loop (cdr specs)
 				       (cons exp exps)

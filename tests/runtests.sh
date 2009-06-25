@@ -31,6 +31,11 @@ if test -n "$MSYSTEM"; then
     dos2unix scrutiny.out
 fi
 
+# this is sensitive to gensym-names, so make it optional
+if test \! -f scrutiny.expected; then
+    cp scrutiny.out scrutiny.expected
+fi
+
 diff -u scrutiny.out scrutiny.expected || exit 1
 
 echo "======================================== runtime tests ..."
