@@ -485,8 +485,8 @@
 			     '() )
 			 '((##core#undefined))) ] )
 
-	     (when (and (debugging 'x "applied compiler syntax:")
-			(pair? compiler-syntax-statistics))
+	     (when (and (pair? compiler-syntax-statistics)
+			(debugging 'x "applied compiler syntax:"))
 	       (for-each 
 		(lambda (cs) (printf "  ~a\t\t~a~%" (car cs) (cdr cs)))
 		compiler-syntax-statistics))

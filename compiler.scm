@@ -107,6 +107,7 @@
 ; ([##core#]lambda <variable> <body>)
 ; ([##core#]lambda ({<variable>}+ [. <variable>]) <body>)
 ; ([##core#]set! <variable> <exp>)
+; ([##core#]begin <exp> ...)
 ; (##core#named-lambda <name> <llist> <body>)
 ; (##core#loop-lambda <llist> <body>)
 ; (##core#undefined)
@@ -136,7 +137,7 @@
 ; (##core#require-for-syntax <exp> ...)
 ; (##core#require-extension (<id> ...) <bool>)
 ; (##core#app <exp> {<exp>})
-; (##coresyntax <exp>)
+; ([##core#]syntax <exp>)
 ; (<exp> {<exp>})
 ; (define-syntax <symbol> <expr>)
 ; (define-syntax (<symbol> . <llist>) <expr> ...)
@@ -567,7 +568,7 @@
 				'(##core#undefined)
 				(walk (cadddr x) e se #f) ) ) )
 
-			((quote syntax)
+			((quote syntax ##core#syntax)
 			 (##sys#check-syntax name x '(_ _) #f se)
 			 `(quote ,(##sys#strip-syntax (cadr x))))
 
@@ -791,13 +792,14 @@
 			(let* ((var (cadr x))
 			       (body (caddr x))
 			       (name (##sys#strip-syntax var se #t)))
-			  (##sys#put! 
-			   name
-			   '##compiler#compiler-syntax
-			   (cons 
-			    (##sys#er-transformer (eval/meta body))
-			    (##sys#current-environment)))
-			  (walk '(##core#undefined) e se dest)) )
+			  (walk
+			   `(##sys#put! 
+			     (##core#syntax ,name)
+			     '##compiler#compiler-syntax
+			     (##sys#cons
+			      (##sys#er-transformer ,body)
+			      (##sys#current-environment)))
+			   e se dest)))
 
 		       ((##core#module)
 			(let* ((name (lookup (cadr x) se))
