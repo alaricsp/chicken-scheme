@@ -8,14 +8,16 @@ expression package used is {{irregex}}
 written by Alex Shinn. Irregex supports most Perl-extensions and is
 written completely in Scheme.
 
-This library unit exposes two APIs: the one listed below and the
-original irregex API. To use the latter, import from the {{irregex}} module.
+This library unit exposes two APIs: the standard Chicken API described below, and the
+original irregex API.  You may use either API or both:
+
+ (require-library regex)   ; required for either API, or both
+ (import regex)            ; import the Chicken regex API
+ (import irregex)          ; import the original irregex API
 
 Regular expressions may be either POSIX-style strings (with most PCRE
 extensions) or an SCSH-style SRE. There is no {{(rx ...)}} syntax -
 just use normal Scheme lists, with quasiquote if you like.
-
-
 
 === grep
 

@@ -35,7 +35,11 @@ of kind {{(exn i/o file)}}.
 ===== open/wronly
 ===== open/rdwr
 ===== open/read
+Synonym for {{open/rdonly}}.
+
 ===== open/write
+Synonym for {{open/wronly}}.
+
 ===== open/creat
 ===== open/append
 ===== open/excl
@@ -278,11 +282,16 @@ Closes the input/output file with the file-descriptor {{FILENO}}.
 <procedure>(file-open FILENAME FLAGS [MODE])</procedure>
 
 Opens the file specified with the string {{FILENAME}} and open-flags
-{{FLAGS}} using the C function {{open()}}. On success a
-file-descriptor for the opened file is returned.  {{FLAGS}}
-should be a bitmask containing one or more of the {{open/...}}
+{{FLAGS}} using the C function {{open(2)}}. On success a
+file-descriptor for the opened file is returned.
+
+{{FLAGS}} is a bitmask of {{open/...}}
 values '''or'''ed together using {{bitwise-ior}} (or simply added
-together).  The optional {{MODE}} should be a bitmask composed of one
+together).  You must provide exactly one of the access flags {{open/rdonly}}, {{open/wronly}}, or {{open/rdwr}}.  Additionally, you may provide zero or more creation flags ({{open/creat}}, {{open/excl}}, {{open/trunc}}, and {{open/noctty}}) and status flags (the remaining {{open/...}} values).  For example, to open a possibly new output file for appending:
+
+ (file-open "/tmp/hen.txt" (+ open/wronly open/append open/creat))
+
+The optional {{MODE}} should be a bitmask composed of one
 or more permission values like {{perm/irusr}} and is only relevant
 when a new file is created. The default mode is
 {{perm/irwxu | perm/irgrp | perm/iroth}}.
@@ -396,9 +405,13 @@ owner (as with {{file-owner}}), gid of owner, size (as with
 {{file-access-time}}, {{file-change-time}} and
 {{file-modification-time}}, device id, device type (for special file
 inode, blocksize and blocks allocated.  On Windows systems the last 4
-values are undefined.  If the optional argument {{LINK}} is given and
-not {{#f}}, then the file-statistics vector will be resolved for
-symbolic links (otherwise symbolic links are not resolved).
+values are undefined.
+
+By default, symbolic links are followed and
+the status of the referenced file is returned;
+however, if the optional argument {{LINK}} is given and
+not {{#f}}, the status of the link itself is returned.
+
 Note that for very large files, the {{file-size}} value may be an
 inexact integer.
 
@@ -1129,7 +1142,7 @@ Returns {{#t}} if {{PORT}} is connected to a terminal and
 Returns two values, the number of columns and rows of the
 current terminal window or {{0}}, {{0}} if the terminal
 size can not be obtained. On Windows, this procedure
-always returns {{0}, {{0}}.
+always returns {{0}}, {{0}}.
 
 
 === How Scheme procedures relate to UNIX C functions

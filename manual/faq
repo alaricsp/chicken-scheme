@@ -1,5 +1,5 @@
 [[toc:]]
-[[tags:faq]]
+[[tags:faq manual]]
 
 == FAQ
 
@@ -494,7 +494,7 @@ which point {{foo.scm}} will no longer be required).
 
 ==== Why is my program which uses regular expressions so slow?
 
-The regular expression engine has recently be replaced by [[alex shinn]]'s excellent
+The regular expression engine has recently be replaced by [[/users/alex shinn|alex shinn]]'s excellent
 {{irregex}} library, which is fully implemented in Scheme. Precompiling regular
 expressions to internal form is somewhat slower than with the old PCRE-based
 regex engine. It is advisable to use {{regexp}} to precompile regular expressions

@@ -761,7 +761,7 @@
 			       '(##core#undefined) )
 			   e se dest)) )
 
-		       ((define-compiled-syntax)
+		       ((define-compiled-syntax) ;XXX refactor with the one above
 			(##sys#check-syntax
 			 'define-compiled-syntax x
 			 (if (pair? (cadr x))

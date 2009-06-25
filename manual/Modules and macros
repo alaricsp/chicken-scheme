@@ -106,10 +106,11 @@ version of the {{let}} macro might be written as
       `((lambda ,vars ,@body)
         ,@inits)))
 
-This would not be hygienic, however.  A hygienic {{let}} macro must
-rename the identifier {{lambda}} to protect it from being captured by
-a local binding.  The renaming effectively creates an fresh alias for
-{{lambda}}, one that cannot be captured by any subsequent binding:
+This would not be hygienic, however.  A
+hygienic {{let}} macro must rename the identifier {{lambda}} to protect it
+from being captured by a local binding.  The renaming effectively
+creates a fresh alias for {{lambda}}, one that cannot be captured by
+any subsequent binding:
 
   (lambda (exp rename compare)
     (let ((vars (map car (cadr exp)))
@@ -138,8 +139,8 @@ predicate that takes the representations of two identifiers as its
 arguments and returns true if and only if they denote the same thing
 in the syntactic environment that will be used to expand the
 transformed macro application.  For example, the transformation
-procedure for a simplified version of the {{cond}} macro can be
-written as
+procedure for a simplified version of the {{cond}} macro can be written
+as
 
   (lambda (exp rename compare)
     (let ((clauses (cdr exp)))

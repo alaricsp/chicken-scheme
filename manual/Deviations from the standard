@@ -29,9 +29,6 @@ where R5RS requires
       (set! y tmp2)
       (cons x y) ) )
 
-[4.3] {{syntax-rules}} macros are not provided but available
-separately.
-
 [6.1] {{equal?}} compares all structured data recursively, while R5RS
 specifies that {{eqv?}} is used for data other than pairs, strings and
 vectors.

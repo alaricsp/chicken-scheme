@@ -1,10 +1,12 @@
 [[tags:manual]]
 
-[[image:http://www.call-with-current-continuation.org/chicken4.png]]
-
 == The CHICKEN User's Manual
 
-This is the user's manual for the Chicken Scheme compiler, version 4.0.8
+<nowiki>
+<img style="float:right; border-left:1px solid #ccc;border-bottom:1px solid #ccc;margin-left:1em;" src="http://www.call-with-current-continuation.org/chicken4.png" alt="Stylized picture of a chicken"/>
+</nowiki>
+
+This is the manual for Chicken Scheme, version 4.0.8.
 
 ; [[Getting started]] : What is CHICKEN and how do I use it?
 
