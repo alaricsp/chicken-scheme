@@ -1124,7 +1124,6 @@
 (char-set:lower-case (struct char-set))
 (char-set:printing (struct char-set))
 (char-set:punctuation (struct char-set))
-(char-set:s (struct char-set))
 (char-set:symbol (struct char-set))
 (char-set:title-case (struct char-set))
 (char-set:upper-case (struct char-set))

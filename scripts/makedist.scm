@@ -52,11 +52,15 @@
 (define (make-html)
   (unless (file-exists? "html")
     (create-directory "html"))
-  (for-each
-   (lambda (f)
-     (run (,(or (get-environment-variable "CSI") "csi") -s scripts/wiki2html.scm
-	   html ,f)))
-   (directory "manual")))
+  (run (,(or (get-environment-variable "CSI")
+	     (let ((this (car (argv))))
+	       (if (string=? "csi" (pathname-file this))
+		   this
+		   "csi")) )
+	-s scripts/wiki2html.scm
+	--outdir=html
+	,@(map (o qs (cut make-pathname "manual" <>))
+	       (directory "manual")))))
 
 (define *makeargs*
   (simple-args
