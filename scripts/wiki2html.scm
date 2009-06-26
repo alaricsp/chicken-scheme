@@ -1,6 +1,4 @@
 ;;;; wiki2html.scm - quick-and-dirty svnwiki->HTML conversion
-;
-; usage: wiki2html <INPUTFILE >OUTPUTFILE
 
 
 (load-relative "tools.scm")

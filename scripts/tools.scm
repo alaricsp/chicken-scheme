@@ -23,7 +23,8 @@
        (not (equal? (getenv "TERM") "dumb"))))
 
 (define *tty-width*
-  (or (and *tty* 
+  (or (and *tty*
+	   (not *windows-shell*)
 	   (with-input-from-pipe "stty size 2>/dev/null"
 	     (lambda () (read) (read))))
       72))
@@ -85,7 +86,7 @@
 		    [names (if (string? (car line))
 			       (list (car line))
 			       (car line))])
-	       (if (ormap match? names)
+	       (if (any match? names)
 		   line
 		   (loop (cdr lines))))]))))
 
@@ -95,18 +96,18 @@
 (define (check-spec spec)
   (and (or (list? spec) (form-error "specification is not a list" spec))
        (or (pair? spec) (form-error "specification is an empty list" spec))
-       (andmap
+       (every
 	(lambda (line)
 	  (and (or (and (list? line) (<= 2 (length line) 3))
 		   (form-error "list is not a list with 2 or 3 parts" line))
 	       (or (or (string? (car line))
 		       (and (list? (car line))
-			    (andmap string? (car line))))
+			    (every string? (car line))))
 		   (form-error "line does not start with a string or list of strings" line))
 	       (let ([name (car line)])
 		 (or (list? (cadr line))
 		     (line-error "second part of line is not a list" (cadr line) name)
-		     (andmap (lambda (dep)
+		     (every (lambda (dep)
 			       (or (string? dep)
 				   (form-error "dependency item is not a string" dep)))
 			     (cadr line)))
@@ -118,7 +119,7 @@
 (define (check-argv argv)
   (or (string? argv)
       (and (vector? argv)
-	   (andmap string? (vector->list argv)))
+	   (every string? (vector->list argv)))
       (error "argument is not a string or string vector" argv)))
 
 (define (make/proc/helper spec argv)
@@ -140,7 +141,7 @@
 				deps)
 		      (let ([reason
 			     (or (not date)
-				 (ormap (lambda (dep)
+				 (any (lambda (dep)
 					  (unless (file-exists? dep)
 					    (quit "dependancy ~a was not made~%" dep))
 					  (and (> (file-modification-time dep) date)

@@ -49,6 +49,15 @@
     (run (tar cfz ,(conc distname ".tar.gz") ,distname))
     (run (rm -fr ,distname)) ) )
 
+(define (make-html)
+  (unless (file-exists? "html")
+    (create-directory "html"))
+  (for-each
+   (lambda (f)
+     (run (,(or (get-environment-variable "CSI") "csi") -s scripts/wiki2html.scm
+	   html ,f)))
+   (directory "manual")))
+
 (define *makeargs*
   (simple-args
    (command-line-arguments)
@@ -57,4 +66,8 @@
      (exit 1))) )
 
 (run (,*make* -f ,(conc "Makefile." *platform*) distfiles ,@*makeargs*))
+
+(make-html)
+(run (cp misc/manual.css html))
+
 (release *release*)
