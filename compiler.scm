@@ -100,6 +100,7 @@
 ; (##core#global-ref <variable>)
 ; (quote <exp>)
 ; (if <exp> <exp> [<exp>])
+; ([##core#]syntax <exp>)
 ; ([##core#]let <variable> ({(<variable> <exp>)}) <body>)
 ; ([##core#]let ({(<variable> <exp>)}) <body>)
 ; ([##core#]letrec ({(<variable> <exp>)}) <body>)
@@ -144,6 +145,7 @@
 ; (define-compiled-syntax <symbol> <expr>)
 ; (define-compiled-syntax (<symbol> . <llist>) <expr> ...)
 ; (##core#define-compiler-syntax <symbol> <expr>)
+; (##core#let-compiler-syntax ((<symbol> <expr>) ...) <expr> ...)
 ; (##core#module <symbol> #t | (<name> | (<name> ...) ...) <body>)
 
 ; - Core language:
@@ -737,9 +739,9 @@
 			   (##sys#canonicalize-body (cddr x) se2 #t)
 			   e se2 dest)))
 			       
-		       ((define-syntax)
+		       ((define-syntax define-commpiled-syntax)
 			(##sys#check-syntax
-			 'define-syntax x
+			 (car x) x
 			 (if (pair? (cadr x))
 			     '(_ (variable . lambda-list) . #(_ 1))
 			     '(_ variable _) )
@@ -755,7 +757,8 @@
 			   (##sys#current-environment)
 			   (##sys#er-transformer (eval/meta body)))
 			  (walk
-			   (if ##sys#enable-runtime-macros
+			   (if (or ##sys#enable-runtime-macros
+				   (eq? 'define-compiled-syntax (car x)))
 			       `(##sys#extend-macro-environment
 				 ',var
 				 (##sys#current-environment)
@@ -763,43 +766,46 @@
 			       '(##core#undefined) )
 			   e se dest)) )
 
-		       ((define-compiled-syntax) ;XXX refactor with the one above
-			(##sys#check-syntax
-			 'define-compiled-syntax x
-			 (if (pair? (cadr x))
-			     '(_ (variable . lambda-list) . #(_ 1))
-			     '(_ variable _) )
-			 #f se)
-			(let* ((var (if (pair? (cadr x)) (caadr x) (cadr x)))
-			       (body (if (pair? (cadr x))
-					 `(##core#lambda ,(cdadr x) ,@(cddr x))
-					 (caddr x)))
-			       (name (lookup var se)))
-			  (##sys#extend-macro-environment
-			   name
-			   (##sys#current-environment)
-			   (##sys#er-transformer (eval/meta body)))
-			  (##sys#register-syntax-export name (##sys#current-module) body)
-			  (walk
-			   `(##sys#extend-macro-environment
-			     ',var
-			     (##sys#current-environment)
-			     (##sys#er-transformer
-			      ,body)) ;*** possibly wrong se?
-			   e se dest)))
-
 		       ((##core#define-compiler-syntax)
 			(let* ((var (cadr x))
 			       (body (caddr x))
 			       (name (##sys#strip-syntax var se #t)))
-			  (walk
+			   (##sys#put! 
+			    name '##compiler#compiler-syntax
+			    (##sys#cons
+			     (##sys#er-transformer (eval/meta body))
+			     (##sys#current-environment)))
+			  (##sys#register-meta-expression 
 			   `(##sys#put! 
 			     (##core#syntax ,name)
 			     '##compiler#compiler-syntax
 			     (##sys#cons
 			      (##sys#er-transformer ,body)
-			      (##sys#current-environment)))
-			   e se dest)))
+			      (##sys#current-environment))) )
+			  (walk '(##core#undefined) e se dest)))
+
+		       ((##core#let-compiler-syntax)
+			(let ((bs (map (lambda (b)
+					 (##sys#check-syntax 'let-compiler-syntax b '(symbol _))
+					 (let ((name (##sys#strip-syntax (car b) se #t)))
+					   (list 
+					    name 
+					    (cons (##sys#er-transformer (eval/meta (cadr x))) se)
+					    (##sys#get name '##compiler#compiler-syntax) ) ) )
+				       (cadr x))))
+			  (dynamic-wind	; this ain't thread safe
+			      (lambda ()
+				(for-each
+				 (lambda (b) (##sys#put! (car b) '##compiler#compiler-syntax (cadr b)))
+				 bs) )
+			      (lambda ()
+				(walk 
+				 (##sys#canonicalize-body (cddr x) se #t)
+				 e se dest) )
+			      (lambda ()
+				(for-each
+				 (lambda (b) (##sys#put! (car b) '##compiler#compiler-syntax (caddr b)))
+				 bs) ) ) ) )
 
 		       ((##core#module)
 			(let* ((name (lookup (cadr x) se))

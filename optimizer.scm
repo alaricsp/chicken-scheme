@@ -1843,6 +1843,7 @@
 	     (write . ,(##sys#primitive-alias 'write))
 	     (fprintf . ,(##sys#primitive-alias 'fprintf))
 	     (number->string . ,(##sys#primitive-alias 'number->string))
+	     (write-char . ,(##sys#primitive-alias 'write-char))
 	     (open-output-string . ,(##sys#primitive-alias 'open-output-string))
 	     (get-output-string . ,(##sys#primitive-alias 'get-output-string)) ) ) )
   (r-c-s
@@ -1909,6 +1910,7 @@
 		  (len (string-length fstr)) 
 		  (%display (r 'display))
 		  (%write (r 'write))
+		  (%write-char (r 'write-char))
 		  (%out (r 'out))
 		  (%fprintf (r 'fprintf))
 		  (%let (r 'let))
@@ -1927,7 +1929,7 @@
 		(when (pair? chunk)
 		  (push 
 		   (if (= 1 (length chunk))
-		       `(##sys#write-char-0 ,(car chunk) ,%out)
+		       `(,%write-char ,(car chunk) ,%out)
 		       `(,%display ,(reverse-list->string chunk) ,%out)))))
 	      (define (push exp)
 		(set! code (cons exp code)))
@@ -1946,7 +1948,7 @@
 			       (case (char-upcase dchar)
 				 ((#\S) (push `(,%write ,(next) ,%out)))
 				 ((#\A) (push `(,%display ,(next) ,%out)))
-				 ((#\C) (push `(##sys#write-char-0 ,(next) ,%out)))
+				 ((#\C) (push `(,%write-char ,(next) ,%out)))
 				 ((#\B) (push `(,%display (,%number->string ,(next) 2) ,%out)))
 				 ((#\O) (push `(,%display (,%number->string ,(next) 8) ,%out)))
 				 ((#\X) (push `(,%display (,%number->string ,(next) 16) ,%out)))
@@ -1955,8 +1957,8 @@
 				  (let* ([fstr (next)]
 					 [lst (next)] )
 				    (push `(##sys#apply ,%fprintf ,%out ,fstr ,lst))))
-				 ((#\~) (push `(##sys#write-char-0 #\~ ,%out)))
-				 ((#\% #\N) (push `(##sys#write-char-0 #\newline ,%out)))
+				 ((#\~) (push `(,write-char #\~ ,%out)))
+				 ((#\% #\N) (push `(,%write-char #\newline ,%out)))
 				 (else
 				  (if (char-whitespace? dchar)
 				      (let skip ((c (fetch)))

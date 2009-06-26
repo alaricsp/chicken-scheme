@@ -108,9 +108,7 @@
 	       (,%let ((,%tail (,%cdr ,%input)))
 		      (,%cond ,@(map process-rule rules)
 			      (,%else 
-			       (,%syntax-error
-				"no rule matches form"
-				,%input))))))
+			       (##sys#syntax-rules-mismatch ,%input))))))
 
   (define (process-rule rule)
     (if (and (pair? rule)

@@ -261,7 +261,11 @@
 				 (cdr r) ) )
 			  (copy r) ) ) ) ) )
 	     ex) )
-      (let ((exp2 (handler exp se dse)))
+      (let ((exp2
+	     (if cs
+		 (fluid-let ((##sys#syntax-rules-mismatch (lambda (input) exp))) ; a bit of a hack
+		   (handler exp se dse))
+		 (handler exp se dse))) )
 	(when (and (not cs) (eq? exp exp2))
 	  (##sys#syntax-error-hook
 	   (string-append
@@ -655,6 +659,9 @@
 
 (define syntax-error ##sys#syntax-error-hook)
 
+(define (##sys#syntax-rules-mismatch input)
+  (##sys#syntax-error-hook "no rule matches form" input))
+
 (define (get-line-number sexp)
   (and ##sys#line-number-database
        (pair? sexp)
@@ -1028,7 +1035,6 @@
  (##sys#er-transformer
   (lambda (form r c)
     (let ((body (cdr form))
-	  (%begin (r 'begin))
 	  (%let (r 'let))
 	  (%if (r 'if))
 	  (%=> (r '=>))
@@ -1041,7 +1047,7 @@
 	    (let ((clause (car clauses))
 		  (rclauses (cdr clauses)) )
 	      (##sys#check-syntax 'cond clause '#(_ 1))
-	      (cond ((c %else (car clause)) `(,%begin ,@(cdr clause)))
+	      (cond ((c %else (car clause)) `(##core#begin ,@(cdr clause)))
 		    ((null? (cdr clause)) `(,%or ,(car clause) ,(expand rclauses)))
 		    ((c %=> (cadr clause))
 		     (let ((tmp (r 'tmp)))
@@ -1059,7 +1065,7 @@
 				       (##sys#apply ,(cadddr clause) ,tmp)
 				       ,(expand rclauses) ) ) ) ) )
 		    (else `(,%if ,(car clause) 
-				 (,%begin ,@(cdr clause))
+				 (##core#begin ,@(cdr clause))
 				 ,(expand rclauses) ) ) ) ) ) ) ) ) ))
 
 (##sys#extend-macro-environment
@@ -1071,7 +1077,6 @@
     (let ((exp (cadr form))
 	  (body (cddr form)) )
       (let ((tmp (r 'tmp))
-	    (%begin (r 'begin))
 	    (%if (r 'if))
 	    (%or (r 'or))
 	    (%else (r 'else)))
@@ -1083,10 +1088,10 @@
 			(rclauses (cdr clauses)) )
 		    (##sys#check-syntax 'case clause '#(_ 1))
 		    (if (c %else (car clause))
-			`(,%begin ,@(cdr clause))
+			`(##core#begin ,@(cdr clause))
 			`(,%if (,%or ,@(##sys#map
 					(lambda (x) `(##sys#eqv? ,tmp ',x)) (car clause)))
-			       (,%begin ,@(cdr clause)) 
+			       (##core#begin ,@(cdr clause)) 
 			       ,(expand rclauses) ) ) ) ) ) ) ) ) ) ) )
 
 (##sys#extend-macro-environment
@@ -1114,15 +1119,14 @@
 	  (body (cdddr form))
 	  (dovar (r 'doloop))
 	  (%let (r 'let))
-	  (%if (r 'if))
-	  (%begin (r 'begin)))
+	  (%if (r 'if)))
       `(,%let ,dovar ,(##sys#map (lambda (b) (list (car b) (car (cdr b)))) bindings)
 	      (,%if ,(car test)
 		    ,(let ((tbody (cdr test)))
 		       (if (eq? tbody '())
 			   '(##core#undefined)
-			   `(,%begin ,@tbody) ) )
-		    (,%begin
+			   `(##core#begin ,@tbody) ) )
+		    (##core#begin
 		     ,(if (eq? body '())
 			  '(##core#undefined)
 			  `(,%let () ,@body) )
@@ -1211,7 +1215,6 @@
 	  (%or (r 'or))
 	  (%not (r 'not))
 	  (%else (r 'else))
-	  (%begin (r 'begin))
 	  (%and (r 'and)))
       (define (err x) 
 	(##sys#error "syntax error in `cond-expand' form"
@@ -1253,8 +1256,8 @@
 			      (let ((rest (cdr clause)))
 				(if (eq? rest '())
 				    '(##core#undefined)
-				    `(,%begin ,@rest) ) ) )
-			     ((test id) `(,%begin ,@(cdr clause)))
+				    `(##core#begin ,@rest) ) ) )
+			     ((test id) `(##core#begin ,@(cdr clause)))
 			     (else (expand rclauses)) ) ) ) ) ) ) ) ) ) ) )
 
 (##sys#extend-macro-environment
@@ -1292,8 +1295,8 @@
  (##sys#er-transformer
   (lambda (x r c)
     (##sys#check-syntax 'begin-for-syntax x '(_ . #(_ 0)))
-    (##sys#register-meta-expression `(begin ,@(cdr x)))
-    `(##core#elaborationtimeonly (,(r 'begin) ,@(cdr x))))))
+    (##sys#register-meta-expression `(##core#begin ,@(cdr x)))
+    `(##core#elaborationtimeonly (##core#begin ,@(cdr x))))))
 
 (##sys#extend-macro-environment
  'export

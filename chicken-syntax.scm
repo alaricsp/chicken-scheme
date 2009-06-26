@@ -1088,6 +1088,13 @@
     ((_ name transformer)
      (##core#define-compiler-syntax name transformer)))))
 
+(##sys#extend-macro-environment
+ 'let-compiler-syntax '()
+ (##sys#er-transformer
+  (syntax-rules ()
+    ((_ ((name transformer) ...) body ...)
+     (##core#let-compiler-syntax ((name transformer) ...) body ...)))))
+
 
 ;;; Just in case someone forgets
 

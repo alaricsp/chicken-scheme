@@ -348,7 +348,7 @@
 			      [(()) (lambda v '())]
 			      [else (lambda v c)] ) ) ]
 
-			 ((syntax)
+			 ((syntax ##core#syntax)
 			  (let ((c (cadr x)))
 			    (lambda v c)))
 
@@ -634,6 +634,11 @@
 
 			 ((##core#define-compiler-syntax)
 			  (compile '(##core#undefined) e #f tf cntr se))
+
+			 ((##core#let-compiler-syntax)
+			  (compile 
+			   (##sys#canonicalize-body (cddr x) se #f)
+			   e #f tf cntr se))
 
 			 ((##core#module)
 			  (let* ((name (rename (cadr x) se))
