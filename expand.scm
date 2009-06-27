@@ -591,7 +591,8 @@
 				  (loop2 (cons (macro-alias 'define se)
 					       (##sys#expand-curried-define head (cddr x) se))) ]
 				 [else
-				  (##sys#check-syntax 'define x '(define (variable . lambda-list) . #(_ 1)) #f se)
+				  (##sys#check-syntax
+				   'define x '(define (variable . lambda-list) . #(_ 1)) #f se)
 				  (loop rest
 					(cons (car head) vars)
 					(cons `(##core#lambda ,(cdr head) ,@(cddr x)) vals)

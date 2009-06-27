@@ -241,25 +241,6 @@ To enable it install the egg and put this in your {{~/.csirc}} file:
 
 More details are available in [[http://www.call-with-current-continuation.org/eggs/readline.html|the egg's documentation]].
 
-=== Accessing documentation
-
-You can access the manual directly from {{csi}} using the [[http://www.call-with-current-continuation.org/eggs/man.html|man]] extension by Mario Domenech Goulart.
-
-To enable it install the egg and put this in your {{~/.csirc}} file:
-
- (use man)
- (man:load)
-
-Then, in {{csi}}, you can search for definitions using {{man:search}} as in:
-
- (man:search "case")
-
-Note that the search uses regular expressions.
-To view the documentation for one entry from the manual, use {{man:help}} as in:
-
- (man:help "case-lambda")
-
-Note: Currently the documentation provided by the {{man}} extension corresponds to Chicken's 2.429, one of the last releases whose documentation was in the texinfo format (the format the {{man}} extension parses).
 
 ---
 Previous: [[Using the compiler]]
