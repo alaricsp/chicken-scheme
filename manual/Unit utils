@@ -61,6 +61,21 @@ as a string. If {{FILE-OR-PORT}} is a port, all remaining input is read and retu
 a string. The port is not closed. If no argument is provided, input will be read from the
 port that is the current value of {{(current-input-port)}}.
 
+
+=== Shell argument quoting
+
+==== qs
+
+ [procedure] (qs STRING [PLATFORM])
+
+Escapes {{STRING}} suitably for passing to a shell command on {{PLATFORM}}.
+{{PLATFORM}} defaults to the value of {{(build-platform)}} and indicates in
+which style the argument should be quoted. On Windows systems, the string
+is simply enclosed in double-quote ({{"}}) characters, on UNIXish systems,
+characters that would have a special meaning to the shell are escaped
+using backslash ({{\}}).
+
+
 ---
 Previous: [[Unit posix]]
 

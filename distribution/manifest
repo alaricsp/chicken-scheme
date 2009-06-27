@@ -236,6 +236,7 @@ tests/test-irregex.scm
 tests/re-tests.txt
 tests/lolevel-tests.scm
 tests/feeley-dynwind.scm
+tests/compiler-syntax-tests.scm
 tweaks.scm
 utils.scm
 apply-hack.x86.s

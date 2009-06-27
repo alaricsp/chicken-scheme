@@ -63,6 +63,10 @@ $compile syntax-tests-2.scm
 #$compile_s -s foo.import.scm
 #$interpret -bnq -e '(require-library meta-syntax-test)' -e '(import foo)' -e '(bar 1 2)'
 
+echo "======================================== compiler syntax tests ..."
+$compile compiler-syntax-tests.scm
+./a.out
+
 echo "======================================== import library tests ..."
 rm -f foo.import.*
 $compile import-library-test1.scm -emit-import-library foo

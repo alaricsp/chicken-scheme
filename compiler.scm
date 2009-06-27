@@ -770,18 +770,11 @@
 			(let* ((var (cadr x))
 			       (body (caddr x))
 			       (name (##sys#strip-syntax var se #t)))
-			   (##sys#put! 
-			    name '##compiler#compiler-syntax
-			    (##sys#cons
-			     (##sys#er-transformer (eval/meta body))
-			     (##sys#current-environment)))
-			  (##sys#register-meta-expression 
-			   `(##sys#put! 
-			     (##core#syntax ,name)
-			     '##compiler#compiler-syntax
-			     (##sys#cons
-			      (##sys#er-transformer ,body)
-			      (##sys#current-environment))) )
+			  (##sys#put! 
+			   name '##compiler#compiler-syntax
+			   (##sys#cons
+			    (##sys#er-transformer (eval/meta body))
+			    (##sys#current-environment)))
 			  (walk '(##core#undefined) e se dest)))
 
 		       ((##core#let-compiler-syntax)
@@ -790,7 +783,7 @@
 					 (let ((name (##sys#strip-syntax (car b) se #t)))
 					   (list 
 					    name 
-					    (cons (##sys#er-transformer (eval/meta (cadr x))) se)
+					    (cons (##sys#er-transformer (eval/meta (cadr b))) se)
 					    (##sys#get name '##compiler#compiler-syntax) ) ) )
 				       (cadr x))))
 			  (dynamic-wind	; this ain't thread safe

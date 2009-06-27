@@ -62,7 +62,7 @@
       "utils.import.so"
       "csi.import.so"
       "irregex.import.so"
-      "compiler.import.so"))
+      "types.db"))
 
   (define *program-path*
     (or (and-let* ((p (getenv "CHICKEN_PREFIX")))

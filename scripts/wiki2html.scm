@@ -220,6 +220,8 @@
 		   (_ strs))))
 	(('procedure strs ...)
 	 `(pre "\n [procedure] " ,@strs))
+	(('nowiki content ...)
+	 `(div ,content))
 	(((? symbol? tag) ('@ attr ...) . body)
 	 `(,tag (@ ,@attr) ,@(map walk body)))
 	(((? symbol? tag) . body)

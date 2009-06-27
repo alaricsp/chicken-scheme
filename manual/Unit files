@@ -81,6 +81,14 @@ replaced by a new value.
 Return a new pathname with the specified component of {{PATHNAME}}
 stripped.
 
+==== normalize-pathname
+
+<procedure>(normalize-pathname PATHNAME [PLATFORM])</procedure>
+
+Performs a simple "normalization" on the {{PATHNAME}}, suitably for
+{{PLATFORM}}, which defaults to the value of {{(build-platform)}}.
+Currently, this just converts forward slashes to backslashes on Windows.
+
 ==== directory-null?
 
 <procedure>(directory-null? DIRECTORY)</procedure>
