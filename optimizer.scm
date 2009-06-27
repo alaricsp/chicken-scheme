@@ -1854,7 +1854,7 @@
 		   'sprintf out 
 		   x
 		   (cdr x)
-		   r)))
+		   r c)))
        (if code
 	   `(,(r 'let) ((,out (,(r 'open-output-string))))
 	     ,code
@@ -1868,7 +1868,7 @@
 	 (let ((code (compile-format-string 
 		      'fprintf (cadr x) 
 		      x (cddr x)
-		      r)))
+		      r c)))
 	   (if code
 	       code
 	       x))
@@ -1880,13 +1880,13 @@
      (let ((code (compile-format-string 
 		  'printf '##sys#standard-output
 		  x (cdr x)
-		  r)))
+		  r c)))
        (if code
 	   code
 	   x)))
    env))
 
-(define (compile-format-string func out x args r)
+(define (compile-format-string func out x args r c)
   (call/cc
    (lambda (return)
      (and (>= (length args) 1)
