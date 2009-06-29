@@ -1201,7 +1201,7 @@ distfiles: buildsvnrevision library.c eval.c expand.c chicken-syntax.c \
 	c-platform.c c-backend.c chicken-bug.c $(IMPORT_LIBRARIES:=.import.c)
 
 dist: distfiles
-	$(CSI) -s $(SRCDIR)scripts/makedist.scm --platform=$(PLATFORM) CHICKEN=$(CHICKEN)
+	CSI=$(CSI) $(CSI) -s $(SRCDIR)scripts/makedist.scm --platform=$(PLATFORM) CHICKEN=$(CHICKEN)
 
 html:
 	$(MAKEDIR_COMMAND) $(MAKEDIR_COMMAND_OPTIONS) $(SRCDIR)html

@@ -65,7 +65,7 @@ CHICKEN contains code from several people:
 ; Richard O'Keefe : sorting routines.
 ; Olin Shivers : implementation of {{let-optionals[*]}} and reference implementations of SRFI-1, SRFI-13 and SRFI-14.
 ; Andrew Wilcox : queues.
-; [[http://chicken.wiki.br/Alex Shinn|Alex Shinn]] : {{scheme-complete.el}} emacs tab-completion
+; [[http://chicken.wiki.br/users/Alex-Shinn|Alex Shinn]] : {{scheme-complete.el}} emacs tab-completion
 
 The documentation and examples for explicit renaming macros was taken from
 the following paper:

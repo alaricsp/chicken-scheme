@@ -2,8 +2,7 @@
 
 == Data representation
 
-''Note: In all cases below, bits are numbered starting
-at 1 and beginning with the lowest-order bit.''
+''Note: In all cases below, bits are numbered starting at 1 and beginning with the lowest-order bit.''
 
 There exist two different kinds of data objects in the CHICKEN system:
 immediate and non-immediate objects. 

@@ -775,7 +775,16 @@
 			   (##sys#cons
 			    (##sys#er-transformer (eval/meta body))
 			    (##sys#current-environment)))
-			  (walk '(##core#undefined) e se dest)))
+			  (walk 
+			   (if ##sys#enable-runtime-macros
+			       `(##sys#put! 
+				(##core#syntax ,name)
+				'##compiler#compiler-syntax
+				(##sys#cons
+				 (##sys#er-transformer ,body)
+				 (##sys#current-environment)))
+			       '(##core#undefined) )
+			   e se dest)))
 
 		       ((##core#let-compiler-syntax)
 			(let ((bs (map (lambda (b)

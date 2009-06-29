@@ -24,9 +24,9 @@ This is the manual for Chicken Scheme, version 4.0.9
 
 ; [[Data representation]] : How Scheme data is internally represented.
 
-; [[Bugs and limitations]] : Yes, there are some.
+; [[Bugs and limitations]] : Things that do not work yet.
 
-; [[FAQ]] : A list of Frequently Asked Questions about CHICKEN (and their answers!).
+; [[FAQ]] : A list of Frequently Asked Questions about CHICKEN (and their answers).
 
 ; [[Acknowledgements]] : A list of some of the people that have contributed to make CHICKEN what it is.
 

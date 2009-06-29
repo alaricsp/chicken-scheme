@@ -13,6 +13,7 @@
 (define +bold+ '(: (= 3 #\') (submatch (* (~ #\'))) (= 3 #\')))
 (define +italic+ '(: (= 2 #\') (submatch (* (~ #\'))) (= 2 #\')))
 (define +html-tag+ '(: #\< (submatch (* (~ #\>))) #\>))
+(define +enscript-tag+ '(: "<enscript" (* (~ #\>)) #\>))
 
 (define +link+
   '(: #\[ #\[ (submatch (* (~ #\] #\|))) (? #\| (submatch (* (~ #\])))) #\] #\]))
@@ -25,6 +26,7 @@
   `(or ,+code+ ,+image-link+ ,+link+ ,+html-tag+ ,+bold+ ,+italic+))
 
 (define +http-url+ '(: (* space) "http://" (* any)))
+(define +end-enscript-tag+ '(: "</enscript>"))
 
 
 ;;; Block elements
@@ -47,6 +49,7 @@
        ,+d-head+
        ,+u-list+
        ,+o-list+
+       ,+enscript-tag+
        ,+hr+))
 
 
@@ -108,11 +111,17 @@
 		      (else
 		       (pop-all out)
 		       (fprintf out "~a~%" (inline ln)))))
+	       ((string-match (rx +enscript-tag+) ln) =>
+		(lambda (m)
+		  (pop-all out)
+		  (fprintf out "<pre>~a~%" (substring ln (string-length (car m))))
+		  (copy-until-match (rx +end-enscript-tag+) in out) ;XXX doesn't parse rest of line
+		  (display "</pre>" out)))
 	       ((string-match (rx +header+) ln) =>
 		(lambda (m)
 		  (pop-all out)
 		  (let ((n (sub1 (string-length (second m))))
-			(name (clean (third m))))
+			(name (inline (third m))))
 		    (fprintf out "<a name='~a' /><h~a>~a</h~a>~%" 
 			     name n name n))))
 	       ((string-match (rx +pre+) ln) =>
@@ -244,6 +253,20 @@
 
 (define (clean str)
   (string-translate* str '(("<" . "&lt;") ("&" . "&amp;") ("'" . "&apos;") ("\"" . "&quot;"))))
+
+
+;;; Read until rx matches
+
+(define (copy-until-match rx in out)
+  (let loop ()
+    (let ((ln (read-line in)))
+      (cond ((string-match rx ln) =>
+	     (lambda (m)
+	       (substring ln (string-length (car m))) ) )
+	    (else
+	     (display (clean ln) out)
+	     (newline out)
+	     (loop))))))
 
 
 ;;; Run it
