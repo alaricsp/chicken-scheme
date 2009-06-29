@@ -26,7 +26,7 @@
   redundant "stat-..." procedures
 - Added "directory-exists?"
 - "(for-each (lambda ...) X)" is compiled as a loop
-- The argument-count for format-strings for "[sf]printf" with a constant 
+- The argument-count check for format-strings for "[sf]printf" with a constant 
   string argument is done at compile-time
 
 4.0.0
