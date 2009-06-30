@@ -110,7 +110,7 @@
        ls)))
 
   (define (make-svn-ls-cmd uarg parg pnam #!key recursive?)
-    (conc "svn ls " uarg #\space parg (if recursive? " -R " "") (qs pnam)) )
+    (conc "svn ls " uarg #\space parg (if recursive? " -R " " ") (qs pnam)) )
 
   (define (make-svn-export-cmd uarg parg dir tmpdir)
     (conc "svn export " uarg #\space parg #\space #\" dir #\" #\space #\" tmpdir #\"
