@@ -68,7 +68,7 @@
   (fprintf (current-error-port) "csc: ~?~%" msg args)
   (exit 64) )
 
-(define chicken-prefix (getenv "CHICKEN_PREFIX"))
+(define chicken-prefix (get-environment-variable "CHICKEN_PREFIX"))
 (define arguments (command-line-arguments))
 (define host-mode (member "-host" arguments))
 (define cross-chicken (##sys#fudge 39))
@@ -936,4 +936,4 @@ EOF
 
 ;;; Run it:
 
-(run (append (string-split (or (getenv "CSC_OPTIONS") "")) arguments))
+(run (append (string-split (or (get-environment-variable "CSC_OPTIONS") "")) arguments))

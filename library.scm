@@ -158,7 +158,7 @@ EOF
      ##sys#set-finalizer! open-output-string get-output-string read ##sys#make-pointer
      ##sys#pointer->address number->string ##sys#flush-output ##sys#break-entry ##sys#step
      ##sys#apply-values ##sys#get-call-chain ##sys#really-print-call-chain
-     string->keyword keyword? string->keyword getenv ##sys#number->string ##sys#copy-bytes
+     string->keyword keyword? string->keyword get-environment-variable ##sys#number->string ##sys#copy-bytes
      call-with-current-continuation ##sys#string->number ##sys#inexact->exact ##sys#exact->inexact
      ##sys#reverse-list->string reverse ##sys#inexact? list? string ##sys#char->utf8-string 
      ##sys#unicode-surrogate? ##sys#surrogates->codepoint ##sys#write-char/port
@@ -231,7 +231,7 @@ EOF
 (define cpu-time (##core#primitive "C_cpu_time"))
 (define ##sys#decode-seconds (##core#primitive "C_decode_seconds"))
 (define get-environment-variable (##core#primitive "C_get_environment_variable"))
-(define getenv get-environment-variable)
+(define getenv get-environment-variable) ; DEPRECATED
 (define (##sys#start-timer) (##core#inline "C_start_timer"))
 (define ##sys#stop-timer (##core#primitive "C_stop_timer"))
 (define (##sys#immediate? x) (not (##core#inline "C_blockp" x)))
@@ -1852,7 +1852,7 @@ EOF
 	    (case (##core#inline "C_subchar" path 0)
 	      ((#\~) 
 	       (let ((rest (##sys#substring path 1 len)))
-		 (##sys#string-append (or (getenv "HOME") "") rest) ) )
+		 (##sys#string-append (or (get-environment-variable "HOME") "") rest) ) )
 	      ((#\$) 
 	       (let loop ((i 1))
 		 (if (fx>= i len)

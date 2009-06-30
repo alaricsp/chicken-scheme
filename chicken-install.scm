@@ -65,7 +65,7 @@
       "types.db"))
 
   (define *program-path*
-    (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
+    (or (and-let* ((p (get-environment-variable "CHICKEN_PREFIX")))
           (make-pathname p "bin") )
         (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 

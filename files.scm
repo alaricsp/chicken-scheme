@@ -51,7 +51,7 @@
     (bound-to-procedure
       string-match regexp
       ##sys#string-append ##sys#substring  string-append
-      getenv
+      get-environment-variable
       file-exists? delete-file
       call-with-output-file read-string)
     (no-procedure-checks-for-usual-bindings)
@@ -324,12 +324,14 @@
 	(make-pathname dir file ext) ) ) ) )
 
 (define create-temporary-file
-  (let ([getenv getenv]
+  (let ([get-enviroment-variable get-environment-variable]
 	[make-pathname make-pathname]
 	[file-exists? file-exists?]
 	[call-with-output-file call-with-output-file] )
     (lambda ext
-      (let ([dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP"))]
+      (let ([dir (or (get-environment-variable "TMPDIR") 
+		     (get-environment-variable "TEMP")
+		     (get-environment-variable "TMP"))]
 	    [ext (if (pair? ext) (car ext) "tmp")])
 	(##sys#check-string ext 'create-temporary-file)
 	(let loop ()
@@ -342,11 +344,62 @@
 
 ;;; normalize pathname for a particular platform
 
-(define (normalize-pathname path #!optional (platform (build-platform)))
-  (case platform
-    ((mingw32 msvc)
-     (string-translate path "/" "\\"))
-    (else path)))
+(define normalize-pathname
+  (let ((open-output-string open-output-string)
+	(get-output-string get-output-string)
+	(get-environment-variable get-environment-variable)
+	(reverse reverse)
+	(display display))
+    (lambda (path #!optional (platform (if (memq (build-platform) '(msvc mingw32)) 'windows 'unix)))
+      (let ((sep (if (eq? platform 'windows) #\\ #\/)))
+	(define (addpart part parts)
+	  (cond ((string=? "." part) parts)
+		((string=? ".." part) 
+		 (if (null? parts)
+		     '("..")
+		     (cdr parts)))
+		(else (cons part parts))))
+	(##sys#check-string path 'normalize-pathname)
+	(let ((len (##sys#size path))
+	      (abspath #f)
+	      (drive #f))
+	  (let loop ((i 0) (prev 0) (parts '()))
+	    (cond ((fx>= i len)
+		   (when (fx> i prev)
+		     (set! parts (addpart (##sys#substring path prev i) parts)))
+		   (if (null? parts)
+		       (##sys#string-append "." (string sep))
+		       (let ((out (open-output-string))
+			     (parts (reverse parts)))
+			 (display (car parts) out)
+			 (for-each
+			  (lambda (p)
+			    (##sys#write-char-0 sep out)
+			    (display p out) )
+			  (cdr parts))
+			 (when (fx= i prev) (##sys#write-char-0 sep out))
+			 (let* ((r1 (get-output-string out))
+				(r (##sys#expand-home-path r1)))
+			   (when (string=? r1 r)
+			     (when abspath 
+			       (set! r (##sys#string-append (string sep) r)))
+			     (when drive
+			       (set! r (##sys#string-append drive r))))
+			   r))))
+		  ((memq (string-ref path i) '(#\\ #\/))
+		   (when (and (null? parts) (fx= i prev))
+		     (set! abspath #t))
+		   (if (fx= i prev)
+		       (loop (fx+ i 1) (fx+ i 1) parts)
+		       (loop (fx+ i 1)
+			     (fx+ i 1)
+			     (addpart (##sys#substring path prev i) parts))))
+		  ((and (null? parts) 
+			(char=? (string-ref path i) #\:)
+			(eq? 'windows platform))
+		   (set! drive (##sys#substring path 0 (fx+ i 1)))
+		   (loop (fx+ i 1) (fx+ i 1) '()))
+		  (else (loop (fx+ i 1) prev parts)))))))))
 
 
 ;; Directory string or list only contains path-separators

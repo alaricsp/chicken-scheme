@@ -414,7 +414,7 @@ and compiler settings:
 {{list-ref}} {{null?}} {{length}} {{not}} {{char?}} {{string?}} {{symbol?}} {{vector?}} {{pair?}} {{procedure?}}
 {{boolean?}} {{number?}} {{complex?}} {{rational?}} {{real?}} {{exact?}} {{inexact?}} {{list?}} {{eof-object?}}
 {{string-ref}} {{string-set!}} {{vector-ref}} {{vector-set!}} {{char=?}} {{char<?}} {{char>?}} {{char<=?}} {{char>=?}}
-{{char-numeric?}} {{char-alphabetic?}} {{char-whitespace?}} {{char-upper-case?}}
+{{char-numeric?}} {{char-alphabetic?}} {{char-whitespace?}} {{char-upper-case?}} {{for-each}}
 {{char-lower-case?}} {{char-upcae}} {{char-downcase}} {{list-tail}} {{assv}} {{memv}} {{memq}} {{assoc}}
 {{member}} {{set-car!}} {{set-cdr!}} {{abs}} {{exp}} {{sin}} {{cos}} {{tan}} {{log}} {{asin}} {{acos}} {{atan}} {{sqrt}}
 {{zero?}} {{positive?}} {{negative?}} {{vector-length}} {{string-length}} {{char->integer}}
@@ -470,6 +470,7 @@ The following extended bindings are handled specially:
 {{locative-ref}} {{locative-set!}} {{locative?}} {{locative->object}} {{identity}}
 {{cpu-time}} {{error}} {{call/cc}} {{any?}}
 {{substring=?}} {{substring-ci=?}} {{substring-index}} {{substring-index-ci}}
+{{printf}} {{sprintf}} {{fprintf}} {{format}}
 
 ==== What's the difference betweem "block" and "local" mode?
 

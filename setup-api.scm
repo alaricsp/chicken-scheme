@@ -90,19 +90,19 @@
 (define host-extension (make-parameter #f))
 
 (define *chicken-bin-path*
-  (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
+  (or (and-let* ((p (get-environment-variable "CHICKEN_PREFIX")))
 	(make-pathname p "bin") )
       (foreign-value "C_INSTALL_BIN_HOME" c-string) ) )
 
 (define *doc-path*
-  (or (and-let* ((p (getenv "CHICKEN_PREFIX")))
+  (or (and-let* ((p (get-environment-variable "CHICKEN_PREFIX")))
 	(make-pathname p "share/chicken/doc") )
       (make-pathname
        (foreign-value "C_INSTALL_SHARE_HOME" c-string) 
        "doc")))
 
 (define chicken-prefix
-  (or (getenv "CHICKEN_PREFIX")
+  (or (get-environment-variable "CHICKEN_PREFIX")
       (let ((m (string-match "(.*)/bin/?" *chicken-bin-path*)))
 	(if m
 	    (cadr m)
@@ -435,7 +435,7 @@
   (make-pathname rpath fn setup-file-extension) )
 
 (define installation-prefix
-  (make-parameter (or (getenv "CHICKEN_INSTALL_PREFIX") #f)))
+  (make-parameter (or (get-environment-variable "CHICKEN_INSTALL_PREFIX") #f)))
 
 (define (write-info id files info)
   (let ((info `((files ,@files) 
@@ -730,7 +730,10 @@
     read))
 
 (define (create-temporary-directory)
-  (let ((dir (or (getenv "TMPDIR") (getenv "TEMP") (getenv "TMP") "/tmp")))
+  (let ((dir (or (get-environment-variable "TMPDIR") 
+		 (get-environment-variable "TEMP")
+		 (get-environment-variable "TMP") 
+		 "/tmp")))
     (let loop ()
       (let* ((n (##sys#fudge 16))	; current milliseconds
 	     (pn (make-pathname dir (string-append "chicken-install-" (number->string n 16)) "tmp")))

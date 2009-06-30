@@ -86,8 +86,15 @@ stripped.
 <procedure>(normalize-pathname PATHNAME [PLATFORM])</procedure>
 
 Performs a simple "normalization" on the {{PATHNAME}}, suitably for
-{{PLATFORM}}, which defaults to the value of {{(build-platform)}}.
-Currently, this just converts forward slashes to backslashes on Windows.
+{{PLATFORM}}, which should be one of the symbols {{windows}}
+or {{unix}} and defaults to on whatever platform is currently
+in use. All relative path elements and duplicate separators are processed 
+and removed.  If {{NAME}} ends with
+a {{/}} or is empty, the appropriate slash is appended to the tail.
+Tilde {{~}} and variable {{$<name>/...}} expansion is also done.
+
+No directories or files are actually tested for existence; this 
+procedure only canonicalises path syntax.
 
 ==== directory-null?
 

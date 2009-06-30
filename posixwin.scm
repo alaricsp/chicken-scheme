@@ -1886,7 +1886,7 @@ EOF
 (define-foreign-variable _shlcmd c-string "C_shlcmd")
 
 (define (##sys#shell-command)
-  (or (getenv "COMSPEC")
+  (or (get-environment-variable "COMSPEC")
       (if (##core#inline "C_get_shlcmd")
 	  _shlcmd
 	  (begin
@@ -1898,7 +1898,7 @@ EOF
 
 (define process-run
   (let ([process-spawn process-spawn]
-	[getenv getenv] )
+	[get-environment-variable get-environment-variable] )
     (lambda (f . args)
       (let ([args (if (pair? args) (car args) #f)])
 	(if args

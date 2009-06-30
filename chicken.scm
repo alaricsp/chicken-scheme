@@ -77,7 +77,7 @@
   (append
    (remove 
     (lambda (x) (string=? x ""))
-    (string-split (or (getenv "CHICKEN_OPTIONS") "")))
+    (string-split (or (get-environment-variable "CHICKEN_OPTIONS") "")))
    (cdr (argv))))
 
 

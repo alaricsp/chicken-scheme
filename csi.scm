@@ -189,7 +189,7 @@ EOF
 		((proc (##core#inline "C_subchar" str1 i)) i)
 		(else (loop (fx+ i 1))) ) ) ) )
     (lambda (name)
-      (let ([path (getenv "PATH")])
+      (let ([path (get-environment-variable "PATH")])
 	(and (> (##sys#size name) 0)
 	     (cond [(dirseparator? (string-ref name 0)) (addext name)]
 		   [(string-index dirseparator? name)
@@ -872,7 +872,7 @@ EOF
   '("-D" "-feature" "-I" "-include-path" "-k" "-keyword-style") )
 
 (define (run)
-  (let* ([extraopts (parse-option-string (or (getenv "CSI_OPTIONS") ""))]
+  (let* ([extraopts (parse-option-string (or (get-environment-variable "CSI_OPTIONS") ""))]
 	 [args (canonicalize-args (command-line-arguments))]
 	 ; Check for these before 'args' is updated by any 'extraopts'
 	 [kwstyle (member* '("-k" "-keyword-style") args)]
@@ -897,7 +897,7 @@ EOF
 	   [batch (or script (member* '("-b" "-batch") args) eval?)]
 	   [quietflag (member* '("-q" "-quiet") args)]
 	   [quiet (or script quietflag eval?)]
-	   [ipath (map chop-separator (string-split (or (getenv "CHICKEN_INCLUDE_PATH") "") ";"))] )      
+	   [ipath (map chop-separator (string-split (or (get-environment-variable "CHICKEN_INCLUDE_PATH") "") ";"))] )      
       (define (collect-options opt)
 	(let loop ([opts args])
 	  (cond [(member opt opts) 
@@ -910,7 +910,7 @@ EOF
 	(let ([fn (##sys#string-append "./" init-file)])
 	  (if (file-exists? fn)
 	      (load fn)
-	      (let* ([prefix (chop-separator (or (getenv "HOME") "."))]
+	      (let* ([prefix (chop-separator (or (get-environment-variable "HOME") "."))]
 		     [fn (string-append prefix "/" init-file)] )
 		(when (file-exists? fn) 
 		  (load fn) ) ) ) ) )

@@ -123,29 +123,6 @@ Returns a list of the pathnames of all existing files matching
 file-patterns (with {{*}} matching zero or more characters and
 {{?}} matching zero or one character).
 
-==== canonical-path
-
-<procedure>(canonical-path NAME)</procedure>
-
-Returns a canonical path for {{NAME}}, which should be a string
-containing a path-or-filename.  The string returned by 
-{{canonical-path}} is OS dependent; it may be quoted and used in
-a shell on the calling machine. (Quoting is suggested as shell
-special characters, including space, are not escaped.)  However,
-all path separators and prefixes are handled in an OS independent
-fashion.  Any appearance of {{/}} below imply {{\\}} is also handled.
-
-The prefix for {{NAME}} determines what path to prepend.  If {{NAME}}
-begins with a {{"~/"}}, this prefix is stripped and the user's 
-home directory is added.  If beginning with {{/}} or a DRIVE-LETTER:\\
-combination, no additional path is added.  Otherwise, the current
-directory and separator are added.  All relative path elements and
-duplicate separators are processed and removed.  If {{NAME}} ends with
-a {{/}} or is empty, the appropriate slash is appended to the tail.
-
-No directories or files are actually tested for existence; this 
-procedure only canonicalises path syntax.
-
 ==== set-root-directory!
 
 <procedure>(set-root-directory! STRING)</procedure>

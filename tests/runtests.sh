@@ -127,8 +127,7 @@ $interpret -s srfi-18-tests.scm
 # $interpret -s feeley-dynwind.scm
 
 echo "======================================== path tests ..."
-$compile path-tests.scm
-./a.out
+$interpret -bnq path-tests.scm
 
 echo "======================================== regular expression tests ..."
 $interpret -bnq test-irregex.scm

@@ -486,7 +486,7 @@ EOF
      ##sys#thread-yield! ##sys#make-string
      ##sys#make-port ##sys#file-info ##sys#update-errno ##sys#fudge ##sys#make-c-string ##sys#check-port
      ##sys#error ##sys#signal-hook ##sys#peek-unsigned-integer make-pathname glob directory?
-     pathname-file process-fork file-close duplicate-fileno process-execute getenv
+     pathname-file process-fork file-close duplicate-fileno process-execute get-environment-variable
      make-string make-input-port make-output-port ##sys#thread-block-for-i/o create-pipe
      process-wait pathname-strip-directory ##sys#expand-home-path directory
      decompose-pathname ##sys#cons-flonum ##sys#decode-seconds ##sys#null-pointer ##sys#pointer->address
@@ -889,10 +889,8 @@ EOF
   (lambda (name #!optional parents?)
     (##sys#check-string name 'create-directory)
     (if parents?
-        (create-directory-helper-parents (canonical-path name))
-        (create-directory-helper (canonical-path name)))))
-;    (unless (zero? (##core#inline "C_mkdir" (##sys#make-c-string (##sys#expand-home-path name))))
-;      (posix-error #:file-error 'create-directory "cannot create directory" name) ) ) )
+        (create-directory-helper-parents name)
+        (create-directory-helper name))))
 
 (define change-directory
   (lambda (name)
@@ -951,8 +949,7 @@ EOF
                 (##sys#substring buffer 0 len)
                 (posix-error #:file-error 'current-directory "cannot retrieve current directory") ) ) ) ) ) )
 
-
-(define canonical-path
+(define canonical-path			; DEPRECATED
     (let ((null?      null?)
           (char=?     char=?)
           (string=?   string=?)
@@ -962,7 +959,7 @@ EOF
           (sappend    string-append)
           (isperse    (cut string-intersperse <> "/"))
           (sep?       (lambda (c) (or (char=? #\/ c) (char=? #\\ c))))
-          (getenv     getenv)
+          (get-environment-variable     get-environment-variable)
           (user       current-user-name)
           (cwd        (let ((cw   current-directory))
                           (lambda ()
@@ -980,7 +977,7 @@ EOF
                              ((and (char=? #\~ (sref path 0))
                                    (sep? (sref path 1)))
                                  (sappend
-                                     (or (getenv "HOME")
+                                     (or (get-environment-variable "HOME")
                                          (sappend "/home/" (user)))
                                      (##sys#substring path 1
                                          (##sys#size path))))
@@ -2204,7 +2201,7 @@ EOF
       (when (fx= r -1) (posix-error #:process-error 'process-signal "could not send signal to process" id sig) ) ) ) ) )
 
 (define (##sys#shell-command)
-  (or (getenv "SHELL") "/bin/sh") )
+  (or (get-environment-variable "SHELL") "/bin/sh") )
 
 (define (##sys#shell-command-arguments cmdlin)
   (list "-c" cmdlin) )

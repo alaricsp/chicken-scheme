@@ -73,7 +73,7 @@
      ##sys#ensure-heap-reserve ##sys#syntax-error-hook ##sys#read-prompt-hook
      ##sys#repl-eval-hook ##sys#append ##sys#eval-decorator
      open-output-string get-output-string make-parameter software-type software-version machine-type
-     build-platform getenv set-extensions-specifier! ##sys#string->symbol list->vector
+     build-platform set-extensions-specifier! ##sys#string->symbol list->vector get-environment-variable
      extension-information syntax-error ->string chicken-home ##sys#expand-curried-define
      vector->list store-string open-input-string eval ##sys#gc
      with-exception-handler print-error-message read-char read ##sys#read-error
@@ -126,7 +126,7 @@
   '(srfi-6 srfi-8 srfi-9 srfi-11 srfi-15 srfi-16 srfi-17 srfi-26 srfi-55) )
 
 (define ##sys#chicken-prefix
-  (let ((prefix (and-let* ((p (getenv prefix-environment-variable)))
+  (let ((prefix (and-let* ((p (get-environment-variable prefix-environment-variable)))
 		  (##sys#string-append 
 		   p
 		   (if (memq (string-ref p (fx- (##sys#size p) 1)) '(#\\ #\/)) "" "/")) ) ) )
@@ -1084,7 +1084,7 @@
 
 (define ##sys#repository-path
   (make-parameter 
-   (or (getenv repository-environment-variable)
+   (or (get-environment-variable repository-environment-variable)
        (##sys#chicken-prefix 
 	(##sys#string-append 
 	 "lib/chicken/"

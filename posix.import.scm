@@ -29,7 +29,7 @@
  '(_exit
    call-with-input-pipe
    call-with-output-pipe
-   canonical-path
+   canonical-path			; DEPRECATED
    change-directory
    change-file-mode
    change-file-owner
