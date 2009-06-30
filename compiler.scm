@@ -740,7 +740,7 @@
 			   (##sys#canonicalize-body (cddr x) se2 compiler-syntax-enabled)
 			   e se2 dest)))
 			       
-		       ((define-syntax define-commpiled-syntax)
+		       ((define-syntax define-compiled-syntax)
 			(##sys#check-syntax
 			 (car x) x
 			 (if (pair? (cadr x))
