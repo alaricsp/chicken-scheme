@@ -1845,16 +1845,14 @@ EOF
   (thunk (##sys#expand-home-path name)) )
 
 (define ##sys#expand-home-path
-  (let ((getenv getenv))
+  (let ((get-environment-variable get-environment-variable))
     (lambda (path)
       (let ((len (##sys#size path)))
 	(if (fx> len 0)
 	    (case (##core#inline "C_subchar" path 0)
 	      ((#\~) 
 	       (let ((rest (##sys#substring path 1 len)))
-		 (if (and (fx> len 1) (char=? #\/ (##core#inline "C_subchar" path 1)))
-		     (##sys#string-append (or (getenv "HOME") "") rest)
-		     (##sys#string-append "/home/" rest) ) ) )
+		 (##sys#string-append (or (getenv "HOME") "") rest) ) )
 	      ((#\$) 
 	       (let loop ((i 1))
 		 (if (fx>= i len)
@@ -1862,7 +1860,7 @@ EOF
 		     (let ((c (##core#inline "C_subchar" path i)))
 		       (if (or (eq? c #\/) (eq? c #\\))
 			   (##sys#string-append
-			    (or (getenv (##sys#substring path 1 i)) "")
+			    (or (get-environment-variable (##sys#substring path 1 i)) "")
 			    (##sys#substring path i len))
 			   (loop (fx+ i 1)) ) ) ) ) )
 	      (else path) )
