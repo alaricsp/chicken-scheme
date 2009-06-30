@@ -129,7 +129,7 @@
     -emit-external-prototypes-first -inline -release -scrutinize
     -analyze-only -keep-shadowed-macros -inline-global -ignore-repository
     -no-symbol-escape -no-parentheses-synonyms -r5rs-syntax
-    -no-argc-checks -no-bound-checks -no-procedure-checks
+    -no-argc-checks -no-bound-checks -no-procedure-checks -no-compiler-syntax
     -no-procedure-checks-for-usual-bindings))
 
 (define-constant complex-options
@@ -314,6 +314,7 @@ Usage: csc FILENAME | OPTION ...
     -compile-syntax                macros are made available at run-time
     -j -emit-import-library MODULE write compile-time module information into
                                     separate file
+    -no-compiler-syntax            disable expansion of compiler-macros
 
   Translation options:
 

@@ -1830,7 +1830,8 @@
 	 (%lst (r 'lst))
 	 (%begin (r 'begin))
 	 (%pair? (r 'pair?)))
-     (if (= 3 (length x))
+     (if (and (memq 'for-each standard-bindings) ; we have to check this because the db (and thus 
+	      (= 3 (length x)))			 ; intrinsic marks) isn't set up yet
 	 `(,%let ,%loop ((,%lst ,(caddr x)))
 		 (,%if (,%pair? ,%lst)
 		       (,%begin
@@ -1890,6 +1891,7 @@
   (call/cc
    (lambda (return)
      (and (>= (length args) 1)
+	  (memq func extended-bindings)	; s.a.
 	  (or (string? (car args))
 	      (and (list? (car args))
 		   (c (r 'quote) (caar args))

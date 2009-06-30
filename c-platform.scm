@@ -124,7 +124,7 @@
     disable-stack-overflow-checks disable-c-syntax-checks unsafe-libraries raw 
     emit-external-prototypes-first release local inline-global
     analyze-only dynamic scrutinize no-argc-checks no-procedure-checks
-    no-bound-checks no-procedure-checks-for-usual-bindings
+    no-bound-checks no-procedure-checks-for-usual-bindings no-compiler-syntax
     no-parentheses-synonyms no-symbol-escape r5rs-syntax) )
 
 (define valid-compiler-options-with-argument
@@ -178,7 +178,8 @@
     f32vector-ref f64vector-ref
     u8vector-set! s8vector-set! u16vector-set! s16vector-set! u32vector-set! s32vector-set!
     locative-ref locative-set! locative->object locative? global-ref
-    null-pointer? pointer->object flonum? finite?) )
+    null-pointer? pointer->object flonum? finite?
+    printf sprintf format) )
 
 (define internal-bindings
   '(##sys#slot ##sys#setslot ##sys#block-ref ##sys#block-set!

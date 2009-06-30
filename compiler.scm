@@ -292,7 +292,7 @@
   simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
   pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
   topological-sort print-version print-usage initialize-analysis-database csc-control-file
-  estimate-foreign-result-location-size inline-output-file
+  estimate-foreign-result-location-size inline-output-file compiler-syntax-enabled
   expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
   units-used-by-default words-per-flonum disable-stack-overflow-checking
   parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
@@ -381,6 +381,7 @@
 (define inline-output-file #f)
 (define do-scrutinize #f)
 (define enable-inline-files #f)
+(define compiler-syntax-enabled #t)
 
 
 ;;; These are here so that the backend can access them:
@@ -549,7 +550,7 @@
 	     (set! ##sys#syntax-error-culprit x)
 	     (let* ((name0 (lookup (car x) se))
 		    (name (or (and (symbol? name0) (##sys#get name0 '##core#primitive)) name0))
-		    (xexpanded (##sys#expand x se #t)))
+		    (xexpanded (##sys#expand x se compiler-syntax-enabled)))
 	       (cond ((not (eq? x xexpanded))
 		      (walk xexpanded e se dest))
 		     
@@ -640,7 +641,7 @@
 			     ,(map (lambda (alias b)
 				     (list alias (walk (cadr b) e se (car b))) )
 				   aliases bindings)
-			     ,(walk (##sys#canonicalize-body (cddr x) se2 #t)
+			     ,(walk (##sys#canonicalize-body (cddr x) se2 compiler-syntax-enabled)
 				    (append aliases e)
 				    se2 dest) ) ) )
 
@@ -673,7 +674,7 @@
 			    (lambda (vars argc rest)
 			      (let* ((aliases (map gensym vars))
 				     (se2 (append (map cons vars aliases) se))
-				     (body0 (##sys#canonicalize-body obody se2 #t))
+				     (body0 (##sys#canonicalize-body obody se2 compiler-syntax-enabled))
 				     (body (walk body0 (append aliases e) se2 #f))
 				     (llist2 
 				      (build-lambda-list
@@ -717,7 +718,7 @@
 					  (cadr x) )
 				     se) ) )
 			   (walk
-			    (##sys#canonicalize-body (cddr x) se2 #t)
+			    (##sys#canonicalize-body (cddr x) se2 compiler-syntax-enabled)
 			    e se2
 			    dest) ) )
 			       
@@ -736,7 +737,7 @@
 			     (set-car! (cdr sb) se2) )
 			   ms)
 			  (walk
-			   (##sys#canonicalize-body (cddr x) se2 #t)
+			   (##sys#canonicalize-body (cddr x) se2 compiler-syntax-enabled)
 			   e se2 dest)))
 			       
 		       ((define-syntax define-commpiled-syntax)
@@ -802,7 +803,7 @@
 				 bs) )
 			      (lambda ()
 				(walk 
-				 (##sys#canonicalize-body (cddr x) se #t)
+				 (##sys#canonicalize-body (cddr x) se compiler-syntax-enabled)
 				 e se dest) )
 			      (lambda ()
 				(for-each
@@ -907,7 +908,7 @@
 			       (se2 (append (map cons vars aliases) se))
 			       [body 
 				(walk 
-				 (##sys#canonicalize-body obody se2 #t)
+				 (##sys#canonicalize-body obody se2 compiler-syntax-enabled)
 				 (append aliases e) 
 				 se2 #f) ] )
 			  (set-real-names! aliases vars)
@@ -1911,9 +1912,6 @@
 	  (let ((clist (get db id 'contains)))
 	    (and clist
 		 (any (lambda (id2) (contains? id2 other-ids)) clist) ) ) ) )
-
-    ;; Initialize database:
-    (initialize-analysis-database db)
 
     ;; Walk toplevel expression-node:
     (debugging 'p "analysis traversal phase...")

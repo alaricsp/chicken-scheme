@@ -337,10 +337,10 @@
 
 (define initialize-analysis-database
   (let ((initial #t))
-    (lambda (db)
+    (lambda ()
       (when initial
 	(for-each
-	 (lambda (s) 
+	 (lambda (s)
 	   (mark-variable s '##compiler#intrinsic 'standard)
 	   (when (memq s foldable-bindings)
 	     (mark-variable s '##compiler#foldable #t)))
@@ -1269,6 +1269,7 @@ Usage: chicken FILENAME OPTION ...
     -compile-syntax              macros are made available at run-time
     -emit-import-library MODULE  write compile-time module information into
                                   separate file
+    -no-compiler-syntax          disable expansion of compiler-macros
 
   Translation options:
 

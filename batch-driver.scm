@@ -52,7 +52,7 @@
   perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
   reorganize-recursive-bindings substitution-table simplify-named-call emit-unsafe-marker
   perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! source-filename standalone-executable
+  transform-direct-lambdas! source-filename standalone-executable compiler-syntax-enabled
   debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
   string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
   collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
@@ -240,6 +240,8 @@
       (set! initforms '()) )
     (when (memq 'no-lambda-info options)
       (set! emit-closure-info #f) )
+    (when (memq 'no-compiler-syntax options)
+      (set! compiler-syntax-enabled #f))
     (when (memq 'local options)
       (set! local-definitions #t))
     (when (memq 'inline-global options)
@@ -525,6 +527,7 @@
 		   (db #f))
 
 	       (print-node "initial node tree" '|T| node0)
+	       (initialize-analysis-database)
 
 	       (when do-scrutinize
 		 ;;;*** hardcoded database file name
