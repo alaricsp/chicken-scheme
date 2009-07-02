@@ -143,6 +143,7 @@
 		   (set! *tests* #t)
 		   (loop rest))
 		  ((string=? ms "list")
+		   (headers)
 		   (listing))
 		  (else
 		   (warning "unrecognized query option" ms)
