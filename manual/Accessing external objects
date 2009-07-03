@@ -20,9 +20,9 @@ Code wrapped inside {{foreign-code}} may not invoke callbacks into Scheme.
 
 === foreign-value
 
- [syntax] (foreign-value STRING TYPE)
+ [syntax] (foreign-value CODE TYPE)
 
-Evaluates the embedded C/C++ expression {{STRING}}, returning a value of type given
+Evaluates the embedded C/C++ expression {{CODE}} (which may be a string or symbol), returning a value of type given
 in the foreign-type specifier {{TYPE}}.
 
 <enscript highlight=scheme>

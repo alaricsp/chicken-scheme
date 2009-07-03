@@ -137,10 +137,15 @@
  '()
  (##sys#er-transformer
   (lambda (form r c)
-    (##sys#check-syntax 'foreign-value form '(_ string _))
-    (let ([tmp (gensym 'code_)])
+    (##sys#check-syntax 'foreign-value form '(_ _ _))
+    (let ((tmp (gensym 'code_))
+	  (code (cadr form)))
       `(,(r 'begin)
-	(,(r 'define-foreign-variable) ,tmp ,(caddr form) ,(cadr form))
+	(,(r 'define-foreign-variable) ,tmp
+	 ,(cond ((string? code) code)
+		((symbol? code) (symbol->string code))
+		(else (syntax-error 'foreign-value "bad argument type - not a string or symbol" code)))
+	 ,(cadr form))
 	,tmp) ) ) ) )
 
 

@@ -711,7 +711,7 @@
 				   '(##core#undefined)
 				   (let-values ([(exp _)
 						 (##sys#do-the-right-thing (car ids) #f imp?)])
-				     `(,(rename 'begin se) ,exp ,(loop (cdr ids))) ) ) )
+				     `(##core#begin ,exp ,(loop (cdr ids))) ) ) )
 			     e #f tf cntr se) ) ]
 
 			 [(##core#elaborationtimeonly ##core#elaborationtimetoo) ; <- Note this!
