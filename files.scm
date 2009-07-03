@@ -324,7 +324,7 @@
 	(make-pathname dir file ext) ) ) ) )
 
 (define create-temporary-file
-  (let ([get-enviroment-variable get-environment-variable]
+  (let ([get-environment-variable get-environment-variable]
 	[make-pathname make-pathname]
 	[file-exists? file-exists?]
 	[call-with-output-file call-with-output-file] )

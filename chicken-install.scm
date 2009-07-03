@@ -62,6 +62,7 @@
       "utils.import.so"
       "csi.import.so"
       "irregex.import.so"
+      "setup.defaults"
       "types.db"))
 
   (define *program-path*
