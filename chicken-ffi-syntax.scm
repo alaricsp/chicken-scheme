@@ -145,7 +145,7 @@
 	 ,(cond ((string? code) code)
 		((symbol? code) (symbol->string code))
 		(else (syntax-error 'foreign-value "bad argument type - not a string or symbol" code)))
-	 ,(cadr form))
+	 ,(caddr form))
 	,tmp) ) ) ) )
 
 

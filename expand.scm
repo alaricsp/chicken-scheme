@@ -87,7 +87,7 @@
 		ua))
 	alias) ) )
 
-#+debugbuild
+;#+debugbuild
 (define (map-se se)
   (map (lambda (a) 
 	 (cons (car a) (if (symbol? (cdr a)) (cdr a) '<macro>)))
