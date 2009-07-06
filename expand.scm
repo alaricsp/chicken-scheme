@@ -55,9 +55,9 @@
  (else))
 
 (begin
-  #;(define-syntax dd (syntax-rules () ((_ . _) (void))))
+  (define-syntax dd (syntax-rules () ((_ . _) (void))))
   (define-syntax dm (syntax-rules () ((_ . _) (void))))
-  #;(define-syntax dc (syntax-rules () ((_ . _) (void)))) )
+  (define-syntax dc (syntax-rules () ((_ . _) (void)))) )
 
 
 ;;; Syntactic environments
@@ -87,7 +87,7 @@
 		ua))
 	alias) ) )
 
-;#+debugbuild
+#+debugbuild
 (define (map-se se)
   (map (lambda (a) 
 	 (cons (car a) (if (symbol? (cdr a)) (cdr a) '<macro>)))
