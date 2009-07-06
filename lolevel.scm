@@ -364,7 +364,7 @@ EOF
 
 (define pointer-s8-ref
   (getter-with-setter
-   (foreign-lambda* int ([c-pointer p]) "return(*((char *)p));")
+   (foreign-lambda* int ([c-pointer p]) "return(*((signed char *)p));")
    pointer-s8-set!) )
 
 (define pointer-u16-ref
