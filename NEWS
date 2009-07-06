@@ -28,6 +28,8 @@
 - "(for-each (lambda ...) X)" is compiled as a loop
 - The argument-count check for format-strings for "[sf]printf" with a constant 
   string argument is done at compile-time
+- A stub application named "chicken-setup" is installed to catch when a 
+  user invokes theobsolete tool instead of the new "chicken-install".
 
 4.0.0
 
