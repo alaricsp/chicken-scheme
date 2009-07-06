@@ -484,18 +484,18 @@
 			  (loop 3 req opt '() r)
 			  (err "`#!key' argument marker in wrong context") ) ]
 		     [else
-		      (cond [(symbol? x)
+		      (cond [(symbol? var)
 			     (case mode
-			       [(0) (loop 0 (cons x req) '() '() r)]
-			       [(1) (loop 1 req (cons (list x #f) opt) '() r)]
+			       [(0) (loop 0 (cons var req) '() '() r)]
+			       [(1) (loop 1 req (cons (list var #f) opt) '() r)]
 			       [(2) (err "invalid lambda list syntax after `#!rest' marker")]
-			       [else (loop 3 req opt (cons (list x) key) r)] ) ]
-			    [(and (list? x) (eq? 2 (length x)))
+			       [else (loop 3 req opt (cons (list var) key) r)] ) ]
+			    [(and (list? var) (eq? 2 (length var)))
 			     (case mode
 			       [(0) (err "invalid required argument syntax")]
-			       [(1) (loop 1 req (cons x opt) '() r)]
+			       [(1) (loop 1 req (cons var opt) '() r)]
 			       [(2) (err "invalid lambda list syntax after `#!rest' marker")]
-			       [else (loop 3 req opt (cons x key) r)] ) ]
+			       [else (loop 3 req opt (cons var key) r)] ) ]
 			    [else (err "invalid lambda list syntax")] ) ] ) ) ] ) ) ) ) ) )
 
 

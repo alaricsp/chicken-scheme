@@ -142,10 +142,10 @@
 	  (code (cadr form)))
       `(,(r 'begin)
 	(,(r 'define-foreign-variable) ,tmp
+	 ,(caddr form)
 	 ,(cond ((string? code) code)
 		((symbol? code) (symbol->string code))
-		(else (syntax-error 'foreign-value "bad argument type - not a string or symbol" code)))
-	 ,(caddr form))
+		(else (syntax-error 'foreign-value "bad argument type - not a string or symbol" code))))
 	,tmp) ) ) ) )
 
 

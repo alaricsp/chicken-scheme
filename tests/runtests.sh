@@ -6,6 +6,10 @@ TEST_DIR=`pwd`
 export DYLD_LIBRARY_PATH=${TEST_DIR}/..
 export LD_LIBRARY_PATH=${TEST_DIR}/..
 
+mkdir -p test-repository
+$TEST_DIR/../chicken-install -init test-repository
+export CHICKEN_REPOSITORY=$TEST_DIR/test-repository
+
 CHICKEN=../chicken
 
 if test -n "$MSYSTEM"; then

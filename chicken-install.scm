@@ -40,7 +40,6 @@
 
   (define +default-repository-files+
     '("setup-api.so" "setup-api.import.so"
-      "setup-utils.so" "setup-utils.import.so"
       "setup-download.so" "setup-download.import.so"
       "chicken.import.so"
       "lolevel.import.so"
@@ -62,7 +61,6 @@
       "utils.import.so"
       "csi.import.so"
       "irregex.import.so"
-      "setup.defaults"
       "types.db"))
 
   (define *program-path*

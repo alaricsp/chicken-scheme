@@ -1249,7 +1249,7 @@ distclean: clean confclean
 
 testclean:
 	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(SRCDIR)tests/*.out $(SRCDIR)tests/tmp* \
-	  $(SRCDIR)tests/*.so $(SRCDIR)tests/*.import.scm
+	  $(SRCDIR)tests/*.so $(SRCDIR)tests/*.import.scm $(SRCDIR)tests/repository
 
 # run tests
 

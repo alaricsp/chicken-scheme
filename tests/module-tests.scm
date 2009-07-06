@@ -145,4 +145,15 @@
 	      (begin0 1 2 3))
 	    1)
 
+(module m14 (test-extlambda)
+  (import chicken scheme)
+  (define (test-extlambda string #!optional whatever)
+    string))
+
+(import m14)
+
+(test-equal "extended lambda list uses expansion environment"
+            "some text"
+            (test-extlambda "some text"))
+
 (test-end "modules")
