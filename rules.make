@@ -1210,7 +1210,7 @@ html:
 
 # cleaning up
 
-.PHONY: clean distclean spotless confclean
+.PHONY: clean distclean spotless confclean testclean
 
 ifeq ($(PLATFORM),mingw)
 CLEAN_MINGW_LIBS = libchickengui.a libchickengui.dll libchickengui.dll.a
@@ -1226,13 +1226,13 @@ clean:
 	  $(LIBCHICKEN_SO_FILE) $(LIBUCHICKEN_SO_FILE) $(LIBCHICKENGUI_SO_FILE) \
 	  libchicken$(A) libuchicken$(A) libchickengui$(A) libchicken$(SO) $(PROGRAM_IMPORT_LIBRARIES) \
 	  $(IMPORT_LIBRARIES:=.import.so) $(LIBCHICKEN_IMPORT_LIBRARY) $(LIBUCHICKEN_IMPORT_LIBRARY) \
-	  $(LIBCHICKENGUI_IMPORT_LIBRARY)  \
+	  $(LIBCHICKENGUI_IMPORT_LIBRARY) setup-api.so setup-download.so setup-api.c setup-download.c \
 	  $(CLEAN_MINGW_LIBS)
 
 confclean:
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) chicken-config.h chicken-defaults.h buildsvnrevision
 
-spotless: distclean
+spotless: distclean testclean
 	-$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) library.c eval.c data-structures.c \
 	  ports.c files.c extras.c lolevel.c utils.c chicken-syntax.c \
 	  tcp.c srfi-1.c srfi-4.c srfi-13.c srfi-14.c srfi-18.c srfi-69.c expand.c \
@@ -1242,10 +1242,14 @@ spotless: distclean
 	  usrfi-18.c usrfi-69.c uposixunix.c uposixwin.c uregex.c chicken-profile.c chicken-bug.c \
 	  csc.c csi.c chicken-install.c chicken-setup.c chicken-uninstall.c chicken-status.c \
 	  chicken.c batch-driver.c compiler.c optimizer.c scrutinizer.c support.c \
-	  c-platform.c c-backend.c \
+	  c-platform.c c-backend.c chicken-boot$(EXE) \
 	  $(IMPORT_LIBRARIES:=.import.c)
 
 distclean: clean confclean
+
+testclean:
+	$(REMOVE_COMMAND) $(REMOVE_COMMAND_OPTIONS) $(SRCDIR)tests/*.out $(SRCDIR)tests/tmp* \
+	  $(SRCDIR)tests/*.so $(SRCDIR)tests/*.import.scm
 
 # run tests
 
