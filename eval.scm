@@ -885,6 +885,7 @@
       [write write]
       [display display]
       [newline newline]
+      (flush-output flush-output)
       [eval eval]
       [open-input-file open-input-file]
       [close-input-port close-input-port]
@@ -928,7 +929,8 @@
 	      [(and (load-verbose) fname)
 	       (display "; loading ")
 	       (display fname)
-	       (display " ...\n") ] )
+	       (display " ...\n") 
+	       (flush-output)] )
 	(or (and fname
 		 (or (##sys#dload (##sys#make-c-string fname) topentry #t) 
 		     (and (not (has-sep? fname))
