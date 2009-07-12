@@ -329,10 +329,11 @@
 	[file-exists? file-exists?]
 	[call-with-output-file call-with-output-file] )
     (lambda ext
-      (let ([dir (or (get-environment-variable "TMPDIR") 
+      (let ((dir (or (get-environment-variable "TMPDIR") 
 		     (get-environment-variable "TEMP")
-		     (get-environment-variable "TMP"))]
-	    [ext (if (pair? ext) (car ext) "tmp")])
+		     (get-environment-variable "TMP")
+		     (file-exists? "/tmp")))
+	    (ext (if (pair? ext) (car ext) "tmp")))
 	(##sys#check-string ext 'create-temporary-file)
 	(let loop ()
 	  (let* ([n (##sys#fudge 16)]
