@@ -912,7 +912,7 @@
 				 (append aliases e) 
 				 se2 #f) ] )
 			  (set-real-names! aliases vars)
-			  `(lambda ,aliases ,body) ) )
+			  `(##core#lambda ,aliases ,body) ) )
 
 			((set! ##core#set!) 
 			 (##sys#check-syntax 'set! x '(_ variable _) #f se)
@@ -1250,28 +1250,22 @@
 	   (compiler-warning 'syntax "literal in operator position: ~S" x) 
 	   (mapwalk x e se) )
 
-	  ((and (pair? (car x))
-		(symbol? (caar x))
-		(memq (or (lookup (caar x) se) (caar x)) '(lambda ##core#lambda)))
-	   (let ([lexp (car x)]
-		 [args (cdr x)] )
-	     (emit-syntax-trace-info x #f)
-	     (##sys#check-syntax 'lambda lexp '(_ lambda-list . #(_ 1)) #f se)
-	     (let ([llist (cadr lexp)])
-	       (if (and (proper-list? llist) (= (llist-length llist) (length args)))
-		   (walk `(##core#let
-			   ,(map list llist args) ,@(cddr lexp)) 
-			 e se dest)
-		   (let ((var (gensym 't)))
-		     (walk
-		      `(##core#let
-			((,var ,(car x)))
-			(,var ,@(cdr x)) )
-		      e se dest) ) ) ) ) )
-	  
 	  (else
 	   (emit-syntax-trace-info x #f)
-	   (mapwalk x e se)) ) )
+	   (let ((x (mapwalk x e se)))
+	     (if (and (pair? (car x))
+		      (symbol? (caar x))
+		      (memq (or (lookup (caar x) se) (caar x)) '(lambda ##core#lambda)))
+		 (let ((lexp (car x))
+		       (args (cdr x)) )
+		   (##sys#check-syntax 'lambda lexp '(_ lambda-list . #(_ 1)) #f se)
+		   (let ((llist (cadr lexp)))
+		     (if (and (proper-list? llist) (= (llist-length llist) (length args)))
+			 `(let ,(map list llist args) ,@(cddr lexp)) 
+			 (let ((var (gensym 't)))
+			   `(let ((,var ,(car x)))
+			     (,var ,@(cdr x)) ) ) ) ) ) 
+		 x))) ) )
   
   (define (mapwalk xs e se)
     (map (lambda (x) (walk x e se #f)) xs) )

@@ -1821,6 +1821,14 @@
        (##sys#put! name '##compiler#compiler-syntax t) )
      (if (symbol? names) (list names) names) ) ) )
 
+(r-c-s
+ '(o #%o)
+ (lambda (x r c)
+   (if (fx> (length x) 1)
+       (let ((%tmp (r 'tmp)))
+	 `(,(r 'lambda) (,%tmp) ,(fold-right list %tmp (cdr x))))
+       x)))
+
 (r-c-s 
  '(for-each ##sys#for-each #%for-each)
  (lambda (x r c)

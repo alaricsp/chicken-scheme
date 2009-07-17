@@ -347,7 +347,9 @@
 	 standard-bindings)
 	(for-each
 	 (lambda (s)
-	   (mark-variable s '##compiler#intrinsic 'extended))
+	   (mark-variable s '##compiler#intrinsic 'extended)
+	   (when (memq s foldable-bindings)
+	     (mark-variable s '##compiler#foldable #t)))
 	 extended-bindings)
 	(for-each
 	 (lambda (s)
