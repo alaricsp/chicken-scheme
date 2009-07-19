@@ -158,7 +158,7 @@
     list-ref abs char-ready? peek-char list->string string->list) )
 
 (define default-extended-bindings
-  '(bitwise-and bitwise-ior bitwise-xor bitwise-not add1 sub1 fx+ fx- fx* fx/ fxmod
+  '(bitwise-and bitwise-ior bitwise-xor bitwise-not add1 sub1 fx+ fx- fx* fx/ fxmod o
     fx= fx> fx< fx>= fx<= fixnum? fxneg fxmax fxmin identity fp+ fp- fp* fp/ fpmin fpmax fpneg
     fp> fp< fp= fp>= fp<= fxand fxnot fxior fxxor fxshr fxshl bit-set?
     arithmetic-shift void flush-output thread-specific thread-specific-set!
@@ -202,7 +202,7 @@
 (define non-foldable-bindings
   '(vector
     cons list string make-vector make-string string->symbol values current-input-port current-output-port
-    read-char write-char
+    read-char write-char printf fprintf
     apply call-with-current-continuation set-car! set-cdr! write-char newline write display
     peek-char char-ready?
     read read-char for-each map string-set! vector-set! string-fill! vector-fill! open-input-file
@@ -211,7 +211,7 @@
     ##sys#slot ##sys#setslot ##sys#call-with-current-continuation ##sys#fudge flush-output print void
     u8vector->blob/shared s8vector->blob/shared u16vector->blob/shared s16vector->blob/shared u32vector->blob/shared
     f32vector->blob/shared f64vector->blob/shared
-    s32vector->blob/shared read-string read-string!
+    s32vector->blob/shared read-string read-string! o
     ##sys#make-structure print* ##sys#make-vector ##sys#apply ##sys#setislot ##sys#block-ref
     ##sys#byte ##sys#setbyte 
     u8vector-length s8vector-length u16vector-length s16vector-length u32vector-length s32vector-length

@@ -1821,14 +1821,6 @@
        (##sys#put! name '##compiler#compiler-syntax t) )
      (if (symbol? names) (list names) names) ) ) )
 
-(r-c-s
- '(o #%o)
- (lambda (x r c)
-   (if (fx> (length x) 1)
-       (let ((%tmp (r 'tmp)))
-	 `(,(r 'lambda) (,%tmp) ,(fold-right list %tmp (cdr x))))
-       x)))
-
 (r-c-s 
  '(for-each ##sys#for-each #%for-each)
  (lambda (x r c)
@@ -1848,6 +1840,15 @@
 	 x)))
  `((pair? . ,(##sys#primitive-alias 'pair?))))
 
+(r-c-s
+ '(o #%o)
+ (lambda (x r c)
+   (if (and (fx> (length x) 1)
+	    (memq 'o extended-bindings) )
+       (let ((%tmp (r 'tmp)))
+	 `(,(r 'lambda) (,%tmp) ,(fold-right list %tmp (cdr x))))
+       x)))
+
 (let ((env `((display . ,(##sys#primitive-alias 'display)) ;XXX clean this up
 	     (write . ,(##sys#primitive-alias 'write))
 	     (fprintf . ,(##sys#primitive-alias 'fprintf))
@@ -1860,7 +1861,10 @@
    (lambda (x r c)
      (let* ((out (gensym 'out))
 	    (code (compile-format-string 
-		   'sprintf out 
+		   (if (memq (car x) '(sprintf #%sprintf))
+		       'sprintf
+		       'format)
+		   out 
 		   x
 		   (cdr x)
 		   r c)))
