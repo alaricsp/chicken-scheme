@@ -28,43 +28,10 @@
 (declare
   (uses chicken-syntax srfi-1 srfi-4 utils files support compiler optimizer scrutinizer driver 
 	platform backend srfi-69)
-  (run-time-macros) )			;*** later: compile-syntax
+  (compile-syntax) )			
 
 
-(private compiler
-  compiler-arguments
-  default-standard-bindings default-extended-bindings
-  foldable-bindings
-  installation-home optimization-iterations process-command-line
-  file-io-only nonwinding-call/cc debugging
-  unit-name insert-timer-checks used-units zap-strings-flag
-  foreign-declarations debugging-executable block-compilation line-number-database-size
-  target-heap-size target-stack-size 
-  default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  broken-constant-nodes inline-substitutions-enabled compiler-warning
-  direct-call-ids foreign-type-table first-analysis
-  initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
-  perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call
-  perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas!
-  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
-  string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
-  put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
-  build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
-  simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
-  pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
-  topological-sort print-version print-usage initialize-analysis-database
-  default-declarations units-used-by-default words-per-flonum
-  foreign-string-result-reserve parameter-limit default-output-filename eq-inline-operator optimizable-rest-argument-operators
-  membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion)
-
-
+(include "compiler-namespace")
 (include "tweaks")
 
 (eval-when (load) 

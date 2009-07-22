@@ -28,48 +28,7 @@
 (declare (unit backend))
 
 
-(private compiler
-  compiler-arguments process-command-line find-early-refs
-  default-standard-bindings default-extended-bindings
-  foldable-bindings
-  installation-home optimization-iterations debugging cleanup
-  file-io-only
-  unit-name insert-timer-checks used-units inlining external-variables
-  foreign-declarations emit-trace-info block-compilation line-number-database-size
-  target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
-  default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  target-initial-heap-size disable-stack-overflow-checking
-  current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  encode-literal
-  broken-constant-nodes inline-substitutions-enabled
-  direct-call-ids foreign-type-table first-analysis block-variable-literal?
-  initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database 
-  scan-toplevel-assignments
-  perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations 
-  perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call find-inlining-candidates perform-inlining!
-  perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
-  expand-foreign-lambda*
-  transform-direct-lambdas! target-include-file emit-unsafe-marker
-  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
-  string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
-  put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
-  build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node 
-  expression-has-side-effects? source-info->string
-  simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
-  pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables 
-  scan-free-variables external-protos-first emit-closure-info
-  topological-sort print-version print-usage initialize-analysis-database
-  generate-external-variables real-name real-name2 unique-id
-  default-declarations units-used-by-default words-per-flonum big-fixnum?
-  foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
-  membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  default-optimization-iterations generate-foreign-callback-header generate-foreign-callback-stub-prototypes
-  generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion)
-
+(include "compiler-namespace")
 (include "tweaks")
 
 

@@ -1369,5 +1369,7 @@
 (read-all (procedure read-all (#!optional (or port string)) string))
 (system* (procedure system* (string #!rest) undefined))
 (qs (procedure qs (string) string))
+(compile-file (procedure compile-file (string #!rest string) undefined))
+(compile-file-options (procedure compile-file-options (#!optional list) list))
 
 ;; missing: setup-api, setup-download

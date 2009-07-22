@@ -257,6 +257,7 @@ Makefile.cross-linux-mingw
 rules.make
 defaults.make
 private-namespace.scm
+compiler-namespace.scm
 scripts/scheme
 scripts/tools.scm
 scripts/test-dist.sh

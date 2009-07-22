@@ -27,7 +27,7 @@
 
 (declare
   (unit utils)
-  (uses extras srfi-13)
+  (uses extras srfi-13 posix files)
   (usual-integrations)
   (fixnum)
   (hide chop-pds)
@@ -119,3 +119,24 @@
 		     (string #\\ c)
 		     (string c)))
 	       (string->list str)))))))
+
+
+;;; Compile and load file
+
+(define compile-file-options (make-parameter '("-S" "-O2" "-d1")))
+
+(define compile-file
+  (let ((csc (foreign-value "C_CSC_PROGRAM" c-string))
+	(path (foreign-value "C_INSTALL_BIN_HOME" c-string)) )
+    (lambda (filename . options)
+      (let ((cscpath (or (file-exists? (make-pathname path csc)) "csc"))
+	    (tmpfile (create-temporary-file "so")))
+	(print "; compiling " filename " ...")
+	(system* 
+	 "~a -s ~a ~a -o ~a" 
+	 (qs cscpath)
+	 (string-intersperse (append (compile-file-options) options) " ")
+	 (qs filename)
+	 (qs tmpfile))
+	(on-exit (cut delete-file* tmpfile))
+	(load tmpfile))) ) )

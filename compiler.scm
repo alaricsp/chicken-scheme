@@ -258,54 +258,7 @@
  (disable-warning var) )
 
 
-(private compiler
-  compiler-arguments process-command-line explicit-use-flag
-  default-standard-bindings default-extended-bindings
-  foldable-bindings llist-length
-  installation-home decompose-lambda-list external-to-pointer defconstant-bindings constant-declarations
-  copy-node! error-is-extended-binding toplevel-scope toplevel-lambda-id
-  unit-name insert-timer-checks used-units external-variables require-imports-flag
-  profile-info-vector-name finish-foreign-result pending-canonicalizations
-  foreign-declarations emit-trace-info block-compilation line-number-database-size
-  make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size valid-c-identifier? profiled-procedures standalone-executable
-  target-initial-heap-size internal-bindings source-filename dump-nodes source-info->string
-  default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
-  profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
-  direct-call-ids foreign-type-table first-analysis callback-names disabled-warnings
-  initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  compiler-warning variable-visible? hide-variable mark-variable inline-locally
-  perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call inline-max-size
-  perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub 
-  expand-foreign-lambda* data-declarations emit-control-file-item expand-foreign-primitive
-  process-declaration external-protos-first basic-literal? rewrite
-  transform-direct-lambdas! expand-foreign-callback-lambda* debugging emit-unsafe-marker
-  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
-  string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
-  put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
-  build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
-  simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
-  pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
-  topological-sort print-version print-usage initialize-analysis-database csc-control-file
-  estimate-foreign-result-location-size inline-output-file compiler-syntax-enabled
-  expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
-  units-used-by-default words-per-flonum disable-stack-overflow-checking
-  parameter-limit eq-inline-operator optimizable-rest-argument-operators postponed-initforms
-  membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  make-random-name final-foreign-type real-name-table real-name set-real-name! safe-globals-flag
-  location-pointer-map inline-globally enable-inline-files
-  local-definitions export-variable variable-mark intrinsic? do-scrutinize
-  undefine-shadowed-macros process-lambda-documentation emit-syntax-trace-info
-  generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  do-lambda-lifting file-requirements emit-closure-info 
-  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
-  big-fixnum? import-libraries unlikely-variables)
-
+(include "compiler-namespace")
 
 (define (d arg1 . more)
   (if (null? more)
@@ -2011,12 +1964,12 @@
 		  (when (node? n)
 		    (cond (assigned
 			   (debugging
-			    'i "global inline candidate was assigned and will not be inlined"
+			    'i "global inlining candidate was assigned and will not be inlined"
 			    sym)
 			   (mark-variable sym '##compiler#inline-global 'no))
 			  (else
 			   (let ((lparams (node-parameters n)))
-			     (put! db (first lparams) 'simple #t)
+			     (put! db (first lparams) 'simple #t) ;XXX hack
 			     (quick-put! plist 'inlinable #t)
 			     (quick-put! plist 'local-value n))))))))
 

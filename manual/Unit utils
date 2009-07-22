@@ -76,6 +76,30 @@ characters that would have a special meaning to the shell are escaped
 using backslash ({{\}}).
 
 
+=== Dynamic compilation
+
+==== compile-file
+
+ [procedure] (compile-file FILENAME [OPTION ...])
+
+Compiles the Scheme source file {{FILENAME}} into a dynamically
+loadable library by invoking the {{csc}} compiler driver, and if the
+library can be successfully created, loads the compiled code into the
+running process. {{OPTION ...}} may be one or more strings with are
+passed as additional command line options to {{csc}}. The compiled
+file is stored in a temporary location and will be deleted when
+the process exits successfully.
+
+Note that this procedure is compatible to the {{scheme-compile-file}}
+command in {{emacs}}' {{scheme-mode}}.
+
+ [parameter] compile-file-options
+
+A parameter that holds a list of default options that should be given
+to {{csc}} after invocation of the {{compile-file}} procedure. 
+The initial default options are {{-scrutinize -O2 -d1}}.
+
+
 ---
 Previous: [[Unit posix]]
 

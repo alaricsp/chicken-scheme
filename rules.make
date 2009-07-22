@@ -1144,21 +1144,29 @@ setup-download.import.c: $(SRCDIR)setup-download.scm
 	$(CHICKEN) $(SRCDIR)setup-download.import.scm $(CHICKEN_IMPORT_LIBRARY_OPTIONS) \
 	  -ignore-repository -output-file $@ 
 
-chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-ffi-syntax.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+chicken.c: $(SRCDIR)chicken.scm $(SRCDIR)chicken-ffi-syntax.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-support.c: $(SRCDIR)support.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+support.c: $(SRCDIR)support.scm $(SRCDIR)banner.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-compiler.c: $(SRCDIR)compiler.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+compiler.c: $(SRCDIR)compiler.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-optimizer.c: $(SRCDIR)optimizer.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+optimizer.c: $(SRCDIR)optimizer.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-scrutinizer.c: $(SRCDIR)scrutinizer.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+scrutinizer.c: $(SRCDIR)scrutinizer.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-batch-driver.c: $(SRCDIR)batch-driver.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+batch-driver.c: $(SRCDIR)batch-driver.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-c-platform.c: $(SRCDIR)c-platform.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+c-platform.c: $(SRCDIR)c-platform.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
-c-backend.c: $(SRCDIR)c-backend.scm $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
+c-backend.c: $(SRCDIR)c-backend.scm $(SRCDIR)compiler-namespace.scm \
+	  $(SRCDIR)private-namespace.scm $(SRCDIR)tweaks.scm
 	$(CHICKEN) $< $(CHICKEN_COMPILER_OPTIONS) -output-file $@ 
 
 csi.c: $(SRCDIR)csi.scm $(SRCDIR)banner.scm $(SRCDIR)private-namespace.scm

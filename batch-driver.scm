@@ -29,51 +29,7 @@
   (unit driver)
   (disable-warning var))
 
-
-(private
- compiler
-  compiler-arguments process-command-line dump-nodes dump-undefined-globals
-  default-standard-bindings default-extended-bindings
-  foldable-bindings dump-defined-globals
-  compiler-cleanup-hook disabled-warnings local-definitions inline-output-file
-  file-io-only undefine-shadowed-macros profiled-procedures
-  unit-name insert-timer-checks used-units inline-max-size mark-variable inline-locally
-  debugging perform-lambda-lifting! disable-stack-overflow-checking
-  foreign-declarations emit-trace-info block-compilation line-number-database-size
-  target-heap-size target-stack-size target-heap-growth target-heap-shrinkage
-  default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  target-initial-heap-size postponed-initforms
-  current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used
-  broken-constant-nodes inline-substitutions-enabled compiler-syntax-statistics
-  emit-profile profile-lambda-list profile-lambda-index profile-info-vector-name
-  direct-call-ids foreign-type-table first-analysis emit-closure-info
-  initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
-  perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call emit-unsafe-marker
-  perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! source-filename standalone-executable compiler-syntax-enabled
-  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
-  string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
-  put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
-  build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
-  simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list external-protos-first
-  pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
-  topological-sort print-version print-usage initialize-analysis-database dump-exported-globals
-  default-declarations units-used-by-default words-per-flonum default-debugging-declarations
-  default-profiling-declarations default-optimization-passes
-  file-requirements import-libraries inline-globally scrutinize do-scrutinize enable-inline-files
-  foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
-  membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  chop-separator chop-extension display-real-name-table display-line-number-database explicit-use-flag
-  generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  do-lambda-lifting compiler-warning emit-global-inline-file load-inline-file
-  foreign-argument-conversion foreign-result-conversion
-  load-identifier-database load-type-database
-  no-bound-checks no-argc-checks no-procedure-checks)
-
-
+(include "compiler-namespace")
 (include "tweaks")
 
 (define-constant default-profile-name "PROFILE")
@@ -601,7 +557,9 @@
 		       (when (memq 'u debugging-chicken)
 			 (dump-undefined-globals db))
 		       (when (memq 'd debugging-chicken)
-			 (dump-defined-globals db)) )
+			 (dump-defined-globals db))
+		       (when (memq 'v debugging-chicken)
+			 (dump-global-refs db)) )
 		     (set! first-analysis #f)
 		     (end-time "analysis")
 		     (print-db "analysis" '|4| db i)

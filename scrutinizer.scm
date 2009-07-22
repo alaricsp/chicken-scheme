@@ -26,46 +26,8 @@
 
 (declare (unit scrutinizer))
 
-(private compiler
-  compiler-arguments process-command-line perform-lambda-lifting!
-  default-standard-bindings default-extended-bindings
-  foldable-bindings llist-length
-  installation-home decompose-lambda-list external-to-pointer
-  copy-node! variable-visible? mark-variable intrinsic?
-  unit-name insert-timer-checks used-units external-variables hide-variable
-  debug-info-index debug-info-vector-name profile-info-vector-name
-  foreign-declarations emit-trace-info block-compilation line-number-database-size
-  make-block-variable-literal block-variable-literal? block-variable-literal-name
-  target-heap-size target-stack-size constant-declarations variable-mark
-  default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used
-  broken-constant-nodes inline-substitutions-enabled loop-lambda-names expand-profile-lambda
-  profile-lambda-list profile-lambda-index emit-profile expand-profile-lambda
-  direct-call-ids foreign-type-table first-analysis expand-debug-lambda expand-debug-assignment expand-debug-call
-  initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database! scan-toplevel-assignments
-  perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call compiler-warning real-name
-  perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! expand-foreign-callback-lambda* debug-lambda-list debug-variable-list debugging
-  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
-  string->c-identifier c-ify-string words check-and-open-input-file close-checked-input-file fold-inner constant?
-  collapsable-literal? immediate? canonicalize-begin-body extract-mutable-constants string->expr get get-all
-  put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
-  build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
-  simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
-  pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
-  topological-sort print-version print-usage initialize-analysis-database
-  expand-foreign-callback-lambda default-optimization-passes default-optimization-passes-when-trying-harder
-  units-used-by-default words-per-flonum rewrite inline-locally
-  parameter-limit eq-inline-operator optimizable-rest-argument-operators
-  membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  make-random-name final-foreign-type inline-max-size simplified-ops
-  generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion foreign-type-convert-argument foreign-type-convert-result
-  scrutinize load-type-database source-info->line)
 
-
+(include "compiler-namespace")
 (include "tweaks")
 
 

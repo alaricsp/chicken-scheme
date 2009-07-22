@@ -28,50 +28,7 @@
 (declare (unit support))
 
 
-(private compiler
-  compiler-arguments process-command-line dump-nodes dump-undefined-globals
-  default-standard-bindings default-extended-bindings
-  foldable-bindings dump-defined-globals
-  installation-home optimization-iterations compiler-cleanup-hook decompose-lambda-list
-  file-io-only banner disabled-warnings internal-bindings
-  unit-name insert-timer-checks used-units source-filename pending-canonicalizations
-  foreign-declarations block-compilation line-number-database-size node->sexpr sexpr->node
-  target-heap-size target-stack-size variable-visible? hide-variable export-variable
-  default-default-target-heap-size default-default-target-stack-size verbose-mode original-program-size
-  current-program-size line-number-database-2 foreign-lambda-stubs immutable-constants foreign-variables
-  rest-parameters-promoted-to-vector inline-table inline-table-used constant-table constants-used 
-  dependency-list broken-constant-nodes inline-substitutions-enabled emit-syntax-trace-info
-  block-variable-literal? copy-node! valid-c-identifier? tree-copy copy-node-tree-and-rename
-  direct-call-ids foreign-type-table first-analysis scan-sharp-greater-string
-  make-block-variable-literal block-variable-literal-name variable-mark
-  expand-profile-lambda profile-lambda-list profile-lambda-index profile-info-vector-name
-  initialize-compiler canonicalize-expression expand-foreign-lambda update-line-number-database scan-toplevel-assignments
-  perform-cps-conversion analyze-expression simplifications perform-high-level-optimizations perform-pre-optimization!
-  reorganize-recursive-bindings substitution-table simplify-named-call
-  perform-closure-conversion prepare-for-code-generation compiler-source-file create-foreign-stub expand-foreign-lambda*
-  transform-direct-lambdas! finish-foreign-result csc-control-file
-  debugging-chicken bomb check-signature posq stringify symbolify build-lambda-list
-  string->c-identifier c-ify-string words words->bytes check-and-open-input-file close-checked-input-file fold-inner
-  constant? basic-literal? source-info->string mark-variable load-inline-file
-  collapsable-literal? immediate? canonicalize-begin-body string->expr get get-all
-  put! collect! count! get-line get-line-2 find-lambda-container display-analysis-database varnode qnode 
-  build-node-graph build-expression-tree fold-boolean inline-lambda-bindings match-node expression-has-side-effects?
-  simple-lambda-node? compute-database-statistics print-program-statistics output gen gen-list 
-  pprint-expressions-to-file foreign-type-check estimate-foreign-result-size scan-used-variables scan-free-variables
-  topological-sort print-version print-usage initialize-analysis-database estimate-foreign-result-location-size
-  real-name real-name-table set-real-name! real-name2 display-real-name-table display-line-number-database
-  default-declarations units-used-by-default words-per-flonum emit-control-file-item compiler-warning
-  foreign-string-result-reserve parameter-limit eq-inline-operator optimizable-rest-argument-operators
-  membership-test-operators membership-unfold-limit valid-compiler-options valid-compiler-options-with-argument
-  default-optimization-iterations chop-separator chop-extension follow-without-loop
-  generate-code make-variable-list make-argument-list generate-foreign-stubs foreign-type-declaration
-  foreign-argument-conversion foreign-result-conversion final-foreign-type debugging source-info->line
-  constant-declarations process-lambda-documentation big-fixnum? sort-symbols llist-length
-  export-dump-hook intrinsic? node->sexpr emit-global-inline-file inline-max-size
-  make-random-name foreign-type-convert-result foreign-type-convert-argument
-  load-identifier-database)
-
-
+(include "compiler-namespace")
 (include "tweaks")
 (include "banner")
 
@@ -818,6 +775,15 @@
 		(assq 'assigned plist))
        (write sym)
        (newline) ) )
+   db) )
+
+(define (dump-global-refs db)
+  (##sys#hash-table-for-each
+   (lambda (sym plist)
+     (when (assq 'global plist)
+       (let ((a (assq 'references plist)))
+	 (write (list sym (if a (length (cdr a)) 0)))
+	 (newline) ) ) )
    db) )
 
 

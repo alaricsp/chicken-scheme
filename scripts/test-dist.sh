@@ -4,7 +4,6 @@
 # usage: test-dist.sh [-bootstrap] PLATFORM [TARBALL]
 
 set -e
-set -x
 
 pwdopts=
 bootstrap=
@@ -37,6 +36,17 @@ fi
 
 # bootstrap, if desired
 prefix=`pwd $pwdopts`/tmp-test-dist
+
+if test \! -x "$prefix/bin/csi"; then
+    echo "no csi at ${prefix} - please build and install chicken first"
+    exit 1
+fi
+
+for ext in htmlprag matchable; do
+    if test `$prefix/bin/csi -p "(extension-information '${ext})"` == "#f"; then
+	$prefix/bin/chicken-install $ext
+    fi
+done
 
 if test -n "$bootstrap"; then
     $makeprg PLATFORM=$platform PREFIX=$prefix DEBUGBUILD=1 bootstrap

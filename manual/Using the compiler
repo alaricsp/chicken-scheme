@@ -51,6 +51,7 @@ Possible options are:
      c          print every expression before macro-expansion
      u          lists all unassigned global variable references
      d          lists all assigned global variables
+     v          lists used global variables and their reference count
      x          display information about experimental features
      D          when printing nodes, use node-tree output
      N          show the real-name mapping table
