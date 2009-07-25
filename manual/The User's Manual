@@ -6,7 +6,7 @@
 <img style="float:right; border-left:1px solid #ccc;border-bottom:1px solid #ccc;margin-left:1em;" src="http://www.call-with-current-continuation.org/chicken4.png" alt="Stylized picture of a chicken"/>
 </nowiki>
 
-This is the manual for Chicken Scheme, version 4.0.9
+This is the manual for Chicken Scheme, version 4.1.1
 
 ; [[Getting started]] : What is CHICKEN and how do I use it?
 

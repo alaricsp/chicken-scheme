@@ -123,20 +123,27 @@
 
 ;;; Compile and load file
 
-(define compile-file-options (make-parameter '("-S" "-O2" "-d1")))
+(define compile-file-options (make-parameter '("-S" "-O2" "-d2")))
 
 (define compile-file
   (let ((csc (foreign-value "C_CSC_PROGRAM" c-string))
 	(path (foreign-value "C_INSTALL_BIN_HOME" c-string)) )
-    (lambda (filename . options)
+    (lambda (filename #!key (options '()) output-file)
       (let ((cscpath (or (file-exists? (make-pathname path csc)) "csc"))
-	    (tmpfile (create-temporary-file "so")))
+	    (tmpfile (and (not output-file) (create-temporary-file "so"))))
 	(print "; compiling " filename " ...")
 	(system* 
 	 "~a -s ~a ~a -o ~a" 
 	 (qs cscpath)
 	 (string-intersperse (append (compile-file-options) options) " ")
 	 (qs filename)
-	 (qs tmpfile))
-	(on-exit (cut delete-file* tmpfile))
-	(load tmpfile))) ) )
+	 (qs (or output-file tmpfile)))
+	(unless output-file 
+	  (on-exit (cut delete-file* tmpfile)))
+	(let ((f (or output-file tmpfile)))
+	  (handle-exceptions ex
+	      (begin
+		(delete-file* f)
+		(abort ex))
+	    (load f)
+	    f))))))

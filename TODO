@@ -49,16 +49,7 @@ TODO for chicken							-*- Outline -*-
     reverted original patch, see patches/finalizer-closures.diff
 
 ** tools
-*** chicken-bug: SMTP servers not accessible
-
-** build
-*** somehow get SONAME to work
-*** integrate and build/install chicken-base.scm
-
-** tests
-*** should run without installation
-
-** setting nursery default size doesn't seem to work properly (reported by Zbigniew)
+*** chicken-bug: SMTP servers not accessible (greylisting)
 
 
 * tasks
@@ -79,9 +70,14 @@ TODO for chicken							-*- Outline -*-
     (as comment in expand.scm indicated (##sys#register-export))
 *** check phase separation and module access
 **** see "expander" above
+*** consider adding support for unnamed modules
 
 ** compiler
 *** (csc) generate object-files in /tmp (or TMPDIR)?
+*** try to improve inlining (single calls should be inlinable)
+    Currently only "simple" procedures are inlined, possibly because accessed variables
+    may not be lexically visible but access to globals should ok, or not?
+*** option ("-M") to compile file as unnamed module (importing scheme + chicken)
 
 ** setup/install
 *** setup-download
@@ -115,15 +111,13 @@ TODO for chicken							-*- Outline -*-
 *** write test file to trigger every type of warning (diff with result file in test-suite)
 *** add support for keyword arguments and check even length and available keywords
 
+** libraries
+*** analyse usage statistics ("-debug v") of all core libraries
+
 
 * wiki
 
 ** compatibility page
-
-
-* extensions
-
-** check status of `s48-modules'
 
 
 * tests
@@ -140,7 +134,7 @@ TODO for chicken							-*- Outline -*-
    what MacScheme called "benchmark-mode" (assume self-calls are recursion)
 *** needs declaration or option, >= -O2
 
-** when inlining, consing arg-list with "list" may make get-keyword possible foldable
+** when inlining, consing arg-list with "list" may make get-keyword possibly foldable
 
 ** compiler-support for get-keyword ?
 
