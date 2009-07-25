@@ -7,7 +7,7 @@
 
 
 dbgoption=
-cache=$HOME/.cache
+cache=$HOME/.schemecache
 uname=`uname`
 wd=`pwd`
 
